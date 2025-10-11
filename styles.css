@@ -132,20 +132,27 @@ footer a {
   height: 40px;
 }
 
-/* Shine effect for header text */
 h1 {
-  background: linear-gradient(
-    120deg,
-    #fff,
-    #ccc,
-    #fff
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shine 3s infinite;
+  position: relative;
+  overflow: hidden; /* hide overflow from pseudo-element */
 }
 
+/* Create animated shine overlay using a pseudo-element */
+h1::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.6),
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 200% 100%;
+  animation: shine 3s infinite;
+  pointer-events: none; /* so it doesn't block clicks */
+}
+
+/* Define the animation for the shine overlay */
 @keyframes shine {
   0% {
     background-position: 200% 0;
