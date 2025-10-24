@@ -3,78 +3,94 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Agility Tree</title>
+<title>Agility Hierarchical Diagram</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    margin: 20px;
+    padding: 20px;
   }
-  h1 {
+
+  .diagram {
+    position: relative;
+    width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Main node (Agility) */
+  .center-node {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
     text-align: center;
-  }
-  .container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    margin-top: 50px;
-  }
-  /* Main boxes (Offense, Defense, Mobility) */
-  .top-row {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-    max-width: 1200px;
-    position: relative;
-    z-index: 1;
-  }
-  .main-box {
-    width: 150px;
     border: 2px solid #000;
     background-color: #f0f0f0;
     padding: 10px;
-    text-align: center;
-    position: relative;
+    border-radius: 5px;
   }
-  /* Connectors from main boxes down to limbs */
+
+  /* SVG for lines, covering entire diagram area */
   svg {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 400px;
+    height: 800px;
     pointer-events: none;
     z-index: 0;
   }
-  /* Limbs container */
-  .limbs-row {
+
+  /* Horizontal connector lines (beneath Agility) */
+  .horizontal-line {
+    position: absolute;
+    height: 0;
+    border-top: 2px solid #000;
+  }
+
+  /* Main branches are positioned absolutely */
+  .branch {
+    position: absolute;
+    top: 150px;
+    width: 150px;
+    text-align: center;
+  }
+
+  /* Limb container below each branch */
+  .limb-container {
+    position: absolute;
+    top: 300px;
     display: flex;
     justify-content: space-around;
-    margin-top: 250px;
-    position: relative;
+    width: 100%;
   }
-  /* Limb box container with vertical line */
-  .limb-column {
+
+  /* Limb box */
+  .limb {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
+    width: 100px;
   }
+
   .limb-box {
-    width: 140px;
     border: 1px solid #555;
-    background-color: #e0e0e0;
     padding: 8px;
+    background-color: #e0e0e0;
     text-align: center;
   }
-  /* Traits list with vertical line connecting to limb box */
+
+  /* Traits list */
   .traits {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: 10px;
   }
+
   .trait {
     padding: 2px 8px;
-    background-color: #ddd;
+    background: #ddd;
     margin: 2px 0;
     border-radius: 3px;
     font-size: 12px;
@@ -83,44 +99,55 @@
 </head>
 <body>
 
-<h1>Agility Tree</h1>
+<h1 style="text-align: center;">Agility Hierarchical Diagram</h1>
 
-<div class="container">
-  <!-- SVG for all lines -->
+<div class="diagram">
+  <!-- SVG for lines -->
   <svg>
-    <!-- Connect top boxes down to limbs (vertical lines) -->
-    <line x1="200" y1="50" x2="200" y2="250" stroke="#000" stroke-width="2"/>
-    <line x1="600" y1="50" x2="600" y2="250" stroke="#000" stroke-width="2"/>
-    <line x1="1000" y1="50" x2="1000" y2="250" stroke="#000" stroke-width="2"/>
-
-    <!-- Connect limbs to traits (vertical lines) -->
+    <!-- Vertical line from Agility -->
+    <line x1="600" y1="40" x2="600" y2="150" stroke="#000" stroke-width="2"/>
+    <!-- Horizontal line beneath Agility -->
+    <line x1="300" y1="150" x2="900" y2="150" stroke="#000" stroke-width="2"/>
+    
+    <!-- Vertical lines down from the left, center, right of horizontal line to branches -->
+    <line x1="300" y1="150" x2="300" y2="200" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="150" x2="600" y2="200" stroke="#000" stroke-width="2"/>
+    <line x1="900" y1="150" x2="900" y2="200" stroke="#000" stroke-width="2"/>
+    
+    <!-- Horizontal line connecting limbs -->
+    <line x1="200" y1="350" x2="400" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="350" x2="800" y2="350" stroke="#000" stroke-width="2"/>
+    
+    <!-- Vertical lines down from limbs to traits -->
     <!-- Offense limbs -->
-    <line x1="200" y1="250" x2="130" y2="350" stroke="#000" stroke-width="2"/>
-    <line x1="200" y1="250" x2="200" y2="350" stroke="#000" stroke-width="2"/>
-    <line x1="200" y1="250" x2="270" y2="350" stroke="#000" stroke-width="2"/>
-
+    <line x1="200" y1="350" x2="200" y2="400" stroke="#000" stroke-width="2"/>
+    <line x1="400" y1="350" x2="400" y2="400" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="350" x2="600" y2="400" stroke="#000" stroke-width="2"/>
     <!-- Defense limbs -->
-    <line x1="600" y1="250" x2="530" y2="350" stroke="#000" stroke-width="2"/>
-    <line x1="600" y1="250" x2="600" y2="350" stroke="#000" stroke-width="2"/>
-    <line x1="600" y1="250" x2="670" y2="350" stroke="#000" stroke-width="2"/>
-
-    <!-- Mobility limbs -->
-    <line x1="1000" y1="250" x2="930" y2="350" stroke="#000" stroke-width="2"/>
-    <line x1="1000" y1="250" x2="1000" y2="350" stroke="#000" stroke-width="2"/>
-    <line x1="1000" y1="250" x2="1070" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="350" x2="600" y2="400" stroke="#000" stroke-width="2"/>
+    <line x1="800" y1="350" x2="800" y2="400" stroke="#000" stroke-width="2"/>
   </svg>
 
-  <!-- Top level boxes -->
-  <div class="top-row">
-    <div class="main-box" style="margin-left: 150px;">Offense</div>
-    <div class="main-box" style="margin-left: 300px;">Defense</div>
-    <div class="main-box" style="margin-left: 450px;">Mobility</div>
+  <!-- Center node: Agility -->
+  <div class="center-node" style="top: 20px; left: 50%; transform: translateX(-50%);">
+    Agility
+  </div>
+
+  <!-- Main branches -->
+  <div class="branch" style="left: 150px;"> <!-- Offense -->
+    <div style="margin-top: 150px;">Offense</div>
+  </div>
+  <div class="branch" style="left: 450px;"> <!-- Defense -->
+    <div style="margin-top: 150px;">Defense</div>
+  </div>
+  <div class="branch" style="left: 750px;"> <!-- Mobility -->
+    <div style="margin-top: 150px;">Mobility</div>
   </div>
 
   <!-- Limbs under Offense -->
-  <div class="limbs-row" style="margin-top: 0;">
-    <!-- Limb Power -->
-    <div class="limb-column" style="margin-left: 120px;">
+  <div class="limb-container" style="left: 150px;">
+    <!-- Limb 1 -->
+    <div class="limb" style="margin-left: -50px;">
       <div class="limb-box">Power</div>
       <div class="traits">
         <div class="trait">Precision</div>
@@ -130,8 +157,8 @@
         <div class="trait">Range Mastery</div>
       </div>
     </div>
-    <!-- Limb Technique -->
-    <div class="limb-column" style="margin-left: 200px;">
+    <!-- Limb 2 -->
+    <div class="limb" style="margin-left: 0px;">
       <div class="limb-box">Technique</div>
       <div class="traits">
         <div class="trait">Power</div>
@@ -141,8 +168,8 @@
         <div class="trait">Offensive Tactics</div>
       </div>
     </div>
-    <!-- Limb Accuracy -->
-    <div class="limb-column" style="margin-left: 200px;">
+    <!-- Limb 3 -->
+    <div class="limb" style="margin-left: 50px;">
       <div class="limb-box">Accuracy</div>
       <div class="traits">
         <div class="trait">Disarm</div>
@@ -155,8 +182,9 @@
   </div>
 
   <!-- Limbs under Defense -->
-  <div class="limbs-row" style="margin-top: 150px;">
-    <div class="limb-column" style="margin-left: 520px;">
+  <div class="limb-container" style="left: 450px;">
+    <!-- Limb 1 -->
+    <div class="limb" style="margin-left: -50px;">
       <div class="limb-box">Parry</div>
       <div class="traits">
         <div class="trait">Damage Reduction</div>
@@ -166,7 +194,8 @@
         <div class="trait">Resilience</div>
       </div>
     </div>
-    <div class="limb-column" style="margin-left: 200px;">
+    <!-- Limb 2 -->
+    <div class="limb" style="margin-left: 0px;">
       <div class="limb-box">Fortitude</div>
       <div class="traits">
         <div class="trait">Resist Magic</div>
@@ -176,7 +205,8 @@
         <div class="trait">Shock Resistance</div>
       </div>
     </div>
-    <div class="limb-column" style="margin-left: 200px;">
+    <!-- Limb 3 -->
+    <div class="limb" style="margin-left: 50px;">
       <div class="limb-box">Immunity</div>
       <div class="traits">
         <div class="trait">Magic Immunity</div>
@@ -189,8 +219,9 @@
   </div>
 
   <!-- Limbs under Mobility -->
-  <div class="limbs-row" style="margin-top: 150px;">
-    <div class="limb-column" style="margin-left: 920px;">
+  <div class="limb-container" style="left: 750px;">
+    <!-- Limb 1 -->
+    <div class="limb" style="margin-left: -50px;">
       <div class="limb-box">Dodge</div>
       <div class="traits">
         <div class="trait">Escape</div>
@@ -200,7 +231,8 @@
         <div class="trait">Quick Retreat</div>
       </div>
     </div>
-    <div class="limb-column" style="margin-left: 200px;">
+    <!-- Limb 2 -->
+    <div class="limb" style="margin-left: 0px;">
       <div class="limb-box">Climb</div>
       <div class="traits">
         <div class="trait">Jump</div>
@@ -210,7 +242,8 @@
         <div class="trait">Slide</div>
       </div>
     </div>
-    <div class="limb-column" style="margin-left: 200px;">
+    <!-- Limb 3 -->
+    <div class="limb" style="margin-left: 50px;">
       <div class="limb-box">Speed</div>
       <div class="traits">
         <div class="trait">Dash</div>
@@ -221,6 +254,7 @@
       </div>
     </div>
   </div>
+
 </div>
 </body>
 </html>
