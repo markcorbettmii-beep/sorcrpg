@@ -8,20 +8,18 @@
   body {
     font-family: Arial, sans-serif;
     margin: 20px;
-    position: relative;
   }
   h1 {
     text-align: center;
   }
-  /* Container for entire diagram */
-  .diagram {
+  .container {
     position: relative;
     display: flex;
     justify-content: center;
     margin-top: 50px;
   }
-  /* Main top boxes (Offense, Defense, Mobility) */
-  .top-boxes {
+  /* Main boxes (Offense, Defense, Mobility) */
+  .top-row {
     display: flex;
     justify-content: space-around;
     width: 100%;
@@ -29,7 +27,6 @@
     position: relative;
     z-index: 1;
   }
-  /* Each main box */
   .main-box {
     width: 150px;
     border: 2px solid #000;
@@ -38,23 +35,38 @@
     text-align: center;
     position: relative;
   }
-  /* Limbs container under each main box */
-  .limbs-container {
+  /* Connectors from main boxes down to limbs */
+  svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 400px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* Limbs container */
+  .limbs-row {
     display: flex;
     justify-content: space-around;
-    margin-top: 150px; /* space for lines to connect */
+    margin-top: 250px;
     position: relative;
   }
-  /* Each limb box */
+  /* Limb box container with vertical line */
+  .limb-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
   .limb-box {
-    width: 120px;
+    width: 140px;
     border: 1px solid #555;
     background-color: #e0e0e0;
     padding: 8px;
-    margin-top: 10px;
     text-align: center;
   }
-  /* Traits under each limb */
+  /* Traits list with vertical line connecting to limb box */
   .traits {
     display: flex;
     flex-direction: column;
@@ -67,153 +79,145 @@
     border-radius: 3px;
     font-size: 12px;
   }
-  /* SVG overlay for lines */
-  svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 600px;
-    pointer-events: none;
-    z-index: 0;
-  }
 </style>
 </head>
 <body>
 
 <h1>Agility Tree</h1>
 
-<div class="diagram">
-  <!-- SVG lines for connections -->
+<div class="container">
+  <!-- SVG for all lines -->
   <svg>
-    <!-- Lines from top boxes down to limbs -->
-    <!-- Offense to its limbs -->
-    <line x1="200" y1="60" x2="200" y2="180" stroke="#000" stroke-width="2"/>
-    <line x1="200" y1="180" x2="120" y2="300" stroke="#000" stroke-width="2"/>
-    <line x1="200" y1="180" x2="200" y2="300" stroke="#000" stroke-width="2"/>
-    <line x1="200" y1="180" x2="280" y2="300" stroke="#000" stroke-width="2"/>
+    <!-- Connect top boxes down to limbs (vertical lines) -->
+    <line x1="200" y1="50" x2="200" y2="250" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="50" x2="600" y2="250" stroke="#000" stroke-width="2"/>
+    <line x1="1000" y1="50" x2="1000" y2="250" stroke="#000" stroke-width="2"/>
 
-    <!-- Defense to its limbs -->
-    <line x1="600" y1="60" x2="600" y2="180" stroke="#000" stroke-width="2"/>
-    <line x1="600" y1="180" x2="520" y2="300" stroke="#000" stroke-width="2"/>
-    <line x1="600" y1="180" x2="600" y2="300" stroke="#000" stroke-width="2"/>
-    <line x1="600" y1="180" x2="680" y2="300" stroke="#000" stroke-width="2"/>
+    <!-- Connect limbs to traits (vertical lines) -->
+    <!-- Offense limbs -->
+    <line x1="200" y1="250" x2="130" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="200" y1="250" x2="200" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="200" y1="250" x2="270" y2="350" stroke="#000" stroke-width="2"/>
 
-    <!-- Mobility to its limbs -->
-    <line x1="1000" y1="60" x2="1000" y2="180" stroke="#000" stroke-width="2"/>
-    <line x1="1000" y1="180" x2="920" y2="300" stroke="#000" stroke-width="2"/>
-    <line x1="1000" y1="180" x2="1000" y2="300" stroke="#000" stroke-width="2"/>
-    <line x1="1000" y1="180" x2="1080" y2="300" stroke="#000" stroke-width="2"/>
+    <!-- Defense limbs -->
+    <line x1="600" y1="250" x2="530" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="250" x2="600" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="600" y1="250" x2="670" y2="350" stroke="#000" stroke-width="2"/>
+
+    <!-- Mobility limbs -->
+    <line x1="1000" y1="250" x2="930" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="1000" y1="250" x2="1000" y2="350" stroke="#000" stroke-width="2"/>
+    <line x1="1000" y1="250" x2="1070" y2="350" stroke="#000" stroke-width="2"/>
   </svg>
 
-  <!-- Offense Box and limbs -->
-  <div class="top-boxes">
+  <!-- Top level boxes -->
+  <div class="top-row">
     <div class="main-box" style="margin-left: 150px;">Offense</div>
-    <div class="main-box" style="margin-left: 150px;">Defense</div>
-    <div class="main-box" style="margin-left: 150px;">Mobility</div>
+    <div class="main-box" style="margin-left: 300px;">Defense</div>
+    <div class="main-box" style="margin-left: 450px;">Mobility</div>
   </div>
 
   <!-- Limbs under Offense -->
-  <div class="limbs-container" style="margin-top: 70px;">
-    <!-- Offense Limbs -->
-    <div style="display: flex; position: relative;">
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 70px;">
-        <div class="limb-box">Power</div>
-        <div class="traits">
-          <div class="trait">Precision</div>
-          <div class="trait">Sneak Attack</div>
-          <div class="trait">Quick Strike</div>
-          <div class="trait">Critical Focus</div>
-          <div class="trait">Range Mastery</div>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 200px;">
-        <div class="limb-box">Technique</div>
-        <div class="traits">
-          <div class="trait">Power</div>
-          <div class="trait">Combo Attack</div>
-          <div class="trait">Flurry</div>
-          <div class="trait">Weapon Specialization</div>
-          <div class="trait">Offensive Tactics</div>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 200px;">
-        <div class="limb-box">Accuracy</div>
-        <div class="traits">
-          <div class="trait">Disarm</div>
-          <div class="trait">Rapid Fire</div>
-          <div class="trait">Trap Shooting</div>
-          <div class="trait">Damage Boost</div>
-          <div class="trait">Precision Aim</div>
-        </div>
+  <div class="limbs-row" style="margin-top: 0;">
+    <!-- Limb Power -->
+    <div class="limb-column" style="margin-left: 120px;">
+      <div class="limb-box">Power</div>
+      <div class="traits">
+        <div class="trait">Precision</div>
+        <div class="trait">Sneak Attack</div>
+        <div class="trait">Quick Strike</div>
+        <div class="trait">Critical Focus</div>
+        <div class="trait">Range Mastery</div>
       </div>
     </div>
-
-    <!-- Defense Limbs -->
-    <div style="display: flex; position: relative; margin-top: 200px;">
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 70px;">
-        <div class="limb-box">Parry</div>
-        <div class="traits">
-          <div class="trait">Damage Reduction</div>
-          <div class="trait">Fortify</div>
-          <div class="trait">Shielding</div>
-          <div class="trait">Absorb</div>
-          <div class="trait">Resilience</div>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 200px;">
-        <div class="limb-box">Fortitude</div>
-        <div class="traits">
-          <div class="trait">Resist Magic</div>
-          <div class="trait">Stun Resistance</div>
-          <div class="trait">Poison Resistance</div>
-          <div class="trait">Fear Resistance</div>
-          <div class="trait">Shock Resistance</div>
-        </div>
-      </div>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 200px;">
-        <div class="limb-box">Immunity</div>
-        <div class="traits">
-          <div class="trait">Magic Immunity</div>
-          <div class="trait">Poison Immunity</div>
-          <div class="trait">Fear Immunity</div>
-          <div class="trait">Stun Immunity</div>
-          <div class="trait">Charm Immunity</div>
-        </div>
+    <!-- Limb Technique -->
+    <div class="limb-column" style="margin-left: 200px;">
+      <div class="limb-box">Technique</div>
+      <div class="traits">
+        <div class="trait">Power</div>
+        <div class="trait">Combo Attack</div>
+        <div class="trait">Flurry</div>
+        <div class="trait">Weapon Specialization</div>
+        <div class="trait">Offensive Tactics</div>
       </div>
     </div>
+    <!-- Limb Accuracy -->
+    <div class="limb-column" style="margin-left: 200px;">
+      <div class="limb-box">Accuracy</div>
+      <div class="traits">
+        <div class="trait">Disarm</div>
+        <div class="trait">Rapid Fire</div>
+        <div class="trait">Trap Shooting</div>
+        <div class="trait">Damage Boost</div>
+        <div class="trait">Precision Aim</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Mobility Limbs -->
-    <div style="display: flex; position: relative; margin-top: 200px;">
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 70px;">
-        <div class="limb-box">Dodge</div>
-        <div class="traits">
-          <div class="trait">Escape</div>
-          <div class="trait">Speed Boost</div>
-          <div class="trait">Agility</div>
-          <div class="trait">Reflexes</div>
-          <div class="trait">Quick Retreat</div>
-        </div>
+  <!-- Limbs under Defense -->
+  <div class="limbs-row" style="margin-top: 150px;">
+    <div class="limb-column" style="margin-left: 520px;">
+      <div class="limb-box">Parry</div>
+      <div class="traits">
+        <div class="trait">Damage Reduction</div>
+        <div class="trait">Fortify</div>
+        <div class="trait">Shielding</div>
+        <div class="trait">Absorb</div>
+        <div class="trait">Resilience</div>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 200px;">
-        <div class="limb-box">Climb</div>
-        <div class="traits">
-          <div class="trait">Jump</div>
-          <div class="trait">Sprint</div>
-          <div class="trait">Stealth</div>
-          <div class="trait">Rolling</div>
-          <div class="trait">Slide</div>
-        </div>
+    </div>
+    <div class="limb-column" style="margin-left: 200px;">
+      <div class="limb-box">Fortitude</div>
+      <div class="traits">
+        <div class="trait">Resist Magic</div>
+        <div class="trait">Stun Resistance</div>
+        <div class="trait">Poison Resistance</div>
+        <div class="trait">Fear Resistance</div>
+        <div class="trait">Shock Resistance</div>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: center; margin-left: 200px;">
-        <div class="limb-box">Speed</div>
-        <div class="traits">
-          <div class="trait">Dash</div>
-          <div class="trait">Quick Turn</div>
-          <div class="trait">Evasion</div>
-          <div class="trait">Rapid Movement</div>
-          <div class="trait">Escape</div>
-        </div>
+    </div>
+    <div class="limb-column" style="margin-left: 200px;">
+      <div class="limb-box">Immunity</div>
+      <div class="traits">
+        <div class="trait">Magic Immunity</div>
+        <div class="trait">Poison Immunity</div>
+        <div class="trait">Fear Immunity</div>
+        <div class="trait">Stun Immunity</div>
+        <div class="trait">Charm Immunity</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Limbs under Mobility -->
+  <div class="limbs-row" style="margin-top: 150px;">
+    <div class="limb-column" style="margin-left: 920px;">
+      <div class="limb-box">Dodge</div>
+      <div class="traits">
+        <div class="trait">Escape</div>
+        <div class="trait">Speed Boost</div>
+        <div class="trait">Agility</div>
+        <div class="trait">Reflexes</div>
+        <div class="trait">Quick Retreat</div>
+      </div>
+    </div>
+    <div class="limb-column" style="margin-left: 200px;">
+      <div class="limb-box">Climb</div>
+      <div class="traits">
+        <div class="trait">Jump</div>
+        <div class="trait">Sprint</div>
+        <div class="trait">Stealth</div>
+        <div class="trait">Rolling</div>
+        <div class="trait">Slide</div>
+      </div>
+    </div>
+    <div class="limb-column" style="margin-left: 200px;">
+      <div class="limb-box">Speed</div>
+      <div class="traits">
+        <div class="trait">Dash</div>
+        <div class="trait">Quick Turn</div>
+        <div class="trait">Evasion</div>
+        <div class="trait">Rapid Movement</div>
+        <div class="trait">Escape</div>
       </div>
     </div>
   </div>
