@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Flow Chart - TTRPG</title>
+<title>Simplified Flow Chart - TTRPG</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
+    background-color: #f0f0f0;
   }
   .chart-container {
     position: relative;
@@ -49,7 +49,7 @@
     <div class="node" id="agility">Agility</div>
   </div>
 
-  <!-- First branch: Offense, Defense, Mobility -->
+  <!-- Branch: Offense, Defense, Mobility -->
   <div class="level" id="level1">
     <div class="node" id="offense">Offense</div>
     <div class="node" id="defense">Defense</div>
@@ -57,134 +57,65 @@
   </div>
 
   <!-- Second level: sub-branches -->
-  <div class="level" id="level2-offense">
+  <div class="level" id="level2">
     <div class="node" id="offense1">Offense 1</div>
-    <div class="node" id="offense2">Offense 2</div>
-    <div class="node" id="offense3">Offense 3</div>
-  </div>
-  <div class="level" id="level2-defense">
-    <div class="node" id="defense1">Defense 1</div>
     <div class="node" id="defense2">Defense 2</div>
-    <div class="node" id="defense3">Defense 3</div>
-  </div>
-  <div class="level" id="level2-mobility">
-    <div class="node" id="mobility1">Mobility 1</div>
-    <div class="node" id="mobility2">Mobility 2</div>
     <div class="node" id="mobility3">Mobility 3</div>
   </div>
 
   <!-- Third level: detailed boxes -->
-  <div class="level" id="level3-offense1">
+  <div class="level" id="level3">
     <div class="node" id="offense1-detail">Offense 1 Detail</div>
-  </div>
-  <div class="level" id="level3-offense2">
-    <div class="node" id="offense2-detail">Offense 2 Detail</div>
-  </div>
-  <div class="level" id="level3-offense3">
-    <div class="node" id="offense3-detail">Offense 3 Detail</div>
-  </div>
-  <div class="level" id="level3-defense1">
-    <div class="node" id="defense1-detail">Defense 1 Detail</div>
-  </div>
-  <div class="level" id="level3-defense2">
     <div class="node" id="defense2-detail">Defense 2 Detail</div>
-  </div>
-  <div class="level" id="level3-defense3">
-    <div class="node" id="defense3-detail">Defense 3 Detail</div>
-  </div>
-  <div class="level" id="level3-mobility1">
-    <div class="node" id="mobility1-detail">Mobility 1 Detail</div>
-  </div>
-  <div class="level" id="level3-mobility2">
-    <div class="node" id="mobility2-detail">Mobility 2 Detail</div>
-  </div>
-  <div class="level" id="level3-mobility3">
     <div class="node" id="mobility3-detail">Mobility 3 Detail</div>
   </div>
 </div>
 
 <script>
-  // Function to draw lines between two elements
-  function connectElements(svg, parent, child) {
-    const svgRect = svg.getBoundingClientRect();
-    const parentRect = parent.getBoundingClientRect();
-    const childRect = child.getBoundingClientRect();
-
-    const x1 = parentRect.left + parentRect.width / 2 - svgRect.left;
-    const y1 = parentRect.bottom - svgRect.top;
-    const x2 = childRect.left + childRect.width / 2 - svgRect.left;
-    const y2 = childRect.top - svgRect.top;
-
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", x1);
-    line.setAttribute("y1", y1);
-    line.setAttribute("x2", x2);
-    line.setAttribute("y2", y2);
-    line.setAttribute("stroke", "#333");
-    line.setAttribute("stroke-width", "2");
-    svg.appendChild(line);
+  function getCenterPosition(element) {
+    const rect = element.getBoundingClientRect();
+    const containerRect = document.getElementById('chartContainer').getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2 - containerRect.left,
+      y: rect.top + rect.height / 2 - containerRect.top
+    };
   }
 
   window.onload = () => {
     const svg = document.querySelector("svg");
     const container = document.getElementById("chartContainer");
 
-    // List of parent-child pairs
-    const connections = [
-      {parent: document.getElementById("agility"), children: [
-        document.getElementById("offense"),
-        document.getElementById("defense"),
-        document.getElementById("mobility")
-      ]},
-      {parent: document.getElementById("offense"), children: [
-        document.getElementById("offense1"),
-        document.getElementById("offense2"),
-        document.getElementById("offense3")
-      ]},
-      {parent: document.getElementById("defense"), children: [
-        document.getElementById("defense1"),
-        document.getElementById("defense2"),
-        document.getElementById("defense3")
-      ]},
-      {parent: document.getElementById("mobility"), children: [
-        document.getElementById("mobility1"),
-        document.getElementById("mobility2"),
-        document.getElementById("mobility3")
-      ]},
-      {parent: document.getElementById("offense1"), children: [
-        document.getElementById("offense1-detail")
-      ]},
-      {parent: document.getElementById("offense2"), children: [
-        document.getElementById("offense2-detail")
-      ]},
-      {parent: document.getElementById("offense3"), children: [
-        document.getElementById("offense3-detail")
-      ]},
-      {parent: document.getElementById("defense1"), children: [
-        document.getElementById("defense1-detail")
-      ]},
-      {parent: document.getElementById("defense2"), children: [
-        document.getElementById("defense2-detail")
-      ]},
-      {parent: document.getElementById("defense3"), children: [
-        document.getElementById("defense3-detail")
-      ]},
-      {parent: document.getElementById("mobility1"), children: [
-        document.getElementById("mobility1-detail")
-      ]},
-      {parent: document.getElementById("mobility2"), children: [
-        document.getElementById("mobility2-detail")
-      ]},
-      {parent: document.getElementById("mobility3"), children: [
-        document.getElementById("mobility3-detail")
-      ]}
+    const lines = [
+      // Diagonal lines from Agility to Offense, Defense, Mobility
+      {from: "agility", to: "offense"},
+      {from: "agility", to: "defense"},
+      {from: "agility", to: "mobility"},
+      // Vertical lines from first to second level
+      {from: "offense", to: "offense1"},
+      {from: "defense", to: "defense2"},
+      {from: "mobility", to: "mobility3"},
+      // Connecting to third level
+      {from: "offense1", to: "offense1-detail"},
+      {from: "defense2", to: "defense2-detail"},
+      {from: "mobility3", to: "mobility3-detail"},
+      // Additional vertical connections following pattern
+      // e.g., offense to defense, defense to mobility, etc., if needed
     ];
 
-    // Draw lines
-    connections.forEach(conn => {
-      conn.children.forEach(child => {
-        connectElements(svg, conn.parent, child);
-      });
+    lines.forEach(link => {
+      const fromEl = document.getElementById(link.from);
+      const toEl = document.getElementById(link.to);
+      const fromPos = getCenterPosition(fromEl);
+      const toPos = getCenterPosition(toEl);
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", fromPos.x);
+      line.setAttribute("y1", fromPos.y);
+      line.setAttribute("x2", toPos.x);
+      line.setAttribute("y2", toPos.y);
+      line.setAttribute("stroke", "#333");
+      line.setAttribute("stroke-width", "2");
+      svg.appendChild(line);
     });
   };
 </script>
