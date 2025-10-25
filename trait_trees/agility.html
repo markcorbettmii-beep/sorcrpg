@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Expanded Flow Chart - TTRPG</title>
+<title>Custom Flow Chart</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background: #f0f0f0;
   }
-  .chart-container {
+  .container {
     position: relative;
     width: 100%;
     padding: 50px 0;
@@ -22,84 +22,64 @@
     height: 100%;
     pointer-events: none;
   }
-  .level {
+  .row {
     display: flex;
     justify-content: center;
-    margin-top: 40px;
+    margin: 50px 0;
   }
-  .sub-level {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-  }
-  .node {
+  .box {
     border: 2px solid #333;
     border-radius: 8px;
     padding: 10px 20px;
-    background-color: #fff;
-    text-align: center;
-    min-width: 100px;
+    background: #fff;
     margin: 20px;
-    position: relative;
+    min-width: 100px;
+    text-align: center;
   }
 </style>
 </head>
 <body>
-
-<div class="chart-container" id="chartContainer">
+<div class="container" id="chart">
   <svg></svg>
-
   <!-- Top Box -->
   <div style="text-align: center;">
-    <div class="node" id="agility">Agility</div>
+    <div class="box" id="top">Agility</div>
   </div>
 
-  <!-- First level: Offense, Defense, Mobility -->
-  <div class="level" id="level1">
-    <div class="node" id="offense">Offense</div>
-    <div class="node" id="defense">Defense</div>
-    <div class="node" id="mobility">Mobility</div>
+  <!-- Second row: 3 boxes -->
+  <div class="row" id="row1">
+    <div class="box" id="offense">Offense</div>
+    <div class="box" id="defense">Defense</div>
+    <div class="box" id="mobility">Mobility</div>
   </div>
 
-  <!-- Second level: three boxes under each main category -->
-  <div class="sub-level" id="sub-offense">
-    <div class="node" id="offense1">Offense 1</div>
-    <div class="node" id="offense2">Offense 2</div>
-    <div class="node" id="offense3">Offense 3</div>
-  </div>
-  <div class="sub-level" id="sub-defense">
-    <div class="node" id="defense1">Defense 1</div>
-    <div class="node" id="defense2">Defense 2</div>
-    <div class="node" id="defense3">Defense 3</div>
-  </div>
-  <div class="sub-level" id="sub-mobility">
-    <div class="node" id="mobility1">Mobility 1</div>
-    <div class="node" id="mobility2">Mobility 2</div>
-    <div class="node" id="mobility3">Mobility 3</div>
+  <!-- Third row: 3 boxes under each of the above, total 9 -->
+  <div class="row" id="row2">
+    <div class="box" id="offense1">Offense 1</div>
+    <div class="box" id="offense2">Offense 2</div>
+    <div class="box" id="offense3">Offense 3</div>
+    <div class="box" id="defense1">Defense 1</div>
+    <div class="box" id="defense2">Defense 2</div>
+    <div class="box" id="defense3">Defense 3</div>
+    <div class="box" id="mobility1">Mobility 1</div>
+    <div class="box" id="mobility2">Mobility 2</div>
+    <div class="box" id="mobility3">Mobility 3</div>
   </div>
 
-  <!-- Third level: details under each sub -->
-  <div class="sub-level" id="detail-offense">
-    <div class="node" id="offense1-detail">Offense 1 Detail</div>
-    <div class="node" id="offense2-detail">Offense 2 Detail</div>
-    <div class="node" id="offense3-detail">Offense 3 Detail</div>
-  </div>
-  <div class="sub-level" id="detail-defense">
-    <div class="node" id="defense1-detail">Defense 1 Detail</div>
-    <div class="node" id="defense2-detail">Defense 2 Detail</div>
-    <div class="node" id="defense3-detail">Defense 3 Detail</div>
-  </div>
-  <div class="sub-level" id="detail-mobility">
-    <div class="node" id="mobility1-detail">Mobility 1 Detail</div>
-    <div class="node" id="mobility2-detail">Mobility 2 Detail</div>
-    <div class="node" id="mobility3-detail">Mobility 3 Detail</div>
+  <!-- Fourth row: 1 box under each of 4 boxes, total 4 -->
+  <div class="row" id="row3">
+    <div class="box" id="offense1a">O1 Detail</div>
+    <div class="box" id="defense1a">D1 Detail</div>
+    <div class="box" id="mobility1a">M1 Detail</div>
+    <div class="box" id="offense2a">O2 Detail</div>
+    <!-- Add as many as needed to reach 13 total boxes -->
   </div>
 </div>
 
 <script>
-  function getCenterPosition(element) {
-    const rect = element.getBoundingClientRect();
-    const containerRect = document.getElementById('chartContainer').getBoundingClientRect();
+  function getCenter(elem) {
+    const rect = elem.getBoundingClientRect();
+    const containerRect = document.getElementById('chart').getBoundingClientRect();
     return {
       x: rect.left + rect.width / 2 - containerRect.left,
       y: rect.top + rect.height / 2 - containerRect.top
@@ -108,14 +88,12 @@
 
   window.onload = () => {
     const svg = document.querySelector("svg");
-    const container = document.getElementById("chartContainer");
-
-    const lines = [
-      // Diagonal lines from Agility to main categories
-      {from: "agility", to: "offense"},
-      {from: "agility", to: "defense"},
-      {from: "agility", to: "mobility"},
-      // Vertical lines from main to second level
+    const connections = [
+      // Diagonal from top to second row
+      {from: "top", to: "offense"},
+      {from: "top", to: "defense"},
+      {from: "top", to: "mobility"},
+      // From second row to third row
       {from: "offense", to: "offense1"},
       {from: "offense", to: "offense2"},
       {from: "offense", to: "offense3"},
@@ -125,24 +103,19 @@
       {from: "mobility", to: "mobility1"},
       {from: "mobility", to: "mobility2"},
       {from: "mobility", to: "mobility3"},
-      // Vertical lines from sub to details
-      {from: "offense1", to: "offense1-detail"},
-      {from: "offense2", to: "offense2-detail"},
-      {from: "offense3", to: "offense3-detail"},
-      {from: "defense1", to: "defense1-detail"},
-      {from: "defense2", to: "defense2-detail"},
-      {from: "defense3", to: "defense3-detail"},
-      {from: "mobility1", to: "mobility1-detail"},
-      {from: "mobility2", to: "mobility2-detail"},
-      {from: "mobility3", to: "mobility3-detail"}
+      // From third row to fourth row
+      {from: "offense1", to: "offense1a"},
+      {from: "defense1", to: "defense1a"},
+      {from: "mobility1", to: "mobility1a"},
+      {from: "offense2", to: "offense2a"},
+      // Add more as needed
     ];
 
-    lines.forEach(link => {
-      const fromEl = document.getElementById(link.from);
-      const toEl = document.getElementById(link.to);
-      const fromPos = getCenterPosition(fromEl);
-      const toPos = getCenterPosition(toEl);
-
+    connections.forEach(c => {
+      const fromEl = document.getElementById(c.from);
+      const toEl = document.getElementById(c.to);
+      const fromPos = getCenter(fromEl);
+      const toPos = getCenter(toEl);
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.setAttribute("x1", fromPos.x);
       line.setAttribute("y1", fromPos.y);
@@ -154,6 +127,5 @@
     });
   };
 </script>
-
 </body>
 </html>
