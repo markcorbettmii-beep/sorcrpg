@@ -3,129 +3,140 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Custom Flow Chart</title>
+<title>Agility Trait Flow Chart</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    background: #f0f0f0;
   }
-  .container {
-    position: relative;
-    width: 100%;
-    padding: 50px 0;
+  ul {
+    list-style-type: none;
   }
-  svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
+  li {
+    margin: 8px 0;
   }
-  .row {
-    display: flex;
-    justify-content: center;
-    margin: 50px 0;
+  .category {
+    font-weight: bold;
+    font-size: 1.2em;
   }
-  .box {
-    border: 2px solid #333;
-    border-radius: 8px;
-    padding: 10px 20px;
-    background: #fff;
-    margin: 20px;
-    min-width: 100px;
-    text-align: center;
+  .sub-category {
+    margin-left: 20px;
+    font-weight: bold;
+  }
+  .elements {
+    margin-left: 40px;
   }
 </style>
 </head>
 <body>
-<div class="container" id="chart">
-  <svg></svg>
-  <!-- Top Box -->
-  <div style="text-align: center;">
-    <div class="box" id="top">Agility</div>
-  </div>
+<h1>Agility Trait Flow Chart</h1>
+<ul>
+  <li>
+    <div class="category">Offense</div>
+    <ul>
+      <li>
+        <div class="sub-category">Hit</div>
+        <ul class="elements">
+          <li>Quick Strike</li>
+          <li>Precision</li>
+          <li>Flurry</li>
+          <li>Aggressive</li>
+          <li>Ruthless</li>
+        </ul>
+      </li>
+      <li>
+        <div class="sub-category">Crit</div>
+        <ul class="elements">
+          <li>Sharp Eye</li>
+          <li>Critical Boost</li>
+          <li>Opportunist</li>
+          <li>Deadeye</li>
+          <li>Precision Strike</li>
+        </ul>
+      </li>
+      <li>
+        <div class="sub-category">Damage</div>
+        <ul class="elements">
+          <li>Piercing</li>
+          <li>Bludgeoning</li>
+          <li>Cutting</li>
+          <li>Poisonous</li>
+          <li>Explosive</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
 
-  <!-- Second row: 3 boxes -->
-  <div class="row" id="row1">
-    <div class="box" id="offense">Offense</div>
-    <div class="box" id="defense">Defense</div>
-    <div class="box" id="mobility">Mobility</div>
-  </div>
+  <li>
+    <div class="category">Defense</div>
+    <ul>
+      <li>
+        <div class="sub-category">Hit</div>
+        <ul class="elements">
+          <li>Evasion</li>
+          <li>Parry</li>
+          <li>Dodge</li>
+          <li>Block</li>
+          <li>Counter</li>
+        </ul>
+      </li>
+      <li>
+        <div class="sub-category">Crit</div>
+        <ul class="elements">
+          <li>Resilient</li>
+          <li>Ironclad</li>
+          <li>Fortify</li>
+          <li>Tough</li>
+          <li>Unyielding</li>
+        </ul>
+      </li>
+      <li>
+        <div class="sub-category">Damage</div>
+        <ul class="elements">
+          <li>Absorption</li>
+          <li>Resistance</li>
+          <li>Reduction</li>
+          <li>Guarded</li>
+          <li>Reinforced</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
 
-  <!-- Third row: 3 boxes under each of the above, total 9 -->
-  <div class="row" id="row2">
-    <div class="box" id="offense1">Offense 1</div>
-    <div class="box" id="offense2">Offense 2</div>
-    <div class="box" id="offense3">Offense 3</div>
-    <div class="box" id="defense1">Defense 1</div>
-    <div class="box" id="defense2">Defense 2</div>
-    <div class="box" id="defense3">Defense 3</div>
-    <div class="box" id="mobility1">Mobility 1</div>
-    <div class="box" id="mobility2">Mobility 2</div>
-    <div class="box" id="mobility3">Mobility 3</div>
-  </div>
-
-  <!-- Fourth row: 1 box under each of 4 boxes, total 4 -->
-  <div class="row" id="row3">
-    <div class="box" id="offense1a">O1 Detail</div>
-    <div class="box" id="defense1a">D1 Detail</div>
-    <div class="box" id="mobility1a">M1 Detail</div>
-    <div class="box" id="offense2a">O2 Detail</div>
-    <!-- Add as many as needed to reach 13 total boxes -->
-  </div>
-</div>
-
-<script>
-  function getCenter(elem) {
-    const rect = elem.getBoundingClientRect();
-    const containerRect = document.getElementById('chart').getBoundingClientRect();
-    return {
-      x: rect.left + rect.width / 2 - containerRect.left,
-      y: rect.top + rect.height / 2 - containerRect.top
-    };
-  }
-
-  window.onload = () => {
-    const svg = document.querySelector("svg");
-    const connections = [
-      // Diagonal from top to second row
-      {from: "top", to: "offense"},
-      {from: "top", to: "defense"},
-      {from: "top", to: "mobility"},
-      // From second row to third row
-      {from: "offense", to: "offense1"},
-      {from: "offense", to: "offense2"},
-      {from: "offense", to: "offense3"},
-      {from: "defense", to: "defense1"},
-      {from: "defense", to: "defense2"},
-      {from: "defense", to: "defense3"},
-      {from: "mobility", to: "mobility1"},
-      {from: "mobility", to: "mobility2"},
-      {from: "mobility", to: "mobility3"},
-      // From third row to fourth row
-      {from: "offense1", to: "offense1a"},
-      {from: "defense1", to: "defense1a"},
-      {from: "mobility1", to: "mobility1a"},
-      {from: "offense2", to: "offense2a"},
-      // Add more as needed
-    ];
-
-    connections.forEach(c => {
-      const fromEl = document.getElementById(c.from);
-      const toEl = document.getElementById(c.to);
-      const fromPos = getCenter(fromEl);
-      const toPos = getCenter(toEl);
-      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", fromPos.x);
-      line.setAttribute("y1", fromPos.y);
-      line.setAttribute("x2", toPos.x);
-      line.setAttribute("y2", toPos.y);
-      line.setAttribute("stroke", "#333");
-      line.setAttribute("stroke-width", "2");
-      svg.appendChild(line);
-    });
-  };
-</script>
+  <li>
+    <div class="category">Mobility</div>
+    <ul>
+      <li>
+        <div class="sub-category">Hit</div>
+        <ul class="elements">
+          <li>Swift Step</li>
+          <li>Nimble</li>
+          <li>Acrobatics</li>
+          <li>Sprint</li>
+          <li>Slide</li>
+        </ul>
+      </li>
+      <li>
+        <div class="sub-category">Crit</div>
+        <ul class="elements">
+          <li>Flash</li>
+          <li>Surprising</li>
+          <li>Evasive</li>
+          <li>Leap</li>
+          <li>Quick Reflexes</li>
+        </ul>
+      </li>
+      <li>
+        <div class="sub-category">Damage</div>
+        <ul class="elements">
+          <li>Trip</li>
+          <li>Knockback</li>
+          <li>Disarm</li>
+          <li>Barrage</li>
+          <li>Impact</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
 </body>
 </html>
