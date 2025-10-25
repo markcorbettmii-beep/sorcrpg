@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Simplified Flow Chart - TTRPG</title>
+<title>Expanded Flow Chart - TTRPG</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -22,8 +22,17 @@
     height: 100%;
     pointer-events: none;
   }
+  .level {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .sub-level {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+  }
   .node {
-    display: inline-block;
     border: 2px solid #333;
     border-radius: 8px;
     padding: 10px 20px;
@@ -33,40 +42,56 @@
     margin: 20px;
     position: relative;
   }
-  .level {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-  }
 </style>
 </head>
 <body>
 
 <div class="chart-container" id="chartContainer">
   <svg></svg>
+
   <!-- Top Box -->
   <div style="text-align: center;">
     <div class="node" id="agility">Agility</div>
   </div>
 
-  <!-- Branch: Offense, Defense, Mobility -->
+  <!-- First level: Offense, Defense, Mobility -->
   <div class="level" id="level1">
     <div class="node" id="offense">Offense</div>
     <div class="node" id="defense">Defense</div>
     <div class="node" id="mobility">Mobility</div>
   </div>
 
-  <!-- Second level: sub-branches -->
-  <div class="level" id="level2">
+  <!-- Second level: three boxes under each main category -->
+  <div class="sub-level" id="sub-offense">
     <div class="node" id="offense1">Offense 1</div>
+    <div class="node" id="offense2">Offense 2</div>
+    <div class="node" id="offense3">Offense 3</div>
+  </div>
+  <div class="sub-level" id="sub-defense">
+    <div class="node" id="defense1">Defense 1</div>
     <div class="node" id="defense2">Defense 2</div>
+    <div class="node" id="defense3">Defense 3</div>
+  </div>
+  <div class="sub-level" id="sub-mobility">
+    <div class="node" id="mobility1">Mobility 1</div>
+    <div class="node" id="mobility2">Mobility 2</div>
     <div class="node" id="mobility3">Mobility 3</div>
   </div>
 
-  <!-- Third level: detailed boxes -->
-  <div class="level" id="level3">
+  <!-- Third level: details under each sub -->
+  <div class="sub-level" id="detail-offense">
     <div class="node" id="offense1-detail">Offense 1 Detail</div>
+    <div class="node" id="offense2-detail">Offense 2 Detail</div>
+    <div class="node" id="offense3-detail">Offense 3 Detail</div>
+  </div>
+  <div class="sub-level" id="detail-defense">
+    <div class="node" id="defense1-detail">Defense 1 Detail</div>
     <div class="node" id="defense2-detail">Defense 2 Detail</div>
+    <div class="node" id="defense3-detail">Defense 3 Detail</div>
+  </div>
+  <div class="sub-level" id="detail-mobility">
+    <div class="node" id="mobility1-detail">Mobility 1 Detail</div>
+    <div class="node" id="mobility2-detail">Mobility 2 Detail</div>
     <div class="node" id="mobility3-detail">Mobility 3 Detail</div>
   </div>
 </div>
@@ -86,20 +111,30 @@
     const container = document.getElementById("chartContainer");
 
     const lines = [
-      // Diagonal lines from Agility to Offense, Defense, Mobility
+      // Diagonal lines from Agility to main categories
       {from: "agility", to: "offense"},
       {from: "agility", to: "defense"},
       {from: "agility", to: "mobility"},
-      // Vertical lines from first to second level
+      // Vertical lines from main to second level
       {from: "offense", to: "offense1"},
+      {from: "offense", to: "offense2"},
+      {from: "offense", to: "offense3"},
+      {from: "defense", to: "defense1"},
       {from: "defense", to: "defense2"},
+      {from: "defense", to: "defense3"},
+      {from: "mobility", to: "mobility1"},
+      {from: "mobility", to: "mobility2"},
       {from: "mobility", to: "mobility3"},
-      // Connecting to third level
+      // Vertical lines from sub to details
       {from: "offense1", to: "offense1-detail"},
+      {from: "offense2", to: "offense2-detail"},
+      {from: "offense3", to: "offense3-detail"},
+      {from: "defense1", to: "defense1-detail"},
       {from: "defense2", to: "defense2-detail"},
-      {from: "mobility3", to: "mobility3-detail"},
-      // Additional vertical connections following pattern
-      // e.g., offense to defense, defense to mobility, etc., if needed
+      {from: "defense3", to: "defense3-detail"},
+      {from: "mobility1", to: "mobility1-detail"},
+      {from: "mobility2", to: "mobility2-detail"},
+      {from: "mobility3", to: "mobility3-detail"}
     ];
 
     lines.forEach(link => {
