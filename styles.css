@@ -88,14 +88,39 @@ p {
   margin-top: 15px;
   margin-bottom: 0px;
 }
-a {
-  color: #B22222;
+
+/* Ruby red animated shimmer links */
+a, footer a {
+  position: relative;
+  color: #B22222 !important;
   text-decoration: none;
   font-weight: bold;
+  overflow: hidden;
+  display: inline-block;
+  transition: color 0.2s;
 }
-a:hover {
+a:hover, footer a:hover {
+  color: #B22222 !important;
   text-decoration: underline;
-  color: #B22222;
+}
+a::after, footer a::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 30%, rgba(255,255,255,0) 60%);
+  transform: translate(-100%, -100%) rotate(10deg);
+  mix-blend-mode: lighten;
+  animation: shimmer 2s infinite linear;
+}
+@keyframes shimmer {
+  0% {
+    transform: translate(-100%, -100%) rotate(10deg);
+  }
+  100% {
+    transform: translate(200%, 200%) rotate(10deg);
+  }
 }
 
 /* Main navigation & layout buttons */
@@ -182,8 +207,6 @@ a:hover {
   cursor: default;
   margin: 0 10px;
 }
-
-
 
 .gm_button:hover,
 .gm_button:focus {
