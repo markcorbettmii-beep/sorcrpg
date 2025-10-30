@@ -28,13 +28,33 @@
 <!-- Placeholder for the dynamic section links -->
 <div id="sections"></div>
 
-<!-- Script to load sections.html -->
 <script>
-  fetch('/sections.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('sections').innerHTML = data;
-    });
+  const sections = [
+    { name: "Rules Section 2", url: "/content/basic_rules/basic_rules_2.html" },
+    { name: "Rules Section 3", url: "/content/basic_rules/basic_rules_3.html" },
+    { name: "Rules Section 4", url: "/content/basic_rules/basic_rules_4.html" },
+    { name: "Rules Section 5", url: "/content/basic_rules/basic_rules_5.html" },
+    // Add more sections here as needed
+  ];
+
+  const currentPath = window.location.pathname;
+  const container = document.getElementById('sections');
+  let html = '<h3>Rules Sections</h3>';
+
+  sections.forEach(section => {
+    if (section.url === currentPath) {
+      // Current page: show as plain text
+      html += `<strong>${section.name}</strong> | `;
+    } else {
+      // Other pages: make clickable links
+      html += `<a href="${section.url}"><strong>${section.name}</strong></a> | `;
+    }
+  });
+
+  // Remove the trailing separator
+  html = html.replace(/\| $/, '');
+
+  container.innerHTML = html;
 </script>
 
 
