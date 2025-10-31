@@ -243,26 +243,10 @@ a:hover, footer a:hover {
   gap: 20px;
   padding: 20px;
   margin-bottom: 20px;
-  width: 100%;
-  max-width: 520px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-}
-
-/* Only show the first 6 buttons */
-.buttons-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, auto);
-  gap: 20px;
-  padding: 20px;
-  margin-bottom: 20px;
   width: auto;
   max-width: none;
   justify-content: center;
   justify-items: center;
-  /* Center grid horizontally */
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -316,14 +300,17 @@ a:hover, footer a:hover {
   margin-bottom: 3px;
 }
 
+/* Links in 2 rows, 3 columns, with | between (not after last), never more than 2 stacked vertically */
 .footer-links-top,
 .footer-links-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 0 12px;
   margin-left: 16px;
   text-align: left;
   font-size: 0.98em;
   margin-top: 1px;
   margin-bottom: 2px;
-  /* white-space: nowrap;  Uncomment if you want to force all links on one line */
 }
 
 .footer-links-top a,
@@ -331,20 +318,27 @@ a:hover, footer a:hover {
   color: #402956 !important;
   text-decoration: none;
   font-weight: bold;
-  margin-right: 0.5em;
-  padding-right: 0;
+  position: relative;
+  padding-right: 0.5em;
 }
 
 .footer-links-top a:not(:last-child)::after,
 .footer-links-bottom a:not(:last-child)::after {
-  content: '|';
-  margin: 0 0.35em;
+  content: "|";
+  margin-left: 0.35em;
   color: #402956;
   font-weight: normal;
 }
 
+.footer-links-top a:last-child::after,
+.footer-links-bottom a:last-child::after {
+  content: "";
+}
+
+/* Social icons row */
 .footer-socials {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 14px;
   margin: 9px 0 2px 0;
@@ -370,7 +364,18 @@ a:hover, footer a:hover {
     margin-left: 6px;
     font-size: 0.95em;
   }
+  .footer-links-top,
+  .footer-links-bottom {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .footer-links-top a:not(:last-child)::after,
+  .footer-links-bottom a:not(:last-child)::after {
+    content: "";
+  }
   .footer-socials {
     gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
