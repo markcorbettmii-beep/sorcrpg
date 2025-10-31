@@ -13,6 +13,13 @@
   <div class="sorc-letters">S O R C</div>
 </div>
 
+<!-- Role display for testing -->
+<div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">
+  <strong>Current Role:</strong> <span id="roleDisplay">Loading...</span>
+  <br>
+  <button id="logoutBtn">Logout</button>
+</div>
+
 <!-- Container for login buttons (visitor login) -->
 <div id="loginButtonsContainer"></div>
 
@@ -36,15 +43,41 @@
       var isGM = localStorage.getItem('isGM') === 'true';
       var isPlayer = localStorage.getItem('isPlayer') === 'true';
 
+      // Show role display
+      updateRoleDisplay();
+
       if (isGM) {
         var gmBtn = document.querySelector('.gm_button');
-        if (gmBtn) gmBtn.style.display = 'none';
+        if (gmBtn) gmBtn.style.display = 'none'; // hide login button if logged in as GM
       }
       if (isPlayer) {
         var playerBtn = document.querySelector('.plyr_button');
-        if (playerBtn) playerBtn.style.display = 'none';
+        if (playerBtn) playerBtn.style.display = 'none'; // hide login button if logged in as Player
       }
     });
+
+  // Function to update role display
+  function updateRoleDisplay() {
+    const roleSpan = document.getElementById('roleDisplay');
+    const isGM = localStorage.getItem('isGM') === 'true';
+    const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+    if (isGM) {
+      roleSpan.textContent = 'Game Master (GM)';
+    } else if (isPlayer) {
+      roleSpan.textContent = 'Player';
+    } else {
+      roleSpan.textContent = 'Visitor / Not Logged In';
+    }
+  }
+
+  // Logout button handler
+  document.getElementById('logoutBtn').onclick = () => {
+    localStorage.removeItem('isGM');
+    localStorage.removeItem('isPlayer');
+    alert('Logged out');
+    location.reload();
+  };
 </script>
 
 <!-- Rules Sections Navigation (dynamic, highlights current page) -->
@@ -144,5 +177,85 @@
       document.getElementById('footer').innerHTML = data;
     });
 </script>
-</body>
-</html>
+
+<!-- Role handling script -->
+<script>
+  // Function to update role display
+  function updateRoleDisplay() {
+    const roleSpan = document.getElementById('roleDisplay');
+    const isGM = localStorage.getItem('isGM') === 'true';
+    const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+    if (isGM) {
+      roleSpan.textContent = 'Game Master (GM)';
+    } else if (isPlayer) {
+      roleSpan.textContent = 'Player';
+    } else {
+      roleSpan.textContent = 'Visitor / Not Logged In';
+    }
+  }
+
+  // Load login buttons and hide/show based on role
+  fetch('/login_butts.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('loginButtonsContainer').innerHTML = data;
+
+      // Run role display update
+      updateRoleDisplay();
+
+      // Hide login buttons if already logged in
+      var isGM = localStorage.getItem('isGM') === 'true';
+      var isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+      if (isGM) {
+        var gmBtn = document.querySelector('.gm_button');
+        if (gmBtn) gmBtn.style.display = 'none';
+      }
+      if (isPlayer) {
+        var playerBtn = document.querySelector('.plyr_button');
+        if (playerBtn) playerBtn.style.display = 'none';
+      }
+    });
+
+  // Logout button handler
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    localStorage.removeItem('isGM');
+    localStorage.removeItem('isPlayer');
+    alert('Logged out');
+    location.reload();
+  });
+</script>
+<!-- Additional: Role buttons for testing -->
+<div style="margin: 10px;">
+  <button id="loginGMBtn">Login as GM</button>
+  <button id="loginPlayerBtn">Login as Player</button>
+</div>
+<script>
+  // Role login handlers for testing
+  document.getElementById('loginGMBtn').onclick = () => {
+    // For testing, prompt email/password
+    const email = prompt('Enter GM email:');
+    const password = prompt('Enter GM password:');
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+        localStorage.setItem('isGM', 'true');
+        localStorage.setItem('isPlayer', 'false');
+        alert('Logged in as GM');
+        location.reload();
+      })
+      .catch(e => alert('Error: ' + e.message));
+  };
+  document.getElementById('loginPlayerBtn').onclick = () => {
+    const email = prompt('Enter Player email:');
+    const password = prompt('Enter Player password:');
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+        localStorage.setItem('isGM', 'false');
+        localStorage.setItem('isPlayer', 'true');
+        alert('Logged in as Player');
+        location.reload();
+      })
+      .catch(e => alert('Error: ' + e.message));
+  };
+</script>
