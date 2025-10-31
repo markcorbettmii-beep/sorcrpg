@@ -3,81 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Login for Slayers of Rings § Crowns." />
-  <title>Slayers of Rings § Crowns - Login</title>
-  <link rel="stylesheet" href="../../styles.css" />
-  <style>
-    .login-container {max-width: 420px; margin: 40px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(64,41,86,0.07); padding: 32px 28px;}
-    .profile-avatar { display: block; margin: 0 auto 16px auto; width: 82px; height: 82px; border-radius: 50%; object-fit: cover; border: 2.5px solid #b1101c; background: #e8e6e2; box-shadow: 0 2px 8px rgba(40,40,40,0.07);}
-    .profile-details { text-align:center; margin-bottom:10px; }
-    .display-name { font-size: 1.19em; font-family: 'Cinzel', serif; color: #402956; font-weight: bold; letter-spacing: 1px;}
-    .user-id { font-size: 0.85em; color: #a9a4b4; letter-spacing:0.5px;}
-    .form-row { margin-bottom: 18px; }
-    .form-row label { display: block; margin-bottom: 3px; font-weight: bold; }
-    .form-row input { width: 100%; padding: 6px 8px; border-radius: 5px; border: 1px solid #ccc; }
-    .login-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; }
-    .login-actions a { font-size: 0.91em; text-decoration: underline; color: #2176ff; font-weight: normal;}
-    #login-message { text-align:center; color:#b1101c; min-height:22px; margin-top:10px; margin-bottom:0;}
-    .gm-tag, .pc-tag { margin-left: 8px; }
-    .logout-btn {margin: 18px auto 0 auto;}
-  </style>
-  <!-- Firebase App (the core Firebase SDK) -->
+  <title>Slayers of Rings & Crowns - Login</title>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-<div class="header-container">
-  <h1>Slayers of Rings § Crowns</h1>
-  <div class="sorc-letters">S O R C</div>
+<h1>Login</h1>
+
+<!-- Role selection buttons -->
+<div style="margin-bottom:20px;">
+  <button id="login-gm" style="margin-right:10px;">Login as GM</button>
+  <button id="login-player">Login as Player</button>
 </div>
 
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_5.html">PG. 5 (GM)</a>
+<!-- Descriptions for each role -->
+<div style="margin-bottom:20px;">
+  <strong>GM (Game Master):</strong> You lead the game, create adventures, and manage the story. GMs are responsible for guiding players and controlling the world.
+</div>
+<div style="margin-bottom:20px;">
+  <strong>Player:</strong> You control a character in the story, make decisions, and explore the world created by the GM.
 </div>
 
-<div class="login-container" id="login-container">
-  <form id="login-form" autocomplete="off">
-    <div class="form-row">
-      <label for="user-email">Email</label>
-      <input type="email" id="user-email" name="user-email" autocomplete="username" placeholder="you@example.com" required>
-    </div>
-    <div class="form-row">
-      <label for="user-password">Password</label>
-      <input type="password" id="user-password" name="user-password" autocomplete="current-password" placeholder="Password" required>
-    </div>
-    <button type="submit" class="gm_button" style="width:100%;margin-bottom:12px;">Login</button>
-    <div class="login-actions">
-      <a href="#" id="forgot-password-link">Forgot password?</a>
-      <a href="/register.html" id="register-link">Register</a>
-    </div>
-  </form>
-  <div id="login-message"></div>
-</div>
-
-<!-- Profile Section (shown after login) -->
-<div class="login-container" id="profile-container" style="display:none;">
-  <img src="../../assets/default_avatar.png" alt="Avatar" class="profile-avatar" id="profile-avatar">
-  <div class="profile-details">
-    <span class="display-name" id="profile-displayname"></span>
-    <span id="profile-role"></span>
-    <div class="user-id" id="profile-uid"></div>
-  </div>
-  <div class="login-actions" style="justify-content:center;">
-    <button class="gm_button logout-btn" id="logout-btn" style="width:80%;">Logout</button>
-  </div>
-</div>
+<!-- Login form for email/password -->
+<form id="login-form" autocomplete="off" style="margin-top:20px;">
+  <input type="email" id="user-email" placeholder="Email" required /><br><br>
+  <input type="password" id="user-password" placeholder="Password" required /><br><br>
+  <button type="submit">Login</button>
+</form>
 
 <script>
-  // --- Initialize Firebase ---
+  // Initialize Firebase (replace with your config)
   const firebaseConfig = {
-    // TODO: fill in your Firebase config here!
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
     projectId: "YOUR_PROJECT_ID",
@@ -87,91 +45,59 @@
   };
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  const db = firebase.firestore();
 
-  // --- Login Handler ---
-  document.getElementById('login-form').onsubmit = async function(event) {
-    event.preventDefault();
-    const email = document.getElementById('user-email').value.trim();
-    const password = document.getElementById('user-password').value;
-    document.getElementById('login-message').innerText = "Logging in...";
-    try {
-      const { user } = await auth.signInWithEmailAndPassword(email, password);
-      showProfile(user);
-    } catch (error) {
-      document.getElementById('login-message').innerText = error.message;
+  // Function to handle login as GM or Player
+  function loginAs(role) {
+    const email = prompt("Enter email:");
+    const password = prompt("Enter password:");
+    if (!email || !password) {
+      alert("Email and password are required.");
+      return;
     }
-  };
-
-  // --- Auth State Change: Show Profile if Logged In ---
-  auth.onAuthStateChanged(async function(user) {
-    if (user) {
-      showProfile(user);
-    } else {
-      document.getElementById('profile-container').style.display = 'none';
-      document.getElementById('login-container').style.display = '';
-    }
-  });
-
-  // --- Show Profile Details ---
-  async function showProfile(user) {
-    // Get user profile from Firestore
-    let userDoc = await db.collection("users").doc(user.uid).get();
-    let profile = userDoc.exists ? userDoc.data() : {};
-    // Display avatar
-    document.getElementById('profile-avatar').src = profile.avatarUrl || user.photoURL || "../../assets/default_avatar.png";
-    // Display name
-    document.getElementById('profile-displayname').innerText = profile.displayName || user.displayName || "No Name";
-    // Display UID (shortened)
-    document.getElementById('profile-uid').innerText = "ID: #" + user.uid.slice(-6);
-    // Display role tag
-    let tagHTML = '';
-    if (profile.role === "gm") {
-      tagHTML = `<span class="gm-tag" title="Game Master">GM</span>`;
-    } else if (profile.role === "player") {
-      tagHTML = `<span class="pc-tag" title="Player Character">PC</span>`;
-    }
-    document.getElementById('profile-role').innerHTML = tagHTML;
-    // Show/hide containers
-    document.getElementById('login-container').style.display = 'none';
-    document.getElementById('profile-container').style.display = '';
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        if (role === 'gm') {
+          localStorage.setItem('isGM', 'true');
+          localStorage.setItem('isPlayer', 'false');
+        } else {
+          localStorage.setItem('isGM', 'false');
+          localStorage.setItem('isPlayer', 'true');
+        }
+        alert(`Logged in as ${role.toUpperCase()}. Reloading...`);
+        location.reload();
+      })
+      .catch(error => {
+        alert("Login failed: " + error.message);
+      });
   }
 
-  // --- Logout Handler ---
-  document.getElementById('logout-btn').onclick = function() {
-    auth.signOut();
-  };
+  document.getElementById('login-gm').onclick = () => loginAs('gm');
+  document.getElementById('login-player').onclick = () => loginAs('player');
 
-  // --- Forgot Password Handler ---
-  document.getElementById('forgot-password-link').onclick = function(e){
+  // Optional: Handle email/password login form
+  document.getElementById('login-form').onsubmit = function(e) {
     e.preventDefault();
-    const email = document.getElementById('user-email').value.trim() || prompt("Enter your email to reset your password:");
-    if(email){
-      auth.sendPasswordResetEmail(email)
-        .then(() => alert("Password reset email sent!"))
-        .catch((error) => alert(error.message));
-    }
+    const email = document.getElementById('user-email').value.trim();
+    const password = document.getElementById('user-password').value;
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(userCredential => {
+        // For testing, default to Player role
+        // Change to 'gm' if needed
+        const role = 'player'; // or 'gm'
+        if (role === 'gm') {
+          localStorage.setItem('isGM', 'true');
+          localStorage.setItem('isPlayer', 'false');
+        } else {
+          localStorage.setItem('isGM', 'false');
+          localStorage.setItem('isPlayer', 'true');
+        }
+        alert(`Logged in as ${role.toUpperCase()}. Reloading...`);
+        location.reload();
+      })
+      .catch(error => {
+        alert("Login failed: " + error.message);
+      });
   };
-</script>
-
-<hr>
-<div id="navbar"></div>
-<script>
-  fetch('/navbar.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('navbar').innerHTML = data;
-    });
-</script>
-
-<!-- Footer include -->
-<div id="footer"></div>
-<script>
-  fetch('/footer.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('footer').innerHTML = data;
-    });
 </script>
 </body>
 </html>
