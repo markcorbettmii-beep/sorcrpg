@@ -20,21 +20,29 @@
   <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp; &nbsp; &nbsp
 </div>
 
-<!-- Player and Game Master Logins -->
-<a href="/login.html?role=gm" class="gm_button" id="gm-btn">GM Login</a>
-<a href="/login.html?role=player" class="plyr_button" id="player-btn">PC Login</a>
+<!-- Container for dynamically loaded login buttons -->
+<div id="loginButtonsContainer"></div>
+
 <script>
-  // Example: Replace with your real authentication check!
-  var isGM = localStorage.getItem('isGM') === 'true';
-  var isPlayer = localStorage.getItem('isPlayer') === 'true';
-  if (isGM) {
-    var gmBtn = document.getElementById('gm-btn');
-    if (gmBtn) gmBtn.style.display = 'none';
-  }
-  if (isPlayer) {
-    var playerBtn = document.getElementById('player-btn');
-    if (playerBtn) playerBtn.style.display = 'none';
-  }
+  // Fetch and insert login buttons dynamically
+  fetch('/login_butts.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('loginButtonsContainer').innerHTML = data;
+
+      // After inserting, run your hide/show logic
+      var isGM = localStorage.getItem('isGM') === 'true';
+      var isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+      if (isGM) {
+        var gmBtn = document.querySelector('.gm_button');
+        if (gmBtn) gmBtn.style.display = 'none';
+      }
+      if (isPlayer) {
+        var playerBtn = document.querySelector('.plyr_button');
+        if (playerBtn) playerBtn.style.display = 'none';
+      }
+    });
 </script>
 
 <!-- Rules Sections Navigation (dynamic, highlights current page) -->
