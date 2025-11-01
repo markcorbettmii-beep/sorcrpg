@@ -28,31 +28,31 @@
   <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
   <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
   <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp; &nbsp; &nbsp
+  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp; &nbsp; &nbsp;
 </div>
 
 <!-- Script to dynamically load login buttons -->
 <script>
-  // Load login buttons dynamically
+  // Load login buttons once
   fetch('/login_butts.html')
     .then(response => response.text())
     .then(data => {
       document.getElementById('loginButtonsContainer').innerHTML = data;
 
-      // After inserting, run your hide/show logic
+      // Role display update
+      updateRoleDisplay();
+
+      // Hide login buttons if already logged in
       var isGM = localStorage.getItem('isGM') === 'true';
       var isPlayer = localStorage.getItem('isPlayer') === 'true';
 
-      // Show role display
-      updateRoleDisplay();
-
       if (isGM) {
         var gmBtn = document.querySelector('.gm_button');
-        if (gmBtn) gmBtn.style.display = 'none'; // hide login button if logged in as GM
+        if (gmBtn) gmBtn.style.display = 'none';
       }
       if (isPlayer) {
         var playerBtn = document.querySelector('.plyr_button');
-        if (playerBtn) playerBtn.style.display = 'none'; // hide login button if logged in as Player
+        if (playerBtn) playerBtn.style.display = 'none';
       }
     });
 
@@ -92,8 +92,8 @@
 </script>
 
 <!-- GM description only for this page -->
+<h3>To the GM</h3>
 <p>
-  <h3>To the GM</h3>
   GMs are required to take a SorC Assessment, which upon passing, grants their account GM references. Passing the GM Assessment also updates their account to a GM profile. For example, a player display name in this manner:
   <br />
   <span class="player-username" data-uid="player5678">
@@ -118,7 +118,7 @@
 </p>
 
 <h3>Basic Rules, the Basics</h3>
-  <p>
+<p>
   In <b>SorC</b>, players create and develop characters by assigning dice rolls to attributes, unlocking skills, and managing resources like health, magic, and stamina. Combat involves tactical attacks, resistances, and limb-specific targeting, while movement depends on stamina and terrain.
 </p>
 <p>
@@ -177,85 +177,5 @@
       document.getElementById('footer').innerHTML = data;
     });
 </script>
-
-<!-- Role handling script -->
-<script>
-  // Function to update role display
-  function updateRoleDisplay() {
-    const roleSpan = document.getElementById('roleDisplay');
-    const isGM = localStorage.getItem('isGM') === 'true';
-    const isPlayer = localStorage.getItem('isPlayer') === 'true';
-
-    if (isGM) {
-      roleSpan.textContent = 'Game Master (GM)';
-    } else if (isPlayer) {
-      roleSpan.textContent = 'Player';
-    } else {
-      roleSpan.textContent = 'Visitor / Not Logged In';
-    }
-  }
-
-  // Load login buttons and hide/show based on role
-  fetch('/login_butts.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('loginButtonsContainer').innerHTML = data;
-
-      // Run role display update
-      updateRoleDisplay();
-
-      // Hide login buttons if already logged in
-      var isGM = localStorage.getItem('isGM') === 'true';
-      var isPlayer = localStorage.getItem('isPlayer') === 'true';
-
-      if (isGM) {
-        var gmBtn = document.querySelector('.gm_button');
-        if (gmBtn) gmBtn.style.display = 'none';
-      }
-      if (isPlayer) {
-        var playerBtn = document.querySelector('.plyr_button');
-        if (playerBtn) playerBtn.style.display = 'none';
-      }
-    });
-
-  // Logout button handler
-  document.getElementById('logoutBtn')?.addEventListener('click', () => {
-    localStorage.removeItem('isGM');
-    localStorage.removeItem('isPlayer');
-    alert('Logged out');
-    location.reload();
-  });
-</script>
-<!-- Additional: Role buttons for testing -->
-<div style="margin: 10px;">
-  <button id="loginGMBtn">Login as GM</button>
-  <button id="loginPlayerBtn">Login as Player</button>
-</div>
-<script>
-  // Role login handlers for testing
-  document.getElementById('loginGMBtn').onclick = () => {
-    // For testing, prompt email/password
-    const email = prompt('Enter GM email:');
-    const password = prompt('Enter GM password:');
-    firebase.auth().signInWithEmailAndPassword(email, password)
-      .then(() => {
-        localStorage.setItem('isGM', 'true');
-        localStorage.setItem('isPlayer', 'false');
-        alert('Logged in as GM');
-        location.reload();
-      })
-      .catch(e => alert('Error: ' + e.message));
-  };
-  document.getElementById('loginPlayerBtn').onclick = () => {
-    const email = prompt('Enter Player email:');
-    const password = prompt('Enter Player password:');
-    firebase.auth().signInWithEmailAndPassword(email, password)
-      .then(() => {
-        localStorage.setItem('isGM', 'false');
-        localStorage.setItem('isPlayer', 'true');
-        alert('Logged in as Player');
-        location.reload();
-      })
-      .catch(e => alert('Error: ' + e.message));
-  };
-</script>
+</body>
+</html>
