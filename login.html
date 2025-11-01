@@ -7,29 +7,20 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <h1>Login</h1>
 
-<!-- Role selection buttons -->
+<!-- Buttons for GM and PC login, linking to this page -->
 <div style="margin-bottom:20px;">
-  <button id="login-gm" style="margin-right:10px;">Login as GM</button>
-  <button id="login-player">Login as Player</button>
-</div>
-
-<!-- Descriptions for each role -->
-<div style="margin-bottom:20px;">
-  <strong>GM (Game Master):</strong> You lead the game, create adventures, and manage the story. GMs are responsible for guiding players and controlling the world.
-</div>
-<div style="margin-bottom:20px;">
-  <strong>Player:</strong> You control a character in the story, make decisions, and explore the world created by the GM.
+  <button class="gm_button" onclick="window.location.href='login.html'">GM Login</button>
+  <button class="plyr_button" onclick="window.location.href='login.html'">PC Login</button>
 </div>
 
 <!-- Login form for email/password -->
 <form id="login-form" autocomplete="off" style="margin-top:20px;">
-  <input type="email" id="user-email" placeholder="Email" required /><br><br>
-  <input type="password" id="user-password" placeholder="Password" required /><br><br>
+  <input type="email" id="user-email" placeholder="Email" required /><br /><br />
+  <input type="password" id="user-password" placeholder="Password" required /><br /><br />
   <button type="submit">Login</button>
 </form>
 
@@ -71,18 +62,19 @@
       });
   }
 
-  document.getElementById('login-gm').onclick = () => loginAs('gm');
-  document.getElementById('login-player').onclick = () => loginAs('player');
+  // Role login buttons for testing
+  document.querySelector('.gm_button').onclick = () => loginAs('gm');
+  document.querySelector('.plyr_button').onclick = () => loginAs('player');
 
-  // Optional: Handle email/password login form
+  // Handle email/password login form
   document.getElementById('login-form').onsubmit = function(e) {
     e.preventDefault();
     const email = document.getElementById('user-email').value.trim();
     const password = document.getElementById('user-password').value;
     firebase.auth().signInWithEmailAndPassword(email, password)
       .then(userCredential => {
-        // For testing, default to Player role
-        // Change to 'gm' if needed
+        // For testing, default to 'player'
+        // Change to 'gm' to test as GM
         const role = 'player'; // or 'gm'
         if (role === 'gm') {
           localStorage.setItem('isGM', 'true');
