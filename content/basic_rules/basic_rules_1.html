@@ -8,164 +8,167 @@
   <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
-<div class="header-container">
-  <h1>Slayers of Rings & Crowns</h1>
-  <div class="sorc-letters">S O R C</div>
-</div>
+  <div class="page-wrapper">
+    <div class="header-container">
+      <h1>Slayers of Rings & Crowns</h1>
+      <div class="sorc-letters">S O R C</div>
+    </div>
 
-<!-- Container for login buttons (visitor login) -->
-<div id="loginButtonsContainer"></div> 
-<!-- Existing page navigation -->
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp; &nbsp; &nbsp;
-</div>
+    <!-- Container for login buttons (visitor login) -->
+    <div id="loginButtonsContainer"></div> 
 
-<!-- Script to dynamically load login buttons -->
-<script>
-  // Load login buttons once
-  fetch('/login-butts.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('loginButtonsContainer').innerHTML = data;
+    <!-- Existing page navigation -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp; &nbsp; &nbsp;
+    </div>
 
-      // Role display update
-      updateRoleDisplay();
+    <!-- Script to dynamically load login buttons -->
+    <script>
+      // Load login buttons once
+      fetch('/login-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('loginButtonsContainer').innerHTML = data;
 
-      // Hide login buttons if already logged in
-      var isGM = localStorage.getItem('isGM') === 'true';
-      var isPlayer = localStorage.getItem('isPlayer') === 'true';
+          // Role display update
+          updateRoleDisplay();
 
-      if (isGM) {
-        var gmBtn = document.querySelector('.gm_button');
-        if (gmBtn) gmBtn.style.display = 'none';
+          // Hide login buttons if already logged in
+          var isGM = localStorage.getItem('isGM') === 'true';
+          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+          if (isGM) {
+            var gmBtn = document.querySelector('.gm_button');
+            if (gmBtn) gmBtn.style.display = 'none';
+          }
+          if (isPlayer) {
+            var playerBtn = document.querySelector('.plyr_button');
+            if (playerBtn) playerBtn.style.display = 'none';
+          }
+        });
+
+      // Function to update role display
+      function updateRoleDisplay() {
+        const roleSpan = document.getElementById('roleDisplay');
+        const isGM = localStorage.getItem('isGM') === 'true';
+        const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+        if (isGM) {
+          roleSpan.textContent = 'Game Master (GM)';
+        } else if (isPlayer) {
+          roleSpan.textContent = 'Player';
+        } else {
+          roleSpan.textContent = 'Visitor / Not Logged In';
+        }
       }
-      if (isPlayer) {
-        var playerBtn = document.querySelector('.plyr_button');
-        if (playerBtn) playerBtn.style.display = 'none';
-      }
-    });
 
-  // Function to update role display
-  function updateRoleDisplay() {
-    const roleSpan = document.getElementById('roleDisplay');
-    const isGM = localStorage.getItem('isGM') === 'true';
-    const isPlayer = localStorage.getItem('isPlayer') === 'true';
+      // Logout button handler
+      document.getElementById('logoutBtn').onclick = () => {
+        localStorage.removeItem('isGM');
+        localStorage.removeItem('isPlayer');
+        alert('Logged out');
+        location.reload();
+      };
+    </script>
 
-    if (isGM) {
-      roleSpan.textContent = 'Game Master (GM)';
-    } else if (isPlayer) {
-      roleSpan.textContent = 'Player';
-    } else {
-      roleSpan.textContent = 'Visitor / Not Logged In';
-    }
-  }
+    <!-- Rules Sections Navigation (dynamic, highlights current page) -->
+    <div id="sections"></div>
+    <script>
+      fetch('/sections-basics.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sections').innerHTML = data;
+        });
+    </script>
 
-  // Logout button handler
-  document.getElementById('logoutBtn').onclick = () => {
-    localStorage.removeItem('isGM');
-    localStorage.removeItem('isPlayer');
-    alert('Logged out');
-    location.reload();
-  };
-</script>
+    <!-- GM description only for this page -->
+    <h3>To the GM</h3>
+    <p>
+      GMs are required to take a SorC Assessment, which upon passing, grants their account GM references. Passing the GM Assessment also updates their account to a GM profile. For example, a player display name in this manner:
+      <br />
+      <span class="player-username" data-uid="player5678">
+        <a href="#">Player Surname</a><span class="pc-tag">PC</span>
+      </span>
+      <br />
+      Upon passing the GM assessment, GMs will be given the following tag:
+      <br />
+      <span class="gm-username" data-uid="gm1234">
+        <a href="#">Game Master</a><span class="gm-tag">GM</span>
+      </span>
+      <br />
+      Surnames are optional and can be included as a second name. Each user is uniquely identified by a hidden id (shown here as <code>data-uid</code>) for online features, so display names may be the same, but user IDs will always remain unique.
+    </p>
 
-<!-- Rules Sections Navigation (dynamic, highlights current page) -->
-<div id="sections"></div>
-<script>
-  fetch('/sections-basics.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('sections').innerHTML = data;
-    });
-</script>
+    <p>
+      Joining lobbies will also require players and GMs to take assessments before joining, especially when substituting in or out of ongoing campaigns. These campaigns are often led remotely by GMs running their own campaigns with friends. Whatever happens in these campaigns can change their dynamics forever, until the game ends and a new campaign begins.
+    </p>
 
-<!-- GM description only for this page -->
-<h3>To the GM</h3>
-<p>
-  GMs are required to take a SorC Assessment, which upon passing, grants their account GM references. Passing the GM Assessment also updates their account to a GM profile. For example, a player display name in this manner:
-  <br />
-  <span class="player-username" data-uid="player5678">
-    <a href="#">Player Surname</a><span class="pc-tag">PC</span>
-  </span>
-  <br />
-  Upon passing the GM assessment, GMs will be given the following tag:
-  <br />
-  <span class="gm-username" data-uid="gm1234">
-    <a href="#">Game Master</a><span class="gm-tag">GM</span>
-  </span>
-  <br />
-  Surnames are optional and can be included as a second name. Each user is uniquely identified by a hidden id (shown here as <code>data-uid</code>) for online features, so display names may be the same, but user IDs will always remain unique.
-</p>
+    <p>
+      These elements add replayability, ongoing adventuring, and more—especially when friends can't make it over for a night, or strangers want to start their own campaigns in these lobbies. Lobby entries include: Beginner, Intermediate, and Expert, each requiring their respective assessments to ensure only knowledgeable gamers are present.
+    </p>
 
-<p>
-  Joining lobbies will also require players and GMs to take assessments before joining, especially when substituting in or out of ongoing campaigns. These campaigns are often led remotely by GMs running their own campaigns with friends. Whatever happens in these campaigns can change their dynamics forever, until the game ends and a new campaign begins.
-</p>
+    <h3>Basic Rules, the Basics</h3>
+    <p>
+      In <b>SorC</b>, players create and develop characters by assigning dice rolls to attributes, unlocking skills, and managing resources like health, magic, and stamina. Combat involves tactical attacks, resistances, and limb-specific targeting, while movement depends on stamina and terrain.
+    </p>
+    <p>
+      <i>GMs are provided with comprehensive details on each subject below, enabling them to seamlessly add relevant information for players to inquire about.</i>
+    </p>
 
-<p>
-  These elements add replayability, ongoing adventuring, and more—especially when friends can't make it over for a night, or strangers want to start their own campaigns in these lobbies. Lobby entries include: Beginner, Intermediate, and Expert, each requiring their respective assessments to ensure only knowledgeable gamers are present.
-</p>
+    <h3>SorC Player Characters</h3>
+    <p>
+      A player character (PC), or simply a character, in SorC is a fictional entity that a player brings to life and controls within the SorC world. While SorC features rules and mechanics that guide gameplay, it is ultimately the player's imagination, creativity, and interpretation of their character's abilities and skills that drive their actions and decisions.
+    </p>
+    <p>
+      In SorC, players and their characters embark on epic quests through a rich, sci-fantasy setting brimming with magic, fantastical creatures, courageous heroes, and formidable strongholds. Players have the option to choose from diverse character classes—including warriors, rogues, clerics, and sorcerers—and races, including but not limited to humans, imperials, arch elves, and more, each offering unique strengths and skills. As characters venture forth, they accumulate power, gain fame, and acquire wealth through their exploits.
+    </p>
 
-<h3>Basic Rules, the Basics</h3>
-<p>
-  In <b>SorC</b>, players create and develop characters by assigning dice rolls to attributes, unlocking skills, and managing resources like health, magic, and stamina. Combat involves tactical attacks, resistances, and limb-specific targeting, while movement depends on stamina and terrain.
-</p>
-<p>
-  <i>GMs are provided with comprehensive details on each subject below, enabling them to seamlessly add relevant information for players to inquire about.</i>
-</p>
+    <h3>Character Creation</h3>
+    <p>
+      Creating a character in SorC is an in-depth, player-driven process that begins by selecting a race and class, then allocating attributes through a combination of dice rolls and point spending. Each character’s foundational stats (see below) are determined by rolling dice and strategically assigning results. Players then spend points to enhance these attributes or unlock <b>Talents, Skills, and Traits (TSTs)</b>, which are special abilities or proficiencies connected to their chosen path.
+    </p>
+    <p>
+      Progression in SorC is ongoing and modular. As characters gain levels, players continue to allocate points and remnants (leftover points from attribute rolls) to further develop their character’s talents and skills. This allows for a high degree of customization and growth, ensuring every character’s journey is unique and responsive to both mechanical and narrative choices.
+    </p>
+    <p>
+      In summary, SorC’s character creation blends strategic decision-making with rich narrative potential. The process is thorough but unfolds gradually, helping both new and experienced players build complex, evolving characters whose choices and stories are central to their adventure in the world of Essentia.
+    </p>
 
-<h3>SorC Player Characters</h3>
-<p>
-  A player character (PC), or simply a character, in SorC is a fictional entity that a player brings to life and controls within the SorC world. While SorC features rules and mechanics that guide gameplay, it is ultimately the player's imagination, creativity, and interpretation of their character's abilities and skills that drive their actions and decisions.
-</p>
-<p>
-  In SorC, players and their characters embark on epic quests through a rich, sci-fantasy setting brimming with magic, fantastical creatures, courageous heroes, and formidable strongholds. Players have the option to choose from diverse character classes—including warriors, rogues, clerics, and sorcerers—and races, including but not limited to humans, imperials, arch elves, and more, each offering unique strengths and skills. As characters venture forth, they accumulate power, gain fame, and acquire wealth through their exploits.
-</p>
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_5.html">PG. 5 (GM)</a>
+    </div>
+      
+    <div id="main-butts"></div>
+    <script>
+      fetch('/main-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('main-butts').innerHTML = data;
 
-<h3>Character Creation</h3>
-<p>
-  Creating a character in SorC is an in-depth, player-driven process that begins by selecting a race and class, then allocating attributes through a combination of dice rolls and point spending. Each character’s foundational stats (see below) are determined by rolling dice and strategically assigning results. Players then spend points to enhance these attributes or unlock <b>Talents, Skills, and Traits (TSTs)</b>, which are special abilities or proficiencies connected to their chosen path.
-</p>
-<p>
-  Progression in SorC is ongoing and modular. As characters gain levels, players continue to allocate points and remnants (leftover points from attribute rolls) to further develop their character’s talents and skills. This allows for a high degree of customization and growth, ensuring every character’s journey is unique and responsive to both mechanical and narrative choices.
-</p>
-<p>
-  In summary, SorC’s character creation blends strategic decision-making with rich narrative potential. The process is thorough but unfolds gradually, helping both new and experienced players build complex, evolving characters whose choices and stories are central to their adventure in the world of Essentia.
-</p>
+          // After inserting the main-butts, select the container and add 'button' class to links
+          const container = document.querySelector('.buttons-container');
+          if (container) {
+            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
+          }
+        });
+    </script>
+  </div> <!-- close page-wrapper -->
 
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_5.html">PG. 5 (GM)</a>
-</div>
-  
-<div id="main-butts"></div>
-<script>
-  fetch('/main-butts.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('main-butts').innerHTML = data;
-
-      // After inserting the main-butts, select the container and add 'button' class to links
-      const container = document.querySelector('.buttons-container');
-      if (container) {
-        container.querySelectorAll('a').forEach(link => link.classList.add('button'));
-      }
-    });
-</script>
-  
-<!-- Footer include -->
-<div id="footer"></div>
-<script>
-  fetch('/footer.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('footer').innerHTML = data;
-    });
-</script>
+  <!-- Footer include outside the wrapper for layout -->
+  <div id="footer"></div>
+  <script>
+    fetch('/footer.html')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('footer').innerHTML = data;
+      });
+  </script>
 </body>
 </html>
