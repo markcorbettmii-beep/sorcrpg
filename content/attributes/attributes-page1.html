@@ -25,13 +25,23 @@
 
     <!-- Rules Sections Navigation (dynamic, highlights current page) -->
     <div id="sections"></div>
-    <script>
-      fetch('/sections-basics.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('sections').innerHTML = data;
-        });
-    </script>
+<script>
+  fetch('/sections-basics.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('sections').innerHTML = data;
+
+      const links = document.querySelectorAll('#sections .sec-rules-link');
+      const currentPath = window.location.pathname;
+
+      links.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('active');
+        }
+      });
+    });
+</script>
+
     
     <!-- Attributes section for page 1 -->
     <h3>Attributes</h3>
