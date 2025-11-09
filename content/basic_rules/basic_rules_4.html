@@ -4,100 +4,150 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="A sci-fantasy tabletop RPG with diverse realms and exciting combat." />
-  <title>Slayers of Rings § Crowns - Basic Rules PG. 4</title>
+  <title>Slayers of Rings & Crowns - Basic Rules PG. 1</title>
   <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
-<div class="header-container">
-  <h1>Slayers of Rings § Crowns</h1>
-  <div class="sorc-letters">S O R C</div>
-</div>
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html" class="current-section">PG. 4</a>&nbsp; &nbsp; &nbsp
-</div>
+  <div class="page-wrapper">
+    <div class="header-container">
+      <h1>Slayers of Rings & Crowns</h1>
+      <div class="sorc-letters">S O R C</div>
+    </div>
 
+    <!-- Container for login buttons (visitor login) -->
+    <div id="loginButtonsContainer"></div> 
 
-<!-- Player and Game Master Logins -->
-<a href="/gm_login.html" class="gm_button">GM Login</a>
-<a href="/player_login.html" class="plyr_button">PC Login</a>
+    <!-- Existing page navigation -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_4.html" class="current-section">PG. 4</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_5.html">PG. 5</a>&nbsp;|&nbsp;
+      
+    </div>
 
-<!-- Rules Sections Navigation (dynamic, highlights current page) -->
-<h3>Rules Sections</h3>
-<div id="sections"></div>
-<script>
-  fetch('/sections-basics.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('sections').innerHTML = data;
-    });
-</script>
-<h3>Fellowship Cards</h3>
-<p>
-  Fellowships are companions, pets, mounts, summons, hirelings, and humanoid allies that characters can acquire, tame, or befriend. They have their own stats, can level up in their primary roles, and grow loyal over time. Characters typically start with three fellowship slots but can have more through skills and circumstances. These allies support in combat, travel, and exploration, with unique abilities—such as mounts like the Stormstrider, a fast, weather-sensitive creature—adding depth to gameplay and character interactions. Each fellowship card may or may not be restricted to character class and race.
-</p>
+    <!-- Script to dynamically load login buttons -->
+    <script>
+      // Load login buttons once
+      fetch('/login-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('loginButtonsContainer').innerHTML = data;
+
+          // Role display update
+          updateRoleDisplay();
+
+          // Hide login buttons if already logged in
+          var isGM = localStorage.getItem('isGM') === 'true';
+          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+          if (isGM) {
+            var gmBtn = document.querySelector('.gm_button');
+            if (gmBtn) gmBtn.style.display = 'none';
+          }
+          if (isPlayer) {
+            var playerBtn = document.querySelector('.plyr_button');
+            if (playerBtn) playerBtn.style.display = 'none';
+          }
+        });
+
+      // Function to update role display
+      function updateRoleDisplay() {
+        const roleSpan = document.getElementById('roleDisplay');
+        const isGM = localStorage.getItem('isGM') === 'true';
+        const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+        if (isGM) {
+          roleSpan.textContent = 'Game Master (GM)';
+        } else if (isPlayer) {
+          roleSpan.textContent = 'Player';
+        } else {
+          roleSpan.textContent = 'Visitor / Not Logged In';
+        }
+      }
+
+      // Logout button handler
+      document.getElementById('logoutBtn').onclick = () => {
+        localStorage.removeItem('isGM');
+        localStorage.removeItem('isPlayer');
+        alert('Logged out');
+        location.reload();
+      };
+    </script>
+
+    <!-- Rules Sections Navigation (dynamic, highlights current page) -->
+    <div id="sections"></div>
+    <script>
+      fetch('/sections-basics.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sections').innerHTML = data;
+        });
+    </script>
+
+<h3>Gear & Equipment</h3>
+<p>The Wayfarer Compass is a magical device enabling teleportation, with levels of calibration increasing its range and capabilities. It can mark locations, detect hazards, and enhance exploration.</p>
+<h3>Items & Currency</h3>
+<p>Basic items like torches, ladders, and apparel are tracked via index cards. Potions and scrolls have individual effects. Rare fellowships, pets, mounts, and guardians can be acquired and leveled up to support in combat and exploration.</p>
+<h3>Fellowship & Pets</h3>
+<p>Support allies like pets, mounts, hirelings, and summons, each with unique stats and abilities. They can level up and support in various ways.</p>
+<h3>Sorc Card System</h3>
+<p>This system manages abilities, gear, allies, and resources. Cards evolve with upgrades and reflect current stats, buffs, and conditions.</p>
+<h3>Items & Gear Management</h3>
 <ul>
-  <li><b>Pets (small):</b> From most rare to most common.</li>
-  <li><b>Argothians, Rodents, Mammals, Marsupials, Critters, Workers, Pack, Draft, Ruminants, Mounts</b></li>
+<li>Weapons & Armor</li>
+<li>Buffs & Debuffs</li>
+<li>Consumables</li>
+<li>Set Bonuses & Special Gear</li>
 </ul>
-<p>
-  <b>Guardians:</b> Guardians can be hired by just about any character, but hirelings are not cheap, and expect pay per day. Summons and Tamed guardians require specific classes, such as warlocks and rangers respectively, but other classes can use rare scrolls or other magical methods if they have the ability to read them; however, any Guardian summoned by a scroll or other form of magic aside from a spell, is temporary for a random period of time.
-</p>
-<p>
-  <b>Companions (small races only):</b> Companions are humanoid races that are companions to the character.
-</p>
-<p>
-  <b>Wild:</b> Only certain classes, such as Rangers, Beast Masters and so forth can tame wild creatures.
-</p>
-<p>
-  <b>Hirelings:</b> Hirelings are hired bodyguards, bounty hunters, henchmen, or hosts that are seasoned in a particular vocational tree the party may need for their adventure, like a theologian or scout. Hirelings are typically stronger than the party that has hired them and expect daily pay at an agreed upon rate.
-</p>
-<p>
-  <b>Summons:</b> Class specific or requires a scroll or other forms of magic.
-</p>
-<p>
-  <b>Ongoing, Temps</b>
-</p>
 
-<h2>Vitality Chips</h2>
-<p>
-  The Vitality System in Slayers of Rings & Crowns tracks four core components - Life, Mana, Stamina, and Endurance - using stackable colored chips, each representing 10 points. Chips are allocated at character creation based on race and size, with capacity (extent) and regeneration speed (Spirit) influencing maximum resource levels and recovery rates. Actions like combat, spellcasting, and crafting consume these chips, affecting performance and survival.
-</p>
+<h3>Combat Mechanics</h3>
+<p>In SorC, combat involves attack rolls vs Defense Scores (DEFS). Success depends on rolling a combined attack and damage roll (e.g., 3d6), modified by attributes and skills. Damage is reduced by Armor Score (AS).</p>
+<h3>Attack & Damage Rolls</h3>
+<p>Attack roll meets or exceeds DEFS: hit. Exact match: half damage. Fail: miss. Damage types include slash, pierce, fire, ice, lightning, poison, acid, psychic, radiant, necrotic, force, sonic, blood, nature, arcane.</p>
+<h3>Special Attacks & Techniques</h3>
 <ul>
-  <li><strong>Life</strong> measures health and damage capacity; damage removes red chips, and regeneration depends on Spirit.</li>
-  <li><strong>Mana</strong> fuels magic; casting spells costs blue chips, with optional spell slot mechanics for traditional magic systems.</li>
-  <li><strong>Stamina</strong> governs immediate physical actions; depletion restricts actions to basic movement, with regeneration also influenced by Spirit.</li>
-  <li><strong>Endurance</strong> affects long-term energy and sustained actions; recovers slowly and is used for prolonged activities.</li>
+<li>Critical hits: natural 20 + modifiers</li>
+<li>Brutal hits, gruesome kills, combos, limb-specific targeting (LST)</li>
+<li>Counterattacks, push maneuvers, special moves</li>
 </ul>
-<p>
-  Players can attune to ancient relics to gain Essence Points, boosting their extent or Spirit, often through challenging quests and faction standing. The system emphasizes strategic resource management, environmental considerations, and optional mechanics like spell slots and rests for magic recovery. Overall, it encourages balancing aggressive tactics with careful conservation to survive and thrive in the universe of Essentia.
-</p>
+<h3>Attack Types & Resistance</h3>
+<p>Damage can be mitigated by resistances or vulnerabilities. Armor and innate traits influence damage absorption or reduction. Spells ignore armor unless designed otherwise.</p>
+<h3>Defensive & Difficulty Scores</h3>
+<ul>
+<li>DEFS: Defense Score, affected by armor, traits, and abilities</li>
+<li>DIFS: Difficulty Score for non-combat challenges</li>
+</ul>
+<h3>Surprise & Criticals</h3>
+<p>Surprise is determined by Vigilance checks. Critical hits are natural 20s with potential for extra damage and effects.</p>
+    
+    <!-- Existing page navigation -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_5.html">PG. 5</a>&nbsp;|&nbsp;
+      
+    </div>
+      
+    <div id="main-butts"></div>
+    <script>
+      fetch('/main-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('main-butts').innerHTML = data;
 
-<h3>Rules Summary</h3>
-<p>
-  <b>Slayers of Rings & Crowns (SorC)</b> is a sci-fantasy tabletop RPG where players create unique characters, choose their race and class, and develop them through dice-based attribute allocation, talents, skills, and traits. The game uses a card system to track gear, abilities, and companions. Combat is tactical, involving dice rolls and resource management (health, mana, stamina, endurance). Exploration spans diverse worlds, with movement and actions governed by stamina and terrain. Equipment and magical items, from standard gear to rare artifacts, are acquired through stores, black markets, and adventures. The rules are designed for both strategy and narrative, encouraging collaboration and creativity under the guidance of a Game Master.
-</p>
+          // After inserting the main-butts, select the container and add 'button' class to links
+          const container = document.querySelector('.buttons-container');
+          if (container) {
+            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
+          }
+        });
+    </script>
 
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html">PG. 1 &nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_3.html">PG. 3 &nbsp;|&nbsp;</a>
-  <strong>PG. 4&nbsp;|&nbsp;</strong>
-  <a href="/content/basic_rules/basic_rules_5.html">PG. 5 (GM)</a>
-</div>
-<hr> 
-  <div id="navbar"></div>
-  <script>
-    fetch('/navbar.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('navbar').innerHTML = data;
-      });
-  </script>
-
-  <!-- Footer include -->
+  <!-- FOOTER: Load footer after buttons to be below -->
   <div id="footer"></div>
   <script>
     fetch('/footer.html')
@@ -106,5 +156,9 @@
         document.getElementById('footer').innerHTML = data;
       });
   </script>
+  
+  </div> <!-- close page-wrapper -->
+
+
 </body>
 </html>
