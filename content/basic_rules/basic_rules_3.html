@@ -4,105 +4,152 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="A sci-fantasy tabletop RPG with diverse realms and exciting combat." />
-  <title>Slayers of Rings § Crowns - Basic Rules PG. 3</title>
+  <title>Slayers of Rings & Crowns - Basic Rules PG. 1</title>
   <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
-<div class="header-container">
-  <h1>Slayers of Rings § Crowns</h1>
-  <div class="sorc-letters">S O R C</div>
-</div>
+  <div class="page-wrapper">
+    <div class="header-container">
+      <h1>Slayers of Rings & Crowns</h1>
+      <div class="sorc-letters">S O R C</div>
+    </div>
 
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_3.html" class="current-section">PG. 3</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp; &nbsp; &nbsp
-</div>
+    <!-- Container for login buttons (visitor login) -->
+    <div id="loginButtonsContainer"></div> 
 
- 
-<!-- Player and Game Master Logins -->
-<a href="/gm_login.html" class="gm_button">GM Login</a>
-<a href="/player_login.html" class="plyr_button">PC Login</a>
-  
-<!-- Rules Sections Navigation (dynamic, highlights current page) -->
-<h3>Rules Sections</h3>
-<div id="sections"></div>
-<script>
-  fetch('/sections-basics.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('sections').innerHTML = data;
-    });
-</script>
-  
-<h3>Items and Currency Cards</h3>
-<p><b>Basic Items:</b> Basic items, such as torches, ladders, diamond dust, apparel and so forth, are listed on an index card titled Items and Currency. Their details are adjusted as they are used throughout SorC. For example, if you have 100 gd and spend 10g, you'd adjust the amount to 90g on your items index card.</p>
-<p><b>Potions and Scrolls:</b> Each potion or scroll, whether alchemical or magical, has its own effects on characters.</p>
+    <!-- Existing page navigation -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html" class="current-section">PG. 3</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_5.html">PG. 5</a>&nbsp;|&nbsp;
+      
+    </div>
 
-<h3>Store</h3>
-<p>
-  <b>The Store</b> is where players can purchase standard equipment, weapons, armor, supplies, and basic magical items for their adventures. Merchants in towns and cities offer a reliable selection of goods at set prices, helping players restock and upgrade as they travel.
-</p>
+    <!-- Script to dynamically load login buttons -->
+    <script>
+      // Load login buttons once
+      fetch('/login-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('loginButtonsContainer').innerHTML = data;
 
-<h3>Black Market</h3>
-<p>
-  <b>The Black Market</b> is the shadowy counterpart to the Store, offering rare, illegal, or forbidden items that can’t be found elsewhere. Here, players might find cursed artifacts, contraband, stolen relics, or unique potions—often at a steep price and with potential consequences. Access may be restricted to those with underworld connections or a willingness to take risks.
-</p>
+          // Role display update
+          updateRoleDisplay();
 
-<h3>Gear and Equipment</h3>
-<p>
-  Equipping your character in SorC is essential for survival and success. From weapons and armor to rare magical artifacts, each piece of gear can enhance your abilities and open up new strategies during your adventures.
-</p>
+          // Hide login buttons if already logged in
+          var isGM = localStorage.getItem('isGM') === 'true';
+          var isPlayer = localStorage.getItem('isPlayer') === 'true';
 
-<h3>Wayfarer Compass</h3>
-<p>
-  The <b>Wayfarer Compass</b> is a magical device that allows players to teleport to discovered taverns or locations in the SorC world. As characters level up and upgrade it, they can teleport farther, mark locations, and access new areas. It also enhances their ability to spot items, hazards, or quest objects. The device is essential for quick travel and exploration, growing more powerful as players progress and develop their skills.
-</p>
+          if (isGM) {
+            var gmBtn = document.querySelector('.gm_button');
+            if (gmBtn) gmBtn.style.display = 'none';
+          }
+          if (isPlayer) {
+            var playerBtn = document.querySelector('.plyr_button');
+            if (playerBtn) playerBtn.style.display = 'none';
+          }
+        });
 
-<h3>Summary of SorC Cards</h3>
-<p>
-  The SorC card system is a central tool for managing your character’s abilities, equipment, and allies throughout the game. Each card in SorC represents a specific aspect of your character—whether it’s a weapon, piece of armor, special skill, spell, companion, or even resources like potions and currency. Cards are not just static records: they evolve with your character, reflecting upgrades, modifications, buffs, and debuffs as adventures unfold.
-</p>
-<p><b>How it works:</b></p>
+      // Function to update role display
+      function updateRoleDisplay() {
+        const roleSpan = document.getElementById('roleDisplay');
+        const isGM = localStorage.getItem('isGM') === 'true';
+        const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+        if (isGM) {
+          roleSpan.textContent = 'Game Master (GM)';
+        } else if (isPlayer) {
+          roleSpan.textContent = 'Player';
+        } else {
+          roleSpan.textContent = 'Visitor / Not Logged In';
+        }
+      }
+
+      // Logout button handler
+      document.getElementById('logoutBtn').onclick = () => {
+        localStorage.removeItem('isGM');
+        localStorage.removeItem('isPlayer');
+        alert('Logged out');
+        location.reload();
+      };
+    </script>
+
+    <!-- Rules Sections Navigation (dynamic, highlights current page) -->
+    <div id="sections"></div>
+    <script>
+      fetch('/sections-basics.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sections').innerHTML = data;
+        });
+    </script>
+
+<body>
+<h3>Background & Mission Statement</h3>
+<p>This encompasses the character's history, motivations, and driving goals, shaping their journey and decisions.</p>
+<h3>Archetype Paths & Prestige</h3>
+<p>A pivotal event that catalyzes the character’s journey, leading them to embrace their role as an adventurer, and their reputation, associations, and legacy influence interactions and decisions.</p>
+<h3>Exploration & Standing</h3>
+<p>Traversing planets and exploring the universe, with standing reflecting moral and political alignment.</p>
+<h3>Attributes & Traits</h3>
+<p>Innate predispositions such as physique, fortitude, artistry, intelligence, wisdom, perception, and survival traits like Courage, Vigilance, Resistance, etc.</p>
+<h3>Land & Family</h3>
+<p>Buy plots of land, own estates, and make families as part of character development.</p>
+<h3>Online Server Features</h3>
+<p>Join lobbies with GMs, share achievements, rare fellowships, and compete in PvP or PvE activities remotely.</p>
+<body>
+<h3>Movement System Overview</h3>
+<p>The movement system revolves around stamina, terrain, and character actions. Each combat turn is 6 seconds, costing stamina points (SP) per second of activity. Movement depends on race-based base speeds, terrain, and environmental factors.</p>
+<h3>Movement Types & Costs</h3>
 <ul>
-  <li><b>Base Cards:</b> Every item, ability, or ally starts as a core card with original stats and properties.</li>
-  <li><b>Index Cards:</b> Each base card is paired with a physical index card, where you record changes—such as enhancements, temporary bonuses, or conditions (like curses or wear). This keeps your stats up-to-date as you play.</li>
-  <li><b>Enhanced Stats Card:</b> This card consolidates a card’s current total stats after all modifications, so you always have an at-a-glance summary of the real capabilities of your gear, skills, or companions.</li>
-  <li><b>Card Categories:</b> There are various types of cards you’ll use—Profile Cards (identity and background), Stat Cards (attributes and traits), Ability Cards (combat abilities, spells, talents, skills), Equipment Cards (weapons, gear, armor), Fellowship Cards (companions, pets, mounts, hirelings), and Item/Currency Cards.</li>
-  <li><b>Upgrades and Swaps:</b> When you upgrade equipment or swap out parts (like adding new boots to an armor set), you update the relevant index card to reflect the change in stats. Some sets grant extra bonuses if kept together.</li>
-  <li><b>Limits:</b> You cannot use cards above your character’s level, and you must meet any attribute or skill requirements to equip or use certain cards. Players may have access to many cards but must choose which ones to bring on each adventure.</li>
-  <li><b>Dynamic Tracking:</b> All changes, trades, or losses are tracked on the cards and index cards, ensuring the game world remains consistent and evolving. Items and allies persist in the world unless destroyed, and their stats/history may change at the GM’s discretion.</li>
+<li>Walking: 1 SP per 5 ft</li>
+<li>Sprinting: 2 SP per 5 ft</li>
+<li>Rough terrain: 1.5 SP per 5 ft walking, 3 SP dashing</li>
+<li>Climbing: 4 SP per 5 ft</li>
+<li>Swimming: 2.5 SP per 5 ft</li>
 </ul>
-<p>
-  <b>Why use the card system?</b><br>
-  <i>Clarity:</i> Cards make it easy to see your current gear, powers, and companions at a glance.<br>
-  <i>Customization:</i> As you earn upgrades, find new items, or forge alliances, your cards change to reflect your growing capabilities.<br>
-  <i>Immersion:</i> Cards help bring the world to life, making your character’s journey, relationships, and achievements tangible and trackable.
-</p>
-<p>
-  In summary, the SorC card system is your toolkit for adventure—organizing everything you can do, wield, or befriend, and adapting as your story unfolds. Master your cards, and you’ll master your destiny in the world of SorC!
-</p>
-
-<div class="page-nav" style="margin: 20px 0;">
-  <a href="/content/basic_rules/basic_rules_1.html">PG. 1 &nbsp; | &nbsp;</a>
-  <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-  <strong>PG. 3 &nbsp;|&nbsp;</strong>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-  <a href="/content/basic_rules/basic_rules_5.html">PG. 5 (GM)</a>
-</div>
+<h3>Attributes & Prerequisites</h3>
+<p>Strength and agility influence movement capabilities, with load affecting climbing and sprinting. Carrying capacity is STR×15 lbs. Climbing and sprinting require specific attribute checks and have penalties if overloaded.</p>
+<h3>Stamina & Endurance</h3>
+<ul>
+<li>Regenerates: 1 SP per 3 seconds (combat), 1 SP per minute (travel)</li>
+<li>Low SP: Reduces speed by 25%, increases SP costs by 50%, and causes exhaustion at 0 SP.</li>
+</ul>
+<h3>Advanced Movement</h3>
+<p>Environmental effects, momentum, group tactics, obstacles, and special gear influence movement and stamina costs.</p>
+</body>
   
-<hr> 
-  <div id="navbar"></div>
-  <script>
-    fetch('/navbar.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('navbar').innerHTML = data;
-      });
-  </script>
+</body>
 
-  <!-- Footer include -->
+    
+    <!-- Existing page navigation -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
+      <a href="/content/basic_rules/basic_rules_5.html">PG. 5</a>&nbsp;|&nbsp;
+      
+    </div>
+      
+    <div id="main-butts"></div>
+    <script>
+      fetch('/main-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('main-butts').innerHTML = data;
+
+          // After inserting the main-butts, select the container and add 'button' class to links
+          const container = document.querySelector('.buttons-container');
+          if (container) {
+            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
+          }
+        });
+    </script>
+
+  <!-- FOOTER: Load footer after buttons to be below -->
   <div id="footer"></div>
   <script>
     fetch('/footer.html')
@@ -111,5 +158,9 @@
         document.getElementById('footer').innerHTML = data;
       });
   </script>
+  
+  </div> <!-- close page-wrapper -->
+
+
 </body>
 </html>
