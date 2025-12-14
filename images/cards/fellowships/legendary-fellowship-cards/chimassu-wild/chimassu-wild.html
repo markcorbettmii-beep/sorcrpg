@@ -100,10 +100,10 @@
 </head>
 <body>
 
-<div class="flip-card" onclick="this.classList.toggle('flipped')">
+<div class="flip-card" id="chimassuCard">
   <div class="flip-card-inner">
     <!-- Front side -->
-    <div class="flip-card-front">
+    <div class="flip-card-front" id="cardFront">
       <p>Wild Fellowships may not be<br>
         purchased. Touch Card (flip) <br>
         for stats and description.</p>
@@ -112,10 +112,10 @@
       </div>
     </div>
     <!-- Back side -->
-    <div class="flip-card-back">
+    <div class="flip-card-back" id="cardBack">
       <div class="back-to-image">Back to Image</div>
       <img src="https://sorcrpg.com/images/cards/fellowships/legendary-fellowship-cards/chimassu-wild/IMG_1230.jpeg" alt="Back Image Chimassu Wild" />
-      <div class="chimassu-text">
+      <div class="chimassu-text" id="chimassuText">
         <h2>Fellowship - Guardian</h2>
         <b>Chimassu Wild – Lore &amp; History</b>
         <p>
@@ -225,6 +225,31 @@
     </div>
   </div>
 </div>
+
+<script>
+const card = document.getElementById('chimassuCard');
+const cardFront = card.querySelector('.flip-card-front');
+const cardBack = card.querySelector('.flip-card-back');
+const chimassuText = card.querySelector('.chimassu-text');
+
+// Only flip when clicking the front or back face (but NOT inside the text description)
+cardFront.addEventListener('click', function() {
+  card.classList.toggle('flipped');
+  // If now flipped to back, scroll back to top so image is visible
+  if(card.classList.contains('flipped')) {
+    cardBack.scrollTop = 0;
+  }
+});
+cardBack.addEventListener('click', function(e) {
+  // Prevent flip if clicking inside the description text
+  if (!chimassuText.contains(e.target)) {
+    card.classList.toggle('flipped');
+  }
+});
+chimassuText.addEventListener('click', function(e) {
+  e.stopPropagation(); // Prevent flipping when clicking inside the text
+});
+</script>
 
 </body>
 </html>
