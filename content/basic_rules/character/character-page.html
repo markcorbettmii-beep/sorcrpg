@@ -112,29 +112,22 @@
             padding: 2em;
             max-width: 400px;
         }
-        .flip-btn {
-            display: block;
-            background: #a5884e;
-            color: #222;
-            margin: 2em auto 0 auto;
-            border: none;
-            border-radius: 8px;
-            padding: 0.8em 2em;
-            font-family: 'MedievalSharp', cursive;
-            font-size: 1.1em;
-            cursor: pointer;
-            box-shadow: 0 0 8px #a5884e;
-            transition: background 0.2s;
-        }
-        .flip-btn:hover {
-            background: #e9d8a6;
-        }
         /* Hide/show pages */
         .page {
             display: none;
         }
         .page.active {
             display: block;
+        }
+        .back-flip-tip {
+            text-align: center;
+            color: #c8b47d;
+            font-size: 1em;
+            margin-top: 0.5em;
+        }
+        @media screen and (max-width: 600px) {
+            .container { padding: 1em; }
+            .accessory-grid { flex-direction: column; }
         }
     </style>
 </head>
@@ -144,8 +137,15 @@
     Slayers of Rings & Crowns, SorC
 </header>
 
+<!-- FRONT PAGE -->
 <div id="frontPage" class="container page active">
-    <img src="https://sorcrpg.com/content/basic_rules/character/IMG_1363.jpeg" alt="Armaments & Accessories (Click to flip to Gear & Equipment page)" title="Click to flip page" onclick="flipPage()">
+    <img 
+        src="https://sorcrpg.com/content/basic_rules/character/IMG_1363.jpeg" 
+        alt="Armaments & Accessories (Touch or click to flip to Gear & Equipment page)" 
+        title="Touch or click to flip page"
+        onclick="flipPage()"
+    >
+    <div class="back-flip-tip">Touch or click the image to view Gear & Equipment</div>
     <h2>Armaments: Armor Sets & Weapons</h2>
     <div class="set-interchange">
         <strong>Armor Sets:</strong> 
@@ -230,37 +230,59 @@
             Wearing a full set grants bonuses; swapping helm, gloves, or boots loses the bonus but applies new item stats.
         </li>
     </ul>
-    <button class="flip-btn" onclick="flipPage()">Flip to Gear & Equipment</button>
 </div>
 
+<!-- BACK PAGE -->
 <div id="backPage" class="container page">
     <div class="back-image-placeholder">
         [Image Placeholder – Storefront, Gear, or Your Campaign Art]
     </div>
-    <h2>Gear & Equipment</h2>
+    <div class="back-flip-tip">Touch or click the image above to return to Armaments & Accessories</div>
+    <h2>Gear, Equipment & Items Overview</h2>
     <ul class="item-list">
         <li>
-            <span class="item-title">Gear</span> <span class="item-type">(Non-combat Equipment)</span><br>
-            Tools for crafting and skills (utility tool, flint and steel), containers (backpacks, tool kits, water skins, pouches), light sources (torches, lamps), ritual supplies (holy water, relics), and miscellaneous supplies (first aid kits, exploration gear).
+            <span class="item-title">Gear</span> <span class="item-type">(Utility & Survival)</span><br>
+            Practical tools and supplies such as backpacks, ropes, torches, containers, light sources, first aid kits, and ritual tools. Essential for exploration, crafting, and overcoming environmental challenges.
         </li>
         <li>
-            <span class="item-title">Items</span><br>
-            Everyday objects with practical or narrative value (candles, crests, quest tokens, heirlooms, keys, rare trinkets).
+            <span class="item-title">Items</span> <span class="item-type">(Narrative & Miscellaneous)</span><br>
+            Everyday objects, quest tokens, heirlooms, keys, trinkets, and symbolic relics. Items enrich roleplay, provide story hooks, and serve as catalysts for crafting, enhancement, and quest progression.
         </li>
         <li>
-            <span class="item-title">Materials</span><br>
-            Raw resources for crafting, repair, or trade (metals, woods, herbs, magical reagents).
+            <span class="item-title">Materials</span> <span class="item-type">(Crafting & Repair)</span><br>
+            Raw components such as metals, woods, herbs, alchemical reagents, and special resources. Used for crafting new gear, repairing equipment, and fulfilling trade or quest objectives.
         </li>
         <li>
             <span class="item-title">Bag Space & Weight</span><br>
-            Inventory management: bag space, sheaths, coin bags. Weight capacity determined by strength + stamina; exceeding capacity results in encumbrance and incapacitation until load is reduced.
+            Inventory management includes bag space, sheaths, and coin bags. Weight capacity = Strength + Stamina (per level). Exceeding capacity causes encumbrance and incapacitation until load is reduced.
         </li>
         <li>
             <span class="item-title">Encumbrance & Carrying Capacity</span><br>
-            Race and Physique determine base capacity; Ogre Physique 10 (+5 racial) = 15, Gnome Physique 10 (-5 racial) = 5. Movement penalties and incapacitation above limits.
+            Base capacity is determined by race and physique. Ogre (Physique 10 +5 racial) = 15, Gnome (Physique 10 -5 racial) = 5. Movement penalties apply if loaded, and total incapacitation occurs if overloaded.
+        </li>
+        <li>
+            <span class="item-title">Equipment Acquisition</span><br>
+            Gear, items, and materials can be purchased, crafted, discovered, looted, or rewarded. Some gear may be lost, stolen, or broken. Rarity and quality are rolled for when acquired; only uncommon and above may be awarded for uncommon challenges.
         </li>
     </ul>
-    <h2>Store Information</h2>
-    <ul class="item-list">
-        <li>
-            <span class="item-title">Acquisition Methods
+    <script>
+        // Only flip when clicking the image or placeholder
+        function flipPage() {
+            var front = document.getElementById('frontPage');
+            var back = document.getElementById('backPage');
+            if (front.classList.contains('active')) {
+                front.classList.remove('active');
+                back.classList.add('active');
+            } else {
+                back.classList.remove('active');
+                front.classList.add('active');
+            }
+        }
+        // Add image click to flip back
+        window.onload = function() {
+            document.querySelector('.back-image-placeholder').onclick = flipPage;
+        }
+    </script>
+</div>
+</body>
+</html>
