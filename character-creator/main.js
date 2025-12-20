@@ -1,25 +1,27 @@
-// CONFIG: Asset mapping for your images
+// Your actual hosted asset paths
+const assetBase = "https://sorcrpg.com/character-creator/assets/";
+
 const layers = {
   body: [
-    {name:'lean', src:'character-creator/assets/fbody-type-lean.png'},
-    {name:'massive', src:'character-creator/assets/fbody-type-massive.png'},
-    {name:'muscular', src:'character-creator/assets/fbody-type-muscular.png'},
-    {name:'thin', src:'character-creator/assets/fbody-type-thin.png'},
+    {name:'lean', src:assetBase+'fbody-type-lean.png'},
+    {name:'massive', src:assetBase+'fbody-type-massive.png'},
+    {name:'muscular', src:assetBase+'fbody-type-muscular.png'},
+    {name:'thin', src:assetBase+'fbody-type-thin.png'},
   ],
   face: [
-    {name:'full', src:'character-creator/assets/femface-full.png'},
-    {name:'long', src:'character-creator/assets/femface-long.png'},
+    {name:'full', src:assetBase+'femface-full.png'},
+    {name:'long', src:assetBase+'femface-long.png'},
   ],
   hair: [
-    {name:'hair1-blck', src:'character-creator/assets/hair1-blck.png'},
-    {name:'hair1-red', src:'character-creator/assets/hair1-red.png'},
-    {name:'hair2-red', src:'character-creator/assets/hair2-red.png'},
-    {name:'hair3-blnd', src:'character-creator/assets/hair3-blnd.png'},
+    {name:'hair1-blck', src:assetBase+'hair1-blck.png'},
+    {name:'hair1-red', src:assetBase+'hair1-red.png'},
+    {name:'hair2-red', src:assetBase+'hair2-red.png'},
+    {name:'hair3-blnd', src:assetBase+'hair3-blnd.png'},
   ],
   eyes: [
-    {name:'eyes1-blu', src:'character-creator/assets/eyes1-blu.png'},
-    {name:'eyes1-green', src:'character-creator/assets/eyes1-green.png'},
-    {name:'eyes2-redbrn', src:'character-creator/assets/eyes2-redbrn.png'},
+    {name:'eyes1-blu', src:assetBase+'eyes1-blu.png'},
+    {name:'eyes1-green', src:assetBase+'eyes1-green.png'},
+    {name:'eyes2-redbrn', src:assetBase+'eyes2-redbrn.png'},
   ]
 };
 
@@ -30,7 +32,7 @@ function physiqueToBody(score) {
   return 'massive';
 }
 
-// Default STATE: picks first option in each layer
+// Default picks
 const state = {
   body: layers.body[0].name,
   face: layers.face[0].name,
@@ -45,6 +47,7 @@ const ctx = canvas.getContext('2d');
 function loadImg(src) {
   return new Promise(res => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.src = src;
     img.onload = () => res(img);
     img.onerror = () => res(null);
@@ -54,16 +57,13 @@ function loadImg(src) {
 // Draw character (composite layers)
 async function drawCharacter() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Draw in order: body, face, hair, eyes
   for (let layerName of ['body','face','hair','eyes']) {
     let layer = layers[layerName].find(l => l.name === state[layerName]);
     if (layer && layer.src) {
       let img = await loadImg(layer.src);
       if (img) {
-        // For eyes, resize and reposition to fit face (example values, adjust as needed):
         if (layerName === 'eyes') {
-          // You may want to fine-tune these numbers:
+          // Adjust these numbers for your art as needed:
           ctx.drawImage(img, canvas.width/2 - 40, canvas.height/2 - 40, 80, 40);
         } else {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -105,13 +105,12 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 
 // Randomizer with physique score
 document.getElementById('randomBtn').addEventListener('click', () => {
-  const score = parseInt(prompt('Enter Physique score (number):'), 10) || 1;
+  const score = parseInt(prompt('SorC says enter physique score number:'), 10) || 1;
   state.body = physiqueToBody(score);
-  // Pick random face/hair/eyes
   state.face = layers.face[Math.floor(Math.random()*layers.face.length)].name;
   state.hair = layers.hair[Math.floor(Math.random()*layers.hair.length)].name;
   state.eyes = layers.eyes[Math.floor(Math.random()*layers.eyes.length)].name;
-  buildThumbnails(); // To update the selected highlight
+  buildThumbnails();
   drawCharacter();
 });
 
