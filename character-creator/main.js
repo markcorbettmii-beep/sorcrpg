@@ -1,9 +1,26 @@
-// CONFIG: Asset mapping
+// CONFIG: Asset mapping for your images
 const layers = {
-  body: ['thin','lean','muscular','massive'],
-  face: ['round','square','long'],
-  hair: ['short','medium','long'],
-  eyes: ['type1','type2','type3']
+  body: [
+    {name:'lean', src:'character-creator/assets/fbody-type-lean.png'},
+    {name:'massive', src:'character-creator/assets/fbody-type-massive.png'},
+    {name:'muscular', src:'character-creator/assets/fbody-type-muscular.png'},
+    {name:'thin', src:'character-creator/assets/fbody-type-thin.png'},
+  ],
+  face: [
+    {name:'full', src:'character-creator/assets/femface-full.png'},
+    {name:'long', src:'character-creator/assets/femface-long.png'},
+  ],
+  hair: [
+    {name:'hair1-blck', src:'character-creator/assets/hair1-blck.png'},
+    {name:'hair1-red', src:'character-creator/assets/hair1-red.png'},
+    {name:'hair2-red', src:'character-creator/assets/hair2-red.png'},
+    {name:'hair3-blnd', src:'character-creator/assets/hair3-blnd.png'},
+  ],
+  eyes: [
+    {name:'eyes1-blu', src:'character-creator/assets/eyes1-blu.png'},
+    {name:'eyes1-green', src:'character-creator/assets/eyes1-green.png'},
+    {name:'eyes2-redbrn', src:'character-creator/assets/eyes2-redbrn.png'},
+  ]
 };
 
 function physiqueToBody(score) {
@@ -13,16 +30,12 @@ function physiqueToBody(score) {
   return 'massive';
 }
 
-// STATE: Current selection
+// Default STATE: picks first option in each layer
 const state = {
-  body: 'lean',
-  face: 'round',
-  hair: 'short',
-  eyes: 'type1',
-  armor: false,
-  helmet: false,
-  hairColor: '#8a4b08',
-  eyeColor: '#666666'
+  body: layers.body[0].name,
+  face: layers.face[0].name,
+  hair: layers.hair[0].name,
+  eyes: layers.eyes[0].name,
 };
 
 const canvas = document.getElementById('charCanvas');
@@ -42,93 +55,45 @@ function loadImg(src) {
 async function drawCharacter() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Draw body
-  let imgBody = await loadImg(`assets/body_${state.body}.png`);
-  if (imgBody) ctx.drawImage(imgBody, 0, 0);
-
-  // Draw face
-  let imgFace = await loadImg(`assets/face_${state.face}.png`);
-  if (imgFace) ctx.drawImage(imgFace, 0, 0);
-
-  // Draw hair
-  let imgHair = await loadImg(`assets/hair_${state.hair}.png`);
-  if (imgHair) {
-    ctx.drawImage(imgHair, 0, 0);
-    tintLastDraw(state.hairColor);
+  // Draw in order: body, face, hair, eyes
+  for (let layerName of ['body','face','hair','eyes']) {
+    let layer = layers[layerName].find(l => l.name === state[layerName]);
+    if (layer && layer.src) {
+      let img = await loadImg(layer.src);
+      if (img) {
+        // For eyes, resize and reposition to fit face (example values, adjust as needed):
+        if (layerName === 'eyes') {
+          // You may want to fine-tune these numbers:
+          ctx.drawImage(img, canvas.width/2 - 40, canvas.height/2 - 40, 80, 40);
+        } else {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+      }
+    }
   }
-
-  // Draw eyes
-  let imgEyes = await loadImg(`assets/eyes_${state.eyes}.png`);
-  if (imgEyes) {
-    ctx.drawImage(imgEyes, 0, 0);
-    tintLastDraw(state.eyeColor);
-  }
-
-  // Armor
-  if (state.armor) {
-    let armorImg = await loadImg('assets/armor_chest.png');
-    if (armorImg) ctx.drawImage(armorImg, 0, 0);
-  }
-  // Helmet
-  if (state.helmet) {
-    let helmetImg = await loadImg('assets/armor_helmet.png');
-    if (helmetImg) ctx.drawImage(helmetImg, 0, 0);
-  }
-
-  // Add other gear/weapons here, same pattern
 }
 
-// Tint just-drawn layer with color
-function tintLastDraw(hex) {
-  ctx.save();
-  ctx.globalCompositeOperation = 'source-atop';
-  ctx.fillStyle = hex;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.restore();
-}
-
-// Build picker thumbnails with preview images
+// Build picker thumbnails
 function buildThumbnails() {
   document.querySelectorAll('.thumbs').forEach(div => {
-    const layer = div.dataset.layer;
-    div.innerHTML = ''; // Clear old
-    layers[layer].forEach(name => {
+    const layerName = div.dataset.layer;
+    div.innerHTML = '';
+    layers[layerName].forEach(layerObj => {
       const img = document.createElement('img');
-      img.src = `assets/${layer}_${name}_preview.png`; // Use preview image
-      img.alt = name;
+      img.src = layerObj.src;
+      img.alt = layerObj.name;
       img.addEventListener('click', () => {
-        state[layer] = name;
+        state[layerName] = layerObj.name;
         div.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
         img.classList.add('selected');
         drawCharacter();
       });
-      if (name === state[layer]) img.classList.add('selected');
+      if (state[layerName] === layerObj.name) img.classList.add('selected');
       div.appendChild(img);
     });
   });
 }
 buildThumbnails();
-
-// Color pickers
-document.getElementById('hairColor').addEventListener('input', e => {
-  state.hairColor = e.target.value;
-  drawCharacter();
-});
-document.getElementById('eyeColor').addEventListener('input', e => {
-  state.eyeColor = e.target.value;
-  drawCharacter();
-});
-
-// Gear toggles
-document.getElementById('armorToggle').addEventListener('change', e => {
-  state.armor = e.target.checked;
-  drawCharacter();
-});
-document.getElementById('helmetToggle').addEventListener('change', e => {
-  state.helmet = e.target.checked;
-  drawCharacter();
-});
 
 // Download PNG
 document.getElementById('downloadBtn').addEventListener('click', () => {
@@ -142,11 +107,11 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 document.getElementById('randomBtn').addEventListener('click', () => {
   const score = parseInt(prompt('Enter Physique score (number):'), 10) || 1;
   state.body = physiqueToBody(score);
-  ['face','hair','eyes'].forEach(layer => {
-    state[layer] = layers[layer][Math.floor(Math.random() * layers[layer].length)];
-  });
-  state.armor = Math.random() > 0.5;
-  state.helmet = Math.random() > 0.5;
+  // Pick random face/hair/eyes
+  state.face = layers.face[Math.floor(Math.random()*layers.face.length)].name;
+  state.hair = layers.hair[Math.floor(Math.random()*layers.hair.length)].name;
+  state.eyes = layers.eyes[Math.floor(Math.random()*layers.eyes.length)].name;
+  buildThumbnails(); // To update the selected highlight
   drawCharacter();
 });
 
