@@ -8,9 +8,9 @@ const layers = {
     {name:'thin', src:assetBase+'fbody-type-thin.png'},
   ],
   face: [
-  {name:'full', src:assetBase+'femface-full.png'},
-  {name:'norm', src:assetBase+'femface-norm.png'},
-],
+    {name:'full', src:assetBase+'femface-full.png'},
+    {name:'norm', src:assetBase+'femface-norm.png'},
+  ],
   hair: [
     {name:'hair1-blck', src:assetBase+'hair1-blck.png'},
     {name:'hair1-red', src:assetBase+'hair1-red.png'},
@@ -25,8 +25,9 @@ const layers = {
   ]
 };
 
+// Physique mapping
 function physiqueToBody(score) {
-  if (score <= 1) return 'thin';
+  if (score <= 0) return 'thin';
   if (score <= 4) return 'lean';
   if (score <= 20) return 'muscular';
   return 'massive';
@@ -83,6 +84,7 @@ async function drawCharacter() {
   }
 }
 
+// Build thumbnails, with physique popup on body picker!
 function buildThumbnails() {
   document.querySelectorAll('.thumbs').forEach(div => {
     const layerName = div.dataset.layer;
@@ -96,15 +98,17 @@ function buildThumbnails() {
         img.src = layerObj.src;
         img.alt = layerObj.name;
         img.addEventListener('click', () => {
-          state[layerName] = layerObj.name;
-          div.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
-          img.classList.add('selected');
+          let score = prompt('Enter your character\'s Physique score:');
+          score = parseInt(score, 10);
+          if (isNaN(score)) score = 0;
+          state.body = physiqueToBody(score);
+          // Highlight the correct body type thumbnail
+          buildThumbnails();
           drawCharacter();
         });
-        if (state[layerName] === layerObj.name) img.classList.add('selected');
+        if (state.body === layerObj.name) img.classList.add('selected');
         const label = document.createElement('div');
         label.className = 'thumb-label';
-        // Capitalize first letter, rest lowercase
         label.textContent = layerObj.name.charAt(0).toUpperCase() + layerObj.name.slice(1);
         box.appendChild(img);
         box.appendChild(label);
@@ -136,7 +140,9 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 });
 
 document.getElementById('randomBtn').addEventListener('click', () => {
-  const score = parseInt(prompt('SorC says enter physique score number:'), 10) || 1;
+  let score = prompt('Enter your character\'s Physique score:');
+  score = parseInt(score, 10);
+  if (isNaN(score)) score = 0;
   state.body = physiqueToBody(score);
   state.face = layers.face[Math.floor(Math.random()*layers.face.length)].name;
   state.hair = layers.hair[Math.floor(Math.random()*layers.hair.length)].name;
@@ -146,4 +152,3 @@ document.getElementById('randomBtn').addEventListener('click', () => {
 });
 
 drawCharacter();
-
