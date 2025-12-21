@@ -29,6 +29,30 @@ const faceOptions = [
   { src: `${BASE}placeholder-face2.png`, thumb: `${BASE}placeholder-face2.png` }
 ];
 
+// Add Armaments options
+const armamentsOptions = [
+  {
+    src: `${BASE}placeholder-thumb.png`,
+    thumb: `${BASE}placeholder-thumb.png`,
+    label: "Full Set (see bonuses): Harness (Cuirass/Paulds/Greaves), *Helm, *Gloves and *Boots (*interchangeable, lose set bonus in exchange for piece bonus)"
+  },
+  {
+    src: `${BASE}placeholder-thumb.png`,
+    thumb: `${BASE}placeholder-thumb.png`,
+    label: "Helm (offset)"
+  },
+  {
+    src: `${BASE}placeholder-thumb.png`,
+    thumb: `${BASE}placeholder-thumb.png`,
+    label: "Gloves (offset)"
+  },
+  {
+    src: `${BASE}placeholder-thumb.png`,
+    thumb: `${BASE}placeholder-thumb.png`,
+    label: "Boots (offset)"
+  }
+];
+
 let selected = { body: 0, hair: 0, eyes: 0, face: 0 };
 let physiqueScore = null;
 let allowedBodyIndices = [3]; // default to Thin
@@ -73,12 +97,18 @@ function initPickers() {
   buildPicker(hairOptions, "hair-pickers", "hair", true, false);
   buildPicker(eyesOptions, "eyes-pickers", "eyes", true, false);
   buildPicker(faceOptions, "face-pickers", "face", true, false);
+  // Armaments row
+  buildPicker(armamentsOptions, "armaments-pickers", "armaments", false, false);
 }
 
 function buildPicker(opts, pickerId, key, enabled, isBody) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
   opts.forEach((opt, idx) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.display = "flex";
+    wrapper.style.flexDirection = "column";
+    wrapper.style.alignItems = "center";
     const img = document.createElement("img");
     img.src  = opt.thumb;
     img.alt  = `${key}-${idx+1}`;
@@ -90,7 +120,18 @@ function buildPicker(opts, pickerId, key, enabled, isBody) {
       if (img.style.pointerEvents === "auto" && (!isBody || allowedBodyIndices.includes(idx)))
         choose(pickerId, idx, key);
     });
-    picker.appendChild(img);
+    wrapper.appendChild(img);
+    if (opt.label) {
+      const lbl = document.createElement("div");
+      lbl.textContent = opt.label;
+      lbl.style.fontSize = "0.88em";
+      lbl.style.color = "#666";
+      lbl.style.maxWidth = "140px";
+      lbl.style.textAlign = "center";
+      lbl.style.marginTop = "0.35em";
+      wrapper.appendChild(lbl);
+    }
+    picker.appendChild(wrapper);
   });
 }
 
