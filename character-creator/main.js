@@ -8,10 +8,9 @@ const layers = {
     {name:'thin', src:assetBase+'fbody-type-thin.png'},
   ],
   face: [
-    {name:'full', src:assetBase+'femface-full.png'},
-    {name:'long', src:assetBase+'femface-long.png'},
-    {name:'norm', src:assetBase+'femface-norm.png'},
-  ],
+  {name:'full', src:assetBase+'femface-full.png'},
+  {name:'norm', src:assetBase+'femface-norm.png'},
+],
   hair: [
     {name:'hair1-blck', src:assetBase+'hair1-blck.png'},
     {name:'hair1-red', src:assetBase+'hair1-red.png'},
@@ -147,3 +146,4 @@ document.getElementById('randomBtn').addEventListener('click', () => {
 });
 
 drawCharacter();
+
