@@ -1,4 +1,3 @@
-// Your actual hosted asset paths
 const assetBase = "https://sorcrpg.com/character-creator/assets/";
 
 const layers = {
@@ -32,7 +31,6 @@ function physiqueToBody(score) {
   return 'massive';
 }
 
-// Default picks
 const state = {
   body: layers.body[0].name,
   face: layers.face[0].name,
@@ -43,7 +41,6 @@ const state = {
 const canvas = document.getElementById('charCanvas');
 const ctx = canvas.getContext('2d');
 
-// Helper to load an image
 function loadImg(src) {
   return new Promise(res => {
     const img = new Image();
@@ -54,7 +51,6 @@ function loadImg(src) {
   });
 }
 
-// Draw character (composite layers)
 async function drawCharacter() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
   for (let layerName of ['body','face','hair','eyes']) {
@@ -63,8 +59,8 @@ async function drawCharacter() {
       let img = await loadImg(layer.src);
       if (img) {
         if (layerName === 'eyes') {
-          // Adjust these numbers for your art as needed:
-          ctx.drawImage(img, canvas.width/2 - 40, canvas.height/2 - 40, 80, 40);
+          // Adjust for your art. This centers and shrinks eyes a bit for larger canvas:
+          ctx.drawImage(img, canvas.width/2 - 60, canvas.height/2 - 60, 120, 60);
         } else {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         }
@@ -73,7 +69,6 @@ async function drawCharacter() {
   }
 }
 
-// Build picker thumbnails
 function buildThumbnails() {
   document.querySelectorAll('.thumbs').forEach(div => {
     const layerName = div.dataset.layer;
@@ -95,7 +90,6 @@ function buildThumbnails() {
 }
 buildThumbnails();
 
-// Download PNG
 document.getElementById('downloadBtn').addEventListener('click', () => {
   const link = document.createElement('a');
   link.download = 'character.png';
@@ -103,7 +97,6 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   link.click();
 });
 
-// Randomizer with physique score
 document.getElementById('randomBtn').addEventListener('click', () => {
   const score = parseInt(prompt('SorC says enter physique score number:'), 10) || 1;
   state.body = physiqueToBody(score);
@@ -114,5 +107,4 @@ document.getElementById('randomBtn').addEventListener('click', () => {
   drawCharacter();
 });
 
-// Initial draw
 drawCharacter();
