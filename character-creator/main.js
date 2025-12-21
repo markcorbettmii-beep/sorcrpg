@@ -1,21 +1,10 @@
-/* ──────────────────────────────────────────
-   main.js  –  SorC Character Creator v2
-   • Bigger thumbnails (140×140, object-fit: cover)
-   • Physique-score gate (must enter score first for body type)
-   • Taller canvas (480 × 960) to keep proportions
-   • JPEG preview is now the selected face thumb (fixes stretch/black)
-   • Eyes layer has white bg
-   • Zoom pop-out for face on picker hold
-   ────────────────────────────────────────── */
-
 const BASE = "https://sorcrpg.com/character-creator/assets/";
 
-/* ---------- IMAGE LISTS ---------- */
 const bodyOptions = [
-  { src: `${BASE}fbody-type-massive.png`,  thumb: `${BASE}fbody-type-massive.png` },
-  { src: `${BASE}fbody-type-muscular.png`, thumb: `${BASE}fbody-type-muscular.png` },
-  { src: `${BASE}fbody-type-lean.png`,     thumb: `${BASE}fbody-type-lean.png` },
-  { src: `${BASE}fbody-type-thin.png`,     thumb: `${BASE}fbody-type-thin.png` }
+  { src: `${BASE}fbody-type-massive.png`,  thumb: `${BASE}fbody-type-massive.png`,  label: "Massive"  },
+  { src: `${BASE}fbody-type-muscular.png`, thumb: `${BASE}fbody-type-muscular.png`, label: "Muscular" },
+  { src: `${BASE}fbody-type-lean.png`,     thumb: `${BASE}fbody-type-lean.png`,     label: "Lean"     },
+  { src: `${BASE}fbody-type-thin.png`,     thumb: `${BASE}fbody-type-thin.png`,     label: "Thin"     }
 ];
 
 const hairOptions = [
@@ -40,25 +29,23 @@ const faceOptions = [
   { src: `${BASE}placeholder-face2.png`, thumb: `${BASE}placeholder-face2.png` }
 ];
 
-/* ---------- STATE ---------- */
 let selected = { body: 0, hair: 0, eyes: 0, face: 0 };
 let physiqueScore = null;
+let allowedBodyIndices = [3]; // default to Thin
 
-/* ---------- INIT ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   initPickers();
   setBodyPickerEnabled(false);
   setOtherPickersEnabled(true);
   markDefaults();
   renderCharacter();
-  setupFaceZoom();
+  setupFeatureZoom();
 });
 
 /* ---------- Physique Score Handling ---------- */
 document.getElementById("physiqueForm").addEventListener("submit", e => {
   e.preventDefault();
   const val = parseInt(document.getElementById("physiqueInput").value, 10);
-
   if (isNaN(val)) {
     document.getElementById("physiqueError").style.display = "inline";
     return;
@@ -67,18 +54,28 @@ document.getElementById("physiqueForm").addEventListener("submit", e => {
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
   document.getElementById("physiqueApprovedMsg").style.display = "block";
+  allowedBodyIndices = getAllowedBodyIndices(physiqueScore);
   setBodyPickerEnabled(true);
+  updateBodyPickerDisabled();
 });
+
+function getAllowedBodyIndices(score) {
+  if (score <= 1) return [3];                // Thin (index 3)
+  if (score >= 2 && score <= 4) return [2];  // Lean (index 2)
+  if (score >= 5 && score <= 20) return [1]; // Muscular (index 1)
+  if (score > 20) return [0];                // Massive (index 0)
+  return [3]; // fallback to Thin
+}
 
 /* ---------- Picker Creation ---------- */
 function initPickers() {
-  buildPicker(bodyOptions, "body-pickers", "body", false);
-  buildPicker(hairOptions, "hair-pickers", "hair", true);
-  buildPicker(eyesOptions, "eyes-pickers", "eyes", true);
-  buildPicker(faceOptions, "face-pickers", "face", true);
+  buildPicker(bodyOptions, "body-pickers", "body", false, true);
+  buildPicker(hairOptions, "hair-pickers", "hair", true, false);
+  buildPicker(eyesOptions, "eyes-pickers", "eyes", true, false);
+  buildPicker(faceOptions, "face-pickers", "face", true, false);
 }
 
-function buildPicker(opts, pickerId, key, enabled) {
+function buildPicker(opts, pickerId, key, enabled, isBody) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
   opts.forEach((opt, idx) => {
@@ -87,8 +84,11 @@ function buildPicker(opts, pickerId, key, enabled) {
     img.alt  = `${key}-${idx+1}`;
     img.style.pointerEvents = enabled ? "auto" : "none";
     img.style.opacity = enabled ? "1" : "0.5";
+    img.dataset.idx = idx;
+    if (isBody) img.dataset.bodyidx = idx;
     img.addEventListener("click", () => {
-      if (img.style.pointerEvents === "auto") choose(pickerId, idx, key);
+      if (img.style.pointerEvents === "auto" && (!isBody || allowedBodyIndices.includes(idx)))
+        choose(pickerId, idx, key);
     });
     picker.appendChild(img);
   });
@@ -100,6 +100,7 @@ function setBodyPickerEnabled(flag) {
     img.style.pointerEvents = flag ? "auto" : "none";
     img.style.opacity = flag ? "1" : "0.5";
   });
+  updateBodyPickerDisabled();
 }
 
 function setOtherPickersEnabled(flag) {
@@ -114,9 +115,27 @@ function setOtherPickersEnabled(flag) {
   document.getElementById("randomBtn").disabled   = !flag;
 }
 
+/* ---------- Restrict Body Types by Physique ---------- */
+function updateBodyPickerDisabled() {
+  const picker = document.getElementById("body-pickers");
+  [...picker.children].forEach((img, idx) => {
+    if (physiqueScore === null) {
+      img.style.pointerEvents = "none";
+      img.style.opacity = "0.5";
+    } else if (allowedBodyIndices.includes(idx)) {
+      img.style.pointerEvents = "auto";
+      img.style.opacity = "1";
+    } else {
+      img.style.pointerEvents = "none";
+      img.style.opacity = "0.25";
+    }
+  });
+}
+
 /* ---------- Selection ---------- */
 function choose(pickerId, idx, key) {
   if (key === "body" && physiqueScore === null) return;
+  if (key === "body" && !allowedBodyIndices.includes(idx)) return;
   const picker = document.getElementById(pickerId);
   [...picker.children].forEach(img => img.classList.remove("selected"));
   if (picker.children[idx]) {
@@ -168,7 +187,9 @@ function markDefaults() {
 
 /* ---------- Random ---------- */
 document.getElementById("randomBtn").addEventListener("click", () => {
-  selected.body = rand(bodyOptions.length);
+  // Body type: choose only among allowed indices
+  const allowed = allowedBodyIndices;
+  selected.body = allowed[Math.floor(Math.random()*allowed.length)];
   selected.hair = rand(hairOptions.length);
   selected.eyes = rand(eyesOptions.length);
   selected.face = rand(faceOptions.length);
@@ -189,15 +210,27 @@ document.getElementById("randomBtn").addEventListener("click", () => {
 function rand(max){ return Math.floor(Math.random()*max); }
 
 /* ---------- JPEG Export ---------- */
-// Instead of canvas, use the face thumb for JPEG preview.
+// JPEG preview uses canvas (so it shows all features), but overlays "feature coming soon" message.
 document.getElementById("showJpegBtn").addEventListener("click",()=>{
+  const canvas=document.getElementById("charCanvas");
   const jpg=document.getElementById("jpegPreview");
-  // Use face thumb as savable jpeg (fixes aspect/stretch/black)
-  jpg.src = faceOptions[selected.face].thumb;
+  // Create a temporary canvas for overlay
+  const tempCanvas = document.createElement("canvas");
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tempCtx = tempCanvas.getContext("2d");
+  tempCtx.drawImage(canvas, 0, 0);
+  // Overlay "feature coming soon"
+  tempCtx.font = "bold 48px sans-serif";
+  tempCtx.fillStyle = "#c55";
+  tempCtx.textAlign = "center";
+  tempCtx.globalAlpha = 0.8;
+  tempCtx.fillText("Feature coming soon", tempCanvas.width/2, tempCanvas.height/2 + 100);
 
+  jpg.src = tempCanvas.toDataURL("image/jpeg");
   jpg.style.display      = "block";
   document.getElementById("saveInstr").style.display = "block";
-  document.getElementById("charCanvas").style.display   = "none";
+  canvas.style.display   = "none";
   document.getElementById("editingButtons").style.display = "none";
   document.getElementById("jpegButtons").style.display = "block";
 });
@@ -210,34 +243,34 @@ document.getElementById("backBtn").addEventListener("click",()=>{
   document.getElementById("jpegButtons").style.display = "none";
 });
 
-/* ---------- Face Zoom Pop-Out ---------- */
-function setupFaceZoom() {
-  const zoomPopup = document.getElementById("faceZoomPopup");
-  const zoomImg   = document.getElementById("faceZoomImg");
+/* ---------- Feature Zoom Pop-Out (for pickers, not savable) ---------- */
+function setupFeatureZoom() {
+  const zoomPopup = document.getElementById("featureZoomPopup");
+  const zoomImg   = document.getElementById("featureZoomImg");
 
-  function showFaceZoom() {
-    zoomImg.src = faceOptions[selected.face].thumb;
+  function showFeatureZoom(src) {
+    zoomImg.src = src;
     zoomPopup.style.display = "flex";
   }
-  function hideFaceZoom() {
+  function hideFeatureZoom() {
     zoomPopup.style.display = "none";
   }
 
-  // Add listeners to hair, eyes, and face pickers
+  // For hair, eyes, face pickers: show zoom of the thumbnail held down
   ["hair-pickers","eyes-pickers","face-pickers"].forEach(id => {
     const picker = document.getElementById(id);
+    // mousedown/touchstart on the actual image
     picker.addEventListener("mousedown", e => {
-      if (e.target.tagName === "IMG") showFaceZoom();
+      if (e.target.tagName === "IMG") showFeatureZoom(e.target.src);
     });
     picker.addEventListener("touchstart", e => {
-      if (e.target.tagName === "IMG") showFaceZoom();
+      if (e.target.tagName === "IMG") showFeatureZoom(e.target.src);
     });
-    picker.addEventListener("mouseup", hideFaceZoom);
-    picker.addEventListener("mouseleave", hideFaceZoom);
-    picker.addEventListener("touchend", hideFaceZoom);
-    picker.addEventListener("touchcancel", hideFaceZoom);
+    picker.addEventListener("mouseup", hideFeatureZoom);
+    picker.addEventListener("mouseleave", hideFeatureZoom);
+    picker.addEventListener("touchend", hideFeatureZoom);
+    picker.addEventListener("touchcancel", hideFeatureZoom);
   });
 
-  // Prevent scrolling when zoom popup is shown
   zoomPopup.addEventListener("touchmove", function(e){e.preventDefault();}, {passive:false});
 }
