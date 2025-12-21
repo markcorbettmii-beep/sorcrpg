@@ -135,38 +135,26 @@ buildThumbnails();
 // --- JPEG Preview Logic ---
 
 function showJpegPreview() {
-  // Hide canvas, show jpeg, show instructions, toggle buttons
-  const jpegPreview = document.getElementById('jpegPreview');
-  const saveInstr = document.getElementById('saveInstr');
-  const showJpegBtn = document.getElementById('showJpegBtn');
-  const editBtn = document.getElementById('editBtn');
-  // Convert canvas to JPEG data URL
-  jpegPreview.src = canvas.toDataURL('image/jpeg', 0.92);
-  jpegPreview.style.display = 'block';
-  saveInstr.style.display = 'block';
+  // Hide canvas, show jpeg, show instructions, toggle button groups
+  document.getElementById('jpegPreview').src = canvas.toDataURL('image/jpeg', 0.92);
+  document.getElementById('jpegPreview').style.display = 'block';
+  document.getElementById('saveInstr').style.display = 'block';
   canvas.style.display = 'none';
-  showJpegBtn.style.display = 'none';
-  editBtn.style.display = 'inline-block';
+  document.getElementById('editingButtons').style.display = 'none';
+  document.getElementById('jpegButtons').style.display = 'block';
 }
 
 function showCanvasEditing() {
-  // Show canvas, hide jpeg, hide instructions, toggle buttons
-  const jpegPreview = document.getElementById('jpegPreview');
-  const saveInstr = document.getElementById('saveInstr');
-  const showJpegBtn = document.getElementById('showJpegBtn');
-  const editBtn = document.getElementById('editBtn');
-  jpegPreview.style.display = 'none';
-  saveInstr.style.display = 'none';
+  // Show canvas, hide jpeg, hide instructions, toggle button groups
+  document.getElementById('jpegPreview').style.display = 'none';
+  document.getElementById('saveInstr').style.display = 'none';
   canvas.style.display = 'block';
-  showJpegBtn.style.display = 'inline-block';
-  editBtn.style.display = 'none';
+  document.getElementById('editingButtons').style.display = 'block';
+  document.getElementById('jpegButtons').style.display = 'none';
 }
 
 document.getElementById('showJpegBtn').addEventListener('click', showJpegPreview);
-document.getElementById('editBtn').addEventListener('click', showCanvasEditing);
-
-// Remove Download PNG Button (if present in old code)
-// document.getElementById('downloadBtn').remove();
+document.getElementById('backBtn').addEventListener('click', showCanvasEditing);
 
 document.getElementById('randomBtn').addEventListener('click', () => {
   let score = prompt('Enter your character\'s Physique score:');
