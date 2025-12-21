@@ -132,12 +132,41 @@ function buildThumbnails() {
 }
 buildThumbnails();
 
-document.getElementById('downloadBtn').addEventListener('click', () => {
-  const link = document.createElement('a');
-  link.download = 'character.png';
-  link.href = canvas.toDataURL();
-  link.click();
-});
+// --- JPEG Preview Logic ---
+
+function showJpegPreview() {
+  // Hide canvas, show jpeg, show instructions, toggle buttons
+  const jpegPreview = document.getElementById('jpegPreview');
+  const saveInstr = document.getElementById('saveInstr');
+  const showJpegBtn = document.getElementById('showJpegBtn');
+  const editBtn = document.getElementById('editBtn');
+  // Convert canvas to JPEG data URL
+  jpegPreview.src = canvas.toDataURL('image/jpeg', 0.92);
+  jpegPreview.style.display = 'block';
+  saveInstr.style.display = 'block';
+  canvas.style.display = 'none';
+  showJpegBtn.style.display = 'none';
+  editBtn.style.display = 'inline-block';
+}
+
+function showCanvasEditing() {
+  // Show canvas, hide jpeg, hide instructions, toggle buttons
+  const jpegPreview = document.getElementById('jpegPreview');
+  const saveInstr = document.getElementById('saveInstr');
+  const showJpegBtn = document.getElementById('showJpegBtn');
+  const editBtn = document.getElementById('editBtn');
+  jpegPreview.style.display = 'none';
+  saveInstr.style.display = 'none';
+  canvas.style.display = 'block';
+  showJpegBtn.style.display = 'inline-block';
+  editBtn.style.display = 'none';
+}
+
+document.getElementById('showJpegBtn').addEventListener('click', showJpegPreview);
+document.getElementById('editBtn').addEventListener('click', showCanvasEditing);
+
+// Remove Download PNG Button (if present in old code)
+// document.getElementById('downloadBtn').remove();
 
 document.getElementById('randomBtn').addEventListener('click', () => {
   let score = prompt('Enter your character\'s Physique score:');
