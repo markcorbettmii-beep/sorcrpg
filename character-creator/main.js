@@ -10,6 +10,7 @@ const layers = {
   face: [
     {name:'full', src:assetBase+'femface-full.png'},
     {name:'long', src:assetBase+'femface-long.png'},
+    {name:'norm', src:assetBase+'femface-norm.png'},
   ],
   hair: [
     {name:'hair1-blck', src:assetBase+'hair1-blck.png'},
@@ -54,19 +55,30 @@ function loadImg(src) {
 
 async function drawCharacter() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  for (let layerName of ['body','face','hair','eyes']) {
-    let layer = layers[layerName].find(l => l.name === state[layerName]);
-    if (layer && layer.src) {
-      let img = await loadImg(layer.src);
-      if (img) {
-        if (layerName === 'eyes') {
-          // Center & size eyes for large canvas; adjust if needed for your art!
-          ctx.drawImage(img, canvas.width/2 - 60, canvas.height/2 - 60, 120, 60);
-        } else {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        }
-      }
-    }
+
+  // Draw body
+  let body = layers.body.find(l => l.name === state.body);
+  if (body) {
+    let img = await loadImg(body.src);
+    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  }
+  // Draw face
+  let face = layers.face.find(l => l.name === state.face);
+  if (face) {
+    let img = await loadImg(face.src);
+    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  }
+  // Draw hair
+  let hair = layers.hair.find(l => l.name === state.hair);
+  if (hair) {
+    let img = await loadImg(hair.src);
+    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  }
+  // Draw eyes LAST and FULL SIZE (so they always show)
+  let eyes = layers.eyes.find(l => l.name === state.eyes);
+  if (eyes) {
+    let img = await loadImg(eyes.src);
+    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   }
 }
 
