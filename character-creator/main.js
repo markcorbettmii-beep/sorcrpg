@@ -3,6 +3,9 @@
    • Bigger thumbnails (140×140, object-fit: cover)
    • Physique-score gate (must enter score first for body type)
    • Taller canvas (480 × 960) to keep proportions
+   • JPEG preview is now the selected face thumb (fixes stretch/black)
+   • Eyes layer has white bg
+   • Zoom pop-out for face on picker hold
    ────────────────────────────────────────── */
 
 const BASE = "https://sorcrpg.com/character-creator/assets/";
@@ -48,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setOtherPickersEnabled(true);
   markDefaults();
   renderCharacter();
+  setupFaceZoom();
 });
 
 /* ---------- Physique Score Handling ---------- */
@@ -128,6 +132,10 @@ function renderCharacter() {
   const ctx    = canvas.getContext("2d");
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
+  // White background for eyes
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
   const layers = [
     bodyOptions[selected.body],
     faceOptions[selected.face],
@@ -181,14 +189,15 @@ document.getElementById("randomBtn").addEventListener("click", () => {
 function rand(max){ return Math.floor(Math.random()*max); }
 
 /* ---------- JPEG Export ---------- */
+// Instead of canvas, use the face thumb for JPEG preview.
 document.getElementById("showJpegBtn").addEventListener("click",()=>{
-  const canvas=document.getElementById("charCanvas");
   const jpg=document.getElementById("jpegPreview");
-  jpg.src = canvas.toDataURL("image/jpeg");
+  // Use face thumb as savable jpeg (fixes aspect/stretch/black)
+  jpg.src = faceOptions[selected.face].thumb;
 
   jpg.style.display      = "block";
   document.getElementById("saveInstr").style.display = "block";
-  canvas.style.display   = "none";
+  document.getElementById("charCanvas").style.display   = "none";
   document.getElementById("editingButtons").style.display = "none";
   document.getElementById("jpegButtons").style.display = "block";
 });
@@ -200,3 +209,35 @@ document.getElementById("backBtn").addEventListener("click",()=>{
   document.getElementById("editingButtons").style.display = "block";
   document.getElementById("jpegButtons").style.display = "none";
 });
+
+/* ---------- Face Zoom Pop-Out ---------- */
+function setupFaceZoom() {
+  const zoomPopup = document.getElementById("faceZoomPopup");
+  const zoomImg   = document.getElementById("faceZoomImg");
+
+  function showFaceZoom() {
+    zoomImg.src = faceOptions[selected.face].thumb;
+    zoomPopup.style.display = "flex";
+  }
+  function hideFaceZoom() {
+    zoomPopup.style.display = "none";
+  }
+
+  // Add listeners to hair, eyes, and face pickers
+  ["hair-pickers","eyes-pickers","face-pickers"].forEach(id => {
+    const picker = document.getElementById(id);
+    picker.addEventListener("mousedown", e => {
+      if (e.target.tagName === "IMG") showFaceZoom();
+    });
+    picker.addEventListener("touchstart", e => {
+      if (e.target.tagName === "IMG") showFaceZoom();
+    });
+    picker.addEventListener("mouseup", hideFaceZoom);
+    picker.addEventListener("mouseleave", hideFaceZoom);
+    picker.addEventListener("touchend", hideFaceZoom);
+    picker.addEventListener("touchcancel", hideFaceZoom);
+  });
+
+  // Prevent scrolling when zoom popup is shown
+  zoomPopup.addEventListener("touchmove", function(e){e.preventDefault();}, {passive:false});
+}
