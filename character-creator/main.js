@@ -1,149 +1,98 @@
-const assetBase = "https://sorcrpg.com/character-creator/assets/";
+// --- CONFIGURE YOUR ASSET COUNTS HERE ---
+const BODY_COUNT = 4;
+const HAIR_COUNT = 6;
+const EYES_COUNT = 6;
+const FACE_COUNT = 6;
 
-const layers = {
-  body: [
-    {name:'lean', src:assetBase+'fbody-type-lean.png'},
-    {name:'massive', src:assetBase+'fbody-type-massive.png'},
-    {name:'muscular', src:assetBase+'fbody-type-muscular.png'},
-    {name:'thin', src:assetBase+'fbody-type-thin.png'},
-  ],
-  face: [
-    {name:'full', src:assetBase+'femface-full.png'},
-    {name:'norm', src:assetBase+'femface-norm.png'},
-    {name:'placeholder1', src:assetBase+'placeholder-face1.png'},
-    {name:'placeholder2', src:assetBase+'placeholder-face2.png'},
-  ],
-  hair: [
-    {name:'hair1-blck', src:assetBase+'hair1-blck.png'},
-    {name:'hair1-red', src:assetBase+'hair1-red.png'},
-    {name:'hair2-red', src:assetBase+'hair2-red.png'},
-    {name:'hair3-blnd', src:assetBase+'hair3-blnd.png'},
-  ],
-  eyes: [
-    {name:'eyes1-blu', src:assetBase+'eyes1-blu.png'},
-    {name:'eyes1-brown', src:assetBase+'eyes1-brown.png'},
-    {name:'eyes1-green', src:assetBase+'eyes1-green.png'},
-    {name:'eyes2-redbrn', src:assetBase+'eyes2-redbrn.png'},
-  ]
-};
-
-function physiqueToBody(score) {
-  if (score <= 0) return 'thin';
-  if (score <= 4) return 'lean';
-  if (score <= 20) return 'muscular';
-  return 'massive';
-}
-
-const state = {
-  body: layers.body[0].name,
-  face: layers.face[0].name,
-  hair: layers.hair[0].name,
-  eyes: layers.eyes[0].name,
-};
-
-const canvas = document.getElementById('charCanvas');
-const ctx = canvas.getContext('2d');
-
-function loadImg(src) {
-  return new Promise(res => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = src;
-    img.onload = () => res(img);
-    img.onerror = () => res(null);
-  });
-}
-
-async function drawCharacter() {
-  ctx.fillStyle = "#E1E1E1";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  let body = layers.body.find(l => l.name === state.body);
-  if (body) {
-    let img = await loadImg(body.src);
-    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  }
-  let face = layers.face.find(l => l.name === state.face);
-  if (face) {
-    let img = await loadImg(face.src);
-    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  }
-  let hair = layers.hair.find(l => l.name === state.hair);
-  if (hair) {
-    let img = await loadImg(hair.src);
-    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  }
-  let eyes = layers.eyes.find(l => l.name === state.eyes);
-  if (eyes) {
-    let img = await loadImg(eyes.src);
-    if (img) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  }
-}
-
-// Build each row
-function buildRow(layerName, containerId, isBody) {
-  const div = document.getElementById(containerId);
-  div.innerHTML = '';
-  layers[layerName].forEach(layerObj => {
+// --- HELPERS ---
+function createPickerImages(feature, count, pickerId, basePath) {
+  const picker = document.getElementById(pickerId);
+  picker.innerHTML = ""; // Clear any existing
+  for (let i = 1; i <= count; i++) {
     const img = document.createElement('img');
-    img.src = layerObj.src;
-    img.alt = layerObj.name;
-    img.className = state[layerName] === layerObj.name ? 'selected' : '';
-    img.addEventListener('click', () => {
-      if (layerName === 'body') {
-        let score = prompt('Enter your character\'s Physique score:');
-        score = parseInt(score, 10);
-        if (isNaN(score)) score = 0;
-        state.body = physiqueToBody(score);
-      } else {
-        state[layerName] = layerObj.name;
-      }
-      buildAllRows();
-      drawCharacter();
+    img.src = `${basePath}-${i}-tmb.png`;             // Use thumbnail for picker
+    img.alt = `${feature} ${i}`;
+    img.dataset.fullsrc = `${basePath}-${i}.png`;      // Main image for canvas
+    img.dataset.index = i;
+    img.addEventListener('click', function () {
+      selectFeature(pickerId, i, img.dataset.fullsrc);
     });
-    div.appendChild(img);
+    picker.appendChild(img);
+  }
+}
+
+// --- TRACK SELECTED FEATURES ---
+let selected = {
+  body: 1,
+  hair: 1,
+  eyes: 1,
+  face: 1
+};
+
+// --- HIGHLIGHT PICKED IMAGE & RENDER ---
+function selectFeature(pickerId, index, imgPath) {
+  // Highlight selected
+  const picker = document.getElementById(pickerId);
+  Array.from(picker.children).forEach(img => img.classList.remove("selected"));
+  picker.children[index - 1].classList.add("selected");
+
+  // Save selection
+  if (pickerId === "body-pickers") selected.body = index;
+  if (pickerId === "hair-pickers") selected.hair = index;
+  if (pickerId === "eyes-pickers") selected.eyes = index;
+  if (pickerId === "face-pickers") selected.face = index;
+
+  renderCharacter();
+}
+
+// --- DRAW CHARACTER TO CANVAS ---
+function renderCharacter() {
+  const canvas = document.getElementById("charCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Load and draw each feature in order
+  const features = [
+    { type: "body", index: selected.body },
+    { type: "hair", index: selected.hair },
+    { type: "eyes", index: selected.eyes },
+    { type: "face", index: selected.face }
+  ];
+
+  let loaded = 0;
+  let images = [];
+
+  // Load all images
+  features.forEach((f, i) => {
+    const img = new Image();
+    img.src = `${f.type}-${f.index}.png`;
+    img.onload = function () {
+      images[i] = img;
+      loaded++;
+      if (loaded === features.length) {
+        // Draw all images in order
+        images.forEach(im => ctx.drawImage(im, 0, 0, canvas.width, canvas.height));
+      }
+    };
   });
 }
 
-function buildAllRows() {
-  buildRow('body', 'body-pickers', true);
-  buildRow('hair', 'hair-pickers', false);
-  buildRow('eyes', 'eyes-pickers', false);
-  buildRow('face', 'face-pickers', false);
-}
+// --- INITIALIZE PICKERS ---
+createPickerImages("body", BODY_COUNT, "body-pickers", "body");
+createPickerImages("hair", HAIR_COUNT, "hair-pickers", "hair");
+createPickerImages("eyes", EYES_COUNT, "eyes-pickers", "eyes");
+createPickerImages("face", FACE_COUNT, "face-pickers", "face");
 
-buildAllRows();
-
-// JPEG Preview Logic
-function showJpegPreview() {
-  document.getElementById('jpegPreview').src = canvas.toDataURL('image/jpeg', 0.92);
-  document.getElementById('jpegPreview').style.display = 'block';
-  document.getElementById('saveInstr').style.display = 'block';
-  canvas.style.display = 'none';
-  document.getElementById('editingButtons').style.display = 'none';
-  document.getElementById('jpegButtons').style.display = 'block';
-}
-function showCanvasEditing() {
-  document.getElementById('jpegPreview').style.display = 'none';
-  document.getElementById('saveInstr').style.display = 'none';
-  canvas.style.display = 'block';
-  document.getElementById('editingButtons').style.display = 'block';
-  document.getElementById('jpegButtons').style.display = 'none';
-}
-
-document.getElementById('showJpegBtn').addEventListener('click', showJpegPreview);
-document.getElementById('backBtn').addEventListener('click', showCanvasEditing);
-
-document.getElementById('randomBtn').addEventListener('click', () => {
-  let score = prompt('Enter your character\'s Physique score:');
-  score = parseInt(score, 10);
-  if (isNaN(score)) score = 0;
-  state.body = physiqueToBody(score);
-  state.face = layers.face[Math.floor(Math.random()*layers.face.length)].name;
-  state.hair = layers.hair[Math.floor(Math.random()*layers.hair.length)].name;
-  state.eyes = layers.eyes[Math.floor(Math.random()*layers.eyes.length)].name;
-  buildAllRows();
-  drawCharacter();
+// --- SELECT DEFAULTS ---
+document.addEventListener("DOMContentLoaded", () => {
+  // Select first image in each picker
+  ["body-pickers", "hair-pickers", "eyes-pickers", "face-pickers"].forEach((pickerId) => {
+    const picker = document.getElementById(pickerId);
+    if (picker && picker.children.length > 0) {
+      picker.children[0].classList.add("selected");
+    }
+  });
+  renderCharacter();
 });
 
-drawCharacter();
+// --- You can add more code for buttons, random, saving, etc as needed ---
