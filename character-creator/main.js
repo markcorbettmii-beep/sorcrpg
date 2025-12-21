@@ -54,8 +54,8 @@ function loadImg(src) {
 }
 
 async function drawCharacter() {
-  // Fill canvas background with ##E1E1E1
-  ctx.fillStyle = "##E1E1E1";
+  // Fill canvas background with #E1E1E1
+  ctx.fillStyle = "#E1E1E1";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw body
