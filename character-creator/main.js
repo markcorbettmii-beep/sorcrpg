@@ -1,7 +1,7 @@
 /* ──────────────────────────────────────────
    main.js  –  SorC Character Creator v2
    • Bigger thumbnails (140×140, object-fit: cover)
-   • Physique-score gate (must enter score first)
+   • Physique-score gate (must enter score first for body type)
    • Taller canvas (480 × 960) to keep proportions
    ────────────────────────────────────────── */
 
@@ -44,7 +44,8 @@ let physiqueScore = null;
 /* ---------- INIT ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   initPickers();
-  setPickersEnabled(false);
+  setBodyPickerEnabled(false);
+  setOtherPickersEnabled(true);
   markDefaults();
   renderCharacter();
 });
@@ -54,7 +55,7 @@ document.getElementById("physiqueForm").addEventListener("submit", e => {
   e.preventDefault();
   const val = parseInt(document.getElementById("physiqueInput").value, 10);
 
-  if (isNaN(val) || val < 1) {
+  if (isNaN(val)) {
     document.getElementById("physiqueError").style.display = "inline";
     return;
   }
@@ -62,26 +63,26 @@ document.getElementById("physiqueForm").addEventListener("submit", e => {
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
   document.getElementById("physiqueApprovedMsg").style.display = "block";
-  setPickersEnabled(true);
+  setBodyPickerEnabled(true);
 });
 
 /* ---------- Picker Creation ---------- */
 function initPickers() {
-  buildPicker(bodyOptions, "body-pickers", "body");
-  buildPicker(hairOptions, "hair-pickers", "hair");
-  buildPicker(eyesOptions, "eyes-pickers", "eyes");
-  buildPicker(faceOptions, "face-pickers", "face");
+  buildPicker(bodyOptions, "body-pickers", "body", false);
+  buildPicker(hairOptions, "hair-pickers", "hair", true);
+  buildPicker(eyesOptions, "eyes-pickers", "eyes", true);
+  buildPicker(faceOptions, "face-pickers", "face", true);
 }
 
-function buildPicker(opts, pickerId, key) {
+function buildPicker(opts, pickerId, key, enabled) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
   opts.forEach((opt, idx) => {
     const img = document.createElement("img");
     img.src  = opt.thumb;
     img.alt  = `${key}-${idx+1}`;
-    img.style.pointerEvents = "none";   // disabled until physique entered
-    img.style.opacity = "0.5";
+    img.style.pointerEvents = enabled ? "auto" : "none";
+    img.style.opacity = enabled ? "1" : "0.5";
     img.addEventListener("click", () => {
       if (img.style.pointerEvents === "auto") choose(pickerId, idx, key);
     });
@@ -89,13 +90,20 @@ function buildPicker(opts, pickerId, key) {
   });
 }
 
-/* ---------- Enable / Disable ---------- */
-function setPickersEnabled(flag) {
-  ["body-pickers","hair-pickers","eyes-pickers","face-pickers"].forEach(id=>{
-    const picker=document.getElementById(id);
-    [...picker.children].forEach(img=>{
+function setBodyPickerEnabled(flag) {
+  const picker = document.getElementById("body-pickers");
+  [...picker.children].forEach(img => {
+    img.style.pointerEvents = flag ? "auto" : "none";
+    img.style.opacity = flag ? "1" : "0.5";
+  });
+}
+
+function setOtherPickersEnabled(flag) {
+  ["hair-pickers", "eyes-pickers", "face-pickers"].forEach(id => {
+    const picker = document.getElementById(id);
+    [...picker.children].forEach(img => {
       img.style.pointerEvents = flag ? "auto" : "none";
-      img.style.opacity       = flag ? "1"    : "0.5";
+      img.style.opacity = flag ? "1" : "0.5";
     });
   });
   document.getElementById("showJpegBtn").disabled = !flag;
@@ -104,8 +112,9 @@ function setPickersEnabled(flag) {
 
 /* ---------- Selection ---------- */
 function choose(pickerId, idx, key) {
-  const picker=document.getElementById(pickerId);
-  [...picker.children].forEach(img=>img.classList.remove("selected"));
+  if (key === "body" && physiqueScore === null) return;
+  const picker = document.getElementById(pickerId);
+  [...picker.children].forEach(img => img.classList.remove("selected"));
   if (picker.children[idx]) {
     picker.children[idx].classList.add("selected");
     selected[key] = idx;
@@ -151,8 +160,6 @@ function markDefaults() {
 
 /* ---------- Random ---------- */
 document.getElementById("randomBtn").addEventListener("click", () => {
-  if (!physiqueScore) return;
-
   selected.body = rand(bodyOptions.length);
   selected.hair = rand(hairOptions.length);
   selected.eyes = rand(eyesOptions.length);
