@@ -54,7 +54,9 @@ function loadImg(src) {
 }
 
 async function drawCharacter() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // Fill canvas background with #F6F6F4
+  ctx.fillStyle = "#F6F6F4";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw body
   let body = layers.body.find(l => l.name === state.body);
