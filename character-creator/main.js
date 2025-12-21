@@ -89,17 +89,41 @@ function buildThumbnails() {
     const layerName = div.dataset.layer;
     div.innerHTML = '';
     layers[layerName].forEach(layerObj => {
-      const img = document.createElement('img');
-      img.src = layerObj.src;
-      img.alt = layerObj.name;
-      img.addEventListener('click', () => {
-        state[layerName] = layerObj.name;
-        div.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
-        img.classList.add('selected');
-        drawCharacter();
-      });
-      if (state[layerName] === layerObj.name) img.classList.add('selected');
-      div.appendChild(img);
+      if (layerName === 'body') {
+        // For body, show image AND label
+        const box = document.createElement('div');
+        box.className = 'thumb-label-box';
+        const img = document.createElement('img');
+        img.src = layerObj.src;
+        img.alt = layerObj.name;
+        img.addEventListener('click', () => {
+          state[layerName] = layerObj.name;
+          div.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
+          img.classList.add('selected');
+          drawCharacter();
+        });
+        if (state[layerName] === layerObj.name) img.classList.add('selected');
+        const label = document.createElement('div');
+        label.className = 'thumb-label';
+        // Capitalize first letter, rest lowercase
+        label.textContent = layerObj.name.charAt(0).toUpperCase() + layerObj.name.slice(1);
+        box.appendChild(img);
+        box.appendChild(label);
+        div.appendChild(box);
+      } else {
+        // For other pickers, just show image
+        const img = document.createElement('img');
+        img.src = layerObj.src;
+        img.alt = layerObj.name;
+        img.addEventListener('click', () => {
+          state[layerName] = layerObj.name;
+          div.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
+          img.classList.add('selected');
+          drawCharacter();
+        });
+        if (state[layerName] === layerObj.name) img.classList.add('selected');
+        div.appendChild(img);
+      }
     });
   });
 }
