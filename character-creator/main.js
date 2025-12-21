@@ -1,33 +1,34 @@
-// --- Asset Arrays, use your ACTUAL filenames here! ---
+// All image paths are prefixed with this:
+const BASE = "https://sorcrpg.com/character-creator/assets/";
+
+// --- Asset Arrays ---
 const bodyOptions = [
-  { src: "body-thin.png", thumb: "body-thin-tmb.png" },
-  { src: "body-lean.png", thumb: "body-lean-tmb.png" },
-  { src: "body-muscular.png", thumb: "body-muscular-tmb.png" },
-  { src: "body-massive.png", thumb: "body-massive-tmb.png" }
+  { src: BASE + "fbody-type-massive.png", thumb: BASE + "fbody-type-massive.png" },
+  { src: BASE + "fbody-type-muscular.png", thumb: BASE + "fbody-type-muscular.png" },
+  { src: BASE + "fbody-type-lean.png", thumb: BASE + "fbody-type-lean.png" },
+  { src: BASE + "fbody-type-thin.png", thumb: BASE + "fbody-type-thin.png" }
 ];
+
 const hairOptions = [
-  { src: "hair1-black.png", thumb: "hair1-black-tmb.png" },
-  { src: "hair2-blonde.png", thumb: "hair2-blonde-tmb.png" },
-  { src: "hair3-red.png", thumb: "hair3-red-tmb.png" },
-  { src: "hair4-brown.png", thumb: "hair4-brown-tmb.png" },
-  { src: "hair5-gray.png", thumb: "hair5-gray-tmb.png" },
-  { src: "hair6-pink.png", thumb: "hair6-pink-tmb.png" }
+  { src: BASE + "hair1-blck.png", thumb: BASE + "hair1-blck-tmb.png" },
+  { src: BASE + "hair1-red.png", thumb: BASE + "hair1-red-tmb.png" },
+  { src: BASE + "hair2-red.png", thumb: BASE + "hair2-red-tmb.png" },
+  { src: BASE + "hair3-blnd.png", thumb: BASE + "hair3-bond-tmb.png" }, // thumb typo assumed: bond/blnd
+  { src: BASE + "hair4-blnd.png", thumb: BASE + "hair4-bond-tmb.png" }  // thumb typo assumed: bond/blnd
 ];
+
 const eyesOptions = [
-  { src: "eyes1-green.png", thumb: "eyes1-green-tmb.png" },
-  { src: "eyes2-blue.png", thumb: "eyes2-blue-tmb.png" },
-  { src: "eyes3-brown.png", thumb: "eyes3-brown-tmb.png" },
-  { src: "eyes4-gray.png", thumb: "eyes4-gray-tmb.png" },
-  { src: "eyes5-hazel.png", thumb: "eyes5-hazel-tmb.png" },
-  { src: "eyes6-violet.png", thumb: "eyes6-violet-tmb.png" }
+  { src: BASE + "eyes1-blu.png", thumb: BASE + "eyes1-blu-tmb.png" },
+  { src: BASE + "eyes1-brown.png", thumb: BASE + "eyes1-brn-tmb.png" },
+  { src: BASE + "eyes1-green.png", thumb: BASE + "eyes1-green-tmb.png" },
+  { src: BASE + "eyes2-redbrn.png", thumb: BASE + "eyes2-redbrn-tmb.png" }
 ];
+
 const faceOptions = [
-  { src: "face1-round.png", thumb: "face1-round-tmb.png" },
-  { src: "face2-square.png", thumb: "face2-square-tmb.png" },
-  { src: "face3-oval.png", thumb: "face3-oval-tmb.png" },
-  { src: "face4-heart.png", thumb: "face4-heart-tmb.png" },
-  { src: "face5-triangle.png", thumb: "face5-triangle-tmb.png" },
-  { src: "face6-diamond.png", thumb: "face6-diamond-tmb.png" }
+  { src: BASE + "femface-full.png", thumb: BASE + "femface-full-tmb.png" },
+  { src: BASE + "femface-norm.png", thumb: BASE + "femface-norm-tmb.png" },
+  { src: BASE + "placeholder-face1.png", thumb: BASE + "placeholder-face1.png" }, // No thumb, reuse main
+  { src: BASE + "placeholder-face2.png", thumb: BASE + "placeholder-face2.png" }  // No thumb, reuse main
 ];
 
 // --- TRACK SELECTED ---
@@ -38,7 +39,6 @@ let selected = {
   face: 0
 };
 
-// --- Picker Setup ---
 function createPickerImages(options, pickerId, featureKey) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
@@ -53,16 +53,16 @@ function createPickerImages(options, pickerId, featureKey) {
   });
 }
 
-// --- Select Feature ---
 function selectFeature(pickerId, idx, featureKey) {
   const picker = document.getElementById(pickerId);
   Array.from(picker.children).forEach(img => img.classList.remove("selected"));
-  picker.children[idx].classList.add("selected");
-  selected[featureKey] = idx;
-  renderCharacter();
+  if (picker.children[idx]) {
+    picker.children[idx].classList.add("selected");
+    selected[featureKey] = idx;
+    renderCharacter();
+  }
 }
 
-// --- Render Character ---
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
@@ -70,22 +70,25 @@ function renderCharacter() {
 
   // Order: body, face, eyes, hair
   const features = [
-    bodyOptions[selected.body],
-    faceOptions[selected.face],
-    eyesOptions[selected.eyes],
-    hairOptions[selected.hair]
+    bodyOptions[selected.body] || bodyOptions[0],
+    faceOptions[selected.face] || faceOptions[0],
+    eyesOptions[selected.eyes] || eyesOptions[0],
+    hairOptions[selected.hair] || hairOptions[0]
   ];
 
   let loaded = 0;
   let images = [];
   features.forEach((option, i) => {
+    if (!option) return;
     const img = new Image();
     img.src = option.src;
     img.onload = function () {
       images[i] = img;
       loaded++;
       if (loaded === features.length) {
-        images.forEach(im => ctx.drawImage(im, 0, 0, canvas.width, canvas.height));
+        images.forEach(im => {
+          if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+        });
       }
     };
     img.onerror = function () {
@@ -105,7 +108,7 @@ createPickerImages(hairOptions, "hair-pickers", "hair");
 createPickerImages(eyesOptions, "eyes-pickers", "eyes");
 createPickerImages(faceOptions, "face-pickers", "face");
 
-// --- Select Defaults on Load ---
+// --- Select Defaults ---
 document.addEventListener("DOMContentLoaded", () => {
   ["body-pickers", "hair-pickers", "eyes-pickers", "face-pickers"].forEach((pickerId, i) => {
     const picker = document.getElementById(pickerId);
@@ -113,6 +116,10 @@ document.addEventListener("DOMContentLoaded", () => {
       picker.children[0].classList.add("selected");
     }
   });
+  selected.body = 0;
+  selected.hair = 0;
+  selected.eyes = 0;
+  selected.face = 0;
   renderCharacter();
 });
 
@@ -131,7 +138,7 @@ document.getElementById("randomBtn").addEventListener("click", function () {
   ].forEach(({ pickerId, idx }) => {
     const picker = document.getElementById(pickerId);
     Array.from(picker.children).forEach(img => img.classList.remove("selected"));
-    picker.children[idx].classList.add("selected");
+    if (picker.children[idx]) picker.children[idx].classList.add("selected");
   });
 
   renderCharacter();
