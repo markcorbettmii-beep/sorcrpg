@@ -35,20 +35,20 @@ const faceOptions = [
   { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu", enabled: false }
 ];
 
-// --- HAIR OPTIONS: Only first is selectable ---
+// --- HAIR OPTIONS: ALL FUNCTIONAL ---
 const hairOptions = [
   { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png`, enabled: true },
-  { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png`, enabled: false },
-  { src: `${BASE}femhair3.png`, thumb: `${BASE}femhair3-tmb.png`, enabled: false },
-  { src: `${BASE}femhair4.png`, thumb: `${BASE}femhair4-tmb.png`, enabled: false },
-  { src: `${BASE}femhair5.png`, thumb: `${BASE}femhair5-tmb.png`, enabled: false },
-  { src: `${BASE}femhair6.png`, thumb: `${BASE}femhair6-tmb.png`, enabled: false },
-  { src: `${BASE}femhair7.png`, thumb: `${BASE}femhair7-tmb.png`, enabled: false },
-  { src: `${BASE}femhair8.png`, thumb: `${BASE}femhair8-tmb.png`, enabled: false },
-  { src: `${BASE}femhair9.png`, thumb: `${BASE}femhair9-tmb.png`, enabled: false },
-  { src: `${BASE}femhair10.png`, thumb: `${BASE}femhair10-tmb.png`, enabled: false },
-  { src: `${BASE}femhair11.png`, thumb: `${BASE}femhair11-tmb.png`, enabled: false },
-  { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, enabled: false }
+  { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png`, enabled: true },
+  { src: `${BASE}femhair3.png`, thumb: `${BASE}femhair3-tmb.png`, enabled: true },
+  { src: `${BASE}femhair4.png`, thumb: `${BASE}femhair4-tmb.png`, enabled: true },
+  { src: `${BASE}femhair5.png`, thumb: `${BASE}femhair5-tmb.png`, enabled: true },
+  { src: `${BASE}femhair6.png`, thumb: `${BASE}femhair6-tmb.png`, enabled: true },
+  { src: `${BASE}femhair7.png`, thumb: `${BASE}femhair7-tmb.png`, enabled: true },
+  { src: `${BASE}femhair8.png`, thumb: `${BASE}femhair8-tmb.png`, enabled: true },
+  { src: `${BASE}femhair9.png`, thumb: `${BASE}femhair9-tmb.png`, enabled: true },
+  { src: `${BASE}femhair10.png`, thumb: `${BASE}femhair10-tmb.png`, enabled: true },
+  { src: `${BASE}femhair11.png`, thumb: `${BASE}femhair11-tmb.png`, enabled: true },
+  { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, enabled: true }
 ];
 
 // --- Equipment images ---
@@ -173,10 +173,6 @@ function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
     selected.face = firstEnabledFace >= 0 ? firstEnabledFace : 0;
     document.getElementById("face-pickers").children[selected.face].classList.add("selected");
     createPickerImages(bodyOptions, "body-pickers", "body");
-  } else if (featureKey === "face") {
-    // nothing special
-  } else if (featureKey === "hair") {
-    // nothing special
   }
   createPickerImages(bodyOptions, "body-pickers", "body");
   createPickerImages(faceOptions.filter(f => f.skin === getCurrentBodySkin()), "face-pickers", "face", getCurrentBodySkin());
