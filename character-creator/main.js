@@ -1,4 +1,4 @@
-const BASE = "character-creator/assets/";
+const BASE = "assets/";
 
 // --- BODY OPTIONS (with skin tone property for matching) ---
 const bodyOptions = [
@@ -8,7 +8,7 @@ const bodyOptions = [
   { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "dark", type: "muscular" },
   { src: `${BASE}fbody-musc-med.png`, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular" },
   { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular" },
-  { src: `${BASE}fbody-thin-drk.png`, thumb: `${BASE}fbody-thin-dark-tmb.png`, skin: "dark", type: "thin" },
+  { src: `${BASE}fbody-thin-drk.png`, thumb: `${BASE}fbody-thin-drk-tmb.png`, skin: "dark", type: "thin" },
   { src: `${BASE}fbody-thin-med.png`, thumb: `${BASE}fbody-thin-med-tmb.png`, skin: "med", type: "thin" },
   { src: `${BASE}fbody-thin-pale.png`, thumb: `${BASE}fbody-thin-pale-tmb.png`, skin: "pale", type: "thin" }
 ];
@@ -33,7 +33,7 @@ const faceOptions = [
   // Pale
   { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl" },
   { src: `${BASE}femface1-pale-brn.png`, thumb: `${BASE}femface1-pale-brn-tmb.png`, skin: "pale", eyes: "brn" },
-  { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-violet-tmb.png`, skin: "pale", eyes: "vio" },
+  { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-vio-tmb.png`, skin: "pale", eyes: "vio" },
   { src: `${BASE}femface2-pale-brn.png`, thumb: `${BASE}femface2-pale-brn-tmb.png`, skin: "pale", eyes: "brn" },
   { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu" },
   { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn" },
@@ -59,10 +59,10 @@ const hairOptions = [
 
 // --- PHYSIQUE SCORE FILTERING ---
 function getAvailableBodyIndexes(score) {
-  if (score <= 1) return bodyOptions.filter(b => b.type === "thin").map((_,i,a)=>a[i]);
-  if (score <= 4) return bodyOptions.filter(b => b.type === "thin").map((_,i,a)=>a[i]);
-  if (score <= 20) return bodyOptions.filter(b => b.type === "muscular").map((_,i,a)=>a[i]);
-  return bodyOptions.filter(b => b.type === "massive").map((_,i,a)=>a[i]);
+  if (score <= 1) return bodyOptions.filter(b => b.type === "thin");
+  if (score <= 4) return bodyOptions.filter(b => b.type === "thin");
+  if (score <= 20) return bodyOptions.filter(b => b.type === "muscular");
+  return bodyOptions.filter(b => b.type === "massive");
 }
 
 // --- PICKER RENDERING, SKIN MATCHING ---
@@ -78,6 +78,11 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
     const img = document.createElement('img');
     img.src = option.thumb;
     img.alt = `${featureKey} ${idx + 1}`;
+    img.onerror = function() {
+      img.src = `${BASE}placeholder.png`;
+      img.style.opacity = "0.4";
+      img.title = "Image not found";
+    };
     img.style.pointerEvents = "auto";
     img.style.opacity = "1";
     img.addEventListener('click', function () {
@@ -114,7 +119,7 @@ function selectFeature(pickerId, idx, featureKey, skinMatch=null) {
 function getCurrentBodySkin() {
   // Find skin from currently selected body option (filtered by Physique Score)
   let bodyOpts = getAvailableBodyIndexes(physiqueScore);
-  return bodyOpts[selected.body].skin;
+  return bodyOpts[selected.body]?.skin || "med";
 }
 
 // --- CHARACTER RENDERING ---
@@ -125,10 +130,13 @@ function renderCharacter() {
 
   let bodyOpts = getAvailableBodyIndexes(physiqueScore);
   let body = bodyOpts[selected.body];
-  let skin = body.skin;
+  let skin = body?.skin || "med";
   let faceOpts = faceOptions.filter(f => f.skin === skin);
   let face = faceOpts[selected.face];
   let hair = hairOptions[selected.hair];
+
+  // If body image failed, nothing else should be drawn
+  if (!body) return;
 
   const layers = [body, face, hair];
 
