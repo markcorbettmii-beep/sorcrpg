@@ -1,69 +1,65 @@
-const BASE = "./"; // Use relative path
+const BASE = ""; // Use current folder
 
-// Only use image filenames you provided (with skinTone labels for bodies/faces)
+// --- Body, Face, Hair: only images you actually have ---
 const bodyOptions = [
-  { src: BASE+"fbody-mass-drk.png", thumb: BASE+"fbody-mass-drk-tmb.png", skinTone: "drk" },
-  { src: BASE+"fbody-mass-med.png", thumb: BASE+"fbody-mass-med-tmb.png", skinTone: "med" },
-  { src: BASE+"fbody-mass-pale.png", thumb: BASE+"fbody-mass-pale-tmb.png", skinTone: "pale" },
-  { src: BASE+"fbody-musc-med.png", thumb: BASE+"fbody-musc-med-tmb.png", skinTone: "med" },
-  { src: BASE+"fbody-musc-pale.png", thumb: BASE+"fbody-musc-pale-tmb.png", skinTone: "pale" },
-  { src: BASE+"fbody-musc-drk.png", thumb: BASE+"fbody-musc-drk-tmb.png", skinTone: "drk" },
-  { src: BASE+"fbody-thin-med.png", thumb: BASE+"fbody-thin-med-tmb.png", skinTone: "med" },
-  { src: BASE+"fbody-thin-drk.png", thumb: BASE+"fbody-thin-dark-tmb.png", skinTone: "drk" },
-  { src: BASE+"fbody-thin-pale.png", thumb: BASE+"fbody-thin-pale-tmb.png", skinTone: "pale" }
+  { src: "fbody-mass-drk.png", thumb: "fbody-mass-drk-tmb.png", skinTone: "drk" },
+  { src: "fbody-mass-med.png", thumb: "fbody-mass-med-tmb.png", skinTone: "med" },
+  { src: "fbody-mass-pale.png", thumb: "fbody-mass-pale-tmb.png", skinTone: "pale" },
+  { src: "fbody-musc-med.png", thumb: "fbody-musc-med-tmb.png", skinTone: "med" },
+  { src: "fbody-musc-pale.png", thumb: "fbody-musc-pale-tmb.png", skinTone: "pale" },
+  { src: "fbody-musc-drk.png", thumb: "fbody-musc-drk-tmb.png", skinTone: "drk" },
+  { src: "fbody-thin-med.png", thumb: "fbody-thin-med-tmb.png", skinTone: "med" },
+  { src: "fbody-thin-drk.png", thumb: "fbody-thin-dark-tmb.png", skinTone: "drk" },
+  { src: "fbody-thin-pale.png", thumb: "fbody-thin-pale-tmb.png", skinTone: "pale" }
 ];
-// Only faces you provided, labeled by skinTone
 const faceOptions = [
-  { src: BASE+"femface1-dark-blu.png", thumb: BASE+"femface1-dark-blu-tmb.png", skinTone: "drk" },
-  { src: BASE+"femface2-dark-brn.png", thumb: BASE+"femface2-dark-brn-tmb.png", skinTone: "drk" },
-  { src: BASE+"femface2-dark-blu.png", thumb: BASE+"femface2-dark-blu-tmb.png", skinTone: "drk" },
-  { src: BASE+"femface1-dark-hzl.png", thumb: BASE+"femface1-dark-hzl-tmb.png", skinTone: "drk" },
-  { src: BASE+"femface1-med-brn.png", thumb: BASE+"femface1-med-brn-tmb.png", skinTone: "med" },
-  { src: BASE+"femface1-med-hzl.png", thumb: BASE+"femface1-med-hzl-tmb.png", skinTone: "med" },
-  { src: BASE+"femface1-med-grn.png", thumb: BASE+"femface1-med-grn-tmb.png", skinTone: "med" },
-  { src: BASE+"femface2-med-brn.png", thumb: BASE+"femface2-med-brn-tmb.png", skinTone: "med" },
-  { src: BASE+"femface2-med-blu.png", thumb: BASE+"femface2-med-blu-tmb.png", skinTone: "med" },
-  { src: BASE+"femface2-med-grn.png", thumb: BASE+"femface2-med-grn-tmb.png", skinTone: "med" },
-  { src: BASE+"femface3-med-brn.png", thumb: BASE+"femface3-med-brn-tmb.png", skinTone: "med" },
-  { src: BASE+"femface1-pale-hzl.png", thumb: BASE+"femface1-pale-hzl-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface1-pale-brn.png", thumb: BASE+"femface1-pale-brn-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface1-pale-vio.png", thumb: BASE+"femface1-pale-violet-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface2-pale-grn.png", thumb: BASE+"femface2-pale-grn-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface2-pale-blu.png", thumb: BASE+"femface2-pale-blu-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface2-pale-brn.png", thumb: BASE+"femface2-pale-brn-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface4-pale-brn-mkup.png", thumb: BASE+"femface4-pale-brn-mkup-tmb.png", skinTone: "pale" },
-  { src: BASE+"femface5-pale-blu-mkup.png", thumb: BASE+"femface5-pale-blu-mkup-tmb.png", skinTone: "pale" }
+  { src: "femface1-dark-blu.png", thumb: "femface1-dark-blu-tmb.png", skinTone: "drk" },
+  { src: "femface2-dark-brn.png", thumb: "femface2-dark-brn-tmb.png", skinTone: "drk" },
+  { src: "femface2-dark-blu.png", thumb: "femface2-dark-blu-tmb.png", skinTone: "drk" },
+  { src: "femface1-dark-hzl.png", thumb: "femface1-dark-hzl-tmb.png", skinTone: "drk" },
+  { src: "femface1-med-brn.png", thumb: "femface1-med-brn-tmb.png", skinTone: "med" },
+  { src: "femface1-med-hzl.png", thumb: "femface1-med-hzl-tmb.png", skinTone: "med" },
+  { src: "femface1-med-grn.png", thumb: "femface1-med-grn-tmb.png", skinTone: "med" },
+  { src: "femface2-med-brn.png", thumb: "femface2-med-brn-tmb.png", skinTone: "med" },
+  { src: "femface2-med-blu.png", thumb: "femface2-med-blu-tmb.png", skinTone: "med" },
+  { src: "femface2-med-grn.png", thumb: "femface2-med-grn-tmb.png", skinTone: "med" },
+  { src: "femface3-med-brn.png", thumb: "femface3-med-brn-tmb.png", skinTone: "med" },
+  { src: "femface1-pale-hzl.png", thumb: "femface1-pale-hzl-tmb.png", skinTone: "pale" },
+  { src: "femface1-pale-brn.png", thumb: "femface1-pale-brn-tmb.png", skinTone: "pale" },
+  { src: "femface1-pale-vio.png", thumb: "femface1-pale-violet-tmb.png", skinTone: "pale" },
+  { src: "femface2-pale-grn.png", thumb: "femface2-pale-grn-tmb.png", skinTone: "pale" },
+  { src: "femface2-pale-blu.png", thumb: "femface2-pale-blu-tmb.png", skinTone: "pale" },
+  { src: "femface2-pale-brn.png", thumb: "femface2-pale-brn-tmb.png", skinTone: "pale" },
+  { src: "femface4-pale-brn-mkup.png", thumb: "femface4-pale-brn-mkup-tmb.png", skinTone: "pale" },
+  { src: "femface5-pale-blu-mkup.png", thumb: "femface5-pale-blu-mkup-tmb.png", skinTone: "pale" }
 ];
-// All hair images you listed
 const hairOptions = [
-  { src: BASE+"femhair1.png", thumb: BASE+"femhair1-tmb.png" },
-  { src: BASE+"femhair2.png", thumb: BASE+"femhair2-tmb.png" },
-  { src: BASE+"femhair3.png", thumb: BASE+"femhair3-tmb.png" },
-  { src: BASE+"femhair4.png", thumb: BASE+"femhair4-tmb.png" },
-  { src: BASE+"femhair5.png", thumb: BASE+"femhair5-tmb.png" },
-  { src: BASE+"femhair6.png", thumb: BASE+"femhair6-tmb.png" },
-  { src: BASE+"femhair7.png", thumb: BASE+"femhair7-tmb.png" },
-  { src: BASE+"femhair8.png", thumb: BASE+"femhair8-tmb.png" },
-  { src: BASE+"femhair9.png", thumb: BASE+"femhair9-tmb.png" },
-  { src: BASE+"femhair10.png", thumb: BASE+"femhair10-tmb.png" },
-  { src: BASE+"femhair11.png", thumb: BASE+"femhair11-tmb.png" },
-  { src: BASE+"femhair12.png", thumb: BASE+"femhair12-tmb.png" }
+  { src: "femhair1.png", thumb: "femhair1-tmb.png" },
+  { src: "femhair2.png", thumb: "femhair2-tmb.png" },
+  { src: "femhair3.png", thumb: "femhair3-tmb.png" },
+  { src: "femhair4.png", thumb: "femhair4-tmb.png" },
+  { src: "femhair5.png", thumb: "femhair5-tmb.png" },
+  { src: "femhair6.png", thumb: "femhair6-tmb.png" },
+  { src: "femhair7.png", thumb: "femhair7-tmb.png" },
+  { src: "femhair8.png", thumb: "femhair8-tmb.png" },
+  { src: "femhair9.png", thumb: "femhair9-tmb.png" },
+  { src: "femhair10.png", thumb: "femhair10-tmb.png" },
+  { src: "femhair11.png", thumb: "femhair11-tmb.png" },
+  { src: "femhair12.png", thumb: "femhair12-tmb.png" }
 ];
-// Armor/helmet/weapons from your list
 const armorOptions = [
-  { src: BASE+"set-fur-common.png", thumb: BASE+"set-fur-common-tmb.png" },
-  { src: BASE+"set-epic-fur-mantle.png", thumb: BASE+"set-epic-fur-mantle.png" }
+  { src: "set-fur-common.png", thumb: "set-fur-common-tmb.png" },
+  { src: "set-epic-fur-mantle.png", thumb: "set-epic-fur-mantle.png" }
 ];
 const helmetOptions = [
-  { src: BASE+"bear-skn-helmet.png", thumb: BASE+"bear-skn-helmet.png" }
+  { src: "bear-skn-helmet.png", thumb: "bear-skn-helmet.png" }
 ];
-const weaponOptions = []; // You did not provide any weapon image, so keep empty
+const weaponOptions = []; // No weapons in your current list
 
 let selected = { body: 8, face: 0, hair: 0 };
 let equippedArmor = null, equippedHelmet = null, selectedWeapon = null;
 let showHelmet = false, showWeapons = false, physiqueScore = null;
 
-// --- Picker logic (body/face/hair match skin tone) ---
 function getBodySkinTone(idx) {
   return bodyOptions[idx].skinTone;
 }
@@ -190,8 +186,6 @@ function createWeaponPicker() {
   });
   document.getElementById("weapon-row").style.display = "block";
 }
-
-// --- Rendering ---
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
@@ -209,7 +203,6 @@ function renderCharacter() {
     if (!opt) { loaded++; return; }
     const im = new Image();
     imgs[i] = null;
-    im.crossOrigin = "anonymous";
     im.src = opt.src;
     im.onload = () => { imgs[i] = im; if (++loaded === layers.length) draw(); };
     im.onerror = () => { if (++loaded === layers.length) draw(); };
@@ -220,8 +213,6 @@ function renderCharacter() {
     });
   }
 }
-
-// --- Initialization ---
 function initAllPickers() {
   createPickerImages(bodyOptions, "body-pickers", "body");
   createPickerImages(faceOptions, "face-pickers", "face");
@@ -254,8 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCharacter();
   });
 });
-
-// --- Physique Form ---
 document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   e.preventDefault();
   const val = parseInt(document.getElementById("physiqueInput").value, 10);
@@ -270,8 +259,6 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   initAllPickers();
   renderCharacter();
 });
-
-// --- Random Button ---
 document.getElementById("randomBtn").addEventListener("click", function () {
   if (physiqueScore) {
     selected.body = Math.floor(Math.random() * bodyOptions.length);
@@ -282,8 +269,6 @@ document.getElementById("randomBtn").addEventListener("click", function () {
   initAllPickers();
   renderCharacter();
 });
-
-// --- JPEG Export ---
 document.getElementById("showJpegBtn").addEventListener("click", function () {
   const canvas = document.getElementById("charCanvas");
   const jpegPreview = document.getElementById("jpegPreview");
