@@ -67,14 +67,7 @@ let showBow = false;
 let showArmor = false;
 let showHelmet = false;
 
-// --- Utility: Only massive bodies are functional ---
-function getAvailableBodyIndexes() {
-  return bodyOptions;
-}
-
-// --- Picker rendering, including faded placeholders and yellow border for selected ---
-// For body: selected gets border and size, non-selected get border only
-// For face/hair: selected gets border (no size change)
+// --- Picker rendering, faded/functional, yellow border for all selected, zoom for selected body only ---
 function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
@@ -121,7 +114,6 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
       img.style.height = "90px";
     }
 
-    // --- Click handler for functional ---
     if (isFunctional) {
       img.addEventListener('click', function () {
         selectFeature(pickerId, idx, featureKey, skinMatch);
@@ -142,9 +134,9 @@ function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
     // When body changes, show only faces for that skin
     const skin = getCurrentBodySkin();
     createPickerImages(faceOptions, "face-pickers", "face", skin);
+    // Select first enabled face for that skin
     selected.face = faceOptions.findIndex(f => f.skin === skin && f.enabled);
     document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    // Re-render body picker for zoom effect and highlight
     createPickerImages(bodyOptions, "body-pickers", "body");
   } else if (featureKey === "face") {
     selected.face = idx;
@@ -162,7 +154,6 @@ function getCurrentBodySkin() {
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
-  // Canvas size: larger for mass body selected
   if (bodyOptions[selected.body] && bodyOptions[selected.body].enabled) {
     canvas.width = 640;
     canvas.height = 1280;
@@ -227,7 +218,6 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
   document.getElementById("physiqueApprovedMsg").style.display = "block";
-  // Rebuild pickers to show only allowed bodies and matched faces
   createPickerImages(bodyOptions, "body-pickers", "body");
   let skin = getCurrentBodySkin();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
@@ -244,9 +234,7 @@ document.getElementById("randomBtn").addEventListener("click", function () {
   let massBodyIndexes = bodyOptions.map((b, i) => b.enabled ? i : null).filter(i => i !== null);
   selected.body = massBodyIndexes[Math.floor(Math.random() * massBodyIndexes.length)];
   let skin = getCurrentBodySkin();
-  // Only functional faces for current body/skin
   let faceOpts = faceOptions.filter(f => f.skin === skin && f.enabled !== false);
-  // For pale, only first face is enabled, so always 0
   selected.face = faceOpts.length > 1 ? Math.floor(Math.random() * faceOpts.length) : 0;
   selected.hair = Math.floor(Math.random() * hairOptions.length);
   createPickerImages(bodyOptions, "body-pickers", "body");
