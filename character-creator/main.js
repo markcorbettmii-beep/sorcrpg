@@ -1,4 +1,4 @@
-const BASE = "https://sorcrpg.com/character-creator/assets/";
+const BASE = "assets/";
 
 const bodyOptions = [
   { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skinTone: "drk" },
@@ -8,30 +8,29 @@ const bodyOptions = [
   { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png`, skinTone: "pale" },
   { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skinTone: "drk" },
   { src: `${BASE}fbody-thin-med.png`, thumb: `${BASE}fbody-thin-med-tmb.png`, skinTone: "med" },
-  { src: `${BASE}fbody-thin-drk.png`, thumb: `${BASE}fbody-thin-drk-tmb.png`, skinTone: "drk" },
+  { src: `${BASE}fbody-thin-drk.png`, thumb: `${BASE}fbody-thin-dark-tmb.png`, skinTone: "drk" },
   { src: `${BASE}fbody-thin-pale.png`, thumb: `${BASE}fbody-thin-pale-tmb.png`, skinTone: "pale" }
 ];
 const faceOptions = [
-  { src: BASE + "femface1-dark-hzl.png", thumb: BASE + "femface1-dark-hzl-tmb.png", skinTone: "drk" },
-  { src: BASE + "femface1-med-grn.png", thumb: BASE + "femface1-med-grn-tmb.png", skinTone: "med" },
-  { src: BASE + "femface1-med-hzl.png", thumb: BASE + "femface1-med-hzl-tmb.png", skinTone: "med" },
-  { src: BASE + "femface1-med-brn.png", thumb: BASE + "femface1-med-brn-tmb.png", skinTone: "med" },
-  { src: BASE + "femface1-pale-brn.png", thumb: BASE + "femface1-pale-brn-tmb.png", skinTone: "pale" },
-  { src: BASE + "femface1-pale-hzl.png", thumb: BASE + "femface1-pale-hzl-tmb.png", skinTone: "pale" },
-  { src: BASE + "femface1-pale-vio.png", thumb: BASE + "femface1-pale-violet-tmb.png", skinTone: "pale" },
   { src: BASE + "femface1-dark-blu.png", thumb: BASE + "femface1-dark-blu-tmb.png", skinTone: "drk" },
-  { src: BASE + "femface3-med-brn.png", thumb: BASE + "femface3-med-brn-tmb.png", skinTone: "med" },
+  { src: BASE + "femface1-dark-hzl.png", thumb: BASE + "femface1-dark-hzl-tmb.png", skinTone: "drk" },
+  { src: BASE + "femface2-dark-brn.png", thumb: BASE + "femface2-dark-brn-tmb.png", skinTone: "drk" },
+  { src: BASE + "femface2-dark-blu.png", thumb: BASE + "femface2-dark-blu-tmb.png", skinTone: "drk" },
+  { src: BASE + "femface1-med-brn.png", thumb: BASE + "femface1-med-brn-tmb.png", skinTone: "med" },
+  { src: BASE + "femface1-med-hzl.png", thumb: BASE + "femface1-med-hzl-tmb.png", skinTone: "med" },
+  { src: BASE + "femface1-med-grn.png", thumb: BASE + "femface1-med-grn-tmb.png", skinTone: "med" },
+  { src: BASE + "femface2-med-brn.png", thumb: BASE + "femface2-med-brn-tmb.png", skinTone: "med" },
+  { src: BASE + "femface2-med-blu.png", thumb: BASE + "femface2-med-blu-tmb.png", skinTone: "med" },
   { src: BASE + "femface2-med-grn.png", thumb: BASE + "femface2-med-grn-tmb.png", skinTone: "med" },
-  { src: BASE + "femface5-pale-blu-mkup.png", thumb: BASE + "femface5-pale-blu-mkup-tmb.png", skinTone: "pale" },
-  { src: BASE + "femface4-pale-brn-mkup.png", thumb: BASE + "femface4-pale-brn-mkup-tmb.png", skinTone: "pale" },
-  { src: BASE + "femface4-pale-brn.png", thumb: BASE + "femface4-pale-brn-tmb.png", skinTone: "pale" },
+  { src: BASE + "femface3-med-brn.png", thumb: BASE + "femface3-med-brn-tmb.png", skinTone: "med" },
+  { src: BASE + "femface1-pale-hzl.png", thumb: BASE + "femface1-pale-hzl-tmb.png", skinTone: "pale" },
+  { src: BASE + "femface1-pale-brn.png", thumb: BASE + "femface1-pale-brn-tmb.png", skinTone: "pale" },
+  { src: BASE + "femface1-pale-vio.png", thumb: BASE + "femface1-pale-violet-tmb.png", skinTone: "pale" },
   { src: BASE + "femface2-pale-brn.png", thumb: BASE + "femface2-pale-brn-tmb.png", skinTone: "pale" },
   { src: BASE + "femface2-pale-blu.png", thumb: BASE + "femface2-pale-blu-tmb.png", skinTone: "pale" },
   { src: BASE + "femface2-pale-grn.png", thumb: BASE + "femface2-pale-grn-tmb.png", skinTone: "pale" },
-  { src: BASE + "femface2-med-brn.png", thumb: BASE + "femface2-med-brn-tmb.png", skinTone: "med" },
-  { src: BASE + "femface2-med-blu.png", thumb: BASE + "femface2-med-blu-tmb.png", skinTone: "med" },
-  { src: BASE + "femface2-dark-blu.png", thumb: BASE + "femface2-dark-blu-tmb.png", skinTone: "drk" },
-  { src: BASE + "femface2-dark-brn.png", thumb: BASE + "femface2-dark-brn-tmb.png", skinTone: "drk" }
+  { src: BASE + "femface4-pale-brn-mkup.png", thumb: BASE + "femface4-pale-brn-mkup-tmb.png", skinTone: "pale" },
+  { src: BASE + "femface5-pale-blu-mkup.png", thumb: BASE + "femface5-pale-blu-mkup-tmb.png", skinTone: "pale" }
 ];
 const hairOptions = [
   { src: BASE + "femhair1.png", thumb: BASE + "femhair1-tmb.png" },
@@ -48,16 +47,19 @@ const hairOptions = [
   { src: BASE + "femhair12.png", thumb: BASE + "femhair12-tmb.png" }
 ];
 const armorOptions = [
-  { src: BASE + "set-fur-common.png", thumb: BASE + "set-fur-common-tmb.png", whale: false },
-  { src: BASE + "set-kaida's-epic-whale-fur.png", thumb: BASE + "set-kaida's-epic-whale-fur-tmb.png", whale: true }
+  { src: BASE + "set-fur-common.png", thumb: BASE + "set-fur-common-tmb.png" },
+  { src: BASE + "set-epic-fur-mantle.png", thumb: BASE + "set-epic-fur-mantle.png" }
 ];
 const weaponOptions = [
-  { src: BASE + "kaida's-great-axe.png", thumb: BASE + "kaida's-great-axe-tmb.png" },
-  { src: BASE + "kaida's-great-bow.png", thumb: BASE + "kaida's-great-bow-tmb.png" }
+  // Just use all available armor/weapons thumbnails as weapons too for this demo
+  { src: BASE + "bear-skn-helmet.png", thumb: BASE + "bear-skn-helmet.png" }
+];
+const helmetOptions = [
+  { src: BASE + "bear-skn-helmet.png", thumb: BASE + "bear-skn-helmet.png" }
 ];
 
 let selected = { body: 8, face: 0, hair: 0 };
-let equippedArmor = null, selectedWeapon = null;
+let equippedArmor = null, selectedWeapon = null, equippedHelmet = false;
 let showHelmet = false, showWeapons = false, physiqueScore = null;
 
 // ----------- PICKER CREATION AND FILTERING -------------
@@ -75,7 +77,7 @@ function createPickerImages(options, pickerId, featureKey) {
   if (featureKey === "face") {
     const tone = getBodySkinTone(selected.body);
     filteredOptions = getMatchingFaceOptions(tone);
-    globalIndexes = filteredOptions.map(f=>f.__globalIdx); // reference original faceOptions index
+    globalIndexes = filteredOptions.map(f=>f.__globalIdx);
   }
 
   let isBodyPickerLocked = (featureKey === "body" && physiqueScore == null);
@@ -114,8 +116,6 @@ function createPickerImages(options, pickerId, featureKey) {
       img.addEventListener('click', function () {
         if (featureKey === "body") {
           selected.body = realIdx;
-          // face picker must update to new skin tone
-          // set face to first matching new tone, or 0 if none
           let faces = getMatchingFaceOptions(getBodySkinTone(selected.body));
           selected.face = faces.length ? faces[0].__globalIdx : 0;
           createPickerImages(bodyOptions, "body-pickers", "body");
@@ -138,7 +138,6 @@ function createArmorPicker() {
   const picker = document.getElementById("armor-pickers");
   picker.innerHTML = "";
   armorOptions.forEach((option, idx) => {
-    if (option.whale && !showWeapons) return;
     const img = document.createElement("img");
     img.src = option.thumb || option.src;
     img.alt = "Armor " + (idx + 1);
@@ -178,6 +177,11 @@ function createWeaponPicker() {
   });
   document.getElementById("weapon-row").style.display = "block";
 }
+function createHelmetPicker() {
+  // Only one helmet for now; equip when checked
+  equippedHelmet = showHelmet;
+  renderCharacter();
+}
 
 // ----------- CHARACTER RENDERING -----------
 function renderCharacter() {
@@ -191,12 +195,8 @@ function renderCharacter() {
     hairOptions[selected.hair]
   ];
   if (equippedArmor) layers.push(equippedArmor);
-  if (showHelmet) {
-    // Add helmet layer here if you have images
-  }
-  if (showWeapons && selectedWeapon) {
-    layers.push(selectedWeapon);
-  }
+  if (showHelmet) layers.push(helmetOptions[0]);
+  if (showWeapons && selectedWeapon) layers.push(selectedWeapon);
 
   let loaded = 0, imgs = [];
   layers.forEach((opt, i) => {
@@ -210,9 +210,7 @@ function renderCharacter() {
   });
 
   function draw() {
-    imgs.forEach(im => {
-      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
-    });
+    imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height); });
   }
 }
 
@@ -235,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("showHelmetChk").addEventListener("change", (e) => {
     showHelmet = e.target.checked;
-    renderCharacter();
+    createHelmetPicker();
   });
   document.getElementById("showWeaponsChk").addEventListener("change", (e) => {
     showWeapons = e.target.checked;
@@ -263,11 +261,9 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
 
 // ----------- RANDOM BUTTON -----------
 document.getElementById("randomBtn").addEventListener("click", function () {
-  // Body random
   if (physiqueScore) {
     selected.body = Math.floor(Math.random() * bodyOptions.length);
   }
-  // Face: only picks matching skin tone
   const faces = getMatchingFaceOptions(getBodySkinTone(selected.body));
   selected.face = faces.length ? faces[Math.floor(Math.random() * faces.length)].__globalIdx : 0;
   selected.hair = Math.floor(Math.random() * hairOptions.length);
