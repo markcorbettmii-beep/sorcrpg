@@ -1,13 +1,14 @@
-const BASE = "character-creator/assets/";
+const BASE = "assets/";
 
-// --- MASSIVE BODY OPTIONS ONLY ---
+// --- BODY OPTIONS ---
 const bodyOptions = [
-  { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", label: "Dark" },
-  { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", label: "Medium" },
-  { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", label: "Pale" }
+  { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", type: "massive" },
+  { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", type: "massive" },
+  { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive" },
+  // Optionally, you can add placeholder thin/musc here, but make them enabled: false
 ];
 
-// --- FACES (each must have correct skin: drk, med, pale) ---
+// --- FACE OPTIONS ---
 const faceOptions = [
   // Dark
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu" },
@@ -31,7 +32,7 @@ const faceOptions = [
   { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn" }
 ];
 
-// --- HAIR (all available) ---
+// --- HAIR OPTIONS ---
 const hairOptions = [
   { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png` },
   { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png` },
@@ -47,16 +48,23 @@ const hairOptions = [
   { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png` }
 ];
 
-// --- EQUIPMENT IMAGES ---
-const bowImgPath    = `${BASE}kaidas-great-bow.png`;
-const armorImgPath  = `${BASE}set-epic-fur-mantle.png`;
-const helmetImgPath = `${BASE}bear-skn-helmet.png`;
+// --- Equipment images ---
+const BOW_IMG    = BASE + "kaidas-great-bow.png";
+const ARMOR_IMG  = BASE + "set-epic-fur-mantle.png";
+const HELMET_IMG = BASE + "bear-skn-helmet.png";
 
 let selected = { body: 0, face: 0, hair: 0 };
-let creationEnabled = false;
-let equipmentOn = false;
+let physiqueScore = null;
+let showBow = false;
+let showArmor = false;
+let showHelmet = false;
 
-// Picker rendering
+// --- Utility: Only massive bodies available ---
+function getAvailableBodyIndexes() {
+  return bodyOptions; // Only mass bodies in this array, no need to filter
+}
+
+// --- Picker rendering (works for all features) ---
 function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
@@ -70,19 +78,17 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
     img.src = option.thumb;
     img.alt = `${featureKey} ${idx + 1}`;
     img.title = option.label ? option.label : '';
-    img.style.pointerEvents = creationEnabled ? "auto" : "none";
-    img.style.opacity = creationEnabled ? "1" : "0.5";
+    img.style.pointerEvents = "auto";
+    img.style.opacity = "1";
     img.addEventListener('click', function () {
-      if (!creationEnabled) return;
       selectFeature(pickerId, idx, featureKey, skinMatch);
     });
     picker.appendChild(img);
   });
 }
 
-// On picker click
-function selectFeature(pickerId, idx, featureKey, skinMatch=null) {
-  if (!creationEnabled) return;
+// --- Picker logic ---
+function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
   const picker = document.getElementById(pickerId);
   Array.from(picker.children).forEach(img => img.classList.remove("selected"));
   picker.children[idx].classList.add("selected");
@@ -103,29 +109,29 @@ function selectFeature(pickerId, idx, featureKey, skinMatch=null) {
 }
 
 function getCurrentBodySkin() {
-  return bodyOptions[selected.body]?.skin || "drk";
+  return bodyOptions[selected.body]?.skin || "med";
 }
 
-// Character rendering (with equipment support)
+// --- Character rendering (with equipment support) ---
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   let body = bodyOptions[selected.body];
-  let skin = body?.skin || "drk";
+  let skin = body?.skin || "med";
   let faceOpts = faceOptions.filter(f => f.skin === skin);
   let face = faceOpts[selected.face];
   let hair = hairOptions[selected.hair];
 
   // Layer order: bow (if on), body, armor (if on), face, hair, helmet (if on)
   const layers = [];
-  if (equipmentOn) layers.push({ src: bowImgPath });
+  if (showBow) layers.push({src: BOW_IMG});
   if (body && body.src) layers.push(body);
-  if (equipmentOn) layers.push({ src: armorImgPath });
+  if (showArmor) layers.push({src: ARMOR_IMG});
   if (face && face.src) layers.push(face);
   if (hair && hair.src) layers.push(hair);
-  if (equipmentOn) layers.push({ src: helmetImgPath });
+  if (showHelmet) layers.push({src: HELMET_IMG});
 
   let loaded = 0, imgs = [];
   layers.forEach((opt, i) => {
@@ -141,20 +147,40 @@ function renderCharacter() {
   }
 }
 
-// Physique form submit
+// --- Equipment checkbox logic ---
+document.getElementById("equipBowChk").addEventListener('change', function() {
+  showBow = this.checked;
+  renderCharacter();
+});
+document.getElementById("equipArmorChk").addEventListener('change', function() {
+  showArmor = this.checked;
+  renderCharacter();
+});
+document.getElementById("equipHelmetChk").addEventListener('change', function() {
+  showHelmet = this.checked;
+  renderCharacter();
+});
+
+// --- Physique form submit ---
 document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   e.preventDefault();
+  const val = parseInt(document.getElementById("physiqueInput").value, 10);
+  if (isNaN(val) || val < 1) {
+    document.getElementById("physiqueError").style.display = "inline";
+    return;
+  }
+  physiqueScore = val;
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
   document.getElementById("physiqueApprovedMsg").style.display = "block";
-  creationEnabled = true;
 
-  // Show all picker options—only mass bodies
+  // Rebuild pickers to show only allowed bodies and matched faces
   createPickerImages(bodyOptions, "body-pickers", "body");
   let skin = getCurrentBodySkin();
-  createPickerImages(faceOptions, "face-pickers", "face", skin);
+  createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
 
+  // Mark defaults
   document.getElementById("body-pickers").children[0].classList.add("selected");
   document.getElementById("face-pickers").children[0].classList.add("selected");
   document.getElementById("hair-pickers").children[0].classList.add("selected");
@@ -162,28 +188,10 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   renderCharacter();
 });
 
-// Page initialize
-document.addEventListener("DOMContentLoaded", () => {
-  createPickerImages(bodyOptions, "body-pickers", "body");
-  let skin = getCurrentBodySkin();
-  createPickerImages(faceOptions, "face-pickers", "face", skin);
-  createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[0].classList.add("selected");
-  document.getElementById("face-pickers").children[0].classList.add("selected");
-  document.getElementById("hair-pickers").children[0].classList.add("selected");
-  renderCharacter();
-});
-
-// Equipment checkbox logic
-document.getElementById("showEquipmentChk").addEventListener('change', function() {
-  equipmentOn = this.checked;
-  renderCharacter();
-});
-
-// Randomizer (mass only)
+// --- Randomizer ---
 document.getElementById("randomBtn").addEventListener("click", function () {
-  if (!creationEnabled) return;
-  selected.body = Math.floor(Math.random() * bodyOptions.length);
+  let bodyOpts = bodyOptions;
+  selected.body = Math.floor(Math.random() * bodyOpts.length);
   let skin = getCurrentBodySkin();
   let faceOpts = faceOptions.filter(f => f.skin === skin);
   selected.face = Math.floor(Math.random() * faceOpts.length);
@@ -197,5 +205,17 @@ document.getElementById("randomBtn").addEventListener("click", function () {
   document.getElementById("face-pickers").children[selected.face].classList.add("selected");
   document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
 
+  renderCharacter();
+});
+
+// --- Initialize ---
+document.addEventListener("DOMContentLoaded", () => {
+  createPickerImages(bodyOptions, "body-pickers", "body");
+  let skin = getCurrentBodySkin();
+  createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
+  createPickerImages(hairOptions, "hair-pickers", "hair");
+  document.getElementById("body-pickers").children[0].classList.add("selected");
+  document.getElementById("face-pickers").children[0].classList.add("selected");
+  document.getElementById("hair-pickers").children[0].classList.add("selected");
   renderCharacter();
 });
