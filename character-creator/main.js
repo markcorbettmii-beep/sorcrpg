@@ -1,4 +1,4 @@
-const BASE = "assets/";
+const BASE = "character-creator/assets/";
 
 // --- MASSIVE BODY OPTIONS ONLY ---
 const bodyOptions = [
@@ -7,15 +7,13 @@ const bodyOptions = [
   { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", label: "Pale" }
 ];
 
-// --- FACE OPTIONS: ALL COLORS, ONLY FOR MASSIVE BODIES, GROUPED BY SKIN TONE ---
+// --- FACES (each must have correct skin: drk, med, pale) ---
 const faceOptions = [
   // Dark
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu" },
   { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl" },
   { src: `${BASE}femface2-dark-brn.png`, thumb: `${BASE}femface2-dark-brn-tmb.png`, skin: "drk", eyes: "brn" },
   { src: `${BASE}femface2-dark-blu.png`, thumb: `${BASE}femface2-dark-blu-tmb.png`, skin: "drk", eyes: "blu" },
-  // Add every DRK face here!
-
   // Medium
   { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn" },
   { src: `${BASE}femface1-med-hzl.png`, thumb: `${BASE}femface1-med-hzl-tmb.png`, skin: "med", eyes: "hzl" },
@@ -24,21 +22,16 @@ const faceOptions = [
   { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu" },
   { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, skin: "med", eyes: "grn" },
   { src: `${BASE}femface3-med-brn.png`, thumb: `${BASE}femface3-med-brn-tmb.png`, skin: "med", eyes: "brn" },
-  // Add every MED face here!
-
   // Pale
   { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl" },
   { src: `${BASE}femface1-pale-brn.png`, thumb: `${BASE}femface1-pale-brn-tmb.png`, skin: "pale", eyes: "brn" },
   { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-vio-tmb.png`, skin: "pale", eyes: "vio" },
   { src: `${BASE}femface2-pale-brn.png`, thumb: `${BASE}femface2-pale-brn-tmb.png`, skin: "pale", eyes: "brn" },
   { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu" },
-  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn" },
-  { src: `${BASE}femface4-pale-brn-mkup.png`, thumb: `${BASE}femface4-pale-brn-mkup-tmb.png`, skin: "pale", eyes: "brn" },
-  { src: `${BASE}femface5-pale-blu-mkup.png`, thumb: `${BASE}femface5-pale-blu-mkup-tmb.png`, skin: "pale", eyes: "blu" }
-  // Add every PALE face here!
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn" }
 ];
 
-// --- HAIR OPTIONS: ALL AVAILABLE ---
+// --- HAIR (all available) ---
 const hairOptions = [
   { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png` },
   { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png` },
@@ -54,8 +47,14 @@ const hairOptions = [
   { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png` }
 ];
 
+// --- EQUIPMENT IMAGES ---
+const bowImgPath    = `${BASE}kaidas-great-bow.png`;
+const armorImgPath  = `${BASE}set-epic-fur-mantle.png`;
+const helmetImgPath = `${BASE}bear-skn-helmet.png`;
+
 let selected = { body: 0, face: 0, hair: 0 };
 let creationEnabled = false;
+let equipmentOn = false;
 
 // Picker rendering
 function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
@@ -107,7 +106,7 @@ function getCurrentBodySkin() {
   return bodyOptions[selected.body]?.skin || "drk";
 }
 
-// Character rendering
+// Character rendering (with equipment support)
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
@@ -119,7 +118,14 @@ function renderCharacter() {
   let face = faceOpts[selected.face];
   let hair = hairOptions[selected.hair];
 
-  const layers = [body, face, hair];
+  // Layer order: bow (if on), body, armor (if on), face, hair, helmet (if on)
+  const layers = [];
+  if (equipmentOn) layers.push({ src: bowImgPath });
+  if (body && body.src) layers.push(body);
+  if (equipmentOn) layers.push({ src: armorImgPath });
+  if (face && face.src) layers.push(face);
+  if (hair && hair.src) layers.push(hair);
+  if (equipmentOn) layers.push({ src: helmetImgPath });
 
   let loaded = 0, imgs = [];
   layers.forEach((opt, i) => {
@@ -165,5 +171,31 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("body-pickers").children[0].classList.add("selected");
   document.getElementById("face-pickers").children[0].classList.add("selected");
   document.getElementById("hair-pickers").children[0].classList.add("selected");
+  renderCharacter();
+});
+
+// Equipment checkbox logic
+document.getElementById("showEquipmentChk").addEventListener('change', function() {
+  equipmentOn = this.checked;
+  renderCharacter();
+});
+
+// Randomizer (mass only)
+document.getElementById("randomBtn").addEventListener("click", function () {
+  if (!creationEnabled) return;
+  selected.body = Math.floor(Math.random() * bodyOptions.length);
+  let skin = getCurrentBodySkin();
+  let faceOpts = faceOptions.filter(f => f.skin === skin);
+  selected.face = Math.floor(Math.random() * faceOpts.length);
+  selected.hair = Math.floor(Math.random() * hairOptions.length);
+
+  createPickerImages(bodyOptions, "body-pickers", "body");
+  createPickerImages(faceOpts, "face-pickers", "face", skin);
+  createPickerImages(hairOptions, "hair-pickers", "hair");
+
+  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
+  document.getElementById("face-pickers").children[selected.face].classList.add("selected");
+  document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
+
   renderCharacter();
 });
