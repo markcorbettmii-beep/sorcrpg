@@ -51,7 +51,6 @@ const armorOptions = [
   { src: BASE + "set-epic-fur-mantle.png", thumb: BASE + "set-epic-fur-mantle.png" }
 ];
 const weaponOptions = [
-  // Just use all available armor/weapons thumbnails as weapons too for this demo
   { src: BASE + "bear-skn-helmet.png", thumb: BASE + "bear-skn-helmet.png" }
 ];
 const helmetOptions = [
@@ -62,7 +61,6 @@ let selected = { body: 8, face: 0, hair: 0 };
 let equippedArmor = null, selectedWeapon = null, equippedHelmet = false;
 let showHelmet = false, showWeapons = false, physiqueScore = null;
 
-// ----------- PICKER CREATION AND FILTERING -------------
 function getBodySkinTone(idx) {
   return bodyOptions[idx].skinTone;
 }
@@ -178,7 +176,6 @@ function createWeaponPicker() {
   document.getElementById("weapon-row").style.display = "block";
 }
 function createHelmetPicker() {
-  // Only one helmet for now; equip when checked
   equippedHelmet = showHelmet;
   renderCharacter();
 }
@@ -189,6 +186,10 @@ function renderCharacter() {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Hide "waiting for content" message initially
+  document.getElementById("canvasMsg").style.display = "none";
+
+  // Build layers (full images only, never -tmb)
   const layers = [
     bodyOptions[selected.body],
     faceOptions[selected.face],
@@ -199,17 +200,23 @@ function renderCharacter() {
   if (showWeapons && selectedWeapon) layers.push(selectedWeapon);
 
   let loaded = 0, imgs = [];
+  let error = false;
   layers.forEach((opt, i) => {
-    if (!opt) { loaded++; return; }
+    if (!opt || !opt.src) { loaded++; error = true; return; }
     const im = new Image();
     imgs[i] = null;
     im.crossOrigin = "anonymous";
     im.src = opt.src;
     im.onload = () => { imgs[i] = im; if (++loaded === layers.length) draw(); };
-    im.onerror = () => { if (++loaded === layers.length) draw(); };
+    im.onerror = () => { error = true; if (++loaded === layers.length) draw(); };
   });
 
   function draw() {
+    if (error) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("canvasMsg").style.display = "block";
+      return;
+    }
     imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height); });
   }
 }
