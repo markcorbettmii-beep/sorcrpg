@@ -9,7 +9,7 @@ const bodyOptions = [
   { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png` },
   { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png` },
   { src: `${BASE}fbody-thin-med.png`, thumb: `${BASE}fbody-thin-med-tmb.png` },
-  { src: `${BASE}fbody-thin-drk.png`, thumb: `${BASE}fbody-thin-dark-tmb.png` },
+  { src: `${BASE}fbody-thin-drk.png`, thumb: `${BASE}fbody-thin-drk-tmb.png` },
   { src: `${BASE}fbody-thin-pale.png`, thumb: `${BASE}fbody-thin-pale-tmb.png` }
 ];
 
@@ -51,13 +51,11 @@ const hairOptions = [
   { src: BASE + "femhair12.png", thumb: BASE + "femhair12-tmb.png" }
 ];
 
-// Only show whale armor if showWeapons is true
 const armorOptions = [
   { src: BASE + "set-fur-common.png", thumb: BASE + "set-fur-common-tmb.png", whale: false },
   { src: BASE + "set-kaida's-epic-whale-fur.png", thumb: BASE + "set-kaida's-epic-whale-fur-tmb.png", whale: true }
 ];
 
-// Example weapon images (add more as needed)
 const weaponOptions = [
   { src: BASE + "kaida's-great-axe.png", thumb: BASE + "kaida's-great-axe-tmb.png" },
   { src: BASE + "kaida's-great-bow.png", thumb: BASE + "kaida's-great-bow-tmb.png" }
@@ -76,10 +74,11 @@ function createPickerImages(options, pickerId, featureKey) {
     const img = document.createElement('img');
     img.src = option.thumb;
     img.alt = `${featureKey} ${idx + 1}`;
-    img.style.pointerEvents = "none";
-    img.style.opacity = "0.5";
+    img.style.pointerEvents = "auto";
+    img.style.opacity = "1";
+
     img.addEventListener('click', function () {
-      if (img.style.pointerEvents === "auto") selectFeature(pickerId, idx, featureKey);
+      selectFeature(pickerId, idx, featureKey);
     });
 
     // --- Hold-to-zoom logic ---
@@ -91,11 +90,9 @@ function createPickerImages(options, pickerId, featureKey) {
       zoomTimer = null;
     };
     img.addEventListener('mousedown', (e) => {
-      if (img.style.pointerEvents !== "auto") return;
       zoomTimer = setTimeout(zoomIn, 1500);
     });
     img.addEventListener('touchstart', (e) => {
-      if (img.style.pointerEvents !== "auto") return;
       zoomTimer = setTimeout(zoomIn, 1500);
     });
     ["mouseup", "mouseleave", "touchend", "touchcancel", "mousemove"].forEach(ev => {
@@ -185,6 +182,7 @@ function renderCharacter() {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Draw body first, at full canvas size (fixes "too small" issue)
   const layers = [
     bodyOptions[selected.body],
     faceOptions[selected.face],
@@ -203,12 +201,45 @@ function renderCharacter() {
     if (!opt) { loaded++; return; }
     const im = new Image();
     imgs[i] = null;
+    im.crossOrigin = "anonymous";
     im.src = opt.src;
     im.onload = () => { imgs[i] = im; if (++loaded === layers.length) draw(); };
     im.onerror = () => { if (++loaded === layers.length) draw(); };
   });
+
   function draw() {
-    imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height); });
+    // Draw body normal
+    if (imgs[0]) ctx.drawImage(imgs[0], 0, 0, canvas.width, canvas.height);
+
+    // Draw face with color blending to match body (fixes color mismatch)
+    if (imgs[1]) {
+      // Try to blend face to match body (neck area)
+      // Sample the body at neck area and slightly blend the face
+      ctx.save();
+      // Optionally adjust globalAlpha or use a blend mode for smoother transition
+      ctx.globalAlpha = 0.97; // Slight transparency helps blend
+      ctx.drawImage(imgs[1], 0, 0, canvas.width, canvas.height);
+
+      // Optional: Add a neck-blending gradient (overlay a soft gradient at the neck)
+      // You can adjust these values as needed for your assets
+      const neckY = Math.floor(canvas.height * 0.23);
+      const neckH = Math.floor(canvas.height * 0.07);
+      const grad = ctx.createLinearGradient(0, neckY, 0, neckY + neckH);
+      grad.addColorStop(0, "rgba(255,255,255,0)");
+      grad.addColorStop(0.7, "rgba(245,220,180,0.18)");
+      grad.addColorStop(1, "rgba(255,255,255,0.22)");
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, neckY, canvas.width, neckH);
+      ctx.restore();
+    }
+
+    // Hair and rest
+    if (imgs[2]) ctx.drawImage(imgs[2], 0, 0, canvas.width, canvas.height);
+    // Armor
+    if (imgs[3]) ctx.drawImage(imgs[3], 0, 0, canvas.width, canvas.height);
+    // Weapon
+    if (imgs[4]) ctx.drawImage(imgs[4], 0, 0, canvas.width, canvas.height);
   }
 }
 
