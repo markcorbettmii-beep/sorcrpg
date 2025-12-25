@@ -56,10 +56,11 @@ const WEAPONS_IMG = BASE + "kaidas-great-bow.png"; // Use this for "Show Weapons
 const ARMOR_IMG   = BASE + "set-epic-fur-mantle.png";
 const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
+// --- Default: pale mass body, first pale face, RANDOM hair style
 let selected = {
   body: bodyOptions.findIndex(b => b.type === "massive" && b.skin === "pale"),
   face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
-  hair: 0
+  hair: Math.floor(Math.random() * hairOptions.length)
 };
 let physiqueScore = null;
 let showWeapons = false;
@@ -111,6 +112,7 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
       img.style.height = "90px";
     }
 
+    // --- Click handler for functional ---
     if (isFunctional) {
       img.addEventListener('click', function () {
         selectFeature(pickerId, idx, featureKey, skinMatch);
@@ -133,9 +135,10 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
   });
 }
 
-// --- Preview logic ---
+// --- Preview logic (NO PREVIEW FOR BODY) ---
 let previewTimeout, previewActive = false;
 function showPreview(featureKey, option) {
+  if (featureKey === "body") return; // Disable preview popup for body images
   clearTimeout(previewTimeout);
   previewTimeout = setTimeout(() => {
     previewActive = true;
