@@ -1,7 +1,6 @@
 const BASE = "https://sorcrpg.com/character-creator/assets/";
 
 // ----------- IMAGE ARRAYS ---------------
-// Add skinTone field for body and face options
 const bodyOptions = [
   { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skinTone: "drk" },
   { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skinTone: "med" },
@@ -15,7 +14,6 @@ const bodyOptions = [
 ];
 
 const faceOptions = [
-  // Add skinTone field for each face
   { src: BASE + "femface1-dark-hzl.png", thumb: BASE + "femface1-dark-hzl-tmb.png", skinTone: "drk" },
   { src: BASE + "femface1-med-grn.png", thumb: BASE + "femface1-med-grn-tmb.png", skinTone: "med" },
   { src: BASE + "femface1-med-hzl.png", thumb: BASE + "femface1-med-hzl-tmb.png", skinTone: "med" },
@@ -72,8 +70,6 @@ let showHelmet = false, showWeapons = false, physiqueScore = null;
 function getBodySkinTone(idx) {
   return bodyOptions[idx].skinTone;
 }
-
-// Get only faces matching a skin tone
 function getMatchingFaceOptions(skinTone) {
   return faceOptions.filter(f => f.skinTone === skinTone);
 }
@@ -90,247 +86,28 @@ function createPickerImages(options, pickerId, featureKey) {
     filteredOptions = options.filter(f => f.skinTone === tone);
   }
 
-  // If no physique score, only pale thin body, matching faces and any hair is selectable
-  let isLocked = physiqueScore == null;
+  // Lock body picker before physique score
+  let lockBody = (featureKey === "body" && !physiqueScore);
 
   filteredOptions.forEach((option, idx) => {
     const img = document.createElement('img');
     img.src = option.thumb;
     img.alt = `${featureKey} ${idx + 1}`;
-    img.style.pointerEvents = "auto";
-    img.style.opacity = "1";
 
-    // Disable all except first for non-GM login (no physique score)
-    let disable = false;
-    if (isLocked) {
-      if (featureKey === "body") disable = option !== bodyOptions[8]; // only pale thin body
-      else if (featureKey === "face") {
-        // only faces matching pale tone; pick first matching
-        const paleFaces = getMatchingFaceOptions("pale");
-        disable = option !== paleFaces[0];
-      }
-      // hair: always allow first
-      else if (featureKey === "hair") disable = idx !== 0;
-    }
-
-    if (disable) {
-      img.style.opacity = "0.4";
-      img.style.pointerEvents = "none";
-    }
-
-    img.classList.toggle("selected", (
+    let isSelected =
       (featureKey === "body" && bodyOptions.indexOf(option) === selected.body) ||
       (featureKey === "face" && faceOptions.indexOf(option) === selected.face) ||
-      (featureKey === "hair" && hairOptions.indexOf(option) === selected.hair)
-    ));
+      (featureKey === "hair" && hairOptions.indexOf(option) === selected.hair);
 
-    img.addEventListener('click', function () {
-      if (!disable) {
-        if (featureKey === "body") {
-          selected.body = bodyOptions.indexOf(option);
-          // After body changes, reset face to first matching tone
-          const tone = getBodySkinTone(selected.body);
-          const faces = getMatchingFaceOptions(tone);
-          selected.face = faceOptions.indexOf(faces[0]);
-          createPickerImages(faceOptions, "face-pickers", "face");
-        }
-        if (featureKey === "face") selected.face = faceOptions.indexOf(option);
-        if (featureKey === "hair") selected.hair = hairOptions.indexOf(option);
-        createPickerImages(bodyOptions, "body-pickers", "body");
-        createPickerImages(faceOptions, "face-pickers", "face");
-        createPickerImages(hairOptions, "hair-pickers", "hair");
-        renderCharacter();
-      }
-    });
+    img.classList.toggle("selected", isSelected);
 
-    picker.appendChild(img);
-  });
-}
-
-// ----------- ARMOR & WEAPON PICKERS -------------
-function createArmorPicker() {
-  const picker = document.getElementById("armor-pickers");
-  picker.innerHTML = "";
-  armorOptions.forEach((option, idx) => {
-    if (option.whale && !showWeapons) return;
-    const img = document.createElement("img");
-    img.src = option.thumb || option.src;
-    img.alt = "Armor " + (idx + 1);
-    img.classList.toggle("selected", equippedArmor === option);
-    img.style.cursor = "pointer";
-    img.addEventListener("click", () => {
-      equippedArmor = option;
-      Array.from(picker.children).forEach(child => child.classList.remove("selected"));
-      img.classList.add("selected");
-      renderCharacter();
-    });
-    picker.appendChild(img);
-  });
-  document.getElementById("armor-row").style.display = "block";
-}
-
-function createWeaponPicker() {
-  const picker = document.getElementById("weapon-pickers");
-  picker.innerHTML = "";
-  if (!showWeapons) {
-    document.getElementById("weapon-row").style.display = "none";
-    selectedWeapon = null;
-    return;
-  }
-  weaponOptions.forEach((option, idx) => {
-    const img = document.createElement("img");
-    img.src = option.thumb || option.src;
-    img.alt = "Weapon " + (idx + 1);
-    img.classList.toggle("selected", selectedWeapon === option);
-    img.style.cursor = "pointer";
-    img.addEventListener("click", () => {
-      selectedWeapon = option;
-      Array.from(picker.children).forEach(child => child.classList.remove("selected"));
-      img.classList.add("selected");
-      renderCharacter();
-    });
-    picker.appendChild(img);
-  });
-  document.getElementById("weapon-row").style.display = "block";
-}
-
-// ----------- ENABLE/DISABLE LOGIC -----------
-function setPickersEnabled(flag) {
-  ["body-pickers", "face-pickers", "hair-pickers"].forEach(id => {
-    const picker = document.getElementById(id);
-    Array.from(picker.children).forEach(img => {
-      img.style.pointerEvents = flag ? "auto" : "none";
-      img.style.opacity = flag ? "1" : "0.5";
-    });
-  });
-  document.getElementById("showJpegBtn").disabled = !flag;
-  document.getElementById("randomBtn").disabled = !flag;
-  document.getElementById("equipArmorBtn").disabled = !flag;
-  document.getElementById("showHelmetChk").disabled = !flag;
-  document.getElementById("showWeaponsChk").disabled = !flag;
-}
-
-// ----------- CHARACTER RENDERING -----------
-function renderCharacter() {
-  const canvas = document.getElementById("charCanvas");
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Always use full-size images for canvas
-  const layers = [
-    bodyOptions[selected.body],
-    faceOptions[selected.face],
-    hairOptions[selected.hair]
-  ];
-  if (equippedArmor) layers.push(equippedArmor);
-  if (showHelmet) { /* ... */ }
-  if (showWeapons && selectedWeapon) {
-    layers.push(selectedWeapon);
-  }
-
-  let loaded = 0, imgs = [];
-  layers.forEach((opt, i) => {
-    if (!opt) { loaded++; return; }
-    const im = new Image();
-    imgs[i] = null;
-    im.crossOrigin = "anonymous";
-    im.src = opt.src; // FULL SIZE IMAGE
-    im.onload = () => { imgs[i] = im; if (++loaded === layers.length) draw(); };
-    im.onerror = () => { if (++loaded === layers.length) draw(); };
-  });
-
-  function draw() {
-    imgs.forEach(im => {
-      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
-    });
-  }
-}
-
-// ----------- DEFAULTS & INIT -----------
-function markDefaults() {
-  createPickerImages(bodyOptions, "body-pickers", "body");
-  createPickerImages(faceOptions, "face-pickers", "face");
-  createPickerImages(hairOptions, "hair-pickers", "hair");
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Set up defaults, only pale thin body and first matching face/hair
-  selected.body = 8; // Body: Pale Thin
-  const paleFaces = getMatchingFaceOptions("pale");
-  selected.face = faceOptions.indexOf(paleFaces[0]);
-  selected.hair = 0;
-  markDefaults();
-  setPickersEnabled(false);
-  renderCharacter();
-
-  document.getElementById("equipArmorBtn").addEventListener("click", () => {
-    createArmorPicker();
-  });
-  document.getElementById("showHelmetChk").addEventListener("change", (e) => {
-    showHelmet = e.target.checked;
-    renderCharacter();
-  });
-  document.getElementById("showWeaponsChk").addEventListener("change", (e) => {
-    showWeapons = e.target.checked;
-    createArmorPicker();
-    createWeaponPicker();
-    renderCharacter();
-  });
-});
-
-// ----------- PHYSIQUE FORM -----------
-document.getElementById("physiqueForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  const val = parseInt(document.getElementById("physiqueInput").value, 10);
-  if (isNaN(val) || val < 1) {
-    document.getElementById("physiqueError").style.display = "inline";
-    return;
-  }
-  physiqueScore = val;
-  document.getElementById("physiqueError").style.display = "none";
-  document.getElementById("physiqueForm").style.display = "none";
-  document.getElementById("physiqueApprovedMsg").style.display = "block";
-  setPickersEnabled(true);
-  markDefaults(); // Recreate pickers with all options now available
-  renderCharacter();
-});
-
-// ----------- RANDOM BUTTON -----------
-document.getElementById("randomBtn").addEventListener("click", function () {
-  if (!physiqueScore) return;
-  // Body random
-  selected.body = Math.floor(Math.random() * bodyOptions.length);
-  // Face: only pick matching skin tone
-  const tone = getBodySkinTone(selected.body);
-  const faces = getMatchingFaceOptions(tone);
-  selected.face = faceOptions.indexOf(faces[Math.floor(Math.random() * faces.length)]);
-  // Hair: any
-  selected.hair = Math.floor(Math.random() * hairOptions.length);
-
-  markDefaults();
-  renderCharacter();
-});
-
-// ----------- JPEG EXPORT -----------
-document.getElementById("showJpegBtn").addEventListener("click", function () {
-  const canvas = document.getElementById("charCanvas");
-  const jpegPreview = document.getElementById("jpegPreview");
-  const saveInstr = document.getElementById("saveInstr");
-  const editingButtons = document.getElementById("editingButtons");
-  const jpegButtons = document.getElementById("jpegButtons");
-
-  jpegPreview.src = canvas.toDataURL("image/jpeg");
-  jpegPreview.style.display = "block";
-  saveInstr.style.display = "block";
-  canvas.style.display = "none";
-  editingButtons.style.display = "none";
-  jpegButtons.style.display = "block";
-});
-
-document.getElementById("backBtn").addEventListener("click", function () {
-  document.getElementById("jpegPreview").style.display = "none";
-  document.getElementById("saveInstr").style.display = "none";
-  document.getElementById("charCanvas").style.display = "block";
-  document.getElementById("editingButtons").style.display = "block";
-  document.getElementById("jpegButtons").style.display = "none";
-});
+    // --- Hold-to-zoom logic ---
+    let zoomTimer = null;
+    const zoomIn = () => img.classList.add("thumb-zoomed");
+    const zoomOut = () => {
+      img.classList.remove("thumb-zoomed");
+      if (zoomTimer) clearTimeout(zoomTimer);
+      zoomTimer = null;
+    };
+    img.addEventListener('mousedown', (e) => { zoomTimer = setTimeout(zoomIn, 1200); });
+    img.addEventListener('touchstart', (e) => { zoomTimer = setTimeout(zoomIn, 120
