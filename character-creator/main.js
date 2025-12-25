@@ -1,50 +1,41 @@
 const BASE = "assets/";
 
-// --- BODY OPTIONS: mass (functional), thin (placeholder), musc (placeholder) ---
+// --- BODY OPTIONS: mass (functional), thin/musc (placeholder) ---
 const bodyOptions = [
-  // Thin placeholder
   { src: null, thumb: `${BASE}fbody-thin-drk-tmb.png`, skin: "drk", type: "thin", enabled: false },
-  // Muscular placeholder
   { src: null, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: false },
-  // Massive functional bodies
   { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", type: "massive", enabled: true },
   { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", type: "massive", enabled: true },
   { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive", enabled: true },
-  // Thin placeholder
   { src: null, thumb: `${BASE}fbody-thin-med-tmb.png`, skin: "med", type: "thin", enabled: false },
-  // Muscular placeholder
   { src: null, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: false },
-  // Thin placeholder
   { src: null, thumb: `${BASE}fbody-thin-pale-tmb.png`, skin: "pale", type: "thin", enabled: false },
-  // Muscular placeholder
   { src: null, thumb: `${BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: false },
 ];
 
-// --- FACE OPTIONS (with specified removals) ---
+// --- FACE OPTIONS (with functional/faded logic) ---
 const faceOptions = [
   // Dark
-  { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu" },
-  { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl" },
-  { src: `${BASE}femface2-dark-brn.png`, thumb: `${BASE}femface2-dark-brn-tmb.png`, skin: "drk", eyes: "brn" },
-  { src: `${BASE}femface2-dark-blu.png`, thumb: `${BASE}femface2-dark-blu-tmb.png`, skin: "drk", eyes: "blu" },
-  // Medium (REMOVED index 5, i.e. 6th med face!)
-  { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn" },
-  { src: `${BASE}femface1-med-hzl.png`, thumb: `${BASE}femface1-med-hzl-tmb.png`, skin: "med", eyes: "hzl" },
-  { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn" },
-  { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn" },
-  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu" },
-  // (REMOVED) { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, skin: "med", eyes: "grn" },
-  { src: `${BASE}femface3-med-brn.png`, thumb: `${BASE}femface3-med-brn-tmb.png`, skin: "med", eyes: "brn" },
-  // Pale (REMOVED index 4, i.e. 5th pale face!)
-  { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl" },
-  { src: `${BASE}femface1-pale-brn.png`, thumb: `${BASE}femface1-pale-brn-tmb.png`, skin: "pale", eyes: "brn" },
-  { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-vio-tmb.png`, skin: "pale", eyes: "vio" },
-  { src: `${BASE}femface2-pale-brn.png`, thumb: `${BASE}femface2-pale-brn-tmb.png`, skin: "pale", eyes: "brn" },
-  { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu" },
-  // (REMOVED) { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn" },
+  { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
+  { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
+  { src: `${BASE}femface2-dark-brn.png`, thumb: `${BASE}femface2-dark-brn-tmb.png`, skin: "drk", eyes: "brn", enabled: true },
+  { src: `${BASE}femface2-dark-blu.png`, thumb: `${BASE}femface2-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
+  // Medium
+  { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
+  { src: `${BASE}femface1-med-hzl.png`, thumb: `${BASE}femface1-med-hzl-tmb.png`, skin: "med", eyes: "hzl", enabled: true },
+  { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
+  { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
+  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu", enabled: true },
+  { src: `${BASE}femface3-med-brn.png`, thumb: `${BASE}femface3-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: false }, // LAST MED FACE: not functional
+  // Pale
+  { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl", enabled: true }, // ONLY THIS PALE FACE IS FUNCTIONAL
+  { src: `${BASE}femface1-pale-brn.png`, thumb: `${BASE}femface1-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: false },
+  { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-vio-tmb.png`, skin: "pale", eyes: "vio", enabled: false },
+  { src: `${BASE}femface2-pale-brn.png`, thumb: `${BASE}femface2-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: false },
+  { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu", enabled: false }
 ];
 
-// --- HAIR OPTIONS ---
+// --- HAIR OPTIONS (all functional) ---
 const hairOptions = [
   { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png` },
   { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png` },
@@ -65,7 +56,12 @@ const BOW_IMG    = BASE + "kaidas-great-bow.png";
 const ARMOR_IMG  = BASE + "set-epic-fur-mantle.png";
 const HELMET_IMG = BASE + "bear-skn-helmet.png";
 
-let selected = { body: 2, face: 0, hair: 0 }; // Default: first mass body
+// Default: Select pale mass body and first face/hair
+let selected = {
+  body: bodyOptions.findIndex(b => b.type === "massive" && b.skin === "pale"),
+  face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
+  hair: 0
+};
 let physiqueScore = null;
 let showBow = false;
 let showArmor = false;
@@ -76,7 +72,9 @@ function getAvailableBodyIndexes() {
   return bodyOptions;
 }
 
-// --- Picker rendering, including faded placeholders and zoom for selected mass body ---
+// --- Picker rendering, including faded placeholders and yellow border for selected ---
+// For body: selected gets border and size, non-selected get border only
+// For face/hair: selected gets border (no size change)
 function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
@@ -90,32 +88,44 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
     img.src = option.thumb;
     img.alt = `${featureKey} ${idx + 1}`;
     img.title = option.label ? option.label : '';
-    if (featureKey === "body" && !option.enabled) {
-      img.style.pointerEvents = "none";
-      img.style.opacity = "0.3";
-    } else {
-      img.style.pointerEvents = "auto";
-      img.style.opacity = "1";
-      img.addEventListener('click', function () {
-        if (featureKey === "body" && !option.enabled) return;
-        selectFeature(pickerId, idx, featureKey, skinMatch);
-      });
-    }
-    // Zoom/size effect for selected mass body
-    if (featureKey === "body" && option.enabled && idx === selected.body) {
-      img.style.width = "140px";
-      img.style.height = "140px";
-      img.style.border = "4px solid #ff8800";
+
+    let selectedIndex = selected[featureKey];
+    let isSelected = (idx === selectedIndex);
+
+    // --- Enable/disable logic ---
+    let isFunctional = true;
+    if (featureKey === "body" && !option.enabled) isFunctional = false;
+    if (featureKey === "face" && option.enabled === false) isFunctional = false;
+
+    img.style.pointerEvents = isFunctional ? "auto" : "none";
+    img.style.opacity = isFunctional ? "1" : "0.3";
+
+    // --- Selection border logic ---
+    if (isSelected) {
+      img.style.border = "4px solid #ffbb00";
       img.style.boxShadow = "0 0 24px #ffbc6c88";
       img.style.zIndex = "2";
       img.style.background = "#fffbe8";
     } else {
-      img.style.width = "90px";
-      img.style.height = "90px";
       img.style.border = "3px solid #ddd";
       img.style.boxShadow = "0 2px 12px #ccc9";
       img.style.zIndex = "1";
       img.style.background = "#fafafa";
+    }
+    // --- Size effect for selected mass body only ---
+    if (featureKey === "body" && option.enabled && isSelected) {
+      img.style.width = "140px";
+      img.style.height = "140px";
+    } else {
+      img.style.width = "90px";
+      img.style.height = "90px";
+    }
+
+    // --- Click handler for functional ---
+    if (isFunctional) {
+      img.addEventListener('click', function () {
+        selectFeature(pickerId, idx, featureKey, skinMatch);
+      });
     }
     picker.appendChild(img);
   });
@@ -132,9 +142,9 @@ function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
     // When body changes, show only faces for that skin
     const skin = getCurrentBodySkin();
     createPickerImages(faceOptions, "face-pickers", "face", skin);
-    selected.face = 0;
-    document.getElementById("face-pickers").children[0].classList.add("selected");
-    // Re-render body picker for zoom effect
+    selected.face = faceOptions.findIndex(f => f.skin === skin && f.enabled);
+    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
+    // Re-render body picker for zoom effect and highlight
     createPickerImages(bodyOptions, "body-pickers", "body");
   } else if (featureKey === "face") {
     selected.face = idx;
@@ -145,7 +155,7 @@ function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
 }
 
 function getCurrentBodySkin() {
-  return bodyOptions[selected.body]?.skin || "med";
+  return bodyOptions[selected.body]?.skin || "pale";
 }
 
 // --- Character rendering (with equipment support and dynamic canvas size) ---
@@ -163,7 +173,7 @@ function renderCharacter() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   let body = bodyOptions[selected.body];
-  let skin = body?.skin || "med";
+  let skin = body?.skin || "pale";
   let faceOpts = faceOptions.filter(f => f.skin === skin);
   let face = faceOpts[selected.face];
   let hair = hairOptions[selected.hair];
@@ -173,7 +183,7 @@ function renderCharacter() {
   if (showBow) layers.push({src: BOW_IMG});
   if (body && body.src) layers.push(body);
   if (showArmor) layers.push({src: ARMOR_IMG});
-  if (face && face.src) layers.push(face);
+  if (face && face.src && face.enabled !== false) layers.push(face);
   if (hair && hair.src) layers.push(hair);
   if (showHelmet) layers.push({src: HELMET_IMG});
 
@@ -222,23 +232,25 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   let skin = getCurrentBodySkin();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
-  // Mark defaults
   document.getElementById("body-pickers").children[selected.body].classList.add("selected");
   document.getElementById("face-pickers").children[selected.face].classList.add("selected");
   document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
   renderCharacter();
 });
 
-// --- Randomizer ---
+// --- Randomizer, only functional faces/bodies ---
 document.getElementById("randomBtn").addEventListener("click", function () {
+  // Only functional mass bodies
   let massBodyIndexes = bodyOptions.map((b, i) => b.enabled ? i : null).filter(i => i !== null);
   selected.body = massBodyIndexes[Math.floor(Math.random() * massBodyIndexes.length)];
   let skin = getCurrentBodySkin();
-  let faceOpts = faceOptions.filter(f => f.skin === skin);
-  selected.face = Math.floor(Math.random() * faceOpts.length);
+  // Only functional faces for current body/skin
+  let faceOpts = faceOptions.filter(f => f.skin === skin && f.enabled !== false);
+  // For pale, only first face is enabled, so always 0
+  selected.face = faceOpts.length > 1 ? Math.floor(Math.random() * faceOpts.length) : 0;
   selected.hair = Math.floor(Math.random() * hairOptions.length);
   createPickerImages(bodyOptions, "body-pickers", "body");
-  createPickerImages(faceOpts, "face-pickers", "face", skin);
+  createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
   document.getElementById("body-pickers").children[selected.body].classList.add("selected");
   document.getElementById("face-pickers").children[selected.face].classList.add("selected");
