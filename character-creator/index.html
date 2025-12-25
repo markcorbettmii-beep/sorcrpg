@@ -14,50 +14,54 @@
       <!-- Physique Score Form -->
       <form id="physiqueForm">
         <label for="physiqueInput"><strong>Enter Character Physique Score:</strong></label>
-        <input type="number" id="physiqueInput" required placeholder="Must submit before body type" style="opacity:0.6;">
-        <button type="submit" id="physiqueSubmitBtn">Submit Physique</button>
-        <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (any integer).</span>
+        <input type="number" id="physiqueInput" min="1" max="99" required>
+        <button type="submit">Submit Physique</button>
+        <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (1 or higher).</span>
       </form>
       <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:green;font-weight:bold;">
-        Physique accepted! You can now select Body Type.
+        Physique accepted! You can now create your character.
       </div>
-      <!-- Character Canvas -->
+
+      <!-- Canvas -->
       <div id="characterCanvasContainer">
         <canvas id="charCanvas" width="480" height="960"></canvas>
       </div>
-      <!-- JPEG Preview (wrapped for horizontal scroll) -->
-      <div id="jpegPreviewContainer">
-        <img id="jpegPreview" style="display:none;" alt="Character Preview">
-      </div>
-      <p id="saveInstr" style="display:none;">Long-press or right-click the image above to save your character as a JPEG.<br><span style="color:#c55;font-size:1.3em;">Feature coming soon</span></p>
+      <img id="jpegPreview" style="display:none;max-width:100%;border:1px solid #ccc;margin:1em 0;">
+      <p id="saveInstr" style="display:none;">Long-press or right-click the image above to save your character as a JPEG.</p>
       <div id="editingButtons">
-        <button id="showJpegBtn">Show Saveable JPEG</button>
-        <button id="randomBtn">Random Character</button>
+        <button id="showJpegBtn" disabled>Show Saveable JPEG</button>
+        <button id="randomBtn" disabled>Random Character</button>
       </div>
       <div id="jpegButtons" style="display:none;">
         <button id="backBtn">Back to Customize</button>
+      </div>
+      <div id="equipment-controls" style="margin:1em 0;">
+        <button type="button" id="equipArmorBtn" disabled>Equip Armor</button>
+        <span style="font-size:0.95em;font-style:italic;">(only armor on person)</span>
+        <br>
+        <label><input type="checkbox" id="showHelmetChk" disabled> Show Helmet</label>
+        <label><input type="checkbox" id="showWeaponsChk" disabled> Show Weapons</label>
       </div>
       <div class="feature-rows">
         <div class="feature-row" id="body-row">
           <h2>Body Type</h2>
           <div id="body-pickers"></div>
         </div>
-        <div class="feature-row" id="hair-row">
-          <h2>Hair <span class="hold-for-preview">(hold for preview)</span></h2>
-          <div id="hair-pickers"></div>
-        </div>
-        <div class="feature-row" id="eyes-row">
-          <h2>Eyes <span class="hold-for-preview">(hold for preview)</span></h2>
-          <div id="eyes-pickers"></div>
-        </div>
         <div class="feature-row" id="face-row">
-          <h2>Face <span class="hold-for-preview">(hold for preview)</span></h2>
+          <h2>Face</h2>
           <div id="face-pickers"></div>
         </div>
-        <!-- Armaments Row ADDED HERE -->
-        <div class="feature-row" id="armaments-row">
-          <h2>Armaments (coming soon)</h2>
-          <div id="armaments-pickers"></div>
+        <div class="feature-row" id="hair-row">
+          <h2>Hair</h2>
+          <div id="hair-pickers"></div>
+        </div>
+        <div class="feature-row" id="armor-row" style="display:none;">
+          <h2>Armor</h2>
+          <div id="armor-pickers"></div>
+        </div>
+        <div class="feature-row" id="weapon-row" style="display:none;">
+          <h2>Weapons</h2>
+          <div id="weapon-pickers"></div>
         </div>
       </div>
       <section class="body-type-explanation">
@@ -70,7 +74,7 @@
           <li><strong>Physique ≤ 1:</strong> Thin</li>
           <li><strong>Physique 2 thru 4:</strong> Lean</li>
           <li><strong>Physique 5 thru 20:</strong> Muscular</li>
-          <li><strong>Physique &gt; 20:</strong> Massive</li>
+          <li><strong>Physique 21 and beyond:</strong> Massive</li>
         </ul>
       </section>
       <div class="coming-soon">
@@ -78,13 +82,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Feature Zoom Popup -->
-  <div id="featureZoomPopup" style="display:none;">
-    <img id="featureZoomImg" src="" alt="Feature Zoom">
-    <div id="featureZoomMsg">Hold for zoom</div>
-  </div>
-
   <script src="main.js"></script>
 </body>
 </html>
