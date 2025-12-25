@@ -1,10 +1,11 @@
 const BASE = "https://sorcrpg.com/character-creator/assets/";
 
+/* ---------- IMAGE LISTS ---------- */
 const bodyOptions = [
-  { src: `${BASE}fbody-type-massive.png`,  thumb: `${BASE}fbody-type-massive.png`,  label: "Massive"  },
-  { src: `${BASE}fbody-type-muscular.png`, thumb: `${BASE}fbody-type-muscular.png`, label: "Muscular" },
-  { src: `${BASE}fbody-type-lean.png`,     thumb: `${BASE}fbody-type-lean.png`,     label: "Lean"     },
-  { src: `${BASE}fbody-type-thin.png`,     thumb: `${BASE}fbody-type-thin.png`,     label: "Thin"     }
+  { src: `${BASE}fbody-type-massive.png`,  thumb: `${BASE}fbody-type-massive.png` },
+  { src: `${BASE}fbody-type-muscular.png`, thumb: `${BASE}fbody-type-muscular.png` },
+  { src: `${BASE}fbody-type-lean.png`,     thumb: `${BASE}fbody-type-lean.png` },
+  { src: `${BASE}fbody-type-thin.png`,     thumb: `${BASE}fbody-type-thin.png` }
 ];
 
 const hairOptions = [
@@ -29,48 +30,24 @@ const faceOptions = [
   { src: `${BASE}placeholder-face2.png`, thumb: `${BASE}placeholder-face2.png` }
 ];
 
-// Add Armaments options
-const armamentsOptions = [
-  {
-    src: `${BASE}placeholder-thumb.png`,
-    thumb: `${BASE}placeholder-thumb.png`,
-    label: "Full Set (see bonuses): Harness (Cuirass/Paulds/Greaves), *Helm, *Gloves and *Boots (*interchangeable, lose set bonus in exchange for piece bonus)"
-  },
-  {
-    src: `${BASE}placeholder-thumb.png`,
-    thumb: `${BASE}placeholder-thumb.png`,
-    label: "Helm (offset)"
-  },
-  {
-    src: `${BASE}placeholder-thumb.png`,
-    thumb: `${BASE}placeholder-thumb.png`,
-    label: "Gloves (offset)"
-  },
-  {
-    src: `${BASE}placeholder-thumb.png`,
-    thumb: `${BASE}placeholder-thumb.png`,
-    label: "Boots (offset)"
-  }
-];
-
+/* ---------- STATE ---------- */
 let selected = { body: 0, hair: 0, eyes: 0, face: 0 };
 let physiqueScore = null;
-let allowedBodyIndices = [3]; // default to Thin
 
+/* ---------- INIT ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   initPickers();
-  setBodyPickerEnabled(false);
-  setOtherPickersEnabled(true);
+  setPickersEnabled(false);
   markDefaults();
   renderCharacter();
-  setupFeatureZoom();
 });
 
 /* ---------- Physique Score Handling ---------- */
 document.getElementById("physiqueForm").addEventListener("submit", e => {
   e.preventDefault();
   const val = parseInt(document.getElementById("physiqueInput").value, 10);
-  if (isNaN(val)) {
+
+  if (isNaN(val) || val < 1) {
     document.getElementById("physiqueError").style.display = "inline";
     return;
   }
@@ -78,110 +55,83 @@ document.getElementById("physiqueForm").addEventListener("submit", e => {
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
   document.getElementById("physiqueApprovedMsg").style.display = "block";
-  allowedBodyIndices = getAllowedBodyIndices(physiqueScore);
-  setBodyPickerEnabled(true);
-  updateBodyPickerDisabled();
+  setPickersEnabled(true);
 });
 
-function getAllowedBodyIndices(score) {
-  if (score <= 1) return [3];                // Thin (index 3)
-  if (score >= 2 && score <= 4) return [2];  // Lean (index 2)
-  if (score >= 5 && score <= 20) return [1]; // Muscular (index 1)
-  if (score > 20) return [0];                // Massive (index 0)
-  return [3]; // fallback to Thin
-}
-
-/* ---------- Picker Creation ---------- */
+/* ---------- Picker Creation with Hold-to-Zoom ---------- */
 function initPickers() {
-  buildPicker(bodyOptions, "body-pickers", "body", false, true);
-  buildPicker(hairOptions, "hair-pickers", "hair", true, false);
-  buildPicker(eyesOptions, "eyes-pickers", "eyes", true, false);
-  buildPicker(faceOptions, "face-pickers", "face", true, false);
-  // Armaments row
-  buildPicker(armamentsOptions, "armaments-pickers", "armaments", false, false);
+  createPickerImages(bodyOptions, "body-pickers", "body");
+  createPickerImages(hairOptions, "hair-pickers", "hair");
+  createPickerImages(eyesOptions, "eyes-pickers", "eyes");
+  createPickerImages(faceOptions, "face-pickers", "face");
 }
 
-function buildPicker(opts, pickerId, key, enabled, isBody) {
+function createPickerImages(options, pickerId, featureKey) {
   const picker = document.getElementById(pickerId);
   picker.innerHTML = "";
-  opts.forEach((opt, idx) => {
-    const wrapper = document.createElement("div");
-    wrapper.style.display = "flex";
-    wrapper.style.flexDirection = "column";
-    wrapper.style.alignItems = "center";
-    const img = document.createElement("img");
-    img.src  = opt.thumb;
-    img.alt  = `${key}-${idx+1}`;
-    img.style.pointerEvents = enabled ? "auto" : "none";
-    img.style.opacity = enabled ? "1" : "0.5";
-    img.dataset.idx = idx;
-    if (isBody) img.dataset.bodyidx = idx;
-    img.addEventListener("click", () => {
-      if (img.style.pointerEvents === "auto" && (!isBody || allowedBodyIndices.includes(idx)))
-        choose(pickerId, idx, key);
+
+  options.forEach((option, idx) => {
+    const img = document.createElement('img');
+    img.src = option.thumb;
+    img.alt = `${featureKey} ${idx + 1}`;
+    img.style.pointerEvents = "none";
+    img.style.opacity = "0.5";
+    img.addEventListener('click', function () {
+      if (img.style.pointerEvents === "auto") selectFeature(pickerId, idx, featureKey);
     });
-    wrapper.appendChild(img);
-    if (opt.label) {
-      const lbl = document.createElement("div");
-      lbl.textContent = opt.label;
-      lbl.style.fontSize = "0.88em";
-      lbl.style.color = "#666";
-      lbl.style.maxWidth = "140px";
-      lbl.style.textAlign = "center";
-      lbl.style.marginTop = "0.35em";
-      wrapper.appendChild(lbl);
-    }
-    picker.appendChild(wrapper);
+
+    // --- Hold-to-zoom logic ---
+    let zoomTimer = null;
+    let zoomed = false;
+
+    const zoomIn = () => {
+      zoomed = true;
+      img.classList.add("thumb-zoomed");
+    };
+    const zoomOut = () => {
+      zoomed = false;
+      img.classList.remove("thumb-zoomed");
+      if (zoomTimer) clearTimeout(zoomTimer);
+      zoomTimer = null;
+    };
+
+    img.addEventListener('mousedown', (e) => {
+      if (img.style.pointerEvents !== "auto") return;
+      zoomTimer = setTimeout(zoomIn, 1500);
+    });
+    img.addEventListener('touchstart', (e) => {
+      if (img.style.pointerEvents !== "auto") return;
+      zoomTimer = setTimeout(zoomIn, 1500);
+    });
+
+    ["mouseup", "mouseleave", "touchend", "touchcancel", "mousemove"].forEach(ev => {
+      img.addEventListener(ev, zoomOut);
+    });
+
+    picker.appendChild(img);
   });
 }
 
-function setBodyPickerEnabled(flag) {
-  const picker = document.getElementById("body-pickers");
-  [...picker.children].forEach(img => {
-    img.style.pointerEvents = flag ? "auto" : "none";
-    img.style.opacity = flag ? "1" : "0.5";
-  });
-  updateBodyPickerDisabled();
-}
-
-function setOtherPickersEnabled(flag) {
-  ["hair-pickers", "eyes-pickers", "face-pickers"].forEach(id => {
-    const picker = document.getElementById(id);
-    [...picker.children].forEach(img => {
-      img.style.pointerEvents = flag ? "auto" : "none";
-      img.style.opacity = flag ? "1" : "0.5";
+/* ---------- Enable / Disable ---------- */
+function setPickersEnabled(flag) {
+  ["body-pickers","hair-pickers","eyes-pickers","face-pickers"].forEach(id=>{
+    const picker=document.getElementById(id);
+    [...picker.children].forEach(img=>{
+      img.style.pointerEvents= flag?"auto":"none";
+      img.style.opacity      = flag?"1":"0.5";
     });
   });
   document.getElementById("showJpegBtn").disabled = !flag;
   document.getElementById("randomBtn").disabled   = !flag;
 }
 
-/* ---------- Restrict Body Types by Physique ---------- */
-function updateBodyPickerDisabled() {
-  const picker = document.getElementById("body-pickers");
-  [...picker.children].forEach((img, idx) => {
-    if (physiqueScore === null) {
-      img.style.pointerEvents = "none";
-      img.style.opacity = "0.5";
-    } else if (allowedBodyIndices.includes(idx)) {
-      img.style.pointerEvents = "auto";
-      img.style.opacity = "1";
-    } else {
-      img.style.pointerEvents = "none";
-      img.style.opacity = "0.25";
-    }
-  });
-}
-
 /* ---------- Selection ---------- */
-function choose(pickerId, idx, key) {
-  if (key === "body" && physiqueScore === null) return;
-  if (key === "body" && !allowedBodyIndices.includes(idx)) return;
-  const picker = document.getElementById(pickerId);
-  [...picker.children].forEach(img => img.classList.remove("selected"));
+function selectFeature(pickerId, idx, featureKey) {
+  const picker=document.getElementById(pickerId);
+  [...picker.children].forEach(img=>img.classList.remove("selected"));
   if (picker.children[idx]) {
     picker.children[idx].classList.add("selected");
-    selected[key] = idx;
+    selected[featureKey] = idx;
     renderCharacter();
   }
 }
@@ -191,10 +141,6 @@ function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx    = canvas.getContext("2d");
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // White background for eyes
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   const layers = [
     bodyOptions[selected.body],
@@ -210,7 +156,7 @@ function renderCharacter() {
     imgs[i]  = null;
     im.src   = opt.src;
     im.onload  = ()=>{ imgs[i]=im; if(++loaded===layers.length) draw(); };
-    im.onerror = ()=>{ if(++loaded===layers.length) draw();              };
+    im.onerror = ()=>{ if(++loaded===layers.length) draw(); };
   });
 
   function draw() {
@@ -228,9 +174,9 @@ function markDefaults() {
 
 /* ---------- Random ---------- */
 document.getElementById("randomBtn").addEventListener("click", () => {
-  // Body type: choose only among allowed indices
-  const allowed = allowedBodyIndices;
-  selected.body = allowed[Math.floor(Math.random()*allowed.length)];
+  if (!physiqueScore) return;
+
+  selected.body = rand(bodyOptions.length);
   selected.hair = rand(hairOptions.length);
   selected.eyes = rand(eyesOptions.length);
   selected.face = rand(faceOptions.length);
@@ -251,24 +197,11 @@ document.getElementById("randomBtn").addEventListener("click", () => {
 function rand(max){ return Math.floor(Math.random()*max); }
 
 /* ---------- JPEG Export ---------- */
-// JPEG preview uses canvas (so it shows all features), but overlays "feature coming soon" message.
 document.getElementById("showJpegBtn").addEventListener("click",()=>{
   const canvas=document.getElementById("charCanvas");
   const jpg=document.getElementById("jpegPreview");
-  // Create a temporary canvas for overlay
-  const tempCanvas = document.createElement("canvas");
-  tempCanvas.width = canvas.width;
-  tempCanvas.height = canvas.height;
-  const tempCtx = tempCanvas.getContext("2d");
-  tempCtx.drawImage(canvas, 0, 0);
-  // Overlay "feature coming soon"
-  tempCtx.font = "bold 48px sans-serif";
-  tempCtx.fillStyle = "#c55";
-  tempCtx.textAlign = "center";
-  tempCtx.globalAlpha = 0.8;
-  tempCtx.fillText("Feature coming soon", tempCanvas.width/2, tempCanvas.height/2 + 100);
+  jpg.src = canvas.toDataURL("image/jpeg");
 
-  jpg.src = tempCanvas.toDataURL("image/jpeg");
   jpg.style.display      = "block";
   document.getElementById("saveInstr").style.display = "block";
   canvas.style.display   = "none";
@@ -283,35 +216,3 @@ document.getElementById("backBtn").addEventListener("click",()=>{
   document.getElementById("editingButtons").style.display = "block";
   document.getElementById("jpegButtons").style.display = "none";
 });
-
-/* ---------- Feature Zoom Pop-Out (for pickers, not savable) ---------- */
-function setupFeatureZoom() {
-  const zoomPopup = document.getElementById("featureZoomPopup");
-  const zoomImg   = document.getElementById("featureZoomImg");
-
-  function showFeatureZoom(src) {
-    zoomImg.src = src;
-    zoomPopup.style.display = "flex";
-  }
-  function hideFeatureZoom() {
-    zoomPopup.style.display = "none";
-  }
-
-  // For hair, eyes, face pickers: show zoom of the thumbnail held down
-  ["hair-pickers","eyes-pickers","face-pickers"].forEach(id => {
-    const picker = document.getElementById(id);
-    // mousedown/touchstart on the actual image
-    picker.addEventListener("mousedown", e => {
-      if (e.target.tagName === "IMG") showFeatureZoom(e.target.src);
-    });
-    picker.addEventListener("touchstart", e => {
-      if (e.target.tagName === "IMG") showFeatureZoom(e.target.src);
-    });
-    picker.addEventListener("mouseup", hideFeatureZoom);
-    picker.addEventListener("mouseleave", hideFeatureZoom);
-    picker.addEventListener("touchend", hideFeatureZoom);
-    picker.addEventListener("touchcancel", hideFeatureZoom);
-  });
-
-  zoomPopup.addEventListener("touchmove", function(e){e.preventDefault();}, {passive:false});
-}
