@@ -52,18 +52,17 @@ const hairOptions = [
 ];
 
 // --- Equipment images ---
-const BOW_IMG    = BASE + "kaidas-great-bow.png";
-const ARMOR_IMG  = BASE + "set-epic-fur-mantle.png";
-const HELMET_IMG = BASE + "bear-skn-helmet.png";
+const WEAPONS_IMG = BASE + "kaidas-great-bow.png"; // Use this for "Show Weapons"
+const ARMOR_IMG   = BASE + "set-epic-fur-mantle.png";
+const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
-// Default: Select pale mass body, first pale face, first hair
 let selected = {
   body: bodyOptions.findIndex(b => b.type === "massive" && b.skin === "pale"),
   face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
   hair: 0
 };
 let physiqueScore = null;
-let showBow = false;
+let showWeapons = false;
 let showArmor = false;
 let showHelmet = false;
 
@@ -112,7 +111,6 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
       img.style.height = "90px";
     }
 
-    // --- Click handler for functional ---
     if (isFunctional) {
       img.addEventListener('click', function () {
         selectFeature(pickerId, idx, featureKey, skinMatch);
@@ -167,7 +165,6 @@ function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
   if (featureKey === "body") {
     const skin = getCurrentBodySkin();
     createPickerImages(faceOptions, "face-pickers", "face", skin);
-    // Select first enabled face for that skin
     let faceOpts = faceOptions.filter(f => f.skin === skin);
     let firstEnabledFace = faceOpts.findIndex(f => f.enabled);
     selected.face = firstEnabledFace >= 0 ? firstEnabledFace : 0;
@@ -208,7 +205,7 @@ function renderCharacter() {
   let hair = hairOptions[selected.hair];
 
   const layers = [];
-  if (showBow) layers.push({src: BOW_IMG});
+  if (showWeapons) layers.push({src: WEAPONS_IMG});
   if (body && body.src) layers.push(body);
   if (showArmor) layers.push({src: ARMOR_IMG});
   if (face && face.src && face.enabled !== false) layers.push(face);
@@ -230,8 +227,8 @@ function renderCharacter() {
 }
 
 // --- Equipment checkbox logic ---
-document.getElementById("equipBowChk").addEventListener('change', function() {
-  showBow = this.checked;
+document.getElementById("equipWeaponsChk").addEventListener('change', function() {
+  showWeapons = this.checked;
   renderCharacter();
 });
 document.getElementById("equipArmorChk").addEventListener('change', function() {
@@ -241,6 +238,14 @@ document.getElementById("equipArmorChk").addEventListener('change', function() {
 document.getElementById("equipHelmetChk").addEventListener('change', function() {
   showHelmet = this.checked;
   renderCharacter();
+});
+
+// --- Dead links for card buttons ---
+document.getElementById("cardWeaponsBtn").addEventListener("click", function(e) {
+  alert("Show Linked Card (coming soon)");
+});
+document.getElementById("cardArmorBtn").addEventListener("click", function(e) {
+  alert("Show Linked Card (coming soon)");
 });
 
 // --- Physique form submit ---
