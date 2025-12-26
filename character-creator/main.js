@@ -2,23 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Character Creator</title>
+  <title>Character Creator Picker Demo</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f5f5f5; }
-    .creator-wrap { max-width: 850px; margin: 0 auto; background: #fff; padding: 24px 24px 48px 24px; border-radius: 18px; box-shadow: 0 4px 32px #0002;}
-    .picker-section { margin-bottom: 24px; }
-    .picker-label { font-size: 1.1em; font-weight: bold; margin: 12px 0 4px 0;}
+    .creator-wrap { max-width: 850px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 32px #0002;}
+    .picker-section { margin-bottom: 20px; }
+    .picker-label { font-size: 1.1em; font-weight: bold; margin: 12px 0 8px 0;}
     .thumb-list { display: flex; gap: 12px; margin-bottom: 8px;}
-    .thumb { width: 90px; height: 90px; border-radius: 12px; border: 3px solid #ddd; background: #fafafa; box-shadow: 0 2px 12px #ccc9; opacity: 1; cursor: pointer; }
+    .thumb { width: 90px; height: 90px; border-radius: 12px; border: 3px solid #ddd; background: #fafafa; box-shadow: 0 2px 12px #ccc9; opacity: 1; cursor: pointer; transition: border .2s, background .2s;}
     .thumb.selected { border: 4px solid #ffbb00; background: #fffbe8; box-shadow: 0 0 24px #ffbc6c88; }
     .thumb.disabled { opacity: 0.3; cursor: default; }
     .hr-label { font-size:0.95em;font-weight:bold;color:#a22;margin-bottom:2px;}
+    #charCanvas { display:block; margin:24px auto 24px auto; border-radius:16px; background:#eee; box-shadow: 0 2px 12px #ccc9; }
   </style>
 </head>
 <body>
 <div class="creator-wrap">
-  <h2>Character Creator</h2>
-  <canvas id="charCanvas" width="640" height="1280" style="background:#eee; border-radius:16px; display:block; margin-bottom:24px;"></canvas>
+  <h2>Character Creator Picker Demo</h2>
+  <canvas id="charCanvas" width="640" height="1280"></canvas>
   <div class="picker-section">
     <div class="picker-label">Body Type</div>
     <div id="body-pickers"></div>
@@ -33,8 +34,10 @@
   </div>
 </div>
 <script>
+// --- Image asset path ---
 const BASE = "character-creator/assets/";
 
+// --- Body Picker ---
 const bodyTypeRows = [
   {
     label: "Body Type (massive)",
@@ -104,6 +107,7 @@ let selected = {
   hair: 5 // hair #6
 };
 
+// PATCH: Only allow selecting enabled body thumbs and protect all "skin" access
 function renderBodyPickers() {
   const container = document.getElementById("body-pickers");
   container.innerHTML = "";
@@ -130,9 +134,9 @@ function renderBodyPickers() {
       img.onclick = function() {
         if (body.enabled) {
           selected.body = idx;
-          let skin = body.skin;
-          let firstEnabledFace = faceOptions.findIndex(f => f.skin === skin && f.enabled);
-          selected.face = firstEnabledFace >= 0 ? firstEnabledFace : 0;
+          let skin = (body && body.skin) ? body.skin : "pale";
+          let filtered = faceOptions.filter(f => f.skin === skin && f.enabled);
+          selected.face = filtered.length ? faceOptions.indexOf(filtered[0]) : 0;
           renderAllPickers();
           renderCharacter();
         }
@@ -149,7 +153,7 @@ function renderFacePickers() {
   const container = document.getElementById("face-pickers");
   container.innerHTML = "";
   let body = bodyOptions[selected.body];
-  let skin = body.skin;
+  let skin = (body && body.skin) ? body.skin : "pale";
   let filtered = faceOptions.filter(f => f.skin === skin);
 
   filtered.forEach((face, idx) => {
@@ -202,39 +206,29 @@ function renderCharacter() {
   canvas.height = 1280;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  let bgImg = new window.Image();
-  bgImg.src = BASE + "highres-canvas-bg.png";
-  bgImg.onload = function() {
-    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    drawLayers();
-  };
-  bgImg.onerror = drawLayers;
+  let body = bodyOptions[selected.body];
+  let skin = (body && body.skin) ? body.skin : "pale";
+  let faceOpts = faceOptions.filter(f => f.skin === skin);
+  let face = faceOpts[selected.face];
+  let hair = hairOptions[selected.hair];
 
-  function drawLayers() {
-    let body = bodyOptions[selected.body];
-    let skin = body?.skin || "pale";
-    let faceOpts = faceOptions.filter(f => f.skin === skin);
-    let face = faceOpts[selected.face];
-    let hair = hairOptions[selected.hair];
+  const layers = [];
+  if (body && body.src) layers.push(body);
+  if (face && face.src && face.enabled !== false) layers.push(face);
+  if (hair && hair.src && hair.enabled !== false) layers.push(hair);
 
-    const layers = [];
-    if (body && body.src) layers.push(body);
-    if (face && face.src && face.enabled !== false) layers.push(face);
-    if (hair && hair.src && hair.enabled !== false) layers.push(hair);
-
-    let loaded = 0, imgs = [];
-    if (!layers.length) return;
-    layers.forEach((opt, i) => {
-      if (!opt || !opt.src) { loaded++; return; }
-      const im = new window.Image();
-      imgs[i] = null;
-      im.src = opt.src;
-      im.onload = () => { imgs[i] = im; if (++loaded === layers.length) drawImgs(); };
-      im.onerror = () => { if (++loaded === layers.length) drawImgs(); };
-    });
-    function drawImgs() {
-      imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height); });
-    }
+  let loaded = 0, imgs = [];
+  if (!layers.length) return;
+  layers.forEach((opt, i) => {
+    if (!opt || !opt.src) { loaded++; return; }
+    const im = new window.Image();
+    imgs[i] = null;
+    im.src = opt.src;
+    im.onload = () => { imgs[i] = im; if (++loaded === layers.length) drawImgs(); };
+    im.onerror = () => { if (++loaded === layers.length) drawImgs(); };
+  });
+  function drawImgs() {
+    imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height); });
   }
 }
 
