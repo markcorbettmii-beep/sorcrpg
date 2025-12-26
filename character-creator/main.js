@@ -30,7 +30,7 @@ const bodyTypeRows = [
 ];
 const bodyOptions = bodyTypeRows.flatMap(row => row.bodies);
 
-// --- FACE OPTIONS (unchanged from your original) ---
+// --- FACE OPTIONS (unchanged) ---
 const faceOptions = [
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
   { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
@@ -72,11 +72,11 @@ const WEAPONS_IMG = BASE + "kaidas-great-bow.png";
 const ARMOR_IMG   = BASE + "set-epic-fur-mantle.png";
 const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
-// --- Default: pale mass body, first pale face, RANDOM hair style
+// --- Default: pale mass body, hair 6, first enabled pale face ---
 let selected = {
-  body: 2,
+  body: 2, // third in flat list: fbody-mass-pale
   face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
-  hair: Math.floor(Math.random() * hairOptions.length)
+  hair: 5 // hair #6 (0-based, so 5)
 };
 let physiqueScore = null;
 let showWeapons = false;
@@ -135,7 +135,7 @@ function createBodyPickers() {
         : "0 2px 12px #ccc9";
       img.style.opacity = body.enabled ? "1" : "0.3";
       img.style.cursor = body.enabled ? "pointer" : "default";
-      // Mobile and desktop: both click and touchstart!
+
       function selectHandler(e) {
         if (body.enabled) {
           selectBody(idxOffset + i);
@@ -168,7 +168,7 @@ function selectBody(idx) {
     document.getElementById("face-row").style.display = "block";
   }
   createBodyPickers();
-  createPickerImages(faceOptions, "face-pickers", "face", body.skin);
+  createPickerImages(faceOptions, "face-pickers", "face", getCurrentBodySkin());
   createPickerImages(hairOptions, "hair-pickers", "hair");
   renderCharacter();
 }
