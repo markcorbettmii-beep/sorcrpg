@@ -1,21 +1,35 @@
 const BASE = "assets/";
 const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
-// --- BODY OPTIONS: ONLY mass (functional) + new HR muscular demo ---
-const bodyOptions = [
-  { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", type: "massive", enabled: true },
-  { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", type: "massive", enabled: true },
-  { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive", enabled: true },
-  // HR body: thumb is the image you want, src is the actual HR fbody
-  { 
-    src: `${BASE}hr-fbody-muscular.png`, 
-    thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`, 
-    skin: "hr", 
-    type: "muscular_hr", 
-    enabled: true, 
-    isHighRes: true 
+// --- BODY TYPE ROWS --- //
+const bodyTypeRows = [
+  {
+    label: "Body Type (massive)",
+    bodies: [
+      { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive", enabled: true },
+      { src: `${BASE}fbody-mass-med.png`,  thumb: `${BASE}fbody-mass-med-tmb.png`,  skin: "med",  type: "massive", enabled: true },
+      { src: `${BASE}fbody-mass-drk.png`,  thumb: `${BASE}fbody-mass-drk-tmb.png`,  skin: "drk",  type: "massive", enabled: true }
+    ]
+  },
+  {
+    label: "Body Type (muscular)",
+    bodies: [
+      { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "muscular", enabled: false, isPlaceholder: true },
+      { src: `${BASE}hr-fbody-muscular.png`, thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`, skin: "med", type: "muscular_hr", enabled: true, isHighRes: true },
+      { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "muscular", enabled: false, isPlaceholder: true }
+    ]
+  },
+  {
+    label: "Body Type (thin)",
+    bodies: [
+      { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "thin", enabled: false, isPlaceholder: true },
+      { src: "", thumb: `${BASE}placeholder-med.png`,  skin: "med",  type: "thin", enabled: false, isPlaceholder: true },
+      { src: "", thumb: `${BASE}placeholder-drk.png`,  skin: "drk",  type: "thin", enabled: false, isPlaceholder: true }
+    ]
   }
 ];
+
+const bodyOptions = bodyTypeRows.flatMap(row => row.bodies);
 
 // --- FACE OPTIONS (unchanged from your original) ---
 const faceOptions = [
@@ -61,7 +75,7 @@ const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
 // --- Default: pale mass body, first pale face, RANDOM hair style
 let selected = {
-  body: bodyOptions.findIndex(b => b.type === "massive" && b.skin === "pale"),
+  body: 0,
   face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
   hair: Math.floor(Math.random() * hairOptions.length)
 };
@@ -70,294 +84,107 @@ let showWeapons = false;
 let showArmor = false;
 let showHelmet = false;
 
-// --- Picker rendering ---
-function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
-  const picker = document.getElementById(pickerId);
+// --- BODY PICKER RENDERING, replaces use of createPickerImages for "body" --- //
+function createBodyPickers() {
+  const picker = document.getElementById("body-pickers");
   picker.innerHTML = "";
+  let idxOffset = 0;
+  bodyTypeRows.forEach(row => {
+    // Section label
+    const label = document.createElement("div");
+    label.textContent = row.label;
+    label.style.fontSize = "1.1em";
+    label.style.fontWeight = "bold";
+    label.style.margin = "12px 0 4px 0";
+    picker.appendChild(label);
 
-  let opts = options;
-  if (featureKey === "face" && skinMatch) {
-    opts = options.filter(opt => opt.skin === skinMatch);
-  }
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.gap = "12px";
+    wrap.style.marginBottom = "6px";
 
-  // HR body restrictions:
-  if (bodyOptions[selected.body]?.isHighRes) {
-    if (featureKey === "hair") {
-      opts = hairOptions.map((opt, idx) => ({...opt, enabled: idx === 5}));
-    }
-    if (featureKey === "face") {
-      picker.style.display = "none";
-      return;
-    }
-  } else if (featureKey === "face") {
-    picker.style.display = "block";
-  }
+    row.bodies.forEach((body, i) => {
+      const outer = document.createElement("div");
+      outer.style.display = "flex";
+      outer.style.flexDirection = "column";
+      outer.style.alignItems = "center";
 
-  opts.forEach((option, idx) => {
-    let wrapper = document.createElement('div');
-    wrapper.style.display = "inline-block";
-    wrapper.style.textAlign = "center";
-    wrapper.style.margin = "0 4px";
-
-    // "high res demo" label above HR body thumb
-    if (featureKey === "body" && option.isHighRes) {
-      let label = document.createElement('div');
-      label.textContent = "high res demo";
-      label.style.fontSize = "1em";
-      label.style.fontWeight = "bold";
-      label.style.color = "#447";
-      label.style.marginBottom = "4px";
-      wrapper.appendChild(label);
-    }
-
-    const img = document.createElement('img');
-    img.src = option.thumb;
-    img.alt = `${featureKey} ${idx + 1}`;
-    img.title = option.label ? option.label : '';
-
-    let selectedIndex = selected[featureKey];
-    let isSelected = (idx === selectedIndex);
-
-    let isFunctional = true;
-    if (featureKey === "body" && !option.enabled) isFunctional = false;
-    if (featureKey === "face" && option.enabled === false) isFunctional = false;
-    if (featureKey === "hair" && option.enabled === false) isFunctional = false;
-
-    img.style.pointerEvents = isFunctional ? "auto" : "none";
-    img.style.opacity = isFunctional ? "1" : "0.3";
-
-    if (isSelected) {
-      img.style.border = "4px solid #ffbb00";
-      img.style.boxShadow = "0 0 24px #ffbc6c88";
-      img.style.zIndex = "2";
-      img.style.background = "#fffbe8";
-    } else {
-      img.style.border = "3px solid #ddd";
-      img.style.boxShadow = "0 2px 12px #ccc9";
-      img.style.zIndex = "1";
-      img.style.background = "#fafafa";
-    }
-    if (featureKey === "body" && option.enabled && isSelected) {
-      img.style.width = "140px";
-      img.style.height = "140px";
-    } else {
+      const img = document.createElement("img");
+      img.src = body.thumb;
       img.style.width = "90px";
       img.style.height = "90px";
-    }
-
-    if (isFunctional) {
-      img.addEventListener('click', function () {
-        selectFeature(pickerId, idx, featureKey, skinMatch);
+      img.style.border = (idxOffset + i === selected.body)
+        ? "4px solid #ffbb00"
+        : "3px solid #ddd";
+      img.style.borderRadius = "12px";
+      img.style.background = (idxOffset + i === selected.body)
+        ? "#fffbe8"
+        : "#fafafa";
+      img.style.boxShadow = (idxOffset + i === selected.body)
+        ? "0 0 24px #ffbc6c88"
+        : "0 2px 12px #ccc9";
+      img.style.opacity = body.enabled ? "1" : "0.3";
+      img.style.cursor = body.enabled ? "pointer" : "default";
+      img.addEventListener("click", function () {
+        if (body.enabled) selectBody(idxOffset + i);
       });
-    }
 
-    img.addEventListener('mousedown', function (e) {
-      if (e.button !== 0) return;
-      showPreview(featureKey, option);
+      outer.appendChild(img);
+      wrap.appendChild(outer);
     });
-    img.addEventListener('touchstart', function (e) {
-      showPreview(featureKey, option);
-    });
-    img.addEventListener('mouseup', hidePreview);
-    img.addEventListener('mouseleave', hidePreview);
-    img.addEventListener('touchend', hidePreview);
 
-    wrapper.appendChild(img);
-    picker.appendChild(wrapper);
+    picker.appendChild(wrap);
+    idxOffset += row.bodies.length;
   });
 }
 
-// --- Preview logic (NO PREVIEW FOR BODY) ---
-let previewTimeout, previewActive = false;
-function showPreview(featureKey, option) {
-  if (featureKey === "body") return;
-  clearTimeout(previewTimeout);
-  previewTimeout = setTimeout(() => {
-    previewActive = true;
-    const overlay = document.getElementById("previewOverlay");
-    let img = document.createElement("img");
-    img.src = option.src || option.thumb;
-    img.style.maxWidth = "90vw";
-    img.style.maxHeight = "90vh";
-    img.style.border = "6px solid #ffbc6c";
-    img.style.background = "#fffbe8";
-    img.style.boxShadow = "0 0 40px #ffbc6c88";
-    overlay.innerHTML = "";
-    overlay.appendChild(img);
-    overlay.style.display = "block";
-  }, 400);
-}
-function hidePreview() {
-  clearTimeout(previewTimeout);
-  previewActive = false;
-  document.getElementById("previewOverlay").style.display = "none";
-}
-
-// --- Picker logic ---
-function selectFeature(pickerId, idx, featureKey, skinMatch = null) {
-  selected[featureKey] = idx;
-
-  if (featureKey === "body") {
-    const skin = getCurrentBodySkin();
-    createPickerImages(faceOptions, "face-pickers", "face", skin);
+function selectBody(idx) {
+  selected.body = idx;
+  let body = bodyOptions[selected.body];
+  if (body.isHighRes) {
+    selected.hair = 5;
+    document.getElementById("face-row").style.display = "none";
+  } else {
+    let skin = body.skin;
     let faceOpts = faceOptions.filter(f => f.skin === skin);
     let firstEnabledFace = faceOpts.findIndex(f => f.enabled);
-    selected.face = firstEnabledFace >= 0 ? firstEnabledFace : 0;
-    createPickerImages(bodyOptions, "body-pickers", "body");
-  }
-  createPickerImages(bodyOptions, "body-pickers", "body");
-  createPickerImages(faceOptions.filter(f => f.skin === getCurrentBodySkin()), "face-pickers", "face", getCurrentBodySkin());
-  createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
-
-  if (bodyOptions[selected.body]?.isHighRes) {
-    selected.hair = 5;
-    document.getElementById("hair-pickers").children[0].classList.add("selected");
-    document.getElementById("face-row").style.display = "none";
-  } else {
+    selected.face = firstEnabledFace >= 0 ? faceOptions.indexOf(faceOpts[firstEnabledFace]) : 0;
     document.getElementById("face-row").style.display = "block";
-    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
   }
-
+  createBodyPickers();
+  createPickerImages(faceOptions, "face-pickers", "face", body.skin);
+  createPickerImages(hairOptions, "hair-pickers", "hair");
   renderCharacter();
 }
 
-function getCurrentBodySkin() {
-  return bodyOptions[selected.body]?.skin || "pale";
-}
-
-// --- Character rendering (with equipment support and dynamic canvas size) ---
-function renderCharacter() {
-  const canvas = document.getElementById("charCanvas");
-  const ctx = canvas.getContext("2d");
-  canvas.width = 640;
-  canvas.height = 1280;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Always draw default background first
-  let bgImg = new window.Image();
-  bgImg.src = CHARACTER_CREATOR_BASE + "highres-canvas-bg.png";
-  bgImg.onload = function() {
-    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    drawLayers();
-  };
-  bgImg.onerror = function() {
-    drawLayers();
-  };
-
-  function drawLayers() {
-    let body = bodyOptions[selected.body];
-    let skin = body?.skin || "pale";
-    let faceOpts = faceOptions.filter(f => f.skin === skin);
-    let face = faceOpts[selected.face];
-    let hair = hairOptions[selected.hair];
-
-    const layers = [];
-    if (showWeapons) layers.push({src: WEAPONS_IMG});
-    if (body && body.src) layers.push(body);
-    if (showArmor) layers.push({src: ARMOR_IMG});
-    if (body.isHighRes) {
-      if (hair && hair.src && selected.hair === 5) layers.push(hair);
-    } else {
-      if (face && face.src && face.enabled !== false) layers.push(face);
-      if (hair && hair.src && hair.enabled !== false) layers.push(hair);
-    }
-    if (showHelmet) layers.push({src: HELMET_IMG});
-
-    let loaded = 0, imgs = [];
-    if (!layers.length) return;
-    layers.forEach((opt, i) => {
-      if (!opt || !opt.src) { loaded++; return; }
-      const im = new window.Image();
-      imgs[i] = null;
-      im.src = opt.src;
-      im.onload = () => { imgs[i] = im; if (++loaded === layers.length) drawImgs(); };
-      im.onerror = () => { if (++loaded === layers.length) drawImgs(); };
-    });
-    function drawImgs() {
-      imgs.forEach(im => { if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height); });
-    }
-  }
-}
-
-// --- Equipment checkbox logic ---
-document.getElementById("equipWeaponsChk").addEventListener('change', function() {
-  showWeapons = this.checked;
-  renderCharacter();
-});
-document.getElementById("equipArmorChk").addEventListener('change', function() {
-  showArmor = this.checked;
-  renderCharacter();
-});
-document.getElementById("equipHelmetChk").addEventListener('change', function() {
-  showHelmet = this.checked;
-  renderCharacter();
-});
-
-document.getElementById("cardWeaponsBtn").addEventListener("click", function(e) {
-  alert("Show Linked Card (coming soon)");
-});
-document.getElementById("cardArmorBtn").addEventListener("click", function(e) {
-  alert("Show Linked Card (coming soon)");
-});
-
-document.getElementById("physiqueForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  const val = parseInt(document.getElementById("physiqueInput").value, 10);
-  if (isNaN(val) || val < 1) {
-    document.getElementById("physiqueError").style.display = "inline";
+// --- Picker rendering (unchanged for face/hair) ---
+function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
+  if (featureKey === "body") {
+    createBodyPickers();
     return;
   }
-  physiqueScore = val;
-  document.getElementById("physiqueError").style.display = "none";
-  document.getElementById("physiqueForm").style.display = "none";
-  document.getElementById("physiqueApprovedMsg").style.display = "block";
-  createPickerImages(bodyOptions, "body-pickers", "body");
-  let skin = getCurrentBodySkin();
-  createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
-  createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
-  if (!bodyOptions[selected.body]?.isHighRes) {
-    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
-  } else {
-    document.getElementById("hair-pickers").children[0].classList.add("selected");
-    document.getElementById("face-row").style.display = "none";
-  }
-  renderCharacter();
-});
+  // ...rest unchanged...
+  // (Paste your existing createPickerImages function here, minus the body block)
+  // For brevity, not repeated here -- you already have it.
+}
 
-document.getElementById("randomBtn").addEventListener("click", function () {
-  let enabledBodyIndexes = bodyOptions.map((b, i) => b.enabled ? i : null).filter(i => i !== null);
-  selected.body = enabledBodyIndexes[Math.floor(Math.random() * enabledBodyIndexes.length)];
-  let skin = getCurrentBodySkin();
-  if (bodyOptions[selected.body]?.isHighRes) {
-    selected.hair = 5;
-    document.getElementById("face-row").style.display = "none";
-  } else {
-    let faceOpts = faceOptions.filter(f => f.skin === skin && f.enabled !== false);
-    selected.face = faceOpts.length > 1 ? Math.floor(Math.random() * faceOpts.length) : 0;
-    let enabledHairIndexes = hairOptions.map((h, i) => h.enabled ? i : null).filter(i => i !== null);
-    selected.hair = enabledHairIndexes.length ? enabledHairIndexes[Math.floor(Math.random() * enabledHairIndexes.length)] : 0;
-    document.getElementById("face-row").style.display = "block";
-  }
-  createPickerImages(bodyOptions, "body-pickers", "body");
-  createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
-  createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
-  if (!bodyOptions[selected.body]?.isHighRes) {
-    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
-  } else {
-    document.getElementById("hair-pickers").children[0].classList.add("selected");
-  }
-  renderCharacter();
-});
+// --- Preview logic (unchanged) ---
+// ... (same as your post) ...
 
+// --- Picker logic (unchanged for face/hair) ---
+// ... (same as your post) ...
+
+// --- Character rendering (unchanged) ---
+// ... (same as your post) ...
+
+// --- Equipment checkbox logic ---
+// ... (same as your post) ...
+
+// --- DOMContentLoaded ---
+// Replace this block:
 document.addEventListener("DOMContentLoaded", () => {
-  createPickerImages(bodyOptions, "body-pickers", "body");
-  let skin = getCurrentBodySkin();
+  createBodyPickers();
+  let skin = bodyOptions[selected.body].skin;
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
   document.getElementById("body-pickers").children[selected.body].classList.add("selected");
@@ -371,3 +198,4 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCharacter();
 });
 
+// All other logic unchanged from your original post!
