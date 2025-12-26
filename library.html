@@ -3,40 +3,133 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Library | Slayers of Rings § Crowns</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="A sci-fantasy tabletop RPG with diverse realms and exciting combat." />
+  <title>Slayers of Rings & Crowns - Library Compendiums</title>
+  <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
-  <div class="header-container">
-    <h1>Slayers of Rings § Crowns</h1>
-    <div class="sorc-letters">S O R C</div>
-  </div>
+  <div class="page-wrapper">
+    <div class="header-container">
+      <h1>Slayers of Rings & Crowns</h1>
+      <div class="sorc-letters">S O R C</div>
+    </div>
 
-  <h2 style="margin-top: 10px;">Library</h2>
-  <h3>Compilation of Stories from Essentia</h3>
-  <p>
-    Welcome to the Library of Essentia—a curated compilation of stories, legends, and chronicles from the worlds of Slayers of Rings § Crowns. Explore the rich lore and adventures that shape the realms, races, and destinies of heroes and villains alike. Dive in and discover the tales that bring Essentia to life!
-  </p>
-  
-  <p><a href="prologue.html">Prologue</a></p>
-  <p><a href="#">Into the Uncharted Worlds of Essentia: Adoria and its first ten celestials.</a></p>
-  <p><a href="#">Tawdry Dwarf and Beyond: the last three planets and a dying star.</a></p>
-  <p><a href="#">The Story of the Omné</a></p>
-  <p><a href="#">The Story of the Imperials</a></p>
-  <p><a href="#">The Story of the Lings</a></p>
-  <p><a href="#">Sacred Places of Essentia</a></p>
-  <p><a href="#">Heroes, Hermits, Villains, and Thronesmen</a></p>
-  <p><a href="#">Burning on Ignis</a></p>
-  <p><a href="#">Freezing on Tredici</a></p>
-  
-  <!-- Footer include -->
-  <div id="footer"></div>
-  <script>
-    fetch('/footer.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('footer').innerHTML = data;
+    <!-- Container for login buttons (visitor login) -->
+    <div id="loginButtonsContainer"></div> 
+
+    <!-- Page navigation bar: update these links as needed for library pages -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/library/library_1.html" class="current-section">Library Home&nbsp; | &nbsp;</a>
+      <a href="/content/library/monster_compendium.html">Monsters&nbsp;|&nbsp;</a>
+      <a href="/content/library/hero_compendium.html">Heroes&nbsp;|&nbsp;</a>
+      <a href="/content/library/class_guides.html">Classes&nbsp;|&nbsp;</a>
+      <a href="/content/library/races.html">Races&nbsp;|&nbsp;</a>
+      <a href="/content/library/territories.html">Territories&nbsp;</a>
+    </div>
+
+    <!-- Script to dynamically load login buttons -->
+    <script>
+      fetch('/login-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('loginButtonsContainer').innerHTML = data;
+
+          // Role display update
+          updateRoleDisplay();
+
+          // Hide login buttons if already logged in
+          var isGM = localStorage.getItem('isGM') === 'true';
+          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+          if (isGM) {
+            var gmBtn = document.querySelector('.gm_button');
+            if (gmBtn) gmBtn.style.display = 'none';
+          }
+          if (isPlayer) {
+            var playerBtn = document.querySelector('.plyr_button');
+            if (playerBtn) playerBtn.style.display = 'none';
+          }
+        });
+
+      function updateRoleDisplay() {
+        const roleSpan = document.getElementById('roleDisplay');
+        const isGM = localStorage.getItem('isGM') === 'true';
+        const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+        if (roleSpan) {
+          if (isGM) {
+            roleSpan.textContent = 'Game Master (GM)';
+          } else if (isPlayer) {
+            roleSpan.textContent = 'Player';
+          } else {
+            roleSpan.textContent = 'Visitor / Not Logged In';
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.onclick = () => {
+            localStorage.removeItem('isGM');
+            localStorage.removeItem('isPlayer');
+            alert('Logged out');
+            location.reload();
+          };
+        }
       });
-  </script>
+    </script>
+
+    <!-- Sections Navigation (if you want a library-specific sections nav, update the fetch path) -->
+    <div id="sections"></div>
+    <script>
+      fetch('/sections-library.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sections').innerHTML = data;
+        });
+    </script>
+
+    <!-- Main Library Compendium Content -->
+    <h3>Library Compendiums</h3>
+    <div>
+      <h6><strong>Monster Compendiums</strong></h6>
+      <h6><strong>Hero Compendiums</strong></h6>
+      <h6><strong>Adventuring Guides</strong></h6>
+      <h6><strong>Class Guides</strong></h6>
+      <h6><strong>Playable Races</strong></h6>
+      <h6><strong>Forbidden Races and Classes</strong></h6>
+      <h6><strong>Secrets of Essentia</strong></h6>
+      <h6><strong>Wonders of the World</strong></h6>
+      <h6><strong>Notable Territories</strong></h6>
+    </div>
+    <br/>
+    <hr>  
+
+    <!-- Main navigation buttons if desired -->
+    <div id="main-butts"></div>
+    <script>
+      fetch('/main-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('main-butts').innerHTML = data;
+
+          const container = document.querySelector('.buttons-container');
+          if (container) {
+            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
+          }
+        });
+    </script>
+
+    <!-- FOOTER: Load footer after buttons to be below -->
+    <div id="footer"></div>
+    <script>
+      fetch('/footer.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('footer').innerHTML = data;
+        });
+    </script>
+  </div> <!-- close page-wrapper -->
 </body>
 </html>
