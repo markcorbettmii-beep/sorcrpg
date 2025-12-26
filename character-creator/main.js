@@ -74,7 +74,7 @@ const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
 // --- Default: pale mass body, hair 6, first enabled pale face ---
 let selected = {
-  body: 2, // third in flat list: fbody-mass-pale
+  body: 2, // third in flattened list: fbody-mass-pale
   face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
   hair: 5 // hair #6 (0-based, so 5)
 };
