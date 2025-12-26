@@ -1,18 +1,24 @@
 const BASE = "assets/";
-const DEFAULT_BG = "character-creator/assets/highres-canvas-bg.png";
+const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
 // --- BODY OPTIONS: ONLY mass (functional) + new HR muscular demo ---
 const bodyOptions = [
   { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", type: "massive", enabled: true },
   { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", type: "massive", enabled: true },
   { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive", enabled: true },
-  // New high res muscular demo
-  { src: `${BASE}hr-fbody-muscular.png`, thumb: `${BASE}hr-fbody-muscular.png`, skin: "hr", type: "muscular_hr", enabled: true, isHighRes: true }
+  // HR body: thumb is the image you want, src is the actual HR fbody
+  { 
+    src: `${BASE}hr-fbody-muscular.png`, 
+    thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`, 
+    skin: "hr", 
+    type: "muscular_hr", 
+    enabled: true, 
+    isHighRes: true 
+  }
 ];
 
 // --- FACE OPTIONS (unchanged from your original) ---
 const faceOptions = [
-  // Dark
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
   { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
   { src: `${BASE}femface2-dark-brn.png`, thumb: `${BASE}femface2-dark-brn-tmb.png`, skin: "drk", eyes: "brn", enabled: true },
@@ -23,9 +29,9 @@ const faceOptions = [
   { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
   { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
   { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu", enabled: true },
-  { src: `${BASE}femface3-med-brn.png`, thumb: `${BASE}femface3-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: false }, // NOT FUNCTIONAL
+  { src: `${BASE}femface3-med-brn.png`, thumb: `${BASE}femface3-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: false },
   // Pale
-  { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl", enabled: true }, // ONLY THIS PALE FACE IS FUNCTIONAL
+  { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl", enabled: true },
   { src: `${BASE}femface1-pale-brn.png`, thumb: `${BASE}femface1-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: false },
   { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-vio-tmb.png`, skin: "pale", eyes: "vio", enabled: false },
   { src: `${BASE}femface2-pale-brn.png`, thumb: `${BASE}femface2-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: false },
@@ -225,14 +231,13 @@ function getCurrentBodySkin() {
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
-
   canvas.width = 640;
   canvas.height = 1280;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Always draw default background first
-  let bgImg = new Image();
-  bgImg.src = DEFAULT_BG;
+  let bgImg = new window.Image();
+  bgImg.src = CHARACTER_CREATOR_BASE + "highres-canvas-bg.png";
   bgImg.onload = function() {
     ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
     drawLayers();
@@ -261,9 +266,10 @@ function renderCharacter() {
     if (showHelmet) layers.push({src: HELMET_IMG});
 
     let loaded = 0, imgs = [];
+    if (!layers.length) return;
     layers.forEach((opt, i) => {
       if (!opt || !opt.src) { loaded++; return; }
-      const im = new Image();
+      const im = new window.Image();
       imgs[i] = null;
       im.src = opt.src;
       im.onload = () => { imgs[i] = im; if (++loaded === layers.length) drawImgs(); };
@@ -296,7 +302,6 @@ document.getElementById("cardArmorBtn").addEventListener("click", function(e) {
   alert("Show Linked Card (coming soon)");
 });
 
-// --- Physique form submit ---
 document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   e.preventDefault();
   const val = parseInt(document.getElementById("physiqueInput").value, 10);
@@ -323,7 +328,6 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   renderCharacter();
 });
 
-// --- Randomizer, only functional faces/bodies/hair, restrict HR logic ---
 document.getElementById("randomBtn").addEventListener("click", function () {
   let enabledBodyIndexes = bodyOptions.map((b, i) => b.enabled ? i : null).filter(i => i !== null);
   selected.body = enabledBodyIndexes[Math.floor(Math.random() * enabledBodyIndexes.length)];
@@ -351,7 +355,6 @@ document.getElementById("randomBtn").addEventListener("click", function () {
   renderCharacter();
 });
 
-// --- Initialize ---
 document.addEventListener("DOMContentLoaded", () => {
   createPickerImages(bodyOptions, "body-pickers", "body");
   let skin = getCurrentBodySkin();
