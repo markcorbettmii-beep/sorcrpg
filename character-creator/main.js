@@ -1,7 +1,7 @@
 const BASE = "assets/";
 const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
-// --- BODY OPTIONS: now defined as three rows for the picker ---
+// --- BODY PICKER: three labeled rows ---
 const bodyTypeRows = [
   {
     label: "Body Type (massive)",
@@ -29,7 +29,6 @@ const bodyTypeRows = [
     ]
   }
 ];
-
 const bodyOptions = bodyTypeRows.flatMap(row => row.bodies);
 
 // --- FACE OPTIONS (unchanged from your original) ---
@@ -385,7 +384,7 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
   document.getElementById("physiqueApprovedMsg").style.display = "block";
-  createPickerImages(bodyOptions, "body-pickers", "body");
+  createBodyPickers();
   let skin = getCurrentBodySkin();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
@@ -414,7 +413,7 @@ document.getElementById("randomBtn").addEventListener("click", function () {
     selected.hair = enabledHairIndexes.length ? enabledHairIndexes[Math.floor(Math.random() * enabledHairIndexes.length)] : 0;
     document.getElementById("face-row").style.display = "block";
   }
-  createPickerImages(bodyOptions, "body-pickers", "body");
+  createBodyPickers();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
   document.getElementById("body-pickers").children[selected.body].classList.add("selected");
@@ -428,7 +427,7 @@ document.getElementById("randomBtn").addEventListener("click", function () {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  createPickerImages(bodyOptions, "body-pickers", "body");
+  createBodyPickers();
   let skin = getCurrentBodySkin();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
