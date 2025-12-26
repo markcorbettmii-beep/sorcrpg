@@ -1,23 +1,20 @@
 const BASE = "assets/";
 const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
-// --- BODY OPTIONS: ONLY mass (functional) + new HR muscular demo ---
 const bodyOptions = [
   { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", type: "massive", enabled: true },
   { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", type: "massive", enabled: true },
   { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive", enabled: true },
-  // HR body: thumb is the image you want, src is the actual HR fbody
-  { 
-    src: `${BASE}hr-fbody-muscular.png`, 
-    thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`, 
-    skin: "hr", 
-    type: "muscular_hr", 
-    enabled: true, 
-    isHighRes: true 
+  {
+    src: `${BASE}hr-fbody-muscular.png`,
+    thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`,
+    skin: "hr",
+    type: "muscular_hr",
+    enabled: true,
+    isHighRes: true
   }
 ];
 
-// --- FACE OPTIONS (unchanged from your original) ---
 const faceOptions = [
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
   { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
@@ -38,7 +35,6 @@ const faceOptions = [
   { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu", enabled: false }
 ];
 
-// --- HAIR OPTIONS ---
 const hairOptions = [
   { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png`, enabled: true },
   { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png`, enabled: true },
@@ -54,16 +50,15 @@ const hairOptions = [
   { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, enabled: true }
 ];
 
-// --- Equipment images ---
 const WEAPONS_IMG = BASE + "kaidas-great-bow.png";
 const ARMOR_IMG   = BASE + "set-epic-fur-mantle.png";
 const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
-// --- Default: pale mass body, first pale face, RANDOM hair style
+// --- Set HR body as default ---
 let selected = {
-  body: bodyOptions.findIndex(b => b.type === "massive" && b.skin === "pale"),
-  face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
-  hair: Math.floor(Math.random() * hairOptions.length)
+  body: 3, // Index of HR body in bodyOptions
+  face: 0, // Will be ignored for HR
+  hair: 5  // Sixth hair (first on bottom row)
 };
 let physiqueScore = null;
 let showWeapons = false;
@@ -227,7 +222,7 @@ function getCurrentBodySkin() {
   return bodyOptions[selected.body]?.skin || "pale";
 }
 
-// --- Character rendering (with equipment support and dynamic canvas size) ---
+// --- Character rendering (canvas bg behind everything except models/model elements) ---
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
@@ -235,18 +230,18 @@ function renderCharacter() {
   canvas.height = 1280;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Always draw default background first
+  // Always draw background first, then all model layers (body, face, hair, etc)
   let bgImg = new window.Image();
   bgImg.src = CHARACTER_CREATOR_BASE + "highres-canvas-bg.png";
   bgImg.onload = function() {
     ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    drawLayers();
+    drawModelLayers();
   };
   bgImg.onerror = function() {
-    drawLayers();
+    drawModelLayers();
   };
 
-  function drawLayers() {
+  function drawModelLayers() {
     let body = bodyOptions[selected.body];
     let skin = body?.skin || "pale";
     let faceOpts = faceOptions.filter(f => f.skin === skin);
@@ -254,15 +249,16 @@ function renderCharacter() {
     let hair = hairOptions[selected.hair];
 
     const layers = [];
-    if (showWeapons) layers.push({src: WEAPONS_IMG});
+    // Body always first model layer
     if (body && body.src) layers.push(body);
-    if (showArmor) layers.push({src: ARMOR_IMG});
+    if (!body.isHighRes && face && face.src && face.enabled !== false) layers.push(face);
     if (body.isHighRes) {
       if (hair && hair.src && selected.hair === 5) layers.push(hair);
-    } else {
-      if (face && face.src && face.enabled !== false) layers.push(face);
-      if (hair && hair.src && hair.enabled !== false) layers.push(hair);
+    } else if (hair && hair.src && hair.enabled !== false) {
+      layers.push(hair);
     }
+    if (showWeapons) layers.push({src: WEAPONS_IMG});
+    if (showArmor) layers.push({src: ARMOR_IMG});
     if (showHelmet) layers.push({src: HELMET_IMG});
 
     let loaded = 0, imgs = [];
@@ -281,7 +277,7 @@ function renderCharacter() {
   }
 }
 
-// --- Equipment checkbox logic ---
+// Equipment checkbox logic
 document.getElementById("equipWeaponsChk").addEventListener('change', function() {
   showWeapons = this.checked;
   renderCharacter();
