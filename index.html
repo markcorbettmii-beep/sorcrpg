@@ -4,57 +4,137 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="A sci-fantasy tabletop RPG with diverse realms and exciting combat." />
-  <title>Slayers of Rings § Crowns</title>
-  <!-- Link to your shared stylesheet -->
+  <title>Slayers of Rings & Crowns</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="header-container">
-    <h1>Slayers of Rings § Crowns</h1>
-    <div class="sorc-letters">S O R C</div>
-  </div>
+  <div class="page-wrapper">
+    <div class="header-container">
+      <h1>Slayers of Rings & Crowns</h1>
+      <div class="sorc-letters">S O R C</div>
+    </div>
 
-  <h2 style="margin-top: 10px;">Into the Uncharted Worlds of Essentia</h2>
-  <h3>Game Setting</h3>
-  <p>Slayers of Rings § Crowns by <i>Ogre Adventurer</i> is a sci-fantasy tabletop RPG that takes players through 13 diverse realms.</p>
-  <p>SorC exhibits exciting combat featuring; <i>limb-specific targeting, killing sprees, and burning streaks</i>. Traverse planets where technology advances furthest from the main sun Adoria, and ancient magic is strongest near the sun, harnessing its magical properties.</p>
-  <p>Come to Essentia now, and play as one of many classes and races. Empower your character through combat, vocational talents, professions, survival traits, or a mix of all. Establish <i>associations</i> and <i>alliances</i>, develop <i>prestige</i> during and after your journey.</p>
-  <p>Roll the dice now and define your character's <i>legacy</i>!  Will you be a 'frog skinner' or a 'dragon slayer'? The choice is yours.</p>
-  
-  <!-- About section inserted here -->
-  <h3>About the Game System</h3>
-  <p>
-    <strong>Slayers of Rings § Crowns (SorC)</strong> incorporates key elements from SorC Cards, with each card featuring an editable index. These elements include Fellowships, Armaments (weapons and armor), Abilities, and Special Items. The game is designed to play like a classic TTRPG, enhanced with unique card mechanics and distinct development and play systems.
-  </p>
-  <p>
-    At Ogre Adventurer, we believe we've introduced innovative features to the genre. The game offers online server functionalities such as an auction house, trading posts (including black markets), and lobbies. Players and GMs join these lobbies after completing role-based assessments at beginner, intermediate, or advanced levels. Campaigns can be run online, even if it’s just to fill a new spot, giving both Players and GMs the freedom to utilize server features as they wish.
-  </p>
-  <p>
-    SorC is fully playable offline, just like any traditional TTRPG, but is further enhanced with a range of online features accessible via smartphones and computers. The Trials of Combat system supports both online and offline PvP, offering practice (wood) and death (magic and steel) modes. Characters can fight until one yields or is defeated at their opponent’s discretion. Every campaign offers a unique experience: the game world evolves dynamically, shaped by weather, war, and other destructive events. Simultaneously, if a plot is available, characters can build homes—from tiny spaces to grand estates and farms.
-  </p>
-  <p>
-    Players will have the opportunity to collect items, establish families, and showcase treasures both online and offline. These homes and treasures are protected by Guardians, Pets, and other Fellowships that players acquire throughout their journey.
-  </p>
-  <hr>  
+    <!-- Container for login buttons (visitor login) -->
+    <div id="loginButtonsContainer"></div> 
 
-  <!-- Main Buttons, main-butts, nclude -->
-  <div id="bottom-main-butts"></div>
-  <script>
-    fetch('/main-butts.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('bottom-main-butts').innerHTML = data;
+    <!-- Page navigation bar, update links as needed -->
+    <div class="page-nav" style="margin: 20px 0;">
+      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_2.html">PG. 2&nbsp;|&nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_3.html">PG. 3&nbsp;|&nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_4.html">PG. 4&nbsp;|&nbsp;</a>
+      <a href="/content/basic_rules/basic_rules_5.html">PG. 5&nbsp;</a>
+    </div>
+
+    <!-- Script to dynamically load login buttons -->
+    <script>
+      fetch('/login-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('loginButtonsContainer').innerHTML = data;
+
+          // Role display update
+          updateRoleDisplay();
+
+          // Hide login buttons if already logged in
+          var isGM = localStorage.getItem('isGM') === 'true';
+          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+          if (isGM) {
+            var gmBtn = document.querySelector('.gm_button');
+            if (gmBtn) gmBtn.style.display = 'none';
+          }
+          if (isPlayer) {
+            var playerBtn = document.querySelector('.plyr_button');
+            if (playerBtn) playerBtn.style.display = 'none';
+          }
+        });
+
+      function updateRoleDisplay() {
+        const roleSpan = document.getElementById('roleDisplay');
+        const isGM = localStorage.getItem('isGM') === 'true';
+        const isPlayer = localStorage.getItem('isPlayer') === 'true';
+
+        if (roleSpan) {
+          if (isGM) {
+            roleSpan.textContent = 'Game Master (GM)';
+          } else if (isPlayer) {
+            roleSpan.textContent = 'Player';
+          } else {
+            roleSpan.textContent = 'Visitor / Not Logged In';
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.onclick = () => {
+            localStorage.removeItem('isGM');
+            localStorage.removeItem('isPlayer');
+            alert('Logged out');
+            location.reload();
+          };
+        }
       });
-  </script>
+    </script>
+
+    <!-- Sections Navigation (adjust file as needed) -->
+    <div id="sections"></div>
+    <script>
+      fetch('/sections-basics.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('sections').innerHTML = data;
+        });
+    </script>
+
+    <!-- MAIN PAGE CONTENT (your original content) -->
+    <h2 style="margin-top: 10px;">Into the Uncharted Worlds of Essentia</h2>
+    <h3>Game Setting</h3>
+    <p>Slayers of Rings § Crowns by <i>Ogre Adventurer</i> is a sci-fantasy tabletop RPG that takes players through 13 diverse realms.</p>
+    <p>SorC exhibits exciting combat featuring; <i>limb-specific targeting, killing sprees, and burning streaks</i>. Traverse planets where technology advances furthest from the main sun Adoria, and ancient magic is strongest near the sun, harnessing its magical properties.</p>
+    <p>Come to Essentia now, and play as one of many classes and races. Empower your character through combat, vocational talents, professions, survival traits, or a mix of all. Establish <i>associations</i> and <i>alliances</i>, develop <i>prestige</i> during and after your journey.</p>
+    <p>Roll the dice now and define your character's <i>legacy</i>!  Will you be a 'frog skinner' or a 'dragon slayer'? The choice is yours.</p>
+    
+    <h3>About the Game System</h3>
+    <p>
+      <strong>Slayers of Rings § Crowns (SorC)</strong> incorporates key elements from SorC Cards, with each card featuring an editable index. These elements include Fellowships, Armaments (weapons and armor), Abilities, and Special Items. The game is designed to play like a classic TTRPG, enhanced with unique card mechanics and distinct development and play systems.
+    </p>
+    <p>
+      At Ogre Adventurer, we believe we've introduced innovative features to the genre. The game offers online server functionalities such as an auction house, trading posts (including black markets), and lobbies. Players and GMs join these lobbies after completing role-based assessments at beginner, intermediate, or advanced levels. Campaigns can be run online, even if it’s just to fill a new spot, giving both Players and GMs the freedom to utilize server features as they wish.
+    </p>
+    <p>
+      SorC is fully playable offline, just like any traditional TTRPG, but is further enhanced with a range of online features accessible via smartphones and computers. The Trials of Combat system supports both online and offline PvP, offering practice (wood) and death (magic and steel) modes. Characters can fight until one yields or is defeated at their opponent’s discretion. Every campaign offers a unique experience: the game world evolves dynamically, shaped by weather, war, and other destructive events. Simultaneously, if a plot is available, characters can build homes—from tiny spaces to grand estates and farms.
+    </p>
+    <p>
+      Players will have the opportunity to collect items, establish families, and showcase treasures both online and offline. These homes and treasures are protected by Guardians, Pets, and other Fellowships that players acquire throughout their journey.
+    </p>
+    <hr>  
+
+    <!-- Main Buttons, main-butts, nclude -->
+    <div id="main-butts"></div>
+    <script>
+      fetch('/main-butts.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('main-butts').innerHTML = data;
+          const container = document.querySelector('.buttons-container');
+          if (container) {
+            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
+          }
+        });
+    </script>
   
-  <!-- Footer include -->
-  <div id="footer"></div>
-  <script>
-    fetch('/footer.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('footer').innerHTML = data;
-      });
-  </script>
+    <!-- Footer include -->
+    <div id="footer"></div>
+    <script>
+      fetch('/footer.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('footer').innerHTML = data;
+        });
+    </script>
+  </div> <!-- close page-wrapper -->
 </body>
 </html>
