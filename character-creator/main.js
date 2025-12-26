@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Character Creator</title>
+  <title>Character Creator Demo</title>
   <style>
     body { font-family: sans-serif; background: #f4f4f8; padding: 0; margin: 0; }
     .picker-row-label { font-size: 1.1em; font-weight: bold; margin: 12px 0 4px 0; }
@@ -144,12 +144,12 @@ let showWeapons = false;
 let showArmor = false;
 let showHelmet = false;
 
+// --- BODY PICKER just like hair picker! ---
 function createBodyPickers() {
   const picker = document.getElementById("body-pickers");
   picker.innerHTML = "";
-  let idxOffset = 0;
+  let idx = 0;
   bodyTypeRows.forEach(row => {
-    // Section label
     const label = document.createElement("div");
     label.textContent = row.label;
     label.className = "picker-row-label";
@@ -158,13 +158,12 @@ function createBodyPickers() {
     const wrap = document.createElement("div");
     wrap.className = "picker-wrap";
 
-    row.bodies.forEach((body, i) => {
-      const outer = document.createElement("div");
-      outer.style.display = "flex";
-      outer.style.flexDirection = "column";
-      outer.style.alignItems = "center";
+    row.bodies.forEach((body) => {
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "inline-block";
+      wrapper.style.textAlign = "center";
+      wrapper.style.margin = "0 4px";
 
-      // HR demo thumb gets a label
       if (body.isHrDemo) {
         const demoLabel = document.createElement("div");
         demoLabel.textContent = "Muscular HR demo";
@@ -172,40 +171,40 @@ function createBodyPickers() {
         demoLabel.style.fontWeight = "bold";
         demoLabel.style.color = "#a22";
         demoLabel.style.marginBottom = "2px";
-        outer.appendChild(demoLabel);
+        wrapper.appendChild(demoLabel);
       }
 
       const img = document.createElement("img");
       img.src = body.thumb;
       img.style.width = "90px";
       img.style.height = "90px";
-      if (idxOffset + i === selected.body) {
-        img.className = "selected-img";
-      } else {
-        img.style.border = "3px solid #ddd";
-        img.style.background = "#fafafa";
-        img.style.boxShadow = "0 2px 12px #ccc9";
-      }
       img.style.borderRadius = "12px";
       img.style.opacity = body.enabled ? "1" : "0.3";
       img.style.cursor = body.enabled ? "pointer" : "default";
-      if (body.isPlaceholder) img.title = "Coming soon!";
 
-      function selectHandler(e) {
-        if (body.enabled) {
-          selectBody(idxOffset + i);
-          e.preventDefault();
-        }
+      // Selection highlight (just like hair/faces)
+      if (idx === selected.body) {
+        img.style.border = "4px solid #ffbb00";
+        img.style.boxShadow = "0 0 24px #ffbc6c88";
+        img.style.background = "#fffbe8";
+      } else {
+        img.style.border = "3px solid #ddd";
+        img.style.boxShadow = "0 2px 12px #ccc9";
+        img.style.background = "#fafafa";
       }
-      img.addEventListener("click", selectHandler, {passive:false});
-      img.addEventListener("touchstart", selectHandler, {passive:false});
 
-      outer.appendChild(img);
-      wrap.appendChild(outer);
+      img.addEventListener("click", function(e){
+        if (body.enabled) selectBody(idx);
+      });
+      img.addEventListener("touchstart", function(e){
+        if (body.enabled) selectBody(idx);
+      });
+
+      wrapper.appendChild(img);
+      wrap.appendChild(wrapper);
+      idx++;
     });
-
     picker.appendChild(wrap);
-    idxOffset += row.bodies.length;
   });
 }
 
@@ -228,7 +227,7 @@ function selectBody(idx) {
   renderCharacter();
 }
 
-// --- Picker rendering (unchanged for face/hair) ---
+// --- Picker rendering (hair and face, unchanged) ---
 function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
   if (featureKey === "body") {
     createBodyPickers();
@@ -277,7 +276,9 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
     img.style.opacity = isFunctional ? "1" : "0.3";
 
     if (isSelected) {
-      img.className = "selected-img";
+      img.style.border = "4px solid #ffbb00";
+      img.style.boxShadow = "0 0 24px #ffbc6c88";
+      img.style.background = "#fffbe8";
     } else {
       img.style.border = "3px solid #ddd";
       img.style.boxShadow = "0 2px 12px #ccc9";
