@@ -1,4 +1,4 @@
-const BASE = "assets/";
+const BASE = "character-creator/assets/";
 const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
 // --- BODY PICKER: three labeled rows ---
@@ -15,7 +15,7 @@ const bodyTypeRows = [
     label: "Body Type (muscular)",
     bodies: [
       { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "muscular", enabled: false, isPlaceholder: true },
-      { src: `${BASE}hr-fbody-muscular.png`, thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`, skin: "hr", type: "muscular_hr", enabled: true, isHighRes: true, isHrDemo: true },
+      { src: `${BASE}hr-fbody-muscular.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "hr", type: "muscular_hr", enabled: true, isHighRes: true, isHrDemo: true },
       { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "muscular", enabled: false, isPlaceholder: true }
     ]
   },
@@ -74,7 +74,7 @@ const HELMET_IMG  = BASE + "bear-skn-helmet.png";
 
 // --- Default: pale mass body, hair 6, first enabled pale face ---
 let selected = {
-  body: 2, // third in flattened list: fbody-mass-pale
+  body: 2, // third in flat list: fbody-mass-pale
   face: faceOptions.findIndex(f => f.skin === "pale" && f.enabled),
   hair: 5 // hair #6 (0-based, so 5)
 };
