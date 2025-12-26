@@ -15,7 +15,6 @@ const bodyTypeRows = [
     label: "Body Type (muscular)",
     bodies: [
       { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "muscular", enabled: false, isPlaceholder: true },
-      // HR demo, thumb labeled below
       { src: `${BASE}hr-fbody-muscular.png`, thumb: `${CHARACTER_CREATOR_BASE}fbody-musc-drk-tmb.png`, skin: "hr", type: "muscular_hr", enabled: true, isHighRes: true, isHrDemo: true },
       { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "muscular", enabled: false, isPlaceholder: true }
     ]
@@ -136,9 +135,15 @@ function createBodyPickers() {
         : "0 2px 12px #ccc9";
       img.style.opacity = body.enabled ? "1" : "0.3";
       img.style.cursor = body.enabled ? "pointer" : "default";
-      img.addEventListener("click", function () {
-        if (body.enabled) selectBody(idxOffset + i);
-      });
+      // Mobile and desktop: both click and touchstart!
+      function selectHandler(e) {
+        if (body.enabled) {
+          selectBody(idxOffset + i);
+          e.preventDefault();
+        }
+      }
+      img.addEventListener("click", selectHandler, {passive:false});
+      img.addEventListener("touchstart", selectHandler, {passive:false});
 
       outer.appendChild(img);
       wrap.appendChild(outer);
@@ -231,9 +236,8 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
     img.style.height = "90px";
 
     if (isFunctional) {
-      img.addEventListener('click', function () {
-        selectFeature(pickerId, idx, featureKey, skinMatch);
-      });
+      img.addEventListener('click', function (e) { selectFeature(pickerId, idx, featureKey, skinMatch); });
+      img.addEventListener('touchstart', function (e) { selectFeature(pickerId, idx, featureKey, skinMatch); });
     }
 
     img.addEventListener('mousedown', function (e) {
