@@ -1,3 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Character Creator</title>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f8; padding: 0; margin: 0; }
+    .picker-row-label { font-size: 1.1em; font-weight: bold; margin: 12px 0 4px 0; }
+    .picker-wrap { display: flex; gap: 12px; margin-bottom: 6px; }
+    .selected-img { border: 4px solid #ffbb00 !important; background: #fffbe8 !important; box-shadow: 0 0 24px #ffbc6c88 !important; }
+    #previewOverlay {
+      position: fixed; left:0; top:0; width:100vw; height:100vh;
+      background:rgba(0,0,0,0.35); display:none; align-items: center; justify-content: center; z-index: 100;
+    }
+    #previewOverlay img { border-radius: 14px; }
+    .picker-section { margin: 18px 0; }
+    .equip-row { margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <h2 style="margin:18px;">Character Creator Demo</h2>
+  
+  <div class="picker-section">
+    <div id="body-pickers"></div>
+  </div>
+
+  <div class="picker-section" id="face-row">
+    <div class="picker-row-label">Face</div>
+    <div id="face-pickers"></div>
+  </div>
+
+  <div class="picker-section">
+    <div class="picker-row-label">Hair</div>
+    <div id="hair-pickers"></div>
+  </div>
+  
+  <div class="equip-row">
+    <label><input type="checkbox" id="equipWeaponsChk"> Weapons</label>
+    <button id="cardWeaponsBtn">Show Weapon Card</button>
+    <label style="margin-left:18px;"><input type="checkbox" id="equipArmorChk"> Armor</label>
+    <button id="cardArmorBtn">Show Armor Card</button>
+    <label style="margin-left:18px;"><input type="checkbox" id="equipHelmetChk"> Helmet</label>
+  </div>
+  
+  <div style="margin:16px 0;">
+    <form id="physiqueForm" style="display:inline;">
+      Physique score: <input type="number" id="physiqueInput" min="1" max="20" style="width:50px;">
+      <button type="submit">Approve</button>
+      <span id="physiqueError" style="color:red;display:none;">Enter a valid value!</span>
+    </form>
+    <span id="physiqueApprovedMsg" style="display:none;color:green;">Approved!</span>
+    <button id="randomBtn" style="margin-left:24px;">Randomize</button>
+  </div>
+  
+  <div style="text-align:center;margin:20px;">
+    <canvas id="charCanvas" width="640" height="1280" style="background:#eaeaea;border-radius:12px;box-shadow:0 2px 24px #ccc9;"></canvas>
+  </div>
+  
+  <div id="previewOverlay" style="display:flex;align-items:center;justify-content:center;"></div>
+  
+  <script>
 const BASE = "character-creator/assets/";
 const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
@@ -83,7 +144,6 @@ let showWeapons = false;
 let showArmor = false;
 let showHelmet = false;
 
-// --- BODY PICKER rendering: 3 labeled rows and HR demo thumb label ---
 function createBodyPickers() {
   const picker = document.getElementById("body-pickers");
   picker.innerHTML = "";
@@ -92,15 +152,11 @@ function createBodyPickers() {
     // Section label
     const label = document.createElement("div");
     label.textContent = row.label;
-    label.style.fontSize = "1.1em";
-    label.style.fontWeight = "bold";
-    label.style.margin = "12px 0 4px 0";
+    label.className = "picker-row-label";
     picker.appendChild(label);
 
     const wrap = document.createElement("div");
-    wrap.style.display = "flex";
-    wrap.style.gap = "12px";
-    wrap.style.marginBottom = "6px";
+    wrap.className = "picker-wrap";
 
     row.bodies.forEach((body, i) => {
       const outer = document.createElement("div");
@@ -123,18 +179,17 @@ function createBodyPickers() {
       img.src = body.thumb;
       img.style.width = "90px";
       img.style.height = "90px";
-      img.style.border = (idxOffset + i === selected.body)
-        ? "4px solid #ffbb00"
-        : "3px solid #ddd";
+      if (idxOffset + i === selected.body) {
+        img.className = "selected-img";
+      } else {
+        img.style.border = "3px solid #ddd";
+        img.style.background = "#fafafa";
+        img.style.boxShadow = "0 2px 12px #ccc9";
+      }
       img.style.borderRadius = "12px";
-      img.style.background = (idxOffset + i === selected.body)
-        ? "#fffbe8"
-        : "#fafafa";
-      img.style.boxShadow = (idxOffset + i === selected.body)
-        ? "0 0 24px #ffbc6c88"
-        : "0 2px 12px #ccc9";
       img.style.opacity = body.enabled ? "1" : "0.3";
       img.style.cursor = body.enabled ? "pointer" : "default";
+      if (body.isPlaceholder) img.title = "Coming soon!";
 
       function selectHandler(e) {
         if (body.enabled) {
@@ -222,14 +277,10 @@ function createPickerImages(options, pickerId, featureKey, skinMatch = null) {
     img.style.opacity = isFunctional ? "1" : "0.3";
 
     if (isSelected) {
-      img.style.border = "4px solid #ffbb00";
-      img.style.boxShadow = "0 0 24px #ffbc6c88";
-      img.style.zIndex = "2";
-      img.style.background = "#fffbe8";
+      img.className = "selected-img";
     } else {
       img.style.border = "3px solid #ddd";
       img.style.boxShadow = "0 2px 12px #ccc9";
-      img.style.zIndex = "1";
       img.style.background = "#fafafa";
     }
     img.style.width = "90px";
@@ -273,7 +324,7 @@ function showPreview(featureKey, option) {
     img.style.boxShadow = "0 0 40px #ffbc6c88";
     overlay.innerHTML = "";
     overlay.appendChild(img);
-    overlay.style.display = "block";
+    overlay.style.display = "flex";
   }, 400);
 }
 function hidePreview() {
@@ -387,19 +438,11 @@ document.getElementById("physiqueForm").addEventListener("submit", function(e) {
   physiqueScore = val;
   document.getElementById("physiqueError").style.display = "none";
   document.getElementById("physiqueForm").style.display = "none";
-  document.getElementById("physiqueApprovedMsg").style.display = "block";
+  document.getElementById("physiqueApprovedMsg").style.display = "inline";
   createBodyPickers();
   let skin = getCurrentBodySkin();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
-  if (!bodyOptions[selected.body]?.isHighRes) {
-    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
-  } else {
-    document.getElementById("hair-pickers").children[0].classList.add("selected");
-    document.getElementById("face-row").style.display = "none";
-  }
   renderCharacter();
 });
 
@@ -420,13 +463,6 @@ document.getElementById("randomBtn").addEventListener("click", function () {
   createBodyPickers();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
-  if (!bodyOptions[selected.body]?.isHighRes) {
-    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
-  } else {
-    document.getElementById("hair-pickers").children[0].classList.add("selected");
-  }
   renderCharacter();
 });
 
@@ -435,13 +471,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let skin = getCurrentBodySkin();
   createPickerImages(faceOptions.filter(f => f.skin === skin), "face-pickers", "face", skin);
   createPickerImages(hairOptions, "hair-pickers", "hair");
-  document.getElementById("body-pickers").children[selected.body].classList.add("selected");
-  if (!bodyOptions[selected.body]?.isHighRes) {
-    document.getElementById("face-pickers").children[selected.face].classList.add("selected");
-    document.getElementById("hair-pickers").children[selected.hair].classList.add("selected");
-  } else {
-    document.getElementById("hair-pickers").children[0].classList.add("selected");
-    document.getElementById("face-row").style.display = "none";
-  }
   renderCharacter();
 });
+  </script>
+</body>
+</html>
