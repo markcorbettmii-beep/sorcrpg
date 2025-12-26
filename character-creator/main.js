@@ -34,7 +34,7 @@
   </div>
 </div>
 <script>
-const BASE = "../character-creator/assets/";
+const BASE = "assets/";
 
 // All 9 bodies: 3 massive, 3 muscular (1 enabled HR demo), 3 thin
 const bodyThumbs = [
@@ -68,7 +68,7 @@ const hairThumbs = [
   { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, enabled: true }
 ];
 
-// Faces (as before)
+// Faces
 const faceOptions = [
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
   { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
