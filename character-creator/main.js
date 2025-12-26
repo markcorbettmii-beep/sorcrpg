@@ -34,7 +34,7 @@
   </div>
 </div>
 <script>
-const BASE = "character-creator/assets/";
+const BASE = "../character-creator/assets/";
 
 // All 9 bodies: 3 massive, 3 muscular (1 enabled HR demo), 3 thin
 const bodyThumbs = [
@@ -68,7 +68,7 @@ const hairThumbs = [
   { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, enabled: true }
 ];
 
-// Faces - just like your original
+// Faces (as before)
 const faceOptions = [
   { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
   { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
@@ -94,7 +94,6 @@ let selectedBody = 2;
 let selectedHair = 11;
 let selectedFace = faceOptions.findIndex(f => f.skin === "pale" && f.enabled);
 
-// Pickers
 function renderBodyPickers() {
   const el = document.getElementById("body-pickers");
   el.innerHTML = "";
@@ -174,7 +173,6 @@ function renderAllPickers() {
   renderHairPickers();
 }
 
-// Character canvas render (body, face, hair)
 function renderCharacter() {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
