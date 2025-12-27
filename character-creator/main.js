@@ -130,8 +130,8 @@ function renderBodyPickers() {
         (selected.body === idx ? " selected" : "") +
         (!body.enabled ? " disabled" : "");
       if (body.type === "massive") {
-        img.alt = "requires physique above 20";
-        img.title = "requires physique above 20";
+        img.alt = "must input a physique score greater than 20 for this body type...";
+        img.title = "must input a physique score greater than 20 for this body type...";
       }
       const currentIdx = idx;
       img.onclick = function() {
@@ -197,7 +197,7 @@ function renderFacePickers() {
   });
 }
 
-// Only style 6 is enabled for HR, rest are placeholders
+// All hair styles enabled for HR, rest are placeholders
 function renderHairPickers() {
   const container = document.getElementById("hair-pickers");
   container.innerHTML = "";
@@ -205,10 +205,7 @@ function renderHairPickers() {
   let skin = (body && body.skin) ? body.skin : "pale";
   hairOptions.forEach((hair, idx) => {
     let enabled = hair.enabled;
-    let isHR = (skin === "hr");
-    if (isHR && idx !== 5) {
-      enabled = false;
-    }
+    // All hair styles are enabled for all body types now
     const img = document.createElement("img");
     img.src = hair.thumb;
     img.className = "thumb" +
