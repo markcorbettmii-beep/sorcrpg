@@ -129,6 +129,10 @@ function renderBodyPickers() {
       img.className = "thumb" +
         (selected.body === idx ? " selected" : "") +
         (!body.enabled ? " disabled" : "");
+      if (body.type === "massive") {
+        img.alt = "requires physique above 20";
+        img.title = "requires physique above 20";
+      }
       const currentIdx = idx;
       img.onclick = function() {
         if (body.enabled) {
