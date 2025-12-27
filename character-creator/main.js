@@ -392,7 +392,7 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   resizeCanvasAndRender();
 });
 
-// Show JPEG button
+// Show JPEG button -- now opens in a new window/tab!
 const showJpegBtn = document.getElementById("showJpegBtn");
 const jpegPreview = document.getElementById("jpegPreview");
 const saveInstr = document.getElementById("saveInstr");
@@ -401,7 +401,6 @@ const editingButtons = document.getElementById("editingButtons");
 const backBtn = document.getElementById("backBtn");
 
 showJpegBtn.addEventListener("click", function() {
-  // Always uses the currently visible canvas contents
   renderCharacter(function(canvas) {
     let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
     jpegPreview.src = dataUrl;
@@ -410,6 +409,8 @@ showJpegBtn.addEventListener("click", function() {
     jpegButtons.style.display = "block";
     editingButtons.style.display = "none";
     document.getElementById("characterCanvasContainer").style.display = "none";
+    // Open the generated JPEG in a new window/tab
+    window.open(dataUrl, '_blank');
   });
 });
 
