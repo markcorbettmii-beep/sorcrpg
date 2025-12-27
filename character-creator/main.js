@@ -1,7 +1,7 @@
 const BASE = "assets/";
 const CHARACTER_CREATOR_BASE = "character-creator/assets/";
 
-// --- BODY PICKER: three labeled rows ---
+// --- element pickers ... ---
 const bodyTypeRows = [
   {
     label: "Body Type (massive)",
