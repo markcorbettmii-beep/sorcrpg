@@ -6,6 +6,7 @@
  */
 
 const BASE = "assets/";
+const PORTRAIT_EXAMPLE = `${BASE}portrait-examp-bow-hr.png`;
 
 // Image paths for special layers
 const IMG_BG = `${BASE}highres-canvas-bg.png`;
@@ -84,6 +85,8 @@ let selected = {
   weapon: false
 };
 
+let isPortraitView = false; // Track whether portrait view is active
+
 function pickFirstEnabledFace(skin) {
   const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
   return index !== -1 ? index : -1;
@@ -138,7 +141,6 @@ function renderBodyPickers() {
         if (body.enabled) {
           selected.body = currentIdx;
           if (body.skin === "hr") {
-            // HR body uses med skin, pick first enabled med face
             selected.face = pickFirstEnabledFace("med");
             selected.hair = 5;
           } else {
@@ -254,9 +256,44 @@ function resizeCanvasAndRender() {
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
-  // Use current canvas size
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Banner text at top
+  ctx.font = "bold 2em sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  if (isPortraitView) {
+    ctx.fillStyle = "#c00";
+    ctx.fillText("paid feature, portrait example.", canvas.width / 2, 10);
+  } else {
+    ctx.fillStyle = "#222";
+    ctx.fillText("touch to flip for portrait view", canvas.width / 2, 10);
+  }
+
+  if (isPortraitView) {
+    // Show portrait example image, centered on canvas
+    const img = new window.Image();
+    img.src = PORTRAIT_EXAMPLE;
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Draw banner again (might be hidden by image)
+      ctx.font = "bold 2em sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "#c00";
+      ctx.fillText("paid feature, portrait example.", canvas.width / 2, 10);
+      if (callback) callback(canvas);
+    };
+    img.onerror = function() {
+      ctx.font = "1.5em sans-serif";
+      ctx.fillStyle = "#c00";
+      ctx.fillText("Portrait example image not found.", canvas.width / 2, canvas.height / 2);
+      if (callback) callback(canvas);
+    };
+    return;
+  }
+
+  // --- Normal character layers ---
   const bgLayer = { src: IMG_BG };
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
@@ -271,7 +308,6 @@ function renderCharacter(callback) {
   if (selected.armor) {
     layers.push({ src: IMG_ARMOR, layer: "armor" });
   }
-  // Show face for all body types including HR
   if (selected.face !== -1) {
     let face = faceOptions[selected.face];
     if (face && face.src && face.enabled !== false) layers.push(face);
@@ -301,6 +337,12 @@ function renderCharacter(callback) {
     imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
+    // Draw banner again (in case images overlap)
+    ctx.font = "bold 2em sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#222";
+    ctx.fillText("touch to flip for portrait view", canvas.width / 2, 10);
     if (callback) callback(canvas);
   });
 }
@@ -355,7 +397,6 @@ physiqueForm.addEventListener("submit", function(e) {
     selected.body = firstEnabledIdx;
     let body = bodyOptions[selected.body];
     if (body.skin === "hr") {
-      // HR body uses med faces
       selected.face = pickFirstEnabledFace("med");
       selected.hair = 5;
     } else {
@@ -390,7 +431,6 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   if (skin === "hr") {
-    // HR body uses med faces
     let filteredFaces = faceOptions.filter(f => f.skin === "med" && f.enabled);
     let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
     selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
@@ -427,7 +467,7 @@ showJpegBtn.addEventListener("click", function() {
   });
 });
 
-backBtn.addEventListener("click", function() {
+backBtn && backBtn.addEventListener("click", function() {
   jpegPreview.style.display = "none";
   saveInstr.style.display = "none";
   jpegButtons.style.display = "none";
@@ -438,6 +478,20 @@ backBtn.addEventListener("click", function() {
 // --- Responsive canvas triggers ---
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
+
+// --- Portrait view toggle on canvas touch/click ---
+const canvasEl = document.getElementById("charCanvas");
+if (canvasEl) {
+  canvasEl.addEventListener("click", function() {
+    isPortraitView = !isPortraitView;
+    renderCharacter();
+  });
+  canvasEl.addEventListener("touchstart", function(e) {
+    isPortraitView = !isPortraitView;
+    renderCharacter();
+    e.preventDefault();
+  });
+}
 
 // Initial setup
 renderAllPickers();
