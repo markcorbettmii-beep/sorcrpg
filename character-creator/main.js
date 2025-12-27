@@ -78,8 +78,8 @@ let selected = {
 };
 
 function pickFirstEnabledFace(skin) {
-  const filtered = faceOptions.filter(f => f.skin === skin && f.enabled);
-  return filtered.length ? 0 : -1;
+  const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
+  return index !== -1 ? index : -1;
 }
 
 function renderBodyPickers() {
@@ -105,16 +105,17 @@ function renderBodyPickers() {
       img.className = "thumb" +
         (selected.body === idx ? " selected" : "") +
         (!body.enabled ? " disabled" : "");
+      const currentIdx = idx;
       img.onclick = function() {
         if (body.enabled) {
-          selected.body = idx;
+          selected.body = currentIdx;
           if (body.skin === "hr") {
             selected.face = -1;
             selected.hair = 5;
           } else {
             const skin = body.skin || "pale";
             selected.face = pickFirstEnabledFace(skin);
-            if (!hairOptions[selected.hair].enabled) {
+            if (selected.hair !== -1 && !hairOptions[selected.hair].enabled) {
               selected.hair = hairOptions.findIndex(h => h.enabled);
             }
           }
@@ -150,15 +151,16 @@ function renderFacePickers() {
 
   let filtered = faceOptions.filter(f => f.skin === skin);
 
-  filtered.forEach((face, idx) => {
+  filtered.forEach((face) => {
+    const globalIdx = faceOptions.indexOf(face);
     const img = document.createElement("img");
     img.src = face.thumb;
     img.className = "thumb" +
       (face.enabled ? "" : " disabled") +
-      (selected.face === idx ? " selected" : "");
+      (selected.face === globalIdx ? " selected" : "");
     img.onclick = function() {
       if (face.enabled) {
-        selected.face = idx;
+        selected.face = globalIdx;
         renderFacePickers();
         renderCharacter();
       }
@@ -176,10 +178,8 @@ function renderHairPickers() {
   hairOptions.forEach((hair, idx) => {
     let enabled = hair.enabled;
     let isHR = (skin === "hr");
-    let showAsPlaceholder = false;
     if (isHR && idx !== 5) {
       enabled = false;
-      showAsPlaceholder = true;
     }
     const img = document.createElement("img");
     img.src = hair.thumb;
@@ -222,13 +222,14 @@ function renderCharacter(callback) {
   if (selected.armor) {
     layers.push({ src: IMG_ARMOR, layer: "armor" });
   }
-  if (skin !== "hr") {
-    let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
-    let face = filteredFaces[selected.face];
+  if (skin !== "hr" && selected.face !== -1) {
+    let face = faceOptions[selected.face];
     if (face && face.src && face.enabled !== false) layers.push(face);
   }
-  let hair = hairOptions[selected.hair];
-  if (hair && hair.src && hair.enabled !== false) layers.push(hair);
+  if (selected.hair !== -1) {
+    let hair = hairOptions[selected.hair];
+    if (hair && hair.src && hair.enabled !== false) layers.push(hair);
+  }
   if (selected.helmet) {
     layers.push({ src: IMG_HELMET, layer: "helmet" });
   }
@@ -240,7 +241,10 @@ function renderCharacter(callback) {
         const im = new window.Image();
         im.src = opt.src;
         im.onload = () => resolve(im);
-        im.onerror = () => resolve(null);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
       })
     )
   ).then(imgs => {
@@ -292,13 +296,16 @@ document.getElementById("randomBtn").addEventListener("click", function() {
     selected.hair = 5;
   } else {
     let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
-    selected.face = Math.floor(Math.random() * filteredFaces.length);
+    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+    
     let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
     selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
   }
-  selected.armor = document.getElementById("equipArmorChk").checked ? (Math.random() < 0.5) : false;
-  selected.helmet = document.getElementById("equipHelmetChk").checked ? (Math.random() < 0.5) : false;
-  selected.weapon = document.getElementById("equipWeaponsChk").checked ? (Math.random() < 0.5) : false;
+  
+  selected.armor = Math.random() < 0.5;
+  selected.helmet = Math.random() < 0.5;
+  selected.weapon = Math.random() < 0.5;
 
   document.getElementById("equipArmorChk").checked = selected.armor;
   document.getElementById("equipHelmetChk").checked = selected.helmet;
