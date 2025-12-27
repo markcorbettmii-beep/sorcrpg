@@ -1,3 +1,10 @@
+/**
+ * Character Creator
+ * Copyright © 2024 [Corbett, editor in chief of Ogre Adventurer, a publishing company of Slayers of Rings § (n, and &) Crowns]
+ * Created: December 26, 2024
+ * All rights reserved.
+ */
+
 const BASE = "assets/";
 
 // Image paths for special layers
