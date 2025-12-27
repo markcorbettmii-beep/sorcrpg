@@ -89,6 +89,23 @@ function pickFirstEnabledFace(skin) {
   return index !== -1 ? index : -1;
 }
 
+function filterBodiesByPhysique(physique) {
+  bodyTypeRows.forEach((row) => {
+    row.bodies.forEach((body) => {
+      if (physique < 5) {
+        // Below 5: only thin (all currently disabled)
+        body.enabled = (body.type === "thin");
+      } else if (physique >= 5 && physique <= 20) {
+        // 5-20: only muscular_hr
+        body.enabled = (body.type === "muscular_hr");
+      } else {
+        // Above 20: only massive
+        body.enabled = (body.type === "massive");
+      }
+    });
+  });
+}
+
 function renderBodyPickers() {
   const container = document.getElementById("body-pickers");
   container.innerHTML = "";
@@ -304,8 +321,39 @@ physiqueForm.addEventListener("submit", function(e) {
     physiqueApprovedMsg.style.display = "none";
     return;
   }
+  
+  // Check if thin body type requested but not available
+  if (val < 5) {
+    physiqueError.textContent = "Thin fbody type not available yet.";
+    physiqueError.style.display = "inline";
+    physiqueApprovedMsg.style.display = "none";
+    return;
+  }
+  
   physiqueError.style.display = "none";
   physiqueApprovedMsg.style.display = "block";
+  
+  // Filter bodies based on physique value
+  filterBodiesByPhysique(val);
+  
+  // Auto-select first enabled body
+  let firstEnabledIdx = bodyOptions.findIndex(b => b.enabled);
+  if (firstEnabledIdx !== -1) {
+    selected.body = firstEnabledIdx;
+    let body = bodyOptions[selected.body];
+    if (body.skin === "hr") {
+      selected.face = -1;
+      selected.hair = 5;
+    } else {
+      selected.face = pickFirstEnabledFace(body.skin);
+      if (selected.hair !== -1 && !hairOptions[selected.hair].enabled) {
+        selected.hair = hairOptions.findIndex(h => h.enabled);
+      }
+    }
+  }
+  
+  renderAllPickers();
+  resizeCanvasAndRender();
 });
 
 document.getElementById("equipArmorChk").addEventListener("change", function(e) {
