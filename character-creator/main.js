@@ -210,11 +210,38 @@ function renderAllPickers() {
   renderHairPickers();
 }
 
+// --- RESPONSIVE CANVAS ---
+function getCanvasSize() {
+  // Maintain aspect ratio 1:2, max 640x1280, but fit to viewport
+  const maxWidth = 640, maxHeight = 1280;
+  let container = document.getElementById("characterCanvasContainer");
+  let vw = window.innerWidth;
+  let vh = window.innerHeight;
+  let width = Math.min(container ? container.offsetWidth : maxWidth, vw * 0.96, maxWidth);
+  let height = Math.min(width * 2, vh * 0.92, maxHeight);
+
+  // If height is limiting, adjust width
+  if (height / 2 < width) width = height / 2;
+  return { width: Math.round(width), height: Math.round(height) };
+}
+
+function resizeCanvasAndRender() {
+  const canvas = document.getElementById("charCanvas");
+  if (!canvas) return;
+  const { width, height } = getCanvasSize();
+  canvas.width = width;
+  canvas.height = height;
+  canvas.style.width = width + "px";
+  canvas.style.height = height + "px";
+  renderCharacter();
+}
+
+// --- END RESPONSIVE CANVAS ---
+
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
-  canvas.width = 640;
-  canvas.height = 1280;
+  // Use current canvas size
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const bgLayer = { src: IMG_BG };
@@ -313,7 +340,7 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   }
 
   renderAllPickers();
-  renderCharacter();
+  resizeCanvasAndRender();
 });
 
 const showJpegBtn = document.getElementById("showJpegBtn");
@@ -343,5 +370,10 @@ backBtn.addEventListener("click", function() {
   document.getElementById("characterCanvasContainer").style.display = "flex";
 });
 
+// --- Responsive canvas triggers ---
+window.addEventListener("resize", resizeCanvasAndRender);
+window.addEventListener("orientationchange", resizeCanvasAndRender);
+
+// Initial setup
 renderAllPickers();
-renderCharacter();
+resizeCanvasAndRender();
