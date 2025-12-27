@@ -304,14 +304,6 @@ document.getElementById("randomBtn").addEventListener("click", function() {
     let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
     selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
   }
-  
-  selected.armor = Math.random() < 0.5;
-  selected.helmet = Math.random() < 0.5;
-  selected.weapon = Math.random() < 0.5;
-
-  document.getElementById("equipArmorChk").checked = selected.armor;
-  document.getElementById("equipHelmetChk").checked = selected.helmet;
-  document.getElementById("equipWeaponsChk").checked = selected.weapon;
 
   renderAllPickers();
   renderCharacter();
