@@ -108,7 +108,6 @@ function renderBodyPickers() {
       img.onclick = function() {
         if (body.enabled) {
           selected.body = idx;
-          // For HR muscular: face is NOT used.
           if (body.skin === "hr") {
             selected.face = -1;
             selected.hair = 5;
@@ -131,15 +130,24 @@ function renderBodyPickers() {
   });
 }
 
+// Show only faces matching body skin; HR body shows only disabled placeholders
 function renderFacePickers() {
   const container = document.getElementById("face-pickers");
   container.innerHTML = "";
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
+
   if (skin === "hr") {
-    container.innerHTML = "<div style='color:#888;font-style:italic;'>No face available for this body type.</div>";
+    // Show 3 placeholder faces, all disabled
+    for (let i = 0; i < 3; ++i) {
+      const img = document.createElement("img");
+      img.src = `${BASE}placeholder-med.png`;
+      img.className = "thumb disabled";
+      container.appendChild(img);
+    }
     return;
   }
+
   let filtered = faceOptions.filter(f => f.skin === skin);
 
   filtered.forEach((face, idx) => {
@@ -159,22 +167,27 @@ function renderFacePickers() {
   });
 }
 
+// Only style 6 is enabled for HR, rest are placeholders
 function renderHairPickers() {
   const container = document.getElementById("hair-pickers");
   container.innerHTML = "";
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   hairOptions.forEach((hair, idx) => {
-    if (skin === "hr" && idx !== 5) {
-      return;
+    let enabled = hair.enabled;
+    let isHR = (skin === "hr");
+    let showAsPlaceholder = false;
+    if (isHR && idx !== 5) {
+      enabled = false;
+      showAsPlaceholder = true;
     }
     const img = document.createElement("img");
     img.src = hair.thumb;
     img.className = "thumb" +
-      (!hair.enabled ? " disabled" : "") +
+      (!enabled ? " disabled" : "") +
       (selected.hair === idx ? " selected" : "");
     img.onclick = function() {
-      if (hair.enabled) {
+      if (enabled) {
         selected.hair = idx;
         renderHairPickers();
         renderCharacter();
