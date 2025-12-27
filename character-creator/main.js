@@ -77,7 +77,7 @@ const hairOptions = [
 
 let selected = {
   body: 2,
-  face: 0,
+  face: 10,
   hair: 5,
   armor: false,
   helmet: false,
