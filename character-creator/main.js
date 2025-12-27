@@ -259,7 +259,7 @@ function renderCharacter(callback) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Banner text at top
-  ctx.font = "bold 2em sans-serif";
+  ctx.font = " 1em sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   if (isPortraitView) {
