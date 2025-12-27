@@ -138,7 +138,8 @@ function renderBodyPickers() {
         if (body.enabled) {
           selected.body = currentIdx;
           if (body.skin === "hr") {
-            selected.face = -1;
+            // HR body uses med skin, pick first enabled med face
+            selected.face = pickFirstEnabledFace("med");
             selected.hair = 5;
           } else {
             const skin = body.skin || "pale";
@@ -159,22 +160,16 @@ function renderBodyPickers() {
   });
 }
 
-// Show only faces matching body skin; HR body shows only disabled placeholders
+// Show only faces matching body skin; HR body shows med skin faces
 function renderFacePickers() {
   const container = document.getElementById("face-pickers");
   container.innerHTML = "";
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
 
+  // HR body uses med skin faces
   if (skin === "hr") {
-    // Show 3 placeholder faces, all disabled
-    for (let i = 0; i < 3; ++i) {
-      const img = document.createElement("img");
-      img.src = `${BASE}placeholder-med.png`;
-      img.className = "thumb disabled";
-      container.appendChild(img);
-    }
-    return;
+    skin = "med";
   }
 
   let filtered = faceOptions.filter(f => f.skin === skin);
@@ -276,7 +271,8 @@ function renderCharacter(callback) {
   if (selected.armor) {
     layers.push({ src: IMG_ARMOR, layer: "armor" });
   }
-  if (skin !== "hr" && selected.face !== -1) {
+  // Show face for all body types including HR
+  if (selected.face !== -1) {
     let face = faceOptions[selected.face];
     if (face && face.src && face.enabled !== false) layers.push(face);
   }
@@ -343,7 +339,8 @@ physiqueForm.addEventListener("submit", function(e) {
     selected.body = firstEnabledIdx;
     let body = bodyOptions[selected.body];
     if (body.skin === "hr") {
-      selected.face = -1;
+      // HR body uses med faces
+      selected.face = pickFirstEnabledFace("med");
       selected.hair = 5;
     } else {
       selected.face = pickFirstEnabledFace(body.skin);
@@ -377,7 +374,10 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   if (skin === "hr") {
-    selected.face = -1;
+    // HR body uses med faces
+    let filteredFaces = faceOptions.filter(f => f.skin === "med" && f.enabled);
+    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
     selected.hair = 5;
   } else {
     let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
