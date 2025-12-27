@@ -232,7 +232,7 @@ function renderCharacter(callback) {
 
   // Face layer (if not HR muscular)
   if (skin !== "hr") {
-    let filteredFaces = faceOptions.filter(f => f.skin === skin);
+    let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
     let face = filteredFaces[selected.face];
     if (face && face.src && face.enabled !== false) layers.push(face);
   }
@@ -317,10 +317,10 @@ document.getElementById("randomBtn").addEventListener("click", function() {
     let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
     selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
   }
-  // Randomize equipment
-  selected.armor = Math.random() < 0.5;
-  selected.helmet = Math.random() < 0.5;
-  selected.weapon = Math.random() < 0.5;
+  // Randomize equipment ONLY if checkboxes are checked
+  selected.armor = document.getElementById("equipArmorChk").checked ? (Math.random() < 0.5) : false;
+  selected.helmet = document.getElementById("equipHelmetChk").checked ? (Math.random() < 0.5) : false;
+  selected.weapon = document.getElementById("equipWeaponsChk").checked ? (Math.random() < 0.5) : false;
 
   // Update checkboxes
   document.getElementById("equipArmorChk").checked = selected.armor;
