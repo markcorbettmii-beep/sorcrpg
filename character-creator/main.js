@@ -20,7 +20,6 @@ const bodyTypeRows = [
   {
     label: "Body Type (muscular)",
     bodies: [
-      // Only HR muscular is enabled, rest are placeholders
       { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "muscular", enabled: false },
       { src: IMG_FB_MUSC_HR, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "hr", type: "muscular_hr", enabled: true, isHighRes: true },
       { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "muscular", enabled: false }
@@ -29,7 +28,6 @@ const bodyTypeRows = [
   {
     label: "Body Type (thin)",
     bodies: [
-      // Placeholders only
       { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "thin", enabled: false },
       { src: "", thumb: `${BASE}placeholder-med.png`, skin: "med", type: "thin", enabled: false },
       { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "thin", enabled: false }
@@ -95,7 +93,7 @@ function renderBodyPickers() {
   const container = document.getElementById("body-pickers");
   container.innerHTML = "";
   let idx = 0;
-  bodyTypeRows.forEach(row => {
+  bodyTypeRows.forEach((row, rowIdx) => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "thumb-list";
     row.bodies.forEach((body, i) => {
@@ -210,6 +208,8 @@ function renderCharacter(callback) {
   canvas.width = 640;
   canvas.height = 1280;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Layer order: bg → weapon → fbody → armor → face → hair → helmet
 
   // Always start with BG
   const bgLayer = { src: IMG_BG };
