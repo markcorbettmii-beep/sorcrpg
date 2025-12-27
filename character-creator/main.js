@@ -218,7 +218,9 @@ function renderCharacter(callback) {
   if (selected.weapon) {
     layers.push({ src: IMG_WEAPON, layer: "weapon" });
   }
-  if (body && body.src) layers.push(body);
+  if (body && body.src && body.src.length > 0) {
+    layers.push(body);
+  }
   if (selected.armor) {
     layers.push({ src: IMG_ARMOR, layer: "armor" });
   }
