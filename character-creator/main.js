@@ -413,7 +413,7 @@ showJpegBtn.addEventListener("click", function() {
       
       // Portrait frame position and size (adjusted higher and bigger)
       const portraitX = 730;
-      const portraitY = 650;
+      const portraitY = 580;
       const portraitWidth = 640;
       const portraitHeight = 1080;
       
