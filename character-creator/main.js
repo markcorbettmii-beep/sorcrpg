@@ -324,11 +324,27 @@ physiqueForm.addEventListener("submit", function(e) {
     physiqueError.textContent = "Thin fbody type not available yet.  Choose a value above 5 for muscular or above 20 for massive (refresh pg. to start over).";
     physiqueError.style.display = "inline";
     physiqueApprovedMsg.style.display = "none";
+    
+    // Lock all body types
+    bodyTypeRows.forEach((row) => {
+      row.bodies.forEach((body) => {
+        body.enabled = false;
+      });
+    });
+    
+    renderAllPickers();
     return;
   }
   
   physiqueError.style.display = "none";
   physiqueApprovedMsg.style.display = "block";
+  
+  // Update message based on body type
+  if (val >= 5 && val <= 20) {
+    physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a muscular body type. You can now create your character. Monitored by GM";
+  } else if (val > 20) {
+    physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a massive body type. You can now create your character. Monitored by GM";
+  }
   
   // Filter bodies based on physique value
   filterBodiesByPhysique(val);
