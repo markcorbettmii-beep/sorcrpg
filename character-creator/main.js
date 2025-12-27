@@ -213,7 +213,7 @@ function renderAllPickers() {
   renderHairPickers();
 }
 
-// --- Responsive Canvas ---
+// --- RESPONSIVE CANVAS ---
 function getCanvasSize() {
   const maxWidth = 640, maxHeight = 1280;
   let container = document.getElementById("characterCanvasContainer");
@@ -236,13 +236,11 @@ function resizeCanvasAndRender() {
   renderCharacter();
 }
 
-// --- Main Canvas Render ---
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // --- Portrait view ---
   if (isPortraitView) {
     const img = new window.Image();
     img.src = PORTRAIT_EXAMPLE;
@@ -256,21 +254,14 @@ function renderCharacter(callback) {
     return;
   }
 
-  // --- Normal character view ---
   const bgLayer = { src: IMG_BG };
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   let layers = [bgLayer];
 
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON, layer: "weapon" });
-  }
-  if (body && body.src && body.src.length > 0) {
-    layers.push(body);
-  }
-  if (selected.armor) {
-    layers.push({ src: IMG_ARMOR, layer: "armor" });
-  }
+  if (selected.weapon) { layers.push({ src: IMG_WEAPON, layer: "weapon" }); }
+  if (body && body.src && body.src.length > 0) { layers.push(body); }
+  if (selected.armor) { layers.push({ src: IMG_ARMOR, layer: "armor" }); }
   if (selected.face !== -1) {
     let face = faceOptions[selected.face];
     if (face && face.src && face.enabled !== false) layers.push(face);
@@ -279,9 +270,7 @@ function renderCharacter(callback) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.src && hair.enabled !== false) layers.push(hair);
   }
-  if (selected.helmet) {
-    layers.push({ src: IMG_HELMET, layer: "helmet" });
-  }
+  if (selected.helmet) { layers.push({ src: IMG_HELMET, layer: "helmet" }); }
 
   Promise.all(
     layers.map(opt =>
@@ -304,7 +293,6 @@ function renderCharacter(callback) {
   });
 }
 
-// Physique input logic
 const physiqueForm = document.getElementById("physiqueForm");
 const physiqueInput = document.getElementById("physiqueInput");
 const physiqueError = document.getElementById("physiqueError");
@@ -356,7 +344,6 @@ physiqueForm.addEventListener("submit", function(e) {
   resizeCanvasAndRender();
 });
 
-// Equipment controls
 document.getElementById("equipArmorChk").addEventListener("change", function(e) {
   selected.armor = e.target.checked;
   renderCharacter();
@@ -370,10 +357,10 @@ document.getElementById("equipWeaponsChk").addEventListener("change", function(e
   renderCharacter();
 });
 
-// Random character button
 document.getElementById("randomBtn").addEventListener("click", function() {
   let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
   selected.body = enabledBodiesIdx[Math.floor(Math.random() * enabledBodiesIdx.length)];
+
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   if (skin === "hr") {
@@ -385,29 +372,26 @@ document.getElementById("randomBtn").addEventListener("click", function() {
     let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
     let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
     selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+    
     let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
     selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
   }
+
   renderAllPickers();
   resizeCanvasAndRender();
 });
 
-// Show JPEG button -- ONLY opens in new tab/window with the image
+// --- SAVE AS JPEG BUTTON ---
+// This is the ONLY handler you need for your desired behavior!
 const showJpegBtn = document.getElementById("showJpegBtn");
 showJpegBtn.addEventListener("click", function() {
+  // Open a blank window immediately in response to the click
+  const win = window.open('', '_blank');
   renderCharacter(function(canvas) {
     let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-    window.open(dataUrl, '_blank');
+    // Write the image into the new window
+    win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
   });
-});
-
-const backBtn = document.getElementById("backBtn");
-backBtn && backBtn.addEventListener("click", function() {
-  jpegPreview.style.display = "none";
-  saveInstr.style.display = "none";
-  jpegButtons.style.display = "none";
-  editingButtons.style.display = "block";
-  document.getElementById("characterCanvasContainer").style.display = "flex";
 });
 
 // --- Responsive canvas triggers ---
