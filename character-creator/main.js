@@ -404,14 +404,18 @@ showJpegBtn.addEventListener("click", function() {
     profileSheet.src = `${BASE}profile-sheet-template.png`;
     
     profileSheet.onload = function() {
+      // Fill with white background first
+      profileCtx.fillStyle = 'white';
+      profileCtx.fillRect(0, 0, profileCanvas.width, profileCanvas.height);
+      
       // Draw the profile sheet background
       profileCtx.drawImage(profileSheet, 0, 0, profileCanvas.width, profileCanvas.height);
       
-      // Portrait frame position and size
-      const portraitX = 770;
-      const portraitY = 750;
-      const portraitWidth = 560;
-      const portraitHeight = 950;
+      // Portrait frame position and size (adjusted higher and bigger)
+      const portraitX = 730;
+      const portraitY = 650;
+      const portraitWidth = 640;
+      const portraitHeight = 1080;
       
       if (usePortrait) {
         // Load and draw portrait example
