@@ -321,7 +321,7 @@ physiqueForm.addEventListener("submit", function(e) {
   
   // Check if thin body type requested but not available
   if (val < 5) {
-    physiqueError.textContent = "Thin fbody type not available yet.";
+    physiqueError.textContent = "Thin fbody type not available yet (refresh page).";
     physiqueError.style.display = "inline";
     physiqueApprovedMsg.style.display = "none";
     return;
