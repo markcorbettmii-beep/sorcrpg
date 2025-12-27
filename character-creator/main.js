@@ -6,6 +6,7 @@
  */
 
 const BASE = "assets/";
+const PORTRAIT_EXAMPLE = `${BASE}portrait-examp-bow-hr.png`;
 
 // Image paths for special layers
 const IMG_BG = `${BASE}highres-canvas-bg.png`;
@@ -84,6 +85,8 @@ let selected = {
   weapon: false
 };
 
+let isPortraitView = false; // Track portrait mode
+
 function pickFirstEnabledFace(skin) {
   const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
   return index !== -1 ? index : -1;
@@ -93,13 +96,10 @@ function filterBodiesByPhysique(physique) {
   bodyTypeRows.forEach((row) => {
     row.bodies.forEach((body) => {
       if (physique < 5) {
-        // Below 5: only thin (all currently disabled)
         body.enabled = (body.type === "thin");
       } else if (physique >= 5 && physique <= 20) {
-        // 5-20: only muscular_hr
         body.enabled = (body.type === "muscular_hr");
       } else {
-        // Above 20: only massive
         body.enabled = (body.type === "massive");
       }
     });
@@ -138,7 +138,6 @@ function renderBodyPickers() {
         if (body.enabled) {
           selected.body = currentIdx;
           if (body.skin === "hr") {
-            // HR body uses med skin, pick first enabled med face
             selected.face = pickFirstEnabledFace("med");
             selected.hair = 5;
           } else {
@@ -160,20 +159,13 @@ function renderBodyPickers() {
   });
 }
 
-// Show only faces matching body skin; HR body shows med skin faces
 function renderFacePickers() {
   const container = document.getElementById("face-pickers");
   container.innerHTML = "";
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
-
-  // HR body uses med skin faces
-  if (skin === "hr") {
-    skin = "med";
-  }
-
+  if (skin === "hr") skin = "med";
   let filtered = faceOptions.filter(f => f.skin === skin);
-
   filtered.forEach((face) => {
     const globalIdx = faceOptions.indexOf(face);
     const img = document.createElement("img");
@@ -192,7 +184,6 @@ function renderFacePickers() {
   });
 }
 
-// All hair styles enabled for HR, rest are placeholders
 function renderHairPickers() {
   const container = document.getElementById("hair-pickers");
   container.innerHTML = "";
@@ -200,7 +191,6 @@ function renderHairPickers() {
   let skin = (body && body.skin) ? body.skin : "pale";
   hairOptions.forEach((hair, idx) => {
     let enabled = hair.enabled;
-    // All hair styles are enabled for all body types now
     const img = document.createElement("img");
     img.src = hair.thumb;
     img.className = "thumb" +
@@ -225,15 +215,12 @@ function renderAllPickers() {
 
 // --- RESPONSIVE CANVAS ---
 function getCanvasSize() {
-  // Maintain aspect ratio 1:2, max 640x1280, but fit to viewport
   const maxWidth = 640, maxHeight = 1280;
   let container = document.getElementById("characterCanvasContainer");
   let vw = window.innerWidth;
   let vh = window.innerHeight;
   let width = Math.min(container ? container.offsetWidth : maxWidth, vw * 0.96, maxWidth);
   let height = Math.min(width * 2, vh * 0.92, maxHeight);
-
-  // If height is limiting, adjust width
   if (height / 2 < width) width = height / 2;
   return { width: Math.round(width), height: Math.round(height) };
 }
@@ -249,29 +236,32 @@ function resizeCanvasAndRender() {
   renderCharacter();
 }
 
-// --- END RESPONSIVE CANVAS ---
-
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   const ctx = canvas.getContext("2d");
-  // Use current canvas size
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (isPortraitView) {
+    const img = new window.Image();
+    img.src = PORTRAIT_EXAMPLE;
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (callback) callback(canvas);
+    };
+    img.onerror = function() {
+      if (callback) callback(canvas);
+    };
+    return;
+  }
 
   const bgLayer = { src: IMG_BG };
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   let layers = [bgLayer];
 
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON, layer: "weapon" });
-  }
-  if (body && body.src && body.src.length > 0) {
-    layers.push(body);
-  }
-  if (selected.armor) {
-    layers.push({ src: IMG_ARMOR, layer: "armor" });
-  }
-  // Show face for all body types including HR
+  if (selected.weapon) { layers.push({ src: IMG_WEAPON, layer: "weapon" }); }
+  if (body && body.src && body.src.length > 0) { layers.push(body); }
+  if (selected.armor) { layers.push({ src: IMG_ARMOR, layer: "armor" }); }
   if (selected.face !== -1) {
     let face = faceOptions[selected.face];
     if (face && face.src && face.enabled !== false) layers.push(face);
@@ -280,9 +270,7 @@ function renderCharacter(callback) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.src && hair.enabled !== false) layers.push(hair);
   }
-  if (selected.helmet) {
-    layers.push({ src: IMG_HELMET, layer: "helmet" });
-  }
+  if (selected.helmet) { layers.push({ src: IMG_HELMET, layer: "helmet" }); }
 
   Promise.all(
     layers.map(opt =>
@@ -318,44 +306,31 @@ physiqueForm.addEventListener("submit", function(e) {
     physiqueApprovedMsg.style.display = "none";
     return;
   }
-  
-  // Check if thin body type requested but not available
   if (val < 5) {
     physiqueError.textContent = "Thin fbody type not available yet.  Choose a value above 5 for muscular or above 20 for massive (refresh pg. to start over).";
     physiqueError.style.display = "inline";
     physiqueApprovedMsg.style.display = "none";
-    
-    // Lock all body types
     bodyTypeRows.forEach((row) => {
       row.bodies.forEach((body) => {
         body.enabled = false;
       });
     });
-    
     renderAllPickers();
     return;
   }
-  
   physiqueError.style.display = "none";
   physiqueApprovedMsg.style.display = "block";
-  
-  // Update message based on body type
   if (val >= 5 && val <= 20) {
     physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a muscular body type. You can now create your character. Monitored by GM";
   } else if (val > 20) {
     physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a massive body type. You can now create your character. Monitored by GM";
   }
-  
-  // Filter bodies based on physique value
   filterBodiesByPhysique(val);
-  
-  // Auto-select first enabled body
   let firstEnabledIdx = bodyOptions.findIndex(b => b.enabled);
   if (firstEnabledIdx !== -1) {
     selected.body = firstEnabledIdx;
     let body = bodyOptions[selected.body];
     if (body.skin === "hr") {
-      // HR body uses med faces
       selected.face = pickFirstEnabledFace("med");
       selected.hair = 5;
     } else {
@@ -365,7 +340,6 @@ physiqueForm.addEventListener("submit", function(e) {
       }
     }
   }
-  
   renderAllPickers();
   resizeCanvasAndRender();
 });
@@ -390,7 +364,6 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   if (skin === "hr") {
-    // HR body uses med faces
     let filteredFaces = faceOptions.filter(f => f.skin === "med" && f.enabled);
     let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
     selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
@@ -408,16 +381,17 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   resizeCanvasAndRender();
 });
 
+// --- SAVE AS JPEG BUTTON ---
 const showJpegBtn = document.getElementById("showJpegBtn");
-const jpegPreview = document.getElementById("jpegPreview");
-const saveInstr = document.getElementById("saveInstr");
-const jpegButtons = document.getElementById("jpegButtons");
-const editingButtons = document.getElementById("editingButtons");
-const backBtn = document.getElementById("backBtn");
-
 showJpegBtn.addEventListener("click", function() {
+  const aiPortraitChk = document.getElementById("aiPortraitChk");
+  const usePortrait = aiPortraitChk && aiPortraitChk.checked;
+  
+  // Open blank window immediately
+  const win = window.open('', '_blank');
+  
   renderCharacter(function(charCanvas) {
-    // Create a new canvas for the profile sheet composite
+    // Create composite canvas
     const profileCanvas = document.createElement('canvas');
     const profileCtx = profileCanvas.getContext('2d');
     
@@ -427,53 +401,65 @@ showJpegBtn.addEventListener("click", function() {
     
     // Load the profile sheet template
     const profileSheet = new Image();
-    profileSheet.src = 'assets/SorC-character-profile-sheet.png'; // Your profile sheet PNG
+    profileSheet.src = `${BASE}profile-sheet-template.png`;
     
     profileSheet.onload = function() {
-      // Draw the profile sheet template
+      // Draw the profile sheet background
       profileCtx.drawImage(profileSheet, 0, 0, profileCanvas.width, profileCanvas.height);
       
-      // Draw the character in the portrait frame
-      // Position: centered horizontally, Y: 750px from top
-      // Size: 560px wide × 950px tall
+      // Portrait frame position and size
       const portraitX = 770;
       const portraitY = 750;
       const portraitWidth = 560;
       const portraitHeight = 950;
       
-      profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
-      
-      // Convert to JPEG and display
-      let dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
-      jpegPreview.src = dataUrl;
-      jpegPreview.style.display = "block";
-      saveInstr.style.display = "block";
-      jpegButtons.style.display = "block";
-      editingButtons.style.display = "none";
-      document.getElementById("characterCanvasContainer").style.display = "none";
-      
-      // Open in new window for easy saving
-      window.open(dataUrl, '_blank');
+      if (usePortrait) {
+        // Load and draw portrait example
+        const portraitImg = new Image();
+        portraitImg.src = PORTRAIT_EXAMPLE;
+        portraitImg.onload = function() {
+          profileCtx.drawImage(portraitImg, portraitX, portraitY, portraitWidth, portraitHeight);
+          const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
+          win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
+        };
+        portraitImg.onerror = function() {
+          // Fallback to character canvas
+          profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
+          const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
+          win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
+        };
+      } else {
+        // Draw the character canvas in the portrait frame
+        profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
+        const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
+        win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
+      }
     };
     
     profileSheet.onerror = function() {
       console.error('Failed to load profile sheet template');
-      alert('Could not load profile sheet. Make sure SorC-character-profile-sheet.png is in the assets folder.');
+      win.document.write('<p>Error: Could not load profile sheet. Make sure profile-sheet-template.png is in the assets folder.</p>');
     };
   });
-});
-
-backBtn.addEventListener("click", function() {
-  jpegPreview.style.display = "none";
-  saveInstr.style.display = "none";
-  jpegButtons.style.display = "none";
-  editingButtons.style.display = "block";
-  document.getElementById("characterCanvasContainer").style.display = "flex";
 });
 
 // --- Responsive canvas triggers ---
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
+
+// --- Portrait view toggle on canvas touch/click ---
+const canvasEl = document.getElementById("charCanvas");
+if (canvasEl) {
+  canvasEl.addEventListener("click", function() {
+    isPortraitView = !isPortraitView;
+    renderCharacter();
+  });
+  canvasEl.addEventListener("touchstart", function(e) {
+    isPortraitView = !isPortraitView;
+    renderCharacter();
+    e.preventDefault();
+  });
+}
 
 // Initial setup
 renderAllPickers();
