@@ -77,8 +77,8 @@ const hairOptions = [
 ];
 
 let selected = {
-  body: 2,
-  face: 10,
+  body: 4,
+  face: 4,
   hair: 5,
   armor: false,
   helmet: false,
@@ -385,7 +385,7 @@ document.getElementById("randomBtn").addEventListener("click", function() {
 const showJpegBtn = document.getElementById("showJpegBtn");
 showJpegBtn.addEventListener("click", function() {
   const aiPortraitChk = document.getElementById("aiPortraitChk");
-  const usePortrait = aiPortraitChk && aiPortraitChk.checked;
+  const usePortrait = (aiPortraitChk && aiPortraitChk.checked) || isPortraitView;
   
   // Open blank window immediately
   const win = window.open('', '_blank');
@@ -411,11 +411,11 @@ showJpegBtn.addEventListener("click", function() {
       // Draw the profile sheet background
       profileCtx.drawImage(profileSheet, 0, 0, profileCanvas.width, profileCanvas.height);
       
-      // Portrait frame position and size (adjusted higher and bigger)
+      // Portrait frame position and size (adjusted to fit between text)
       const portraitX = 730;
-      const portraitY = 650;
+      const portraitY = 640;
       const portraitWidth = 640;
-      const portraitHeight = 1080;
+      const portraitHeight = 1000;
       
       if (usePortrait) {
         // Load and draw portrait example
