@@ -359,22 +359,34 @@ document.getElementById("equipWeaponsChk").addEventListener("change", function(e
 
 document.getElementById("randomBtn").addEventListener("click", function() {
   let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledBodiesIdx.length === 0) return; // No enabled bodies
+  
   selected.body = enabledBodiesIdx[Math.floor(Math.random() * enabledBodiesIdx.length)];
 
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "pale";
   if (skin === "hr") {
     let filteredFaces = faceOptions.filter(f => f.skin === "med" && f.enabled);
-    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
-    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+    if (filteredFaces.length > 0) {
+      let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+      selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+    } else {
+      selected.face = pickFirstEnabledFace("med");
+    }
     selected.hair = 5;
   } else {
     let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
-    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
-    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+    if (filteredFaces.length > 0) {
+      let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+      selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+    } else {
+      selected.face = pickFirstEnabledFace(skin);
+    }
     
     let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
-    selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
+    if (enabledHairIdx.length > 0) {
+      selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
+    }
   }
 
   renderAllPickers();
@@ -451,17 +463,132 @@ showJpegBtn.addEventListener("click", function() {
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
 
-// --- Portrait view toggle on canvas touch/click ---
+// --- Portrait view toggle on canvas hold (1.2 seconds) ---
 const canvasEl = document.getElementById("charCanvas");
+let holdTimer = null;
+let touchMoved = false;
+let lastTapTime = 0;
+
 if (canvasEl) {
-  canvasEl.addEventListener("click", function() {
-    isPortraitView = !isPortraitView;
-    renderCharacter();
+  // Double-tap to reset zoom
+  canvasEl.addEventListener("dblclick", function() {
+    // Reset viewport zoom
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
+      setTimeout(() => {
+        viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
+      }, 10);
+    }
   });
+  
+  // Mouse events
+  canvasEl.addEventListener("mousedown", function(e) {
+    touchMoved = false;
+    holdTimer = setTimeout(function() {
+      if (!touchMoved) {
+        isPortraitView = !isPortraitView;
+        renderCharacter();
+      }
+    }, 1200);
+  });
+  
+  canvasEl.addEventListener("mousemove", function() {
+    touchMoved = true;
+  });
+  
+  canvasEl.addEventListener("mouseup", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("mouseleave", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  // Touch events
   canvasEl.addEventListener("touchstart", function(e) {
-    isPortraitView = !isPortraitView;
-    renderCharacter();
+    // Allow pinch-to-zoom (multi-touch)
+    if (e.touches.length > 1) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      return;
+    }
+    
+    const currentTime = Date.now();
+    const tapGap = currentTime - lastTapTime;
+    
+    // Double-tap detection (within 300ms)
+    if (tapGap < 300 && tapGap > 0) {
+      // Reset zoom on double-tap
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
+        setTimeout(() => {
+          viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
+        }, 10);
+      }
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      lastTapTime = 0;
+      return;
+    }
+    
+    lastTapTime = currentTime;
+    touchMoved = false;
+    holdTimer = setTimeout(function() {
+      if (!touchMoved) {
+        isPortraitView = !isPortraitView;
+        renderCharacter();
+      }
+    }, 1200);
     e.preventDefault();
+  });
+  
+  canvasEl.addEventListener("touchmove", function(e) {
+    // Allow pinch-to-zoom (multi-touch)
+    if (e.touches.length > 1) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      return;
+    }
+    
+    touchMoved = true;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("touchend", function(e) {
+    // Allow pinch-to-zoom
+    if (e.touches.length > 0) {
+      return;
+    }
+    
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    e.preventDefault();
+  });
+  
+  canvasEl.addEventListener("touchcancel", function(e) {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
   });
 }
 
