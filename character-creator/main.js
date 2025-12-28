@@ -77,8 +77,8 @@ const hairOptions = [
 ];
 
 let selected = {
-  body: 2,
-  face: 10,
+  body: 4,
+  face: 4,
   hair: 5,
   armor: false,
   helmet: false,
@@ -385,7 +385,7 @@ document.getElementById("randomBtn").addEventListener("click", function() {
 const showJpegBtn = document.getElementById("showJpegBtn");
 showJpegBtn.addEventListener("click", function() {
   const aiPortraitChk = document.getElementById("aiPortraitChk");
-  const usePortrait = aiPortraitChk && aiPortraitChk.checked;
+  const usePortrait = (aiPortraitChk && aiPortraitChk.checked) || isPortraitView;
   
   // Open blank window immediately
   const win = window.open('', '_blank');
@@ -451,17 +451,58 @@ showJpegBtn.addEventListener("click", function() {
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
 
-// --- Portrait view toggle on canvas touch/click ---
+// --- Portrait view toggle on canvas hold (1.2 seconds) ---
 const canvasEl = document.getElementById("charCanvas");
+let holdTimer = null;
+let holdStartTime = 0;
+
 if (canvasEl) {
-  canvasEl.addEventListener("click", function() {
-    isPortraitView = !isPortraitView;
-    renderCharacter();
+  // Mouse events
+  canvasEl.addEventListener("mousedown", function(e) {
+    holdStartTime = Date.now();
+    holdTimer = setTimeout(function() {
+      isPortraitView = !isPortraitView;
+      renderCharacter();
+    }, 1200);
   });
+  
+  canvasEl.addEventListener("mouseup", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("mouseleave", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  // Touch events
   canvasEl.addEventListener("touchstart", function(e) {
-    isPortraitView = !isPortraitView;
-    renderCharacter();
+    holdStartTime = Date.now();
+    holdTimer = setTimeout(function() {
+      isPortraitView = !isPortraitView;
+      renderCharacter();
+    }, 1200);
     e.preventDefault();
+  });
+  
+  canvasEl.addEventListener("touchend", function(e) {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    e.preventDefault();
+  });
+  
+  canvasEl.addEventListener("touchcancel", function(e) {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
   });
 }
 
