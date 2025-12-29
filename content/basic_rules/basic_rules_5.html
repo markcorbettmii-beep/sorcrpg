@@ -9,210 +9,131 @@
 </head>
 <body>
   <div class="page-wrapper">
-    <div class="header-container">
+    <header class="header-container">
       <h1>Slayers of Rings & Crowns</h1>
       <div class="sorc-letters">S O R C</div>
-    </div>
+    </header>
 
-    <!-- Container for login buttons (visitor login) -->
-    <div id="loginButtonsContainer"></div> 
+    <nav class="page-nav">
+      <a href="basic_rules_1.html">PG. 1</a>
+      <a href="basic_rules_2.html">PG. 2</a>
+      <a href="basic_rules_3.html">PG. 3</a>
+      <a href="basic_rules_4.html">PG. 4</a>
+      <a href="basic_rules_5.html" class="current-section">PG. 5</a>
+    </nav>
 
-    <!-- Existing page navigation -->
-    <div class="page-nav" style="margin: 20px 0;">
-      <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_5.html" class="current-section">PG. 5</a>&nbsp; &nbsp;
-    </div>
+    <main>
+      <section class="rules-section">
+        <h2>Talents</h2>
+        <p>
+          Talents are specialized actions acquired from Vocational Trees, used when characters face interactive challenges in the world. Talents are chosen at creation and improved as you level. Each Talent is tied to a Vocational Tree, and using it requires the right tools in your inventory. Successes grow Talent experience; failures can set you back. To use a Talent, roll the relevant dice, add modifiers, and compare to the challenge’s Difficulty Score.
+        </p>
+        <p>
+          <strong>Examples:</strong><br>
+          <em>The Scout:</em> Carving a branch to use as a lever (roll d20 + Artistry + Branches).<br>
+          <em>The Olympiad:</em> Hurdling a canyon (roll d20 + Agility + Hurdle).<br>
+          <em>The Hacker:</em> Decoding a lock (roll d20 + Intellect + Bypass).<br>
+          <em>The Thief:</em> Stealing a trinket (roll d20 + Agility + Escape Artist).
+        </p>
+        <p>
+          Talents require matching attribute scores to improve, and performances are always influenced by gear, environment, and situational bonuses or penalties.
+        </p>
+        <ul>
+          <li>Success: +2% progress; Natural 20: +5%; Natural 1: -2%.</li>
+        </ul>
 
-    <!-- Script to dynamically load login buttons -->
-    <script>
-      // Load login buttons once
-      fetch('/login-butts.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('loginButtonsContainer').innerHTML = data;
+        <h3>Talent Modifiers</h3>
+        <ul>
+          <li><strong>Bonuses:</strong> Good tools/environment (+1 to +3), enchanted gear (+2+), story/GM bonus (+1 to +5).</li>
+          <li><strong>Penalties:</strong> Hazards (-1 to -3), poor tools (-2+), fatigue or status (-1 to -4).</li>
+        </ul>
+        <p>
+          Modifiers stack up to ±5 for balance. Example: Sense Danger at night (+2), heavy rain (-2) = net +0.
+        </p>
 
-          // Role display update
-          updateRoleDisplay();
+        <h3>Movement & Stamina</h3>
+        <p>
+          Movement is tactical and costs stamina (SP). Each combat turn is 6 seconds; each second of activity uses 1 SP. Stamina regenerates 1 SP per 3 seconds of rest in combat, 1 SP per minute out of combat. When SP falls below 25%, movement speed drops by 25% and SP costs are 50% higher. At 0 SP, you’re Exhausted and can’t act until you regain at least 25% SP.
+        </p>
+        <p>
+          Endurance is your total number of natural turns per day. Base speed is by race size: Goliath 40 ft, Standard 30 ft, Small 25 ft.
+        </p>
 
-          // Hide login buttons if already logged in
-          var isGM = localStorage.getItem('isGM') === 'true';
-          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+        <h3>Stamina Cost Table</h3>
+        <table>
+          <tr><th>Movement Type</th><th>SP Cost per 5 ft</th></tr>
+          <tr><td>Flat Walking</td><td>1 SP</td></tr>
+          <tr><td>Flat Running/Dashing</td><td>2 SP</td></tr>
+          <tr><td>Rough Terrain Walking</td><td>2 SP</td></tr>
+          <tr><td>Rough Terrain Dashing</td><td>3 SP</td></tr>
+          <tr><td>Moderate Slope Uphill</td><td>2 SP</td></tr>
+          <tr><td>Steep Slope Uphill</td><td>3 SP</td></tr>
+          <tr><td>Controlled Downhill</td><td>1 SP</td></tr>
+          <tr><td>Vertical Climbing</td><td>4 SP*</td></tr>
+          <tr><td>Aquatic Movement (Swimming)</td><td>3 SP</td></tr>
+        </table>
+        <p><small>*May incur additional penalties from failed checks or overload.</small></p>
+        <p>
+          Silent/stealth movement requires a successful talent check and may further adjust SP costs.
+        </p>
 
-          if (isGM) {
-            var gmBtn = document.querySelector('.gm_button');
-            if (gmBtn) gmBtn.style.display = 'none';
-          }
-          if (isPlayer) {
-            var playerBtn = document.querySelector('.plyr_button');
-            if (playerBtn) playerBtn.style.display = 'none';
-          }
-        });
+        <h3>Initiative</h3>
+        <p>
+          Initiative order is determined by: <br>
+          <strong>Formula:</strong> (2 × AGI Score) + STR Score + (Base Speed × Modifier)<br>
+          Modifier is 1 by default, adjusted for buffs/debuffs (ex: 1.2 for a 20% speed buff).<br>
+          Attributes, traits, and GM calls may further influence initiative.
+        </p>
 
-      function updateRoleDisplay() {
-        const roleSpan = document.getElementById('roleDisplay');
-        const isGM = localStorage.getItem('isGM') === 'true';
-        const isPlayer = localStorage.getItem('isPlayer') === 'true';
+        <h3>Combo Attribute Checks</h3>
+        <p>
+          Some challenges use multiple attributes (ex: climbing rope = STR + ART, fast climb also uses AGI). Success may lower SP cost, failure increases it or causes setbacks.
+        </p>
 
-        if (isGM) {
-          roleSpan.textContent = 'Game Master (GM)';
-        } else if (isPlayer) {
-          roleSpan.textContent = 'Player';
-        } else {
-          roleSpan.textContent = 'Visitor / Not Logged In';
-        }
-      }
+        <h3>Travel & The Wayfarer System</h3>
+        <p>
+          Wayfarers can be upgraded through talents, navigation, and exploration milestones. Taverns and hearths offer rest, minigames, and teleport options. As you develop your Wayfarer, you’ll unlock new travel abilities and teleportation features, including linking to specific hearths for fast travel.
+        </p>
 
-      document.getElementById('logoutBtn').onclick = () => {
-        localStorage.removeItem('isGM');
-        localStorage.removeItem('isPlayer');
-        alert('Logged out');
-        location.reload();
-      };
-    </script>
+        <h3>Key Concepts Recap</h3>
+        <ul>
+          <li>Movement types have clear SP costs; STR/AGI and load affect speed and stamina use.</li>
+          <li>Low stamina reduces speed and increases costs; careful management is key.</li>
+          <li>Survival Traits can help mitigate movement costs and penalties.</li>
+        </ul>
 
-    <!-- Rules Sections Navigation (dynamic, highlights current page) -->
-    <div id="sections"></div>
-    <script>
-      fetch('/sections-basics.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('sections').innerHTML = data;
-        });
-    </script>
+        <h3>Terms & Definitions</h3>
+        <ul>
+          <li><b>Player:</b> The participant controlling a character.</li>
+          <li><b>Character:</b> The persona you play in SorC.</li>
+          <li><b>Game Master (GM):</b> Storyteller and rule adjudicator.</li>
+          <li><b>Host:</b> NPCs, monsters, and entities in the world.</li>
+          <li><b>Race/Species:</b> Biological and cultural groups.</li>
+          <li><b>Talents/Skills/Abilities/Traits:</b> Personal strengths and learned actions.</li>
+          <li><b>Vitality:</b> Life, Mana, Stamina, Endurance.</li>
+          <li><b>Gear & Items:</b> Equipment and consumables.</li>
+          <li><b>Factions, Reputation, Titles, Achievements:</b> Social systems and rewards.</li>
+        </ul>
+        <ul>
+          <li><b>Common Abbreviations:</b> XP, HP, AP, SP, DPS, AoE, CC, DoT, HoT, PvE, PvP, PK, AFK, RNG, OOC, LOS, etc.</li>
+        </ul>
+      </section>
+    </main>
 
-    <!-- PAGE 5 CONTENT -->
-    <div>
-      <h3>Talents</h3>
-      <p>
-        Talents are specialized actions acquired from Vocational Trees, used when characters face interactive challenges in the world. Talents are chosen at creation and improved as you level. Each Talent is tied to a Vocational Tree, and using it requires the right tools in your inventory. Successes grow Talent experience; failures can set you back. To use a Talent, roll the relevant dice, add modifiers, and compare to the challenge’s Difficulty Score.
-      </p>
-      <p>
-        <strong>Examples:</strong><br>
-        <em>The Scout:</em> Carving a branch to use as a lever (roll d20 + Artistry + Branches).<br>
-        <em>The Olympiad:</em> Hurdling a canyon (roll d20 + Agility + Hurdle).<br>
-        <em>The Hacker:</em> Decoding a lock (roll d20 + Intellect + Bypass).<br>
-        <em>The Thief:</em> Stealing a trinket (roll d20 + Agility + Escape Artist).
-      </p>
-      <p>
-        Talents require matching attribute scores to improve, and performances are always influenced by gear, environment, and situational bonuses or penalties.
-      </p>
-      <ul>
-        <li>Success: +2% progress; Natural 20: +5%; Natural 1: -2%.</li>
-      </ul>
+    <nav class="page-nav bottom-nav">
+      <a href="basic_rules_1.html">PG. 1</a>
+      <a href="basic_rules_2.html">PG. 2</a>
+      <a href="basic_rules_3.html">PG. 3</a>
+      <a href="basic_rules_4.html">PG. 4</a>
+      <a href="basic_rules_5.html" class="current-section">PG. 5</a>
+    </nav>
 
-      <h3>Talent Modifiers</h3>
-      <ul>
-        <li><strong>Bonuses:</strong> Good tools/environment (+1 to +3), enchanted gear (+2+), story/GM bonus (+1 to +5).</li>
-        <li><strong>Penalties:</strong> Hazards (-1 to -3), poor tools (-2+), fatigue or status (-1 to -4).</li>
-      </ul>
-      <p>
-        Modifiers stack up to ±5 for balance. Example: Sense Danger at night (+2), heavy rain (-2) = net +0.
-      </p>
-
-      <h3>Movement & Stamina</h3>
-      <p>
-        Movement is tactical and costs stamina (SP). Each combat turn is 6 seconds; each second of activity uses 1 SP. Stamina regenerates 1 SP per 3 seconds of rest in combat, 1 SP per minute out of combat. When SP falls below 25%, movement speed drops by 25% and SP costs are 50% higher. At 0 SP, you’re Exhausted and can’t act until you regain at least 25% SP.
-      </p>
-      <p>
-        Endurance is your total number of natural turns per day. Base speed is by race size: Goliath 40 ft, Standard 30 ft, Small 25 ft.
-      </p>
-
-      <h3>Stamina Cost Table</h3>
-      <table>
-        <tr><th>Movement Type</th><th>SP Cost per 5 ft</th></tr>
-        <tr><td>Flat Walking</td><td>1 SP</td></tr>
-        <tr><td>Flat Running/Dashing</td><td>2 SP</td></tr>
-        <tr><td>Rough Terrain Walking</td><td>2 SP</td></tr>
-        <tr><td>Rough Terrain Dashing</td><td>3 SP</td></tr>
-        <tr><td>Moderate Slope Uphill</td><td>2 SP</td></tr>
-        <tr><td>Steep Slope Uphill</td><td>3 SP</td></tr>
-        <tr><td>Controlled Downhill</td><td>1 SP</td></tr>
-        <tr><td>Vertical Climbing</td><td>4 SP*</td></tr>
-        <tr><td>Aquatic Movement (Swimming)</td><td>3 SP</td></tr>
-      </table>
-      <p><small>*May incur additional penalties from failed checks or overload.</small></p>
-      <p>
-        Silent/stealth movement requires a successful talent check and may further adjust SP costs.
-      </p>
-
-      <h3>Initiative</h3>
-      <p>
-        Initiative order is determined by: <br>
-        <strong>Formula:</strong> (2 × AGI Score) + STR Score + (Base Speed × Modifier)<br>
-        Modifier is 1 by default, adjusted for buffs/debuffs (ex: 1.2 for a 20% speed buff).<br>
-        Attributes, traits, and GM calls may further influence initiative.
-      </p>
-
-      <h3>Combo Attribute Checks</h3>
-      <p>
-        Some challenges use multiple attributes (ex: climbing rope = STR + ART, fast climb also uses AGI). Success may lower SP cost, failure increases it or causes setbacks.
-      </p>
-
-      <h3>Travel & The Wayfarer System</h3>
-      <p>
-        Wayfarers can be upgraded through talents, navigation, and exploration milestones. Taverns and hearths offer rest, minigames, and teleport options. As you develop your Wayfarer, you’ll unlock new travel abilities and teleportation features, including linking to specific hearths for fast travel.
-      </p>
-
-      <h3>Key Concepts Recap</h3>
-      <ul>
-        <li>Movement types have clear SP costs; STR/AGI and load affect speed and stamina use.</li>
-        <li>Low stamina reduces speed and increases costs; careful management is key.</li>
-        <li>Survival Traits can help mitigate movement costs and penalties.</li>
-      </ul>
-
-      <h3>Terms & Definitions</h3>
-      <ul>
-        <li><b>Player:</b> The participant controlling a character.</li>
-        <li><b>Character:</b> The persona you play in SorC.</li>
-        <li><b>Game Master (GM):</b> Storyteller and rule adjudicator.</li>
-        <li><b>Host:</b> NPCs, monsters, and entities in the world.</li>
-        <li><b>Race/Species:</b> Biological and cultural groups.</li>
-        <li><b>Talents/Skills/Abilities/Traits:</b> Personal strengths and learned actions.</li>
-        <li><b>Vitality:</b> Life, Mana, Stamina, Endurance.</li>
-        <li><b>Gear & Items:</b> Equipment and consumables.</li>
-        <li><b>Factions, Reputation, Titles, Achievements:</b> Social systems and rewards.</li>
-      </ul>
-      <ul>
-        <li><b>Common Abbreviations:</b> XP, HP, AP, SP, DPS, AoE, CC, DoT, HoT, PvE, PvP, PK, AFK, RNG, OOC, LOS, etc.</li>
-      </ul>
-    </div>
-
-    <div class="page-nav" style="margin: 20px 0;">
-      <a href="/content/basic_rules/basic_rules_1.html">PG. 1&nbsp; | &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_5.html" class="current-section">PG. 5</a>&nbsp; &nbsp;
-    </div>
-      
-    <div id="main-butts"></div>
-    <script>
-      fetch('/main-butts.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('main-butts').innerHTML = data;
-
-          // After inserting the main-butts, select the container and add 'button' class to links
-          const container = document.querySelector('.buttons-container');
-          if (container) {
-            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
-          }
-        });
-    </script>
-
-    <!-- FOOTER: Load footer after buttons to be below -->
-    <div id="footer"></div>
-    <script>
-      fetch('/footer.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('footer').innerHTML = data;
-        });
-    </script>
-  
-  </div> <!-- close page-wrapper -->
+    <footer>
+      <div class="container">
+        <span>Slayers of Rings & Crowns © 2026 Ogre Adventurer. All Rights Reserved. ESRB 18+.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="../../main.js"></script>
 </body>
 </html>
