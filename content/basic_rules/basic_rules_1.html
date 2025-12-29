@@ -9,155 +9,66 @@
 </head>
 <body>
   <div class="page-wrapper">
-    <div class="header-container">
+    <header class="header-container">
       <h1>Slayers of Rings & Crowns</h1>
       <div class="sorc-letters">S O R C</div>
-    </div>
+    </header>
 
-    <!-- Container for login buttons (visitor login) -->
-    <div id="loginButtonsContainer"></div> 
+    <nav class="page-nav">
+      <a href="basic_rules_1.html" class="current-section">PG. 1</a>
+      <a href="basic_rules_2.html">PG. 2</a>
+      <a href="basic_rules_3.html">PG. 3</a>
+      <a href="basic_rules_4.html">PG. 4</a>
+      <a href="basic_rules_5.html">PG. 5</a>
+    </nav>
 
-    <!-- Existing page navigation -->
-    <div class="page-nav" style="margin: 20px 0;">
-      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_5.html">PG. 5</a>&nbsp; &nbsp;
-      
-    </div>
+    <main>
+      <section class="rules-section">
+        <h2>Introduction</h2>
+        <p>In SorC, players create and develop characters by assigning dice rolls to attributes, unlocking skills, and managing resources like health, magic, and stamina. Combat involves tactical attacks, resistances, and limb-specific targeting, while movement depends on stamina and terrain.</p>
+        <p>Note: GMs are provided with comprehensive details on each subject below, enabling them to seamlessly add relevant information for players to inquire about.</p>
 
-    <!-- Script to dynamically load login buttons -->
-    <script>
-      // Load login buttons once
-      fetch('/login-butts.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('loginButtonsContainer').innerHTML = data;
+        <h3>To the GM</h3>
+        <p>
+          GMs are required to take a SorC Assessment, which upon passing, grants their account GM references. Passing the GM Assessment also updates their account to a GM profile. For example, a player display name in this manner:
+          <br />
+          <span class="player-username" data-uid="player5678">
+            <a href="#">Player Surname</a><span class="pc-tag">PC</span>
+          </span>
+          <br />
+          Upon passing the GM assessment, GMs will be given the following tag:
+          <br />
+          <span class="gm-username" data-uid="gm1234">
+            <a href="#">Game Master</a><span class="gm-tag">GM</span>
+          </span>
+          <br />
+          Surnames are optional and can be included as a second name. Each user is uniquely identified by a hidden id (shown here as <code>data-uid</code>) for online features, so display names may be the same, but user IDs will always remain unique.
+        </p>
 
-          // Role display update
-          updateRoleDisplay();
+        <p>
+          Joining lobbies will also require players and GMs to take assessments before joining, especially when substituting in or out of ongoing campaigns. These campaigns are often led remotely by GMs running their own campaigns with friends. Whatever happens in these campaigns can change their dynamics forever, until the game ends and a new campaign begins.
+        </p>
 
-          // Hide login buttons if already logged in
-          var isGM = localStorage.getItem('isGM') === 'true';
-          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+        <p>
+          These elements add replayability, ongoing adventuring, and more - especially when friends can't make it over for a night, or strangers want to start their own campaigns in these lobbies. Lobby entries include: Beginner, Intermediate, and Expert, each requiring their respective assessments to ensure only knowledgeable gamers are present.
+        </p>
+      </section>
+    </main>
 
-          if (isGM) {
-            var gmBtn = document.querySelector('.gm_button');
-            if (gmBtn) gmBtn.style.display = 'none';
-          }
-          if (isPlayer) {
-            var playerBtn = document.querySelector('.plyr_button');
-            if (playerBtn) playerBtn.style.display = 'none';
-          }
-        });
+    <nav class="page-nav bottom-nav">
+      <a href="basic_rules_1.html" class="current-section">PG. 1</a>
+      <a href="basic_rules_2.html">PG. 2</a>
+      <a href="basic_rules_3.html">PG. 3</a>
+      <a href="basic_rules_4.html">PG. 4</a>
+      <a href="basic_rules_5.html">PG. 5</a>
+    </nav>
 
-      // Function to update role display
-      function updateRoleDisplay() {
-        const roleSpan = document.getElementById('roleDisplay');
-        const isGM = localStorage.getItem('isGM') === 'true';
-        const isPlayer = localStorage.getItem('isPlayer') === 'true';
-
-        if (isGM) {
-          roleSpan.textContent = 'Game Master (GM)';
-        } else if (isPlayer) {
-          roleSpan.textContent = 'Player';
-        } else {
-          roleSpan.textContent = 'Visitor / Not Logged In';
-        }
-      }
-
-      // Logout button handler
-      document.getElementById('logoutBtn').onclick = () => {
-        localStorage.removeItem('isGM');
-        localStorage.removeItem('isPlayer');
-        alert('Logged out');
-        location.reload();
-      };
-    </script>
-
-    <!-- Rules Sections Navigation (dynamic, highlights current page) -->
-    <div id="sections"></div>
-    <script>
-      fetch('/sections-basics.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('sections').innerHTML = data;
-        });
-    </script>
-
-<!-- Page 1 -->
-<h3>Introduction</h3>
-<p>In SorC, players create and develop characters by assigning dice rolls to attributes, unlocking skills, and managing resources like health, magic, and stamina. Combat involves tactical attacks, resistances, and limb-specific targeting, while movement depends on stamina and terrain.</p>
-<p>Note: GMs are provided with comprehensive details on each subject below, enabling them to seamlessly add relevant information for players to inquire about.</p>
-
-
-    <!-- GM description -->
-    <h3>To the GM</h3>
-    <p>
-      GMs are required to take a SorC Assessment, which upon passing, grants their account GM references. Passing the GM Assessment also updates their account to a GM profile. For example, a player display name in this manner:
-      <br />
-      <span class="player-username" data-uid="player5678">
-        <a href="#">Player Surname</a><span class="pc-tag">PC</span>
-      </span>
-      <br />
-      Upon passing the GM assessment, GMs will be given the following tag:
-      <br />
-      <span class="gm-username" data-uid="gm1234">
-        <a href="#">Game Master</a><span class="gm-tag">GM</span>
-      </span>
-      <br />
-      Surnames are optional and can be included as a second name. Each user is uniquely identified by a hidden id (shown here as <code>data-uid</code>) for online features, so display names may be the same, but user IDs will always remain unique.
-    </p>
-
-    <p>
-      Joining lobbies will also require players and GMs to take assessments before joining, especially when substituting in or out of ongoing campaigns. These campaigns are often led remotely by GMs running their own campaigns with friends. Whatever happens in these campaigns can change their dynamics forever, until the game ends and a new campaign begins.
-    </p>
-
-    <p>
-      These elements add replayability, ongoing adventuring, and more - especially when friends can't make it over for a night, or strangers want to start their own campaigns in these lobbies. Lobby entries include: Beginner, Intermediate, and Expert, each requiring their respective assessments to ensure only knowledgeable gamers are present.
-    </p>
-    
-    <!-- Existing page navigation -->
-    <div class="page-nav" style="margin: 20px 0;">
-      <a href="/content/basic_rules/basic_rules_1.html" class="current-section">PG. 1&nbsp; | &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_2.html">PG. 2 &nbsp;| &nbsp;</a>
-      <a href="/content/basic_rules/basic_rules_3.html">PG. 3</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_4.html">PG. 4</a>&nbsp;|&nbsp;
-      <a href="/content/basic_rules/basic_rules_5.html">PG. 5</a>&nbsp; &nbsp;
-      
-    </div>
-      
-    <div id="main-butts"></div>
-    <script>
-      fetch('/main-butts.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('main-butts').innerHTML = data;
-
-          // After inserting the main-butts, select the container and add 'button' class to links
-          const container = document.querySelector('.buttons-container');
-          if (container) {
-            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
-          }
-        });
-    </script>
-
-  <!-- FOOTER: Load footer after buttons to be below -->
-  <div id="footer"></div>
-  <script>
-    fetch('/footer.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('footer').innerHTML = data;
-      });
-  </script>
-  
-  </div> <!-- close page-wrapper -->
-
-
+    <footer>
+      <div class="container">
+        <span>Slayers of Rings & Crowns © 2026 Ogre Adventurer. All Rights Reserved. ESRB 18+.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="../../main.js"></script>
 </body>
 </html>
-
-
-
