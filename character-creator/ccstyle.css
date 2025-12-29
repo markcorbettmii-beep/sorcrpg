@@ -33,8 +33,9 @@ body {
     color: #d0021b;
     letter-spacing: 0.35em;
     font-weight: bold;
-    font-size: 3rem;
+    font-size: 2.1rem !important;
     margin-bottom: 0.15em;
+    margin-top: 0.2em;
     text-shadow: 1px 2px 8px #000;
 }
 .page-nav {
@@ -43,6 +44,8 @@ body {
     gap: 1.5rem;
     margin: 1.4rem 0 1.4rem 0;
     font-weight: bold;
+    background: none;
+    position: relative;
 }
 .page-nav a {
     color: #d0021b;
@@ -50,18 +53,68 @@ body {
     padding: 0.35em 0.8em;
     border-radius: 6px;
     transition: background 0.15s, color 0.15s;
+    flex: 0 0 auto;
+    display: inline-block;
+    min-width: 64px;
+    text-align: center;
+    font-size: 1em;
+    margin: 0 2px;
 }
 .page-nav a.current-section, .page-nav a:hover, .page-nav a:focus {
     background: #d0021b;
     color: #fff;
 }
+@media (max-width: 600px) {
+    .page-nav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        padding: 0.5em 0;
+        margin: 1em auto 2em auto;
+        background: #1a060c;
+        border-radius: 100px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.28);
+        min-height: 48px;
+        width: 96%;
+        max-width: 440px;
+    }
+    .page-nav::before,
+    .page-nav::after {
+        content: "";
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 28px;
+        pointer-events: none;
+        z-index: 2;
+    }
+    .page-nav::before {
+        left: 0;
+        background: linear-gradient(to right, #1a060c 80%, transparent);
+        border-top-left-radius: 100px;
+        border-bottom-left-radius: 100px;
+    }
+    .page-nav::after {
+        right: 0;
+        background: linear-gradient(to left, #1a060c 80%, transparent);
+        border-top-right-radius: 100px;
+        border-bottom-right-radius: 100px;
+    }
+    .page-nav::-webkit-scrollbar {
+        height: 6px;
+    }
+    .page-nav::-webkit-scrollbar-thumb {
+        background: #d0021b;
+        border-radius: 4px;
+    }
+}
 
-/* Card-style images with arrow overlays */
+/* --- CARD IMAGES, LARGER, NOT CROPPED --- */
 .image-card {
     position: relative;
     width: 100%;
-    max-width: 340px;
-    margin: 28px auto 22px auto;
+    max-width: 540px;
+    margin: 32px auto 28px auto;
     border-radius: 8px;
     box-shadow: 0 1px 6px #222;
     background: #1a060c;
@@ -73,8 +126,9 @@ body {
 }
 .image-card img {
     width: 100%;
-    height: 160px;
-    object-fit: cover;
+    height: 340px;
+    object-fit: contain;        /* <--- CHANGE: show full image, no crop */
+    object-position: center;    /* <--- center image in box */
     border-radius: 8px;
     display: block;
     background: #222;
@@ -100,7 +154,10 @@ body {
 }
 @media (max-width: 600px) {
     .image-card img {
-        height: 100px;
+        height: 220px;
+    }
+    .image-card {
+        max-width: 98vw;
     }
     .arrow svg {
         width: 28px;
@@ -125,6 +182,10 @@ h1, h2, h3 {
     color: #d0021b;
     margin-top: 2em;
     margin-bottom: 0.6em;
+}
+h2 {
+    font-size: 2rem !important;   /* <--- header smaller */
+    margin-bottom: 0.3em;
 }
 hr {
     border: none;
