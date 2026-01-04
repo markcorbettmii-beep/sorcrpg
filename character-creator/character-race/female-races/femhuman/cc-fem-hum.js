@@ -5,7 +5,7 @@
  * All rights reserved.
  */
 
-const BASE = "../../../../assets/";
+const BASE = "../../../assets/";
 const PORTRAIT_EXAMPLE = `${BASE}portrait-examp-bow-hr.png`;
 
 // Image paths for special layers
