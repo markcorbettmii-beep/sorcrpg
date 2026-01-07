@@ -162,6 +162,10 @@ function renderFacePickers() {
   let skin = (body && body.skin) ? body.skin : "med";
   let filtered = faceOptions.filter(f => f.skin === skin);
   
+  console.log("Rendering face pickers for skin:", skin);
+  console.log("Filtered faces:", filtered.length);
+  console.log("Currently selected face index:", selected.face);
+  
   const rowDiv = document.createElement("div");
   rowDiv.className = "thumb-list";
   
@@ -185,6 +189,7 @@ function renderFacePickers() {
     
     img.onclick = function() {
       if (face.enabled) {
+        console.log("Face clicked! Index:", globalIdx, "Skin:", face.skin);
         selected.face = globalIdx;
         renderFacePickers();
         renderCharacter();
@@ -345,9 +350,14 @@ function renderCharacter(callback) {
   // 5. Face
   if (selected.face !== -1 && faceOptions[selected.face]) {
     let face = faceOptions[selected.face];
+    console.log("Rendering face:", selected.face, "Src:", face.src);
     if (face && face.src && face.enabled !== false) {
       layers.push({ src: face.src, layer: "face" });
+    } else {
+      console.warn("Face not added - missing src or disabled");
     }
+  } else {
+    console.warn("No face selected or face not found");
   }
   
   // 6. Face Paint (if selected and not "None")
@@ -621,6 +631,6 @@ if (canvasEl) {
   });
 }
 
-// Initial setup
+// Initial setup - pickers work immediately in beta
 renderAllPickers();
 resizeCanvasAndRender();
