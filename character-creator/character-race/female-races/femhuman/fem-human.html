@@ -12,10 +12,276 @@
   <meta name="viewport" content="width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3">
   <link rel="stylesheet" href="../../../../style.css">
   <link rel="stylesheet" href="../../../ccstyle.css">
+  <style>
+    /* Character Creator Specific Styles */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #d0021b;
+      margin-bottom: 0.5rem;
+    }
+    
+    .coming-soon {
+      text-align: center;
+      color: #DED463;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+    
+    .main-layout {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .center-panel {
+      background: #121212;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      border: 1px solid #d0021b;
+    }
+    
+    /* Form Styles */
+    #physiqueForm {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #d0021b;
+    }
+    
+    #physiqueForm label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #e0cfc0;
+    }
+    
+    #physiqueInput {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: #0a0a0a;
+      border: 1px solid #d0021b;
+      color: #e0cfc0;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    button {
+      background: #d0021b;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 1rem;
+    }
+    
+    button:hover {
+      background: #a50013;
+    }
+    
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    
+    /* Canvas Container - CENTERED */
+    #characterCanvasContainer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1.5rem auto;
+      max-width: 640px;
+    }
+    
+    #canvasInstruction {
+      font-size: 1em;
+      color: #DED463;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    #charCanvas {
+      display: block;
+      margin: 0 auto;
+      border: 2px solid #d0021b;
+      border-radius: 8px;
+      background: #0a0a0a;
+      cursor: pointer;
+    }
+    
+    /* Character Actions */
+    #character-actions {
+      margin: 2rem 0 1rem 0;
+      text-align: center;
+    }
+    
+    #randomBtn {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    #showJpegBtn {
+      margin-bottom: 0;
+    }
+    
+    /* Equipment Controls */
+    #equipment-controls, #fellowship-controls {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #d0021b;
+    }
+    
+    #equipment-controls label,
+    #fellowship-controls label {
+      display: block;
+      margin: 0.5rem 0;
+      color: #e0cfc0;
+      cursor: pointer;
+    }
+    
+    #equipment-controls input[type="checkbox"],
+    #fellowship-controls input[type="checkbox"] {
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+    
+    /* Feature Rows */
+    .feature-rows {
+      margin: 2rem 0;
+    }
+    
+    .feature-row {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #d0021b;
+    }
+    
+    .feature-row h2 {
+      color: #d0021b;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+    
+    /* Thumbnail Styles */
+    .thumb-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border: 3px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0a0a0a;
+    }
+    
+    .thumb:hover {
+      border-color: #d0021b;
+      transform: scale(1.05);
+    }
+    
+    .thumb.selected {
+      border-color: #DED463;
+      box-shadow: 0 0 10px #DED463;
+    }
+    
+    .thumb.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      filter: grayscale(100%);
+    }
+    
+    .thumb.disabled:hover {
+      transform: none;
+      border-color: transparent;
+    }
+    
+    .thumb.placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #333;
+      color: #888;
+      font-size: 0.7rem;
+      text-align: center;
+      padding: 4px;
+      line-height: 1.2;
+    }
+    
+    .hr-label {
+      font-size: 0.8rem;
+      color: #DED463;
+      font-weight: bold;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    
+    /* Body Type Explanation */
+    .body-type-explanation {
+      margin: 2rem 0;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #d0021b;
+    }
+    
+    .body-type-explanation h2 {
+      color: #d0021b;
+      margin-top: 0;
+    }
+    
+    .body-type-explanation ul {
+      color: #e0cfc0;
+      line-height: 1.8;
+    }
+    
+    /* Responsive */
+    @media (max-width: 600px) {
+      .center-panel {
+        padding: 1rem;
+      }
+      
+      .thumb {
+        width: 60px;
+        height: 60px;
+      }
+      
+      button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <h1>SorC Female Human Character Creator</h1>
   <p class="coming-soon">Armaments and Gear coming soon…</p>
+  
   <div class="main-layout">
     <div class="center-panel">
       <form id="physiqueForm">
@@ -24,34 +290,28 @@
         <button type="submit">Submit Physique</button>
         <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (1 or higher).</span>
       </form>
-      <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:green;font-weight:bold;">
+      
+      <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:#DED463;font-weight:bold;">
         Physique accepted! You can now create your character. Monitored by GM
       </div>
-      <div id="characterCanvasContainer" style="position:relative;">
-        <div id="canvasInstruction" style="font-size:1em; color:#DED463; margin-bottom:8px; text-align:center;">
+      
+      <div id="characterCanvasContainer">
+        <div id="canvasInstruction">
           Press n hold image to flip to portrait example
         </div>
         <canvas id="charCanvas" width="640" height="1280"></canvas>
-        <div id="previewOverlay" style="display:none;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:10;"></div>
       </div>
-      <!-- JPEG preview and save instruction elements are intentionally kept for your reference, but are not used anymore -->
-      <img id="jpegPreview" style="display:none;max-width:100%;border:1px solid #ccc;margin:1em 0;">
-      <p id="saveInstr" style="display:none;">Long-press or right-click the image above to save your character as a JPEG.</p>
 
-      <div id="character-actions" style="margin:2em 0 1em 0;">
-        <button id="randomBtn" style="display:block; width:100%; margin-bottom:10px;">Random Character</button>
-        <div style="margin-bottom: 0.5em; font-weight: bold;">(random character elements)</div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-          <button id="showJpegBtn" style="margin-bottom:0;">Save as JPEG</button>
-          <span style="font-size: 0.98em;">for character profile</span>
+      <div id="character-actions">
+        <button id="randomBtn">Random Character</button>
+        <div style="margin-bottom: 0.5em; font-weight: bold; color: #e0cfc0;">(random character elements)</div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; justify-content: center;">
+          <button id="showJpegBtn">Save as JPEG</button>
+          <span style="font-size: 0.98em; color: #e0cfc0;">for character profile</span>
         </div>
       </div>
 
-      <div id="jpegButtons" style="display:none;">
-        <button id="backBtn">Back to Customize</button>
-      </div>
-
-      <div id="equipment-controls" style="margin:1em 0;">
+      <div id="equipment-controls">
         <label>
           <input type="checkbox" id="equipWeaponsChk"> Show Weapons
         </label>
@@ -70,7 +330,8 @@
           Fellowship displays coming soon
         </div>
       </div>
-      <div id="fellowship-controls" style="margin:1em 0;">
+      
+      <div id="fellowship-controls">
         <div style="display: flex; align-items: center; gap: 1.5em;">
           <label style="margin-bottom:0;">
             <input type="checkbox" id="equipFellowshipsChk" disabled> Fellowships
@@ -95,34 +356,40 @@
           Default elements are currently shown in Black and White until you own these elements (they're in color here for beta purposes).
         </div>
       </div>
+      
       <div class="feature-rows">
         <div class="feature-row" id="body-row">
-          <h2>Body Type <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
+          <h2>Body Type <span style="font-size:0.9em;color:#888;">(muscular only)</span></h2>
           <div id="body-pickers"></div>
         </div>
         <div class="feature-row" id="face-row">
           <h2>Face <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
           <div id="face-pickers"></div>
         </div>
+        <div class="feature-row" id="facepaint-row">
+          <h2>Face Paint <span style="font-size:0.9em;color:#888;">(optional)</span></h2>
+          <div id="facepaint-pickers"></div>
+        </div>
         <div class="feature-row" id="hair-row">
           <h2>Hair <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
           <div id="hair-pickers"></div>
         </div>
       </div>
+      
       <section class="body-type-explanation">
-        <h2>Body Type Selection (Female Human)</h2>
+        <h2>Body Type Selection (Female Human - Muscular)</h2>
         <ul>
-          <li><strong>Physique ≤ 1:</strong> Thin</li>
-          <li><strong>Physique 2 thru 4:</strong> Lean</li>
-          <li><strong>Physique 5 thru 20:</strong> Muscular</li>
-          <li><strong>Physique 21 and beyond:</strong> Massive</li>
+          <li><strong>Physique 5 thru 20:</strong> Muscular (available)</li>
+          <li><strong>Other body types:</strong> Coming soon</li>
         </ul>
       </section>
+      
       <div class="coming-soon">
         Armaments and Gear coming soon...
       </div>
     </div>
   </div>
+  
   <script src="cc-fem-hum.js"></script>
 </body>
 </html>
