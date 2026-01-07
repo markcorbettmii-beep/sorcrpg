@@ -40,7 +40,9 @@ const faceOptions = [
   { src: `${BASE}femface5-med-blu-mkp.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
   // Pale skin faces
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true }
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true },
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
 const facePaintOptions = [
@@ -432,11 +434,8 @@ document.getElementById("randomBtn").addEventListener("click", function() {
     selected.face = pickFirstEnabledFace(skin);
   }
   
-  // Random face paint (including None)
-  let enabledPaintIdx = facePaintOptions.map((p, idx) => p.enabled ? idx : -1).filter(idx => idx !== -1);
-  if (enabledPaintIdx.length > 0) {
-    selected.facePaint = enabledPaintIdx[Math.floor(Math.random() * enabledPaintIdx.length)];
-  }
+  // Face paint is NOT randomized - keep current selection or default to None (0)
+  // selected.facePaint stays as is
   
   let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
   if (enabledHairIdx.length > 0) {
