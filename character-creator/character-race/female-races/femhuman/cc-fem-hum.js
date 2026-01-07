@@ -90,24 +90,24 @@ function pickFirstEnabledFace(skin) {
 // Create placeholder thumbnail with text
 function createPlaceholder(text) {
   const canvas = document.createElement('canvas');
-  canvas.width = 80;
-  canvas.height = 80;
+  canvas.width = 100;
+  canvas.height = 100;
   const ctx = canvas.getContext('2d');
   
   ctx.fillStyle = '#333';
-  ctx.fillRect(0, 0, 80, 80);
+  ctx.fillRect(0, 0, 100, 100);
   
   ctx.fillStyle = '#888';
-  ctx.font = 'bold 10px Arial';
+  ctx.font = 'bold 12px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   
   const words = text.split(' ');
-  const lineHeight = 12;
-  const startY = 40 - ((words.length - 1) * lineHeight / 2);
+  const lineHeight = 14;
+  const startY = 50 - ((words.length - 1) * lineHeight / 2);
   
   words.forEach((word, i) => {
-    ctx.fillText(word, 40, startY + (i * lineHeight));
+    ctx.fillText(word, 50, startY + (i * lineHeight));
   });
   
   return canvas.toDataURL();
@@ -162,6 +162,9 @@ function renderFacePickers() {
   let skin = (body && body.skin) ? body.skin : "med";
   let filtered = faceOptions.filter(f => f.skin === skin);
   
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
+  
   filtered.forEach((face) => {
     const globalIdx = faceOptions.indexOf(face);
     const img = document.createElement("img");
@@ -170,12 +173,15 @@ function renderFacePickers() {
       img.src = face.thumb;
     } else {
       img.src = createPlaceholder('Coming Soon');
-      img.className = "thumb placeholder";
     }
     
-    img.className = "thumb" +
-      (face.enabled ? "" : " disabled") +
-      (selected.face === globalIdx ? " selected" : "");
+    // Build className properly
+    let className = "thumb";
+    if (!face.thumb) className += " placeholder";
+    if (!face.enabled) className += " disabled";
+    if (selected.face === globalIdx) className += " selected";
+    
+    img.className = className;
     
     img.onclick = function() {
       if (face.enabled) {
@@ -184,13 +190,18 @@ function renderFacePickers() {
         renderCharacter();
       }
     };
-    container.appendChild(img);
+    rowDiv.appendChild(img);
   });
+  
+  container.appendChild(rowDiv);
 }
 
 function renderFacePaintPickers() {
   const container = document.getElementById("facepaint-pickers");
   container.innerHTML = "";
+  
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
   
   facePaintOptions.forEach((paint, idx) => {
     const img = document.createElement("img");
@@ -198,17 +209,19 @@ function renderFacePaintPickers() {
     if (idx === 0) {
       // "None" option
       img.src = createPlaceholder('None');
-      img.className = "thumb placeholder";
     } else if (paint.thumb) {
       img.src = paint.thumb;
     } else {
       img.src = createPlaceholder('Coming Soon');
-      img.className = "thumb placeholder";
     }
     
-    img.className = img.className + 
-      (paint.enabled ? "" : " disabled") +
-      (selected.facePaint === idx ? " selected" : "");
+    // Build className properly
+    let className = "thumb";
+    if (idx === 0) className += " placeholder";
+    if (!paint.enabled) className += " disabled";
+    if (selected.facePaint === idx) className += " selected";
+    
+    img.className = className;
     
     img.onclick = function() {
       if (paint.enabled) {
@@ -217,13 +230,18 @@ function renderFacePaintPickers() {
         renderCharacter();
       }
     };
-    container.appendChild(img);
+    rowDiv.appendChild(img);
   });
+  
+  container.appendChild(rowDiv);
 }
 
 function renderHairPickers() {
   const container = document.getElementById("hair-pickers");
   container.innerHTML = "";
+  
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
   
   hairOptions.forEach((hair, idx) => {
     const img = document.createElement("img");
@@ -232,12 +250,15 @@ function renderHairPickers() {
       img.src = hair.thumb;
     } else {
       img.src = createPlaceholder('Coming Soon');
-      img.className = "thumb placeholder";
     }
     
-    img.className = "thumb" +
-      (!hair.enabled ? " disabled" : "") +
-      (selected.hair === idx ? " selected" : "");
+    // Build className properly
+    let className = "thumb";
+    if (!hair.thumb) className += " placeholder";
+    if (!hair.enabled) className += " disabled";
+    if (selected.hair === idx) className += " selected";
+    
+    img.className = className;
     
     img.onclick = function() {
       if (hair.enabled) {
@@ -246,8 +267,10 @@ function renderHairPickers() {
         renderCharacter();
       }
     };
-    container.appendChild(img);
+    rowDiv.appendChild(img);
   });
+  
+  container.appendChild(rowDiv);
 }
 
 function renderAllPickers() {
