@@ -10,55 +10,47 @@ const PORTRAIT_EXAMPLE = `${BASE}portrait-examp-bow-hr.png`;
 
 // Image paths for special layers
 const IMG_BG = `${BASE}highres-canvas-bg.png`;
-const IMG_FB_MUSC_HR = `${BASE}fbody-musc-hr.png`;
 const IMG_ARMOR = `${BASE}set-epic-fur-mantle.png`;
 const IMG_HELMET = `${BASE}bear-skn-helmet.png`;
-const IMG_WEAPON = `${BASE}kaidas-great-bow.png`;
+const IMG_WEAPON_BACK = `${BASE}kaida-great-bow-bck.png`;
+const IMG_WEAPON_FRONT = `${BASE}kaida-btlax-frnt.png`;
 
-const bodyTypeRows = [
-  {
-    label: "Body Type (massive)",
-    bodies: [
-      { src: `${BASE}fbody-mass-drk.png`, thumb: `${BASE}fbody-mass-drk-tmb.png`, skin: "drk", type: "massive", enabled: true },
-      { src: `${BASE}fbody-mass-med.png`, thumb: `${BASE}fbody-mass-med-tmb.png`, skin: "med", type: "massive", enabled: true },
-      { src: `${BASE}fbody-mass-pale.png`, thumb: `${BASE}fbody-mass-pale-tmb.png`, skin: "pale", type: "massive", enabled: true }
-    ]
-  },
-  {
-    label: "Body Type (muscular)",
-    bodies: [
-      { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "muscular", enabled: false },
-      { src: IMG_FB_MUSC_HR, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "hr", type: "muscular_hr", enabled: true, isHighRes: true },
-      { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "muscular", enabled: false }
-    ]
-  },
-  {
-    label: "Body Type (thin)",
-    bodies: [
-      { src: "", thumb: `${BASE}placeholder-pale.png`, skin: "pale", type: "thin", enabled: false },
-      { src: "", thumb: `${BASE}placeholder-med.png`, skin: "med", type: "thin", enabled: false },
-      { src: "", thumb: `${BASE}placeholder-drk.png`, skin: "drk", type: "thin", enabled: false }
-    ]
-  }
+// ONLY MUSCULAR BODY TYPES
+const bodyOptions = [
+  { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: true },
+  { src: `${BASE}fbody-musc-med.png`, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: true },
+  { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
 ];
-const bodyOptions = bodyTypeRows.flatMap(row => row.bodies);
 
 const faceOptions = [
-  { src: `${BASE}femface1-dark-blu.png`, thumb: `${BASE}femface1-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
-  { src: `${BASE}femface1-dark-hzl.png`, thumb: `${BASE}femface1-dark-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface2-dark-brn.png`, thumb: `${BASE}femface2-dark-brn-tmb.png`, skin: "drk", eyes: "brn", enabled: true },
-  { src: `${BASE}femface2-dark-blu.png`, thumb: `${BASE}femface2-dark-blu-tmb.png`, skin: "drk", eyes: "blu", enabled: true },
+  // Dark skin faces
+  { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
+  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
+  { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
+  
+  // Medium skin faces
   { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
   { src: `${BASE}femface1-med-hzl.png`, thumb: `${BASE}femface1-med-hzl-tmb.png`, skin: "med", eyes: "hzl", enabled: true },
   { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
+  { src: `${BASE}femface1-med-blk.png`, thumb: `${BASE}femface1-med-blk-tmb.png`, skin: "med", eyes: "blk", enabled: true },
   { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
   { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu", enabled: true },
-  { src: `${BASE}femface3-med-brn.png`, thumb: `${BASE}femface3-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: false },
-  { src: `${BASE}femface1-pale-hzl.png`, thumb: `${BASE}femface1-pale-hzl-tmb.png`, skin: "pale", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface1-pale-brn.png`, thumb: `${BASE}femface1-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: false },
-  { src: `${BASE}femface1-pale-vio.png`, thumb: `${BASE}femface1-pale-vio-tmb.png`, skin: "pale", eyes: "vio", enabled: false },
-  { src: `${BASE}femface2-pale-brn.png`, thumb: `${BASE}femface2-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: false },
-  { src: `${BASE}femface2-pale-blu.png`, thumb: `${BASE}femface2-pale-blu-tmb.png`, skin: "pale", eyes: "blu", enabled: false }
+  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
+  { src: `${BASE}femface4-med-brn.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
+  { src: `${BASE}femface5-med-blu-mkp.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
+  
+  // Pale skin faces
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true }
+];
+
+const facePaintOptions = [
+  { src: "", thumb: "", label: "None", enabled: true }, // No face paint option
+  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, color: "red", enabled: true },
+  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, color: "red", enabled: true }
 ];
 
 const hairOptions = [
@@ -77,102 +69,112 @@ const hairOptions = [
 ];
 
 let selected = {
-  body: 4,
-  face: 4,
-  hair: 5,
+  body: 0,
+  face: 0,
+  facePaint: 0, // 0 = None
+  hair: 0,
   armor: false,
   helmet: false,
   weapon: false
 };
 
-let isPortraitView = false; // Track portrait mode
+let isPortraitView = false;
 
 function pickFirstEnabledFace(skin) {
   const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
-  return index !== -1 ? index : -1;
+  return index !== -1 ? index : 0;
 }
 
-function filterBodiesByPhysique(physique) {
-  bodyTypeRows.forEach((row) => {
-    row.bodies.forEach((body) => {
-      if (physique < 5) {
-        body.enabled = (body.type === "thin");
-      } else if (physique >= 5 && physique <= 20) {
-        body.enabled = (body.type === "muscular_hr");
-      } else {
-        body.enabled = (body.type === "massive");
-      }
-    });
+// Create placeholder thumbnail with text
+function createPlaceholder(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 80;
+  canvas.height = 80;
+  const ctx = canvas.getContext('2d');
+  
+  ctx.fillStyle = '#333';
+  ctx.fillRect(0, 0, 80, 80);
+  
+  ctx.fillStyle = '#888';
+  ctx.font = 'bold 10px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  const words = text.split(' ');
+  const lineHeight = 12;
+  const startY = 40 - ((words.length - 1) * lineHeight / 2);
+  
+  words.forEach((word, i) => {
+    ctx.fillText(word, 40, startY + (i * lineHeight));
   });
+  
+  return canvas.toDataURL();
 }
 
 function renderBodyPickers() {
   const container = document.getElementById("body-pickers");
   container.innerHTML = "";
-  let idx = 0;
-  bodyTypeRows.forEach((row) => {
-    const rowDiv = document.createElement("div");
-    rowDiv.className = "thumb-list";
-    row.bodies.forEach((body, i) => {
-      const wrap = document.createElement("div");
-      wrap.style.display = "flex";
-      wrap.style.flexDirection = "column";
-      wrap.style.alignItems = "center";
-      if (body.isHighRes) {
-        const label = document.createElement("div");
-        label.textContent = "Muscular HR demo";
-        label.className = "hr-label";
-        wrap.appendChild(label);
-      }
-      const img = document.createElement("img");
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
+  
+  bodyOptions.forEach((body, idx) => {
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = "center";
+    
+    const img = document.createElement("img");
+    
+    // Check if thumbnail exists, otherwise create placeholder
+    if (body.thumb) {
       img.src = body.thumb;
-      img.className = "thumb" +
-        (selected.body === idx ? " selected" : "") +
-        (!body.enabled ? " disabled" : "");
-      if (body.type === "massive") {
-        img.alt = "must input a physique score greater than 20 for this body type...";
-        img.title = "must input a physique score greater than 20 for this body type...";
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+      img.className = "thumb placeholder";
+    }
+    
+    img.className = "thumb" +
+      (selected.body === idx ? " selected" : "") +
+      (!body.enabled ? " disabled" : "");
+    
+    img.onclick = function() {
+      if (body.enabled) {
+        selected.body = idx;
+        selected.face = pickFirstEnabledFace(body.skin);
+        renderAllPickers();
+        renderCharacter();
       }
-      const currentIdx = idx;
-      img.onclick = function() {
-        if (body.enabled) {
-          selected.body = currentIdx;
-          if (body.skin === "hr") {
-            selected.face = pickFirstEnabledFace("med");
-            selected.hair = 5;
-          } else {
-            const skin = body.skin || "pale";
-            selected.face = pickFirstEnabledFace(skin);
-            if (selected.hair !== -1 && !hairOptions[selected.hair].enabled) {
-              selected.hair = hairOptions.findIndex(h => h.enabled);
-            }
-          }
-          renderAllPickers();
-          renderCharacter();
-        }
-      };
-      wrap.appendChild(img);
-      rowDiv.appendChild(wrap);
-      idx++;
-    });
-    container.appendChild(rowDiv);
+    };
+    
+    wrap.appendChild(img);
+    rowDiv.appendChild(wrap);
   });
+  
+  container.appendChild(rowDiv);
 }
 
 function renderFacePickers() {
   const container = document.getElementById("face-pickers");
   container.innerHTML = "";
   let body = bodyOptions[selected.body];
-  let skin = (body && body.skin) ? body.skin : "pale";
-  if (skin === "hr") skin = "med";
+  let skin = (body && body.skin) ? body.skin : "med";
   let filtered = faceOptions.filter(f => f.skin === skin);
+  
   filtered.forEach((face) => {
     const globalIdx = faceOptions.indexOf(face);
     const img = document.createElement("img");
-    img.src = face.thumb;
+    
+    if (face.thumb) {
+      img.src = face.thumb;
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+      img.className = "thumb placeholder";
+    }
+    
     img.className = "thumb" +
       (face.enabled ? "" : " disabled") +
       (selected.face === globalIdx ? " selected" : "");
+    
     img.onclick = function() {
       if (face.enabled) {
         selected.face = globalIdx;
@@ -184,20 +186,59 @@ function renderFacePickers() {
   });
 }
 
+function renderFacePaintPickers() {
+  const container = document.getElementById("facepaint-pickers");
+  container.innerHTML = "";
+  
+  facePaintOptions.forEach((paint, idx) => {
+    const img = document.createElement("img");
+    
+    if (idx === 0) {
+      // "None" option
+      img.src = createPlaceholder('None');
+      img.className = "thumb placeholder";
+    } else if (paint.thumb) {
+      img.src = paint.thumb;
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+      img.className = "thumb placeholder";
+    }
+    
+    img.className = img.className + 
+      (paint.enabled ? "" : " disabled") +
+      (selected.facePaint === idx ? " selected" : "");
+    
+    img.onclick = function() {
+      if (paint.enabled) {
+        selected.facePaint = idx;
+        renderFacePaintPickers();
+        renderCharacter();
+      }
+    };
+    container.appendChild(img);
+  });
+}
+
 function renderHairPickers() {
   const container = document.getElementById("hair-pickers");
   container.innerHTML = "";
-  let body = bodyOptions[selected.body];
-  let skin = (body && body.skin) ? body.skin : "pale";
+  
   hairOptions.forEach((hair, idx) => {
-    let enabled = hair.enabled;
     const img = document.createElement("img");
-    img.src = hair.thumb;
+    
+    if (hair.thumb) {
+      img.src = hair.thumb;
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+      img.className = "thumb placeholder";
+    }
+    
     img.className = "thumb" +
-      (!enabled ? " disabled" : "") +
+      (!hair.enabled ? " disabled" : "") +
       (selected.hair === idx ? " selected" : "");
+    
     img.onclick = function() {
-      if (enabled) {
+      if (hair.enabled) {
         selected.hair = idx;
         renderHairPickers();
         renderCharacter();
@@ -210,10 +251,10 @@ function renderHairPickers() {
 function renderAllPickers() {
   renderBodyPickers();
   renderFacePickers();
+  renderFacePaintPickers();
   renderHairPickers();
 }
 
-// --- RESPONSIVE CANVAS ---
 function getCanvasSize() {
   const maxWidth = 640, maxHeight = 1280;
   let container = document.getElementById("characterCanvasContainer");
@@ -254,23 +295,61 @@ function renderCharacter(callback) {
     return;
   }
 
-  const bgLayer = { src: IMG_BG };
+  // NEW LAYER ORDER: canvas bg, back weapon, body, armor, face, face paint, hair, helmet, front weapon
+  let layers = [];
+  
+  // 1. Background
+  layers.push({ src: IMG_BG, layer: "bg" });
+  
+  // 2. Back weapon (if weapons enabled)
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
+  }
+  
+  // 3. Body
   let body = bodyOptions[selected.body];
-  let skin = (body && body.skin) ? body.skin : "pale";
-  let layers = [bgLayer];
-
-  if (selected.weapon) { layers.push({ src: IMG_WEAPON, layer: "weapon" }); }
-  if (body && body.src && body.src.length > 0) { layers.push(body); }
-  if (selected.armor) { layers.push({ src: IMG_ARMOR, layer: "armor" }); }
-  if (selected.face !== -1) {
+  if (body && body.src) {
+    layers.push({ src: body.src, layer: "body" });
+  }
+  
+  // 4. Armor (if enabled)
+  if (selected.armor) {
+    layers.push({ src: IMG_ARMOR, layer: "armor" });
+  }
+  
+  // 5. Face
+  if (selected.face !== -1 && faceOptions[selected.face]) {
     let face = faceOptions[selected.face];
-    if (face && face.src && face.enabled !== false) layers.push(face);
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
+    }
   }
-  if (selected.hair !== -1) {
+  
+  // 6. Face Paint (if selected and not "None")
+  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
+    let paint = facePaintOptions[selected.facePaint];
+    if (paint && paint.src && paint.enabled !== false) {
+      layers.push({ src: paint.src, layer: "facepaint" });
+    }
+  }
+  
+  // 7. Hair
+  if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
-    if (hair && hair.src && hair.enabled !== false) layers.push(hair);
+    if (hair && hair.src && hair.enabled !== false) {
+      layers.push({ src: hair.src, layer: "hair" });
+    }
   }
-  if (selected.helmet) { layers.push({ src: IMG_HELMET, layer: "helmet" }); }
+  
+  // 8. Helmet (if enabled)
+  if (selected.helmet) {
+    layers.push({ src: IMG_HELMET, layer: "helmet" });
+  }
+  
+  // 9. Front weapon (if weapons enabled)
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
+  }
 
   Promise.all(
     layers.map(opt =>
@@ -293,6 +372,7 @@ function renderCharacter(callback) {
   });
 }
 
+// Physique Form Handler
 const physiqueForm = document.getElementById("physiqueForm");
 const physiqueInput = document.getElementById("physiqueInput");
 const physiqueError = document.getElementById("physiqueError");
@@ -306,44 +386,21 @@ physiqueForm.addEventListener("submit", function(e) {
     physiqueApprovedMsg.style.display = "none";
     return;
   }
-  if (val < 5) {
-    physiqueError.textContent = "Thin fbody type not available yet.  Choose a value above 5 for muscular or above 20 for massive (refresh pg. to start over).";
+  if (val < 5 || val > 20) {
+    physiqueError.textContent = "Only muscular body type (Physique 5-20) is available. Other body types coming soon!";
     physiqueError.style.display = "inline";
     physiqueApprovedMsg.style.display = "none";
-    bodyTypeRows.forEach((row) => {
-      row.bodies.forEach((body) => {
-        body.enabled = false;
-      });
-    });
-    renderAllPickers();
     return;
   }
   physiqueError.style.display = "none";
   physiqueApprovedMsg.style.display = "block";
-  if (val >= 5 && val <= 20) {
-    physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a muscular body type. You can now create your character. Monitored by GM";
-  } else if (val > 20) {
-    physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a massive body type. You can now create your character. Monitored by GM";
-  }
-  filterBodiesByPhysique(val);
-  let firstEnabledIdx = bodyOptions.findIndex(b => b.enabled);
-  if (firstEnabledIdx !== -1) {
-    selected.body = firstEnabledIdx;
-    let body = bodyOptions[selected.body];
-    if (body.skin === "hr") {
-      selected.face = pickFirstEnabledFace("med");
-      selected.hair = 5;
-    } else {
-      selected.face = pickFirstEnabledFace(body.skin);
-      if (selected.hair !== -1 && !hairOptions[selected.hair].enabled) {
-        selected.hair = hairOptions.findIndex(h => h.enabled);
-      }
-    }
-  }
+  physiqueApprovedMsg.textContent = "Physique accepted! You've submitted a muscular body type. You can now create your character. Monitored by GM";
+  
   renderAllPickers();
   resizeCanvasAndRender();
 });
 
+// Equipment Controls
 document.getElementById("equipArmorChk").addEventListener("change", function(e) {
   selected.armor = e.target.checked;
   renderCharacter();
@@ -357,80 +414,66 @@ document.getElementById("equipWeaponsChk").addEventListener("change", function(e
   renderCharacter();
 });
 
+// Random Character Button
 document.getElementById("randomBtn").addEventListener("click", function() {
   let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
-  if (enabledBodiesIdx.length === 0) return; // No enabled bodies
+  if (enabledBodiesIdx.length === 0) return;
   
   selected.body = enabledBodiesIdx[Math.floor(Math.random() * enabledBodiesIdx.length)];
 
   let body = bodyOptions[selected.body];
-  let skin = (body && body.skin) ? body.skin : "pale";
-  if (skin === "hr") {
-    let filteredFaces = faceOptions.filter(f => f.skin === "med" && f.enabled);
-    if (filteredFaces.length > 0) {
-      let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
-      selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
-    } else {
-      selected.face = pickFirstEnabledFace("med");
-    }
-    selected.hair = 5;
+  let skin = (body && body.skin) ? body.skin : "med";
+  
+  let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
+  if (filteredFaces.length > 0) {
+    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
   } else {
-    let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
-    if (filteredFaces.length > 0) {
-      let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
-      selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
-    } else {
-      selected.face = pickFirstEnabledFace(skin);
-    }
-    
-    let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
-    if (enabledHairIdx.length > 0) {
-      selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
-    }
+    selected.face = pickFirstEnabledFace(skin);
+  }
+  
+  // Random face paint (including None)
+  let enabledPaintIdx = facePaintOptions.map((p, idx) => p.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledPaintIdx.length > 0) {
+    selected.facePaint = enabledPaintIdx[Math.floor(Math.random() * enabledPaintIdx.length)];
+  }
+  
+  let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledHairIdx.length > 0) {
+    selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
   }
 
   renderAllPickers();
   resizeCanvasAndRender();
 });
 
-// --- SAVE AS JPEG BUTTON ---
+// Save as JPEG Button
 const showJpegBtn = document.getElementById("showJpegBtn");
 showJpegBtn.addEventListener("click", function() {
-  const aiPortraitChk = document.getElementById("aiPortraitChk");
-  const usePortrait = (aiPortraitChk && aiPortraitChk.checked) || isPortraitView;
-  
-  // Open blank window immediately
+  const usePortrait = isPortraitView;
   const win = window.open('', '_blank');
   
   renderCharacter(function(charCanvas) {
-    // Create composite canvas
     const profileCanvas = document.createElement('canvas');
     const profileCtx = profileCanvas.getContext('2d');
     
-    // Profile sheet dimensions (10" x 14.5" at 210 DPI)
     profileCanvas.width = 2100;
     profileCanvas.height = 3045;
     
-    // Load the profile sheet template
     const profileSheet = new Image();
     profileSheet.src = `${BASE}profile-sheet-template.png`;
     
     profileSheet.onload = function() {
-      // Fill with white background first
       profileCtx.fillStyle = 'white';
       profileCtx.fillRect(0, 0, profileCanvas.width, profileCanvas.height);
-      
-      // Draw the profile sheet background
       profileCtx.drawImage(profileSheet, 0, 0, profileCanvas.width, profileCanvas.height);
       
-      // Portrait frame position and size (adjusted to fit between text)
       const portraitX = 730;
       const portraitY = 640;
       const portraitWidth = 640;
       const portraitHeight = 1000;
       
       if (usePortrait) {
-        // Load and draw portrait example
         const portraitImg = new Image();
         portraitImg.src = PORTRAIT_EXAMPLE;
         portraitImg.onload = function() {
@@ -439,13 +482,11 @@ showJpegBtn.addEventListener("click", function() {
           win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
         };
         portraitImg.onerror = function() {
-          // Fallback to character canvas
           profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
           const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
           win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
         };
       } else {
-        // Draw the character canvas in the portrait frame
         profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
         const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
         win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
@@ -459,42 +500,33 @@ showJpegBtn.addEventListener("click", function() {
   });
 });
 
-// --- Responsive canvas triggers ---
+// Responsive canvas triggers
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
 
-// --- Portrait view toggle on canvas hold (1.2 seconds) ---
+// Portrait view toggle on canvas hold
 const canvasEl = document.getElementById("charCanvas");
 let holdTimer = null;
 let touchMoved = false;
-let lastTapTime = 0;
 
 if (canvasEl) {
-  // Double-tap to reset zoom
-  canvasEl.addEventListener("dblclick", function() {
-    // Reset viewport zoom
-    const viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-      viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
-      setTimeout(() => {
-        viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
-      }, 10);
-    }
-  });
-  
-  // Mouse events
   canvasEl.addEventListener("mousedown", function(e) {
     touchMoved = false;
     holdTimer = setTimeout(function() {
       if (!touchMoved) {
         isPortraitView = !isPortraitView;
         renderCharacter();
+        console.log("Portrait view toggled:", isPortraitView);
       }
     }, 1200);
   });
   
   canvasEl.addEventListener("mousemove", function() {
     touchMoved = true;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
   });
   
   canvasEl.addEventListener("mouseup", function() {
@@ -511,9 +543,7 @@ if (canvasEl) {
     }
   });
   
-  // Touch events
   canvasEl.addEventListener("touchstart", function(e) {
-    // Allow pinch-to-zoom (multi-touch)
     if (e.touches.length > 1) {
       if (holdTimer) {
         clearTimeout(holdTimer);
@@ -522,40 +552,18 @@ if (canvasEl) {
       return;
     }
     
-    const currentTime = Date.now();
-    const tapGap = currentTime - lastTapTime;
-    
-    // Double-tap detection (within 300ms)
-    if (tapGap < 300 && tapGap > 0) {
-      // Reset zoom on double-tap
-      const viewport = document.querySelector('meta[name="viewport"]');
-      if (viewport) {
-        viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
-        setTimeout(() => {
-          viewport.content = "width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3";
-        }, 10);
-      }
-      if (holdTimer) {
-        clearTimeout(holdTimer);
-        holdTimer = null;
-      }
-      lastTapTime = 0;
-      return;
-    }
-    
-    lastTapTime = currentTime;
     touchMoved = false;
     holdTimer = setTimeout(function() {
       if (!touchMoved) {
         isPortraitView = !isPortraitView;
         renderCharacter();
+        console.log("Portrait view toggled:", isPortraitView);
       }
     }, 1200);
     e.preventDefault();
   });
   
   canvasEl.addEventListener("touchmove", function(e) {
-    // Allow pinch-to-zoom (multi-touch)
     if (e.touches.length > 1) {
       if (holdTimer) {
         clearTimeout(holdTimer);
@@ -572,7 +580,6 @@ if (canvasEl) {
   });
   
   canvasEl.addEventListener("touchend", function(e) {
-    // Allow pinch-to-zoom
     if (e.touches.length > 0) {
       return;
     }
