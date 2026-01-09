@@ -25,7 +25,7 @@ const bodyOptions = [
 const faceOptions = [
   // Dark skin faces
   { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
+  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn.png`, skin: "drk", eyes: "grn", enabled: true },
   { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
   
   // Medium skin faces
@@ -71,8 +71,8 @@ const hairOptions = [
 ];
 
 let selected = {
-  body: 0,
-  face: 0,
+  body: 2,  // Pale body as default
+  face: 0,  // Will be updated on init
   facePaint: 0,
   hair: 0,
   armor: false,
@@ -614,5 +614,7 @@ if (canvasEl) {
   });
 }
 
+// Initial setup - make sure face matches body on load
+selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
