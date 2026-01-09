@@ -25,7 +25,8 @@ const bodyOptions = [
 const faceOptions = [
   // Dark skin faces
   { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn.png`, skin: "drk", eyes: "grn", enabled: true },
+  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}IMG_2983.png
+`, skin: "drk", eyes: "grn", enabled: true },
   { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
   
   // Medium skin faces
