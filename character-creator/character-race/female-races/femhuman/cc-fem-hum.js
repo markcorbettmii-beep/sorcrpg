@@ -25,8 +25,8 @@ const bodyOptions = [
 const faceOptions = [
   // Dark skin faces
   { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn.png`, skin: "drk", eyes: "grn", enabled: true }, // NO THUMBNAIL - using full image
-  { src: `${BASE}femface2-drk-grn-tmb.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true }, // NO FULL IMAGE - using thumbnail
+  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true }, // NO THUMBNAIL - using full image
+  { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true }, // NO FULL IMAGE - using thumbnail
   
   // Medium skin faces
   { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
@@ -34,13 +34,13 @@ const faceOptions = [
   { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
   { src: `${BASE}femface1-med-blk.png`, thumb: `${BASE}femface1-med-blk-tmb.png`, skin: "med", eyes: "blk", enabled: true },
   { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
-  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu.png`, skin: "med", eyes: "blu", enabled: true }, // NO THUMBNAIL - using full image
-  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn.png`, skin: "med", eyes: "grn", enabled: true }, // NO THUMBNAIL - using full image
-  { src: `${BASE}femface4-med.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true }, // MISMATCHED NAMES
-  { src: `${BASE}femface5-med-blu-mkp-tmb.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true }, // NO FULL IMAGE - using thumbnail
+  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu", enabled: true }, // NO THUMBNAIL - using full image
+  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true }, // NO THUMBNAIL - using full image
+  { src: `${BASE}femface4-med.png`, thumb: `${BASE}femface4-med.png`, skin: "med", eyes: "brn", enabled: true }, // Corrected: full image instead of mismatched thumb
+  { src: `${BASE}femface5-med-blu-mkp.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true }, // NO FULL IMAGE - using thumbnail
   
   // Pale skin faces
-  { src: `${BASE}femface2-pale-grn-tmb.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true }, // NO FULL IMAGE - using thumbnail
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true }, // NO FULL IMAGE - using thumbnail
   { src: `${BASE}femface4-pale.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true },
   { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
@@ -50,7 +50,7 @@ const facePaintOptions = [
   { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, color: "blu", enabled: true },
   { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, color: "blu", enabled: true },
   { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, color: "red", enabled: true },
-  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk.png`, color: "blk", enabled: true }, // NO THUMBNAIL - using full image
+  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, color: "blk", enabled: true },
   { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, color: "blk", enabled: true },
   { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, color: "red", enabled: true }
 ];
@@ -93,23 +93,23 @@ function createPlaceholder(text) {
   canvas.width = 100;
   canvas.height = 100;
   const ctx = canvas.getContext('2d');
-  
+
   ctx.fillStyle = '#333';
   ctx.fillRect(0, 0, 100, 100);
-  
+
   ctx.fillStyle = '#888';
   ctx.font = 'bold 12px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  
+
   const words = text.split(' ');
   const lineHeight = 14;
   const startY = 50 - ((words.length - 1) * lineHeight / 2);
-  
+
   words.forEach((word, i) => {
     ctx.fillText(word, 50, startY + (i * lineHeight));
   });
-  
+
   return canvas.toDataURL();
 }
 
@@ -118,15 +118,15 @@ function renderBodyPickers() {
   container.innerHTML = "";
   const rowDiv = document.createElement("div");
   rowDiv.className = "thumb-list";
-  
+
   bodyOptions.forEach((body, idx) => {
     const wrap = document.createElement("div");
     wrap.style.display = "flex";
     wrap.style.flexDirection = "column";
     wrap.style.alignItems = "center";
-    
+
     const img = document.createElement("img");
-    
+
     // Check if thumbnail exists, otherwise create placeholder
     if (body.thumb) {
       img.src = body.thumb;
@@ -134,11 +134,11 @@ function renderBodyPickers() {
       img.src = createPlaceholder('Coming Soon');
       img.className = "thumb placeholder";
     }
-    
+
     img.className = "thumb" +
       (selected.body === idx ? " selected" : "") +
       (!body.enabled ? " disabled" : "");
-    
+
     img.onclick = function() {
       if (body.enabled) {
         selected.body = idx;
@@ -147,11 +147,11 @@ function renderBodyPickers() {
         renderCharacter();
       }
     };
-    
+
     wrap.appendChild(img);
     rowDiv.appendChild(wrap);
   });
-  
+
   container.appendChild(rowDiv);
 }
 
@@ -161,32 +161,32 @@ function renderFacePickers() {
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "med";
   let filtered = faceOptions.filter(f => f.skin === skin);
-  
+
   console.log("Rendering face pickers for skin:", skin);
   console.log("Filtered faces:", filtered.length);
   console.log("Currently selected face index:", selected.face);
-  
+
   const rowDiv = document.createElement("div");
   rowDiv.className = "thumb-list";
-  
+
   filtered.forEach((face) => {
     const globalIdx = faceOptions.indexOf(face);
     const img = document.createElement("img");
-    
+
     if (face.thumb) {
       img.src = face.thumb;
     } else {
       img.src = createPlaceholder('Coming Soon');
     }
-    
+
     // Build className properly
     let className = "thumb";
     if (!face.thumb) className += " placeholder";
     if (!face.enabled) className += " disabled";
     if (selected.face === globalIdx) className += " selected";
-    
+
     img.className = className;
-    
+
     img.onclick = function() {
       if (face.enabled) {
         console.log("Face clicked! Index:", globalIdx, "Skin:", face.skin);
@@ -197,20 +197,20 @@ function renderFacePickers() {
     };
     rowDiv.appendChild(img);
   });
-  
+
   container.appendChild(rowDiv);
 }
 
 function renderFacePaintPickers() {
   const container = document.getElementById("facepaint-pickers");
   container.innerHTML = "";
-  
+
   const rowDiv = document.createElement("div");
   rowDiv.className = "thumb-list";
-  
+
   facePaintOptions.forEach((paint, idx) => {
     const img = document.createElement("img");
-    
+
     if (idx === 0) {
       // "None" option
       img.src = createPlaceholder('None');
@@ -219,15 +219,15 @@ function renderFacePaintPickers() {
     } else {
       img.src = createPlaceholder('Coming Soon');
     }
-    
+
     // Build className properly
     let className = "thumb";
     if (idx === 0) className += " placeholder";
     if (!paint.enabled) className += " disabled";
     if (selected.facePaint === idx) className += " selected";
-    
+
     img.className = className;
-    
+
     img.onclick = function() {
       if (paint.enabled) {
         selected.facePaint = idx;
@@ -237,34 +237,33 @@ function renderFacePaintPickers() {
     };
     rowDiv.appendChild(img);
   });
-  
+
   container.appendChild(rowDiv);
 }
 
 function renderHairPickers() {
   const container = document.getElementById("hair-pickers");
   container.innerHTML = "";
-  
   const rowDiv = document.createElement("div");
   rowDiv.className = "thumb-list";
-  
+
   hairOptions.forEach((hair, idx) => {
     const img = document.createElement("img");
-    
+
     if (hair.thumb) {
       img.src = hair.thumb;
     } else {
       img.src = createPlaceholder('Coming Soon');
     }
-    
+
     // Build className properly
     let className = "thumb";
     if (!hair.thumb) className += " placeholder";
     if (!hair.enabled) className += " disabled";
     if (selected.hair === idx) className += " selected";
-    
+
     img.className = className;
-    
+
     img.onclick = function() {
       if (hair.enabled) {
         selected.hair = idx;
@@ -274,7 +273,7 @@ function renderHairPickers() {
     };
     rowDiv.appendChild(img);
   });
-  
+
   container.appendChild(rowDiv);
 }
 
