@@ -25,8 +25,8 @@ const bodyOptions = [
 const faceOptions = [
   // Dark skin faces
   { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn.png`, skin: "drk", eyes: "grn", enabled: true }, // NO THUMBNAIL - using full image
-  { src: `${BASE}femface2-drk-grn-tmb.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true }, // NO FULL IMAGE - using thumbnail
+  { src: `${BASE}femface1-drk-grn.png`, thumb: `${BASE}femface1-drk-grn.png`, skin: "drk", eyes: "grn", enabled: true }, // Still no thumbnail - using full image
+  { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true }, // FIXED - now has both!
   
   // Medium skin faces
   { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
@@ -34,14 +34,14 @@ const faceOptions = [
   { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
   { src: `${BASE}femface1-med-blk.png`, thumb: `${BASE}femface1-med-blk-tmb.png`, skin: "med", eyes: "blk", enabled: true },
   { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
-  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu.png`, skin: "med", eyes: "blu", enabled: true }, // NO THUMBNAIL - using full image
-  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn.png`, skin: "med", eyes: "grn", enabled: true }, // NO THUMBNAIL - using full image
-  { src: `${BASE}femface4-med.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
-  { src: `${BASE}femface5-med-blu-mkp-tmb.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true }, // NO FULL IMAGE - using thumbnail
+  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu", enabled: true }, // FIXED - now has both!
+  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true }, // FIXED - now has both!
+  { src: `${BASE}femface4-med-brn.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true }, // FIXED - correct name!
+  { src: `${BASE}femface5-med-blu-mkp.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true }, // FIXED - now has both!
   
   // Pale skin faces
-  { src: `${BASE}femface2-pale-grn-tmb.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true }, // NO FULL IMAGE - using thumbnail
-  { src: `${BASE}femface4-pale.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true },
+  { src: `${BASE}femface2-pale-grn-tmb.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true }, // Still no full image - using thumbnail
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true }, // FIXED - correct name!
   { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
@@ -50,7 +50,7 @@ const facePaintOptions = [
   { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, color: "blu", enabled: true },
   { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, color: "blu", enabled: true },
   { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, color: "red", enabled: true },
-  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk.png`, color: "blk", enabled: true }, // NO THUMBNAIL - using full image
+  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, color: "blk", enabled: true }, // FIXED - now has both!
   { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, color: "blk", enabled: true },
   { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, color: "red", enabled: true }
 ];
