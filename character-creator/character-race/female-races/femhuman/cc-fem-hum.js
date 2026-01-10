@@ -25,8 +25,7 @@ const bodyOptions = [
 const faceOptions = [
   // Dark skin faces
   { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}IMG_2983.png`, thumb: `${BASE}femface2-drk-grn-tmb.png
-`, skin: "drk", eyes: "grn", enabled: true },
+  { src: `${BASE}IMG_2983.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
   { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
   
   // Medium skin faces
@@ -146,6 +145,7 @@ function renderBodyPickers() {
         selected.face = pickFirstEnabledFace(body.skin);
         renderAllPickers();
         renderCharacter();
+        renderFacePreview();
       }
     };
 
@@ -162,10 +162,6 @@ function renderFacePickers() {
   let body = bodyOptions[selected.body];
   let skin = (body && body.skin) ? body.skin : "med";
   let filtered = faceOptions.filter(f => f.skin === skin);
-
-  console.log("Rendering face pickers for skin:", skin);
-  console.log("Filtered faces:", filtered.length);
-  console.log("Currently selected face index:", selected.face);
 
   const rowDiv = document.createElement("div");
   rowDiv.className = "thumb-list";
@@ -189,10 +185,11 @@ function renderFacePickers() {
 
     img.onclick = function() {
       if (face.enabled) {
-        console.log("Face clicked! Index:", globalIdx, "Skin:", face.skin);
         selected.face = globalIdx;
         renderFacePickers();
         renderCharacter();
+        renderFacePreview();
+        renderFinalCharacter();
       }
     };
     rowDiv.appendChild(img);
@@ -231,6 +228,8 @@ function renderFacePaintPickers() {
         selected.facePaint = idx;
         renderFacePaintPickers();
         renderCharacter();
+        renderFacePreview();
+        renderFinalCharacter();
       }
     };
     rowDiv.appendChild(img);
@@ -266,6 +265,8 @@ function renderHairPickers() {
         selected.hair = idx;
         renderHairPickers();
         renderCharacter();
+        renderFacePreview();
+        renderFinalCharacter();
       }
     };
     rowDiv.appendChild(img);
@@ -305,6 +306,7 @@ function resizeCanvasAndRender() {
 
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
+  if (!canvas) return;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -340,14 +342,9 @@ function renderCharacter(callback) {
   
   if (selected.face !== -1 && faceOptions[selected.face]) {
     let face = faceOptions[selected.face];
-    console.log("Rendering face:", selected.face, "Src:", face.src);
     if (face && face.src && face.enabled !== false) {
       layers.push({ src: face.src, layer: "face" });
-    } else {
-      console.warn("Face not added - missing src or disabled");
     }
-  } else {
-    console.warn("No face selected or face not found");
   }
   
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
@@ -393,6 +390,139 @@ function renderCharacter(callback) {
   });
 }
 
+function renderFacePreview() {
+  const canvas = document.getElementById("faceCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let layers = [];
+  
+  // Background color
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
+    }
+  }
+  
+  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
+    let paint = facePaintOptions[selected.facePaint];
+    if (paint && paint.src && paint.enabled !== false) {
+      layers.push({ src: paint.src, layer: "facepaint" });
+    }
+  }
+  
+  if (selected.hair !== -1 && hairOptions[selected.hair]) {
+    let hair = hairOptions[selected.hair];
+    if (hair && hair.src && hair.enabled !== false) {
+      layers.push({ src: hair.src, layer: "hair" });
+    }
+  }
+
+  Promise.all(
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve(im);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
+  ).then(imgs => {
+    imgs.forEach(im => {
+      if (im) {
+        // Crop to show just the face area (top portion of the image)
+        const srcWidth = im.width;
+        const srcHeight = im.height * 0.4; // Top 40% of image
+        const srcX = 0;
+        const srcY = im.height * 0.15; // Start a bit lower to center face
+        
+        ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
+      }
+    });
+  });
+}
+
+function renderFinalCharacter() {
+  const canvas = document.getElementById("finalCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let layers = [];
+  
+  layers.push({ src: IMG_BG, layer: "bg" });
+  
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
+  }
+  
+  let body = bodyOptions[selected.body];
+  if (body && body.src) {
+    layers.push({ src: body.src, layer: "body" });
+  }
+  
+  if (selected.armor) {
+    layers.push({ src: IMG_ARMOR, layer: "armor" });
+  }
+  
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
+    }
+  }
+  
+  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
+    let paint = facePaintOptions[selected.facePaint];
+    if (paint && paint.src && paint.enabled !== false) {
+      layers.push({ src: paint.src, layer: "facepaint" });
+    }
+  }
+  
+  if (selected.hair !== -1 && hairOptions[selected.hair]) {
+    let hair = hairOptions[selected.hair];
+    if (hair && hair.src && hair.enabled !== false) {
+      layers.push({ src: hair.src, layer: "hair" });
+    }
+  }
+  
+  if (selected.helmet) {
+    layers.push({ src: IMG_HELMET, layer: "helmet" });
+  }
+  
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
+  }
+
+  Promise.all(
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve(im);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
+  ).then(imgs => {
+    imgs.forEach(im => {
+      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+    });
+  });
+}
+
 const physiqueForm = document.getElementById("physiqueForm");
 const physiqueInput = document.getElementById("physiqueInput");
 const physiqueError = document.getElementById("physiqueError");
@@ -421,7 +551,7 @@ physiqueForm.addEventListener("submit", function(e) {
     bodyType = "massive";
   }
   
-  physiqueApprovedMsg.textContent = `Physique accepted! You've submitted a ${bodyType} body type (Physique: ${val}). Note: Physique mechanics are not functional while in beta. All body types available for testing.`;
+  physiqueApprovedMsg.textContent = `Physique accepted! Body type: ${bodyType} (Physique: ${val}). Note: Physique mechanics are not functional while in beta.`;
   
   renderAllPickers();
   resizeCanvasAndRender();
@@ -430,14 +560,17 @@ physiqueForm.addEventListener("submit", function(e) {
 document.getElementById("equipArmorChk").addEventListener("change", function(e) {
   selected.armor = e.target.checked;
   renderCharacter();
+  renderFinalCharacter();
 });
 document.getElementById("equipHelmetChk").addEventListener("change", function(e) {
   selected.helmet = e.target.checked;
   renderCharacter();
+  renderFinalCharacter();
 });
 document.getElementById("equipWeaponsChk").addEventListener("change", function(e) {
   selected.weapon = e.target.checked;
   renderCharacter();
+  renderFinalCharacter();
 });
 
 document.getElementById("randomBtn").addEventListener("click", function() {
@@ -464,6 +597,8 @@ document.getElementById("randomBtn").addEventListener("click", function() {
 
   renderAllPickers();
   resizeCanvasAndRender();
+  renderFacePreview();
+  renderFinalCharacter();
 });
 
 const showJpegBtn = document.getElementById("showJpegBtn");
@@ -471,7 +606,10 @@ showJpegBtn.addEventListener("click", function() {
   const usePortrait = isPortraitView;
   const win = window.open('', '_blank');
   
-  renderCharacter(function(charCanvas) {
+  renderFinalCharacter();
+  
+  setTimeout(() => {
+    const charCanvas = document.getElementById("finalCanvas");
     const profileCanvas = document.createElement('canvas');
     const profileCtx = profileCanvas.getContext('2d');
     
@@ -491,31 +629,16 @@ showJpegBtn.addEventListener("click", function() {
       const portraitWidth = 640;
       const portraitHeight = 1000;
       
-      if (usePortrait) {
-        const portraitImg = new Image();
-        portraitImg.src = PORTRAIT_EXAMPLE;
-        portraitImg.onload = function() {
-          profileCtx.drawImage(portraitImg, portraitX, portraitY, portraitWidth, portraitHeight);
-          const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
-          win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
-        };
-        portraitImg.onerror = function() {
-          profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
-          const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
-          win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
-        };
-      } else {
-        profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
-        const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
-        win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
-      }
+      profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
+      const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
+      win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
     };
     
     profileSheet.onerror = function() {
       console.error('Failed to load profile sheet template');
       win.document.write('<p>Error: Could not load profile sheet. Make sure profile-sheet-template.png is in the assets folder.</p>');
     };
-  });
+  }, 100);
 });
 
 const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
@@ -536,6 +659,21 @@ showBlankJpegBtn.addEventListener("click", function() {
   };
 });
 
+// Page navigation
+document.getElementById("toPage2Btn").addEventListener("click", function() {
+  document.getElementById("page1").classList.remove("active");
+  document.getElementById("page2").classList.add("active");
+  renderFacePreview();
+  window.scrollTo(0, 0);
+});
+
+document.getElementById("toPage3Btn").addEventListener("click", function() {
+  document.getElementById("page2").classList.remove("active");
+  document.getElementById("page3").classList.add("active");
+  renderFinalCharacter();
+  window.scrollTo(0, 0);
+});
+
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
 
@@ -550,7 +688,6 @@ if (canvasEl) {
       if (!touchMoved) {
         isPortraitView = !isPortraitView;
         renderCharacter();
-        console.log("Portrait view toggled:", isPortraitView);
       }
     }, 1200);
   });
@@ -591,7 +728,6 @@ if (canvasEl) {
       if (!touchMoved) {
         isPortraitView = !isPortraitView;
         renderCharacter();
-        console.log("Portrait view toggled:", isPortraitView);
       }
     }, 1200);
     e.preventDefault();
@@ -636,21 +772,3 @@ if (canvasEl) {
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
-
-// Hamburger menu toggle
-const menuToggle = document.getElementById('menuToggle');
-const navLinks = document.getElementById('navLinks');
-const closeLink = document.getElementById('closeLink');
-
-if (menuToggle && navLinks) {
-  menuToggle.addEventListener('click', function() {
-    navLinks.classList.toggle('active');
-  });
-}
-
-if (closeLink) {
-  closeLink.addEventListener('click', function(e) {
-    e.preventDefault();
-    navLinks.classList.remove('active');
-  });
-}
