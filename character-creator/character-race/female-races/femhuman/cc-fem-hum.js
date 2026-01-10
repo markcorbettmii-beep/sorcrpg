@@ -284,11 +284,9 @@ function renderAllPickers() {
 
 function getCanvasSize() {
   const maxWidth = 640, maxHeight = 1280;
-  let container = document.getElementById("characterCanvasContainer");
-  if (!container) container = document.getElementById("characterCanvasContainer2");
   let vw = window.innerWidth;
   let vh = window.innerHeight;
-  let width = Math.min(container ? container.offsetWidth : maxWidth, vw * 0.96, maxWidth);
+  let width = Math.min(vw * 0.96, maxWidth);
   let height = Math.min(width * 2, vh * 0.92, maxHeight);
   if (height / 2 < width) width = height / 2;
   return { width: Math.round(width), height: Math.round(height) };
@@ -303,16 +301,6 @@ function resizeCanvasAndRender() {
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
     renderCharacter();
-  }
-  
-  const finalCanvas = document.getElementById("finalCanvas");
-  if (finalCanvas) {
-    const { width, height } = getCanvasSize();
-    finalCanvas.width = width;
-    finalCanvas.height = height;
-    finalCanvas.style.width = width + "px";
-    finalCanvas.style.height = height + "px";
-    renderFinalCharacter();
   }
 }
 
@@ -410,7 +398,6 @@ function renderFacePreview() {
 
   let layers = [];
   
-  // Background color
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
@@ -451,11 +438,10 @@ function renderFacePreview() {
   ).then(imgs => {
     imgs.forEach(im => {
       if (im) {
-        // Crop to show just the face area (top portion of the image)
         const srcWidth = im.width;
-        const srcHeight = im.height * 0.4; // Top 40% of image
+        const srcHeight = im.height * 0.4;
         const srcX = 0;
-        const srcY = im.height * 0.15; // Start a bit lower to center face
+        const srcY = im.height * 0.15;
         
         ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
       }
@@ -610,6 +596,7 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   renderAllPickers();
   resizeCanvasAndRender();
   renderFacePreview();
+  renderFinalCharacter();
 });
 
 const showJpegBtn = document.getElementById("showJpegBtn");
@@ -667,7 +654,6 @@ showBlankJpegBtn.addEventListener("click", function() {
   };
 });
 
-// Page navigation
 document.getElementById("toPage2Btn").addEventListener("click", function() {
   document.getElementById("page1").classList.remove("active");
   document.getElementById("page2").classList.add("active");
@@ -676,12 +662,10 @@ document.getElementById("toPage2Btn").addEventListener("click", function() {
 });
 
 document.getElementById("toPage3Btn").addEventListener("click", function() {
-  document.getElementById("toPage3Btn").addEventListener("click", function() {
   document.getElementById("page2").classList.remove("active");
   document.getElementById("page3").classList.add("active");
   window.scrollTo(0, 0);
   
-  // Give the page time to render before sizing canvas
   setTimeout(function() {
     const finalCanvas = document.getElementById("finalCanvas");
     if (finalCanvas) {
@@ -793,4 +777,3 @@ if (canvasEl) {
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
-
