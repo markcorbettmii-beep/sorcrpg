@@ -676,10 +676,23 @@ document.getElementById("toPage2Btn").addEventListener("click", function() {
 });
 
 document.getElementById("toPage3Btn").addEventListener("click", function() {
+  document.getElementById("toPage3Btn").addEventListener("click", function() {
   document.getElementById("page2").classList.remove("active");
   document.getElementById("page3").classList.add("active");
-  resizeCanvasAndRender();
   window.scrollTo(0, 0);
+  
+  // Give the page time to render before sizing canvas
+  setTimeout(function() {
+    const finalCanvas = document.getElementById("finalCanvas");
+    if (finalCanvas) {
+      const { width, height } = getCanvasSize();
+      finalCanvas.width = width;
+      finalCanvas.height = height;
+      finalCanvas.style.width = width + "px";
+      finalCanvas.style.height = height + "px";
+      renderFinalCharacter();
+    }
+  }, 50);
 });
 
 window.addEventListener("resize", resizeCanvasAndRender);
@@ -780,3 +793,4 @@ if (canvasEl) {
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
+
