@@ -19,6 +19,7 @@
       flex-direction: column;
       align-items: center;
       padding: 1rem;
+      background: #0a0a0a;
     }
     
     h1 {
@@ -46,6 +47,15 @@
       border-radius: 10px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.5);
       border: 1px solid #d0021b;
+    }
+    
+    /* Page Sections */
+    .page-section {
+      display: none;
+    }
+    
+    .page-section.active {
+      display: block;
     }
     
     /* Form Styles */
@@ -95,6 +105,14 @@
       cursor: not-allowed;
     }
     
+    .nav-button {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      font-size: 1.1rem;
+    }
+    
     /* Canvas Container - CENTERED */
     #characterCanvasContainer {
       position: relative;
@@ -105,6 +123,15 @@
       max-width: 640px;
     }
     
+    #faceCanvasContainer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1.5rem auto;
+      max-width: 400px;
+    }
+    
     #canvasInstruction {
       font-size: 1em;
       color: #DED463;
@@ -113,7 +140,7 @@
       font-weight: bold;
     }
     
-    #charCanvas {
+    #charCanvas, #faceCanvas {
       display: block;
       margin: 0 auto;
       border: 2px solid #d0021b;
@@ -132,10 +159,6 @@
       display: block;
       width: 100%;
       margin-bottom: 10px;
-    }
-    
-    #showJpegBtn {
-      margin-bottom: 0;
     }
     
     /* Equipment Controls */
@@ -233,14 +256,6 @@
       line-height: 1.2;
     }
     
-    .hr-label {
-      font-size: 0.8rem;
-      color: #DED463;
-      font-weight: bold;
-      margin-bottom: 4px;
-      text-align: center;
-    }
-    
     /* Body Type Explanation */
     .body-type-explanation {
       margin: 2rem 0;
@@ -276,6 +291,20 @@
       line-height: 1.6;
     }
     
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 2rem;
+      color: #d0021b;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .back-link:hover {
+      color: #fff;
+    }
+    
     /* Responsive */
     @media (max-width: 600px) {
       .center-panel {
@@ -295,141 +324,155 @@
   </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <a href="../../../../index.html" class="logo">SorC</a>
-      <nav>
-        <button class="menu-toggle" id="menuToggle">&#9776;</button>
-        <ul id="navLinks">
-          <li><a href="../../../../index.html">Home</a></li>
-          <li><a href="../../../../news.html">News</a></li>
-          <li><a href="#">Game Setting</a></li>
-          <li><a href="#">Community</a></li>
-          <li><a href="#">Support</a></li>
-          <li><a href="../../../../basic_rules_1.html">Basic Rules</a></li>
-          <li><a href="#">Library</a></li>
-          <li><a href="#" id="closeLink">Close</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
   <h1>SorC Female Human Character Creator</h1>
-  <p class="coming-soon">Armaments and Gear coming soon…</p>
   
   <div class="main-layout">
     <div class="center-panel">
-      <form id="physiqueForm">
-        <label for="physiqueInput"><strong>Enter Physique for Body Type</strong></label>
-        <input type="number" id="physiqueInput" min="1" max="99" required>
-        <button type="submit">Submit Physique</button>
-        <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (1 or higher).</span>
-      </form>
       
-      <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:#DED463;font-weight:bold;">
-        Physique accepted! You can now create your character. Monitored by GM
-      </div>
-      
-      <!-- HAIR ABOVE CANVAS -->
-      <div class="feature-row" id="hair-row">
-        <h2>Hair <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
-        <div id="hair-pickers"></div>
-      </div>
-      
-      <div id="characterCanvasContainer">
-        <div id="canvasInstruction">
-          Press n hold image to flip to portrait example
+      <!-- PAGE 1: BODY & EQUIPMENT -->
+      <div id="page1" class="page-section active">
+        <h2 style="text-align:center; color:#d0021b;">Step 1: Body & Equipment</h2>
+        
+        <form id="physiqueForm">
+          <label for="physiqueInput"><strong>Enter Physique for Body Type</strong></label>
+          <input type="number" id="physiqueInput" min="1" max="99" required>
+          <button type="submit">Submit Physique</button>
+          <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (1 or higher).</span>
+        </form>
+        
+        <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:#DED463;font-weight:bold;">
+          Physique accepted! You can now create your character.
         </div>
-        <canvas id="charCanvas" width="640" height="1280"></canvas>
-      </div>
+        
+        <div id="characterCanvasContainer">
+          <div id="canvasInstruction">
+            Press n hold image to flip to portrait example
+          </div>
+          <canvas id="charCanvas" width="640" height="1280"></canvas>
+        </div>
 
-      <!-- FACE AND FACEPAINT BELOW CANVAS -->
-      <div class="feature-rows">
-        <div class="feature-row" id="face-row">
-          <h2>Face <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
-          <div id="face-pickers"></div>
-        </div>
-        <div class="feature-row" id="facepaint-row">
-          <h2>Face Paint <span style="font-size:0.9em;color:#888;">(optional)</span></h2>
-          <div id="facepaint-pickers"></div>
-        </div>
         <div class="feature-row" id="body-row">
           <h2>Body Type <span style="font-size:0.9em;color:#888;">(muscular available)</span></h2>
           <div id="body-pickers"></div>
         </div>
-      </div>
 
-      <div id="character-actions">
-        <button id="randomBtn">Random Character</button>
-        <div style="margin-bottom: 0.5em; font-weight: bold; color: #e0cfc0;">(random character elements)</div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; justify-content: center;">
-          <button id="showJpegBtn">Save Char. JPEG</button>
-          <button id="showBlankJpegBtn">Save Blank JPEG</button>
-          <span style="font-size: 0.98em; color: #e0cfc0;">for character profile</span>
+        <div id="equipment-controls">
+          <label>
+            <input type="checkbox" id="equipWeaponsChk"> Show Weapons
+          </label>
+          <button id="cardWeaponsBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
+          <br>
+          <label>
+            <input type="checkbox" id="equipArmorChk"> Show Armor
+          </label>
+          <button id="cardArmorBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
+          <br>
+          <label>
+            <input type="checkbox" id="equipHelmetChk"> Show Helmet
+          </label>
+          <br>
+          <div style="margin:10px 0; font-weight:bold; color:#DED463; font-size:1.1em;">
+            Fellowship displays coming soon
+          </div>
         </div>
-      </div>
-
-      <div id="equipment-controls">
-        <label>
-          <input type="checkbox" id="equipWeaponsChk"> Show Weapons
-        </label>
-        <button id="cardWeaponsBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
-        <br>
-        <label>
-          <input type="checkbox" id="equipArmorChk"> Show Armor
-        </label>
-        <button id="cardArmorBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
-        <br>
-        <label>
-          <input type="checkbox" id="equipHelmetChk"> Show Helmet
-        </label>
-        <br>
-        <div style="margin:10px 0; font-weight:bold; color:#DED463; font-size:1.1em;">
-          Fellowship displays coming soon
-        </div>
-      </div>
-      
-      <div id="fellowship-controls">
-        <div style="display: flex; align-items: center; gap: 1.5em;">
-          <label style="margin-bottom:0;">
-            <input type="checkbox" id="equipFellowshipsChk" disabled> Fellowships
-            <span style="margin-left:6px;">(toggle mount on/off <input type="checkbox" id="toggleMountChk" disabled style="vertical-align:middle;">)</span>
+        
+        <div id="fellowship-controls">
+          <div style="display: flex; align-items: center; gap: 1.5em;">
+            <label style="margin-bottom:0;">
+              <input type="checkbox" id="equipFellowshipsChk" disabled> Fellowships
+              <span style="margin-left:6px;">(toggle mount on/off <input type="checkbox" id="toggleMountChk" disabled style="vertical-align:middle;">)</span>
+            </label>
+          </div>
+          <br>
+          <label>
+            <input type="checkbox" id="equipHearthChk" disabled> Selected Hearth
           </label>
         </div>
-        <br>
-        <label>
-          <input type="checkbox" id="equipHearthChk" disabled> Selected Hearth
-        </label>
+        
+        <button class="nav-button" id="toPage2Btn">Confirm & Continue to Face Customization</button>
       </div>
       
-      <section class="body-type-explanation">
-        <h2>Body Type Selection (Female Human - Beta)</h2>
-        <ul>
-          <li><strong>Currently available:</strong> Muscular body types (all skin tones)</li>
-          <li><strong>Physique system:</strong> Not functional during beta - you can select any body type for testing</li>
-          <li><strong>Coming soon:</strong> Thin, lean, and massive body types</li>
-        </ul>
-      </section>
-      
-      <div class="coming-soon">
-        Armaments and Gear coming soon...
+      <!-- PAGE 2: FACE CUSTOMIZATION -->
+      <div id="page2" class="page-section">
+        <h2 style="text-align:center; color:#d0021b;">Step 2: Face Customization</h2>
+        
+        <div id="faceCanvasContainer">
+          <div style="font-size: 1em; color: #DED463; margin-bottom: 8px; text-align: center; font-weight: bold;">
+            Face Close-Up Preview
+          </div>
+          <canvas id="faceCanvas" width="400" height="500"></canvas>
+        </div>
+
+        <div class="feature-row" id="face-row">
+          <h2>Face <span style="font-size:0.9em;color:#888;">(select your face)</span></h2>
+          <div id="face-pickers"></div>
+        </div>
+        
+        <div class="feature-row" id="hair-row">
+          <h2>Hair <span style="font-size:0.9em;color:#888;">(select your hairstyle)</span></h2>
+          <div id="hair-pickers"></div>
+        </div>
+        
+        <div class="feature-row" id="facepaint-row">
+          <h2>Face Paint <span style="font-size:0.9em;color:#888;">(optional)</span></h2>
+          <div id="facepaint-pickers"></div>
+        </div>
+        
+        <button class="nav-button" id="toPage3Btn">Submit & View Final Profile</button>
       </div>
       
-      <!-- FELLOWSHIP/HEARTH INFO LAST -->
-      <section class="info-section">
-        <div>
-          <strong>Fellowships</strong> come in the form of; Agothian, Pets, Ruminants, Mounts, Guardian, Companions, Draft Animals, Temps (summons, hirelings etc) and more. See page of basic rules for more on "Fellowship Cards".
+      <!-- PAGE 3: FINAL PROFILE -->
+      <div id="page3" class="page-section">
+        <h2 style="text-align:center; color:#d0021b;">Your Complete Character</h2>
+        
+        <div id="characterCanvasContainer2">
+          <div style="font-size: 1em; color: #DED463; margin-bottom: 8px; text-align: center; font-weight: bold;">
+            Final Character
+          </div>
+          <canvas id="finalCanvas" width="640" height="1280"></canvas>
         </div>
-        <div>
-          <strong>Hearth</strong> is any fire source you've found and chosen as your Wayfarer Compass's resting place.
+
+        <div id="character-actions">
+          <button id="randomBtn">Randomize Character</button>
+          <div style="margin-bottom: 0.5em; font-weight: bold; color: #e0cfc0;">(random character elements)</div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap;">
+            <button id="showJpegBtn">Save Char. JPEG</button>
+            <button id="showBlankJpegBtn">Save Blank JPEG</button>
+            <span style="font-size: 0.98em; color: #e0cfc0;">for character profile</span>
+          </div>
         </div>
-        <div>
-          Characters are displayed at ease and only the Armor and Weapons on your person are displayed, but in sheath.
+        
+        <section class="body-type-explanation">
+          <h2>Body Type Selection (Female Human - Beta)</h2>
+          <ul>
+            <li><strong>Currently available:</strong> Muscular body types (all skin tones)</li>
+            <li><strong>Physique system:</strong> Not functional during beta - you can select any body type for testing</li>
+            <li><strong>Coming soon:</strong> Thin, lean, and massive body types</li>
+          </ul>
+        </section>
+        
+        <div class="coming-soon">
+          Armaments and Gear coming soon...
         </div>
-        <div>
-          Default elements are currently shown in Black and White until you own these elements (they're in color here for beta purposes).
-        </div>
-      </section>
+        
+        <section class="info-section">
+          <div>
+            <strong>Fellowships</strong> come in the form of; Agothian, Pets, Ruminants, Mounts, Guardian, Companions, Draft Animals, Temps (summons, hirelings etc) and more. See page of basic rules for more on "Fellowship Cards".
+          </div>
+          <div>
+            <strong>Hearth</strong> is any fire source you've found and chosen as your Wayfarer Compass's resting place.
+          </div>
+          <div>
+            Characters are displayed at ease and only the Armor and Weapons on your person are displayed, but in sheath.
+          </div>
+          <div>
+            Default elements are currently shown in Black and White until you own these elements (they're in color here for beta purposes).
+          </div>
+        </section>
+        
+        <a href="../../../creation-overview.html" class="back-link">← Back To Creation Overview</a>
+      </div>
+      
     </div>
   </div>
   
