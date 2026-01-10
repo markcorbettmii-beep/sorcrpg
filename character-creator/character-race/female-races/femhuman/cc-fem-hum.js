@@ -636,3 +636,21 @@ if (canvasEl) {
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
+
+// Hamburger menu toggle
+const menuToggle = document.getElementById('menuToggle');
+const navLinks = document.getElementById('navLinks');
+const closeLink = document.getElementById('closeLink');
+
+if (menuToggle && navLinks) {
+  menuToggle.addEventListener('click', function() {
+    navLinks.classList.toggle('active');
+  });
+}
+
+if (closeLink) {
+  closeLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    navLinks.classList.remove('active');
+  });
+}
