@@ -518,6 +518,24 @@ showJpegBtn.addEventListener("click", function() {
   });
 });
 
+const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
+showBlankJpegBtn.addEventListener("click", function() {
+  const win = window.open('', '_blank');
+  
+  const blankImg = new Image();
+  blankImg.src = `${BASE}sorc-blank-profile-page.png`;
+  
+  blankImg.onload = function() {
+    const dataUrl = blankImg.src;
+    win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
+  };
+  
+  blankImg.onerror = function() {
+    console.error('Failed to load blank profile page');
+    win.document.write('<p>Error: Could not load sorc-blank-profile-page.png. Make sure it is in the assets folder.</p>');
+  };
+});
+
 window.addEventListener("resize", resizeCanvasAndRender);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
 
