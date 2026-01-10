@@ -285,6 +285,7 @@ function renderAllPickers() {
 function getCanvasSize() {
   const maxWidth = 640, maxHeight = 1280;
   let container = document.getElementById("characterCanvasContainer");
+  if (!container) container = document.getElementById("characterCanvasContainer2");
   let vw = window.innerWidth;
   let vh = window.innerHeight;
   let width = Math.min(container ? container.offsetWidth : maxWidth, vw * 0.96, maxWidth);
@@ -295,13 +296,24 @@ function getCanvasSize() {
 
 function resizeCanvasAndRender() {
   const canvas = document.getElementById("charCanvas");
-  if (!canvas) return;
-  const { width, height } = getCanvasSize();
-  canvas.width = width;
-  canvas.height = height;
-  canvas.style.width = width + "px";
-  canvas.style.height = height + "px";
-  renderCharacter();
+  if (canvas) {
+    const { width, height } = getCanvasSize();
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    renderCharacter();
+  }
+  
+  const finalCanvas = document.getElementById("finalCanvas");
+  if (finalCanvas) {
+    const { width, height } = getCanvasSize();
+    finalCanvas.width = width;
+    finalCanvas.height = height;
+    finalCanvas.style.width = width + "px";
+    finalCanvas.style.height = height + "px";
+    renderFinalCharacter();
+  }
 }
 
 function renderCharacter(callback) {
@@ -598,15 +610,11 @@ document.getElementById("randomBtn").addEventListener("click", function() {
   renderAllPickers();
   resizeCanvasAndRender();
   renderFacePreview();
-  renderFinalCharacter();
 });
 
 const showJpegBtn = document.getElementById("showJpegBtn");
 showJpegBtn.addEventListener("click", function() {
-  const usePortrait = isPortraitView;
   const win = window.open('', '_blank');
-  
-  renderFinalCharacter();
   
   setTimeout(() => {
     const charCanvas = document.getElementById("finalCanvas");
@@ -670,7 +678,7 @@ document.getElementById("toPage2Btn").addEventListener("click", function() {
 document.getElementById("toPage3Btn").addEventListener("click", function() {
   document.getElementById("page2").classList.remove("active");
   document.getElementById("page3").classList.add("active");
-  renderFinalCharacter();
+  resizeCanvasAndRender();
   window.scrollTo(0, 0);
 });
 
