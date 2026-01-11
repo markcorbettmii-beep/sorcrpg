@@ -33,3 +33,38 @@ document.addEventListener("DOMContentLoaded", function() {
     };
   }
 });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const newsCards = document.querySelectorAll('.news-card');
+    const rightArrows = document.querySelectorAll('.arrow-right');
+    const leftArrows = document.querySelectorAll('.arrow-left');
+    let currentIndex = 0;
+
+    // Only show one card at a time
+    function showCard(index) {
+        newsCards.forEach((card, i) => {
+            card.style.display = i === index ? 'flex' : 'none';
+        });
+    }
+
+    showCard(currentIndex);
+
+    rightArrows.forEach(arrow => {
+        arrow.style.pointerEvents = 'auto'; // Make arrow clickable
+        arrow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            currentIndex = (currentIndex + 1) % newsCards.length;
+            showCard(currentIndex);
+        });
+    });
+
+    leftArrows.forEach(arrow => {
+        arrow.style.pointerEvents = 'auto';
+        arrow.addEventListener('click', function(e) {
+            e.stopPropagation();
+            currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
+            showCard(currentIndex);
+        });
+    });
+});
+
