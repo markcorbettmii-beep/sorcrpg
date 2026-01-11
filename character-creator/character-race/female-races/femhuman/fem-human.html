@@ -1,481 +1,186 @@
 <!DOCTYPE html>
 <!--
-  Female Human Character Creator
+  Female Race Selection
   Copyright © 2024 Corbett, editor in chief of Ogre Adventurer, a publishing company of Slayers of Rings § (and, and &) Crowns. Time stamped via GitHub repository push
   Created: December 26, 2024
   All rights reserved.
 -->
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Female Human Character Creator</title>
-  <meta name="viewport" content="width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3">
-  <link rel="stylesheet" href="../../../../style.css">
-  <link rel="stylesheet" href="../../../ccstyle.css">
-  <style>
-    /* Character Creator Specific Styles */
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
-      background: #0a0a0a;
-    }
-    
-    h1 {
-      text-align: center;
-      color: #d0021b;
-      margin-bottom: 0.5rem;
-    }
-    
-    .coming-soon {
-      text-align: center;
-      color: #DED463;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-    }
-    
-    .main-layout {
-      width: 100%;
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    
-    .center-panel {
-      background: #121212;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-      border: 1px solid #d0021b;
-    }
-    
-    /* Page Sections */
-    .page-section {
-      display: none;
-    }
-    
-    .page-section.active {
-      display: block;
-    }
-    
-    /* Form Styles */
-    #physiqueForm {
-      margin-bottom: 1.5rem;
-      padding: 1rem;
-      background: #1a060c;
-      border-radius: 8px;
-      border-left: 4px solid #d0021b;
-    }
-    
-    #physiqueForm label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #e0cfc0;
-    }
-    
-    #physiqueInput {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 0.5rem;
-      background: #0a0a0a;
-      border: 1px solid #d0021b;
-      color: #e0cfc0;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-    
-    button {
-      background: #d0021b;
-      color: #fff;
-      border: none;
-      padding: 0.6rem 1.5rem;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-      font-size: 1rem;
-    }
-    
-    button:hover {
-      background: #a50013;
-    }
-    
-    button:disabled {
-      background: #666;
-      cursor: not-allowed;
-    }
-    
-    .nav-button {
-      display: block;
-      width: 100%;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      font-size: 1.1rem;
-    }
-    
-    /* Canvas Container - CENTERED */
-    #characterCanvasContainer, #characterCanvasContainer2 {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 1.5rem auto;
-      max-width: 640px;
-    }
-    
-    #faceCanvasContainer {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 1.5rem auto;
-      max-width: 400px;
-    }
-    
-    #canvasInstruction {
-      font-size: 1em;
-      color: #DED463;
-      margin-bottom: 8px;
-      text-align: center;
-      font-weight: bold;
-    }
-    
-    #charCanvas, #faceCanvas, #finalCanvas {
-      display: block;
-      margin: 0 auto;
-      border: 2px solid #d0021b;
-      border-radius: 8px;
-      background: #0a0a0a;
-      cursor: pointer;
-    }
-    
-    /* Character Actions */
-    #character-actions {
-      margin: 2rem 0 1rem 0;
-      text-align: center;
-    }
-    
-    #randomBtn {
-      display: block;
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    
-    /* Equipment Controls */
-    #equipment-controls, #fellowship-controls {
-      margin: 1.5rem 0;
-      padding: 1rem;
-      background: #1a060c;
-      border-radius: 8px;
-      border-left: 4px solid #d0021b;
-    }
-    
-    #equipment-controls label,
-    #fellowship-controls label {
-      display: block;
-      margin: 0.5rem 0;
-      color: #e0cfc0;
-      cursor: pointer;
-    }
-    
-    #equipment-controls input[type="checkbox"],
-    #fellowship-controls input[type="checkbox"] {
-      margin-right: 0.5rem;
-      cursor: pointer;
-    }
-    
-    /* Feature Rows */
-    .feature-rows {
-      margin: 1.5rem 0;
-    }
-    
-    .feature-row {
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background: #1a060c;
-      border-radius: 8px;
-      border-left: 4px solid #d0021b;
-    }
-    
-    .feature-row h2 {
-      color: #d0021b;
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
-    }
-    
-    /* Thumbnail Styles */
-    .thumb-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    
-    .thumb {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border: 3px solid transparent;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: #0a0a0a;
-    }
-    
-    .thumb:hover {
-      border-color: #d0021b;
-      transform: scale(1.05);
-    }
-    
-    .thumb.selected {
-      border-color: #DED463;
-      box-shadow: 0 0 10px #DED463;
-    }
-    
-    .thumb.disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-      filter: grayscale(100%);
-    }
-    
-    .thumb.disabled:hover {
-      transform: none;
-      border-color: transparent;
-    }
-    
-    .thumb.placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #333;
-      color: #888;
-      font-size: 0.8rem;
-      text-align: center;
-      padding: 4px;
-      line-height: 1.2;
-    }
-    
-    /* Body Type Explanation */
-    .body-type-explanation {
-      margin: 2rem 0;
-      padding: 1rem;
-      background: #1a060c;
-      border-radius: 8px;
-      border-left: 4px solid #d0021b;
-    }
-    
-    .body-type-explanation h2 {
-      color: #d0021b;
-      margin-top: 0;
-    }
-    
-    .body-type-explanation ul {
-      color: #e0cfc0;
-      line-height: 1.8;
-    }
-    
-    /* Info Section */
-    .info-section {
-      margin: 2rem 0;
-      padding: 1rem;
-      background: #1a060c;
-      border-radius: 8px;
-      border-left: 4px solid #d0021b;
-    }
-    
-    .info-section div {
-      margin-bottom: 0.8em;
-      color: #fff;
-      font-size: 0.98em;
-      line-height: 1.6;
-    }
-    
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 2rem;
-      color: #d0021b;
-      text-decoration: none;
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
-    
-    .back-link:hover {
-      color: #fff;
-    }
-    
-    /* Responsive */
-    @media (max-width: 600px) {
-      .center-panel {
-        padding: 1rem;
-      }
-      
-      .thumb {
-        width: 70px;
-        height: 70px;
-      }
-      
-      button {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Female Race Selection</title>
+<meta name="viewport" content="width=520, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3" />
+<link rel="stylesheet" href="../../../character-creator/style.css" />
+<link rel="stylesheet" href="../../../character-creator/ccstyle.css" />
+<style>
+  /* Layout styling for male and female pages, matching the original style */
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: #0a0a0a;
+    font-family: Arial, sans-serif;
+  }
+  h1 {
+    text-align: center;
+    color: #d0021b;
+    margin-bottom: 0.5rem;
+  }
+  /* For male page: single column layout */
+  .race-list {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  /* Both use same class, so same CSS applies */
+
+  .race-item {
+    width: 100%;
+    max-width: 600px;
+    margin: 10px 0;
+    text-align: center;
+  }
+  .race-item img {
+    width: 500px;
+    height: 500px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+  }
+  .race-item a {
+    display: block;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin: 10px 0 5px 0;
+    color: #2a7ae2;
+    text-decoration: none;
+  }
+  .race-item a:hover {
+    text-decoration: underline;
+  }
+  /* Set all paragraph text to the same light color as the page you posted */
+  p, .description, .about-section p {
+    color: #e0cfc0;
+  }
+</style>
+<script>
+  function showBetaMessage(event) {
+    event.preventDefault();
+    alert("Only Female Human Available During Beta");
+  }
+</script>
 </head>
 <body>
-  <h1>SorC Female Human Character Creator</h1>
-  
-  <div class="main-layout">
-    <div class="center-panel">
-      
-      <!-- PAGE 1: BODY & EQUIPMENT -->
-      <div id="page1" class="page-section active">
-        <h2 style="text-align:center; color:#d0021b;">Step 1: Body & Equipment</h2>
-        
-        <form id="physiqueForm">
-          <label for="physiqueInput"><strong>Enter Physique for Body Type</strong></label>
-          <input type="number" id="physiqueInput" min="1" max="99" required>
-          <button type="submit">Submit Physique</button>
-          <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (1 or higher).</span>
-        </form>
-        
-        <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:#DED463;font-weight:bold;">
-          Physique accepted! You can now create your character.
-        </div>
-        
-        <div id="characterCanvasContainer">
-          <div id="canvasInstruction">
-            Press n hold image to flip to portrait example
-          </div>
-          <canvas id="charCanvas" width="640" height="1280"></canvas>
-        </div>
+<h1>SorC Female Races</h1>
+<p style="text-align:center;">Select your race to begin customizing your female character. Each race offers unique traits and cultures to explore.</p>
+<div class="race-list">
 
-        <div class="feature-row" id="body-row">
-          <h2>Body Type <span style="font-size:0.9em;color:#888;">(muscular available)</span></h2>
-          <div id="body-pickers"></div>
-        </div>
+<!-- Goliath Size Races -->
+<h2>Goliath Size</h2>
+<div class="race-item">
+  <img src="images/choose-race-fembast.png" alt="Bast" />
+  <a href="#" onclick="showBetaMessage(event)">Bast</a>
+  <div class="description">Feline humanoids, agile and graceful.</div>
+</div>
 
-        <div id="equipment-controls">
-          <label>
-            <input type="checkbox" id="equipWeaponsChk"> Show Weapons
-          </label>
-          <button id="cardWeaponsBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
-          <br>
-          <label>
-            <input type="checkbox" id="equipArmorChk"> Show Armor
-          </label>
-          <button id="cardArmorBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
-          <br>
-          <label>
-            <input type="checkbox" id="equipHelmetChk"> Show Helmet
-          </label>
-          <br>
-          <div style="margin:10px 0; font-weight:bold; color:#DED463; font-size:1.1em;">
-            Fellowship displays coming soon
-          </div>
-        </div>
-        
-        <div id="fellowship-controls">
-          <div style="display: flex; align-items: center; gap: 1.5em;">
-            <label style="margin-bottom:0;">
-              <input type="checkbox" id="equipFellowshipsChk" disabled> Fellowships
-              <span style="margin-left:6px;">(toggle mount on/off <input type="checkbox" id="toggleMountChk" disabled style="vertical-align:middle;">)</span>
-            </label>
-          </div>
-          <br>
-          <label>
-            <input type="checkbox" id="equipHearthChk" disabled> Selected Hearth
-          </label>
-        </div>
-        
-        <button class="nav-button" id="toPage2Btn">Confirm & Continue to Face Customization</button>
-      </div>
-      
-      <!-- PAGE 2: FACE CUSTOMIZATION -->
-      <div id="page2" class="page-section">
-        <h2 style="text-align:center; color:#d0021b;">Step 2: Face Customization</h2>
-        
-        <div id="faceCanvasContainer">
-          <div style="font-size: 1em; color: #DED463; margin-bottom: 8px; text-align: center; font-weight: bold;">
-            Face Close-Up Preview
-          </div>
-          <canvas id="faceCanvas" width="400" height="500"></canvas>
-        </div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Bugbear" alt="Bugbear" />
+  <a href="#" onclick="showBetaMessage(event)">Bugbear</a>
+  <div class="description">Large, strong, and stealthy, often living in forests or mountains.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Firbolg" alt="Firbolg" />
+  <a href="#" onclick="showBetaMessage(event)">Firbolg</a>
+  <div class="description">Gentle giants with nature magic, often in forests.</div>
+</div>
+<div class="race-item">
+  <img src="images/choose-race-femogre.png" alt="Ogre" />
+  <a href="#" onclick="showBetaMessage(event)">Ogre</a>
+  <div class="description">Huge and strong, often solitary or in small groups.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Troll" alt="Troll" />
+  <a href="#" onclick="showBetaMessage(event)">Troll</a>
+  <div class="description">Regenerative and formidable, usually dwelling in caves or mountains.</div>
+</div>
 
-        <div class="feature-row" id="face-row">
-          <h2>Face <span style="font-size:0.9em;color:#888;">(select your face)</span></h2>
-          <div id="face-pickers"></div>
-        </div>
-        
-        <div class="feature-row" id="hair-row">
-          <h2>Hair <span style="font-size:0.9em;color:#888;">(select your hairstyle)</span></h2>
-          <div id="hair-pickers"></div>
-        </div>
-        
-        <div class="feature-row" id="facepaint-row">
-          <h2>Face Paint <span style="font-size:0.9em;color:#888;">(optional)</span></h2>
-          <div id="facepaint-pickers"></div>
-        </div>
-        
-        <button class="nav-button" id="toPage3Btn">Submit & View Final Profile</button>
-      </div>
-      
-      <!-- PAGE 3: FINAL PROFILE -->
-      <div id="page3" class="page-section">
-        <h2 style="text-align:center; color:#d0021b;">Your Complete Character</h2>
-        
-        <div id="characterCanvasContainer2">
-          <div style="font-size: 1em; color: #DED463; margin-bottom: 8px; text-align: center; font-weight: bold;">
-            Final Character
-          </div>
-          <canvas id="finalCanvas" width="640" height="1280"></canvas>
-        </div>
+<!-- Standard Size Races -->
+<h2>Standard Size</h2>
+<div class="race-item">
+  <img src="images/choose-race-femhum.png" alt="Human" />
+  <a href="femhuman/fem-human.html">Human</a>
+  <div class="description">Versatile beings known for their adaptability and ingenuity across cultures and environments.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Blood+Draco" alt="Blood Draco" />
+  <a href="#" onclick="showBetaMessage(event)">Blood Draco</a>
+  <div class="description">Imperial humans with draconic traits, strong and charismatic.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Orc" alt="Orc" />
+  <a href="#" onclick="showBetaMessage(event)">Orc</a>
+  <div class="description">Powerful resilient fighters.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Vanwa" alt="Vanwa" />
+  <a href="#" onclick="showBetaMessage(event)">Vanwa</a>
+  <div class="description">Tall, noble, 6-7 feet.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=High+Elf" alt="High Elf" />
+  <a href="#" onclick="showBetaMessage(event)">High Elf</a>
+  <div class="description">Elegant, magical, 5-6 feet.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Drow" alt="Drow" />
+  <a href="#" onclick="showBetaMessage(event)">Drow</a>
+  <div class="description">Dark elves skilled in stealth and magic.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Nordian" alt="Nordian" />
+  <a href="#" onclick="showBetaMessage(event)">Nordian</a>
+  <div class="description">Rugged, 5-6 feet.</div>
+</div>
 
-        <div id="character-actions">
-          <button id="randomBtn">Randomize Character</button>
-          <div style="margin-bottom: 0.5em; font-weight: bold; color: #e0cfc0;">(random character elements)</div>
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap;">
-            <button id="showJpegBtn">Save Char. JPEG</button>
-            <button id="showBlankJpegBtn">Save Blank JPEG</button>
-            <span style="font-size: 0.98em; color: #e0cfc0;">for character profile</span>
-          </div>
-        </div>
-        
-        <section class="body-type-explanation">
-          <h2>Body Type Selection (Female Human - Beta)</h2>
-          <ul>
-            <li><strong>Currently available:</strong> Muscular body types (all skin tones)</li>
-            <li><strong>Physique system:</strong> Not functional during beta - you can select any body type for testing</li>
-            <li><strong>Coming soon:</strong> Thin, lean, and massive body types</li>
-          </ul>
-        </section>
-        
-        <div class="coming-soon">
-          Armaments and Gear coming soon...
-        </div>
-        
-        <section class="info-section">
-          <div>
-            <strong>Fellowships</strong> come in the form of; Agothian, Pets, Ruminants, Mounts, Guardian, Companions, Draft Animals, Temps (summons, hirelings etc) and more. See page of basic rules for more on "Fellowship Cards".
-          </div>
-          <div>
-            <strong>Hearth</strong> is any fire source you've found and chosen as your Wayfarer Compass's resting place.
-          </div>
-          <div>
-            Characters are displayed at ease and only the Armor and Weapons on your person are displayed, but in sheath.
-          </div>
-          <div>
-            Default elements are currently shown in Black and White until you own these elements (they're in color here for beta purposes).
-          </div>
-        </section>
-        
-        <a href="../../../creation-overview.html" class="back-link">← Back To Creation Overview</a>
-      </div>
-      
-    </div>
-  </div>
-  
-  <script src="cc-fem-hum.js"></script>
+<!-- Small Size Races -->
+<h2>Small Size</h2>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Brownie" alt="Brownie" />
+  <a href="#" onclick="showBetaMessage(event)">Brownie</a>
+  <div class="description">Small, magical, lucky, under 4 feet.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Halfling" alt="Halfling" />
+  <a href="#" onclick="showBetaMessage(event)">Halfling</a>
+  <div class="description">Cheerful, resourceful, about 3 feet.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Pinkling" alt="Pinkling" />
+  <a href="#" onclick="showBetaMessage(event)">Pinkling</a>
+  <div class="description">Mischievous illusionists with pink hue.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Micelings" alt="Micelings" />
+  <a href="#" onclick="showBetaMessage(event)">Micelings</a>
+  <div class="description">Tiny, stealthy, under 3 feet.</div>
+</div>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Yawnie" alt="Yawnie" />
+  <a href="#" onclick="showBetaMessage(event)">Yawnie</a>
+  <div class="description">Very small, under 3 feet.</div>
+</div>
+
+<!-- Hybrid (Goliath + Small) only -->
+<h2>Hybrid (Goliath + Small)</h2>
+<div class="race-item">
+  <img src="https://via.placeholder.com/500x500?text=Hybrid" alt="Hybrid" />
+  <a href="#" onclick="showBetaMessage(event)">Hybrid</a>
+  <div class="description">Up to 4 races combined, traits averaged proportionally.</div>
+</div>
+
+</div>
 </body>
 </html>
