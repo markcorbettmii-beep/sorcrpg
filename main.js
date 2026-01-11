@@ -68,3 +68,30 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+// Age verification logic
+document.addEventListener('DOMContentLoaded', () => {
+  const ageModal = document.getElementById('age-verification');
+  const btnYes = document.getElementById('age-yes');
+  const btnNo = document.getElementById('age-no');
+
+  // Check if user already verified this session (or store in cookie/localStorage)
+  const ageVerified = sessionStorage.getItem('ageVerified');
+
+  if (!ageVerified) {
+    // Show modal
+    ageModal.style.display = 'flex';
+  }
+
+  btnYes.onclick = () => {
+    sessionStorage.setItem('ageVerified', 'true');
+    ageModal.style.display = 'none';
+  };
+
+  btnNo.onclick = () => {
+    alert('You must be of age to view this site.');
+    // Optionally redirect or close window
+    window.location.href = 'https://www.google.com'; // redirect elsewhere
+  };
+});
+
+
