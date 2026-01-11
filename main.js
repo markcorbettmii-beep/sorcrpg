@@ -13,4 +13,23 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault(); // prevent default link behavior
         navLinks.classList.remove('active'); // hide menu
     });
+    
+});
+
+// SorC Cookie Consent
+document.addEventListener("DOMContentLoaded", function() {
+  var cookieConsent = document.getElementById('cookieConsent');
+  var acceptBtn = document.getElementById('acceptCookiesBtn');
+  var hasConsent = localStorage.getItem('sorcCookieConsent') === 'true';
+
+  if (!hasConsent && cookieConsent) {
+    cookieConsent.style.display = 'block';
+  }
+
+  if (acceptBtn) {
+    acceptBtn.onclick = function() {
+      localStorage.setItem('sorcCookieConsent', 'true');
+      cookieConsent.style.display = 'none';
+    };
+  }
 });
