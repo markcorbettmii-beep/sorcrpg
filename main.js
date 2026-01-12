@@ -1,3 +1,4 @@
+// Navigation menu logic
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
@@ -13,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault(); // prevent default link behavior
         navLinks.classList.remove('active'); // hide menu
     });
-    
 });
 
 // SorC Cookie Consent
@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
+// News Cards Slider
 document.addEventListener("DOMContentLoaded", function() {
     const newsCards = document.querySelectorAll('.news-card');
     const rightArrows = document.querySelectorAll('.arrow-right');
@@ -94,4 +95,19 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 });
 
+// Social OAuth Sign-in Button Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const googleBtn = document.querySelector('.oauth-google');
+    const appleBtn = document.querySelector('.oauth-apple');
 
+    if (googleBtn) {
+        googleBtn.addEventListener('click', function() {
+            window.location.href = '/auth/google'; // Redirect to backend Google OAuth
+        });
+    }
+    if (appleBtn) {
+        appleBtn.addEventListener('click', function() {
+            window.location.href = '/auth/apple'; // Redirect to backend Apple OAuth
+        });
+    }
+});
