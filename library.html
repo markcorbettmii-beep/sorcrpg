@@ -9,33 +9,35 @@
 </head>
 <body>
   <div class="page-wrapper">
-    <!-- Header container with role display and logout button -->
+    <!-- Header with role display and logout button -->
     <div class="header-container">
       <h1>Slayers of Rings & Crowns</h1>
       <div class="sorc-letters">S O R C</div>
-      <!-- Add role display element -->
+      <!-- Add role display -->
       <div id="roleDisplay"></div>
-      <!-- Add logout button -->
+      <!-- Logout button -->
       <button id="logoutBtn">Logout</button>
     </div>
 
+    <!-- Login buttons container -->
     <div id="loginButtonsContainer"></div> 
 
     <script>
+      // Fetch login buttons
       fetch('/login-butts.html')
         .then(response => response.text())
         .then(data => {
           document.getElementById('loginButtonsContainer').innerHTML = data;
           updateRoleDisplay();
-          var isGM = localStorage.getItem('isGM') === 'true';
-          var isPlayer = localStorage.getItem('isPlayer') === 'true';
+          const isGM = localStorage.getItem('isGM') === 'true';
+          const isPlayer = localStorage.getItem('isPlayer') === 'true';
           if (isGM) {
-            var gmBtn = document.querySelector('.gm_button');
+            const gmBtn = document.querySelector('.gm_button');
             if (gmBtn) gmBtn.style.display = 'none';
           }
           if (isPlayer) {
-            var playerBtn = document.querySelector('.plyr_button');
-            if (playerBtn) playerBtn.style.display = 'none';
+            const plyrBtn = document.querySelector('.plyr_button');
+            if (plyrBtn) plyrBtn.style.display = 'none';
           }
         });
 
@@ -53,7 +55,9 @@
           }
         }
       }
-      document.addEventListener("DOMContentLoaded", function() {
+
+      // Logout button
+      document.addEventListener("DOMContentLoaded", () => {
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
           logoutBtn.onclick = () => {
@@ -66,6 +70,7 @@
       });
     </script>
 
+    <!-- Sections content -->
     <div id="sections"></div>
     <script>
       fetch('/sections-basics.html')
@@ -75,6 +80,7 @@
         });
     </script>
 
+    <!-- Main content -->
     <h3>Game Compendium</h3>
     <p>
       Welcome to the Slayers of Rings & Crowns Compendium! Here you'll find the collected wisdom, lore, and rules of Essentia. Explore chronicles of the nineteen crowns, histories of planetary wars, secrets of the Omné, and guides to forbidden races. Deepen your SorC experience with monster compendiums, class guides, and legendary tales from across the universe.
@@ -102,7 +108,7 @@
       <h6><strong><a href="#">Notable Territories</a></strong></h6>
     </div>
     <br/>
-    <hr>  
+    <hr>
 
     <section class="explore-more">
       <h4>Explore More</h4>
@@ -155,7 +161,7 @@
           <img src="images/placeholder_master_tier.jpg" alt="Crownmaster Tier" class="news-img" />
           <h5>Crownmaster Tier</h5>
           <ul>
-            <li>Share compendium content with your party</li>
+            <li>Share content with your party</li>
             <li>Use homebrew SorC content</li>
             <li>Advanced campaign management</li>
           </ul>
@@ -188,6 +194,7 @@
       </div>
     </section>
 
+    <!-- Fetch main-butts.html -->
     <div id="main-butts"></div>
     <script>
       fetch('/main-butts.html')
@@ -201,6 +208,7 @@
         });
     </script>
 
+    <!-- Fetch footer.html -->
     <div id="footer"></div>
     <script>
       fetch('/footer.html')
