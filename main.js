@@ -95,19 +95,46 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 });
 
-// Social OAuth Sign-in Button Logic
-document.addEventListener('DOMContentLoaded', function() {
-    const googleBtn = document.querySelector('.oauth-google');
-    const appleBtn = document.querySelector('.oauth-apple');
+// --- Auth0 Google Login detection and signup hide logic ---
 
-    if (googleBtn) {
-        googleBtn.addEventListener('click', function() {
-            window.location.href = '/auth/google'; // Redirect to backend Google OAuth
-        });
+// Make sure this runs after Auth0 script is loaded AND you have auth0 defined (from your index.html)
+function parseJwt(token) {
+  try {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return {};
+  }
+}
+
+function handleAuth0Login() {
+  // If Auth0 script is not loaded, skip
+  if (typeof auth0 === "undefined" || !auth0.parseHash) return;
+
+  auth0.parseHash(function(err, authResult) {
+    if (authResult && authResult.accessToken && authResult.idToken) {
+      // Hide signup cards
+      var signups = document.querySelectorAll('.signup-card.legend-signup');
+      signups.forEach(function(card) {
+        card.style.display = 'none';
+      });
+
+      // Optionally, show welcome message
+      var userInfo = parseJwt(authResult.idToken);
+      var welcome = document.createElement('div');
+      welcome.className = 'welcome-user';
+      welcome.innerHTML = '<h2>Welcome, ' + (userInfo.name || userInfo.email || 'Adventurer') + '!</h2>';
+      var legendSection = document.querySelector('.legend');
+      if (legendSection) legendSection.insertBefore(welcome, legendSection.firstChild);
+
+      // Optionally: store tokens in localStorage/sessionStorage for persistent login (advanced)
     }
-    if (appleBtn) {
-        appleBtn.addEventListener('click', function() {
-            window.location.href = '/auth/apple'; // Redirect to backend Apple OAuth
-        });
-    }
-});
+    // Optionally: handle errors here
+  });
+}
+
+document.addEventListener('DOMContentLoaded', handleAuth0Login);
