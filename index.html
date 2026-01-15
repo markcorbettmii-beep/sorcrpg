@@ -41,7 +41,6 @@
                     <li><a href="news.html">News</a></li>
                     <li><a href="#">Game Setting</a></li>
                     <li><a href="#">Community</a></li>
-                    <li><a href="#">Support</a></li>
                     <li><a href="content/basic_rules/basic_rules_1.html">Basic Rules</a></li>
                     <li><a href="library.html">Library</a></li>
                     <li><a href="subscriptions.html">Subscriptions</a></li>
@@ -343,6 +342,30 @@
         <button id="acceptCookiesBtn" class="cta-btn">Accept & Continue</button>
       </div>
     </div>
+    <!-- Auth0 Google Login Integration -->
+    <script src="https://cdn.auth0.com/js/auth0/9.19/auth0.min.js"></script>
+    <script>
+      // Initialize Auth0
+      var auth0 = new auth0.WebAuth({
+        domain:       'dev-rrhpvnijd21u28t5.us.auth0.com',
+        clientID:     'vgdkuegvHBwQ9wT1ypE4xwhngWZf3E5n',
+        redirectUri:  window.location.href, // change if you want to redirect to a specific page after login
+        responseType: 'token id_token',
+        scope:        'openid profile email'
+      });
+
+      // Attach Auth0 Google login to all "Sign up with Google" buttons
+      document.addEventListener('DOMContentLoaded', function() {
+        var googleBtns = document.querySelectorAll('.signup-oauth.oauth-google');
+        googleBtns.forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            auth0.authorize({
+              connection: 'google-oauth2'
+            });
+          });
+        });
+      });
+    </script>
 </body>
 </html>
-
