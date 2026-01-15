@@ -3,84 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="SorC compendium: Essentia's lore, guides, and chronicles." />
-  <title>Slayers of Rings & Crowns Compendium</title>
+  <title>Slayers of Rings & Crowns</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="page-wrapper">
-    <!-- Header with role display and logout button -->
+    <!-- Header section -->
     <div class="header-container">
       <h1>Slayers of Rings & Crowns</h1>
       <div class="sorc-letters">S O R C</div>
-      <!-- Add role display -->
-      <div id="roleDisplay"></div>
-      <!-- Logout button -->
-      <button id="logoutBtn">Logout</button>
     </div>
 
-    <!-- Login buttons container -->
-    <div id="loginButtonsContainer"></div> 
+    <!-- Role display -->
+    <div id="roleDisplay">Visitor / Not Logged In</div>
+    <!-- Logout button -->
+    <button id="logoutBtn">Logout</button>
 
-    <script>
-      // Fetch login buttons
-      fetch('/login-butts.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('loginButtonsContainer').innerHTML = data;
-          updateRoleDisplay();
-          const isGM = localStorage.getItem('isGM') === 'true';
-          const isPlayer = localStorage.getItem('isPlayer') === 'true';
-          if (isGM) {
-            const gmBtn = document.querySelector('.gm_button');
-            if (gmBtn) gmBtn.style.display = 'none';
-          }
-          if (isPlayer) {
-            const plyrBtn = document.querySelector('.plyr_button');
-            if (plyrBtn) plyrBtn.style.display = 'none';
-          }
-        });
-
-      function updateRoleDisplay() {
-        const roleSpan = document.getElementById('roleDisplay');
-        const isGM = localStorage.getItem('isGM') === 'true';
-        const isPlayer = localStorage.getItem('isPlayer') === 'true';
-        if (roleSpan) {
-          if (isGM) {
-            roleSpan.textContent = 'Game Master (GM)';
-          } else if (isPlayer) {
-            roleSpan.textContent = 'Player';
-          } else {
-            roleSpan.textContent = 'Visitor / Not Logged In';
-          }
-        }
-      }
-
-      // Logout button
-      document.addEventListener("DOMContentLoaded", () => {
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-          logoutBtn.onclick = () => {
-            localStorage.removeItem('isGM');
-            localStorage.removeItem('isPlayer');
-            alert('Logged out');
-            location.reload();
-          };
-        }
-      });
-    </script>
-
-    <!-- Sections content -->
-    <div id="sections"></div>
-    <script>
-      fetch('/sections-basics.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('sections').innerHTML = data;
-        });
-    </script>
-
-    <!-- Main content -->
+    <!-- Main content starts here -->
     <h3>Game Compendium</h3>
     <p>
       Welcome to the Slayers of Rings & Crowns Compendium! Here you'll find the collected wisdom, lore, and rules of Essentia. Explore chronicles of the nineteen crowns, histories of planetary wars, secrets of the Omné, and guides to forbidden races. Deepen your SorC experience with monster compendiums, class guides, and legendary tales from across the universe.
@@ -107,8 +46,7 @@
       <h6><strong><a href="#">Wonders of the World</a></strong></h6>
       <h6><strong><a href="#">Notable Territories</a></strong></h6>
     </div>
-    <br/>
-    <hr>
+    <hr />
 
     <section class="explore-more">
       <h4>Explore More</h4>
@@ -194,29 +132,7 @@
       </div>
     </section>
 
-    <!-- Fetch main-butts.html -->
-    <div id="main-butts"></div>
-    <script>
-      fetch('/main-butts.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('main-butts').innerHTML = data;
-          const container = document.querySelector('.buttons-container');
-          if (container) {
-            container.querySelectorAll('a').forEach(link => link.classList.add('button'));
-          }
-        });
-    </script>
-
-    <!-- Fetch footer.html -->
-    <div id="footer"></div>
-    <script>
-      fetch('/footer.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('footer').innerHTML = data;
-        });
-    </script>
+    <!-- Static content ends here, no fetch or scripts -->
   </div>
 </body>
 </html>
