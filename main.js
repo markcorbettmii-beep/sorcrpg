@@ -95,9 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 });
 
-// --- Auth0 Google Login detection and signup hide logic ---
+// --- Auth0 Google Login detection and persistent login logic ---
 
-// Make sure this runs after Auth0 script is loaded AND you have auth0 defined (from your index.html)
 function parseJwt(token) {
   try {
     var base64Url = token.split('.')[1];
@@ -111,27 +110,48 @@ function parseJwt(token) {
   }
 }
 
+function showWelcomeAndHideSignup(userInfo) {
+  var signups = document.querySelectorAll('.signup-card.legend-signup');
+  signups.forEach(function(card) {
+    card.style.display = 'none';
+  });
+  // Only show welcome message if not already present
+  if (!document.querySelector('.welcome-user')) {
+    var welcome = document.createElement('div');
+    welcome.className = 'welcome-user';
+    welcome.innerHTML = '<h2>Welcome, ' + (userInfo.name || userInfo.email || 'Adventurer') + '!</h2>'
+      + '<button id="logoutBtn" style="margin-top:10px;">Logout</button>';
+    var legendSection = document.querySelector('.legend');
+    if (legendSection) legendSection.insertBefore(welcome, legendSection.firstChild);
+    // Add logout logic
+    document.getElementById('logoutBtn').onclick = function() {
+      localStorage.removeItem('sorc_accessToken');
+      localStorage.removeItem('sorc_idToken');
+      window.location.reload();
+    }
+  }
+}
+
 function handleAuth0Login() {
   // If Auth0 script is not loaded, skip
   if (typeof auth0 === "undefined" || !auth0.parseHash) return;
 
   auth0.parseHash(function(err, authResult) {
     if (authResult && authResult.accessToken && authResult.idToken) {
-      // Hide signup cards
-      var signups = document.querySelectorAll('.signup-card.legend-signup');
-      signups.forEach(function(card) {
-        card.style.display = 'none';
-      });
-
-      // Optionally, show welcome message
+      // Store tokens for persistence
+      localStorage.setItem('sorc_accessToken', authResult.accessToken);
+      localStorage.setItem('sorc_idToken', authResult.idToken);
       var userInfo = parseJwt(authResult.idToken);
-      var welcome = document.createElement('div');
-      welcome.className = 'welcome-user';
-      welcome.innerHTML = '<h2>Welcome, ' + (userInfo.name || userInfo.email || 'Adventurer') + '!</h2>';
-      var legendSection = document.querySelector('.legend');
-      if (legendSection) legendSection.insertBefore(welcome, legendSection.firstChild);
-
-      // Optionally: store tokens in localStorage/sessionStorage for persistent login (advanced)
+      showWelcomeAndHideSignup(userInfo);
+      // Remove hash from URL for cleanliness
+      window.location.hash = '';
+    } else {
+      // On normal page load, check localStorage for tokens
+      var storedIdToken = localStorage.getItem('sorc_idToken');
+      if (storedIdToken) {
+        var userInfo = parseJwt(storedIdToken);
+        showWelcomeAndHideSignup(userInfo);
+      }
     }
     // Optionally: handle errors here
   });
