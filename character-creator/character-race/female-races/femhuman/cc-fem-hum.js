@@ -612,7 +612,7 @@ showJpegBtn.addEventListener("click", function() {
     profileCanvas.height = 3045;
     
     const profileSheet = new Image();
-    profileSheet.src = `${BASE}profile-sheet-template.png`;
+    profileSheet.src = `${BASE}sorc-blank-profile-page.png`;
     
     profileSheet.onload = function() {
       profileCtx.fillStyle = 'white';
@@ -631,7 +631,7 @@ showJpegBtn.addEventListener("click", function() {
     
     profileSheet.onerror = function() {
       console.error('Failed to load profile sheet template');
-      win.document.write('<p>Error: Could not load profile sheet. Make sure profile-sheet-template.png is in the assets folder.</p>');
+      win.document.write('<p>Error: Could not load profile sheet. Make sure sorc-blank-profile-page.png is in the assets folder.</p>');
     };
   }, 100);
 });
