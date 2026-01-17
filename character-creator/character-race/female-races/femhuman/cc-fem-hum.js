@@ -390,14 +390,14 @@ function renderCharacter(callback) {
   });
 }
 
-// *** ONLY CHANGE: Face close-up preview (clup window) – NO face drawn, only hair clup + face paint ***
+// ONLY THIS FUNCTION IS CHANGED:
 function renderFacePreview() {
   const canvas = document.getElementById("faceCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Solid bg for preview
+  // Background for preview
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -529,5 +529,6 @@ function renderFinalCharacter() {
   });
 }
 
-const physiqueForm = document.getElementById("physiqueForm");
-const physique
+// ... No further changes below this point (all your event listeners and navigation remain unchanged) ...
+
+// [The rest of your script including event listeners, forms, and any remaining code is unchanged.]
