@@ -401,9 +401,6 @@ function renderFacePreview() {
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
-  // NO FACE IMAGE - clup hair already has face baked in
-  
-  // Use regular facepaint image (NO clup)
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
     if (paint && paint.src && paint.enabled !== false) {
@@ -411,7 +408,6 @@ function renderFacePreview() {
     }
   }
   
-  // Use hair CLUP (keep clups for hair only)
   if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.enabled !== false) {
@@ -695,4 +691,27 @@ if (canvasEl) {
     }, 1200);
   });
   
-  canvasEl.addEventListener("mousemove", function
+  canvasEl.addEventListener("mousemove", function() {
+    touchMoved = true;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("mouseup", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("mouseleave", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("touchstart", function(e) {
+    if (e.touches
