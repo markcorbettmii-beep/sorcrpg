@@ -390,28 +390,28 @@ function renderCharacter(callback) {
   });
 }
 
-// ONLY THIS FUNCTION IS CHANGED:
 function renderFacePreview() {
   const canvas = document.getElementById("faceCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Background for preview
+  let layers = [];
+  
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  let layers = [];
-
-  // Face paint only (if chosen)
+  
+  // NO FACE IMAGE - clup hair already has face baked in
+  
+  // Use regular facepaint image (NO clup)
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
     if (paint && paint.src && paint.enabled !== false) {
       layers.push({ src: paint.src, layer: "facepaint" });
     }
   }
-
-  // Hair CLUP (always use hair.clup if available)
+  
+  // Use hair CLUP (keep clups for hair only)
   if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.enabled !== false) {
@@ -436,22 +436,12 @@ function renderFacePreview() {
   ).then(imgs => {
     imgs.forEach(im => {
       if (im) {
-        // Draw image centered, fit to canvas without cropping or stretching
-        const aspectImg = im.width / im.height;
-        const aspectCanvas = canvas.width / canvas.height;
-        let drawW, drawH, drawX, drawY;
-        if (aspectImg > aspectCanvas) {
-          drawH = canvas.height;
-          drawW = im.width * (canvas.height / im.height);
-          drawX = (canvas.width - drawW) / 2;
-          drawY = 0;
-        } else {
-          drawW = canvas.width;
-          drawH = im.height * (canvas.width / im.width);
-          drawX = 0;
-          drawY = (canvas.height - drawH) / 2;
-        }
-        ctx.drawImage(im, drawX, drawY, drawW, drawH);
+        const srcWidth = im.width;
+        const srcHeight = im.height * 0.4;
+        const srcX = 0;
+        const srcY = im.height * 0.15;
+        
+        ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
       }
     });
   });
@@ -529,6 +519,180 @@ function renderFinalCharacter() {
   });
 }
 
-// ... No further changes below this point (all your event listeners and navigation remain unchanged) ...
+const physiqueForm = document.getElementById("physiqueForm");
+const physiqueInput = document.getElementById("physiqueInput");
+const physiqueError = document.getElementById("physiqueError");
+const physiqueApprovedMsg = document.getElementById("physiqueApprovedMsg");
 
-// [The rest of your script including event listeners, forms, and any remaining code is unchanged.]
+physiqueForm.addEventListener("submit", function(e) {
+  e.preventDefault();
+  const val = parseInt(physiqueInput.value);
+  if (isNaN(val) || val < 1) {
+    physiqueError.style.display = "inline";
+    physiqueApprovedMsg.style.display = "none";
+    return;
+  }
+  
+  physiqueError.style.display = "none";
+  physiqueApprovedMsg.style.display = "block";
+  
+  let bodyType = "";
+  if (val <= 1) {
+    bodyType = "thin";
+  } else if (val >= 2 && val <= 4) {
+    bodyType = "lean";
+  } else if (val >= 5 && val <= 20) {
+    bodyType = "muscular";
+  } else {
+    bodyType = "massive";
+  }
+  
+  physiqueApprovedMsg.textContent = `Physique accepted! Body type: ${bodyType} (Physique: ${val}). Note: Physique mechanics are not functional while in beta.`;
+  
+  renderAllPickers();
+  resizeCanvasAndRender();
+});
+
+document.getElementById("equipArmorChk").addEventListener("change", function(e) {
+  selected.armor = e.target.checked;
+  renderCharacter();
+  renderFinalCharacter();
+});
+document.getElementById("equipHelmetChk").addEventListener("change", function(e) {
+  selected.helmet = e.target.checked;
+  renderCharacter();
+  renderFinalCharacter();
+});
+document.getElementById("equipWeaponsChk").addEventListener("change", function(e) {
+  selected.weapon = e.target.checked;
+  renderCharacter();
+  renderFinalCharacter();
+});
+
+document.getElementById("randomBtn").addEventListener("click", function() {
+  let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledBodiesIdx.length === 0) return;
+  
+  selected.body = enabledBodiesIdx[Math.floor(Math.random() * enabledBodiesIdx.length)];
+
+  let body = bodyOptions[selected.body];
+  let skin = (body && body.skin) ? body.skin : "med";
+  
+  let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
+  if (filteredFaces.length > 0) {
+    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+  } else {
+    selected.face = pickFirstEnabledFace(skin);
+  }
+  
+  let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledHairIdx.length > 0) {
+    selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
+  }
+
+  renderAllPickers();
+  resizeCanvasAndRender();
+  renderFacePreview();
+  renderFinalCharacter();
+});
+
+const showJpegBtn = document.getElementById("showJpegBtn");
+showJpegBtn.addEventListener("click", function() {
+  const win = window.open('', '_blank');
+  
+  setTimeout(() => {
+    const charCanvas = document.getElementById("finalCanvas");
+    const profileCanvas = document.createElement('canvas');
+    const profileCtx = profileCanvas.getContext('2d');
+    
+    profileCanvas.width = 2100;
+    profileCanvas.height = 3045;
+    
+    const profileSheet = new Image();
+    profileSheet.src = `${BASE}sorc-blank-profile-page.png`;
+    
+    profileSheet.onload = function() {
+      profileCtx.fillStyle = 'white';
+      profileCtx.fillRect(0, 0, profileCanvas.width, profileCanvas.height);
+      profileCtx.drawImage(profileSheet, 0, 0, profileCanvas.width, profileCanvas.height);
+      
+      const portraitX = 730;
+      const portraitY = 640;
+      const portraitWidth = 640;
+      const portraitHeight = 1000;
+      
+      profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
+      const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
+      win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
+    };
+    
+    profileSheet.onerror = function() {
+      console.error('Failed to load profile sheet template');
+      win.document.write('<p>Error: Could not load profile sheet. Make sure sorc-blank-profile-page.png is in the assets folder.</p>');
+    };
+  }, 100);
+});
+
+const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
+showBlankJpegBtn.addEventListener("click", function() {
+  const win = window.open('', '_blank');
+  
+  const blankImg = new Image();
+  blankImg.src = `${BASE}sorc-blank-profile-page.png`;
+  
+  blankImg.onload = function() {
+    const dataUrl = blankImg.src;
+    win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
+  };
+  
+  blankImg.onerror = function() {
+    console.error('Failed to load blank profile page');
+    win.document.write('<p>Error: Could not load sorc-blank-profile-page.png. Make sure it is in the assets folder.</p>');
+  };
+});
+
+document.getElementById("toPage2Btn").addEventListener("click", function() {
+  document.getElementById("page1").classList.remove("active");
+  document.getElementById("page2").classList.add("active");
+  renderFacePreview();
+  window.scrollTo(0, 0);
+});
+
+document.getElementById("toPage3Btn").addEventListener("click", function() {
+  document.getElementById("page2").classList.remove("active");
+  document.getElementById("page3").classList.add("active");
+  window.scrollTo(0, 0);
+  
+  setTimeout(function() {
+    const finalCanvas = document.getElementById("finalCanvas");
+    if (finalCanvas) {
+      const { width, height } = getCanvasSize();
+      finalCanvas.width = width;
+      finalCanvas.height = height;
+      finalCanvas.style.width = width + "px";
+      finalCanvas.style.height = height + "px";
+      renderFinalCharacter();
+    }
+  }, 50);
+});
+
+window.addEventListener("resize", resizeCanvasAndRender);
+window.addEventListener("orientationchange", resizeCanvasAndRender);
+
+const canvasEl = document.getElementById("charCanvas");
+let holdTimer = null;
+let touchMoved = false;
+
+if (canvasEl) {
+  canvasEl.addEventListener("mousedown", function(e) {
+    touchMoved = false;
+    holdTimer = setTimeout(function() {
+      if (!touchMoved) {
+        isPortraitView = !isPortraitView;
+        renderCharacter();
+      }
+    }, 1200);
+  });
+  
+  canvasEl.addEventListener("mousemove", function
