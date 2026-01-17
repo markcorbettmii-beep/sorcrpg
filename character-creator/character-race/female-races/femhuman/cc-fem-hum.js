@@ -24,35 +24,35 @@ const bodyOptions = [
 
 const faceOptions = [
   // Dark skin faces
-  { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, clup: `${BASE}femface1-drk-hzl-clup.png`, skin: "drk", eyes: "hzl", enabled: true },
-  { src: `${BASE}IMG_2983.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, clup: `${BASE}femface1-drk-grn-clup.png`, skin: "drk", eyes: "grn", enabled: true },
-  { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, clup: `${BASE}femface2-drk-grn-clup.png`, skin: "drk", eyes: "grn", enabled: true },
+  { src: `${BASE}femface1-drk-hzl.png`, thumb: `${BASE}femface1-drk-hzl-tmb.png`, skin: "drk", eyes: "hzl", enabled: true },
+  { src: `${BASE}IMG_2983.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
+  { src: `${BASE}femface2-drk-grn.png`, thumb: `${BASE}femface2-drk-grn-tmb.png`, skin: "drk", eyes: "grn", enabled: true },
   
   // Medium skin faces
-  { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, clup: `${BASE}femface1-med-brn-clup.png`, skin: "med", eyes: "brn", enabled: true },
-  { src: `${BASE}femface1-med-hzl.png`, thumb: `${BASE}femface1-med-hzl-tmb.png`, clup: `${BASE}femface1-med-hzl-clup.png`, skin: "med", eyes: "hzl", enabled: true },
-  { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, clup: `${BASE}femface1-med-grn-clup.png`, skin: "med", eyes: "grn", enabled: true },
-  { src: `${BASE}femface1-med-blk.png`, thumb: `${BASE}femface1-med-blk-tmb.png`, clup: `${BASE}femface1-med-blk-clup.png`, skin: "med", eyes: "blk", enabled: true },
-  { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, clup: `${BASE}femface2-med-brn-clup.png`, skin: "med", eyes: "brn", enabled: true },
-  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, clup: `${BASE}femface2-med-blu-clup.png`, skin: "med", eyes: "blu", enabled: true },
-  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, clup: `${BASE}femface2-med-grn-clup.png`, skin: "med", eyes: "grn", enabled: true },
-  { src: `${BASE}femface4-med-brn.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, clup: `${BASE}femface4-med-brn-clup.png`, skin: "med", eyes: "brn", enabled: true },
-  { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, clup: `${BASE}femface5-med-blu-clup.png`, skin: "med", eyes: "blu", enabled: true },
+  { src: `${BASE}femface1-med-brn.png`, thumb: `${BASE}femface1-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
+  { src: `${BASE}femface1-med-hzl.png`, thumb: `${BASE}femface1-med-hzl-tmb.png`, skin: "med", eyes: "hzl", enabled: true },
+  { src: `${BASE}femface1-med-grn.png`, thumb: `${BASE}femface1-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
+  { src: `${BASE}femface1-med-blk.png`, thumb: `${BASE}femface1-med-blk-tmb.png`, skin: "med", eyes: "blk", enabled: true },
+  { src: `${BASE}femface2-med-brn.png`, thumb: `${BASE}femface2-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
+  { src: `${BASE}femface2-med-blu.png`, thumb: `${BASE}femface2-med-blu-tmb.png`, skin: "med", eyes: "blu", enabled: true },
+  { src: `${BASE}femface2-med-grn.png`, thumb: `${BASE}femface2-med-grn-tmb.png`, skin: "med", eyes: "grn", enabled: true },
+  { src: `${BASE}femface4-med-brn.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
+  { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
   // Pale skin faces
-  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-grn-clup.png`, skin: "pale", eyes: "grn", enabled: true },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: true }
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true },
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
 const facePaintOptions = [
-  { src: "", thumb: "", clup: "", label: "None", enabled: true },
-  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, clup: `${BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
-  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, clup: `${BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
-  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, clup: `${BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
-  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, clup: `${BASE}facepnt5-red-clup.png`, color: "red", enabled: true }
+  { src: "", thumb: "", label: "None", enabled: true },
+  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, color: "red", enabled: true },
+  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, color: "red", enabled: true }
 ];
 
 const hairOptions = [
@@ -401,22 +401,23 @@ function renderFacePreview() {
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
+  // Use regular face image (NO clup)
   if (selected.face !== -1 && faceOptions[selected.face]) {
     let face = faceOptions[selected.face];
-    if (face && face.enabled !== false) {
-      let faceImg = face.clup && face.clup.length > 0 ? face.clup : face.src;
-      if (faceImg) layers.push({ src: faceImg, layer: "face" });
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
     }
   }
   
+  // Use regular facepaint image (NO clup)
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
-    if (paint && paint.enabled !== false) {
-      let paintImg = paint.clup && paint.clup.length > 0 ? paint.clup : paint.src;
-      if (paintImg) layers.push({ src: paintImg, layer: "facepaint" });
+    if (paint && paint.src && paint.enabled !== false) {
+      layers.push({ src: paint.src, layer: "facepaint" });
     }
   }
   
+  // Use hair CLUP (keep clups for hair only)
   if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.enabled !== false) {
@@ -433,7 +434,7 @@ function renderFacePreview() {
         im.src = opt.src;
         im.onload = () => resolve(im);
         im.onerror = () => {
-          console.warn(`Failed to load clup image: ${opt.src}`);
+          console.warn(`Failed to load preview image: ${opt.src}`);
           resolve(null);
         };
       })
@@ -441,7 +442,12 @@ function renderFacePreview() {
   ).then(imgs => {
     imgs.forEach(im => {
       if (im) {
-        ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+        const srcWidth = im.width;
+        const srcHeight = im.height * 0.4;
+        const srcX = 0;
+        const srcY = im.height * 0.15;
+        
+        ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
       }
     });
   });
