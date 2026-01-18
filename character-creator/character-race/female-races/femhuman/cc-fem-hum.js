@@ -46,13 +46,13 @@ const faceOptions = [
 ];
 
 const facePaintOptions = [
-  { src: "", thumb: "", label: "None", enabled: true },
-  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, color: "red", enabled: true },
-  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, color: "blk", enabled: true },
-  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, color: "blk", enabled: true },
-  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, color: "red", enabled: true }
+  { src: "", thumb: "", clup: "", label: "None", enabled: true },
+  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, clup: `${BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
+  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, clup: `${BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, clup: `${BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, clup: `${BASE}facepnt5-red-clup.png`, color: "red", enabled: true }
 ];
 
 const hairOptions = [
@@ -402,23 +402,25 @@ function renderFacePreview() {
 
   let layers = [];
   
-  // REMOVED: face layer - we don't want femface images in the closeup preview
+  // NO face layer - faces don't appear in closeup
   
-  // Use regular facepaint image (NO clup)
+  // Use facepaint CLUP for closeup window
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
-    if (paint && paint.src && paint.enabled !== false) {
-      layers.push({ src: paint.src, layer: "facepaint", useCloseupFit: false });
+    if (paint && paint.enabled !== false) {
+      let paintImg = paint.clup && paint.clup.length > 0 ? paint.clup : paint.src;
+      if (paintImg) {
+        layers.push({ src: paintImg, layer: "facepaint", useCloseupFit: paint.clup && paint.clup.length > 0 });
+      }
     }
   }
   
-  // Use hair CLUP with proper fitting (no stretch)
+  // Use hair CLUP for closeup window
   if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.enabled !== false) {
       let hairImg = hair.clup && hair.clup.length > 0 ? hair.clup : hair.src;
       if (hairImg) {
-        // Mark hair clup to use contain-style fitting
         layers.push({ src: hairImg, layer: "hair", useCloseupFit: hair.clup && hair.clup.length > 0 });
       }
     }
@@ -443,7 +445,7 @@ function renderFacePreview() {
         const im = result.img;
         
         if (result.useCloseupFit) {
-          // Hair closeup: fit without stretching (contain behavior)
+          // CLUP images: fit without stretching (contain behavior)
           const imgAspect = im.width / im.height;
           const canvasAspect = canvas.width / canvas.height;
           
@@ -465,13 +467,8 @@ function renderFacePreview() {
           
           ctx.drawImage(im, drawX, drawY, drawWidth, drawHeight);
         } else {
-          // Facepaint: crop and draw like before
-          const srcWidth = im.width;
-          const srcHeight = im.height * 0.4;
-          const srcX = 0;
-          const srcY = im.height * 0.15;
-          
-          ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
+          // Fallback if no clup available: stretch to fill
+          ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
         }
       }
     });
