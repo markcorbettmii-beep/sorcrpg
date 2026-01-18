@@ -396,33 +396,31 @@ function renderFacePreview() {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  let layers = [];
-  
+  // Dark background
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let layers = [];
   
-  // Use regular face image (NO clup)
-  if (selected.face !== -1 && faceOptions[selected.face]) {
-    let face = faceOptions[selected.face];
-    if (face && face.src && face.enabled !== false) {
-      layers.push({ src: face.src, layer: "face" });
-    }
-  }
+  // REMOVED: face layer - we don't want femface images in the closeup preview
   
   // Use regular facepaint image (NO clup)
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
     if (paint && paint.src && paint.enabled !== false) {
-      layers.push({ src: paint.src, layer: "facepaint" });
+      layers.push({ src: paint.src, layer: "facepaint", useCloseupFit: false });
     }
   }
   
-  // Use hair CLUP (keep clups for hair only)
+  // Use hair CLUP with proper fitting (no stretch)
   if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.enabled !== false) {
       let hairImg = hair.clup && hair.clup.length > 0 ? hair.clup : hair.src;
-      if (hairImg) layers.push({ src: hairImg, layer: "hair" });
+      if (hairImg) {
+        // Mark hair clup to use contain-style fitting
+        layers.push({ src: hairImg, layer: "hair", useCloseupFit: hair.clup && hair.clup.length > 0 });
+      }
     }
   }
 
@@ -432,22 +430,49 @@ function renderFacePreview() {
         if (!opt || !opt.src) return resolve(null);
         const im = new window.Image();
         im.src = opt.src;
-        im.onload = () => resolve(im);
+        im.onload = () => resolve({ img: im, useCloseupFit: opt.useCloseupFit, layer: opt.layer });
         im.onerror = () => {
           console.warn(`Failed to load preview image: ${opt.src}`);
           resolve(null);
         };
       })
     )
-  ).then(imgs => {
-    imgs.forEach(im => {
-      if (im) {
-        const srcWidth = im.width;
-        const srcHeight = im.height * 0.4;
-        const srcX = 0;
-        const srcY = im.height * 0.15;
+  ).then(results => {
+    results.forEach(result => {
+      if (result && result.img) {
+        const im = result.img;
         
-        ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
+        if (result.useCloseupFit) {
+          // Hair closeup: fit without stretching (contain behavior)
+          const imgAspect = im.width / im.height;
+          const canvasAspect = canvas.width / canvas.height;
+          
+          let drawWidth, drawHeight, drawX, drawY;
+          
+          if (imgAspect > canvasAspect) {
+            // Image is wider than canvas - fit to width
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / imgAspect;
+            drawX = 0;
+            drawY = (canvas.height - drawHeight) / 2;
+          } else {
+            // Image is taller than canvas - fit to height
+            drawHeight = canvas.height;
+            drawWidth = canvas.height * imgAspect;
+            drawX = (canvas.width - drawWidth) / 2;
+            drawY = 0;
+          }
+          
+          ctx.drawImage(im, drawX, drawY, drawWidth, drawHeight);
+        } else {
+          // Facepaint: crop and draw like before
+          const srcWidth = im.width;
+          const srcHeight = im.height * 0.4;
+          const srcX = 0;
+          const srcY = im.height * 0.15;
+          
+          ctx.drawImage(im, srcX, srcY, srcWidth, srcHeight, 0, 0, canvas.width, canvas.height);
+        }
       }
     });
   });
