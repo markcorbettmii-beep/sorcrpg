@@ -401,6 +401,15 @@ function renderFacePreview() {
   ctx.fillStyle = '#0a0a0a';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
+  // Use regular face image (NO clup)
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
+    }
+  }
+  
+  // Use regular facepaint image (NO clup)
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
     if (paint && paint.src && paint.enabled !== false) {
@@ -408,6 +417,7 @@ function renderFacePreview() {
     }
   }
   
+  // Use hair CLUP (keep clups for hair only)
   if (selected.hair !== -1 && hairOptions[selected.hair]) {
     let hair = hairOptions[selected.hair];
     if (hair && hair.enabled !== false) {
@@ -714,4 +724,60 @@ if (canvasEl) {
   });
   
   canvasEl.addEventListener("touchstart", function(e) {
-    if (e.touches
+    if (e.touches.length > 1) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      return;
+    }
+    
+    touchMoved = false;
+    holdTimer = setTimeout(function() {
+      if (!touchMoved) {
+        isPortraitView = !isPortraitView;
+        renderCharacter();
+      }
+    }, 1200);
+    e.preventDefault();
+  });
+  
+  canvasEl.addEventListener("touchmove", function(e) {
+    if (e.touches.length > 1) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      return;
+    }
+    
+    touchMoved = true;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("touchend", function(e) {
+    if (e.touches.length > 0) {
+      return;
+    }
+    
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    e.preventDefault();
+  });
+  
+  canvasEl.addEventListener("touchcancel", function(e) {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+}
+
+selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
+renderAllPickers();
+resizeCanvasAndRender();
