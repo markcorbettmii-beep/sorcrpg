@@ -44,69 +44,6 @@
             margin: 1rem auto 0 auto;
             padding-left: 1.2em;
         }
-        
-        /* Lawful Mode Theme */
-        body.lawful-mode {
-            background: #f5f5f0;
-            color: #2c2c2c;
-        }
-        body.lawful-mode header {
-            background: #ffffff;
-            border-bottom: 2px solid #d4af37;
-        }
-        body.lawful-mode nav a {
-            color: #2c2c2c;
-        }
-        body.lawful-mode nav a:hover {
-            color: #d4af37;
-        }
-        body.lawful-mode .sorc-beyond {
-            background: #ffffff;
-            color: #2c2c2c;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        body.lawful-mode .sorc-beyond h2 {
-            color: #d4af37;
-        }
-        body.lawful-mode section {
-            background: #ffffff;
-            color: #2c2c2c;
-        }
-        body.lawful-mode h2, body.lawful-mode h3 {
-            color: #d4af37;
-        }
-        body.lawful-mode .news-card,
-        body.lawful-mode .creator-card,
-        body.lawful-mode .tier-card {
-            background: #ffffff;
-            color: #2c2c2c;
-            border: 1px solid #e0e0e0;
-        }
-        body.lawful-mode .cta-btn {
-            background: #d4af37;
-            color: #2c2c2c;
-        }
-        body.lawful-mode .cta-btn:hover {
-            background: #c19b2b;
-        }
-        body.lawful-mode footer {
-            background: #2c2c2c;
-            color: #f5f5f0;
-        }
-        body.lawful-mode .signup-card {
-            background: #ffffff;
-            color: #2c2c2c;
-            border: 1px solid #e0e0e0;
-        }
-        body.lawful-mode .signup-primary {
-            background: #d4af37;
-            color: #2c2c2c;
-        }
-        body.lawful-mode .signup-oauth {
-            background: #f5f5f0;
-            color: #2c2c2c;
-            border: 1px solid #e0e0e0;
-        }
     </style>
 </head>
 <body>
@@ -442,4 +379,67 @@
     </main>
     <footer>
         <div class="container">
-            <span>Slayers of Rings § Crowns © 2026 Ogre Adventurer. All Rights
+            <span>Slayers of Rings § Crowns © 2026 Ogre Adventurer. All Rights Reserved. ESRB 18+.</span>
+        </div>
+    </footer>
+    <script src="main.js"></script>
+    <script>
+        // Legend carousel functionality
+        let currentLegendSlide = 1;
+        function showLegendSlide(slideNumber) {
+            const slides = document.querySelectorAll('.legend-slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            document.getElementById('legendSlide' + slideNumber).classList.add('active');
+            currentLegendSlide = slideNumber;
+        }
+        function nextLegendSlide() {
+            showLegendSlide(2);
+        }
+        function previousLegendSlide() {
+            showLegendSlide(1);
+        }
+    </script>
+    <!-- COOKIE CONSENT -->
+    <div id="cookieConsent" style="display:none;">
+      <div class="cookie-popup">
+        <h3>Essentia Cookie Notice</h3>
+        <p>
+          Slayers of Rings § Crowns (SorC) uses cookies to enhance your journey through Essentia, personalize your experience, and support site functionality. By continuing, you accept the use of cookies.
+        </p>
+        <button id="acceptCookiesBtn" class="cta-btn">Accept & Continue</button>
+      </div>
+    </div>
+    <!-- Auth0 Google Login Integration -->
+    <script src="https://cdn.auth0.com/js/auth0/9.19/auth0.min.js"></script>
+    <script>
+      // Initialize Auth0
+      var auth0 = new auth0.WebAuth({
+        domain:       'dev-rrhpvnijd21u28t5.us.auth0.com',
+        clientID:     'vgdkuegvHBwQ9wT1ypE4xwhngWZf3E5n',
+        redirectUri:  window.location.href, // change if you want to redirect to a specific page after login
+        responseType: 'token id_token',
+        scope:        'openid profile email'
+      });
+
+      // Attach Auth0 Google login to all "Sign up with Google" buttons
+      document.addEventListener('DOMContentLoaded', function() {
+        var googleBtns = document.querySelectorAll('.signup-oauth.oauth-google');
+        googleBtns.forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            auth0.authorize({
+              connection: 'google-oauth2'
+            });
+          });
+        });
+      });
+    </script>
+<div id="age-verification" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+  <div style="background:#222; color:#fff; padding:2rem; border-radius:1rem; max-width:400px; margin:auto; text-align:center;">
+    <h2>Age Verification</h2>
+    <p>You must be 18 or older to enter this site. Are you of age?</p>
+    <button id="age-yes" class="cta-btn" style="margin:1rem;">Yes, I am 18 or older</button>
+    <button id="age-no" class="cta-btn" style="background:#d0021b; color:#fff;">No</button>
+  </div>
+</div></body>
+</html>
