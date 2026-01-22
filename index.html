@@ -9,7 +9,6 @@
     <meta name="keywords" content="Slayers of Rings and Crowns, SorC, SorC Beyond, RPG, TTRPG, sci-fantasy, tabletop game, fantasy adventure, online RPG, fantasy role-playing, innovative TTRPG, Ogre Adventurer, character sheets, digital RPG, campaigns, quests, epic fantasy, game setting, fantasy universe">
     <meta name="author" content="Corbett, Ogre Adventurer">
 
-
     <link rel="icon" href="IMG_3419.jpeg">
 
     <!-- Additional Meta Tags for Social Sharing (Optional) -->
@@ -51,6 +50,81 @@
             display: inline-block;
             margin: 1rem auto 0 auto;
             padding-left: 1.2em;
+        }
+        
+        /* Lawful Mode Theme */
+        body.lawful-mode {
+            background: #f5f5f0;
+            color: #2c2c2c;
+        }
+        body.lawful-mode header {
+            background: #ffffff;
+            border-bottom: 2px solid #d4af37;
+        }
+        body.lawful-mode nav a {
+            color: #2c2c2c;
+        }
+        body.lawful-mode nav a:hover {
+            color: #d4af37;
+        }
+        body.lawful-mode .sorc-beyond {
+            background: #ffffff;
+            color: #2c2c2c;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        body.lawful-mode .sorc-beyond h2 {
+            color: #d4af37;
+        }
+        body.lawful-mode section {
+            background: #ffffff;
+            color: #2c2c2c;
+        }
+        body.lawful-mode h2, body.lawful-mode h3 {
+            color: #d4af37;
+        }
+        body.lawful-mode .news-card,
+        body.lawful-mode .creator-card,
+        body.lawful-mode .tier-card {
+            background: #ffffff;
+            color: #2c2c2c;
+            border: 1px solid #e0e0e0;
+        }
+        body.lawful-mode .cta-btn {
+            background: #d4af37;
+            color: #2c2c2c;
+        }
+        body.lawful-mode .cta-btn:hover {
+            background: #c19b2b;
+        }
+        body.lawful-mode footer {
+            background: #2c2c2c;
+            color: #f5f5f0;
+        }
+        body.lawful-mode .signup-card {
+            background: #ffffff;
+            color: #2c2c2c;
+            border: 1px solid #e0e0e0;
+        }
+        body.lawful-mode .signup-primary {
+            background: #d4af37;
+            color: #2c2c2c;
+        }
+        body.lawful-mode .signup-oauth {
+            background: #f5f5f0;
+            color: #2c2c2c;
+            border: 1px solid #e0e0e0;
+        }
+        body.lawful-mode .legend {
+            background: #f5f5f0;
+        }
+        body.lawful-mode .about,
+        body.lawful-mode .news-preview,
+        body.lawful-mode .back-of-book,
+        body.lawful-mode .explore-more,
+        body.lawful-mode .partnered-creators,
+        body.lawful-mode .level-up-game {
+            background: #ffffff;
+            border: 1px solid #d4af37;
         }
     </style>
 </head>
@@ -410,6 +484,27 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
         <button id="acceptCookiesBtn" class="cta-btn">Accept & Continue</button>
       </div>
     </div>
+    
+    <!-- AGE VERIFICATION -->
+    <div id="age-verification" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+      <div style="background:#222; color:#fff; padding:2rem; border-radius:1rem; max-width:400px; margin:auto; text-align:center;">
+        <h2>Age Verification</h2>
+        <p>You must be 18 or older to enter this site. Are you of age?</p>
+        <button id="age-yes" class="cta-btn" style="margin:1rem;">Yes, I am 18 or older</button>
+        <button id="age-no" class="cta-btn" style="background:#d0021b; color:#fff;">No</button>
+      </div>
+    </div>
+    
+    <!-- THEME SELECTOR -->
+    <div id="theme-selector" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+      <div style="background:#222; color:#fff; padding:2rem; border-radius:1rem; max-width:400px; margin:auto; text-align:center;">
+        <h2>Choose Your Alignment</h2>
+        <p>Select your preferred theme for Essentia.</p>
+        <button id="theme-evil" class="cta-btn" style="margin:1rem; background:#d0021b; color:#fff;">Evil Mode</button>
+        <button id="theme-lawful" class="cta-btn" style="margin:1rem; background:#d4af37; color:#2c2c2c;">Lawful Mode</button>
+      </div>
+    </div>
+    
     <!-- Auth0 Google Login Integration -->
     <script src="https://cdn.auth0.com/js/auth0/9.19/auth0.min.js"></script>
     <script>
@@ -433,16 +528,80 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
             });
           });
         });
+
+        // Cookie Consent Logic
+        var cookieConsent = document.getElementById('cookieConsent');
+        var acceptCookiesBtn = document.getElementById('acceptCookiesBtn');
+        
+        if (!localStorage.getItem('cookiesAccepted')) {
+          cookieConsent.style.display = 'flex';
+        } else {
+          showAgeVerification();
+        }
+
+        acceptCookiesBtn.addEventListener('click', function() {
+          localStorage.setItem('cookiesAccepted', 'true');
+          cookieConsent.style.display = 'none';
+          showAgeVerification();
+        });
+
+        // Age Verification Logic
+        function showAgeVerification() {
+          var ageVerification = document.getElementById('age-verification');
+          var ageYesBtn = document.getElementById('age-yes');
+          var ageNoBtn = document.getElementById('age-no');
+
+          if (!localStorage.getItem('ageVerified')) {
+            ageVerification.style.display = 'flex';
+          } else {
+            showThemeSelector();
+          }
+
+          ageYesBtn.addEventListener('click', function() {
+            localStorage.setItem('ageVerified', 'true');
+            ageVerification.style.display = 'none';
+            showThemeSelector();
+          });
+
+          ageNoBtn.addEventListener('click', function() {
+            alert('You must be 18 or older to access this site.');
+            window.location.href = 'https://www.google.com';
+          });
+        }
+
+        // Theme Selector Logic
+        function showThemeSelector() {
+          var themeSelector = document.getElementById('theme-selector');
+          var themeEvilBtn = document.getElementById('theme-evil');
+          var themeLawfulBtn = document.getElementById('theme-lawful');
+
+          if (!localStorage.getItem('themeSelected')) {
+            themeSelector.style.display = 'flex';
+          } else {
+            applyTheme(localStorage.getItem('themeSelected'));
+          }
+
+          themeEvilBtn.addEventListener('click', function() {
+            localStorage.setItem('themeSelected', 'evil');
+            applyTheme('evil');
+            themeSelector.style.display = 'none';
+          });
+
+          themeLawfulBtn.addEventListener('click', function() {
+            localStorage.setItem('themeSelected', 'lawful');
+            applyTheme('lawful');
+            themeSelector.style.display = 'none';
+          });
+        }
+
+        function applyTheme(theme) {
+          if (theme === 'lawful') {
+            document.body.classList.add('lawful-mode');
+          } else {
+            document.body.classList.remove('lawful-mode');
+          }
+        }
       });
     </script>
-<div id="age-verification" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
-  <div style="background:#222; color:#fff; padding:2rem; border-radius:1rem; max-width:400px; margin:auto; text-align:center;">
-    <h2>Age Verification</h2>
-    <p>You must be 18 or older to enter this site. Are you of age?</p>
-    <button id="age-yes" class="cta-btn" style="margin:1rem;">Yes, I am 18 or older</button>
-    <button id="age-no" class="cta-btn" style="background:#d0021b; color:#fff;">No</button>
-  </div>
-</div>
 </body>
 </html>
-
