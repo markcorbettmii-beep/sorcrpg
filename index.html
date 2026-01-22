@@ -52,6 +52,64 @@
             padding-left: 1.2em;
         }
         
+        /* Permanent Theme Toggle Buttons */
+        .theme-toggle-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .theme-toggle-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .theme-toggle-btn.evil {
+            background: #d0021b;
+            color: #fff;
+            border-color: #d0021b;
+        }
+        
+        .theme-toggle-btn.evil:hover {
+            background: #a50013;
+        }
+        
+        .theme-toggle-btn.lawful {
+            background: #d4af37;
+            color: #2c2c2c;
+            border-color: #d4af37;
+        }
+        
+        .theme-toggle-btn.lawful:hover {
+            background: #c19b2b;
+        }
+        
+        .theme-toggle-btn.active {
+            box-shadow: 0 0 10px currentColor;
+            transform: scale(1.05);
+        }
+        
+        /* Mobile responsiveness for theme buttons */
+        @media (max-width: 600px) {
+            .theme-toggle-container {
+                top: 10px;
+                right: 10px;
+                gap: 0.3rem;
+            }
+            .theme-toggle-btn {
+                padding: 0.4rem 0.7rem;
+                font-size: 0.8rem;
+            }
+        }
+        
         /* Lawful Mode Theme */
         body.lawful-mode {
             background: #f5f5f0;
@@ -129,6 +187,12 @@
     </style>
 </head>
 <body>
+    <!-- PERMANENT THEME TOGGLE BUTTONS -->
+    <div class="theme-toggle-container">
+        <button class="theme-toggle-btn evil" id="permanentEvilBtn" title="Switch to Evil Mode">Evil</button>
+        <button class="theme-toggle-btn lawful" id="permanentLawfulBtn" title="Switch to Lawful Mode">Lawful</button>
+    </div>
+    
     <header>
         <div class="container">
             <!-- Site-wide header image -->
@@ -495,7 +559,7 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
       </div>
     </div>
     
-    <!-- THEME SELECTOR -->
+    <!-- THEME SELECTOR (Initial popup) -->
     <div id="theme-selector" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
       <div style="background:#222; color:#fff; padding:2rem; border-radius:1rem; max-width:400px; margin:auto; text-align:center;">
         <h2>Choose Your Alignment</h2>
@@ -569,30 +633,51 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
           });
         }
 
-        // Theme Selector Logic
+        // Theme Selector Logic (Initial popup)
         function showThemeSelector() {
           var themeSelector = document.getElementById('theme-selector');
           var themeEvilBtn = document.getElementById('theme-evil');
           var themeLawfulBtn = document.getElementById('theme-lawful');
 
-          if (!localStorage.getItem('themeSelected')) {
-            themeSelector.style.display = 'flex';
-          } else {
+          // If theme already selected, apply it and don't show popup
+          if (localStorage.getItem('themeSelected')) {
             applyTheme(localStorage.getItem('themeSelected'));
+            updatePermanentButtons();
+          } else {
+            // Show popup for first-time selection
+            themeSelector.style.display = 'flex';
           }
 
           themeEvilBtn.addEventListener('click', function() {
             localStorage.setItem('themeSelected', 'evil');
             applyTheme('evil');
+            updatePermanentButtons();
             themeSelector.style.display = 'none';
           });
 
           themeLawfulBtn.addEventListener('click', function() {
             localStorage.setItem('themeSelected', 'lawful');
             applyTheme('lawful');
+            updatePermanentButtons();
             themeSelector.style.display = 'none';
           });
         }
+
+        // Permanent Theme Toggle Buttons
+        var permanentEvilBtn = document.getElementById('permanentEvilBtn');
+        var permanentLawfulBtn = document.getElementById('permanentLawfulBtn');
+
+        permanentEvilBtn.addEventListener('click', function() {
+          localStorage.setItem('themeSelected', 'evil');
+          applyTheme('evil');
+          updatePermanentButtons();
+        });
+
+        permanentLawfulBtn.addEventListener('click', function() {
+          localStorage.setItem('themeSelected', 'lawful');
+          applyTheme('lawful');
+          updatePermanentButtons();
+        });
 
         function applyTheme(theme) {
           if (theme === 'lawful') {
@@ -601,6 +686,21 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
             document.body.classList.remove('lawful-mode');
           }
         }
+
+        function updatePermanentButtons() {
+          var currentTheme = localStorage.getItem('themeSelected') || 'evil';
+          permanentEvilBtn.classList.remove('active');
+          permanentLawfulBtn.classList.remove('active');
+          
+          if (currentTheme === 'lawful') {
+            permanentLawfulBtn.classList.add('active');
+          } else {
+            permanentEvilBtn.classList.add('active');
+          }
+        }
+
+        // Initialize permanent buttons on page load
+        updatePermanentButtons();
       });
     </script>
 </body>
