@@ -54,12 +54,10 @@
         
         /* Permanent Theme Toggle Buttons */
         .theme-toggle-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
             display: flex;
             gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            align-items: center;
         }
         
         .theme-toggle-btn {
@@ -98,15 +96,14 @@
         }
         
         /* Mobile responsiveness for theme buttons */
-        @media (max-width: 600px) {
+        @media (max-width: 800px) {
             .theme-toggle-container {
-                top: 10px;
-                right: 10px;
+                padding: 0.3rem 0.5rem;
                 gap: 0.3rem;
             }
             .theme-toggle-btn {
                 padding: 0.4rem 0.7rem;
-                font-size: 0.8rem;
+                font-size: 0.75rem;
             }
         }
         
@@ -184,15 +181,12 @@
             background: #ffffff;
             border: 1px solid #d4af37;
         }
+        body.lawful-mode .menu-toggle {
+            color: #2c2c2c;
+        }
     </style>
 </head>
 <body>
-    <!-- PERMANENT THEME TOGGLE BUTTONS -->
-    <div class="theme-toggle-container">
-        <button class="theme-toggle-btn evil" id="permanentEvilBtn" title="Switch to Evil Mode">Evil</button>
-        <button class="theme-toggle-btn lawful" id="permanentLawfulBtn" title="Switch to Lawful Mode">Lawful</button>
-    </div>
-    
     <header>
         <div class="container">
             <!-- Site-wide header image -->
@@ -209,6 +203,13 @@
         </div>
     </header>  
     <nav>
+        <!-- PERMANENT THEME TOGGLE BUTTONS - Left side -->
+        <div class="theme-toggle-container">
+            <button class="theme-toggle-btn evil" id="permanentEvilBtn" title="Switch to Evil Mode">Evil</button>
+            <button class="theme-toggle-btn lawful" id="permanentLawfulBtn" title="Switch to Lawful Mode">Lawful</button>
+        </div>
+        
+        <!-- Hamburger Menu - Right side -->
         <button class="menu-toggle" id="menuToggle">&#9776;</button>
         <ul id="navLinks">
             <li><a href="#">Home</a></li>
@@ -537,6 +538,32 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
         function previousLegendSlide() {
             showLegendSlide(1);
         }
+        
+        // Theme switching functions - GLOBAL SCOPE
+        function applyTheme(theme) {
+            if (theme === 'lawful') {
+                document.body.classList.add('lawful-mode');
+            } else {
+                document.body.classList.remove('lawful-mode');
+            }
+        }
+
+        function updatePermanentButtons() {
+            var currentTheme = localStorage.getItem('themeSelected') || 'evil';
+            var permanentEvilBtn = document.getElementById('permanentEvilBtn');
+            var permanentLawfulBtn = document.getElementById('permanentLawfulBtn');
+            
+            if (permanentEvilBtn && permanentLawfulBtn) {
+                permanentEvilBtn.classList.remove('active');
+                permanentLawfulBtn.classList.remove('active');
+                
+                if (currentTheme === 'lawful') {
+                    permanentLawfulBtn.classList.add('active');
+                } else {
+                    permanentEvilBtn.classList.add('active');
+                }
+            }
+        }
     </script>
     <!-- COOKIE CONSENT -->
     <div id="cookieConsent" style="display:none;">
@@ -667,36 +694,18 @@ Duel to the death or practice safely using wooden weapons and fizzled spells (At
         var permanentEvilBtn = document.getElementById('permanentEvilBtn');
         var permanentLawfulBtn = document.getElementById('permanentLawfulBtn');
 
-        permanentEvilBtn.addEventListener('click', function() {
-          localStorage.setItem('themeSelected', 'evil');
-          applyTheme('evil');
-          updatePermanentButtons();
-        });
+        if (permanentEvilBtn && permanentLawfulBtn) {
+            permanentEvilBtn.addEventListener('click', function() {
+              localStorage.setItem('themeSelected', 'evil');
+              applyTheme('evil');
+              updatePermanentButtons();
+            });
 
-        permanentLawfulBtn.addEventListener('click', function() {
-          localStorage.setItem('themeSelected', 'lawful');
-          applyTheme('lawful');
-          updatePermanentButtons();
-        });
-
-        function applyTheme(theme) {
-          if (theme === 'lawful') {
-            document.body.classList.add('lawful-mode');
-          } else {
-            document.body.classList.remove('lawful-mode');
-          }
-        }
-
-        function updatePermanentButtons() {
-          var currentTheme = localStorage.getItem('themeSelected') || 'evil';
-          permanentEvilBtn.classList.remove('active');
-          permanentLawfulBtn.classList.remove('active');
-          
-          if (currentTheme === 'lawful') {
-            permanentLawfulBtn.classList.add('active');
-          } else {
-            permanentEvilBtn.classList.add('active');
-          }
+            permanentLawfulBtn.addEventListener('click', function() {
+              localStorage.setItem('themeSelected', 'lawful');
+              applyTheme('lawful');
+              updatePermanentButtons();
+            });
         }
 
         // Initialize permanent buttons on page load
