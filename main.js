@@ -183,3 +183,18 @@ function handleAuth0Login() {
 }
 
 document.addEventListener('DOMContentLoaded', handleAuth0Login);
+// ... all your existing code above ...
+
+document.addEventListener('DOMContentLoaded', handleAuth0Login);
+
+// Load footer on all pages
+document.addEventListener('DOMContentLoaded', function() {
+  var footerDiv = document.getElementById('footer');
+  if (footerDiv) {
+    fetch('/footer.html')
+      .then(response => response.text())
+      .then(data => {
+        footerDiv.innerHTML = data;
+      });
+  }
+});
