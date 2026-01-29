@@ -1,4 +1,29 @@
+// Apply theme across all pages
+document.addEventListener('DOMContentLoaded', function() {
+  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+  if (savedTheme === 'lawful') {
+    document.body.classList.add('lawful-mode');
+  }
+});
+
 // Navigation menu logic
+document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    const closeLink = document.getElementById('closeLink');
+
+    // Toggle menu when hamburger button is clicked
+    menuToggle.addEventListener('click', function() {
+        navLinks.classList.toggle('active');
+    });
+
+    // Close menu when "Close" link is clicked
+    closeLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        navLinks.classList.remove('active');
+    });
+});
+// ... rest of your existing code// Navigation menu logic
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
