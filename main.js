@@ -1,79 +1,93 @@
 // ========== THEME SYSTEM ==========
-// Apply theme immediately (before DOM loads) to prevent flash
+// Apply saved theme IMMEDIATELY (before DOMContentLoaded to prevent flash)
 (function() {
   var savedTheme = localStorage.getItem('themeSelected') || 'evil';
   if (savedTheme === 'lawful') {
-    document.documentElement.classList.add('lawful-mode');
+    document.body.classList.add('lawful-mode');
   }
 })();
 
-// Theme switching function - call from buttons
-function setTheme(theme) {
-  localStorage.setItem('themeSelected', theme);
-  if (theme === 'lawful') {
-    document.body.classList.add('lawful-mode');
-    document.documentElement.classList.add('lawful-mode');
-  } else {
-    document.body.classList.remove('lawful-mode');
-    document.documentElement.classList.remove('lawful-mode');
-  }
-  updateThemeButtons();
-}
-
-// Update button active states
-function updateThemeButtons() {
-  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
-  var evilBtns = document.querySelectorAll('.theme-toggle-btn.evil');
-  var lawfulBtns = document.querySelectorAll('.theme-toggle-btn.lawful');
+// Theme toggle functionality (only works on home page where buttons exist)
+document.addEventListener('DOMContentLoaded', function() {
+  // Support both class-based (.theme-toggle-btn.evil) and ID-based (#theme-evil) selectors
+  var evilBtn = document.querySelector('.theme-toggle-btn.evil') || document.getElementById('theme-evil');
+  var lawfulBtn = document.querySelector('.theme-toggle-btn.lawful') || document.getElementById('theme-lawful');
   
-  evilBtns.forEach(function(btn) {
-    btn.classList.toggle('active', savedTheme === 'evil');
-  });
-  lawfulBtns.forEach(function(btn) {
-    btn.classList.toggle('active', savedTheme === 'lawful');
-  });
-}
+  // Only set up toggles if buttons exist (home page only)
+  if (evilBtn && lawfulBtn) {
+    // Update button states based on current theme
+    function updateButtonStates() {
+      var currentTheme = localStorage.getItem('themeSelected') || 'evil';
+      if (currentTheme === 'evil') {
+        evilBtn.classList.add('active');
+        lawfulBtn.classList.remove('active');
+      } else {
+        lawfulBtn.classList.add('active');
+        evilBtn.classList.remove('active');
+      }
+    }
+    
+    // Initial state
+    updateButtonStates();
+    
+    // Evil mode button
+    evilBtn.addEventListener('click', function() {
+      localStorage.setItem('themeSelected', 'evil');
+      document.body.classList.remove('lawful-mode');
+      updateButtonStates();
+    });
+    
+    // Lawful mode button
+    lawfulBtn.addEventListener('click', function() {
+      localStorage.setItem('themeSelected', 'lawful');
+      document.body.classList.add('lawful-mode');
+      updateButtonStates();
+    });
+  }
+});
 
- // ========== FOOTER INJECTION ==========
-function injectFooter() {
+// ========== FOOTER INJECTION ==========
+document.addEventListener('DOMContentLoaded', function() {
   var footerDiv = document.getElementById('footer');
   if (footerDiv) {
-    footerDiv.innerHTML = `
-      <footer>
-        <p>© 2025 Slayers of Rings § Crowns by Ogre Adventurer. All rights reserved.</p>
-        <p>
-          <a href="terms.html">Terms of Service</a> |
-          <a href="privacy.html">Privacy Policy</a> |
-          <a href="conduct.html">Code of Conduct</a> |
-          <a href="mailto:corbett@sorcrpg.com">corbett@sorcrpg.com</a>
-        </p>
-      </footer>
-    `;
+    footerDiv.innerHTML = '<footer>' +
+      '<div class="container">' +
+        '<p>&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer. All rights reserved.</p>' +
+        '<nav class="footer-links">' +
+          '<a href="/terms.html">Terms of Service</a>' +
+          '<a href="/privacy.html">Privacy Policy</a>' +
+          '<a href="/conduct.html">Code of Conduct</a>' +
+          '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
+        '</nav>' +
+      '</div>' +
+    '</footer>';
   }
-}
+});
 
 // ========== NAVIGATION MENU ==========
-function initNavMenu() {
+document.addEventListener('DOMContentLoaded', function() {
   const menuToggle = document.getElementById('menuToggle');
   const navLinks = document.getElementById('navLinks');
   const closeLink = document.getElementById('closeLink');
 
-  if (menuToggle) {
+  if (menuToggle && navLinks) {
+    // Toggle menu when hamburger button is clicked
     menuToggle.addEventListener('click', function() {
       navLinks.classList.toggle('active');
     });
-  }
 
-  if (closeLink) {
-    closeLink.addEventListener('click', function(e) {
-      e.preventDefault();
-      navLinks.classList.remove('active');
-    });
+    // Close menu when "Close" link is clicked
+    if (closeLink) {
+      closeLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        navLinks.classList.remove('active');
+      });
+    }
   }
-}
+});
 
 // ========== COOKIE CONSENT ==========
-function initCookieConsent() {
+document.addEventListener("DOMContentLoaded", function() {
   var cookieConsent = document.getElementById('cookieConsent');
   var acceptBtn = document.getElementById('acceptCookiesBtn');
   var hasConsent = localStorage.getItem('sorcCookieConsent') === 'true';
@@ -88,72 +102,70 @@ function initCookieConsent() {
       cookieConsent.style.display = 'none';
     };
   }
-}
+});
 
 // ========== NEWS CARDS SLIDER ==========
-function initNewsSlider() {
+document.addEventListener("DOMContentLoaded", function() {
   const newsCards = document.querySelectorAll('.news-card');
   const rightArrows = document.querySelectorAll('.arrow-right');
   const leftArrows = document.querySelectorAll('.arrow-left');
   let currentIndex = 0;
 
-  if (newsCards.length === 0) return;
+  if (newsCards.length > 0) {
+    // Only show one card at a time
+    function showCard(index) {
+      newsCards.forEach((card, i) => {
+        card.style.display = i === index ? 'flex' : 'none';
+      });
+    }
 
-  function showCard(index) {
-    newsCards.forEach((card, i) => {
-      card.style.display = i === index ? 'flex' : 'none';
+    showCard(currentIndex);
+
+    rightArrows.forEach(arrow => {
+      arrow.style.pointerEvents = 'auto';
+      arrow.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentIndex = (currentIndex + 1) % newsCards.length;
+        showCard(currentIndex);
+      });
+    });
+
+    leftArrows.forEach(arrow => {
+      arrow.style.pointerEvents = 'auto';
+      arrow.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
+        showCard(currentIndex);
+      });
     });
   }
-
-  showCard(currentIndex);
-
-  rightArrows.forEach(arrow => {
-    arrow.style.pointerEvents = 'auto';
-    arrow.addEventListener('click', function(e) {
-      e.stopPropagation();
-      currentIndex = (currentIndex + 1) % newsCards.length;
-      showCard(currentIndex);
-    });
-  });
-
-  leftArrows.forEach(arrow => {
-    arrow.style.pointerEvents = 'auto';
-    arrow.addEventListener('click', function(e) {
-      e.stopPropagation();
-      currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
-      showCard(currentIndex);
-    });
-  });
-}
+});
 
 // ========== AGE VERIFICATION ==========
-function initAgeVerification() {
+document.addEventListener('DOMContentLoaded', function() {
   const ageModal = document.getElementById('age-verification');
   const btnYes = document.getElementById('age-yes');
   const btnNo = document.getElementById('age-no');
 
-  if (!ageModal) return;
+  if (ageModal && btnYes && btnNo) {
+    // Check if user already verified this session
+    const ageVerified = sessionStorage.getItem('ageVerified');
 
-  const ageVerified = sessionStorage.getItem('ageVerified');
+    if (!ageVerified) {
+      ageModal.style.display = 'flex';
+    }
 
-  if (!ageVerified) {
-    ageModal.style.display = 'flex';
-  }
-
-  if (btnYes) {
-    btnYes.onclick = () => {
+    btnYes.onclick = function() {
       sessionStorage.setItem('ageVerified', 'true');
       ageModal.style.display = 'none';
     };
-  }
 
-  if (btnNo) {
-    btnNo.onclick = () => {
+    btnNo.onclick = function() {
       alert('You must be of age to view this site.');
       window.location.href = 'https://www.google.com';
     };
   }
-}
+});
 
 // ========== AUTH0 LOGIN ==========
 function parseJwt(token) {
@@ -174,7 +186,7 @@ function showWelcomeAndHideSignup(userInfo) {
   signups.forEach(function(card) {
     card.style.display = 'none';
   });
-
+  // Only show welcome message if not already present
   if (!document.querySelector('.welcome-user')) {
     var welcome = document.createElement('div');
     welcome.className = 'welcome-user';
@@ -182,26 +194,30 @@ function showWelcomeAndHideSignup(userInfo) {
       + '<button id="logoutBtn" style="margin-top:10px;">Logout</button>';
     var legendSection = document.querySelector('.legend');
     if (legendSection) legendSection.insertBefore(welcome, legendSection.firstChild);
-
+    // Add logout logic
     document.getElementById('logoutBtn').onclick = function() {
       localStorage.removeItem('sorc_accessToken');
       localStorage.removeItem('sorc_idToken');
       window.location.reload();
-    };
+    }
   }
 }
 
 function handleAuth0Login() {
+  // If Auth0 script is not loaded, skip
   if (typeof auth0 === "undefined" || !auth0.parseHash) return;
 
   auth0.parseHash(function(err, authResult) {
     if (authResult && authResult.accessToken && authResult.idToken) {
+      // Store tokens for persistence
       localStorage.setItem('sorc_accessToken', authResult.accessToken);
       localStorage.setItem('sorc_idToken', authResult.idToken);
       var userInfo = parseJwt(authResult.idToken);
       showWelcomeAndHideSignup(userInfo);
+      // Remove hash from URL for cleanliness
       window.location.hash = '';
     } else {
+      // On normal page load, check localStorage for tokens
       var storedIdToken = localStorage.getItem('sorc_idToken');
       if (storedIdToken) {
         var userInfo = parseJwt(storedIdToken);
@@ -211,19 +227,4 @@ function handleAuth0Login() {
   });
 }
 
-// ========== INITIALIZE EVERYTHING ==========
-document.addEventListener('DOMContentLoaded', function() {
-  // Apply theme to body (documentElement already handled above)
-  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
-  if (savedTheme === 'lawful') {
-    document.body.classList.add('lawful-mode');
-  }
-  
-  updateThemeButtons();
-  injectFooter();
-  initNavMenu();
-  initCookieConsent();
-  initNewsSlider();
-  initAgeVerification();
-  handleAuth0Login();
-});
+document.addEventListener('DOMContentLoaded', handleAuth0Login);
