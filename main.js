@@ -183,18 +183,15 @@ function handleAuth0Login() {
 }
 
 document.addEventListener('DOMContentLoaded', handleAuth0Login);
-// ... all your existing code above ...
 
-document.addEventListener('DOMContentLoaded', handleAuth0Login);
-
-// Load footer on all pages
+// Insert footer content directly here
 document.addEventListener('DOMContentLoaded', function() {
   var footerDiv = document.getElementById('footer');
   if (footerDiv) {
-    fetch('/footer.html')
-      .then(response => response.text())
-      .then(data => {
-        footerDiv.innerHTML = data;
-      });
+    footerDiv.innerHTML = `
+      <footer>
+        <p>Slayers of Rings § Crowns © 2024 Ogre Adventurer. All rights reserved.</p>
+      </footer>
+    `;
   }
 });
