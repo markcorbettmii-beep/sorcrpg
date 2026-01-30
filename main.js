@@ -40,7 +40,7 @@ function injectFooter() {
   if (footerDiv) {
     footerDiv.innerHTML = `
       <footer>
-        <p>&copy; 2025 SorC RPG. All rights reserved.</p>
+        <p>© 2025 Slayers of Rings § Crowns by Ogre Adventurer. All rights reserved.</p>
         <p>
           <a href="terms.html">Terms of Service</a> |
           <a href="privacy.html">Privacy Policy</a> |
