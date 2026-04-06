@@ -1,508 +1,298 @@
-<!--
-  This Website's, sorcrpg.com for Slayers of Rings § Crowns, Design
-  Copyright © 2024 Corbett, editor in chief of Ogre Adventurer, a publishing company of Slayers of Rings § (and, and &) Crowns. Time stamped via GitHub repository push
-  Created: December 26, 2024
-  All rights reserved.
--->
+// ========== THEME SYSTEM ==========
+(function() {
+  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+  if (savedTheme === 'lawful') {
+    document.body.classList.add('lawful-mode');
+  }
+})();
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Slayers of Rings § Crowns (SorC)</title>
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Slayers of Rings & Crowns (SorC), an innovative sci-fantasy TTRPG by Ogre Adventurer. Explore epic adventures, character creation, and beyond." />
-    <meta name="keywords" content="Slayers of Rings and Crowns, SorC, SorC Beyond, RPG, TTRPG, sci-fantasy, tabletop game, fantasy adventure, online RPG, fantasy role-playing, innovative TTRPG, Ogre Adventurer, character sheets, digital RPG, campaigns, quests, epic fantasy, game setting, fantasy universe" />
-    <meta name="author" content="Corbett, Ogre Adventurer" />
+document.addEventListener('DOMContentLoaded', function() {
+  var evilBtn = document.querySelector('.theme-toggle-btn.evil') || document.getElementById('theme-evil');
+  var lawfulBtn = document.querySelector('.theme-toggle-btn.lawful') || document.getElementById('theme-lawful');
+  
+  if (evilBtn && lawfulBtn) {
+    function updateButtonStates() {
+      var currentTheme = localStorage.getItem('themeSelected') || 'evil';
+      if (currentTheme === 'evil') {
+        evilBtn.classList.add('active');
+        lawfulBtn.classList.remove('active');
+      } else {
+        lawfulBtn.classList.add('active');
+        evilBtn.classList.remove('active');
+      }
+    }
+    
+    updateButtonStates();
+    
+    evilBtn.addEventListener('click', function() {
+      localStorage.setItem('themeSelected', 'evil');
+      document.body.classList.remove('lawful-mode');
+      updateButtonStates();
+    });
+    
+    lawfulBtn.addEventListener('click', function() {
+      localStorage.setItem('themeSelected', 'lawful');
+      document.body.classList.add('lawful-mode');
+      updateButtonStates();
+    });
+  }
+});
 
-    <link rel="icon" href="IMG_3419.jpeg" />
+// ========== FOOTER INJECTION ==========
+document.addEventListener('DOMContentLoaded', function() {
+  var footerDiv = document.getElementById('footer');
+  if (footerDiv) {
+    footerDiv.innerHTML = '<footer>' +
+      '<div class="container">' +
+        '<p>&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer. All rights reserved.</p>' +
+        '<nav class="footer-links">' +
+          '<a href="/terms.html">Terms of Service</a>' +
+          '<a href="/privacy.html">Privacy Policy</a>' +
+          '<a href="/conduct.html">Code of Conduct</a>' +
+          '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
+        '</nav>' +
+      '</div>' +
+    '</footer>';
+  }
+});
 
-    <meta property="og:title" content="Slayers of Rings & Crowns (SorC)" />
-    <meta property="og:description" content="An epic sci-fantasy TTRPG by Ogre Adventurer. Join the adventure in Slayers of Rings & Crowns." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://sorcrpg.com/" />
-    <meta property="og:image" content="IMG_3419.jpeg" />
+// ========== NAVIGATION MENU ==========
+document.addEventListener('DOMContentLoaded', function() {
+  const menuToggle = document.getElementById('menuToggle');
+  const navLinks = document.getElementById('navLinks');
+  const closeLink = document.getElementById('closeLink');
 
-    <link rel="stylesheet" href="styles.css" />
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <style>
-        section, .about, .back-of-book, .explore-more, .level-up-game, .expand-library, .news-preview, .partnered-creators, .sorc-beyond {
-            border: none !important;
-        }
-        .legend-slide {
-            display: none;
-        }
-        .legend-slide.active {
-            display: block;
-        }
-        .legend-video-wrapper {
-            position: relative;
-        }
-        .sorc-beyond {
-            margin: 2rem 0;
-            padding: 2rem 1rem;
-            background: #181818;
-            border-radius: 1rem;
-            color: #e0cfc0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.13);
-            text-align: center;
-        }
-        .sorc-beyond h2 {
-            color: #d0021b;
-            margin-bottom: 1rem;
-        }
-        .sorc-beyond ul {
-            text-align: left;
-            display: inline-block;
-            margin: 1rem auto 0 auto;
-            padding-left: 1.2em;
-        }
-        .theme-toggle-container {
-            display: flex;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            align-items: center;
-        }
-        .theme-toggle-btn {
-            padding: 0.5rem 1.2rem;
-            border: 2px solid;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            min-width: 120px;
-            text-align: center;
-        }
-        .theme-toggle-btn.evil {
-            background: #d0021b;
-            color: #fff;
-            border-color: #d0021b;
-        }
-        .theme-toggle-btn.evil:hover {
-            background: #a50013;
-        }
-        .theme-toggle-btn.lawful {
-            background: #d4af37;
-            color: #2c2c2c;
-            border-color: #d4af37;
-        }
-        .theme-toggle-btn.lawful:hover {
-            background: #c19b2b;
-        }
-        .theme-toggle-btn.active {
-            box-shadow: 0 0 10px currentColor;
-            transform: scale(1.05);
-        }
-        @media (min-width: 801px) {
-            nav ul {
-                display: none;
-            }
-            nav ul.active {
-                display: flex;
-            }
-        }
-        @media (max-width: 800px) {
-            .theme-toggle-container {
-                padding: 0.3rem 0.5rem;
-                gap: 0.3rem;
-            }
-            .theme-toggle-btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.75rem;
-                min-width: 100px;
-            }
-        }
-        body.lawful-mode {
-            background: #f5f5f0;
-            color: #2c2c2c;
-        }
-        body.lawful-mode header {
-            background: #ffffff;
-            border-bottom: 2px solid #d4af37;
-        }
-        body.lawful-mode nav a {
-            color: #2c2c2c;
-        }
-        body.lawful-mode nav a:hover {
-            color: #d4af37;
-        }
-        body.lawful-mode nav ul li a {
-            color: #d4af37;
-        }
-        body.lawful-mode nav ul li a:hover {
-            color: #c19b2b;
-        }
-        body.lawful-mode .sorc-beyond {
-            background: #ffffff;
-            color: #2c2c2c;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        body.lawful-mode .sorc-beyond h2 {
-            color: #d4af37;
-        }
-        body.lawful-mode section {
-            background: #ffffff;
-            color: #2c2c2c;
-        }
-        body.lawful-mode h2, body.lawful-mode h3 {
-            color: #d4af37;
-        }
-        body.lawful-mode .news-card,
-        body.lawful-mode .creator-card,
-        body.lawful-mode .tier-card {
-            background: #ffffff;
-            color: #2c2c2c;
-            border: 1px solid #e0e0e0;
-        }
-        body.lawful-mode .cta-btn {
-            background: #d4af37;
-            color: #2c2c2c;
-        }
-        body.lawful-mode .cta-btn:hover {
-            background: #c19b2b;
-        }
-        body.lawful-mode footer {
-            background: #2c2c2c;
-            color: #f5f5f0;
-        }
-        body.lawful-mode .signup-card {
-            background: #ffffff;
-            color: #2c2c2c;
-            border: 1px solid #e0e0e0;
-        }
-        body.lawful-mode .signup-primary {
-            background: #d4af37;
-            color: #2c2c2c;
-        }
-        body.lawful-mode .signup-oauth {
-            background: #f5f5f0;
-            color: #2c2c2c;
-            border: 1px solid #e0e0e0;
-        }
-        body.lawful-mode .legend {
-            background: #f5f5f0;
-        }
-        body.lawful-mode .about,
-        body.lawful-mode .news-preview,
-        body.lawful-mode .back-of-book,
-        body.lawful-mode .explore-more,
-        body.lawful-mode .partnered-creators,
-        body.lawful-mode .level-up-game {
-            background: #ffffff;
-            border: 1px solid #d4af37;
-        }
-        body.lawful-mode .menu-toggle {
-            color: #2c2c2c;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-image-wrapper">
-                <img src="slayers-letters.png" 
-                     alt="Slayers of Rings & Crowns Logo" 
-                     class="header-logo"
-                     width="3840" height="2160" />
-            </div>
-            <nav>
-            </nav>
-        </div>
-    </header>  
-    <nav>
-        <div class="theme-toggle-container">
-            <button class="theme-toggle-btn evil" id="permanentEvilBtn" title="Switch to Evil Mode">Evil Mode</button>
-            <button class="theme-toggle-btn lawful" id="permanentLawfulBtn" title="Switch to Lawful Mode">Lawful Mode</button>
-        </div>
-        <button class="menu-toggle" id="menuToggle">&#9776;</button>
-        <ul id="navLinks">
-            <li><a href="#">Home</a></li>
-            <li><a href="prologue.html">Prologue</a></li>
-            <li><a href="news.html">News</a></li>
-            <li><a href="#">Game Setting</a></li>
-            <li><a href="#">Community</a></li>
-            <li><a href="content/basic_rules/basic_rules_1.html">Basic Rules</a></li>
-            <li><a href="library.html">Library</a></li>
-            <li><a href="subscriptions.html">Subscriptions</a></li>
-            <li><a href="#" id="closeLink">Close</a></li>
-        </ul>
-    </nav>
-    <main>
-        <section class="legend">
-            <div class="legend-slide active" id="legendSlide1">
-                <div class="legend-video-wrapper">
-                    <video class="legend-video" autoplay muted loop playsinline poster="video-poster.jpg">
-                        <source src="your-trailer.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                <div class="expand-library-legend" style="margin: 2rem 0 1rem 0; text-align:center;">
-                    <section class="sorc-beyond">
-                        <h2>SorC Beyond</h2>
-                        <p>
-                            Go beyond SorC's core traditional TTRPG elements of rolling the dice at home, and delve into <b>SorC Beyond</b> for online and digital features, including:
-                        </p>
-                        <ul>
-                            <li><b>Character Profile Page:</b> Create, customize, and manage digital character sheets.</li>
-                            <br />
-                            <li><b>Trials of Combat:</b> Trials of Combat: Fairly without paying to win, test your skills in PvP Arenas, Battlegrounds (land, sea, and air), and the Coliseum tiers based on your character's pvp combat score. 
-                            Duel to the death or practice safely using wooden weapons and fizzled spells (At an in gamr currency fee, characters that die MUST be resurrected by ring judges to re-enter)</li>
-                            <br />
-                            <b>Note:</b> There are many modes of play, such as "reach the vault" and "battlegrounds" that support many players fighting at once, arenas that are 3 v 3 or 5 v 5, "Duel" is 1 on 1, and "Pet Party" which allows up to 5 of your fellowships in the ring.
-                            <br /><br />
-                            <li><b>Auction House & Black Market:</b> Trade, buy, and sell rare items, gear, and collectibles.</li>
-                            <br />
-                            <li><b>SorC Lobbies:</b> Fill in tardy character spots for your home campaign, by joining our <b>Online Lobbies</b> where both GMs and Players alike enter upon passing an assessment for beginner, intermediate or advanced lobbies.</li>
-                            <br />
-                            <li><b>SorC Store:</b>Access physical SorC Cards, books, character pages along with the digital version or obtain the digital, <i>often free</i>, versions.</li>
-                            <br />
-                            <b>Note:</b> BASIC SorC Cards will come in hard paper forms with basic sets, modules and their expansions. If playing at home, the GM will grant paper versions of the cards when they are discovered or earned while playing. When discovered or obtained in the wild, players must roll digital dice to earn the digital version(s) of cards to prove they earned them, free. Hard printed cards are purchased in packs or stand alone. Each hard version has a QR code, and with it players can obtain the digital versions.
-                        </ul>
-                    </section>
+  if (menuToggle && navLinks) {
+    menuToggle.addEventListener('click', function() {
+      navLinks.classList.toggle('active');
+    });
 
-                    <p>Embark on a sci-fantasy journey through Essentia's 13 planets, two suns, many moons, and a seemingly endless number of colonized worlds to explore forever. Players will traverse these worlds on their own accord or will find themselves unexpectedly astray.</p>
-                    <a href="character-creator/creation-overview.html" class="cta-btn">Character Creation</a>
-                </div>
-                <div class="expand-library-legend" style="margin: 2rem 0 1rem 0; text-align:center;">
-                    <h2 style="color: #d0021b;">Expand Your Library</h2>
-                    <p style="color: #c0c0c0;">
-                        Soon you'll be able to access official SorC books, modules, and compendiums to forge your character, possibly becoming a Legend and shaping Essentia's future.
-                    </p>
-                    <a href="library.html" class="cta-btn">Browse Library</a>
-                </div>
-                <div class="social-links" style="margin-bottom:1.5rem;">
-                    <a href="https://www.youtube.com/" target="_blank" aria-label="YouTube">
-                        <img src="images/social_icons/IMG_2419.png" alt="YouTube" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                    </a>
-                    <a href="https://x.com/" target="_blank" aria-label="X">
-                        <img src="images/social_icons/x_icon.png" alt="X" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                    </a>
-                    <a href="https://www.esrb.org/ratings-guide/" target="_blank" aria-label="ESRB Adults Only 18+">
-                        <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                    </a>
-                </div>
-                <div class="signup-card legend-signup">
-                    <h2>Create Account</h2>
-                    <p class="signup-note">
-                        By creating an account, you agree to follow Ogre Adventurer's
-                        <a href="terms.html" target="_blank">Terms of Service</a>,
-                        <a href="conduct.html" target="_blank">Code of Conduct</a>, and
-                        <a href="privacy.html" target="_blank">Privacy Policy</a>.
-                    </p>
-                    <button class="signup-primary">
-                        <span class="icon default-icon"></span> Sign up with SorC
-                    </button>
-                    <div class="signup-divider"><span>or</span></div>
-                    <button class="signup-oauth oauth-apple">
-                        <span class="icon apple-icon"></span> Sign up with Apple
-                    </button>
-                    <button class="signup-oauth oauth-google">
-                        <span class="icon google-icon"></span> Sign up with Google
-                    </button>
-                    <p class="signin-link">
-                        Already have an account?
-                        <a href="signin.html">Sign In</a>
-                    </p>
-                </div>
-            </div>
-            <div class="legend-slide" id="legendSlide2">
-                <div class="legend-video-wrapper">
-                    <video class="legend-video" autoplay muted loop playsinline poster="video-poster.jpg">
-                        <source src="your-trailer.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="arrow arrow-left" tabindex="0" onclick="previousLegendSlide()" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 10;">
-                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                            <polygon points="36,9 9,24 36,39"></polygon>
-                        </svg>
-                    </div>
-                </div>
-                <div class="legend-overlay"></div>
-                <div class="legend-content">
-                    <div class="social-links" style="margin-bottom:1.5rem;">
-                        <a href="https://www.youtube.com/" target="_blank" aria-label="YouTube">
-                            <img src="images/social_icons/IMG_2419.png" alt="YouTube" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                        </a>
-                        <a href="https://x.com/" target="_blank" aria-label="X">
-                            <img src="images/social_icons/x_icon.png" alt="X" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                        </a>
-                        <a href="https://www.esrb.org/ratings-guide/" target="_blank" aria-label="ESRB Adults Only 18+">
-                            <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                        </a>
-                    </div>
-                    <div class="signup-card legend-signup">
-                        <h2>Create Account</h2>
-                        <p class="signup-note">
-                            By creating an account, you agree to follow Ogre Adventurer's
-                            <a href="terms.html" target="_blank">Terms of Service</a>,
-                            <a href="conduct.html" target="_blank">Code of Conduct</a>, and
-                            <a href="privacy.html" target="_blank">Privacy Policy</a>.
-                        </p>
-                        <button class="signup-primary">
-                            <span class="icon default-icon"></span> Sign up with SorC
-                        </button>
-                        <div class="signup-divider"><span>or</span></div>
-                        <button class="signup-oauth oauth-apple">
-                            <span class="icon apple-icon"></span> Sign up with Apple
-                        </button>
-                        <button class="signup-oauth oauth-google">
-                            <span class="icon google-icon"></span> Sign up with Google
-                        </button>
-                        <p class="signin-link">
-                            Already have an account?
-                            <a href="signin.html">Sign In</a>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <section class="about">
-            <h2>Explore Essentia</h2>
-            <p>
-                Begin on Zailister, a lush life-sustainable planet, where arcane sorcery and steel meet advanced technology. Journey between 13 planetary worlds using rifts, portals, starships, and forbidden hell gates. Each planet's biomes, societies are shaped by their distance from Adoria (the magic emitting sun) and Tawdry Dwarf (the dying star). Those near Adoria thrive on magic, while those on the fringes rely on machinery and ingenuity.
-            </p>
-            <p>
-                Zailister is torn by war. Noble, Feral, and Purge factions unite against the Omnè, invaders from a desperate planet whose fate relies on the death of Adoria's sister star, Taedry Dwarf.
-            </p>
-            <p>
-                Choose your race, class and fulfill your destiny of becoming a legend. Fight, craft or train your way into a legend. Build your reputation, earn notoriety, and shape your story throughout Essentia's history. Will you become a frog skinner, or ascend as a dragon slayer?
-            </p>
-        </section>
-        <section class="news-preview">
-            <h2>Latest News</h2>
-            <div class="news-list">
-                <article class="news-card first-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/news_placeholder1.jpg" alt="News 1" class="news-img" />
-                        <div class="arrow arrow-right" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="12,9 39,24 12,39"></polygon>
-                            </svg>
-                        </div>
-                    </div>
-                    <h3><a href="news.html">Welcome to Essentia!</a></h3>
-                    <p>The official SorC site is live. Begin your journey through Zailister and beyond. Community forums and resources opening soon.</p>
-                    <span class="date">2024-06-20</span>
-                </article>
-                <article class="news-card middle-card">
-                    <div class="news-img-wrapper">
-                        <div class="arrow arrow-left" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="36,9 9,24 36,39"></polygon>
-                            </svg>
-                        </div>
-                        <img src="images/news_placeholder2.jpg" alt="News 2" class="news-img" />
-                        <div class="arrow arrow-right" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="12,9 39,24 12,39"></polygon>
-                            </svg>
-                        </div>
-                    </div>
-                    <h3><a href="news.html">Dev Update: Limb Targeting Combat</a></h3>
-                    <p>Learn about SorC's unique combat system: Limb Specific Targeting, Burning Streaks (hit streaks), Slayer Sprees (last hit kills), Gruesome Kills (aimed and critical killing blows) and tactical choices that make every fight unique.</p>
-                    <span class="date">2024-06-15</span>
-                </article>
-                <article class="news-card last-card">
-                    <div class="news-img-wrapper">
-                        <div class="arrow arrow-left" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="36,9 9,24 36,39"></polygon>
-                            </svg>
-                        </div>
-                        <img src="images/news_placeholder3.jpg" alt="News 3" class="news-img" />
-                    </div>
-                    <h3><a href="news.html">Prologue Released</a></h3>
-                    <p>Essentia's prologue and setting revealed: the nineteen crowns, the prophecy, and the fate of the universe.</p>
-                    <span class="date">2024-06-10</span>
-                </article>
-            </div>
-            <a href="news.html" class="more-news">More News</a>
-        </section>
-        <section class="back-of-book">
-            <h2>The Story</h2>
-            <p>
-                Awaken to Essentia, a universe of thirteen planets, many moons and the dying star Tawdry Dwarf that orbit the main sun, Adoria. Begin your legend on the 4th planet, Zailister, where war and prophecy collide.
-            </p>
-            <p>
-                As it was written, nineteen radiant star-like figures from magical rings crashed into Zailister. These figures were crowns, each destined for their true heirs. Denial and chaos followed, as believers and challengers battled over the prophecy.
-            </p>
-            <p>
-                Only the chosen heirs of the nineteen races can claim their crown, dividing the world between those sworn by blood and those who seek power.
-            </p>
-            <p>
-                Many crowns have been lost, hidden, or destroyed. Essentia's fate hangs in the balance.
-            </p>
-        </section>
-        <section class="explore-more">
-            <h2>Explore More</h2>
-            <p>Discover the latest SorC news and releases.</p>
-            <nav class="explore-nav">
-                <a href="news.html">News</a>
-                <a href="library.html">Library</a>
-                <a href="subscriptions.html">Subscriber Perks</a>
-                <a href="#">Characters</a>
-                <a href="#">Community</a>
-            </nav>
-        </section>
-        <section class="partnered-creators">
-            <h2>Featured SorC Modules</h2>
-            <p>Discover original campaigns and adventure packs from SorC creators. (Coming soon)</p>
-            <div class="creators-list">
-                <article class="creator-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/placeholder_creator1.jpg" alt="Essentia Adventure Pack" class="news-img" />
-                    </div>
-                    <h3>Quest of the Lost Crowns</h3>
-                    <p>Face the war-torn lands and the hunt for the lost crowns, and even unveil the fate of others said to be destroyed.</p>
-                </article>
-                <article class="creator-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/placeholder_creator2.jpg" alt="Omné Chronicles" class="news-img" />
-                    </div>
-                    <h3>Omné Chronicles</h3>
-                    <p>Quest to defend worlds from the Omnè threat and unlock new technologies.</p>
-                </article>
-                <article class="creator-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/placeholder_creator3.jpg" alt="Crownfall Saga" class="news-img" />
-                    </div>
-                </article>
-            </div>
-        </section>
-        <section class="level-up-game">
-            <h2>Level Up Your Game</h2>
-            <p>Unlock digital tools, exclusive perks, and more with a SorC subscription.</p>
-            <div class="subscription-tiers">
-                <article class="tier-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/placeholder_legend_tier.jpg" alt="Legend Tier" class="news-img" />
-                    </div>
-                    <h3>Legend Tier</h3>
-                    <ul>
-                        <li>Unlimited character slots</li>
-                        <li>Monthly SorC perks</li>
-                        <li>Early access to new features</li>
-                    </ul>
-                </article>
-                <article class="tier-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/placeholder_master_tier.jpg" alt="Crownmaster Tier" class="news-img" />
-                    </div>
-                    <h3>Crownmaster Tier</h3>
-                    <ul>
-                        <li>Share compendium content with your party</li>
-                        <li>Use homebrew SorC content</li>
-                        <li>Advanced campaign management</li>
-                    </ul>
-                </article>
-            </div>
-        </section>
-    </main>
+    if (closeLink) {
+      closeLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        navLinks.classList.remove('active');
+      });
+    }
+  }
+});
 
-    <div id="footer"></div>
-    <script src="main.js"></script>
-</body>
-</html>
+// ========== COOKIE CONSENT ==========
+document.addEventListener("DOMContentLoaded", function() {
+  var cookieConsent = document.getElementById('cookieConsent');
+  var acceptBtn = document.getElementById('acceptCookiesBtn');
+  var hasConsent = localStorage.getItem('sorcCookieConsent') === 'true';
+
+  if (!hasConsent && cookieConsent) {
+    cookieConsent.style.display = 'block';
+  }
+
+  if (acceptBtn) {
+    acceptBtn.onclick = function() {
+      localStorage.setItem('sorcCookieConsent', 'true');
+      cookieConsent.style.display = 'none';
+    };
+  }
+});
+
+// ========== NEWS CARDS SLIDER ==========
+document.addEventListener("DOMContentLoaded", function() {
+  const newsCards = document.querySelectorAll('.news-card');
+  const rightArrows = document.querySelectorAll('.arrow-right');
+  const leftArrows = document.querySelectorAll('.arrow-left');
+  let currentIndex = 0;
+
+  if (newsCards.length > 0) {
+    function showCard(index) {
+      newsCards.forEach((card, i) => {
+        card.style.display = i === index ? 'flex' : 'none';
+      });
+    }
+
+    showCard(currentIndex);
+
+    rightArrows.forEach(arrow => {
+      arrow.style.pointerEvents = 'auto';
+      arrow.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentIndex = (currentIndex + 1) % newsCards.length;
+        showCard(currentIndex);
+      });
+    });
+
+    leftArrows.forEach(arrow => {
+      arrow.style.pointerEvents = 'auto';
+      arrow.addEventListener('click', function(e) {
+        e.stopPropagation();
+        currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
+        showCard(currentIndex);
+      });
+    });
+  }
+});
+
+// ========== AGE VERIFICATION ==========
+document.addEventListener('DOMContentLoaded', function() {
+  const ageModal = document.getElementById('age-verification');
+  const btnYes = document.getElementById('age-yes');
+  const btnNo = document.getElementById('age-no');
+
+  if (ageModal && btnYes && btnNo) {
+    const ageVerified = sessionStorage.getItem('ageVerified');
+
+    if (!ageVerified) {
+      ageModal.style.display = 'flex';
+    }
+
+    btnYes.onclick = function() {
+      sessionStorage.setItem('ageVerified', 'true');
+      ageModal.style.display = 'none';
+    };
+
+    btnNo.onclick = function() {
+      alert('You must be of age to view this site.');
+      window.location.href = 'https://www.google.com';
+    };
+  }
+});
+
+// ========== FIREBASE CONFIG ==========
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+  authDomain: "sorc-a1393.firebaseapp.com",
+  projectId: "sorc-a1393",
+  storageBucket: "sorc-a1393.firebasestorage.app",
+  messagingSenderId: "303646936307",
+  appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
+
+// ========== ROLE BADGE ==========
+function showRoleBadge(user, role) {
+  var existing = document.querySelector('.role-badge');
+  if (existing) existing.remove();
+
+  var badge = document.createElement('div');
+  badge.className = 'role-badge';
+  badge.style.cssText = 'position:fixed;top:10px;right:10px;background:#d0021b;color:#fff;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;';
+
+  var roleLabel = role === 'admin' ? 'Admin' : role === 'gm' ? 'GM' : 'PC';
+  badge.innerHTML = 'Signed in as ' + roleLabel + ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;">Logout</button>';
+
+  if (role === 'admin') badge.style.background = '#d4af37';
+  if (role === 'gm') badge.style.background = '#1a6b1a';
+
+  document.body.appendChild(badge);
+
+  // Hide signup cards
+  document.querySelectorAll('.signup-card.legend-signup').forEach(function(card) {
+    card.style.display = 'none';
+  });
+
+  // Show admin panel if admin
+  if (role === 'admin') showAdminPanel();
+}
+
+// ========== SIGN OUT ==========
+window.sorcSignOut = function() {
+  signOut(auth).then(function() {
+    localStorage.removeItem('sorc_idToken');
+    window.location.reload();
+  });
+};
+
+// ========== GET OR SET USER ROLE ==========
+async function getUserRole(user) {
+  if (user.email === ADMIN_EMAIL) return 'admin';
+  var docRef = doc(db, "users", user.uid);
+  var docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data().role || 'pc';
+  }
+  // New user — save as PC by default
+  await setDoc(docRef, { email: user.email, role: 'pc', displayName: user.displayName || '' });
+  return 'pc';
+}
+
+// ========== AUTH STATE LISTENER ==========
+onAuthStateChanged(auth, async function(user) {
+  if (user) {
+    var role = await getUserRole(user);
+    showRoleBadge(user, role);
+  }
+});
+
+// ========== GOOGLE LOGIN ==========
+document.addEventListener('DOMContentLoaded', function() {
+  var googleBtns = document.querySelectorAll('.oauth-google');
+  googleBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      signInWithPopup(auth, googleProvider).then(async function(result) {
+        var role = await getUserRole(result.user);
+        showRoleBadge(result.user, role);
+      }).catch(function(error) {
+        alert('Google sign-in failed: ' + error.message);
+      });
+    });
+  });
+});
+
+// ========== EMAIL/PASSWORD SIGNUP ==========
+window.sorcSignUp = function(email, password, gmCode) {
+  createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
+    var role = 'pc';
+    if (gmCode) {
+      // Check GM code against Firestore
+      var codesSnap = await getDocs(collection(db, "gm_codes"));
+      codesSnap.forEach(function(d) {
+        if (d.data().code === gmCode && !d.data().used) role = 'gm';
+      });
+    }
+    await setDoc(doc(db, "users", result.user.uid), {
+      email: email,
+      role: role,
+      displayName: ''
+    });
+    showRoleBadge(result.user, role);
+  }).catch(function(error) {
+    alert('Sign up failed: ' + error.message);
+  });
+};
+
+// ========== EMAIL/PASSWORD SIGN IN ==========
+window.sorcSignIn = function(email, password) {
+  signInWithEmailAndPassword(auth, email, password).then(async function(result) {
+    var role = await getUserRole(result.user);
+    showRoleBadge(result.user, role);
+  }).catch(function(error) {
+    alert('Sign in failed: ' + error.message);
+  });
+};
+
+// ========== ADMIN PANEL ==========
+function showAdminPanel() {
+  if (document.querySelector('.admin-panel')) return;
+
+  var panel = document.createElement('div');
+  panel.className = 'admin-panel';
+  panel.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9999;min-width:260px;border:2px solid #d4af37;';
+  panel.innerHTML = '<h3 style="color:#d4af37;margin:0 0 10px 0;">Admin Panel</h3>' +
+    '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">Generate GM Code</button>' +
+    '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>';
+  document.body.appendChild(panel);
+}
+
+window.generateGMCode = async function() {
+  var code = 'GM-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+  await addDoc(collection(db, "gm_codes"), { code: code, used: false, createdAt: new Date() });
+  document.getElementById('gmCodeOutput').innerHTML = 'New GM Code: <strong>' + code + '</strong><br><small>Share this with your GM</small>';
+};
