@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,7 +26,6 @@
             border: 1px solid #333;
         }
         .profile-field label { font-size: 0.8rem; color: #888; display: block; margin-bottom: 4px; }
-        .profile-field span { font-weight: bold; }
         .role-badge-profile {
             display: inline-block;
             padding: 4px 12px;
@@ -33,14 +33,41 @@
             font-weight: bold;
             font-size: 0.9rem;
         }
-        .gm-code-section {
+        .upgrade-section {
             margin-top: 1.5rem;
             padding: 1rem;
-            background: #1a2a1a;
-            border: 1px solid #1a6b1a;
+            background: #1a1a2a;
+            border: 1px solid #444;
             border-radius: 8px;
         }
-        .gm-code-section h3 { color: #4caf50; margin-bottom: 0.5rem; }
+        .upgrade-section h3 { color: #d4af37; margin-bottom: 0.5rem; }
+        .upgrade-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 2px solid #444;
+            background: #222;
+            color: #e0cfc0;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-align: left;
+            transition: border-color 0.2s;
+        }
+        .upgrade-btn:hover { border-color: #d4af37; }
+        .upgrade-info {
+            display: none;
+            background: #2a1a00;
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
         .gm-code-input {
             width: 100%;
             padding: 8px;
@@ -48,16 +75,11 @@
             border: 1px solid #444;
             background: #222;
             color: #fff;
+            margin-top: 8px;
             margin-bottom: 8px;
             box-sizing: border-box;
         }
-        .btn {
-            padding: 8px 20px;
-            border-radius: 6px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
         .btn-red { background: #d0021b; color: #fff; }
         .btn-gold { background: #d4af37; color: #222; }
         .btn-green { background: #1a6b1a; color: #fff; }
@@ -70,9 +92,7 @@
 </head>
 <body>
     <div id="profileApp">
-        <div class="not-logged-in">
-            <p>Loading...</p>
-        </div>
+        <div class="not-logged-in"><p>Loading...</p></div>
     </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -115,6 +135,52 @@
                 role = user.email === ADMIN_EMAIL ? 'ADMIN' : (userData.role || 'BASIC');
             }
 
+            var upgradeSection = '';
+            if (role === 'BASIC') {
+                upgradeSection = `
+                <div class="upgrade-section">
+                    <h3>Upgrade Your Account</h3>
+                    <p style="font-size:0.85rem;color:#aaa;margin-bottom:1rem;">When assessments launch, you'll be able to upgrade to PC or GM from here.</p>
+                    <button class="upgrade-btn" onclick="toggleUpgradeInfo('pc-info')">
+                        ▶ Upgrade to PC (Player Character)
+                    </button>
+                    <div class="upgrade-info" id="pc-info">
+                        <b>PC — Player Character</b><br/><br/>
+                        PC accounts are for adventurers who want to join SorC Beyond online lobbies and play with others digitally. To become a PC, you must pass a <b>SorC PC Assessment</b> (Beginner, Intermediate, or Advanced).<br/><br/>
+                        <b>PC upgrades are not yet available.</b> Assessments are currently under heavy development. Your BASIC account will be linked to your PC account when they launch.
+                    </div>
+                    <button class="upgrade-btn" onclick="toggleUpgradeInfo('gm-info')">
+                        ▶ Upgrade to GM (Game Master)
+                    </button>
+                    <div class="upgrade-info" id="gm-info">
+                        <b>GM — Game Master</b><br/><br/>
+                        GM accounts are for those who want to run campaigns and host online lobbies in SorC Beyond. To become a GM, you must pass a <b>SorC GM Assessment</b> AND redeem an official GM Code issued by Ogre Adventurer.<br/><br/>
+                        <b>GM upgrades are not yet available.</b> Assessments are currently under heavy development. Your BASIC account will be linked to your GM account when they launch.<br/><br/>
+                        Have a GM code already?<br/>
+                        <input type="text" id="gmCodeInput" class="gm-code-input" placeholder="Enter GM Code (e.g. GM-X7K2PQ9A)" />
+                        <button class="btn btn-green" onclick="redeemGMCode('${user.uid}')">Redeem Code</button>
+                        <div id="gmCodeMsg" class="msg"></div>
+                    </div>
+                </div>`;
+            } else if (role === 'PC') {
+                upgradeSection = `
+                <div class="upgrade-section">
+                    <h3>Upgrade to GM</h3>
+                    <button class="upgrade-btn" onclick="toggleUpgradeInfo('gm-info-pc')">
+                        ▶ Upgrade to GM (Game Master)
+                    </button>
+                    <div class="upgrade-info" id="gm-info-pc">
+                        <b>GM — Game Master</b><br/><br/>
+                        To upgrade from PC to GM, you must pass a <b>SorC GM Assessment</b> AND redeem an official GM Code issued by Ogre Adventurer.<br/><br/>
+                        <b>GM upgrades are not yet available.</b> Assessments are currently under heavy development.<br/><br/>
+                        Have a GM code already?<br/>
+                        <input type="text" id="gmCodeInput" class="gm-code-input" placeholder="Enter GM Code (e.g. GM-X7K2PQ9A)" />
+                        <button class="btn btn-green" onclick="redeemGMCode('${user.uid}')">Redeem Code</button>
+                        <div id="gmCodeMsg" class="msg"></div>
+                    </div>
+                </div>`;
+            }
+
             document.getElementById('profileApp').innerHTML = `
                 <div class="profile-container">
                     <h1>Your Profile</h1>
@@ -130,14 +196,7 @@
                         <label>DISPLAY NAME</label>
                         <span>${userData.displayName || 'Not set'}</span>
                     </div>
-                    ${role === 'BASIC' ? `
-                    <div class="gm-code-section">
-                        <h3>Redeem GM Code</h3>
-                        <p style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">Have a GM code? Enter it here to upgrade your account.</p>
-                        <input type="text" id="gmCodeInput" class="gm-code-input" placeholder="Enter GM Code (e.g. GM-X7K2PQ9A)" />
-                        <button class="btn btn-green" onclick="redeemGMCode('${user.uid}')">Redeem Code</button>
-                        <div id="gmCodeMsg" class="msg"></div>
-                    </div>` : ''}
+                    ${upgradeSection}
                     <br/>
                     <button class="btn btn-red" onclick="doSignOut()">Logout</button>
                     &nbsp;
@@ -146,6 +205,11 @@
             `;
         });
 
+        window.toggleUpgradeInfo = function(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        };
+
         window.doSignOut = function() {
             signOut(auth).then(function() {
                 window.location.href = 'index.html';
@@ -153,10 +217,11 @@
         };
 
         window.redeemGMCode = async function(uid) {
-            var code = document.getElementById('gmCodeInput').value.trim();
+            var input = document.getElementById('gmCodeInput');
             var msgEl = document.getElementById('gmCodeMsg');
+            if (!input) return;
+            var code = input.value.trim();
             if (!code) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a code.'; return; }
-
             var codesSnap = await getDocs(collection(db, "gm_codes"));
             var matched = null;
             var matchedDocId = null;
@@ -166,13 +231,11 @@
                     matchedDocId = d.id;
                 }
             });
-
             if (!matched) {
                 msgEl.className = 'msg error';
                 msgEl.textContent = 'Invalid or already used code.';
                 return;
             }
-
             await updateDoc(doc(db, "users", uid), { role: 'GM' });
             msgEl.className = 'msg success';
             msgEl.textContent = 'Success! You are now a GM. Reload the page to see your updated role.';
