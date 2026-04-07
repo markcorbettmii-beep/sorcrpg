@@ -162,7 +162,7 @@ window.selectAccountType = function(type, btn) {
 
 // ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, sendEmailVerification, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, sendEmailVerification, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -233,16 +233,9 @@ onAuthStateChanged(auth, async function(user) {
 });
 
 // ========== GOOGLE LOGIN ==========
+// Detect mobile and use redirect, desktop uses popup
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.oauth-google').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      signInWithRedirect(auth, googleProvider);
-    });
-  });
-});
-
-// ========== HANDLE GOOGLE REDIRECT RESULT ==========
-document.addEventListener('DOMContentLoaded', function() {
+  // Handle redirect result first (for mobile)
   getRedirectResult(auth).then(async function(result) {
     if (result && result.user) {
       var role = await getUserRole(result.user);
@@ -252,6 +245,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (error.code !== 'auth/no-current-user') {
       alert('Google sign-in failed: ' + error.message);
     }
+  });
+
+  // Set up Google buttons
+  document.querySelectorAll('.oauth-google').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Use redirect for mobile
+        signInWithRedirect(auth, googleProvider);
+      } else {
+        // Use popup for desktop
+        signInWithPopup(auth, googleProvider).then(async function(result) {
+          var role = await getUserRole(result.user);
+          showRoleBadge(result.user, role);
+        }).catch(function(error) {
+          alert('Google sign-in failed: ' + error.message);
+        });
+      }
+    });
   });
 });
 
