@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function() {
   var cookieConsent = document.getElementById('cookieConsent');
   var acceptBtn = document.getElementById('acceptCookiesBtn');
   var hasConsent = localStorage.getItem('sorcCookieConsent') === 'true';
-  if (!hasConsent && cookieConsent) cookieConsent.style.display = 'block';
+  if (!hasConsent && cookieConsent) cookieConsent.style.display = 'flex';
   if (acceptBtn) {
     acceptBtn.onclick = function() {
       localStorage.setItem('sorcCookieConsent', 'true');
@@ -135,31 +135,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ========== ACCOUNT TYPE SELECTOR ==========
-var selectedAccountType = 'BASIC';
-window.selectAccountType = function(type, btn) {
-  selectedAccountType = type;
-  var parentSelector = btn.closest('.account-type-selector');
-  parentSelector.querySelectorAll('.account-type-btn').forEach(function(b) {
-    b.classList.remove('active');
-  });
-  btn.classList.add('active');
-  var card = btn.closest('.signup-card');
-  card.querySelectorAll('.account-info-msg').forEach(function(m) {
-    m.style.display = 'none';
-  });
-  if (type === 'BASIC') {
-    card.querySelector('[id^="basicInfo"]').style.display = 'block';
-    card.querySelector('[id^="signupForm"]').style.display = 'block';
-  } else if (type === 'PC') {
-    card.querySelector('[id^="pcInfo"]').style.display = 'block';
-    card.querySelector('[id^="signupForm"]').style.display = 'none';
-  } else if (type === 'GM') {
-    card.querySelector('[id^="gmInfo"]').style.display = 'block';
-    card.querySelector('[id^="signupForm"]').style.display = 'none';
-  }
-};
-
 // ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -183,22 +158,28 @@ const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
 function showRoleBadge(email, name, role) {
   var existing = document.querySelector('.role-badge');
   if (existing) existing.remove();
+
+  // Hide sign in link
+  var signinLink = document.getElementById('signinLink');
+  if (signinLink) signinLink.style.display = 'none';
+
   var badge = document.createElement('div');
   badge.className = 'role-badge';
   badge.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;';
-  var roleLabel = role === 'ADMIN' ? 'ADMIN' : role === 'GM' ? 'GM' : role === 'PC' ? 'PC' : 'BASIC';
-  if (role === 'ADMIN') { badge.style.background = '#d4af37'; badge.style.color = '#222'; }
-  else if (role === 'GM') { badge.style.background = '#1a6b1a'; badge.style.color = '#fff'; }
-  else if (role === 'PC') { badge.style.background = '#1a3a6b'; badge.style.color = '#fff'; }
+
+  var roleLabel = role === 'BOUNCER' ? 'BOUNCER' : role === 'MASTER' ? 'MASTER' : role === 'PLAYER' ? 'PLAYER' : 'CIVILIAN';
+
+  if (role === 'BOUNCER') { badge.style.background = '#d4af37'; badge.style.color = '#222'; }
+  else if (role === 'MASTER') { badge.style.background = '#1a6b1a'; badge.style.color = '#fff'; }
+  else if (role === 'PLAYER') { badge.style.background = '#1a3a6b'; badge.style.color = '#fff'; }
   else { badge.style.background = '#333'; badge.style.color = '#e0cfc0'; }
+
   badge.innerHTML = 'Signed in as ' + roleLabel +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
   document.body.appendChild(badge);
-  document.querySelectorAll('.signup-card.legend-signup').forEach(function(card) {
-    card.style.display = 'none';
-  });
-  if (role === 'ADMIN') showAdminPanel();
+
+  if (role === 'BOUNCER') showAdminPanel();
 }
 
 // ========== SIGN OUT ==========
@@ -210,12 +191,12 @@ window.sorcSignOut = function() {
 
 // ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
-  if (email === ADMIN_EMAIL) return 'ADMIN';
+  if (email === ADMIN_EMAIL) return 'BOUNCER';
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
-  if (docSnap.exists()) return docSnap.data().role || 'BASIC';
-  await setDoc(docRef, { email: email, role: 'BASIC', displayName: '' });
-  return 'BASIC';
+  if (docSnap.exists()) return docSnap.data().role || 'CIVILIAN';
+  await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
+  return 'CIVILIAN';
 }
 
 // ========== AUTH STATE (Firebase email/password) ==========
@@ -237,8 +218,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (savedGoogle) {
     try {
       var userInfo = JSON.parse(savedGoogle);
-      var role = userInfo.role || 'BASIC';
-      if (userInfo.email === ADMIN_EMAIL) role = 'ADMIN';
+      var role = userInfo.role || 'CIVILIAN';
+      if (userInfo.email === ADMIN_EMAIL) role = 'BOUNCER';
       showRoleBadge(userInfo.email, userInfo.name, role);
     } catch(e) {
       localStorage.removeItem('sorc_google_user');
@@ -253,9 +234,9 @@ window.sorcSignUp = function(email, password) {
     await sendEmailVerification(result.user);
     await setDoc(doc(db, "users", result.user.uid), {
       email: email,
-      role: 'BASIC',
+      role: 'CIVILIAN',
       displayName: '',
-      accountType: 'BASIC'
+      accountType: 'CIVILIAN'
     });
     signOut(auth);
     document.querySelectorAll('.verify-notice').forEach(function(n) {
@@ -292,13 +273,13 @@ function showAdminPanel() {
   panel.className = 'admin-panel';
   panel.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9999;min-width:260px;border:2px solid #d4af37;';
   panel.innerHTML = '<h3 style="color:#d4af37;margin:0 0 10px 0;">Admin Panel</h3>' +
-    '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">Generate GM Code</button>' +
+    '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">Generate Master Code</button>' +
     '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>';
   document.body.appendChild(panel);
 }
 
 window.generateGMCode = async function() {
-  var code = 'GM-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+  var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
   await addDoc(collection(db, "gm_codes"), { code: code, used: false, createdAt: new Date() });
-  document.getElementById('gmCodeOutput').innerHTML = 'New GM Code: <strong>' + code + '</strong><br><small>Share this with your GM</small>';
+  document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
 };
