@@ -510,7 +510,8 @@
         </section>
     </main>
     <div id="footer"></div>
-    <script>
+    
+<script>
 function handleGoogleCredential(response) {
   var base64Url = response.credential.split('.')[1];
   var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -520,9 +521,27 @@ function handleGoogleCredential(response) {
     name: userInfo.name,
     googleId: userInfo.sub
   }));
-  window.location.reload();
+  // Cancel One Tap before reloading to prevent loop
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    google.accounts.id.cancel();
+    google.accounts.id.disableAutoSelect();
+  }
+  setTimeout(function() {
+    window.location.reload();
+  }, 300);
 }
+
+// If already signed in via Google, cancel One Tap immediately
+document.addEventListener('DOMContentLoaded', function() {
+  if (localStorage.getItem('sorc_google_user')) {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+      google.accounts.id.cancel();
+      google.accounts.id.disableAutoSelect();
+    }
+  }
+});
 </script>
 <script type="module" src="main.js"></script>
+
 </body>
 </html>
