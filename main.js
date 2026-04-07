@@ -167,7 +167,7 @@ import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "
 
 const firebaseConfig = {
   apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-  authDomain: "sorcrpg.com",
+  authDomain: "sorc-a1393.firebaseapp.com",
   projectId: "sorc-a1393",
   storageBucket: "sorc-a1393.firebasestorage.app",
   messagingSenderId: "303646936307",
