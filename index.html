@@ -87,70 +87,52 @@
         body.lawful-mode .cta-btn { background: #d4af37; color: #2c2c2c; }
         body.lawful-mode .cta-btn:hover { background: #c19b2b; }
         body.lawful-mode footer { background: #2c2c2c; color: #f5f5f0; }
-        body.lawful-mode .signup-card { background: #ffffff; color: #2c2c2c; border: 1px solid #e0e0e0; }
-        body.lawful-mode .signup-primary { background: #d4af37; color: #2c2c2c; }
-        body.lawful-mode .signup-oauth { background: #f5f5f0; color: #2c2c2c; border: 1px solid #e0e0e0; }
-        body.lawful-mode .legend { background: #f5f5f0; }
-        body.lawful-mode .about, body.lawful-mode .news-preview, body.lawful-mode .back-of-book,
-        body.lawful-mode .explore-more, body.lawful-mode .partnered-creators, body.lawful-mode .level-up-game {
-            background: #ffffff; border: 1px solid #d4af37;
-        }
         body.lawful-mode .menu-toggle { color: #2c2c2c; }
-        .account-type-selector {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            justify-content: center;
-        }
-        .account-type-btn {
-            padding: 0.5rem 1rem;
-            border: 2px solid #444;
-            border-radius: 8px;
-            background: #222;
+
+        /* Cookie Consent */
+        .cookie-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            border-top: 2px solid #d0021b;
             color: #e0cfc0;
+            padding: 1rem 1.5rem;
+            z-index: 99999;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        .cookie-banner p { margin: 0; flex: 1; min-width: 200px; }
+        .cookie-banner a { color: #d4af37; }
+        .cookie-accept-btn {
+            background: #d0021b;
+            color: #fff;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+            white-space: nowrap;
         }
-        .account-type-btn.active { border-color: #d0021b; background: #d0021b; color: #fff; }
-        .account-type-btn:hover { border-color: #d0021b; }
-        .account-info-msg {
-            background: #1a1a2a;
-            border: 1px solid #444;
-            color: #e0cfc0;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.88rem;
-            line-height: 1.6;
-            display: none;
-            text-align: left;
-        }
-        .account-info-msg.coming-soon { border-color: #d4af37; background: #2a1a00; color: #d4af37; }
-        .signup-input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border: 1px solid #444;
-            background: #222;
-            color: #fff;
-            box-sizing: border-box;
-        }
-        .verify-notice {
-            background: #1a2a1a;
-            border: 1px solid #4caf50;
-            color: #4caf50;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.88rem;
-            display: none;
-        }
+        .cookie-accept-btn:hover { background: #a50013; }
     </style>
 </head>
 <body>
+    <!-- Cookie Consent Banner -->
+    <div class="cookie-banner" id="cookieConsent">
+        <p>
+            We use cookies to enhance your experience on Essentia. By continuing to use this site you agree to our
+            <a href="privacy.html" target="_blank">Privacy Policy</a>.
+        </p>
+        <button class="cookie-accept-btn" id="acceptCookiesBtn">Accept</button>
+    </div>
+
     <header>
         <div class="container">
             <div class="header-image-wrapper">
@@ -225,56 +207,9 @@
                         <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
                     </a>
                 </div>
-                <div class="signup-card legend-signup">
-                    <h2>Create Account</h2>
-                    <p class="signup-note">
-                        By creating an account, you agree to follow Ogre Adventurer's
-                        <a href="terms.html" target="_blank">Terms of Service</a>,
-                        <a href="conduct.html" target="_blank">Code of Conduct</a>, and
-                        <a href="privacy.html" target="_blank">Privacy Policy</a>.
-                    </p>
-                    <div class="account-type-selector">
-                        <button class="account-type-btn active" onclick="selectAccountType('BASIC', this)">BASIC</button>
-                        <button class="account-type-btn" onclick="selectAccountType('PC', this)">PC</button>
-                        <button class="account-type-btn" onclick="selectAccountType('GM', this)">GM</button>
-                    </div>
-                    <div class="account-info-msg" id="basicInfo" style="display:block;border-color:#555;background:#1a1a1a;color:#e0cfc0;">
-                        <b>BASIC</b> is our free starter account. Create your SorC profile, browse the library, and get ready for the full SorC Beyond experience. A verification email will be sent to confirm your address before your account activates.
-                    </div>
-                    <div class="account-info-msg coming-soon" id="pcInfo">
-                        <b>PC</b> stands for <b>Player Character</b> — the role for players who join SorC Beyond online lobbies and digital features as an active adventurer.<br /><br />
-                        To become a PC, players must pass a <b>SorC PC Assessment</b> (available in Beginner, Intermediate, and Advanced tiers). These assessments ensure every player joining online lobbies understands SorC's rules and can hold their own at the table.<br /><br />
-                        <b>PC accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your PC account when assessments launch.
-                    </div>
-                    <div class="account-info-msg coming-soon" id="gmInfo">
-                        <b>GM</b> stands for <b>Game Master</b> — the role for those who run campaigns, manage lobbies, and guide other players through Essentia.<br /><br />
-                        To become a GM, candidates must pass a <b>SorC GM Assessment</b> (available in Beginner, Intermediate, and Advanced tiers) AND receive an official GM Code issued by Ogre Adventurer. This ensures every GM hosting online lobbies is qualified to lead a great session.<br /><br />
-                        <b>GM accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your GM account when assessments launch.
-                    </div>
-                    <div class="verify-notice" id="verifyNotice">
-                        ✅ Account created! A verification email has been sent to your address. Please verify before signing in.
-                    </div>
-                    <div id="signupForm">
-                        <input type="email" id="sorcEmail" class="signup-input" placeholder="Email" />
-                        <input type="password" id="sorcPassword" class="signup-input" placeholder="Password (min 6 characters)" />
-                        <button class="signup-primary" onclick="sorcSignUp(document.getElementById('sorcEmail').value, document.getElementById('sorcPassword').value)">
-                            Sign up with SorC
-                        </button>
-                        <div class="signup-divider"><span>or sign in</span></div>
-                        <input type="email" id="sorcSignInEmail" class="signup-input" placeholder="Email" />
-                        <input type="password" id="sorcSignInPassword" class="signup-input" placeholder="Password" />
-                        <button class="signup-primary" onclick="sorcSignIn(document.getElementById('sorcSignInEmail').value, document.getElementById('sorcSignInPassword').value)" style="background:#555;">
-                            Sign In with SorC
-                        </button>
-                    </div>
-                    <div class="signup-divider"><span>or</span></div>
-                    <button class="signup-oauth oauth-apple">
-                        <span class="icon apple-icon"></span> Sign up with Apple
-                    </button>
-                    <a href="google-signin.html" class="signup-oauth oauth-google" style="display:block;text-align:center;text-decoration:none;padding:10px;">
-                        Sign in with Google
-                    </a>
-                    <p class="signin-link">Already have an account? <a href="signin.html">Sign In</a></p>
+                <!-- Sign In Link -->
+                <div style="text-align:center;margin:2rem 0;">
+                    <a href="signin.html" class="cta-btn">Sign In / Create Account</a>
                 </div>
             </div>
             <!-- SLIDE 2 -->
@@ -303,56 +238,9 @@
                             <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
                         </a>
                     </div>
-                    <div class="signup-card legend-signup">
-                        <h2>Create Account</h2>
-                        <p class="signup-note">
-                            By creating an account, you agree to follow Ogre Adventurer's
-                            <a href="terms.html" target="_blank">Terms of Service</a>,
-                            <a href="conduct.html" target="_blank">Code of Conduct</a>, and
-                            <a href="privacy.html" target="_blank">Privacy Policy</a>.
-                        </p>
-                        <div class="account-type-selector">
-                            <button class="account-type-btn active" onclick="selectAccountType('BASIC', this)">BASIC</button>
-                            <button class="account-type-btn" onclick="selectAccountType('PC', this)">PC</button>
-                            <button class="account-type-btn" onclick="selectAccountType('GM', this)">GM</button>
-                        </div>
-                        <div class="account-info-msg" id="basicInfo2" style="display:block;border-color:#555;background:#1a1a1a;color:#e0cfc0;">
-                            <b>BASIC</b> is our free starter account. Create your SorC profile, browse the library, and get ready for the full SorC Beyond experience. A verification email will be sent to confirm your address before your account activates.
-                        </div>
-                        <div class="account-info-msg coming-soon" id="pcInfo2">
-                            <b>PC</b> stands for <b>Player Character</b> — the role for players who join SorC Beyond online lobbies and digital features as an active adventurer.<br /><br />
-                            To become a PC, players must pass a <b>SorC PC Assessment</b> (available in Beginner, Intermediate, and Advanced tiers). These assessments ensure every player joining online lobbies understands SorC's rules and can hold their own at the table.<br /><br />
-                            <b>PC accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your PC account when assessments launch.
-                        </div>
-                        <div class="account-info-msg coming-soon" id="gmInfo2">
-                            <b>GM</b> stands for <b>Game Master</b> — the role for those who run campaigns, manage lobbies, and guide other players through Essentia.<br /><br />
-                            To become a GM, candidates must pass a <b>SorC GM Assessment</b> (available in Beginner, Intermediate, and Advanced tiers) AND receive an official GM Code issued by Ogre Adventurer. This ensures every GM hosting online lobbies is qualified to lead a great session.<br /><br />
-                            <b>GM accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your GM account when assessments launch.
-                        </div>
-                        <div class="verify-notice" id="verifyNotice2">
-                            ✅ Account created! A verification email has been sent to your address. Please verify before signing in.
-                        </div>
-                        <div id="signupForm2">
-                            <input type="email" id="sorcEmail2" class="signup-input" placeholder="Email" />
-                            <input type="password" id="sorcPassword2" class="signup-input" placeholder="Password (min 6 characters)" />
-                            <button class="signup-primary" onclick="sorcSignUp(document.getElementById('sorcEmail2').value, document.getElementById('sorcPassword2').value)">
-                                Sign up with SorC
-                            </button>
-                            <div class="signup-divider"><span>or sign in</span></div>
-                            <input type="email" id="sorcSignInEmail2" class="signup-input" placeholder="Email" />
-                            <input type="password" id="sorcSignInPassword2" class="signup-input" placeholder="Password" />
-                            <button class="signup-primary" onclick="sorcSignIn(document.getElementById('sorcSignInEmail2').value, document.getElementById('sorcSignInPassword2').value)" style="background:#555;">
-                                Sign In with SorC
-                            </button>
-                        </div>
-                        <div class="signup-divider"><span>or</span></div>
-                        <button class="signup-oauth oauth-apple">
-                            <span class="icon apple-icon"></span> Sign up with Apple
-                        </button>
-                        <a href="google-signin.html" class="signup-oauth oauth-google" style="display:block;text-align:center;text-decoration:none;padding:10px;">
-                            Sign in with Google
-                        </a>
-                        <p class="signin-link">Already have an account? <a href="signin.html">Sign In</a></p>
+                    <!-- Sign In Link Slide 2 -->
+                    <div style="text-align:center;margin:2rem 0;">
+                        <a href="signin.html" class="cta-btn">Sign In / Create Account</a>
                     </div>
                 </div>
             </div>
