@@ -1,1 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile | Slayers of Rings § Crowns</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; }
+        .profile-container {
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: #1a1a1a;
+            border-radius: 1rem;
+            border: 1px solid #333;
+        }
+        .profile-container h1 { color: #d0021b; margin-bottom: 0.5rem; }
+        .profile-field {
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: #222;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .profile-field label { font-size: 0.8rem; color: #888; display: block; margin-bottom: 4px; }
+        .profile-field span { font-weight: bold; }
+        .role-badge-profile {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .gm-code-section {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #1a2a1a;
+            border: 1px solid #1a6b1a;
+            border-radius: 8px;
+        }
+        .gm-code-section h3 { color: #4caf50; margin-bottom: 0.5rem; }
+        .gm-code-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+            margin-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .btn {
+            padding: 8px 20px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-red { background: #d0021b; color: #fff; }
+        .btn-gold { background: #d4af37; color: #222; }
+        .btn-green { background: #1a6b1a; color: #fff; }
+        .msg { margin-top: 0.5rem; font-size: 0.9rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #d0021b; }
+        .not-logged-in { text-align: center; padding: 3rem; }
+        .not-logged-in a { color: #d0021b; }
+    </style>
+</head>
+<body>
+    <div id="profileApp">
+        <div class="not-logged-in">
+            <p>Loading...</p>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
+
+        function roleColor(role) {
+            if (role === 'ADMIN') return 'background:#d4af37;color:#222;';
+            if (role === 'GM') return 'background:#1a6b1a;color:#fff;';
+            if (role === 'PC') return 'background:#1a3a6b;color:#fff;';
+            return 'background:#333;color:#e0cfc0;';
+        }
+
+        onAuthStateChanged(auth, async function(user) {
+            if (!user) {
+                document.getElementById('profileApp').innerHTML =
+                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
+                return;
+            }
+
+            var role = user.email === ADMIN_EMAIL ? 'ADMIN' : 'BASIC';
+            var userData = {};
+            var docSnap = await getDoc(doc(db, "users", user.uid));
+            if (docSnap.exists()) {
+                userData = docSnap.data();
+                role = user.email === ADMIN_EMAIL ? 'ADMIN' : (userData.role || 'BASIC');
+            }
+
+            document.getElementById('profileApp').innerHTML = `
+                <div class="profile-container">
+                    <h1>Your Profile</h1>
+                    <div class="profile-field">
+                        <label>EMAIL</label>
+                        <span>${user.email}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label>ACCOUNT ROLE</label>
+                        <span class="role-badge-profile" style="${roleColor(role)}">${role}</span>
+                    </div>
+                    <div class="profile-field">
+                        <label>DISPLAY NAME</label>
+                        <span>${userData.displayName || 'Not set'}</span>
+                    </div>
+                    ${role === 'BASIC' ? `
+                    <div class="gm-code-section">
+                        <h3>Redeem GM Code</h3>
+                        <p style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">Have a GM code? Enter it here to upgrade your account.</p>
+                        <input type="text" id="gmCodeInput" class="gm-code-input" placeholder="Enter GM Code (e.g. GM-X7K2PQ9A)" />
+                        <button class="btn btn-green" onclick="redeemGMCode('${user.uid}')">Redeem Code</button>
+                        <div id="gmCodeMsg" class="msg"></div>
+                    </div>` : ''}
+                    <br/>
+                    <button class="btn btn-red" onclick="doSignOut()">Logout</button>
+                    &nbsp;
+                    <a href="index.html" class="btn btn-gold" style="text-decoration:none;">Home</a>
+                </div>
+            `;
+        });
+
+        window.doSignOut = function() {
+            signOut(auth).then(function() {
+                window.location.href = 'index.html';
+            });
+        };
+
+        window.redeemGMCode = async function(uid) {
+            var code = document.getElementById('gmCodeInput').value.trim();
+            var msgEl = document.getElementById('gmCodeMsg');
+            if (!code) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a code.'; return; }
+
+            var codesSnap = await getDocs(collection(db, "gm_codes"));
+            var matched = null;
+            var matchedDocId = null;
+            codesSnap.forEach(function(d) {
+                if (d.data().code === code && !d.data().used) {
+                    matched = d.data();
+                    matchedDocId = d.id;
+                }
+            });
+
+            if (!matched) {
+                msgEl.className = 'msg error';
+                msgEl.textContent = 'Invalid or already used code.';
+                return;
+            }
+
+            await updateDoc(doc(db, "users", uid), { role: 'GM' });
+            msgEl.className = 'msg success';
+            msgEl.textContent = 'Success! You are now a GM. Reload the page to see your updated role.';
+        };
+    </script>
+</body>
+</html>
