@@ -78,7 +78,7 @@
         body.lawful-mode nav a:hover { color: #d4af37; }
         body.lawful-mode nav ul li a { color: #d4af37; }
         body.lawful-mode nav ul li a:hover { color: #c19b2b; }
-        body.lawful-mode .sorc-beyond { background: #ffffff; color: #2c2c2c; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        body.lawful-mode .sorc-beyond { background: #ffffff; color: #2c2c2c; }
         body.lawful-mode .sorc-beyond h2 { color: #d4af37; }
         body.lawful-mode section { background: #ffffff; color: #2c2c2c; }
         body.lawful-mode h2, body.lawful-mode h3 { color: #d4af37; }
@@ -97,8 +97,6 @@
             background: #ffffff; border: 1px solid #d4af37;
         }
         body.lawful-mode .menu-toggle { color: #2c2c2c; }
-
-        /* Account type selector */
         .account-type-selector {
             display: flex;
             gap: 0.5rem;
@@ -116,22 +114,21 @@
             font-size: 0.9rem;
             transition: all 0.2s;
         }
-        .account-type-btn.active {
-            border-color: #d0021b;
-            background: #d0021b;
-            color: #fff;
-        }
+        .account-type-btn.active { border-color: #d0021b; background: #d0021b; color: #fff; }
         .account-type-btn:hover { border-color: #d0021b; }
-        .assessment-msg {
-            background: #2a1a00;
-            border: 1px solid #d4af37;
-            color: #d4af37;
+        .account-info-msg {
+            background: #1a1a2a;
+            border: 1px solid #444;
+            color: #e0cfc0;
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1rem;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            line-height: 1.6;
             display: none;
+            text-align: left;
         }
+        .account-info-msg.coming-soon { border-color: #d4af37; background: #2a1a00; color: #d4af37; }
         .signup-input {
             width: 100%;
             padding: 8px;
@@ -141,6 +138,16 @@
             background: #222;
             color: #fff;
             box-sizing: border-box;
+        }
+        .verify-notice {
+            background: #1a2a1a;
+            border: 1px solid #4caf50;
+            color: #4caf50;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+            display: none;
         }
     </style>
 </head>
@@ -219,7 +226,6 @@
                         <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
                     </a>
                 </div>
-                <!-- SIGNUP CARD -->
                 <div class="signup-card legend-signup">
                     <h2>Create Account</h2>
                     <p class="signup-note">
@@ -228,21 +234,31 @@
                         <a href="conduct.html" target="_blank">Code of Conduct</a>, and
                         <a href="privacy.html" target="_blank">Privacy Policy</a>.
                     </p>
-                    <!-- Account Type Selector -->
                     <div class="account-type-selector">
                         <button class="account-type-btn active" onclick="selectAccountType('BASIC', this)">BASIC</button>
                         <button class="account-type-btn" onclick="selectAccountType('PC', this)">PC</button>
                         <button class="account-type-btn" onclick="selectAccountType('GM', this)">GM</button>
                     </div>
-                    <!-- Assessment message for PC and GM -->
-                    <div class="assessment-msg" id="assessmentMsg">
-                        Assessments are Under Heavy Development. Create a BASIC account and it will be linked to this when assessments launch.
+                    <div class="account-info-msg" id="basicInfo" style="display:block;border-color:#555;background:#1a1a1a;color:#e0cfc0;">
+                        <b>BASIC</b> is our free starter account. Create your SorC profile, browse the library, and get ready for the full SorC Beyond experience. A verification email will be sent to confirm your address before your account activates.
                     </div>
-                    <!-- Signup form (shown for BASIC) -->
+                    <div class="account-info-msg coming-soon" id="pcInfo">
+                        <b>PC</b> stands for <b>Player Character</b> — the role for players who join SorC Beyond online lobbies and digital features as an active adventurer.<br /><br />
+                        To become a PC, players must pass a <b>SorC PC Assessment</b> (available in Beginner, Intermediate, and Advanced tiers). These assessments ensure every player joining online lobbies understands SorC's rules and can hold their own at the table.<br /><br />
+                        <b>PC accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your PC account when assessments launch.
+                    </div>
+                    <div class="account-info-msg coming-soon" id="gmInfo">
+                        <b>GM</b> stands for <b>Game Master</b> — the role for those who run campaigns, manage lobbies, and guide other players through Essentia.<br /><br />
+                        To become a GM, candidates must pass a <b>SorC GM Assessment</b> (available in Beginner, Intermediate, and Advanced tiers) AND receive an official GM Code issued by Ogre Adventurer. This ensures every GM hosting online lobbies is qualified to lead a great session.<br /><br />
+                        <b>GM accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your GM account when assessments launch.
+                    </div>
+                    <div class="verify-notice" id="verifyNotice">
+                        ✅ Account created! A verification email has been sent to your address. Please verify before signing in.
+                    </div>
                     <div id="signupForm">
                         <input type="email" id="sorcEmail" class="signup-input" placeholder="Email" />
-                        <input type="password" id="sorcPassword" class="signup-input" placeholder="Password" />
-                        <button class="signup-primary" id="signupBtn" onclick="sorcSignUp(document.getElementById('sorcEmail').value, document.getElementById('sorcPassword').value)">
+                        <input type="password" id="sorcPassword" class="signup-input" placeholder="Password (min 6 characters)" />
+                        <button class="signup-primary" onclick="sorcSignUp(document.getElementById('sorcEmail').value, document.getElementById('sorcPassword').value)">
                             Sign up with SorC
                         </button>
                         <div class="signup-divider"><span>or sign in</span></div>
@@ -301,12 +317,25 @@
                             <button class="account-type-btn" onclick="selectAccountType('PC', this)">PC</button>
                             <button class="account-type-btn" onclick="selectAccountType('GM', this)">GM</button>
                         </div>
-                        <div class="assessment-msg" id="assessmentMsg2">
-                            Assessments are Under Heavy Development. Create a BASIC account and it will be linked to this when assessments launch.
+                        <div class="account-info-msg" id="basicInfo2" style="display:block;border-color:#555;background:#1a1a1a;color:#e0cfc0;">
+                            <b>BASIC</b> is our free starter account. Create your SorC profile, browse the library, and get ready for the full SorC Beyond experience. A verification email will be sent to confirm your address before your account activates.
+                        </div>
+                        <div class="account-info-msg coming-soon" id="pcInfo2">
+                            <b>PC</b> stands for <b>Player Character</b> — the role for players who join SorC Beyond online lobbies and digital features as an active adventurer.<br /><br />
+                            To become a PC, players must pass a <b>SorC PC Assessment</b> (available in Beginner, Intermediate, and Advanced tiers). These assessments ensure every player joining online lobbies understands SorC's rules and can hold their own at the table.<br /><br />
+                            <b>PC accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your PC account when assessments launch.
+                        </div>
+                        <div class="account-info-msg coming-soon" id="gmInfo2">
+                            <b>GM</b> stands for <b>Game Master</b> — the role for those who run campaigns, manage lobbies, and guide other players through Essentia.<br /><br />
+                            To become a GM, candidates must pass a <b>SorC GM Assessment</b> (available in Beginner, Intermediate, and Advanced tiers) AND receive an official GM Code issued by Ogre Adventurer. This ensures every GM hosting online lobbies is qualified to lead a great session.<br /><br />
+                            <b>GM accounts are not yet available.</b> Assessments are currently under heavy development. Create a <b>BASIC</b> account now — it will be linked to your GM account when assessments launch.
+                        </div>
+                        <div class="verify-notice" id="verifyNotice2">
+                            ✅ Account created! A verification email has been sent to your address. Please verify before signing in.
                         </div>
                         <div id="signupForm2">
                             <input type="email" id="sorcEmail2" class="signup-input" placeholder="Email" />
-                            <input type="password" id="sorcPassword2" class="signup-input" placeholder="Password" />
+                            <input type="password" id="sorcPassword2" class="signup-input" placeholder="Password (min 6 characters)" />
                             <button class="signup-primary" onclick="sorcSignUp(document.getElementById('sorcEmail2').value, document.getElementById('sorcPassword2').value)">
                                 Sign up with SorC
                             </button>
