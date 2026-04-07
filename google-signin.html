@@ -1,1 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In with Google | SorC</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body {
+            background: #111;
+            color: #e0cfc0;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .box h1 { color: #d0021b; margin-bottom: 0.5rem; font-size: 1.4rem; }
+        .box p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .status { color: #4caf50; margin-top: 1rem; font-size: 0.9rem; display: none; }
+        .error { color: #d0021b; margin-top: 1rem; font-size: 0.9rem; display: none; }
+        .back { 
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back:hover { color: #e0cfc0; }
+        .g_id_signin { margin: 0 auto; display: flex; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Sign In with Google</h1>
+        <p>Choose your Google account to continue your adventure in Essentia.</p>
 
+        <div id="g_id_onload"
+             data-client_id="72029996593-u4lf2ocdpm257rbq495o1kvoecqc8mbk.apps.googleusercontent.com"
+             data-callback="handleGoogleCredential"
+             data-auto_select="false"
+             data-cancel_on_tap_outside="true">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="filled_black"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left">
+        </div>
+
+        <div class="status" id="statusMsg">✅ Signed in! Redirecting...</div>
+        <div class="error" id="errorMsg"></div>
+        <a href="index.html" class="back">← Back to site</a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
+
+        window.handleGoogleCredential = async function(response) {
+            try {
+                var base64Url = response.credential.split('.')[1];
+                var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                var userInfo = JSON.parse(window.atob(base64));
+
+                var email = userInfo.email;
+                var name = userInfo.name;
+                var googleId = userInfo.sub;
+
+                // Save to Firestore
+                var role = 'BASIC';
+                if (email === ADMIN_EMAIL) {
+                    role = 'ADMIN';
+                } else {
+                    var docRef = doc(db, "users", googleId);
+                    var docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        role = docSnap.data().role || 'BASIC';
+                    } else {
+                        await setDoc(docRef, { email: email, role: 'BASIC', displayName: name });
+                        role = 'BASIC';
+                    }
+                }
+
+                // Save to localStorage
+                localStorage.setItem('sorc_google_user', JSON.stringify({
+                    email: email,
+                    name: name,
+                    googleId: googleId,
+                    role: role
+                }));
+
+                // Cancel One Tap
+                if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+                    google.accounts.id.cancel();
+                    google.accounts.id.disableAutoSelect();
+                }
+
+                // Show success and redirect
+                document.getElementById('statusMsg').style.display = 'block';
+                setTimeout(function() {
+                    window.location.href = 'https://sorcrpg.com/';
+                }, 1000);
+
+            } catch(e) {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').textContent = 'Error: ' + e.message;
+            }
+        };
+    </script>
+</body>
+</html>
