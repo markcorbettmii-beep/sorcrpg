@@ -139,34 +139,36 @@ document.addEventListener('DOMContentLoaded', function() {
 var selectedAccountType = 'BASIC';
 window.selectAccountType = function(type, btn) {
   selectedAccountType = type;
-  // Update all account type button groups
-  document.querySelectorAll('.account-type-selector').forEach(function(selector) {
-    selector.querySelectorAll('.account-type-btn').forEach(function(b) {
-      b.classList.remove('active');
-    });
-  });
-  // Activate clicked button and its sibling group
   var parentSelector = btn.closest('.account-type-selector');
   parentSelector.querySelectorAll('.account-type-btn').forEach(function(b) {
-    if (b.textContent === type) b.classList.add('active');
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+
+  // Find the parent signup card
+  var card = btn.closest('.signup-card');
+
+  // Hide all info messages in this card
+  card.querySelectorAll('.account-info-msg').forEach(function(m) {
+    m.style.display = 'none';
   });
 
-  // Show/hide assessment message and signup form
-  var msgs = document.querySelectorAll('.assessment-msg');
-  var forms = document.querySelectorAll('#signupForm, #signupForm2');
-
+  // Show the right one
   if (type === 'BASIC') {
-    msgs.forEach(function(m) { m.style.display = 'none'; });
-    forms.forEach(function(f) { f.style.display = 'block'; });
-  } else {
-    msgs.forEach(function(m) { m.style.display = 'block'; });
-    forms.forEach(function(f) { f.style.display = 'none'; });
+    card.querySelector('[id^="basicInfo"]').style.display = 'block';
+    card.querySelector('[id^="signupForm"]').style.display = 'block';
+  } else if (type === 'PC') {
+    card.querySelector('[id^="pcInfo"]').style.display = 'block';
+    card.querySelector('[id^="signupForm"]').style.display = 'none';
+  } else if (type === 'GM') {
+    card.querySelector('[id^="gmInfo"]').style.display = 'block';
+    card.querySelector('[id^="signupForm"]').style.display = 'none';
   }
 };
 
 // ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, sendEmailVerification, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -190,13 +192,15 @@ function showRoleBadge(user, role) {
   if (existing) existing.remove();
   var badge = document.createElement('div');
   badge.className = 'role-badge';
-  badge.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;cursor:pointer;';
+  badge.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;';
   var roleLabel = role === 'ADMIN' ? 'ADMIN' : role === 'GM' ? 'GM' : role === 'PC' ? 'PC' : 'BASIC';
-  if (role === 'ADMIN') badge.style.background = '#d4af37', badge.style.color = '#222';
-  else if (role === 'GM') badge.style.background = '#1a6b1a', badge.style.color = '#fff';
-  else if (role === 'PC') badge.style.background = '#1a3a6b', badge.style.color = '#fff';
-  else badge.style.background = '#333', badge.style.color = '#e0cfc0';
-  badge.innerHTML = 'Signed in as ' + roleLabel + ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a> &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
+  if (role === 'ADMIN') { badge.style.background = '#d4af37'; badge.style.color = '#222'; }
+  else if (role === 'GM') { badge.style.background = '#1a6b1a'; badge.style.color = '#fff'; }
+  else if (role === 'PC') { badge.style.background = '#1a3a6b'; badge.style.color = '#fff'; }
+  else { badge.style.background = '#333'; badge.style.color = '#e0cfc0'; }
+  badge.innerHTML = 'Signed in as ' + roleLabel +
+    ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
+    ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
   document.body.appendChild(badge);
   document.querySelectorAll('.signup-card.legend-signup').forEach(function(card) {
     card.style.display = 'none';
@@ -207,7 +211,6 @@ function showRoleBadge(user, role) {
 // ========== SIGN OUT ==========
 window.sorcSignOut = function() {
   signOut(auth).then(function() {
-    localStorage.removeItem('sorc_idToken');
     window.location.reload();
   });
 };
@@ -225,6 +228,12 @@ async function getUserRole(user) {
 // ========== AUTH STATE ==========
 onAuthStateChanged(auth, async function(user) {
   if (user) {
+    // For email/password users, require email verification
+    if (!user.emailVerified && user.providerData[0].providerId === 'password') {
+      alert('Please verify your email before signing in. Check your inbox for a verification link.');
+      signOut(auth);
+      return;
+    }
     var role = await getUserRole(user);
     showRoleBadge(user, role);
   }
@@ -246,14 +255,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ========== EMAIL SIGNUP ==========
 window.sorcSignUp = function(email, password) {
+  if (!email || !password) { alert('Please enter an email and password.'); return; }
   createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
+    await sendEmailVerification(result.user);
     await setDoc(doc(db, "users", result.user.uid), {
       email: email,
       role: 'BASIC',
       displayName: '',
-      accountType: selectedAccountType
+      accountType: 'BASIC'
     });
-    showRoleBadge(result.user, 'BASIC');
+    signOut(auth);
+    // Show verification notice
+    document.querySelectorAll('.verify-notice').forEach(function(n) {
+      n.style.display = 'block';
+    });
+    document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) {
+      f.style.display = 'none';
+    });
   }).catch(function(error) {
     alert('Sign up failed: ' + error.message);
   });
@@ -261,7 +279,13 @@ window.sorcSignUp = function(email, password) {
 
 // ========== EMAIL SIGN IN ==========
 window.sorcSignIn = function(email, password) {
+  if (!email || !password) { alert('Please enter your email and password.'); return; }
   signInWithEmailAndPassword(auth, email, password).then(async function(result) {
+    if (!result.user.emailVerified) {
+      alert('Please verify your email first. Check your inbox for a verification link.');
+      signOut(auth);
+      return;
+    }
     var role = await getUserRole(result.user);
     showRoleBadge(result.user, role);
   }).catch(function(error) {
