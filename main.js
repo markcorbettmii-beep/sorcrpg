@@ -203,9 +203,7 @@ function showRoleBadge(email, name, role) {
 
 // ========== SIGN OUT ==========
 window.sorcSignOut = function() {
-  // Sign out of Firebase
   signOut(auth);
-  // Sign out of Google
   if (typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.disableAutoSelect();
   }
@@ -213,7 +211,7 @@ window.sorcSignOut = function() {
   window.location.reload();
 };
 
-// ========== GET OR SET USER ROLE (Firebase) ==========
+// ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
   if (email === ADMIN_EMAIL) return 'ADMIN';
   var docRef = doc(db, "users", uid);
@@ -235,42 +233,6 @@ onAuthStateChanged(auth, async function(user) {
     showRoleBadge(user.email, user.displayName, role);
   }
 });
-
-// ========== GOOGLE LOGIN (Google Identity Services) ==========
-window.handleGoogleCredential = async function(response) {
-  // Decode the JWT to get user info
-  var base64Url = response.credential.split('.')[1];
-  var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  var userInfo = JSON.parse(window.atob(base64));
-
-  var email = userInfo.email;
-  var name = userInfo.name;
-  var googleId = userInfo.sub;
-
-  // Save to localStorage so we can persist the session
-  localStorage.setItem('sorc_google_user', JSON.stringify({ email: email, name: name, googleId: googleId }));
-
-  // Save to Firestore
-  var role = 'BASIC';
-  if (email === ADMIN_EMAIL) {
-    role = 'ADMIN';
-  } else {
-    try {
-      var docRef = doc(db, "users", googleId);
-      var docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        role = docSnap.data().role || 'BASIC';
-      } else {
-        await setDoc(docRef, { email: email, role: 'BASIC', displayName: name });
-        role = 'BASIC';
-      }
-    } catch(e) {
-      console.error(e);
-    }
-  }
-
-  showRoleBadge(email, name, role);
-};
 
 // ========== CHECK PERSISTED GOOGLE SESSION ==========
 document.addEventListener('DOMContentLoaded', async function() {
