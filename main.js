@@ -160,7 +160,7 @@ window.selectAccountType = function(type, btn) {
   }
 };
 
-// ========== FIREBASE (email/password only) ==========
+// ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -204,9 +204,6 @@ function showRoleBadge(email, name, role) {
 // ========== SIGN OUT ==========
 window.sorcSignOut = function() {
   signOut(auth);
-  if (typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.disableAutoSelect();
-  }
   localStorage.removeItem('sorc_google_user');
   window.location.reload();
 };
@@ -240,9 +237,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (savedGoogle) {
     try {
       var userInfo = JSON.parse(savedGoogle);
-      var docRef = doc(db, "users", userInfo.googleId);
-      var docSnap = await getDoc(docRef);
-      var role = userInfo.email === ADMIN_EMAIL ? 'ADMIN' : (docSnap.exists() ? docSnap.data().role || 'BASIC' : 'BASIC');
+      var role = userInfo.role || 'BASIC';
+      if (userInfo.email === ADMIN_EMAIL) role = 'ADMIN';
       showRoleBadge(userInfo.email, userInfo.name, role);
     } catch(e) {
       localStorage.removeItem('sorc_google_user');
