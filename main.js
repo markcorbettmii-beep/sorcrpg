@@ -144,16 +144,10 @@ window.selectAccountType = function(type, btn) {
     b.classList.remove('active');
   });
   btn.classList.add('active');
-
-  // Find the parent signup card
   var card = btn.closest('.signup-card');
-
-  // Hide all info messages in this card
   card.querySelectorAll('.account-info-msg').forEach(function(m) {
     m.style.display = 'none';
   });
-
-  // Show the right one
   if (type === 'BASIC') {
     card.querySelector('[id^="basicInfo"]').style.display = 'block';
     card.querySelector('[id^="signupForm"]').style.display = 'block';
@@ -168,7 +162,7 @@ window.selectAccountType = function(type, btn) {
 
 // ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, sendEmailVerification, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, sendEmailVerification, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -228,7 +222,6 @@ async function getUserRole(user) {
 // ========== AUTH STATE ==========
 onAuthStateChanged(auth, async function(user) {
   if (user) {
-    // For email/password users, require email verification
     if (!user.emailVerified && user.providerData[0].providerId === 'password') {
       alert('Please verify your email before signing in. Check your inbox for a verification link.');
       signOut(auth);
@@ -243,14 +236,21 @@ onAuthStateChanged(auth, async function(user) {
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.oauth-google').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      signInWithPopup(auth, googleProvider).then(async function(result) {
-        var role = await getUserRole(result.user);
-        showRoleBadge(result.user, role);
-      }).catch(function(error) {
-        alert('Google sign-in failed: ' + error.message);
-      });
+      signInWithRedirect(auth, googleProvider);
     });
   });
+});
+
+// ========== HANDLE GOOGLE REDIRECT RESULT ==========
+getRedirectResult(auth).then(async function(result) {
+  if (result && result.user) {
+    var role = await getUserRole(result.user);
+    showRoleBadge(result.user, role);
+  }
+}).catch(function(error) {
+  if (error.code !== 'auth/no-current-user') {
+    alert('Google sign-in failed: ' + error.message);
+  }
 });
 
 // ========== EMAIL SIGNUP ==========
@@ -265,7 +265,6 @@ window.sorcSignUp = function(email, password) {
       accountType: 'BASIC'
     });
     signOut(auth);
-    // Show verification notice
     document.querySelectorAll('.verify-notice').forEach(function(n) {
       n.style.display = 'block';
     });
