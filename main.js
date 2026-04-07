@@ -242,15 +242,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ========== HANDLE GOOGLE REDIRECT RESULT ==========
-getRedirectResult(auth).then(async function(result) {
-  if (result && result.user) {
-    var role = await getUserRole(result.user);
-    showRoleBadge(result.user, role);
-  }
-}).catch(function(error) {
-  if (error.code !== 'auth/no-current-user') {
-    alert('Google sign-in failed: ' + error.message);
-  }
+document.addEventListener('DOMContentLoaded', function() {
+  getRedirectResult(auth).then(async function(result) {
+    if (result && result.user) {
+      var role = await getUserRole(result.user);
+      showRoleBadge(result.user, role);
+    }
+  }).catch(function(error) {
+    if (error.code !== 'auth/no-current-user') {
+      alert('Google sign-in failed: ' + error.message);
+    }
+  });
 });
 
 // ========== EMAIL SIGNUP ==========
