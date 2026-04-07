@@ -1,1 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | Slayers of Rings § Crowns</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <style>
+        body {
+            background: #111;
+            color: #e0cfc0;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .signin-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .signin-box h1 {
+            color: #d0021b;
+            margin-bottom: 0.5rem;
+            font-size: 1.4rem;
+        }
+        .signin-box p {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn-google {
+            background: #fff;
+            color: #222;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-google:hover { background: #f5f5f5; }
+        .btn-back {
+            background: #333;
+            color: #e0cfc0;
+            margin-top: 0.5rem;
+        }
+        .btn-back:hover { background: #444; }
+        .status {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #4caf50;
+            display: none;
+        }
+        .error {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #d0021b;
+            display: none;
+        }
+        .google-icon {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="signin-box">
+        <h1>Sign In to SorC</h1>
+        <p>Sign in with your Google account to continue your adventure.</p>
+        <button class="btn btn-google" id="googleSignInBtn">
+            <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Sign in with Google
+        </button>
+        <div class="status" id="statusMsg">Signing you in...</div>
+        <div class="error" id="errorMsg"></div>
+        <a href="index.html" class="btn btn-back">Back to Site</a>
+    </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+        const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
+
+        const statusMsg = document.getElementById('statusMsg');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Check if already signed in
+        onAuthStateChanged(auth, function(user) {
+            if (user) {
+                statusMsg.style.display = 'block';
+                statusMsg.textContent = 'Signed in! Redirecting...';
+                setTimeout(function() {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+        });
+
+        // Handle redirect result when page loads
+        getRedirectResult(auth).then(async function(result) {
+            if (result && result.user) {
+                var user = result.user;
+                var docRef = doc(db, "users", user.uid);
+                var docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    await setDoc(docRef, {
+                        email: user.email,
+                        role: user.email === ADMIN_EMAIL ? 'ADMIN' : 'BASIC',
+                        displayName: user.displayName || ''
+                    });
+                }
+                statusMsg.style.display = 'block';
+                statusMsg.textContent = 'Signed in! Redirecting...';
+                setTimeout(function() {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+        }).catch(function(error) {
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = 'Error: ' + error.message;
+        });
+
+        // Google sign in button
+        document.getElementById('googleSignInBtn').addEventListener('click', function() {
+            statusMsg.style.display = 'block';
+            statusMsg.textContent = 'Redirecting to Google...';
+            signInWithRedirect(auth, googleProvider);
+        });
+    </script>
+</body>
+</html>
