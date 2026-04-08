@@ -7,22 +7,50 @@
     <link rel="icon" href="IMG_3419.jpeg" />
     <link rel="stylesheet" href="styles.css" />
     <style>
-        body { background: #111; color: #e0cfc0; font-family: sans-serif; }
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
         .profile-container {
-            max-width: 600px;
-            margin: 4rem auto;
+            max-width: 680px;
+            margin: 2rem auto;
             padding: 2rem;
+        }
+        .profile-card {
             background: #1a1a1a;
             border-radius: 1rem;
             border: 1px solid #333;
+            overflow: hidden;
+            margin-bottom: 1rem;
         }
-        .profile-header {
+        .profile-banner {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #1a0a0a, #2a0808, #d0021b22);
             display: flex;
             align-items: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            justify-content: center;
+            color: #333;
+            font-size: 0.8rem;
+            position: relative;
         }
-        .profile-avatar {
+        .profile-banner.locked {
+            filter: grayscale(1);
+            opacity: 0.4;
+        }
+        .profile-banner .lock-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 1rem;
+            color: #555;
+        }
+        .profile-info-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            padding: 0 1.5rem;
+            margin-top: -40px;
+            margin-bottom: 1rem;
+        }
+        .profile-avatar-large {
             width: 80px;
             height: 80px;
             border-radius: 50%;
@@ -36,43 +64,133 @@
             overflow: hidden;
             flex-shrink: 0;
         }
-        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-username { font-size: 1.4rem; font-weight: bold; color: #e0cfc0; }
-        .profile-role {
+        .profile-name-block { flex: 1; padding-bottom: 0.5rem; }
+        .profile-username { font-size: 1.3rem; font-weight: bold; color: #e0cfc0; }
+        .profile-role-tag {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 2px 8px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
-            margin-top: 4px;
+            margin-top: 3px;
+        }
+        .profile-title {
+            font-size: 0.8rem;
+            color: #d4af37;
+            margin-top: 2px;
+            font-style: italic;
+        }
+        .profile-section {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #2a2a2a;
+        }
+        .profile-section h3 {
+            color: #d4af37;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 0.75rem 0;
         }
         .profile-field {
-            margin-bottom: 1rem;
-            padding: 0.75rem 1rem;
-            background: #222;
-            border-radius: 8px;
-            border: 1px solid #333;
+            margin-bottom: 0.75rem;
         }
-        .profile-field label { font-size: 0.8rem; color: #888; display: block; margin-bottom: 4px; }
+        .profile-field label {
+            font-size: 0.75rem;
+            color: #888;
+            display: block;
+            margin-bottom: 3px;
+        }
         .profile-input {
             width: 100%;
             padding: 8px;
             border-radius: 6px;
             border: 1px solid #444;
-            background: #1a1a1a;
+            background: #222;
             color: #fff;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             box-sizing: border-box;
-            margin-bottom: 8px;
+        }
+        .profile-input:focus { outline: none; border-color: #d0021b; }
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .toggle-row label { font-size: 0.8rem; color: #888; }
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #444;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        input:checked + .toggle-slider { background: #d0021b; }
+        input:checked + .toggle-slider:before { transform: translateX(16px); }
+        .points-bar-bg {
+            background: #2a2a2a;
+            border-radius: 8px;
+            height: 8px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .points-bar-fill {
+            background: linear-gradient(90deg, #d0021b, #d4af37);
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.5s;
+        }
+        .points-milestone {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 4px;
+        }
+        .locked-feature {
+            opacity: 0.45;
+            pointer-events: none;
+            position: relative;
+        }
+        .locked-feature::after {
+            content: '🔒 SorC Beyond Pro';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            color: #555;
+            white-space: nowrap;
+            pointer-events: auto;
         }
         .upgrade-section {
-            margin-top: 1.5rem;
-            padding: 1rem;
+            margin-top: 1rem;
+            padding: 1rem 1.5rem;
             background: #1a1a2a;
             border: 1px solid #444;
             border-radius: 8px;
         }
-        .upgrade-section h3 { color: #d4af37; margin-bottom: 0.5rem; }
+        .upgrade-section h3 { color: #d4af37; margin-bottom: 0.5rem; font-size: 0.85rem; }
         .upgrade-btn {
             display: block;
             width: 100%;
@@ -84,7 +202,7 @@
             color: #e0cfc0;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             text-align: left;
             transition: border-color 0.2s;
         }
@@ -97,7 +215,7 @@
             border-radius: 8px;
             padding: 1rem;
             margin-top: 0.5rem;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             line-height: 1.6;
         }
         .master-code-input {
@@ -111,11 +229,12 @@
             margin-bottom: 8px;
             box-sizing: border-box;
         }
-        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-red { background: #d0021b; color: #fff; }
         .btn-gold { background: #d4af37; color: #222; }
         .btn-green { background: #1a6b1a; color: #fff; }
-        .msg { margin-top: 0.5rem; font-size: 0.9rem; }
+        .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+        .msg { margin-top: 0.5rem; font-size: 0.85rem; }
         .msg.success { color: #4caf50; }
         .msg.error { color: #d0021b; }
         .not-logged-in { text-align: center; padding: 3rem; }
@@ -146,18 +265,38 @@
             color: #555;
             font-size: 0.7rem;
         }
-        .avatar-preview {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
-            display: block;
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
         }
+        .stat-box {
+            background: #222;
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .stat-box .stat-val { font-size: 1.2rem; font-weight: bold; color: #d4af37; }
+        .stat-box .stat-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
+        .surname-locked {
+            background: #1a1a00;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 0.75rem;
+        }
+        .surname-locked span { color: #d4af37; }
     </style>
 </head>
 <body>
     <div id="profileApp">
         <div class="not-logged-in"><p>Loading...</p></div>
     </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -175,7 +314,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
+        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
+        const SURNAME_UNLOCK_POINTS = 500;
 
         var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
         function containsBadWord(str) {
@@ -184,20 +325,23 @@
         }
         function isValidUsername(u) {
             if (u.length < 3) return 'Username must be at least 3 characters.';
-            if (u.length > 20) return 'Username must be 20 characters or less.';
-            if (!/^[a-zA-Z0-9_]+$/.test(u)) return 'Letters, numbers and underscores only.';
+            if (u.length > 30) return 'Username must be 30 characters or less.';
+            if (!/^[a-zA-Z0-9_ ]+$/.test(u)) return 'Letters, numbers, underscores and spaces only.';
+            if ((u.match(/ /g) || []).length > 1) return 'Only one space allowed (for a surname).';
             if (containsBadWord(u)) return 'Username contains inappropriate language.';
             return null;
         }
 
         function roleColor(role) {
-            if (role === 'BOUNCER') return 'background:#d4af37;color:#222;';
+            if (role === 'OWNER') return 'background:#d4af37;color:#222;';
+            if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
             if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
             if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
             return 'background:#333;color:#e0cfc0;';
         }
         function roleAbbr(role) {
-            if (role === 'BOUNCER') return '[AD]';
+            if (role === 'OWNER') return '[OWN]';
+            if (role === 'ADMIN') return '[AD]';
             if (role === 'MASTER') return '[GM]';
             if (role === 'PLAYER') return '[PC]';
             return '[CIV]';
@@ -208,17 +352,24 @@
             return 'assets/images/avatars/' + avatarId + '.png';
         }
 
+        function calculateAge(birthday) {
+            if (!birthday) return null;
+            var today = new Date();
+            var birth = new Date(birthday);
+            var age = today.getFullYear() - birth.getFullYear();
+            var m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
         var selectedAvatar = null;
-        var currentUid = null;
 
         function buildAvatarGrid(currentAvatar) {
             var avatars = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11','avatar12'];
             return avatars.map(function(id) {
                 var sel = id === currentAvatar ? ' selected' : '';
-                var avatarPath = getAvatarPath(id);
-                var inner = '<div class="avatar-placeholder">' + id + '</div>';
-                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')" id="avataropt-' + id + '">' +
-                    inner +
+                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')">' +
+                    '<div class="avatar-placeholder">' + id + '</div>' +
                 '</div>';
             }).join('');
         }
@@ -227,12 +378,6 @@
             document.querySelectorAll('.avatar-option').forEach(function(o) { o.classList.remove('selected'); });
             el.classList.add('selected');
             selectedAvatar = id;
-            // Update the header avatar preview immediately
-            var headerAvatar = document.getElementById('headerAvatar');
-            if (headerAvatar) {
-                var path = getAvatarPath(id);
-                headerAvatar.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + id + '</div>';
-            }
         };
 
         var googleUser = null;
@@ -241,48 +386,80 @@
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
-                currentUid = user.uid;
+                var uid = user.uid;
                 var email = user.email;
-                var role = ADMIN_EMAILS.includes(email) ? 'BOUNCER' : 'CIVILIAN';
-                var username = '';
-                var avatar = null;
-                var userId = '';
+                var role = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : 'CIVILIAN';
+                var data = {};
 
-                var docSnap = await getDoc(doc(db, "users", currentUid));
+                var docSnap = await getDoc(doc(db, "users", uid));
                 if (docSnap.exists()) {
-                    role = ADMIN_EMAILS.includes(email) ? 'BOUNCER' : (docSnap.data().role || 'CIVILIAN');
-                    username = docSnap.data().username || docSnap.data().displayName || '';
-                    avatar = docSnap.data().avatar || null;
-                    userId = docSnap.data().userId || '';
+                    data = docSnap.data();
+                    if (!OWNER_EMAILS.includes(email) && !ADMIN_EMAILS.includes(email)) {
+                        role = data.role || 'CIVILIAN';
+                    }
                 }
-                selectedAvatar = avatar;
-                renderProfile(currentUid, email, role, username, avatar, userId);
+                renderProfile(uid, email, role, data);
             } else if (googleUser) {
-                currentUid = googleUser.googleId;
-                selectedAvatar = googleUser.avatar || null;
-                renderProfile(googleUser.googleId, googleUser.email, ADMIN_EMAILS.includes(googleUser.email) ? 'BOUNCER' : (googleUser.role || 'CIVILIAN'), googleUser.username || googleUser.name || '', googleUser.avatar || null, googleUser.userId || '');
+                var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
+                var data = {};
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) data = docSnap.data();
+                } catch(e) {}
+                renderProfile(googleUser.googleId, googleUser.email, role, data);
             } else {
                 document.getElementById('profileApp').innerHTML =
                     '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
             }
         });
 
-        function renderProfile(uid, email, role, username, avatar, userId) {
+        function renderProfile(uid, email, role, data) {
+            var username = data.username || data.displayName || email.split('@')[0];
+            var avatar = data.avatar || null;
+            var userId = data.userId || '';
+            var bio = data.bio || '';
+            var birthday = data.birthday || '';
+            var website = data.website || '';
+            var socialTwitter = data.socialTwitter || '';
+            var socialInstagram = data.socialInstagram || '';
+            var communityPoints = data.communityPoints || 0;
+            var joinDate = data.joinDate || '';
+            var postCount = data.postCount || 0;
+            var titles = data.titles || [];
+            var isPro = data.isPro || false;
+
+            var privacyEmail = data.privacyEmail !== false;
+            var privacyBirthday = data.privacyBirthday !== false;
+            var privacyBio = data.privacyBio !== false;
+            var privacySocial = data.privacySocial !== false;
+
+            var surnameUnlocked = communityPoints >= SURNAME_UNLOCK_POINTS;
+            var pointsPct = Math.min((communityPoints / SURNAME_UNLOCK_POINTS) * 100, 100);
+
+            var age = calculateAge(birthday);
+            var avatarDisplay = avatar
+                ? '<div style="font-size:0.7rem;color:#555;">' + avatar + '</div>'
+                : '<div style="font-size:0.7rem;color:#555;">No avatar</div>';
+
+            var titleDisplay = titles.length > 0
+                ? '<div class="profile-title">' + titles.join(' · ') + '</div>'
+                : '';
+
             var upgradeSection = '';
             if (role === 'CIVILIAN') {
                 upgradeSection = `
                 <div class="upgrade-section">
                     <h3>Upgrade Your Account</h3>
-                    <button class="upgrade-btn" onclick="toggleInfo('pc-info')">▶ Upgrade to PLAYER (Player Character)</button>
+                    <button class="upgrade-btn" onclick="toggleInfo('pc-info')">▶ Upgrade to PLAYER</button>
                     <div class="upgrade-info" id="pc-info">
-                        To upgrade to PLAYER, you must pass a <b>SorC Player Assessment</b>. Assessments are currently under heavy development. Your CIVILIAN account will be linked when they launch.
+                        To upgrade to PLAYER, you must pass a <b>SorC Player Assessment</b>. Assessments are currently under heavy development.
                     </div>
-                    <button class="upgrade-btn" onclick="toggleInfo('gm-info')">▶ Upgrade to MASTER (Game Master)</button>
+                    <button class="upgrade-btn" onclick="toggleInfo('gm-info')">▶ Upgrade to MASTER</button>
                     <div class="upgrade-info" id="gm-info">
                         To upgrade to MASTER, you must pass a <b>SorC Master Assessment</b> AND redeem an official Master Code.<br/><br/>
                         Have a code?<br/>
                         <input type="text" id="masterCodeInput" class="master-code-input" placeholder="Enter Master Code" />
-                        <button class="btn btn-green" onclick="redeemCode('${uid}')">Redeem</button>
+                        <button class="btn btn-green btn-sm" onclick="redeemCode('${uid}')">Redeem</button>
                         <div id="codeMsg" class="msg"></div>
                     </div>
                 </div>`;
@@ -290,58 +467,162 @@
                 upgradeSection = `
                 <div class="upgrade-section">
                     <h3>Upgrade to MASTER</h3>
-                    <button class="upgrade-btn" onclick="toggleInfo('gm-info-pc')">▶ Upgrade to MASTER (Game Master)</button>
+                    <button class="upgrade-btn" onclick="toggleInfo('gm-info-pc')">▶ Upgrade to MASTER</button>
                     <div class="upgrade-info" id="gm-info-pc">
                         To upgrade from PLAYER to MASTER, you must pass a <b>SorC Master Assessment</b> AND redeem an official Master Code.<br/><br/>
                         Have a code?<br/>
                         <input type="text" id="masterCodeInput" class="master-code-input" placeholder="Enter Master Code" />
-                        <button class="btn btn-green" onclick="redeemCode('${uid}')">Redeem</button>
+                        <button class="btn btn-green btn-sm" onclick="redeemCode('${uid}')">Redeem</button>
                         <div id="codeMsg" class="msg"></div>
                     </div>
                 </div>`;
             }
 
-            var avatarDisplay = avatar
-                ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + avatar + '</div>'
-                : '<div style="font-size:0.7rem;color:#555;">No avatar</div>';
-
             document.getElementById('profileApp').innerHTML = `
                 <div class="profile-container">
-                    <div class="profile-header">
-                        <div class="profile-avatar" id="headerAvatar">
-                            ${avatarDisplay}
+                    <div class="profile-card">
+                        <!-- Banner -->
+                        <div class="profile-banner ${isPro ? '' : 'locked'}">
+                            ${isPro ? 'Custom Banner' : '<span class="lock-icon">🔒</span> Banner — SorC Beyond Pro'}
                         </div>
-                        <div>
-                            <div class="profile-username" id="headerUsername">${username || 'No username'}</div>
-                            <span class="profile-role" style="${roleColor(role)}">${role} ${roleAbbr(role)}</span>
-                            ${userId ? '<div style="font-size:0.75rem;color:#555;margin-top:4px;">ID: #' + userId + '</div>' : ''}
+
+                        <!-- Avatar + Name -->
+                        <div class="profile-info-row">
+                            <div class="profile-avatar-large">${avatarDisplay}</div>
+                            <div class="profile-name-block">
+                                <div class="profile-username">${username}</div>
+                                <span class="profile-role-tag" style="${roleColor(role)}">${role} ${roleAbbr(role)}</span>
+                                ${titleDisplay}
+                                ${userId ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + userId + '</div>' : ''}
+                            </div>
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="profile-section">
+                            <div class="stat-grid">
+                                <div class="stat-box">
+                                    <div class="stat-val">${communityPoints}</div>
+                                    <div class="stat-label">Community Points</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-val">${postCount}</div>
+                                    <div class="stat-label">Forum Posts</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-val">${titles.length}</div>
+                                    <div class="stat-label">Titles Earned</div>
+                                </div>
+                            </div>
+                            ${joinDate ? '<div style="font-size:0.75rem;color:#555;">Member since ' + joinDate + '</div>' : ''}
                         </div>
                     </div>
 
-                    <div class="profile-field">
-                        <label>EMAIL</label>
-                        <span>${email}</span>
-                    </div>
+                    <!-- Edit Profile -->
+                    <div class="profile-card">
+                        <div class="profile-section">
+                            <h3>Edit Profile</h3>
 
-                    <div class="profile-field">
-                        <label>USERNAME</label>
-                        <input type="text" id="usernameInput" class="profile-input" value="${username}" maxlength="20" placeholder="Choose a username" />
-                        <button class="btn btn-gold" onclick="saveUsername('${uid}')">Save Username</button>
-                        <div id="usernameMsg" class="msg"></div>
-                    </div>
+                            <!-- Username -->
+                            <div class="profile-field">
+                                <label>USERNAME ${surnameUnlocked ? '<span style="color:#4caf50;font-size:0.7rem;">· Surname unlocked!</span>' : ''}</label>
+                                ${!surnameUnlocked ? `
+                                <div class="surname-locked">
+                                    🔒 Surname locked — earn <span>${SURNAME_UNLOCK_POINTS - communityPoints} more community points</span> to unlock spaces in your name (e.g. <i>Elise Darkwood</i>).
+                                    <div class="points-bar-bg"><div class="points-bar-fill" style="width:${pointsPct}%"></div></div>
+                                    <div class="points-milestone">${communityPoints} / ${SURNAME_UNLOCK_POINTS} points</div>
+                                </div>` : ''}
+                                <input type="text" id="usernameInput" class="profile-input" value="${username}" maxlength="30" placeholder="Choose a username" ${!surnameUnlocked ? 'pattern="[a-zA-Z0-9_]+"' : ''} />
+                                <button class="btn btn-gold btn-sm" onclick="saveUsername('${uid}', ${surnameUnlocked})" style="margin-top:6px;">Save Username</button>
+                                <div id="usernameMsg" class="msg"></div>
+                            </div>
 
-                    <div class="profile-field">
-                        <label>AVATAR</label>
-                        <div class="avatar-grid" style="margin-top:0.5rem;">${buildAvatarGrid(avatar)}</div>
-                        <button class="btn btn-gold" onclick="saveAvatar('${uid}')">Save Avatar</button>
-                        <div id="avatarMsg" class="msg"></div>
+                            <!-- Avatar -->
+                            <div class="profile-field">
+                                <label>AVATAR</label>
+                                <div class="avatar-grid">${buildAvatarGrid(avatar)}</div>
+                                <button class="btn btn-gold btn-sm" onclick="saveAvatar('${uid}')">Save Avatar</button>
+                                <div id="avatarMsg" class="msg"></div>
+                            </div>
+
+                            <!-- Bio -->
+                            <div class="profile-field">
+                                <div class="toggle-row">
+                                    <label>BIO <span style="font-size:0.7rem;color:#555;">(public/hidden)</span></label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleBio" ${privacyBio ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacyBio', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <textarea id="bioInput" class="profile-input" rows="3" maxlength="300" placeholder="Tell Essentia about yourself...">${bio}</textarea>
+                                <button class="btn btn-gold btn-sm" onclick="saveBio('${uid}')" style="margin-top:6px;">Save Bio</button>
+                                <div id="bioMsg" class="msg"></div>
+                            </div>
+
+                            <!-- Birthday -->
+                            <div class="profile-field">
+                                <div class="toggle-row">
+                                    <label>BIRTHDAY <span style="font-size:0.7rem;color:#555;">(public/hidden)</span></label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleBirthday" ${privacyBirthday ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacyBirthday', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <input type="date" id="birthdayInput" class="profile-input" value="${birthday}" />
+                                ${age !== null ? '<div style="font-size:0.8rem;color:#888;margin-top:4px;">Age: ' + age + '</div>' : ''}
+                                <button class="btn btn-gold btn-sm" onclick="saveBirthday('${uid}')" style="margin-top:6px;">Save Birthday</button>
+                                <div id="birthdayMsg" class="msg"></div>
+                            </div>
+
+                            <!-- Email privacy -->
+                            <div class="profile-field">
+                                <div class="toggle-row">
+                                    <label>EMAIL <span style="font-size:0.7rem;color:#555;">(show on profile)</span></label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleEmail" ${privacyEmail ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacyEmail', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div style="font-size:0.8rem;color:#555;">${email}</div>
+                            </div>
+                        </div>
+
+                        <!-- SorC Beyond Pro Features -->
+                        <div class="profile-section">
+                            <h3>SorC Beyond Pro <span style="color:#555;font-weight:normal;font-size:0.75rem;">— <a href="sorc-beyond.html" style="color:#d4af37;">Learn more</a></span></h3>
+
+                            <!-- Website -->
+                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
+                                <label>WEBSITE</label>
+                                <input type="url" id="websiteInput" class="profile-input" value="${website}" placeholder="https://yoursite.com" />
+                                <button class="btn btn-gold btn-sm" onclick="saveWebsite('${uid}')" style="margin-top:6px;">Save</button>
+                                <div id="websiteMsg" class="msg"></div>
+                            </div>
+
+                            <!-- Social Links -->
+                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
+                                <label>SOCIAL LINKS</label>
+                                <input type="text" id="twitterInput" class="profile-input" value="${socialTwitter}" placeholder="X / Twitter handle" style="margin-bottom:6px;" />
+                                <input type="text" id="instagramInput" class="profile-input" value="${socialInstagram}" placeholder="Instagram handle" />
+                                <div class="toggle-row" style="margin-top:6px;">
+                                    <label style="font-size:0.7rem;color:#555;">Show social links publicly</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleSocial" ${privacySocial ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacySocial', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <button class="btn btn-gold btn-sm" onclick="saveSocial('${uid}')" style="margin-top:6px;">Save</button>
+                                <div id="socialMsg" class="msg"></div>
+                            </div>
+                        </div>
                     </div>
 
                     ${upgradeSection}
-                    <br/>
-                    <button class="btn btn-red" onclick="doSignOut()">Logout</button>
-                    &nbsp;
-                    <a href="index.html" class="btn btn-gold" style="text-decoration:none;">Home</a>
+
+                    <div style="margin-top:1rem;">
+                        <button class="btn btn-red" onclick="doSignOut()">Logout</button>
+                        &nbsp;
+                        <a href="index.html" class="btn btn-gold" style="text-decoration:none;">Home</a>
+                    </div>
                 </div>
             `;
         }
@@ -351,12 +632,23 @@
             if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
         };
 
-        window.saveUsername = async function(uid) {
+        window.saveUsername = async function(uid, surnameUnlocked) {
             var newUsername = document.getElementById('usernameInput').value.trim();
             var msgEl = document.getElementById('usernameMsg');
-            var err = isValidUsername(newUsername);
-            if (err) { msgEl.className = 'msg error'; msgEl.textContent = err; return; }
 
+            // Validate
+            if (!surnameUnlocked && newUsername.includes(' ')) {
+                msgEl.className = 'msg error';
+                msgEl.textContent = 'Earn 500 community points to unlock surnames.';
+                return;
+            }
+            if (newUsername.length < 3) { msgEl.className = 'msg error'; msgEl.textContent = 'Username must be at least 3 characters.'; return; }
+            if (newUsername.length > 30) { msgEl.className = 'msg error'; msgEl.textContent = 'Username must be 30 characters or less.'; return; }
+            if (!/^[a-zA-Z0-9_ ]+$/.test(newUsername)) { msgEl.className = 'msg error'; msgEl.textContent = 'Letters, numbers, underscores and spaces only.'; return; }
+            if ((newUsername.match(/ /g) || []).length > 1) { msgEl.className = 'msg error'; msgEl.textContent = 'Only one space allowed for a surname.'; return; }
+            if (containsBadWord(newUsername)) { msgEl.className = 'msg error'; msgEl.textContent = 'Username contains inappropriate language.'; return; }
+
+            // Check not taken
             var q = query(collection(db, "users"), where("username", "==", newUsername));
             var existing = await getDocs(q);
             var taken = false;
@@ -364,10 +656,6 @@
             if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That username is already taken.'; return; }
 
             await updateDoc(doc(db, "users", uid), { username: newUsername, displayName: newUsername });
-
-            // Update header immediately
-            var headerUsername = document.getElementById('headerUsername');
-            if (headerUsername) headerUsername.textContent = newUsername;
 
             // Update localStorage for Google users
             var savedGoogle = localStorage.getItem('sorc_google_user');
@@ -379,23 +667,19 @@
                 } catch(e) {}
             }
 
+            // Update header username
+            var headerUsername = document.querySelector('.profile-username');
+            if (headerUsername) headerUsername.textContent = newUsername;
+
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ Username saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
         };
 
         window.saveAvatar = async function(uid) {
             var msgEl = document.getElementById('avatarMsg');
-            if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar first.'; return; }
-
+            if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar.'; return; }
             await updateDoc(doc(db, "users", uid), { avatar: selectedAvatar });
-
-            // Update header avatar immediately
-            var headerAvatar = document.getElementById('headerAvatar');
-            if (headerAvatar) {
-                headerAvatar.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + selectedAvatar + '</div>';
-            }
-
-            // Update localStorage for Google users
             var savedGoogle = localStorage.getItem('sorc_google_user');
             if (savedGoogle) {
                 try {
@@ -404,9 +688,52 @@
                     localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
                 } catch(e) {}
             }
-
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ Avatar saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveBio = async function(uid) {
+            var bio = document.getElementById('bioInput').value.trim();
+            await updateDoc(doc(db, "users", uid), { bio: bio });
+            var msgEl = document.getElementById('bioMsg');
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Bio saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveBirthday = async function(uid) {
+            var birthday = document.getElementById('birthdayInput').value;
+            await updateDoc(doc(db, "users", uid), { birthday: birthday });
+            var msgEl = document.getElementById('birthdayMsg');
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Birthday saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveWebsite = async function(uid) {
+            var website = document.getElementById('websiteInput').value.trim();
+            await updateDoc(doc(db, "users", uid), { website: website });
+            var msgEl = document.getElementById('websiteMsg');
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveSocial = async function(uid) {
+            var twitter = document.getElementById('twitterInput').value.trim();
+            var instagram = document.getElementById('instagramInput').value.trim();
+            await updateDoc(doc(db, "users", uid), { socialTwitter: twitter, socialInstagram: instagram });
+            var msgEl = document.getElementById('socialMsg');
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.savePrivacy = async function(uid, field, value) {
+            var update = {};
+            update[field] = value;
+            await updateDoc(doc(db, "users", uid), update);
         };
 
         window.doSignOut = function() {
@@ -428,6 +755,12 @@
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ You are now a MASTER! Reload to see your updated role.';
         };
+
+        function containsBadWord(str) {
+            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+            return badWords.some(function(w) { return lower.includes(w); });
+        }
     </script>
 </body>
 </html>
