@@ -29,7 +29,7 @@
             border: 1px solid #333;
             border-radius: 1rem;
             padding: 2.5rem 2rem;
-            max-width: 480px;
+            max-width: 420px;
             width: 100%;
             text-align: center;
         }
@@ -127,47 +127,6 @@
         body.lawful-mode .signin-input { background: #f5f5f0; color: #2c2c2c; border-color: #ccc; }
         body.lawful-mode .account-type-btn { background: #f5f5f0; color: #2c2c2c; }
         body.lawful-mode .account-info { background: #fff; }
-
-        /* Avatar picker */
-        .avatar-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .avatar-option {
-            border: 3px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }
-        .avatar-option:hover { border-color: #d4af37; }
-        .avatar-option.selected { border-color: #d0021b; }
-        .avatar-option img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: cover;
-            display: block;
-            background: #333;
-        }
-        .avatar-placeholder {
-            width: 100%;
-            aspect-ratio: 1;
-            background: #2a2a2a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #555;
-            font-size: 0.7rem;
-        }
-        .section-label {
-            text-align: left;
-            color: #888;
-            font-size: 0.8rem;
-            margin-bottom: 0.5rem;
-            margin-top: 0.5rem;
-        }
     </style>
 </head>
 <body>
@@ -200,62 +159,20 @@
             <div class="status-msg" id="statusMsg"></div>
 
             <div id="signinForm">
-                <!-- SIGN IN SECTION -->
-                <p class="section-label">Sign In</p>
+                <p style="text-align:left;color:#888;font-size:0.8rem;margin-bottom:0.5rem;">Sign In</p>
                 <input type="email" id="emailInput" class="signin-input" placeholder="Email address" />
                 <input type="password" id="passwordInput" class="signin-input" placeholder="Password" />
                 <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
 
                 <div class="signin-divider">or create account</div>
 
-                <!-- SIGN UP SECTION -->
                 <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" />
                 <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" />
-                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a username" maxlength="20" />
-
-                <p class="section-label">Choose your avatar</p>
-                <div class="avatar-grid" id="avatarGrid">
-                    <!-- 12 avatar slots -->
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar1')">
-                        <div class="avatar-placeholder">Avatar 1</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar2')">
-                        <div class="avatar-placeholder">Avatar 2</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar3')">
-                        <div class="avatar-placeholder">Avatar 3</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar4')">
-                        <div class="avatar-placeholder">Avatar 4</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar5')">
-                        <div class="avatar-placeholder">Avatar 5</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar6')">
-                        <div class="avatar-placeholder">Avatar 6</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar7')">
-                        <div class="avatar-placeholder">Avatar 7</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar8')">
-                        <div class="avatar-placeholder">Avatar 8</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar9')">
-                        <div class="avatar-placeholder">Avatar 9</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar10')">
-                        <div class="avatar-placeholder">Avatar 10</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar11')">
-                        <div class="avatar-placeholder">Avatar 11</div>
-                    </div>
-                    <div class="avatar-option" onclick="selectAvatar(this, 'avatar12')">
-                        <div class="avatar-placeholder">Avatar 12</div>
-                    </div>
-                </div>
+                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a username (letters, numbers, underscores)" maxlength="20" />
+                <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">You can change your username and choose an avatar from your profile page.</p>
 
                 <button class="signin-btn" onclick="handleSignUp()" style="background:#555;color:#fff;">
-                    Create Civilian Account
+                    Create Profile
                 </button>
             </div>
 
@@ -280,14 +197,12 @@
         var badWords = [
             'fuck', 'shit', 'ass', 'bitch', 'cunt', 'dick', 'cock', 'pussy',
             'nigger', 'nigga', 'faggot', 'retard', 'whore', 'slut', 'bastard',
-            'damn', 'crap', 'piss', 'prick', 'twat', 'wanker', 'bollocks'
+            'crap', 'piss', 'prick', 'twat', 'wanker', 'bollocks'
         ];
 
         function containsBadWord(str) {
             var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return badWords.some(function(word) {
-                return lower.includes(word);
-            });
+            return badWords.some(function(word) { return lower.includes(word); });
         }
 
         function isValidUsername(username) {
@@ -298,27 +213,33 @@
             return null;
         }
 
-        // ===== AVATAR SELECTION =====
-        var selectedAvatar = null;
+        function generateRandomUsername() {
+            var adjectives = ['Shadow', 'Iron', 'Storm', 'Fire', 'Dark', 'Swift', 'Wild', 'Stone', 'Frost', 'Silver'];
+            var nouns = ['Slayer', 'Adventurer', 'Wanderer', 'Knight', 'Ranger', 'Mage', 'Rogue', 'Hunter', 'Warrior', 'Scout'];
+            var adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            var noun = nouns[Math.floor(Math.random() * nouns.length)];
+            var num = Math.floor(Math.random() * 9000) + 1000;
+            return adj + noun + num;
+        }
 
-        window.selectAvatar = function(el, avatarId) {
-            document.querySelectorAll('.avatar-option').forEach(function(opt) {
-                opt.classList.remove('selected');
-            });
-            el.classList.add('selected');
-            selectedAvatar = avatarId;
-        };
+        function generateUserId() {
+            return Math.floor(Math.random() * 90000) + 10000;
+        }
 
         // ===== GOOGLE =====
         function handleGoogleCredential(response) {
             var base64Url = response.credential.split('.')[1];
             var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             var userInfo = JSON.parse(window.atob(base64));
+            var randomUsername = generateRandomUsername();
+            var userId = generateUserId();
             var userData = JSON.stringify({
                 email: userInfo.email,
                 name: userInfo.name,
                 googleId: userInfo.sub,
-                role: 'CIVILIAN'
+                role: 'CIVILIAN',
+                username: randomUsername,
+                userId: userId
             });
             localStorage.setItem('sorc_google_user', userData);
             showStatus('✅ Signed in! Redirecting...', 'success');
@@ -359,13 +280,9 @@
         }
 
         window.selectType = function(type, btn) {
-            document.querySelectorAll('.account-type-btn').forEach(function(b) {
-                b.classList.remove('active');
-            });
+            document.querySelectorAll('.account-type-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
-            document.querySelectorAll('.account-info').forEach(function(el) {
-                el.style.display = 'none';
-            });
+            document.querySelectorAll('.account-info').forEach(function(el) { el.style.display = 'none'; });
             if (type === 'civilian') {
                 document.getElementById('civilianInfo').style.display = 'block';
                 document.getElementById('signinForm').style.display = 'block';
@@ -382,7 +299,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -420,22 +337,21 @@
         };
 
         window.handleSignUp = async function() {
-            var email = document.getElementById('signupEmail').value;
+            var email = document.getElementById('signupEmail').value.trim();
             var password = document.getElementById('signupPassword').value;
             var username = document.getElementById('signupUsername').value.trim();
 
             if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
 
-            // Validate username
             var usernameError = isValidUsername(username);
             if (usernameError) { showStatus(usernameError, 'error'); return; }
 
             // Check username not taken
-            var usernameQuery = query(collection(db, "users"), where("username", "==", username));
-            var existing = await getDocs(usernameQuery);
+            var q = query(collection(db, "users"), where("username", "==", username));
+            var existing = await getDocs(q);
             if (!existing.empty) { showStatus('That username is already taken. Please choose another.', 'error'); return; }
 
-            if (!selectedAvatar) { showStatus('Please choose an avatar.', 'error'); return; }
+            var userId = generateUserId();
 
             createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
                 await sendEmailVerification(result.user);
@@ -443,12 +359,13 @@
                     email: email,
                     role: 'CIVILIAN',
                     username: username,
-                    avatar: selectedAvatar,
+                    userId: userId,
+                    avatar: null,
                     displayName: username
                 });
                 signOut(auth);
                 document.getElementById('signinForm').style.display = 'none';
-                showStatus('✅ Account created! Check your email to verify before signing in.', 'success');
+                showStatus('✅ Profile created! Check your email to verify before signing in.', 'success');
             }).catch(function(error) {
                 showStatus('Sign up failed: ' + error.message, 'error');
             });
