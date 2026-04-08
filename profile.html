@@ -28,15 +28,14 @@
             border-radius: 50%;
             border: 3px solid #d0021b;
             background: #2a2a2a;
-            object-fit: cover;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.7rem;
             color: #555;
             overflow: hidden;
+            flex-shrink: 0;
         }
-        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .profile-username { font-size: 1.4rem; font-weight: bold; color: #e0cfc0; }
         .profile-role {
             display: inline-block;
@@ -54,7 +53,17 @@
             border: 1px solid #333;
         }
         .profile-field label { font-size: 0.8rem; color: #888; display: block; margin-bottom: 4px; }
-        .profile-field span { font-weight: bold; }
+        .profile-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
         .upgrade-section {
             margin-top: 1.5rem;
             padding: 1rem;
@@ -110,8 +119,6 @@
         .msg.error { color: #d0021b; }
         .not-logged-in { text-align: center; padding: 3rem; }
         .not-logged-in a { color: #d0021b; }
-
-        /* Avatar picker on profile */
         .avatar-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -146,7 +153,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -162,13 +169,26 @@
         const db = getFirestore(app);
         const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
 
+        // Bad word filter
+        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+        function containsBadWord(str) {
+            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return badWords.some(function(w) { return lower.includes(w); });
+        }
+        function isValidUsername(u) {
+            if (u.length < 3) return 'Username must be at least 3 characters.';
+            if (u.length > 20) return 'Username must be 20 characters or less.';
+            if (!/^[a-zA-Z0-9_]+$/.test(u)) return 'Letters, numbers and underscores only.';
+            if (containsBadWord(u)) return 'Username contains inappropriate language.';
+            return null;
+        }
+
         function roleColor(role) {
             if (role === 'BOUNCER') return 'background:#d4af37;color:#222;';
             if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
             if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
             return 'background:#333;color:#e0cfc0;';
         }
-
         function roleAbbr(role) {
             if (role === 'BOUNCER') return '[AD]';
             if (role === 'MASTER') return '[GM]';
@@ -179,11 +199,10 @@
         var selectedAvatar = null;
 
         function buildAvatarGrid(currentAvatar) {
-            var avatars = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6',
-                           'avatar7','avatar8','avatar9','avatar10','avatar11','avatar12'];
+            var avatars = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11','avatar12'];
             return avatars.map(function(id) {
-                var isSelected = id === currentAvatar ? ' selected' : '';
-                return '<div class="avatar-option' + isSelected + '" onclick="pickAvatar(this, \'' + id + '\')">' +
+                var sel = id === currentAvatar ? ' selected' : '';
+                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')">' +
                     '<div class="avatar-placeholder">' + id + '</div>' +
                 '</div>';
             }).join('');
@@ -195,39 +214,36 @@
             selectedAvatar = id;
         };
 
-        // Check Google session too
         var googleUser = null;
         var savedGoogle = localStorage.getItem('sorc_google_user');
-        if (savedGoogle) {
-            try { googleUser = JSON.parse(savedGoogle); } catch(e) {}
-        }
+        if (savedGoogle) { try { googleUser = JSON.parse(savedGoogle); } catch(e) {} }
 
         onAuthStateChanged(auth, async function(user) {
-            var uid, email, role, username, avatar;
-
             if (user) {
-                uid = user.uid;
-                email = user.email;
-                role = email === ADMIN_EMAIL ? 'BOUNCER' : 'CIVILIAN';
-                username = '';
-                avatar = null;
+                var uid = user.uid;
+                var email = user.email;
+                var role = email === ADMIN_EMAIL ? 'BOUNCER' : 'CIVILIAN';
+                var username = '';
+                var avatar = null;
+                var userId = '';
 
                 var docSnap = await getDoc(doc(db, "users", uid));
                 if (docSnap.exists()) {
                     role = email === ADMIN_EMAIL ? 'BOUNCER' : (docSnap.data().role || 'CIVILIAN');
                     username = docSnap.data().username || docSnap.data().displayName || '';
                     avatar = docSnap.data().avatar || null;
+                    userId = docSnap.data().userId || '';
                 }
-                renderProfile(uid, email, role, username, avatar);
+                renderProfile(uid, email, role, username, avatar, userId);
             } else if (googleUser) {
-                renderProfile(googleUser.googleId, googleUser.email, googleUser.role || 'CIVILIAN', googleUser.username || googleUser.name || '', null);
+                renderProfile(googleUser.googleId, googleUser.email, googleUser.role || 'CIVILIAN', googleUser.username || googleUser.name || '', null, googleUser.userId || '');
             } else {
                 document.getElementById('profileApp').innerHTML =
                     '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
             }
         });
 
-        function renderProfile(uid, email, role, username, avatar) {
+        function renderProfile(uid, email, role, username, avatar, userId) {
             var upgradeSection = '';
             if (role === 'CIVILIAN') {
                 upgradeSection = `
@@ -265,13 +281,12 @@
                 <div class="profile-container">
                     <div class="profile-header">
                         <div class="profile-avatar">
-                            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:0.7rem;color:#555;">
-                                ${avatar || 'No avatar'}
-                            </div>
+                            ${avatar ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + avatar + '</div>' : '<div style="font-size:0.7rem;color:#555;">No avatar</div>'}
                         </div>
                         <div>
-                            <div class="profile-username">${username || 'No username set'}</div>
+                            <div class="profile-username">${username || 'No username'}</div>
                             <span class="profile-role" style="${roleColor(role)}">${role} ${roleAbbr(role)}</span>
+                            ${userId ? '<div style="font-size:0.75rem;color:#555;margin-top:4px;">ID: #' + userId + '</div>' : ''}
                         </div>
                     </div>
 
@@ -282,13 +297,15 @@
 
                     <div class="profile-field">
                         <label>USERNAME</label>
-                        <span>${username || 'Not set'}</span>
+                        <input type="text" id="usernameInput" class="profile-input" value="${username}" maxlength="20" placeholder="Choose a username" />
+                        <button class="btn btn-gold" onclick="saveUsername('${uid}')">Save Username</button>
+                        <div id="usernameMsg" class="msg"></div>
                     </div>
 
                     <div class="profile-field">
                         <label>AVATAR</label>
                         <div class="avatar-grid" style="margin-top:0.5rem;">${buildAvatarGrid(avatar)}</div>
-                        <button class="btn btn-gold" onclick="saveAvatar('${uid}')" style="margin-top:0.5rem;">Save Avatar</button>
+                        <button class="btn btn-gold" onclick="saveAvatar('${uid}')">Save Avatar</button>
                         <div id="avatarMsg" class="msg"></div>
                     </div>
 
@@ -306,15 +323,30 @@
             if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
         };
 
+        window.saveUsername = async function(uid) {
+            var newUsername = document.getElementById('usernameInput').value.trim();
+            var msgEl = document.getElementById('usernameMsg');
+            var err = isValidUsername(newUsername);
+            if (err) { msgEl.className = 'msg error'; msgEl.textContent = err; return; }
+
+            // Check not taken by someone else
+            var q = query(collection(db, "users"), where("username", "==", newUsername));
+            var existing = await getDocs(q);
+            var taken = false;
+            existing.forEach(function(d) { if (d.id !== uid) taken = true; });
+            if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That username is already taken.'; return; }
+
+            await updateDoc(doc(db, "users", uid), { username: newUsername, displayName: newUsername });
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Username saved!';
+        };
+
         window.saveAvatar = async function(uid) {
-            if (!selectedAvatar) {
-                document.getElementById('avatarMsg').textContent = 'Please select an avatar first.';
-                document.getElementById('avatarMsg').className = 'msg error';
-                return;
-            }
+            var msgEl = document.getElementById('avatarMsg');
+            if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar first.'; return; }
             await updateDoc(doc(db, "users", uid), { avatar: selectedAvatar });
-            document.getElementById('avatarMsg').textContent = '✅ Avatar saved!';
-            document.getElementById('avatarMsg').className = 'msg success';
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Avatar saved!';
         };
 
         window.doSignOut = function() {
@@ -330,14 +362,8 @@
             if (!code) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a code.'; return; }
             var codesSnap = await getDocs(collection(db, "gm_codes"));
             var matched = null;
-            codesSnap.forEach(function(d) {
-                if (d.data().code === code && !d.data().used) matched = d.id;
-            });
-            if (!matched) {
-                msgEl.className = 'msg error';
-                msgEl.textContent = 'Invalid or already used code.';
-                return;
-            }
+            codesSnap.forEach(function(d) { if (d.data().code === code && !d.data().used) matched = d.id; });
+            if (!matched) { msgEl.className = 'msg error'; msgEl.textContent = 'Invalid or already used code.'; return; }
             await updateDoc(doc(db, "users", uid), { role: 'MASTER' });
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ You are now a MASTER! Reload to see your updated role.';
