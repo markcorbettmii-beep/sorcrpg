@@ -203,9 +203,7 @@ function showRoleBadge(email, username, role, avatar, userId) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'" />';
   }
 
-  // Store data on badge for popup use
   var safeUserId = String(userId || '');
-  var safeUsername = displayName.replace(/'/g, "\\'");
 
   badge.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
@@ -214,7 +212,6 @@ function showRoleBadge(email, username, role, avatar, userId) {
 
   document.body.appendChild(badge);
 
-  // Attach click to role tag using event listener to stop propagation
   badge.querySelector('.role-tag').addEventListener('click', function(e) {
     e.stopPropagation();
     e.preventDefault();
@@ -260,45 +257,23 @@ window.sorcSignOut = function() {
 
 // ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
-  if (OWNER_EMAILS.includes(email)) {
-    // Still fetch username and avatar from Firestore for owners
-    var docRef = doc(db, "users", uid);
-    var docSnap = await getDoc(docRef);
-    var username = '';
-    var avatar = null;
-    var userId = '';
-    if (docSnap.exists()) {
-      username = docSnap.data().username || docSnap.data().displayName || '';
-      avatar = docSnap.data().avatar || null;
-      userId = docSnap.data().userId || '';
-    }
-    return { role: 'OWNER', username: username, avatar: avatar, userId: userId };
-  }
-  if (ADMIN_EMAILS.includes(email)) {
-    var docRef = doc(db, "users", uid);
-    var docSnap = await getDoc(docRef);
-    var username = '';
-    var avatar = null;
-    var userId = '';
-    if (docSnap.exists()) {
-      username = docSnap.data().username || docSnap.data().displayName || '';
-      avatar = docSnap.data().avatar || null;
-      userId = docSnap.data().userId || '';
-    }
-    return { role: 'ADMIN', username: username, avatar: avatar, userId: userId };
-  }
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return {
-      role: docSnap.data().role || 'CIVILIAN',
-      username: docSnap.data().username || docSnap.data().displayName || '',
-      avatar: docSnap.data().avatar || null,
-      userId: docSnap.data().userId || ''
-    };
+  var data = docSnap.exists() ? docSnap.data() : {};
+
+  var username = data.username || data.displayName || '';
+  var avatar = data.avatar || null;
+  var userId = data.userId || '';
+  var role = data.role || 'CIVILIAN';
+
+  if (OWNER_EMAILS.includes(email)) role = 'OWNER';
+  else if (ADMIN_EMAILS.includes(email)) role = 'ADMIN';
+
+  if (!docSnap.exists()) {
+    await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
   }
-  await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  return { role: 'CIVILIAN', username: '', avatar: null, userId: '' };
+
+  return { role, username, avatar, userId };
 }
 
 // ========== AUTH STATE ==========
@@ -375,18 +350,11 @@ window.sorcSignUp = function(email, password) {
   createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
     await sendEmailVerification(result.user);
     await setDoc(doc(db, "users", result.user.uid), {
-      email: email,
-      role: 'CIVILIAN',
-      displayName: '',
-      accountType: 'CIVILIAN'
+      email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN'
     });
     signOut(auth);
-    document.querySelectorAll('.verify-notice').forEach(function(n) {
-      n.style.display = 'block';
-    });
-    document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) {
-      f.style.display = 'none';
-    });
+    document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
+    document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
   }).catch(function(error) {
     alert('Sign up failed: ' + error.message);
   });
@@ -432,11 +400,9 @@ window.toggleAdminPanel = function() {
   var content = document.getElementById('adminPanelContent');
   var btn = document.querySelector('.admin-panel button');
   if (content.style.display === 'none') {
-    content.style.display = 'block';
-    btn.textContent = '−';
+    content.style.display = 'block'; btn.textContent = '−';
   } else {
-    content.style.display = 'none';
-    btn.textContent = '+';
+    content.style.display = 'none'; btn.textContent = '+';
   }
 };
 
