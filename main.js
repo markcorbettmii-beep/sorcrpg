@@ -159,7 +159,6 @@ function showRoleBadge(email, name, role) {
   var existing = document.querySelector('.role-badge');
   if (existing) existing.remove();
 
-  // Hide sign in link
   var signinLink = document.getElementById('signinLink');
   if (signinLink) signinLink.style.display = 'none';
 
@@ -227,6 +226,20 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 });
 
+// ========== LISTEN FOR GOOGLE LOGIN FROM SIGNIN TAB ==========
+window.addEventListener('storage', async function(e) {
+  if (e.key === 'sorc_google_user' && e.newValue) {
+    try {
+      var userInfo = JSON.parse(e.newValue);
+      var role = userInfo.role || 'CIVILIAN';
+      if (userInfo.email === ADMIN_EMAIL) role = 'BOUNCER';
+      showRoleBadge(userInfo.email, userInfo.name, role);
+    } catch(err) {
+      console.error(err);
+    }
+  }
+});
+
 // ========== EMAIL SIGNUP ==========
 window.sorcSignUp = function(email, password) {
   if (!email || !password) { alert('Please enter an email and password.'); return; }
@@ -271,7 +284,6 @@ function showAdminPanel() {
   if (document.querySelector('.admin-panel')) return;
   var panel = document.createElement('div');
   panel.className = 'admin-panel';
-  // Position above cookie banner, with minimize
   panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #d4af37;';
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
