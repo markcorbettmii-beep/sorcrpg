@@ -228,6 +228,7 @@ async function getUserRoleFromDB(uid, email) {
 }
 
 // ========== AUTH STATE ==========
+// This handles email/password users — always fetches fresh from Firestore
 onAuthStateChanged(auth, async function(user) {
   if (user) {
     if (!user.emailVerified && user.providerData[0].providerId === 'password') {
@@ -235,43 +236,40 @@ onAuthStateChanged(auth, async function(user) {
       signOut(auth);
       return;
     }
+    // Always get fresh data from Firestore for email/password users
     var data = await getUserRoleFromDB(user.uid, user.email);
     showRoleBadge(user.email, data.username, data.role, data.avatar);
-  }
-});
+  } else {
+    // No Firebase user — check for Google session
+    var savedGoogle = localStorage.getItem('sorc_google_user');
+    if (savedGoogle) {
+      try {
+        var userInfo = JSON.parse(savedGoogle);
+        var role = userInfo.role || 'CIVILIAN';
+        var username = userInfo.username || userInfo.name || '';
+        var avatar = userInfo.avatar || null;
+        if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
 
-// ========== CHECK PERSISTED GOOGLE SESSION ==========
-document.addEventListener('DOMContentLoaded', async function() {
-  var savedGoogle = localStorage.getItem('sorc_google_user');
-  if (savedGoogle) {
-    try {
-      var userInfo = JSON.parse(savedGoogle);
-      var role = userInfo.role || 'CIVILIAN';
-      var username = userInfo.username || userInfo.name || '';
-      var avatar = userInfo.avatar || null;
-      if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
+        // Fetch fresh data from Firestore for Google users too
+        if (userInfo.googleId) {
+          try {
+            var docSnap = await getDoc(doc(db, "users", userInfo.googleId));
+            if (docSnap.exists()) {
+              username = docSnap.data().username || docSnap.data().displayName || username;
+              avatar = docSnap.data().avatar || avatar;
+              role = ADMIN_EMAILS.includes(userInfo.email) ? 'BOUNCER' : (docSnap.data().role || role);
+              userInfo.username = username;
+              userInfo.avatar = avatar;
+              userInfo.role = role;
+              localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
+            }
+          } catch(e) {}
+        }
 
-      // Try to get fresh data from Firestore for Google users
-      if (userInfo.googleId) {
-        try {
-          const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-          var docSnap = await getDoc(doc(db, "users", userInfo.googleId));
-          if (docSnap.exists()) {
-            username = docSnap.data().username || docSnap.data().displayName || username;
-            avatar = docSnap.data().avatar || avatar;
-            role = ADMIN_EMAILS.includes(userInfo.email) ? 'BOUNCER' : (docSnap.data().role || role);
-            // Update localStorage with fresh data
-            userInfo.username = username;
-            userInfo.avatar = avatar;
-            userInfo.role = role;
-            localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
-          }
-        } catch(e) {}
+        showRoleBadge(userInfo.email, username, role, avatar);
+      } catch(e) {
+        localStorage.removeItem('sorc_google_user');
       }
-
-      showRoleBadge(userInfo.email, username, role, avatar);
-    } catch(e) {
-      localStorage.removeItem('sorc_google_user');
     }
   }
 });
