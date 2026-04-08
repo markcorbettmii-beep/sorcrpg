@@ -88,8 +88,6 @@
         body.lawful-mode .cta-btn:hover { background: #c19b2b; }
         body.lawful-mode footer { background: #2c2c2c; color: #f5f5f0; }
         body.lawful-mode .menu-toggle { color: #2c2c2c; }
-
-        /* Cookie Consent */
         .cookie-banner {
             display: none;
             position: fixed;
@@ -101,7 +99,6 @@
             color: #e0cfc0;
             padding: 1rem 1.5rem;
             z-index: 999999;
-            display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
@@ -124,7 +121,6 @@
     </style>
 </head>
 <body>
-    <!-- Cookie Consent Banner -->
     <div class="cookie-banner" id="cookieConsent">
         <p>
             We use cookies to enhance your experience on Essentia. By continuing to use this site you agree to our
@@ -207,7 +203,6 @@
                         <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
                     </a>
                 </div>
-                <!-- Sign In Link -->
                 <div id="signinLink" style="text-align:center;margin:2rem 0;">
                     <a href="signin.html" class="cta-btn">Sign In / Create Account</a>
                 </div>
@@ -238,8 +233,7 @@
                             <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
                         </a>
                     </div>
-                    <!-- Sign In Link Slide 2 -->
-                    <div id="signinLink" style="text-align:center;margin:2rem 0;">
+                    <div style="text-align:center;margin:2rem 0;">
                         <a href="signin.html" class="cta-btn">Sign In / Create Account</a>
                     </div>
                 </div>
@@ -374,6 +368,31 @@
         </section>
     </main>
     <div id="footer"></div>
+    <script>
+    (function() {
+        // Check URL for Google user data passed from signin page
+        var params = new URLSearchParams(window.location.search);
+        var guser = params.get('guser');
+        if (guser) {
+            try {
+                var userData = JSON.parse(decodeURIComponent(guser));
+                localStorage.setItem('sorc_google_user', JSON.stringify(userData));
+            } catch(e) {}
+            window.history.replaceState({}, '', '/');
+        }
+        // Hide signin link if logged in
+        var savedGoogle = localStorage.getItem('sorc_google_user');
+        if (savedGoogle) {
+            try {
+                JSON.parse(savedGoogle);
+                var signinLink = document.getElementById('signinLink');
+                if (signinLink) signinLink.style.display = 'none';
+            } catch(e) {
+                localStorage.removeItem('sorc_google_user');
+            }
+        }
+    })();
+    </script>
     <script type="module" src="main.js"></script>
 </body>
 </html>
