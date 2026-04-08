@@ -169,8 +169,13 @@ function getRoleColor(role) {
   return { bg: '#333', color: '#e0cfc0' };
 }
 
+function getAvatarPath(avatarId) {
+  if (!avatarId) return null;
+  return 'assets/images/avatars/' + avatarId + '.png';
+}
+
 // ========== ROLE BADGE ==========
-function showRoleBadge(email, username, role) {
+function showRoleBadge(email, username, role, avatar) {
   var existing = document.querySelector('.role-badge');
   if (existing) existing.remove();
 
@@ -180,12 +185,18 @@ function showRoleBadge(email, username, role) {
   var badge = document.createElement('div');
   badge.className = 'role-badge';
   var colors = getRoleColor(role);
-  badge.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;background:' + colors.bg + ';color:' + colors.color + ';';
+  badge.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;background:' + colors.bg + ';color:' + colors.color + ';display:flex;align-items:center;gap:8px;';
 
   var displayName = username || email.split('@')[0];
   var abbr = getRoleAbbr(role);
 
-  badge.innerHTML = displayName + ' ' + abbr +
+  var avatarHtml = '';
+  if (avatar) {
+    var avatarPath = getAvatarPath(avatar);
+    avatarHtml = '<img src="' + avatarPath + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'" />';
+  }
+
+  badge.innerHTML = avatarHtml + displayName + ' ' + abbr +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
   document.body.appendChild(badge);
@@ -202,17 +213,18 @@ window.sorcSignOut = function() {
 
 // ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
-  if (ADMIN_EMAILS.includes(email)) return { role: 'BOUNCER', username: 'Admin' };
+  if (ADMIN_EMAILS.includes(email)) return { role: 'BOUNCER', username: 'Admin', avatar: null };
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return {
       role: docSnap.data().role || 'CIVILIAN',
-      username: docSnap.data().username || docSnap.data().displayName || ''
+      username: docSnap.data().username || docSnap.data().displayName || '',
+      avatar: docSnap.data().avatar || null
     };
   }
   await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  return { role: 'CIVILIAN', username: '' };
+  return { role: 'CIVILIAN', username: '', avatar: null };
 }
 
 // ========== AUTH STATE ==========
@@ -224,7 +236,7 @@ onAuthStateChanged(auth, async function(user) {
       return;
     }
     var data = await getUserRoleFromDB(user.uid, user.email);
-    showRoleBadge(user.email, data.username, data.role);
+    showRoleBadge(user.email, data.username, data.role, data.avatar);
   }
 });
 
@@ -236,8 +248,28 @@ document.addEventListener('DOMContentLoaded', async function() {
       var userInfo = JSON.parse(savedGoogle);
       var role = userInfo.role || 'CIVILIAN';
       var username = userInfo.username || userInfo.name || '';
+      var avatar = userInfo.avatar || null;
       if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
-      showRoleBadge(userInfo.email, username, role);
+
+      // Try to get fresh data from Firestore for Google users
+      if (userInfo.googleId) {
+        try {
+          const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          var docSnap = await getDoc(doc(db, "users", userInfo.googleId));
+          if (docSnap.exists()) {
+            username = docSnap.data().username || docSnap.data().displayName || username;
+            avatar = docSnap.data().avatar || avatar;
+            role = ADMIN_EMAILS.includes(userInfo.email) ? 'BOUNCER' : (docSnap.data().role || role);
+            // Update localStorage with fresh data
+            userInfo.username = username;
+            userInfo.avatar = avatar;
+            userInfo.role = role;
+            localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
+          }
+        } catch(e) {}
+      }
+
+      showRoleBadge(userInfo.email, username, role, avatar);
     } catch(e) {
       localStorage.removeItem('sorc_google_user');
     }
@@ -251,8 +283,9 @@ window.addEventListener('storage', async function(e) {
       var userInfo = JSON.parse(e.newValue);
       var role = userInfo.role || 'CIVILIAN';
       var username = userInfo.username || userInfo.name || '';
+      var avatar = userInfo.avatar || null;
       if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
-      showRoleBadge(userInfo.email, username, role);
+      showRoleBadge(userInfo.email, username, role, avatar);
     } catch(err) {
       console.error(err);
     }
@@ -292,7 +325,7 @@ window.sorcSignIn = function(email, password) {
       return;
     }
     var data = await getUserRoleFromDB(result.user.uid, result.user.email);
-    showRoleBadge(result.user.email, data.username, data.role);
+    showRoleBadge(result.user.email, data.username, data.role, data.avatar);
   }).catch(function(error) {
     alert('Sign in failed: ' + error.message);
   });
