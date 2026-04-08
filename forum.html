@@ -1,1 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forums | Slayers of Rings § Crowns</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
 
+        .forum-hero {
+            background: linear-gradient(135deg, #1a0505, #2a0808, #111);
+            padding: 2.5rem 2rem;
+            text-align: center;
+            border-bottom: 2px solid #d0021b;
+        }
+        .forum-hero h1 { color: #d0021b; font-size: 2rem; margin-bottom: 0.25rem; }
+        .forum-hero p { color: #666; font-size: 0.85rem; }
+
+        .forum-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+
+        .forum-stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: #666;
+            flex-wrap: wrap;
+        }
+        .forum-stats-bar span { color: #888; }
+        .forum-stats-bar b { color: #d4af37; }
+
+        .online-users {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        .online-users b { color: #4caf50; }
+        .online-dot { display: inline-block; width: 8px; height: 8px; background: #4caf50; border-radius: 50%; margin-right: 4px; }
+
+        .search-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: #e0cfc0;
+            font-size: 0.9rem;
+        }
+        .search-bar input:focus { outline: none; border-color: #d0021b; }
+        .search-bar button {
+            padding: 10px 20px;
+            background: #d0021b;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .search-bar button:hover { background: #a50013; }
+
+        .category-group { margin-bottom: 2rem; }
+        .category-group-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #444;
+            margin-bottom: 0.5rem;
+            padding-left: 0.25rem;
+        }
+
+        .category-card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .category-card:hover { border-color: #d0021b; }
+        .category-card.has-unread { border-left: 3px solid #d0021b; }
+        .category-card.locked { opacity: 0.7; }
+
+        .category-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .category-info { flex: 1; min-width: 0; }
+        .category-name {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #e0cfc0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .category-name .lock-badge {
+            font-size: 0.7rem;
+            background: #333;
+            color: #666;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+        .category-desc {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .category-meta {
+            text-align: right;
+            font-size: 0.75rem;
+            color: #555;
+            flex-shrink: 0;
+            min-width: 100px;
+        }
+        .category-meta b { color: #888; display: block; }
+        .category-meta .last-post { font-size: 0.7rem; color: #444; margin-top: 2px; }
+        .unread-dot {
+            width: 8px; height: 8px;
+            background: #d0021b;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .new-thread-btn {
+            display: inline-block;
+            background: #d0021b;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            transition: background 0.2s;
+        }
+        .new-thread-btn:hover { background: #a50013; }
+        .new-thread-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+
+        .forum-footer-bar {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .forum-footer-bar a { color: #d4af37; text-decoration: none; }
+
+        .not-logged-in-bar {
+            background: #1a1a00;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: #888;
+            text-align: center;
+        }
+        .not-logged-in-bar a { color: #d4af37; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h2 { color: #d0021b; margin-bottom: 1rem; font-size: 1.2rem; }
+        .modal input, .modal textarea, .modal select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #222;
+            color: #e0cfc0;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            margin-bottom: 0.75rem;
+            font-family: sans-serif;
+        }
+        .modal input:focus, .modal textarea:focus { outline: none; border-color: #d0021b; }
+        .modal textarea { min-height: 120px; resize: vertical; }
+        .modal-btns { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-red { background: #d0021b; color: #fff; }
+        .btn-red:hover { background: #a50013; }
+        .btn-grey { background: #333; color: #888; }
+        .btn-grey:hover { background: #444; }
+
+        .msg { font-size: 0.85rem; margin-top: 0.5rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #d0021b; }
+    </style>
+</head>
+<body>
+    <div class="forum-hero">
+        <h1>Community Forums</h1>
+        <p>Welcome to the SorC community — discuss, explore, and connect.</p>
+    </div>
+
+    <div class="forum-container">
+        <div id="notLoggedInBar" class="not-logged-in-bar" style="display:none;">
+            <a href="signin.html">Sign in</a> or <a href="signin.html">create an account</a> to post, like, and join the conversation.
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+            <button class="new-thread-btn" id="newThreadBtn" onclick="openNewThread()">+ New Thread</button>
+            <div class="search-bar" style="margin:0;flex:1;max-width:320px;">
+                <input type="text" id="searchInput" placeholder="Search forums..." />
+                <button onclick="searchForum()">Search</button>
+            </div>
+        </div>
+
+        <div class="online-users" id="onlineUsers">
+            <span class="online-dot"></span> Loading online members...
+        </div>
+
+        <div class="forum-stats-bar" id="forumStatsBar">
+            <span>Loading forum stats...</span>
+        </div>
+
+        <div id="forumCategories">
+            <!-- Categories rendered by JS -->
+        </div>
+
+        <div class="forum-footer-bar">
+            <span>Slayers of Rings &sect; Crowns &copy; 2025 Ogre Adventurer</span>
+            <span><a href="index.html">Home</a> &nbsp;·&nbsp; <a href="profile.html">Profile</a> &nbsp;·&nbsp; <a href="sorc-beyond.html">SORC Beyond</a></span>
+        </div>
+    </div>
+
+    <!-- New Thread Modal -->
+    <div class="modal-overlay" id="newThreadModal">
+        <div class="modal">
+            <h2>New Thread</h2>
+            <select id="threadCategory">
+                <option value="">Select a category...</option>
+                <option value="general">General Discussion</option>
+                <option value="sorc-beyond">SORC Beyond</option>
+                <option value="x-roads">The X Roads</option>
+                <option value="rules">Rules & Gameplay Advice</option>
+                <option value="majestic-worlds">The Majestic Worlds of Essentia</option>
+                <option value="tawdry-dwarf">Tawdry Dwarf & Beyond</option>
+                <option value="lfg">Looking for Group</option>
+            </select>
+            <input type="text" id="threadTitle" placeholder="Thread title" maxlength="100" />
+            <textarea id="threadBody" placeholder="What's on your mind, adventurer?"></textarea>
+            <div id="newThreadMsg" class="msg"></div>
+            <div class="modal-btns">
+                <button class="btn btn-grey" onclick="closeNewThread()">Cancel</button>
+                <button class="btn btn-red" onclick="submitThread()">Post Thread</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Modal -->
+    <div class="modal-overlay" id="searchModal">
+        <div class="modal">
+            <h2>Search Results</h2>
+            <div id="searchResults"></div>
+            <div class="modal-btns">
+                <button class="btn btn-grey" onclick="closeSearch()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer"></div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limit, getDocs, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
+
+        const CATEGORIES = [
+            {
+                id: 'announcements',
+                name: 'News & Announcements',
+                icon: '📣',
+                desc: null,
+                color: '#d0021b',
+                readOnly: true,
+                adminOnly: true
+            },
+            {
+                id: 'general',
+                name: 'General Discussion',
+                icon: '💬',
+                desc: 'The heart of the SorC community. Talk about anything and everything.',
+                color: '#333'
+            },
+            {
+                id: 'sorc-beyond',
+                name: 'SORC Beyond',
+                icon: '⚡',
+                desc: 'Discuss digital features, online lobbies, and the SORC Beyond platform.',
+                color: '#1a3a6b'
+            },
+            {
+                id: 'x-roads',
+                name: 'The X Roads',
+                icon: '🗺',
+                desc: 'Where lore, legend, and mystery converge. Share campaign stories, discuss Essentia\'s history, prophecies, and secrets.',
+                color: '#4a1a6b'
+            },
+            {
+                id: 'rules',
+                name: 'Rules & Gameplay Advice',
+                icon: '📖',
+                desc: 'Questions, clarifications, and discussions about SorC mechanics and rules.',
+                color: '#1a4a1a'
+            },
+            {
+                id: 'majestic-worlds',
+                name: 'The Majestic Worlds of Essentia',
+                icon: '🌍',
+                desc: 'Harnessing the powers of Adoria, the thirteen worlds of Essentia breathe with magic, war, and wonder. Explore the planets, factions, races, and the ancient forces that shape them all.',
+                color: '#1a3a1a'
+            },
+            {
+                id: 'tawdry-dwarf',
+                name: 'Tawdry Dwarf & Beyond',
+                icon: '🔭',
+                desc: 'Far from Adoria\'s reach, where magic fades and ingenuity reigns. The outer planets are bastions of scientific advancement, technological mastery, and cold survival — civilizations that built empires not from sorcery, but from steel, data, and sheer will.',
+                color: '#1a1a3a'
+            },
+            {
+                id: 'lfg',
+                name: 'Looking for Group',
+                icon: '⚔️',
+                desc: 'Find players and Game Masters for home campaigns and SORC Beyond lobbies.',
+                color: '#3a1a00'
+            }
+        ];
+
+        var currentUser = null;
+        var currentUserData = null;
+        var googleUser = null;
+        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
+
+        function getRoleAbbr(role) {
+            if (role === 'OWNER') return '[OWN]';
+            if (role === 'ADMIN') return '[AD]';
+            if (role === 'MASTER') return '[GM]';
+            if (role === 'PLAYER') return '[PC]';
+            return '[CIV]';
+        }
+
+        function isAdminOrOwner(email) {
+            return OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
+        }
+
+        function timeAgo(timestamp) {
+            if (!timestamp) return 'Never';
+            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+
+        async function loadCategoryStats() {
+            var stats = {};
+            for (var cat of CATEGORIES) {
+                var q = query(collection(db, "threads"), where("categoryId", "==", cat.id));
+                var snap = await getDocs(q);
+                var threadCount = snap.size;
+                var postCount = 0;
+                var lastPost = null;
+                snap.forEach(function(d) {
+                    postCount += (d.data().replyCount || 0) + 1;
+                    if (!lastPost || (d.data().lastReplyAt && d.data().lastReplyAt > lastPost.time)) {
+                        lastPost = { time: d.data().lastReplyAt || d.data().createdAt, user: d.data().lastReplyBy || d.data().authorName };
+                    }
+                });
+                stats[cat.id] = { threadCount, postCount, lastPost };
+            }
+            return stats;
+        }
+
+        async function loadLastVisited() {
+            if (!currentUser && !googleUser) return {};
+            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var docSnap = await getDoc(doc(db, "lastVisited", uid));
+            return docSnap.exists() ? docSnap.data() : {};
+        }
+
+        async function saveLastVisited(categoryId) {
+            if (!currentUser && !googleUser) return;
+            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var update = {};
+            update[categoryId] = new Date();
+            await setDoc(doc(db, "lastVisited", uid), update, { merge: true });
+        }
+
+        async function hasUnread(categoryId, lastVisited) {
+            if (!lastVisited[categoryId]) return true;
+            var lastTime = lastVisited[categoryId].toDate ? lastVisited[categoryId].toDate() : new Date(lastVisited[categoryId]);
+            var q = query(
+                collection(db, "threads"),
+                where("categoryId", "==", categoryId),
+                where("createdAt", ">", lastTime),
+                limit(1)
+            );
+            var snap = await getDocs(q);
+            return !snap.empty;
+        }
+
+        async function loadOnlineUsers() {
+            var fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            var q = query(collection(db, "users"), where("lastSeen", ">", fiveMinutesAgo));
+            var snap = await getDocs(q);
+            var names = [];
+            snap.forEach(function(d) {
+                names.push(d.data().username || d.data().email.split('@')[0]);
+            });
+            var el = document.getElementById('onlineUsers');
+            if (el) {
+                el.innerHTML = '<span class="online-dot"></span> <b>' + names.length + ' online</b>' +
+                    (names.length > 0 ? ' — ' + names.slice(0, 5).join(', ') + (names.length > 5 ? ' and ' + (names.length - 5) + ' more' : '') : '');
+            }
+        }
+
+        async function updateLastSeen() {
+            if (!currentUser && !googleUser) return;
+            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            await setDoc(doc(db, "users", uid), { lastSeen: new Date() }, { merge: true });
+        }
+
+        async function loadForumStats() {
+            var usersSnap = await getDocs(collection(db, "users"));
+            var threadsSnap = await getDocs(collection(db, "threads"));
+            var postsSnap = await getDocs(collection(db, "posts"));
+            var el = document.getElementById('forumStatsBar');
+            if (el) {
+                el.innerHTML =
+                    '<span>👥 Members: <b>' + usersSnap.size + '</b></span>' +
+                    '<span>💬 Threads: <b>' + threadsSnap.size + '</b></span>' +
+                    '<span>📝 Posts: <b>' + postsSnap.size + '</b></span>';
+            }
+        }
+
+        async function renderCategories() {
+            var stats = await loadCategoryStats();
+            var lastVisited = await loadLastVisited();
+            var html = '';
+
+            for (var cat of CATEGORIES) {
+                var s = stats[cat.id] || { threadCount: 0, postCount: 0, lastPost: null };
+                var unread = await hasUnread(cat.id, lastVisited);
+                var canPost = !cat.adminOnly || isAdminOrOwner(currentUser ? currentUser.email : (googleUser ? googleUser.email : ''));
+
+                html += `
+                    <div class="category-card ${unread && (currentUser || googleUser) ? 'has-unread' : ''}"
+                        onclick="openCategory('${cat.id}', '${cat.name.replace(/'/g, "\\'")}')">
+                        <div class="category-icon" style="background:${cat.color}22;color:${cat.color};">${cat.icon}</div>
+                        <div class="category-info">
+                            <div class="category-name">
+                                ${cat.name}
+                                ${cat.readOnly ? '<span class="lock-badge">🔒 Read Only</span>' : ''}
+                                ${unread && (currentUser || googleUser) ? '<div class="unread-dot"></div>' : ''}
+                            </div>
+                            ${cat.desc ? '<div class="category-desc">' + cat.desc + '</div>' : ''}
+                        </div>
+                        <div class="category-meta">
+                            <b>${s.threadCount} threads</b>
+                            <span>${s.postCount} posts</span>
+                            <div class="last-post">${s.lastPost ? timeAgo(s.lastPost.time) + ' by ' + (s.lastPost.user || 'Unknown') : 'No posts yet'}</div>
+                        </div>
+                    </div>`;
+            }
+
+            document.getElementById('forumCategories').innerHTML = html;
+        }
+
+        window.openCategory = async function(categoryId, categoryName) {
+            await saveLastVisited(categoryId);
+            window.location.href = 'threads.html?cat=' + categoryId + '&name=' + encodeURIComponent(categoryName);
+        };
+
+        window.openNewThread = function() {
+            if (!currentUser && !googleUser) {
+                alert('Please sign in to post.');
+                return;
+            }
+            document.getElementById('newThreadModal').classList.add('active');
+        };
+
+        window.closeNewThread = function() {
+            document.getElementById('newThreadModal').classList.remove('active');
+            document.getElementById('newThreadMsg').textContent = '';
+            document.getElementById('threadTitle').value = '';
+            document.getElementById('threadBody').value = '';
+            document.getElementById('threadCategory').value = '';
+        };
+
+        window.submitThread = async function() {
+            var categoryId = document.getElementById('threadCategory').value;
+            var title = document.getElementById('threadTitle').value.trim();
+            var body = document.getElementById('threadBody').value.trim();
+            var msgEl = document.getElementById('newThreadMsg');
+
+            if (!categoryId) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select a category.'; return; }
+            if (!title) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a title.'; return; }
+            if (!body) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter some content.'; return; }
+
+            var cat = CATEGORIES.find(function(c) { return c.id === categoryId; });
+            if (cat && cat.adminOnly && !isAdminOrOwner(currentUser ? currentUser.email : (googleUser ? googleUser.email : ''))) {
+                msgEl.className = 'msg error'; msgEl.textContent = 'Only admins can post in this category.'; return;
+            }
+
+            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var email = currentUser ? currentUser.email : googleUser.email;
+            var userData = currentUserData || {};
+            var username = userData.username || userData.displayName || email.split('@')[0];
+            var role = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : (userData.role || 'CIVILIAN');
+
+            try {
+                var threadRef = await addDoc(collection(db, "threads"), {
+                    categoryId: categoryId,
+                    title: title,
+                    body: body,
+                    authorUid: uid,
+                    authorName: username,
+                    authorRole: role,
+                    createdAt: serverTimestamp(),
+                    lastReplyAt: serverTimestamp(),
+                    lastReplyBy: username,
+                    replyCount: 0,
+                    likeCount: 0,
+                    pinned: false,
+                    locked: false,
+                    views: 0
+                });
+
+                // Add community points
+                await setDoc(doc(db, "users", uid), { communityPoints: increment(10), postCount: increment(1) }, { merge: true });
+
+                // If announcements category, send email to all users
+                if (categoryId === 'announcements') {
+                    await sendAnnouncementEmail(title, body, username);
+                }
+
+                msgEl.className = 'msg success';
+                msgEl.textContent = '✅ Thread posted!';
+                setTimeout(function() {
+                    closeNewThread();
+                    window.location.href = 'threads.html?cat=' + categoryId + '&thread=' + threadRef.id;
+                }, 800);
+            } catch(e) {
+                msgEl.className = 'msg error';
+                msgEl.textContent = 'Error posting thread: ' + e.message;
+            }
+        };
+
+        async function sendAnnouncementEmail(title, body, authorName) {
+            try {
+                var usersSnap = await getDocs(collection(db, "users"));
+                var emails = [];
+                usersSnap.forEach(function(d) {
+                    if (d.data().email) emails.push(d.data().email);
+                });
+                await fetch('https://sorc-email.sorcdashrpg.workers.dev', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'announcement',
+                        emails: emails,
+                        title: title,
+                        body: body,
+                        author: authorName
+                    })
+                });
+            } catch(e) {
+                console.error('Email send failed:', e);
+            }
+        }
+
+        window.searchForum = async function() {
+            var term = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!term) return;
+            var snap = await getDocs(collection(db, "threads"));
+            var results = [];
+            snap.forEach(function(d) {
+                var data = d.data();
+                if (data.title.toLowerCase().includes(term) || data.body.toLowerCase().includes(term)) {
+                    results.push({ id: d.id, ...data });
+                }
+            });
+            var html = results.length === 0
+                ? '<p style="color:#666;">No results found for "' + term + '"</p>'
+                : results.map(function(r) {
+                    return '<div style="padding:0.75rem 0;border-bottom:1px solid #2a2a2a;">' +
+                        '<a href="threads.html?cat=' + r.categoryId + '&thread=' + r.id + '" style="color:#d4af37;font-weight:bold;text-decoration:none;">' + r.title + '</a>' +
+                        '<div style="font-size:0.75rem;color:#555;margin-top:2px;">by ' + r.authorName + ' in ' + r.categoryId + ' · ' + timeAgo(r.createdAt) + '</div>' +
+                    '</div>';
+                }).join('');
+            document.getElementById('searchResults').innerHTML = html;
+            document.getElementById('searchModal').classList.add('active');
+        };
+
+        window.closeSearch = function() {
+            document.getElementById('searchModal').classList.remove('active');
+        };
+
+        onAuthStateChanged(auth, async function(user) {
+            if (user) {
+                currentUser = user;
+                var docSnap = await getDoc(doc(db, "users", user.uid));
+                if (docSnap.exists()) currentUserData = docSnap.data();
+                await updateLastSeen();
+            } else if (googleUser) {
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
+                } catch(e) {}
+                await updateLastSeen();
+            } else {
+                document.getElementById('notLoggedInBar').style.display = 'block';
+                document.getElementById('newThreadBtn').disabled = true;
+            }
+
+            await loadOnlineUsers();
+            await loadForumStats();
+            await renderCategories();
+        });
+    </script>
+</body>
+</html>
