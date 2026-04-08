@@ -215,7 +215,7 @@ async function getUserRoleFromDB(uid, email) {
   return { role: 'CIVILIAN', username: '' };
 }
 
-// ========== AUTH STATE (Firebase email/password) ==========
+// ========== AUTH STATE ==========
 onAuthStateChanged(auth, async function(user) {
   if (user) {
     if (!user.emailVerified && user.providerData[0].providerId === 'password') {
@@ -310,8 +310,10 @@ function showAdminPanel() {
       '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#d4af37;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
     '</div>' +
     '<div id="adminPanelContent">' +
-      '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">Generate Master Code</button>' +
+      '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
+      '<button onclick="loadUsers()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">View All Users</button>' +
       '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
+      '<div id="userList" style="margin-top:10px;font-size:0.8rem;max-height:200px;overflow-y:auto;"></div>' +
     '</div>';
   document.body.appendChild(panel);
 }
@@ -332,4 +334,26 @@ window.generateGMCode = async function() {
   var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
   await addDoc(collection(db, "gm_codes"), { code: code, used: false, createdAt: new Date() });
   document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
+};
+
+window.loadUsers = async function() {
+  var userListEl = document.getElementById('userList');
+  userListEl.innerHTML = 'Loading...';
+  var snap = await getDocs(collection(db, "users"));
+  var html = '<table style="width:100%;border-collapse:collapse;">' +
+    '<tr style="color:#d4af37;border-bottom:1px solid #444;">' +
+      '<th style="text-align:left;padding:4px;">Username</th>' +
+      '<th style="text-align:left;padding:4px;">Role</th>' +
+      '<th style="text-align:left;padding:4px;">ID</th>' +
+    '</tr>';
+  snap.forEach(function(d) {
+    var data = d.data();
+    html += '<tr style="border-bottom:1px solid #333;">' +
+      '<td style="padding:4px;">' + (data.username || data.email || 'N/A') + '</td>' +
+      '<td style="padding:4px;">' + (data.role || 'CIVILIAN') + '</td>' +
+      '<td style="padding:4px;">#' + (data.userId || 'N/A') + '</td>' +
+    '</tr>';
+  });
+  html += '</table>';
+  userListEl.innerHTML = html;
 };
