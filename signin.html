@@ -231,12 +231,9 @@
             if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
         })();
 
-        // ===== BAD WORD FILTER =====
-        var badWords = [
-            'fuck','shit','ass','bitch','cunt','dick','cock','pussy',
-            'nigger','nigga','faggot','retard','whore','slut','bastard',
-            'crap','piss','prick','twat','wanker','bollocks'
-        ];
+        var ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
+
+        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
         function containsBadWord(str) {
             var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
             return badWords.some(function(word) { return lower.includes(word); });
@@ -262,7 +259,6 @@
             return Math.floor(Math.random() * 90000) + 10000;
         }
 
-        // ===== TOGGLE PASSWORD =====
         window.togglePassword = function(inputId, btn) {
             var input = document.getElementById(inputId);
             if (input.type === 'password') {
@@ -274,7 +270,6 @@
             }
         };
 
-        // ===== GOOGLE =====
         function handleGoogleCredential(response) {
             var base64Url = response.credential.split('.')[1];
             var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -285,7 +280,7 @@
                 email: userInfo.email,
                 name: userInfo.name,
                 googleId: userInfo.sub,
-                role: 'CIVILIAN',
+                role: ADMIN_EMAILS.includes(userInfo.email) ? 'BOUNCER' : 'CIVILIAN',
                 username: randomUsername,
                 userId: userId
             });
@@ -342,13 +337,6 @@
                 document.getElementById('signinForm').style.display = 'none';
             }
         };
-
-        window.showForgotPassword = function() {
-            showStatus('Enter your email above and click "Forgot password" — a reset link will be sent.', 'success');
-            forgotPasswordMode = true;
-        };
-
-        var forgotPasswordMode = false;
     </script>
 
     <script type="module">
@@ -368,6 +356,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
 
         onAuthStateChanged(auth, function(user) {
             if (user && user.emailVerified) {
@@ -380,9 +369,8 @@
             var password = document.getElementById('passwordInput').value;
             if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
             signInWithEmailAndPassword(auth, email, password).then(function(result) {
-                if (!result.user.emailVerified) {
+                if (!result.user.emailVerified && !ADMIN_EMAILS.includes(result.user.email)) {
                     showStatus('Please verify your email first. Check your inbox.', 'error');
-                    // Show resend button and store user for resend
                     document.getElementById('resendBtn').style.display = 'block';
                     window._unverifiedUser = result.user;
                     signOut(auth);
@@ -395,33 +383,23 @@
         };
 
         window.resendVerification = function() {
-            if (window._unverifiedUser) {
-                sendEmailVerification(window._unverifiedUser).then(function() {
-                    showStatus('✅ Verification email sent! Check your inbox.', 'success');
+            var email = document.getElementById('emailInput').value.trim();
+            var password = document.getElementById('passwordInput').value;
+            if (!email || !password) { showStatus('Enter your email and password first.', 'error'); return; }
+            signInWithEmailAndPassword(auth, email, password).then(function(result) {
+                sendEmailVerification(result.user).then(function() {
+                    showStatus('✅ Verification email sent! Check your inbox and spam.', 'success');
                     document.getElementById('resendBtn').style.display = 'none';
-                }).catch(function(error) {
-                    showStatus('Failed to send: ' + error.message, 'error');
+                    signOut(auth);
                 });
-            } else {
-                // Sign in again to get the user then send
-                var email = document.getElementById('emailInput').value.trim();
-                var password = document.getElementById('passwordInput').value;
-                if (!email || !password) { showStatus('Enter your email and password first.', 'error'); return; }
-                signInWithEmailAndPassword(auth, email, password).then(function(result) {
-                    sendEmailVerification(result.user).then(function() {
-                        showStatus('✅ Verification email sent! Check your inbox.', 'success');
-                        document.getElementById('resendBtn').style.display = 'none';
-                        signOut(auth);
-                    });
-                }).catch(function(error) {
-                    showStatus('Failed: ' + error.message, 'error');
-                });
-            }
+            }).catch(function(error) {
+                showStatus('Failed: ' + error.message, 'error');
+            });
         };
 
         window.showForgotPassword = function() {
             var email = document.getElementById('emailInput').value.trim();
-            if (!email) { showStatus('Enter your email address above first.', 'error'); return; }
+            if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
             sendPasswordResetEmail(auth, email).then(function() {
                 showStatus('✅ Password reset email sent to ' + email, 'success');
             }).catch(function(error) {
