@@ -48,6 +48,27 @@
             box-sizing: border-box;
         }
         .signin-input:focus { outline: none; border-color: #d0021b; }
+        .password-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+        .password-wrapper .signin-input {
+            margin-bottom: 0;
+            padding-right: 44px;
+        }
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0;
+        }
+        .toggle-pw:hover { color: #e0cfc0; }
         .signin-btn {
             width: 100%;
             padding: 12px;
@@ -63,6 +84,15 @@
         .signin-btn-primary:hover { background: #a50013; }
         .signin-btn-apple { background: #000; color: #fff; }
         .signin-btn-apple:hover { background: #222; }
+        .signin-btn-resend {
+            background: none;
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            padding: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        .signin-btn-resend:hover { background: #2a1a00; }
         .signin-divider {
             display: flex;
             align-items: center;
@@ -122,6 +152,7 @@
         .status-msg.success { background: #1a2a1a; border: 1px solid #4caf50; color: #4caf50; }
         .status-msg.error { background: #2a1a1a; border: 1px solid #d0021b; color: #d0021b; }
         #googleBtn { display: flex; justify-content: center; margin-bottom: 12px; }
+        #resendBtn { display: none; }
         body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
         body.lawful-mode .signin-card { background: #fff; border-color: #e0e0e0; }
         body.lawful-mode .signin-input { background: #f5f5f0; color: #2c2c2c; border-color: #ccc; }
@@ -161,13 +192,20 @@
             <div id="signinForm">
                 <p style="text-align:left;color:#888;font-size:0.8rem;margin-bottom:0.5rem;">Sign In</p>
                 <input type="email" id="emailInput" class="signin-input" placeholder="Email address" />
-                <input type="password" id="passwordInput" class="signin-input" placeholder="Password" />
+                <div class="password-wrapper">
+                    <input type="password" id="passwordInput" class="signin-input" placeholder="Password" />
+                    <button class="toggle-pw" onclick="togglePassword('passwordInput', this)" type="button">👁</button>
+                </div>
                 <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
+                <button class="signin-btn signin-btn-resend" id="resendBtn" onclick="resendVerification()">Resend Verification Email</button>
 
                 <div class="signin-divider">or create account</div>
 
                 <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" />
-                <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" />
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" />
+                    <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
+                </div>
                 <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a username (letters, numbers, underscores)" maxlength="20" />
                 <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">You can change your username and choose an avatar from your profile page.</p>
 
@@ -181,7 +219,7 @@
             <button class="signin-btn signin-btn-apple">Continue with Apple</button>
 
             <div class="signin-links">
-                <a href="#">Forgot password?</a> &nbsp;·&nbsp;
+                <a href="#" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
                 <a href="index.html">Back to site</a>
             </div>
         </div>
@@ -195,16 +233,14 @@
 
         // ===== BAD WORD FILTER =====
         var badWords = [
-            'fuck', 'shit', 'ass', 'bitch', 'cunt', 'dick', 'cock', 'pussy',
-            'nigger', 'nigga', 'faggot', 'retard', 'whore', 'slut', 'bastard',
-            'crap', 'piss', 'prick', 'twat', 'wanker', 'bollocks'
+            'fuck','shit','ass','bitch','cunt','dick','cock','pussy',
+            'nigger','nigga','faggot','retard','whore','slut','bastard',
+            'crap','piss','prick','twat','wanker','bollocks'
         ];
-
         function containsBadWord(str) {
             var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
             return badWords.some(function(word) { return lower.includes(word); });
         }
-
         function isValidUsername(username) {
             if (username.length < 3) return 'Username must be at least 3 characters.';
             if (username.length > 20) return 'Username must be 20 characters or less.';
@@ -214,8 +250,8 @@
         }
 
         function generateRandomUsername() {
-            var adjectives = ['Shadow', 'Iron', 'Storm', 'Fire', 'Dark', 'Swift', 'Wild', 'Stone', 'Frost', 'Silver'];
-            var nouns = ['Slayer', 'Adventurer', 'Wanderer', 'Knight', 'Ranger', 'Mage', 'Rogue', 'Hunter', 'Warrior', 'Scout'];
+            var adjectives = ['Shadow','Iron','Storm','Fire','Dark','Swift','Wild','Stone','Frost','Silver'];
+            var nouns = ['Slayer','Adventurer','Wanderer','Knight','Ranger','Mage','Rogue','Hunter','Warrior','Scout'];
             var adj = adjectives[Math.floor(Math.random() * adjectives.length)];
             var noun = nouns[Math.floor(Math.random() * nouns.length)];
             var num = Math.floor(Math.random() * 9000) + 1000;
@@ -225,6 +261,18 @@
         function generateUserId() {
             return Math.floor(Math.random() * 90000) + 10000;
         }
+
+        // ===== TOGGLE PASSWORD =====
+        window.togglePassword = function(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+            }
+        };
 
         // ===== GOOGLE =====
         function handleGoogleCredential(response) {
@@ -294,11 +342,18 @@
                 document.getElementById('signinForm').style.display = 'none';
             }
         };
+
+        window.showForgotPassword = function() {
+            showStatus('Enter your email above and click "Forgot password" — a reset link will be sent.', 'success');
+            forgotPasswordMode = true;
+        };
+
+        var forgotPasswordMode = false;
     </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -321,18 +376,56 @@
         });
 
         window.handleSignIn = function() {
-            var email = document.getElementById('emailInput').value;
+            var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
             if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
             signInWithEmailAndPassword(auth, email, password).then(function(result) {
                 if (!result.user.emailVerified) {
                     showStatus('Please verify your email first. Check your inbox.', 'error');
+                    // Show resend button and store user for resend
+                    document.getElementById('resendBtn').style.display = 'block';
+                    window._unverifiedUser = result.user;
                     signOut(auth);
                     return;
                 }
                 window.location.href = 'https://sorcrpg.com/?loggedin=1';
             }).catch(function(error) {
                 showStatus('Sign in failed: ' + error.message, 'error');
+            });
+        };
+
+        window.resendVerification = function() {
+            if (window._unverifiedUser) {
+                sendEmailVerification(window._unverifiedUser).then(function() {
+                    showStatus('✅ Verification email sent! Check your inbox.', 'success');
+                    document.getElementById('resendBtn').style.display = 'none';
+                }).catch(function(error) {
+                    showStatus('Failed to send: ' + error.message, 'error');
+                });
+            } else {
+                // Sign in again to get the user then send
+                var email = document.getElementById('emailInput').value.trim();
+                var password = document.getElementById('passwordInput').value;
+                if (!email || !password) { showStatus('Enter your email and password first.', 'error'); return; }
+                signInWithEmailAndPassword(auth, email, password).then(function(result) {
+                    sendEmailVerification(result.user).then(function() {
+                        showStatus('✅ Verification email sent! Check your inbox.', 'success');
+                        document.getElementById('resendBtn').style.display = 'none';
+                        signOut(auth);
+                    });
+                }).catch(function(error) {
+                    showStatus('Failed: ' + error.message, 'error');
+                });
+            }
+        };
+
+        window.showForgotPassword = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) { showStatus('Enter your email address above first.', 'error'); return; }
+            sendPasswordResetEmail(auth, email).then(function() {
+                showStatus('✅ Password reset email sent to ' + email, 'success');
+            }).catch(function(error) {
+                showStatus('Failed: ' + error.message, 'error');
             });
         };
 
@@ -346,7 +439,6 @@
             var usernameError = isValidUsername(username);
             if (usernameError) { showStatus(usernameError, 'error'); return; }
 
-            // Check username not taken
             var q = query(collection(db, "users"), where("username", "==", username));
             var existing = await getDocs(q);
             if (!existing.empty) { showStatus('That username is already taken. Please choose another.', 'error'); return; }
