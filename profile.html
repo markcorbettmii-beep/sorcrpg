@@ -167,9 +167,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
 
-        // Bad word filter
         var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
         function containsBadWord(str) {
             var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -222,21 +221,21 @@
             if (user) {
                 var uid = user.uid;
                 var email = user.email;
-                var role = email === ADMIN_EMAIL ? 'BOUNCER' : 'CIVILIAN';
+                var role = ADMIN_EMAILS.includes(email) ? 'BOUNCER' : 'CIVILIAN';
                 var username = '';
                 var avatar = null;
                 var userId = '';
 
                 var docSnap = await getDoc(doc(db, "users", uid));
                 if (docSnap.exists()) {
-                    role = email === ADMIN_EMAIL ? 'BOUNCER' : (docSnap.data().role || 'CIVILIAN');
+                    role = ADMIN_EMAILS.includes(email) ? 'BOUNCER' : (docSnap.data().role || 'CIVILIAN');
                     username = docSnap.data().username || docSnap.data().displayName || '';
                     avatar = docSnap.data().avatar || null;
                     userId = docSnap.data().userId || '';
                 }
                 renderProfile(uid, email, role, username, avatar, userId);
             } else if (googleUser) {
-                renderProfile(googleUser.googleId, googleUser.email, googleUser.role || 'CIVILIAN', googleUser.username || googleUser.name || '', null, googleUser.userId || '');
+                renderProfile(googleUser.googleId, googleUser.email, ADMIN_EMAILS.includes(googleUser.email) ? 'BOUNCER' : (googleUser.role || 'CIVILIAN'), googleUser.username || googleUser.name || '', null, googleUser.userId || '');
             } else {
                 document.getElementById('profileApp').innerHTML =
                     '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
@@ -281,7 +280,9 @@
                 <div class="profile-container">
                     <div class="profile-header">
                         <div class="profile-avatar">
-                            ${avatar ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + avatar + '</div>' : '<div style="font-size:0.7rem;color:#555;">No avatar</div>'}
+                            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">
+                                ${avatar || 'No avatar'}
+                            </div>
                         </div>
                         <div>
                             <div class="profile-username">${username || 'No username'}</div>
@@ -328,14 +329,11 @@
             var msgEl = document.getElementById('usernameMsg');
             var err = isValidUsername(newUsername);
             if (err) { msgEl.className = 'msg error'; msgEl.textContent = err; return; }
-
-            // Check not taken by someone else
             var q = query(collection(db, "users"), where("username", "==", newUsername));
             var existing = await getDocs(q);
             var taken = false;
             existing.forEach(function(d) { if (d.id !== uid) taken = true; });
             if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That username is already taken.'; return; }
-
             await updateDoc(doc(db, "users", uid), { username: newUsername, displayName: newUsername });
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ Username saved!';
