@@ -152,18 +152,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
+const OWNER_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
 
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
-  if (role === 'BOUNCER') return '[AD]';
+  if (role === 'OWNER') return '[OWN]';
+  if (role === 'ADMIN') return '[AD]';
   if (role === 'MASTER') return '[GM]';
   if (role === 'PLAYER') return '[PC]';
   return '[CIV]';
 }
 
 function getRoleColor(role) {
-  if (role === 'BOUNCER') return { bg: '#d4af37', color: '#222' };
+  if (role === 'OWNER') return { bg: '#d4af37', color: '#222' };
+  if (role === 'ADMIN') return { bg: '#8B0000', color: '#fff' };
   if (role === 'MASTER') return { bg: '#1a6b1a', color: '#fff' };
   if (role === 'PLAYER') return { bg: '#1a3a6b', color: '#fff' };
   return { bg: '#333', color: '#e0cfc0' };
@@ -175,9 +177,12 @@ function getAvatarPath(avatarId) {
 }
 
 // ========== ROLE BADGE ==========
-function showRoleBadge(email, username, role, avatar) {
+function showRoleBadge(email, username, role, avatar, userId) {
   var existing = document.querySelector('.role-badge');
   if (existing) existing.remove();
+
+  var existingPopup = document.querySelector('.role-popup');
+  if (existingPopup) existingPopup.remove();
 
   var signinLink = document.getElementById('signinLink');
   if (signinLink) signinLink.style.display = 'none';
@@ -196,13 +201,37 @@ function showRoleBadge(email, username, role, avatar) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'" />';
   }
 
-  badge.innerHTML = avatarHtml + displayName + ' ' + abbr +
+  badge.innerHTML = avatarHtml + displayName +
+    ' <span class="role-tag" onclick="showRolePopup(\'' + displayName + '\', \'' + userId + '\', \'' + role + '\')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
   document.body.appendChild(badge);
 
-  if (role === 'BOUNCER') showAdminPanel();
+  if (role === 'OWNER') showAdminPanel();
+  if (role === 'ADMIN') showAdminPanel();
 }
+
+window.showRolePopup = function(username, userId, role) {
+  var existing = document.querySelector('.role-popup');
+  if (existing) { existing.remove(); return; }
+
+  var popup = document.createElement('div');
+  popup.className = 'role-popup';
+  popup.style.cssText = 'position:fixed;top:50px;right:10px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+
+  var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
+
+  popup.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
+      '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
+      '<button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
+    '</div>' +
+    '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + username + '</div>' +
+    '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + roleLabel + '</div>' +
+    '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + (userId || 'N/A') + '</div>';
+
+  document.body.appendChild(popup);
+};
 
 // ========== SIGN OUT ==========
 window.sorcSignOut = function() {
@@ -213,22 +242,22 @@ window.sorcSignOut = function() {
 
 // ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
-  if (ADMIN_EMAILS.includes(email)) return { role: 'BOUNCER', username: 'Admin', avatar: null };
+  if (OWNER_EMAILS.includes(email)) return { role: 'OWNER', username: 'Owner', avatar: null, userId: '' };
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return {
       role: docSnap.data().role || 'CIVILIAN',
       username: docSnap.data().username || docSnap.data().displayName || '',
-      avatar: docSnap.data().avatar || null
+      avatar: docSnap.data().avatar || null,
+      userId: docSnap.data().userId || ''
     };
   }
   await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  return { role: 'CIVILIAN', username: '', avatar: null };
+  return { role: 'CIVILIAN', username: '', avatar: null, userId: '' };
 }
 
 // ========== AUTH STATE ==========
-// This handles email/password users — always fetches fresh from Firestore
 onAuthStateChanged(auth, async function(user) {
   if (user) {
     if (!user.emailVerified && user.providerData[0].providerId === 'password') {
@@ -236,11 +265,9 @@ onAuthStateChanged(auth, async function(user) {
       signOut(auth);
       return;
     }
-    // Always get fresh data from Firestore for email/password users
     var data = await getUserRoleFromDB(user.uid, user.email);
-    showRoleBadge(user.email, data.username, data.role, data.avatar);
+    showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
   } else {
-    // No Firebase user — check for Google session
     var savedGoogle = localStorage.getItem('sorc_google_user');
     if (savedGoogle) {
       try {
@@ -248,25 +275,27 @@ onAuthStateChanged(auth, async function(user) {
         var role = userInfo.role || 'CIVILIAN';
         var username = userInfo.username || userInfo.name || '';
         var avatar = userInfo.avatar || null;
-        if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
+        var userId = userInfo.userId || '';
+        if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
 
-        // Fetch fresh data from Firestore for Google users too
         if (userInfo.googleId) {
           try {
             var docSnap = await getDoc(doc(db, "users", userInfo.googleId));
             if (docSnap.exists()) {
               username = docSnap.data().username || docSnap.data().displayName || username;
               avatar = docSnap.data().avatar || avatar;
-              role = ADMIN_EMAILS.includes(userInfo.email) ? 'BOUNCER' : (docSnap.data().role || role);
+              userId = docSnap.data().userId || userId;
+              role = OWNER_EMAILS.includes(userInfo.email) ? 'OWNER' : (docSnap.data().role || role);
               userInfo.username = username;
               userInfo.avatar = avatar;
+              userInfo.userId = userId;
               userInfo.role = role;
               localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
             }
           } catch(e) {}
         }
 
-        showRoleBadge(userInfo.email, username, role, avatar);
+        showRoleBadge(userInfo.email, username, role, avatar, userId);
       } catch(e) {
         localStorage.removeItem('sorc_google_user');
       }
@@ -282,8 +311,9 @@ window.addEventListener('storage', async function(e) {
       var role = userInfo.role || 'CIVILIAN';
       var username = userInfo.username || userInfo.name || '';
       var avatar = userInfo.avatar || null;
-      if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
-      showRoleBadge(userInfo.email, username, role, avatar);
+      var userId = userInfo.userId || '';
+      if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
+      showRoleBadge(userInfo.email, username, role, avatar, userId);
     } catch(err) {
       console.error(err);
     }
@@ -323,7 +353,7 @@ window.sorcSignIn = function(email, password) {
       return;
     }
     var data = await getUserRoleFromDB(result.user.uid, result.user.email);
-    showRoleBadge(result.user.email, data.username, data.role, data.avatar);
+    showRoleBadge(result.user.email, data.username, data.role, data.avatar, data.userId);
   }).catch(function(error) {
     alert('Sign in failed: ' + error.message);
   });
