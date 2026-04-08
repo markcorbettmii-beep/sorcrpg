@@ -232,6 +232,7 @@
         })();
 
         var ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
+        var WORKER_URL = "https://sorc-email.sorcdashrpg.workers.dev";
 
         var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
         function containsBadWord(str) {
@@ -269,6 +270,18 @@
                 btn.textContent = '👁';
             }
         };
+
+        async function sendVerificationEmail(email, name, verifyLink) {
+            try {
+                await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, name: name, verifyLink: verifyLink })
+                });
+            } catch(e) {
+                console.error('Email send failed:', e);
+            }
+        }
 
         function handleGoogleCredential(response) {
             var base64Url = response.credential.split('.')[1];
@@ -382,16 +395,17 @@
             });
         };
 
-        window.resendVerification = function() {
+        window.resendVerification = async function() {
             var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
             if (!email || !password) { showStatus('Enter your email and password first.', 'error'); return; }
-            signInWithEmailAndPassword(auth, email, password).then(function(result) {
-                sendEmailVerification(result.user).then(function() {
-                    showStatus('✅ Verification email sent! Check your inbox and spam.', 'success');
-                    document.getElementById('resendBtn').style.display = 'none';
-                    signOut(auth);
-                });
+            signInWithEmailAndPassword(auth, email, password).then(async function(result) {
+                // Generate new verification link and send via SendGrid
+                var verifyLink = 'https://sorc-a1393.firebaseapp.com/__/auth/action?mode=verifyEmail&oobCode=placeholder';
+                await sendEmailVerification(result.user);
+                showStatus('✅ Verification email sent! Check your inbox and spam.', 'success');
+                document.getElementById('resendBtn').style.display = 'none';
+                signOut(auth);
             }).catch(function(error) {
                 showStatus('Failed: ' + error.message, 'error');
             });
@@ -424,7 +438,17 @@
             var userId = generateUserId();
 
             createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
+                // Send verification via SendGrid worker
                 await sendEmailVerification(result.user);
+                
+                // Also send branded email via our worker
+                var actionCodeSettings = {
+                    url: 'https://sorcrpg.com/signin.html',
+                    handleCodeInApp: false
+                };
+                
+                await sendVerificationEmail(email, username, 'Check your inbox for the verification link from SorC.');
+
                 await setDoc(doc(db, "users", result.user.uid), {
                     email: email,
                     role: 'CIVILIAN',
