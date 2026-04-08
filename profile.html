@@ -36,6 +36,7 @@
             overflow: hidden;
             flex-shrink: 0;
         }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .profile-username { font-size: 1.4rem; font-weight: bold; color: #e0cfc0; }
         .profile-role {
             display: inline-block;
@@ -131,6 +132,7 @@
             cursor: pointer;
             overflow: hidden;
             transition: border-color 0.2s;
+            background: #2a2a2a;
         }
         .avatar-option:hover { border-color: #d4af37; }
         .avatar-option.selected { border-color: #d0021b; }
@@ -143,6 +145,12 @@
             justify-content: center;
             color: #555;
             font-size: 0.7rem;
+        }
+        .avatar-preview {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            display: block;
         }
     </style>
 </head>
@@ -195,14 +203,22 @@
             return '[CIV]';
         }
 
+        function getAvatarPath(avatarId) {
+            if (!avatarId) return null;
+            return 'assets/images/avatars/' + avatarId + '.png';
+        }
+
         var selectedAvatar = null;
+        var currentUid = null;
 
         function buildAvatarGrid(currentAvatar) {
             var avatars = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11','avatar12'];
             return avatars.map(function(id) {
                 var sel = id === currentAvatar ? ' selected' : '';
-                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')">' +
-                    '<div class="avatar-placeholder">' + id + '</div>' +
+                var avatarPath = getAvatarPath(id);
+                var inner = '<div class="avatar-placeholder">' + id + '</div>';
+                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')" id="avataropt-' + id + '">' +
+                    inner +
                 '</div>';
             }).join('');
         }
@@ -211,6 +227,12 @@
             document.querySelectorAll('.avatar-option').forEach(function(o) { o.classList.remove('selected'); });
             el.classList.add('selected');
             selectedAvatar = id;
+            // Update the header avatar preview immediately
+            var headerAvatar = document.getElementById('headerAvatar');
+            if (headerAvatar) {
+                var path = getAvatarPath(id);
+                headerAvatar.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + id + '</div>';
+            }
         };
 
         var googleUser = null;
@@ -219,23 +241,26 @@
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
-                var uid = user.uid;
+                currentUid = user.uid;
                 var email = user.email;
                 var role = ADMIN_EMAILS.includes(email) ? 'BOUNCER' : 'CIVILIAN';
                 var username = '';
                 var avatar = null;
                 var userId = '';
 
-                var docSnap = await getDoc(doc(db, "users", uid));
+                var docSnap = await getDoc(doc(db, "users", currentUid));
                 if (docSnap.exists()) {
                     role = ADMIN_EMAILS.includes(email) ? 'BOUNCER' : (docSnap.data().role || 'CIVILIAN');
                     username = docSnap.data().username || docSnap.data().displayName || '';
                     avatar = docSnap.data().avatar || null;
                     userId = docSnap.data().userId || '';
                 }
-                renderProfile(uid, email, role, username, avatar, userId);
+                selectedAvatar = avatar;
+                renderProfile(currentUid, email, role, username, avatar, userId);
             } else if (googleUser) {
-                renderProfile(googleUser.googleId, googleUser.email, ADMIN_EMAILS.includes(googleUser.email) ? 'BOUNCER' : (googleUser.role || 'CIVILIAN'), googleUser.username || googleUser.name || '', null, googleUser.userId || '');
+                currentUid = googleUser.googleId;
+                selectedAvatar = googleUser.avatar || null;
+                renderProfile(googleUser.googleId, googleUser.email, ADMIN_EMAILS.includes(googleUser.email) ? 'BOUNCER' : (googleUser.role || 'CIVILIAN'), googleUser.username || googleUser.name || '', googleUser.avatar || null, googleUser.userId || '');
             } else {
                 document.getElementById('profileApp').innerHTML =
                     '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
@@ -276,16 +301,18 @@
                 </div>`;
             }
 
+            var avatarDisplay = avatar
+                ? '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + avatar + '</div>'
+                : '<div style="font-size:0.7rem;color:#555;">No avatar</div>';
+
             document.getElementById('profileApp').innerHTML = `
                 <div class="profile-container">
                     <div class="profile-header">
-                        <div class="profile-avatar">
-                            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">
-                                ${avatar || 'No avatar'}
-                            </div>
+                        <div class="profile-avatar" id="headerAvatar">
+                            ${avatarDisplay}
                         </div>
                         <div>
-                            <div class="profile-username">${username || 'No username'}</div>
+                            <div class="profile-username" id="headerUsername">${username || 'No username'}</div>
                             <span class="profile-role" style="${roleColor(role)}">${role} ${roleAbbr(role)}</span>
                             ${userId ? '<div style="font-size:0.75rem;color:#555;margin-top:4px;">ID: #' + userId + '</div>' : ''}
                         </div>
@@ -329,12 +356,29 @@
             var msgEl = document.getElementById('usernameMsg');
             var err = isValidUsername(newUsername);
             if (err) { msgEl.className = 'msg error'; msgEl.textContent = err; return; }
+
             var q = query(collection(db, "users"), where("username", "==", newUsername));
             var existing = await getDocs(q);
             var taken = false;
             existing.forEach(function(d) { if (d.id !== uid) taken = true; });
             if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That username is already taken.'; return; }
+
             await updateDoc(doc(db, "users", uid), { username: newUsername, displayName: newUsername });
+
+            // Update header immediately
+            var headerUsername = document.getElementById('headerUsername');
+            if (headerUsername) headerUsername.textContent = newUsername;
+
+            // Update localStorage for Google users
+            var savedGoogle = localStorage.getItem('sorc_google_user');
+            if (savedGoogle) {
+                try {
+                    var userInfo = JSON.parse(savedGoogle);
+                    userInfo.username = newUsername;
+                    localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
+                } catch(e) {}
+            }
+
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ Username saved!';
         };
@@ -342,7 +386,25 @@
         window.saveAvatar = async function(uid) {
             var msgEl = document.getElementById('avatarMsg');
             if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar first.'; return; }
+
             await updateDoc(doc(db, "users", uid), { avatar: selectedAvatar });
+
+            // Update header avatar immediately
+            var headerAvatar = document.getElementById('headerAvatar');
+            if (headerAvatar) {
+                headerAvatar.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#555;">' + selectedAvatar + '</div>';
+            }
+
+            // Update localStorage for Google users
+            var savedGoogle = localStorage.getItem('sorc_google_user');
+            if (savedGoogle) {
+                try {
+                    var userInfo = JSON.parse(savedGoogle);
+                    userInfo.avatar = selectedAvatar;
+                    localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
+                } catch(e) {}
+            }
+
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ Avatar saved!';
         };
