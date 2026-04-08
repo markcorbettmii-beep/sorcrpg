@@ -152,7 +152,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const OWNER_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
+
+const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
@@ -201,14 +203,25 @@ function showRoleBadge(email, username, role, avatar, userId) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'" />';
   }
 
+  // Store data on badge for popup use
+  var safeUserId = String(userId || '');
+  var safeUsername = displayName.replace(/'/g, "\\'");
+
   badge.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" onclick="showRolePopup(\'' + displayName + '\', \'' + userId + '\', \'' + role + '\')" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
+
   document.body.appendChild(badge);
 
-  if (role === 'OWNER') showAdminPanel();
-  if (role === 'ADMIN') showAdminPanel();
+  // Attach click to role tag using event listener to stop propagation
+  badge.querySelector('.role-tag').addEventListener('click', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
+  });
+
+  if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 }
 
 window.showRolePopup = function(username, userId, role) {
@@ -217,20 +230,25 @@ window.showRolePopup = function(username, userId, role) {
 
   var popup = document.createElement('div');
   popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50px;right:10px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  popup.style.cssText = 'position:fixed;top:50px;right:10px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
 
   var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
 
   popup.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
       '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
-      '<button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
+      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
     '</div>' +
     '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + username + '</div>' +
     '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + roleLabel + '</div>' +
     '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + (userId || 'N/A') + '</div>';
 
   document.body.appendChild(popup);
+
+  document.getElementById('closeRolePopup').addEventListener('click', function(e) {
+    e.stopPropagation();
+    popup.remove();
+  });
 };
 
 // ========== SIGN OUT ==========
@@ -242,7 +260,33 @@ window.sorcSignOut = function() {
 
 // ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
-  if (OWNER_EMAILS.includes(email)) return { role: 'OWNER', username: 'Owner', avatar: null, userId: '' };
+  if (OWNER_EMAILS.includes(email)) {
+    // Still fetch username and avatar from Firestore for owners
+    var docRef = doc(db, "users", uid);
+    var docSnap = await getDoc(docRef);
+    var username = '';
+    var avatar = null;
+    var userId = '';
+    if (docSnap.exists()) {
+      username = docSnap.data().username || docSnap.data().displayName || '';
+      avatar = docSnap.data().avatar || null;
+      userId = docSnap.data().userId || '';
+    }
+    return { role: 'OWNER', username: username, avatar: avatar, userId: userId };
+  }
+  if (ADMIN_EMAILS.includes(email)) {
+    var docRef = doc(db, "users", uid);
+    var docSnap = await getDoc(docRef);
+    var username = '';
+    var avatar = null;
+    var userId = '';
+    if (docSnap.exists()) {
+      username = docSnap.data().username || docSnap.data().displayName || '';
+      avatar = docSnap.data().avatar || null;
+      userId = docSnap.data().userId || '';
+    }
+    return { role: 'ADMIN', username: username, avatar: avatar, userId: userId };
+  }
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
@@ -276,7 +320,9 @@ onAuthStateChanged(auth, async function(user) {
         var username = userInfo.username || userInfo.name || '';
         var avatar = userInfo.avatar || null;
         var userId = userInfo.userId || '';
+
         if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
+        else if (ADMIN_EMAILS.includes(userInfo.email)) role = 'ADMIN';
 
         if (userInfo.googleId) {
           try {
@@ -285,7 +331,9 @@ onAuthStateChanged(auth, async function(user) {
               username = docSnap.data().username || docSnap.data().displayName || username;
               avatar = docSnap.data().avatar || avatar;
               userId = docSnap.data().userId || userId;
-              role = OWNER_EMAILS.includes(userInfo.email) ? 'OWNER' : (docSnap.data().role || role);
+              if (!OWNER_EMAILS.includes(userInfo.email) && !ADMIN_EMAILS.includes(userInfo.email)) {
+                role = docSnap.data().role || role;
+              }
               userInfo.username = username;
               userInfo.avatar = avatar;
               userInfo.userId = userId;
@@ -313,6 +361,7 @@ window.addEventListener('storage', async function(e) {
       var avatar = userInfo.avatar || null;
       var userId = userInfo.userId || '';
       if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
+      else if (ADMIN_EMAILS.includes(userInfo.email)) role = 'ADMIN';
       showRoleBadge(userInfo.email, username, role, avatar, userId);
     } catch(err) {
       console.error(err);
