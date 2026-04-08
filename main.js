@@ -45,6 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
           '<a href="/terms.html">Terms of Service</a>' +
           '<a href="/privacy.html">Privacy Policy</a>' +
           '<a href="/conduct.html">Code of Conduct</a>' +
+          '<a href="/forum.html">Forums</a>' +
+          '<a href="/sorc-beyond.html">SORC Beyond</a>' +
           '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
         '</nav>' +
       '</div>' +
@@ -208,6 +210,7 @@ function showRoleBadge(email, username, role, avatar, userId) {
   badge.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
+    ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
 
   document.body.appendChild(badge);
@@ -260,7 +263,6 @@ async function getUserRoleFromDB(uid, email) {
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
   var data = docSnap.exists() ? docSnap.data() : {};
-
   var username = data.username || data.displayName || '';
   var avatar = data.avatar || null;
   var userId = data.userId || '';
@@ -350,7 +352,10 @@ window.sorcSignUp = function(email, password) {
   createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
     await sendEmailVerification(result.user);
     await setDoc(doc(db, "users", result.user.uid), {
-      email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN'
+      email: email,
+      role: 'CIVILIAN',
+      displayName: '',
+      accountType: 'CIVILIAN'
     });
     signOut(auth);
     document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
