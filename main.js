@@ -271,12 +271,31 @@ function showAdminPanel() {
   if (document.querySelector('.admin-panel')) return;
   var panel = document.createElement('div');
   panel.className = 'admin-panel';
-  panel.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9999;min-width:260px;border:2px solid #d4af37;';
-  panel.innerHTML = '<h3 style="color:#d4af37;margin:0 0 10px 0;">Admin Panel</h3>' +
-    '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">Generate Master Code</button>' +
-    '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>';
+  // Position above cookie banner, with minimize
+  panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #d4af37;';
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+      '<h3 style="color:#d4af37;margin:0;">Admin Panel</h3>' +
+      '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#d4af37;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
+    '</div>' +
+    '<div id="adminPanelContent">' +
+      '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">Generate Master Code</button>' +
+      '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
+    '</div>';
   document.body.appendChild(panel);
 }
+
+window.toggleAdminPanel = function() {
+  var content = document.getElementById('adminPanelContent');
+  var btn = document.querySelector('.admin-panel button');
+  if (content.style.display === 'none') {
+    content.style.display = 'block';
+    btn.textContent = '−';
+  } else {
+    content.style.display = 'none';
+    btn.textContent = '+';
+  }
+};
 
 window.generateGMCode = async function() {
   var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
