@@ -1,1 +1,106 @@
+export default {
+  async fetch(request, env) {
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      });
+    }
 
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    try {
+      var body = await request.json();
+
+      // Announcement email to multiple users
+      if (body.type === 'announcement') {
+        var results = [];
+        for (var email of (body.emails || [])) {
+          var response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer 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',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              personalizations: [{ to: [{ email: email }] }],
+              from: { email: 'corbett@sorcrpg.com', name: 'SorC — Slayers of Rings & Crowns' },
+              subject: '📣 ' + body.title,
+              content: [{
+                type: 'text/html',
+                value: `
+                  <div style="background:#111;color:#e0cfc0;padding:2rem;font-family:sans-serif;max-width:600px;margin:0 auto;border-radius:1rem;">
+                    <h1 style="color:#d0021b;">📣 ${body.title}</h1>
+                    <p style="color:#888;font-size:0.85rem;">Posted by ${body.author}</p>
+                    <div style="background:#1a1a1a;padding:1rem;border-radius:8px;margin:1rem 0;border-left:3px solid #d0021b;">
+                      <p style="color:#e0cfc0;">${body.body}</p>
+                    </div>
+                    <a href="https://sorcrpg.com/forum.html" style="display:inline-block;background:#d0021b;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">View on SorC Forums</a>
+                    <p style="color:#444;font-size:0.75rem;margin-top:1.5rem;">&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer</p>
+                  </div>`
+              }]
+            })
+          });
+          results.push(response.ok);
+        }
+        return new Response(JSON.stringify({ success: true, sent: results.filter(Boolean).length }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+
+      // Single verification email
+      var toEmail = body.email;
+      var toName = body.name || 'Adventurer';
+      var verifyLink = body.verifyLink;
+
+      if (!toEmail || !verifyLink) {
+        return new Response(JSON.stringify({ error: 'Missing email or verifyLink' }), { status: 400 });
+      }
+
+      var response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer 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',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: toEmail, name: toName }] }],
+          from: { email: 'corbett@sorcrpg.com', name: 'SorC — Slayers of Rings & Crowns' },
+          subject: 'Verify your SorC account',
+          content: [{
+            type: 'text/html',
+            value: `
+              <div style="background:#111;color:#e0cfc0;padding:2rem;font-family:sans-serif;max-width:600px;margin:0 auto;border-radius:1rem;">
+                <h1 style="color:#d0021b;">Welcome to Essentia, ${toName}!</h1>
+                <p>Click the button below to verify your email address.</p>
+                <a href="${verifyLink}" style="display:inline-block;background:#d0021b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin:1rem 0;">Verify My Account</a>
+                <p style="color:#555;font-size:0.75rem;">&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer</p>
+              </div>`
+          }]
+        })
+      });
+
+      if (response.ok) {
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } else {
+        var error = await response.text();
+        return new Response(JSON.stringify({ error: error }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    } catch(e) {
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+  }
+};
