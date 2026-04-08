@@ -152,7 +152,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const ADMIN_EMAIL = "markcorbett.mii@gmail.com";
+const ADMIN_EMAILS = ["markcorbett.mii@gmail.com", "corbett@sorcrpg.com"];
 
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
@@ -202,7 +202,7 @@ window.sorcSignOut = function() {
 
 // ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
-  if (email === ADMIN_EMAIL) return { role: 'BOUNCER', username: 'Admin' };
+  if (ADMIN_EMAILS.includes(email)) return { role: 'BOUNCER', username: 'Admin' };
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       var userInfo = JSON.parse(savedGoogle);
       var role = userInfo.role || 'CIVILIAN';
       var username = userInfo.username || userInfo.name || '';
-      if (userInfo.email === ADMIN_EMAIL) role = 'BOUNCER';
+      if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
       showRoleBadge(userInfo.email, username, role);
     } catch(e) {
       localStorage.removeItem('sorc_google_user');
@@ -251,7 +251,7 @@ window.addEventListener('storage', async function(e) {
       var userInfo = JSON.parse(e.newValue);
       var role = userInfo.role || 'CIVILIAN';
       var username = userInfo.username || userInfo.name || '';
-      if (userInfo.email === ADMIN_EMAIL) role = 'BOUNCER';
+      if (ADMIN_EMAILS.includes(userInfo.email)) role = 'BOUNCER';
       showRoleBadge(userInfo.email, username, role);
     } catch(err) {
       console.error(err);
