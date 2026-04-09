@@ -48,7 +48,6 @@
         .bubble-content { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
         .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
         .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
-        .bubble-content.system { background: #1a1a2a; color: #888; font-style: italic; border-radius: 10px; }
         .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
         .message-input-row { display: flex; gap: 0.5rem; }
         .message-input-row input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem; }
@@ -223,7 +222,7 @@
                         '<div class="request-text">wants to send you a message</div>' +
                     '</div>' +
                     '<div class="request-actions">' +
-                        '<button class="btn btn-red" onclick="acceptRequest(\'' + req.id + '\')">Accept</button>' +
+                        '<button class="btn btn-red" onclick="acceptRequest(\'' + req.id + '\', \'' + (req.senderUid || '') + '\', \'' + (req.senderName || '').replace(/'/g, "\\'") + '\')">Accept</button>' +
                         '<button class="btn btn-grey" onclick="declineRequest(\'' + req.id + '\')">Decline</button>' +
                     '</div>' +
                 '</div>';
@@ -237,32 +236,27 @@
             document.getElementById('requestsList').style.display = tab === 'requests' ? 'block' : 'none';
         };
 
-        window.acceptRequest = async function(convId) {
+        window.acceptRequest = async function(convId, senderUid, senderName) {
+            var myUsername = getMyUsername();
+            var myUid = getMyUid();
+
             await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
+
+            // Auto system message
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: myUid,
+                senderName: myUsername,
+                text: myUsername + ' accepted your message request.',
+                isSystem: true,
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "conversations", convId), {
+                lastMessageAt: serverTimestamp(),
+                lastMessageText: myUsername + ' accepted your message request.'
+            });
+
             await loadInbox();
-            var convDoc = await getDoc(doc(db, "conversations", convId));
-            if (convDoc.exists()) {
-                var conv = convDoc.data();
-                var myUid = getMyUid();
-                var myUsername = getMyUsername();
-                var otherName = conv.senderUid === myUid ? conv.receiverName : conv.senderName;
-                var otherUid = conv.senderUid === myUid ? conv.receiverUid : conv.senderUid;
-
-                // Send auto message
-                await addDoc(collection(db, "conversations", convId, "messages"), {
-                    senderUid: myUid,
-                    senderName: myUsername,
-                    text: myUsername + ' accepted your message request.',
-                    isSystem: true,
-                    createdAt: serverTimestamp()
-                });
-                await updateDoc(doc(db, "conversations", convId), {
-                    lastMessageAt: serverTimestamp(),
-                    lastMessageText: myUsername + ' accepted your message request.'
-                });
-
-                openConversation(convId, otherName, otherUid);
-            }
+            openConversation(convId, senderName, senderUid);
         };
 
         window.declineRequest = async function(convId) {
@@ -278,14 +272,17 @@
             document.getElementById('inboxList').classList.add('hidden');
             document.getElementById('convView').classList.add('active');
 
-            var otherDoc = await getDoc(doc(db, "users", currentOtherUid));
+            // Fetch other user's role
             var otherRole = 'CIVILIAN';
-            if (otherDoc.exists()) {
-                var otherEmail = otherDoc.data().email || '';
-                otherRole = OWNER_EMAILS.includes(otherEmail) ? 'OWNER' : ADMIN_EMAILS.includes(otherEmail) ? 'ADMIN' : (otherDoc.data().role || 'CIVILIAN');
-            }
+            try {
+                var otherDoc = await getDoc(doc(db, "users", currentOtherUid));
+                if (otherDoc.exists()) {
+                    var otherEmail = otherDoc.data().email || '';
+                    otherRole = OWNER_EMAILS.includes(otherEmail) ? 'OWNER' : ADMIN_EMAILS.includes(otherEmail) ? 'ADMIN' : (otherDoc.data().role || 'CIVILIAN');
+                }
+            } catch(e) {}
 
-            // Use currentOtherUid for the profile link — guaranteed to be set
+            // Build header — use currentOtherUid for the profile link
             document.getElementById('convHeader').innerHTML =
                 '<div class="conv-avatar">' + (currentOtherName ? currentOtherName.charAt(0).toUpperCase() : '?') + '</div>' +
                 '<div>' +
