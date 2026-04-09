@@ -8,136 +8,52 @@
     <link rel="stylesheet" href="styles.css" />
     <style>
         body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
-
-        .inbox-hero {
-            background: linear-gradient(135deg, #1a0505, #2a0808, #111);
-            padding: 2rem;
-            border-bottom: 2px solid #d0021b;
-            text-align: center;
-        }
+        .inbox-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 2rem; border-bottom: 2px solid #d0021b; text-align: center; }
         .inbox-hero h1 { color: #d0021b; font-size: 1.8rem; margin-bottom: 0.25rem; }
         .inbox-hero p { color: #666; font-size: 0.85rem; }
-
         .inbox-container { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
-
-        .inbox-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .inbox-tab {
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background: #1a1a1a;
-            color: #888;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            transition: all 0.2s;
-        }
+        .inbox-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .inbox-tab { padding: 8px 20px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; }
         .inbox-tab.active { background: #d0021b; color: #fff; border-color: #d0021b; }
         .inbox-tab:hover { border-color: #d0021b; }
-        .inbox-tab .badge {
-            display: inline-block;
-            background: #d4af37;
-            color: #222;
-            border-radius: 10px;
-            padding: 1px 6px;
-            font-size: 0.7rem;
-            margin-left: 4px;
-        }
-
-        .conversation-card {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: border-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+        .inbox-tab .badge { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; }
+        .conversation-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 1rem; }
         .conversation-card:hover { border-color: #d0021b; }
-
-        .conv-avatar {
-            width: 44px; height: 44px; border-radius: 50%;
-            background: #2a2a2a; display: flex; align-items: center;
-            justify-content: center; font-size: 1.1rem; color: #888;
-            border: 2px solid #333; flex-shrink: 0;
-        }
+        .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #888; border: 2px solid #333; flex-shrink: 0; }
         .conv-info { flex: 1; min-width: 0; }
         .conv-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
         .conv-preview { font-size: 0.8rem; color: #555; margin-top: 2px; }
         .conv-meta { text-align: right; font-size: 0.75rem; color: #555; flex-shrink: 0; }
-
-        .request-card {
-            background: #1a1a1a;
-            border: 1px solid #d4af37;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
+        .request-card { background: #1a1a1a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .request-info { flex: 1; }
         .request-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
         .request-text { font-size: 0.8rem; color: #888; margin-top: 2px; }
         .request-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-
         .btn { padding: 7px 16px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
         .btn-red { background: #d0021b; color: #fff; }
         .btn-red:hover { background: #a50013; }
         .btn-grey { background: #333; color: #888; }
         .btn-grey:hover { background: #444; color: #e0cfc0; }
-
         .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; }
-
         .conv-view { display: none; }
         .conv-view.active { display: block; }
         .inbox-list.hidden { display: none; }
-
-        .conv-header {
-            background: #1a1a1a; border: 1px solid #2a2a2a;
-            border-radius: 10px; padding: 1rem 1.25rem;
-            margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;
-        }
+        .conv-header { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
         .conv-header-name { font-weight: bold; font-size: 1rem; color: #e0cfc0; }
-
-        .message-thread {
-            background: #1a1a1a; border: 1px solid #2a2a2a;
-            border-radius: 10px; padding: 1rem;
-            min-height: 300px; max-height: 450px;
-            overflow-y: auto; margin-bottom: 1rem;
-        }
+        .message-thread { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem; min-height: 300px; max-height: 450px; overflow-y: auto; margin-bottom: 1rem; }
         .message-bubble { margin-bottom: 0.75rem; display: flex; flex-direction: column; }
         .message-bubble.mine { align-items: flex-end; }
         .message-bubble.theirs { align-items: flex-start; }
         .bubble-author { font-size: 0.7rem; color: #555; margin-bottom: 2px; }
-        .bubble-content {
-            max-width: 80%; padding: 8px 12px; border-radius: 10px;
-            font-size: 0.88rem; line-height: 1.5;
-        }
+        .bubble-content { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
         .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
         .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
         .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
-
         .message-input-row { display: flex; gap: 0.5rem; }
-        .message-input-row input {
-            flex: 1; padding: 10px 14px; border-radius: 8px;
-            border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem;
-        }
+        .message-input-row input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem; }
         .message-input-row input:focus { outline: none; border-color: #d0021b; }
-        .message-input-row button {
-            padding: 10px 20px; background: #d0021b; color: #fff;
-            border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
+        .message-input-row button { padding: 10px 20px; background: #d0021b; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .message-input-row button:hover { background: #a50013; }
-
         .not-logged-in { text-align: center; padding: 3rem; color: #555; }
         .not-logged-in a { color: #d4af37; }
     </style>
@@ -178,7 +94,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, orderBy, getDocs, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -243,27 +159,14 @@
                 return;
             }
 
-            // Load ALL conversations where I am sender OR receiver
             var snap1 = await getDocs(query(collection(db, "conversations"), where("senderUid", "==", uid)));
             var snap2 = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid)));
 
             var conversations = [];
             var seen = new Set();
+            snap1.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); conversations.push({ id: d.id, ...d.data() }); } });
+            snap2.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); conversations.push({ id: d.id, ...d.data() }); } });
 
-            snap1.forEach(function(d) {
-                if (!seen.has(d.id)) {
-                    seen.add(d.id);
-                    conversations.push({ id: d.id, ...d.data() });
-                }
-            });
-            snap2.forEach(function(d) {
-                if (!seen.has(d.id)) {
-                    seen.add(d.id);
-                    conversations.push({ id: d.id, ...d.data() });
-                }
-            });
-
-            // Sort by lastMessageAt descending
             conversations.sort(function(a, b) {
                 var aTime = a.lastMessageAt ? (a.lastMessageAt.toDate ? a.lastMessageAt.toDate() : new Date(a.lastMessageAt)) : new Date(0);
                 var bTime = b.lastMessageAt ? (b.lastMessageAt.toDate ? b.lastMessageAt.toDate() : new Date(b.lastMessageAt)) : new Date(0);
@@ -271,10 +174,8 @@
             });
 
             var accepted = conversations.filter(function(c) { return c.status === 'accepted'; });
-            // Pending requests RECEIVED by me
             var pending = conversations.filter(function(c) { return c.status === 'pending' && c.receiverUid === uid; });
 
-            // Update requests badge
             var badge = document.getElementById('requestsBadge');
             if (pending.length > 0) {
                 badge.textContent = pending.length;
@@ -296,14 +197,13 @@
             el.innerHTML = conversations.map(function(conv) {
                 var otherName = conv.senderUid === uid ? conv.receiverName : conv.senderName;
                 var otherUid = conv.senderUid === uid ? conv.receiverUid : conv.senderUid;
-                return `
-                    <div class="conversation-card" onclick="openConversation('${conv.id}', '${otherName}', '${otherUid}')">
-                        <div class="conv-avatar">${otherName ? otherName.charAt(0).toUpperCase() : '?'}</div>
-                        <div class="conv-info">
-                            <div class="conv-name">${otherName || 'Unknown'}</div>
-                            <div class="conv-preview">${timeAgo(conv.lastMessageAt)}</div>
-                        </div>
-                    </div>`;
+                return '<div class="conversation-card" onclick="openConversation(\'' + conv.id + '\', \'' + otherName + '\', \'' + otherUid + '\')">' +
+                    '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
+                    '<div class="conv-info">' +
+                        '<div class="conv-name">' + (otherName || 'Unknown') + '</div>' +
+                        '<div class="conv-preview">' + timeAgo(conv.lastMessageAt) + '</div>' +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
 
@@ -314,18 +214,17 @@
                 return;
             }
             el.innerHTML = requests.map(function(req) {
-                return `
-                    <div class="request-card">
-                        <div class="conv-avatar">${req.senderName ? req.senderName.charAt(0).toUpperCase() : '?'}</div>
-                        <div class="request-info">
-                            <div class="request-name">${req.senderName || 'Unknown'}</div>
-                            <div class="request-text">wants to send you a message</div>
-                        </div>
-                        <div class="request-actions">
-                            <button class="btn btn-red" onclick="acceptRequest('${req.id}')">Accept</button>
-                            <button class="btn btn-grey" onclick="declineRequest('${req.id}')">Decline</button>
-                        </div>
-                    </div>`;
+                return '<div class="request-card">' +
+                    '<div class="conv-avatar">' + (req.senderName ? req.senderName.charAt(0).toUpperCase() : '?') + '</div>' +
+                    '<div class="request-info">' +
+                        '<div class="request-name">' + (req.senderName || 'Unknown') + '</div>' +
+                        '<div class="request-text">wants to send you a message</div>' +
+                    '</div>' +
+                    '<div class="request-actions">' +
+                        '<button class="btn btn-red" onclick="acceptRequest(\'' + req.id + '\')">Accept</button>' +
+                        '<button class="btn btn-grey" onclick="declineRequest(\'' + req.id + '\')">Decline</button>' +
+                    '</div>' +
+                '</div>';
             }).join('');
         }
 
@@ -339,7 +238,15 @@
         window.acceptRequest = async function(convId) {
             await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
             await loadInbox();
-            switchTab('messages');
+            // Open the conversation immediately after accepting
+            var convDoc = await getDoc(doc(db, "conversations", convId));
+            if (convDoc.exists()) {
+                var conv = convDoc.data();
+                var myUid = getMyUid();
+                var otherName = conv.senderUid === myUid ? conv.receiverName : conv.senderName;
+                var otherUid = conv.senderUid === myUid ? conv.receiverUid : conv.senderUid;
+                openConversation(convId, otherName, otherUid);
+            }
         };
 
         window.declineRequest = async function(convId) {
@@ -361,13 +268,14 @@
                 otherRole = OWNER_EMAILS.includes(otherEmail) ? 'OWNER' : ADMIN_EMAILS.includes(otherEmail) ? 'ADMIN' : (otherDoc.data().role || 'CIVILIAN');
             }
 
+            // Profile link has NO &msg=1 — goes straight to profile
             document.getElementById('convHeader').innerHTML =
                 '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
                 '<div>' +
                     '<div class="conv-header-name">' + otherName +
                         ' <span style="' + getRoleColor(otherRole) + 'padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:bold;">' + getRoleAbbr(otherRole) + '</span>' +
                     '</div>' +
-                    '<a href="public-profile.html?uid=' + otherUid + '" style="color:#d4af37;font-size:0.75rem;">View Profile</a>' +
+                    '<a href="public-profile.html?uid=' + otherUid + '" style="color:#d4af37;font-size:0.75rem;text-decoration:none;">View Profile</a>' +
                 '</div>';
 
             await loadMessages(convId);
@@ -388,12 +296,12 @@
             snap.forEach(function(d) {
                 var msg = d.data();
                 var isMine = msg.senderUid === myUid;
-                html += `
-                    <div class="message-bubble ${isMine ? 'mine' : 'theirs'}">
-                        ${!isMine ? '<div class="bubble-author">' + (msg.senderName || '') + '</div>' : ''}
-                        <div class="bubble-content">${msg.text}</div>
-                        <div class="bubble-time">${timeAgo(msg.createdAt)}</div>
-                    </div>`;
+                html +=
+                    '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
+                        (!isMine ? '<div class="bubble-author">' + (msg.senderName || '') + '</div>' : '') +
+                        '<div class="bubble-content">' + msg.text + '</div>' +
+                        '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
+                    '</div>';
             });
             var el = document.getElementById('messageThread');
             el.innerHTML = html || '<p style="color:#444;font-size:0.85rem;text-align:center;margin-top:2rem;">No messages yet. Say hello!</p>';
