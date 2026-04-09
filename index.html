@@ -1,369 +1,436 @@
+<!--
+  This Website's, sorcrpg.com for Slayers of Rings § Crowns, Design
+  Copyright © 2024 Corbett, editor in chief of Ogre Adventurer, a publishing company of Slayers of Rings § (and, and &) Crowns. Time stamped via GitHub repository push
+  Created: December 26, 2024
+  All rights reserved.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Inbox | Slayers of Rings § Crowns</title>
+    <title>Slayers of Rings § Crowns (SorC)</title>
+    <meta name="description" content="Slayers of Rings & Crowns (SorC), an innovative sci-fantasy TTRPG by Ogre Adventurer. Explore epic adventures, character creation, and beyond." />
+    <meta name="keywords" content="Slayers of Rings and Crowns, SorC, SorC Beyond, RPG, TTRPG, sci-fantasy, tabletop game, fantasy adventure, online RPG, fantasy role-playing, innovative TTRPG, Ogre Adventurer, character sheets, digital RPG, campaigns, quests, epic fantasy, game setting, fantasy universe" />
+    <meta name="author" content="Corbett, Ogre Adventurer" />
     <link rel="icon" href="IMG_3419.jpeg" />
+    <meta property="og:title" content="Slayers of Rings & Crowns (SorC)" />
+    <meta property="og:description" content="An epic sci-fantasy TTRPG by Ogre Adventurer. Join the adventure in Slayers of Rings & Crowns." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://sorcrpg.com/" />
+    <meta property="og:image" content="IMG_3419.jpeg" />
     <link rel="stylesheet" href="styles.css" />
     <style>
-        body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
-        .inbox-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 2rem; border-bottom: 2px solid #d0021b; text-align: center; }
-        .inbox-hero h1 { color: #d0021b; font-size: 1.8rem; margin-bottom: 0.25rem; }
-        .inbox-hero p { color: #666; font-size: 0.85rem; }
-        .inbox-container { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
-        .inbox-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-        .inbox-tab { padding: 8px 20px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; }
-        .inbox-tab.active { background: #d0021b; color: #fff; border-color: #d0021b; }
-        .inbox-tab:hover { border-color: #d0021b; }
-        .inbox-tab .badge { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; }
-        .conversation-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 1rem; }
-        .conversation-card:hover { border-color: #d0021b; }
-        .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #888; border: 2px solid #333; flex-shrink: 0; }
-        .conv-info { flex: 1; min-width: 0; }
-        .conv-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
-        .conv-preview { font-size: 0.8rem; color: #555; margin-top: 2px; }
-        .conv-meta { text-align: right; font-size: 0.75rem; color: #555; flex-shrink: 0; }
-        .request-card { background: #1a1a1a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .request-info { flex: 1; }
-        .request-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
-        .request-text { font-size: 0.8rem; color: #888; margin-top: 2px; }
-        .request-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-        .btn { padding: 7px 16px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
-        .btn-red { background: #d0021b; color: #fff; }
-        .btn-red:hover { background: #a50013; }
-        .btn-grey { background: #333; color: #888; }
-        .btn-grey:hover { background: #444; color: #e0cfc0; }
-        .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; }
-        .conv-view { display: none; }
-        .conv-view.active { display: block; }
-        .inbox-list.hidden { display: none; }
-        .conv-header { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
-        .conv-header-name { font-weight: bold; font-size: 1rem; color: #e0cfc0; }
-        .message-thread { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem; min-height: 300px; max-height: 450px; overflow-y: auto; margin-bottom: 1rem; }
-        .message-bubble { margin-bottom: 0.75rem; display: flex; flex-direction: column; }
-        .message-bubble.mine { align-items: flex-end; }
-        .message-bubble.theirs { align-items: flex-start; }
-        .bubble-author { font-size: 0.7rem; color: #555; margin-bottom: 2px; }
-        .bubble-content { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
-        .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
-        .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
-        .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
-        .message-input-row { display: flex; gap: 0.5rem; }
-        .message-input-row input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem; }
-        .message-input-row input:focus { outline: none; border-color: #d0021b; }
-        .message-input-row button { padding: 10px 20px; background: #d0021b; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .message-input-row button:hover { background: #a50013; }
-        .not-logged-in { text-align: center; padding: 3rem; color: #555; }
-        .not-logged-in a { color: #d4af37; }
+        section, .about, .back-of-book, .explore-more, .level-up-game, .expand-library, .news-preview, .partnered-creators, .sorc-beyond {
+            border: none !important;
+        }
+        .legend-slide { display: none; }
+        .legend-slide.active { display: block; }
+        .legend-video-wrapper { position: relative; }
+        .sorc-beyond {
+            margin: 2rem 0;
+            padding: 2rem 1rem;
+            background: #181818;
+            border-radius: 1rem;
+            color: #e0cfc0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+            text-align: center;
+        }
+        .sorc-beyond h2 { color: #d0021b; margin-bottom: 1rem; }
+        .sorc-beyond ul {
+            text-align: left;
+            display: inline-block;
+            margin: 1rem auto 0 auto;
+            padding-left: 1.2em;
+        }
+        .theme-toggle-container {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            align-items: center;
+        }
+        .theme-toggle-btn {
+            padding: 0.5rem 1.2rem;
+            border: 2px solid;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            min-width: 120px;
+            text-align: center;
+        }
+        .theme-toggle-btn.evil { background: #d0021b; color: #fff; border-color: #d0021b; }
+        .theme-toggle-btn.evil:hover { background: #a50013; }
+        .theme-toggle-btn.lawful { background: #d4af37; color: #2c2c2c; border-color: #d4af37; }
+        .theme-toggle-btn.lawful:hover { background: #c19b2b; }
+        .theme-toggle-btn.active { box-shadow: 0 0 10px currentColor; transform: scale(1.05); }
+        @media (max-width: 800px) {
+            .theme-toggle-container { padding: 0.3rem 0.5rem; gap: 0.3rem; }
+            .theme-toggle-btn { padding: 0.4rem 0.8rem; font-size: 0.75rem; min-width: 100px; }
+        }
+        body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
+        body.lawful-mode header { background: #ffffff; border-bottom: 2px solid #d4af37; }
+        body.lawful-mode nav a { color: #2c2c2c; }
+        body.lawful-mode nav a:hover { color: #d4af37; }
+        body.lawful-mode nav ul li a { color: #d4af37; }
+        body.lawful-mode nav ul li a:hover { color: #c19b2b; }
+        body.lawful-mode .sorc-beyond { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .sorc-beyond h2 { color: #d4af37; }
+        body.lawful-mode section { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode h2, body.lawful-mode h3 { color: #d4af37; }
+        body.lawful-mode .news-card, body.lawful-mode .creator-card, body.lawful-mode .tier-card {
+            background: #ffffff; color: #2c2c2c; border: 1px solid #e0e0e0;
+        }
+        body.lawful-mode .cta-btn { background: #d4af37; color: #2c2c2c; }
+        body.lawful-mode .cta-btn:hover { background: #c19b2b; }
+        body.lawful-mode footer { background: #2c2c2c; color: #f5f5f0; }
+        body.lawful-mode .menu-toggle { color: #2c2c2c; }
+        .cookie-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            border-top: 2px solid #d0021b;
+            color: #e0cfc0;
+            padding: 1rem 1.5rem;
+            z-index: 999999;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+        .cookie-banner p { margin: 0; flex: 1; min-width: 200px; }
+        .cookie-banner a { color: #d4af37; }
+        .cookie-accept-btn {
+            background: #d0021b;
+            color: #fff;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .cookie-accept-btn:hover { background: #a50013; }
     </style>
 </head>
 <body>
-    <div class="inbox-hero">
-        <h1>Inbox</h1>
-        <p>Your messages and requests</p>
+    <div class="cookie-banner" id="cookieConsent">
+        <p>
+            We use cookies to enhance your experience on Essentia. By continuing to use this site you agree to our
+            <a href="privacy.html" target="_blank">Privacy Policy</a>.
+        </p>
+        <button class="cookie-accept-btn" id="acceptCookiesBtn">Accept</button>
     </div>
 
-    <div class="inbox-container">
-        <div class="inbox-list" id="inboxList">
-            <div class="inbox-tabs">
-                <button class="inbox-tab active" id="tabMessages" onclick="switchTab('messages')">Messages</button>
-                <button class="inbox-tab" id="tabRequests" onclick="switchTab('requests')">
-                    Requests <span class="badge" id="requestsBadge" style="display:none;">0</span>
-                </button>
+    <header>
+        <div class="container">
+            <div class="header-image-wrapper">
+                <img src="slayers-letters.png" alt="Slayers of Rings & Crowns Logo" class="header-logo" width="3840" height="2160" />
             </div>
-            <div id="messagesList"></div>
-            <div id="requestsList" style="display:none;"></div>
+            <nav></nav>
         </div>
+    </header>
 
-        <div class="conv-view" id="convView">
-            <div style="margin-bottom:1rem;">
-                <button class="btn btn-grey" onclick="backToInbox()" style="font-size:0.85rem;padding:6px 14px;">← Back to Inbox</button>
-            </div>
-            <div class="conv-header" id="convHeader"></div>
-            <div class="message-thread" id="messageThread"></div>
-            <div class="message-input-row">
-                <input type="text" id="messageInput" placeholder="Write a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
-                <button onclick="sendMessage()">Send</button>
-            </div>
+    <nav>
+        <div class="theme-toggle-container">
+            <button class="theme-toggle-btn evil" id="permanentEvilBtn" title="Switch to Evil Mode">Evil Mode</button>
+            <button class="theme-toggle-btn lawful" id="permanentLawfulBtn" title="Switch to Lawful Mode">Lawful Mode</button>
         </div>
-    </div>
+        <button class="menu-toggle" id="menuToggle">&#9776;</button>
+        <ul id="navLinks">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="prologue.html">Prologue</a></li>
+            <li><a href="news.html">News</a></li>
+            <li><a href="#">Game Setting</a></li>
+            <li><a href="forum.html">Community Forums</a></li>
+            <li><a href="content/basic_rules/basic_rules_1.html">Basic Rules</a></li>
+            <li><a href="library.html">Library</a></li>
+            <li><a href="sorc-beyond.html">SORC Beyond</a></li>
+            <li><a href="subscriptions.html">Subscriptions</a></li>
+            <li><a href="#" id="closeLink">Close</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section class="legend">
+            <div class="legend-slide active" id="legendSlide1">
+                <div class="legend-video-wrapper">
+                    <video class="legend-video" autoplay muted loop playsinline poster="video-poster.jpg">
+                        <source src="your-trailer.mp4" type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div class="expand-library-legend" style="margin: 2rem 0 1rem 0; text-align:center;">
+                    <div id="navRoleBadge"></div>
+                    <section class="sorc-beyond">
+                        <h2>SorC Beyond</h2>
+                        <p>Go beyond SorC's core traditional TTRPG elements of rolling the dice at home, and delve into <b>SorC Beyond</b> for online and digital features, including:</p>
+                        <ul>
+                            <li><b>Character Profile Page:</b> Create, customize, and manage digital character sheets.</li>
+                            <br />
+                            <li><b>Trials of Combat:</b> Fairly without paying to win, test your skills in PvP Arenas, Battlegrounds (land, sea, and air), and the Coliseum tiers based on your character's pvp combat score. Duel to the death or practice safely using wooden weapons and fizzled spells (At an in game currency fee, characters that die MUST be resurrected by ring judges to re-enter)</li>
+                            <br />
+                            <b>Note:</b> There are many modes of play, such as "reach the vault" and "battlegrounds" that support many players fighting at once, arenas that are 3 v 3 or 5 v 5, "Duel" is 1 on 1, and "Pet Party" which allows up to 5 of your fellowships in the ring.
+                            <br /><br />
+                            <li><b>Auction House & Black Market:</b> Trade, buy, and sell rare items, gear, and collectibles.</li>
+                            <br />
+                            <li><b>SorC Lobbies:</b> Fill in tardy character spots for your home campaign, by joining our <b>Online Lobbies</b> where both GMs and Players alike enter upon passing an assessment for beginner, intermediate or advanced lobbies.</li>
+                            <br />
+                            <li><b>SorC Store:</b> Access physical SorC Cards, books, character pages along with the digital version or obtain the digital, <i>often free</i>, versions.</li>
+                            <br />
+                            <b>Note:</b> BASIC SorC Cards will come in hard paper forms with basic sets, modules and their expansions. If playing at home, the GM will grant paper versions of the cards when they are discovered or earned while playing. When discovered or obtained in the wild, players must roll digital dice to earn the digital version(s) of cards to prove they earned them, free. Hard printed cards are purchased in packs or stand alone. Each hard version has a QR code, and with it players can obtain the digital versions.
+                        </ul>
+                    </section>
+                    <p>Embark on a sci-fantasy journey through Essentia's 13 planets, two suns, many moons, and a seemingly endless number of colonized worlds to explore forever. Players will traverse these worlds on their own accord or will find themselves unexpectedly astray.</p>
+                    <a href="character-creator/creation-overview.html" class="cta-btn">Character Creation</a>
+                </div>
+                <div class="expand-library-legend" style="margin: 2rem 0 1rem 0; text-align:center;">
+                    <h2 style="color: #d0021b;">Expand Your Library</h2>
+                    <p style="color: #c0c0c0;">Soon you'll be able to access official SorC books, modules, and compendiums to forge your character, possibly becoming a Legend and shaping Essentia's future.</p>
+                    <a href="library.html" class="cta-btn">Browse Library</a>
+                </div>
+                <div class="social-links" style="margin-bottom:1.5rem;">
+                    <a href="https://www.youtube.com/" target="_blank" aria-label="YouTube">
+                        <img src="images/social_icons/IMG_2419.png" alt="YouTube" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                    </a>
+                    <a href="https://x.com/" target="_blank" aria-label="X">
+                        <img src="images/social_icons/x_icon.png" alt="X" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                    </a>
+                    <a href="https://www.esrb.org/ratings-guide/" target="_blank" aria-label="ESRB Adults Only 18+">
+                        <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                    </a>
+                </div>
+                <div style="text-align:center;margin:1.5rem 0;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                    <a href="forum.html" class="cta-btn">Community Forums</a>
+                    <a href="sorc-beyond.html" class="cta-btn" style="background:#1a3a6b;border-color:#1a3a6b;">SORC Beyond</a>
+                </div>
+                <div id="signinLink" style="text-align:center;margin:2rem 0;">
+                    <a href="signin.html" class="cta-btn">Sign In / Create Account</a>
+                </div>
+            </div>
+            <!-- SLIDE 2 -->
+            <div class="legend-slide" id="legendSlide2">
+                <div class="legend-video-wrapper">
+                    <video class="legend-video" autoplay muted loop playsinline poster="video-poster.jpg">
+                        <source src="your-trailer.mp4" type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="arrow arrow-left" tabindex="0" onclick="previousLegendSlide()" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 10;">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <polygon points="36,9 9,24 36,39"></polygon>
+                        </svg>
+                    </div>
+                </div>
+                <div class="legend-overlay"></div>
+                <div class="legend-content">
+                    <div class="social-links" style="margin-bottom:1.5rem;">
+                        <a href="https://www.youtube.com/" target="_blank" aria-label="YouTube">
+                            <img src="images/social_icons/IMG_2419.png" alt="YouTube" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                        </a>
+                        <a href="https://x.com/" target="_blank" aria-label="X">
+                            <img src="images/social_icons/x_icon.png" alt="X" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                        </a>
+                        <a href="https://www.esrb.org/ratings-guide/" target="_blank" aria-label="ESRB Adults Only 18+">
+                            <img src="images/social_icons/IMG_2418.png" alt="ESRB Adults Only 18+" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                        </a>
+                    </div>
+                    <div style="text-align:center;margin:2rem 0;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+                        <a href="signin.html" class="cta-btn">Sign In / Create Account</a>
+                        <a href="forum.html" class="cta-btn" style="background:#333;border-color:#555;">Community Forums</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="about">
+            <h2>Explore Essentia</h2>
+            <p>Begin on Zailister, a lush life-sustainable planet, where arcane sorcery and steel meet advanced technology. Journey between 13 planetary worlds using rifts, portals, starships, and forbidden hell gates. Each planet's biomes, societies are shaped by their distance from Adoria (the magic emitting sun) and Tawdry Dwarf (the dying star). Those near Adoria thrive on magic, while those on the fringes rely on machinery and ingenuity.</p>
+            <p>Zailister is torn by war. Noble, Feral, and Purge factions unite against the Omnè, invaders from a desperate planet whose fate relies on the death of Adoria's sister star, Taedry Dwarf.</p>
+            <p>Choose your race, class and fulfill your destiny of becoming a legend. Fight, craft or train your way into a legend. Build your reputation, earn notoriety, and shape your story throughout Essentia's history. Will you become a frog skinner, or ascend as a dragon slayer?</p>
+        </section>
+
+        <section class="news-preview">
+            <h2>Latest News</h2>
+            <div class="news-list">
+                <article class="news-card first-card">
+                    <div class="news-img-wrapper">
+                        <img src="images/news_placeholder1.jpg" alt="News 1" class="news-img" />
+                        <div class="arrow arrow-right" tabindex="0">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <polygon points="12,9 39,24 12,39"></polygon>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3><a href="news.html">Welcome to Essentia!</a></h3>
+                    <p>The official SorC site is live. Begin your journey through Zailister and beyond. Community forums and resources opening soon.</p>
+                    <span class="date">2024-06-20</span>
+                </article>
+                <article class="news-card middle-card">
+                    <div class="news-img-wrapper">
+                        <div class="arrow arrow-left" tabindex="0">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <polygon points="36,9 9,24 36,39"></polygon>
+                            </svg>
+                        </div>
+                        <img src="images/news_placeholder2.jpg" alt="News 2" class="news-img" />
+                        <div class="arrow arrow-right" tabindex="0">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <polygon points="12,9 39,24 12,39"></polygon>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3><a href="news.html">Dev Update: Limb Targeting Combat</a></h3>
+                    <p>Learn about SorC's unique combat system: Limb Specific Targeting, Burning Streaks (hit streaks), Slayer Sprees (last hit kills), Gruesome Kills (aimed and critical killing blows) and tactical choices that make every fight unique.</p>
+                    <span class="date">2024-06-15</span>
+                </article>
+                <article class="news-card last-card">
+                    <div class="news-img-wrapper">
+                        <div class="arrow arrow-left" tabindex="0">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <polygon points="36,9 9,24 36,39"></polygon>
+                            </svg>
+                        </div>
+                        <img src="images/news_placeholder3.jpg" alt="News 3" class="news-img" />
+                    </div>
+                    <h3><a href="news.html">Prologue Released</a></h3>
+                    <p>Essentia's prologue and setting revealed: the nineteen crowns, the prophecy, and the fate of the universe.</p>
+                    <span class="date">2024-06-10</span>
+                </article>
+            </div>
+            <a href="news.html" class="more-news">More News</a>
+        </section>
+
+        <section class="back-of-book">
+            <h2>The Story</h2>
+            <p>Awaken to Essentia, a universe of thirteen planets, many moons and the dying star Tawdry Dwarf that orbit the main sun, Adoria. Begin your legend on the 4th planet, Zailister, where war and prophecy collide.</p>
+            <p>As it was written, nineteen radiant star-like figures from magical rings crashed into Zailister. These figures were crowns, each destined for their true heirs. Denial and chaos followed, as believers and challengers battled over the prophecy.</p>
+            <p>Only the chosen heirs of the nineteen races can claim their crown, dividing the world between those sworn by blood and those who seek power.</p>
+            <p>Many crowns have been lost, hidden, or destroyed. Essentia's fate hangs in the balance.</p>
+        </section>
+
+        <section class="explore-more">
+            <h2>Explore More</h2>
+            <p>Discover the latest SorC news and releases.</p>
+            <nav class="explore-nav">
+                <a href="news.html">News</a>
+                <a href="library.html">Library</a>
+                <a href="forum.html">Community Forums</a>
+                <a href="sorc-beyond.html">SORC Beyond</a>
+                <a href="subscriptions.html">Subscriber Perks</a>
+                <a href="#">Characters</a>
+            </nav>
+        </section>
+
+        <section class="partnered-creators">
+            <h2>Featured SorC Modules</h2>
+            <p>Discover original campaigns and adventure packs from SorC creators. (Coming soon)</p>
+            <div class="creators-list">
+                <article class="creator-card">
+                    <div class="news-img-wrapper">
+                        <img src="images/placeholder_creator1.jpg" alt="Essentia Adventure Pack" class="news-img" />
+                    </div>
+                    <h3>Quest of the Lost Crowns</h3>
+                    <p>Face the war-torn lands and the hunt for the lost crowns, and even unveil the fate of others said to be destroyed.</p>
+                </article>
+                <article class="creator-card">
+                    <div class="news-img-wrapper">
+                        <img src="images/placeholder_creator2.jpg" alt="Omné Chronicles" class="news-img" />
+                    </div>
+                    <h3>Omné Chronicles</h3>
+                    <p>Quest to defend worlds from the Omnè threat and unlock new technologies.</p>
+                </article>
+                <article class="creator-card">
+                    <div class="news-img-wrapper">
+                        <img src="images/placeholder_creator3.jpg" alt="Crownfall Saga" class="news-img" />
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="level-up-game">
+            <h2>Level Up Your Game</h2>
+            <p>Unlock digital tools, exclusive perks, and more with a SorC subscription.</p>
+            <div class="subscription-tiers">
+                <article class="tier-card">
+                    <div class="news-img-wrapper">
+                        <img src="images/placeholder_legend_tier.jpg" alt="Legend Tier" class="news-img" />
+                    </div>
+                    <h3>Legend Tier</h3>
+                    <ul>
+                        <li>Unlimited character slots</li>
+                        <li>Monthly SorC perks</li>
+                        <li>Early access to new features</li>
+                    </ul>
+                </article>
+                <article class="tier-card">
+                    <div class="news-img-wrapper">
+                        <img src="images/placeholder_master_tier.jpg" alt="Crownmaster Tier" class="news-img" />
+                    </div>
+                    <h3>Crownmaster Tier</h3>
+                    <ul>
+                        <li>Share compendium content with your party</li>
+                        <li>Use homebrew SorC content</li>
+                        <li>Advanced campaign management</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+    </main>
 
     <div id="footer"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-            authDomain: "sorc-a1393.firebaseapp.com",
-            projectId: "sorc-a1393",
-            storageBucket: "sorc-a1393.firebasestorage.app",
-            messagingSenderId: "303646936307",
-            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
-        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-
-        var currentUser = null;
-        var currentUserData = null;
-        var googleUser = null;
-        var currentConvId = null;
-        var currentOtherUid = null;
-        var currentOtherName = null;
-
-        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
-
-        function getMyUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
-        function getMyEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
-        function getMyUsername() {
-            var data = currentUserData || {};
-            return data.username || data.displayName || (getMyEmail() || '').split('@')[0];
-        }
-
-        function timeAgo(timestamp) {
-            if (!timestamp) return '';
-            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            var seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return 'Just now';
-            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-            return Math.floor(seconds / 86400) + 'd ago';
-        }
-
-        function getRoleColor(role) {
-            if (role === 'OWNER') return 'background:#d4af37;color:#222;';
-            if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
-            if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
-            if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
-            return 'background:#333;color:#e0cfc0;';
-        }
-        function getRoleAbbr(role) {
-            if (role === 'OWNER') return '[OWN]';
-            if (role === 'ADMIN') return '[AD]';
-            if (role === 'MASTER') return '[GM]';
-            if (role === 'PLAYER') return '[PC]';
-            return '[CIV]';
-        }
-
-        async function loadInbox() {
-            var uid = getMyUid();
-            if (!uid) {
-                document.getElementById('inboxList').innerHTML = '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
-                return;
-            }
-
-            var snap1 = await getDocs(query(collection(db, "conversations"), where("senderUid", "==", uid)));
-            var snap2 = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid)));
-
-            var conversations = [];
-            var seen = new Set();
-            snap1.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); conversations.push({ id: d.id, ...d.data() }); } });
-            snap2.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); conversations.push({ id: d.id, ...d.data() }); } });
-
-            conversations.sort(function(a, b) {
-                var aTime = a.lastMessageAt ? (a.lastMessageAt.toDate ? a.lastMessageAt.toDate() : new Date(a.lastMessageAt)) : new Date(0);
-                var bTime = b.lastMessageAt ? (b.lastMessageAt.toDate ? b.lastMessageAt.toDate() : new Date(b.lastMessageAt)) : new Date(0);
-                return bTime - aTime;
-            });
-
-            var accepted = conversations.filter(function(c) { return c.status === 'accepted'; });
-            var pending = conversations.filter(function(c) { return c.status === 'pending' && c.receiverUid === uid; });
-
-            var badge = document.getElementById('requestsBadge');
-            if (pending.length > 0) {
-                badge.textContent = pending.length;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
-
-            renderMessages(accepted, uid);
-            renderRequests(pending);
-        }
-
-        function renderMessages(conversations, uid) {
-            var el = document.getElementById('messagesList');
-            if (conversations.length === 0) {
-                el.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit someone\'s profile to start a conversation.</div>';
-                return;
-            }
-            el.innerHTML = conversations.map(function(conv) {
-                var otherName = conv.senderUid === uid ? conv.receiverName : conv.senderName;
-                var otherUid = conv.senderUid === uid ? conv.receiverUid : conv.senderUid;
-                return '<div class="conversation-card" onclick="openConversation(\'' + conv.id + '\', \'' + (otherName || '').replace(/'/g, "\\'") + '\', \'' + otherUid + '\')">' +
-                    '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
-                    '<div class="conv-info">' +
-                        '<div class="conv-name">' + (otherName || 'Unknown') + '</div>' +
-                        '<div class="conv-preview">' + timeAgo(conv.lastMessageAt) + '</div>' +
-                    '</div>' +
-                '</div>';
-            }).join('');
-        }
-
-        function renderRequests(requests) {
-            var el = document.getElementById('requestsList');
-            if (requests.length === 0) {
-                el.innerHTML = '<div class="empty-state">No pending message requests.</div>';
-                return;
-            }
-            el.innerHTML = requests.map(function(req) {
-                return '<div class="request-card">' +
-                    '<div class="conv-avatar">' + (req.senderName ? req.senderName.charAt(0).toUpperCase() : '?') + '</div>' +
-                    '<div class="request-info">' +
-                        '<div class="request-name">' + (req.senderName || 'Unknown') + '</div>' +
-                        '<div class="request-text">wants to send you a message</div>' +
-                    '</div>' +
-                    '<div class="request-actions">' +
-                        '<button class="btn btn-red" onclick="acceptRequest(\'' + req.id + '\', \'' + (req.senderUid || '') + '\', \'' + (req.senderName || '').replace(/'/g, "\\'") + '\')">Accept</button>' +
-                        '<button class="btn btn-grey" onclick="declineRequest(\'' + req.id + '\')">Decline</button>' +
-                    '</div>' +
-                '</div>';
-            }).join('');
-        }
-
-        window.switchTab = function(tab) {
-            document.getElementById('tabMessages').classList.toggle('active', tab === 'messages');
-            document.getElementById('tabRequests').classList.toggle('active', tab === 'requests');
-            document.getElementById('messagesList').style.display = tab === 'messages' ? 'block' : 'none';
-            document.getElementById('requestsList').style.display = tab === 'requests' ? 'block' : 'none';
-        };
-
-        window.acceptRequest = async function(convId, senderUid, senderName) {
-            var myUsername = getMyUsername();
-            var myUid = getMyUid();
-
-            await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
-
-            // Auto system message
-            await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: myUid,
-                senderName: myUsername,
-                text: myUsername + ' accepted your message request.',
-                isSystem: true,
-                createdAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, "conversations", convId), {
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: myUsername + ' accepted your message request.'
-            });
-
-            await loadInbox();
-            openConversation(convId, senderName, senderUid);
-        };
-
-        window.declineRequest = async function(convId) {
-            await updateDoc(doc(db, "conversations", convId), { status: 'declined' });
-            await loadInbox();
-        };
-
-        window.openConversation = async function(convId, otherName, otherUid) {
-            currentConvId = convId;
-            currentOtherUid = otherUid;
-            currentOtherName = otherName;
-
-            document.getElementById('inboxList').classList.add('hidden');
-            document.getElementById('convView').classList.add('active');
-
-            // Fetch other user's role
-            var otherRole = 'CIVILIAN';
+    <script>
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var guser = params.get('guser');
+        if (guser) {
             try {
-                var otherDoc = await getDoc(doc(db, "users", currentOtherUid));
-                if (otherDoc.exists()) {
-                    var otherEmail = otherDoc.data().email || '';
-                    otherRole = OWNER_EMAILS.includes(otherEmail) ? 'OWNER' : ADMIN_EMAILS.includes(otherEmail) ? 'ADMIN' : (otherDoc.data().role || 'CIVILIAN');
-                }
+                var userData = JSON.parse(decodeURIComponent(guser));
+                localStorage.setItem('sorc_google_user', JSON.stringify(userData));
             } catch(e) {}
-
-            // Build header — use currentOtherUid for the profile link
-            document.getElementById('convHeader').innerHTML =
-                '<div class="conv-avatar">' + (currentOtherName ? currentOtherName.charAt(0).toUpperCase() : '?') + '</div>' +
-                '<div>' +
-                    '<div class="conv-header-name">' + currentOtherName +
-                        ' <span style="' + getRoleColor(otherRole) + 'padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:bold;">' + getRoleAbbr(otherRole) + '</span>' +
-                    '</div>' +
-                    '<a href="public-profile.html?uid=' + currentOtherUid + '" style="color:#d4af37;font-size:0.75rem;text-decoration:none;">View Profile</a>' +
-                '</div>';
-
-            await loadMessages(convId);
-        };
-
-        window.backToInbox = function() {
-            currentConvId = null;
-            currentOtherUid = null;
-            currentOtherName = null;
-            document.getElementById('inboxList').classList.remove('hidden');
-            document.getElementById('convView').classList.remove('active');
-            loadInbox();
-        };
-
-        async function loadMessages(convId) {
-            var q = query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc"));
-            var snap = await getDocs(q);
-            var myUid = getMyUid();
-            var html = '';
-            snap.forEach(function(d) {
-                var msg = d.data();
-                var isMine = msg.senderUid === myUid;
-                var isSystem = msg.isSystem === true;
-                if (isSystem) {
-                    html +=
-                        '<div style="text-align:center;margin:0.5rem 0;">' +
-                            '<span style="background:#1a1a2a;color:#666;font-size:0.78rem;padding:4px 12px;border-radius:10px;font-style:italic;">' + msg.text + '</span>' +
-                        '</div>';
-                } else {
-                    html +=
-                        '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
-                            (!isMine ? '<div class="bubble-author">' + (msg.senderName || '') + '</div>' : '') +
-                            '<div class="bubble-content">' + msg.text + '</div>' +
-                            '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
-                        '</div>';
-                }
-            });
-            var el = document.getElementById('messageThread');
-            el.innerHTML = html || '<p style="color:#444;font-size:0.85rem;text-align:center;margin-top:2rem;">No messages yet. Say hello!</p>';
-            el.scrollTop = el.scrollHeight;
+            window.history.replaceState({}, '', '/');
         }
-
-        window.sendMessage = async function() {
-            var input = document.getElementById('messageInput');
-            var text = input ? input.value.trim() : '';
-            if (!text || !currentConvId) return;
-            var myUid = getMyUid();
-            await addDoc(collection(db, "conversations", currentConvId, "messages"), {
-                senderUid: myUid,
-                senderName: getMyUsername(),
-                text: text,
-                createdAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, "conversations", currentConvId), {
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: text
-            });
-            input.value = '';
-            await loadMessages(currentConvId);
-        };
-
-        onAuthStateChanged(auth, async function(user) {
-            if (user) {
-                currentUser = user;
-                var docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) currentUserData = docSnap.data();
-            } else if (googleUser) {
-                try {
-                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-                    if (docSnap.exists()) currentUserData = docSnap.data();
-                } catch(e) {}
+        var savedGoogle = localStorage.getItem('sorc_google_user');
+        if (savedGoogle) {
+            try {
+                JSON.parse(savedGoogle);
+                var signinLink = document.getElementById('signinLink');
+                if (signinLink) signinLink.style.display = 'none';
+            } catch(e) {
+                localStorage.removeItem('sorc_google_user');
             }
-            await loadInbox();
-        });
+        }
+    })();
+
+    window.showUserMiniPopup = function(e, uid, name) {
+        e.stopPropagation();
+        var existing = document.querySelector('.user-mini-popup');
+        if (existing) { existing.remove(); return; }
+        var popup = document.createElement('div');
+        popup.className = 'user-mini-popup';
+        popup.style.cssText = 'position:fixed;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:0.75rem 1rem;z-index:999999;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.6);font-size:0.85rem;';
+        var rect = e.target.getBoundingClientRect();
+        popup.style.top = (rect.bottom + 8) + 'px';
+        popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+        popup.innerHTML =
+            '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + name + '</div>' +
+            '<a href="public-profile.html?uid=' + uid + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
+            '<a href="public-profile.html?uid=' + uid + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
+        document.body.appendChild(popup);
+        setTimeout(function() {
+            document.addEventListener('click', function removePopup() {
+                var p = document.querySelector('.user-mini-popup');
+                if (p) p.remove();
+                document.removeEventListener('click', removePopup);
+            });
+        }, 100);
+    };
     </script>
     <script type="module" src="main.js"></script>
 </body>
