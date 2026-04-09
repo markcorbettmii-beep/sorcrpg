@@ -180,6 +180,36 @@ function getAvatarPath(avatarId) {
   return 'assets/images/avatars/' + avatarId + '.png';
 }
 
+// ========== USER MINI POPUP ==========
+window.showUserMiniPopup = function(e, uid, name) {
+  e.stopPropagation();
+  var existing = document.querySelector('.user-mini-popup');
+  if (existing) { existing.remove(); return; }
+
+  var popup = document.createElement('div');
+  popup.className = 'user-mini-popup';
+  popup.style.cssText = 'position:fixed;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:0.75rem 1rem;z-index:999999;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.6);font-size:0.85rem;';
+
+  var rect = e.target.getBoundingClientRect();
+  popup.style.top = (rect.bottom + 8) + 'px';
+  popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+
+  popup.innerHTML =
+    '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + name + '</div>' +
+    '<a href="public-profile.html?uid=' + uid + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
+    '<a href="public-profile.html?uid=' + uid + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
+
+  document.body.appendChild(popup);
+
+  setTimeout(function() {
+    document.addEventListener('click', function removePopup() {
+      var p = document.querySelector('.user-mini-popup');
+      if (p) p.remove();
+      document.removeEventListener('click', removePopup);
+    });
+  }, 100);
+};
+
 // ========== ROLE BADGE ==========
 function showRoleBadge(email, username, role, avatar, userId) {
   var existing = document.querySelector('.role-badge');
@@ -230,7 +260,7 @@ function showRoleBadge(email, username, role, avatar, userId) {
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 }
 
-// ========== OWN ROLE POPUP (non-admin) ==========
+// ========== OWN ROLE POPUP ==========
 window.showRolePopup = function(username, userId, role) {
   var existing = document.querySelector('.role-popup');
   if (existing) { existing.remove(); return; }
@@ -281,7 +311,6 @@ window.showAdminMembersPopup = async function() {
     popup.remove();
   });
 
-  // Load all members
   var snap = await getDocs(collection(db, "users"));
   var members = [];
   snap.forEach(function(d) {
@@ -298,7 +327,7 @@ window.showAdminMembersPopup = async function() {
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2a2a;">' +
       '<div style="display:flex;align-items:center;gap:6px;">' +
         '<span style="background:' + colors.bg + ';color:' + colors.color + ';padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:bold;">' + getRoleAbbr(m.role) + '</span>' +
-        '<span style="color:#e0cfc0;">' + m.name + '</span>' +
+        '<span style="color:#e0cfc0;cursor:pointer;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
       '</div>' +
       '<div style="display:flex;gap:6px;">' +
         '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
@@ -411,17 +440,12 @@ window.sorcSignUp = function(email, password) {
   createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
     await sendEmailVerification(result.user);
     await setDoc(doc(db, "users", result.user.uid), {
-      email: email,
-      role: 'CIVILIAN',
-      displayName: '',
-      accountType: 'CIVILIAN'
+      email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN'
     });
     signOut(auth);
     document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
     document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
-  }).catch(function(error) {
-    alert('Sign up failed: ' + error.message);
-  });
+  }).catch(function(error) { alert('Sign up failed: ' + error.message); });
 };
 
 // ========== EMAIL SIGN IN ==========
@@ -435,9 +459,7 @@ window.sorcSignIn = function(email, password) {
     }
     var data = await getUserRoleFromDB(result.user.uid, result.user.email);
     showRoleBadge(result.user.email, data.username, data.role, data.avatar, data.userId);
-  }).catch(function(error) {
-    alert('Sign in failed: ' + error.message);
-  });
+  }).catch(function(error) { alert('Sign in failed: ' + error.message); });
 };
 
 // ========== ADMIN PANEL ==========
@@ -480,20 +502,32 @@ window.loadUsers = async function() {
   var userListEl = document.getElementById('userList');
   userListEl.innerHTML = 'Loading...';
   var snap = await getDocs(collection(db, "users"));
+  var members = [];
+  snap.forEach(function(d) {
+    var data = d.data();
+    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
+    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
+    members.push({ uid: d.id, name, role, userId: data.userId || '' });
+  });
+  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
   var html = '<table style="width:100%;border-collapse:collapse;">' +
     '<tr style="color:#d4af37;border-bottom:1px solid #444;">' +
       '<th style="text-align:left;padding:4px;">Username</th>' +
       '<th style="text-align:left;padding:4px;">Role</th>' +
       '<th style="text-align:left;padding:4px;">ID</th>' +
     '</tr>';
-  snap.forEach(function(d) {
-    var data = d.data();
+
+  members.forEach(function(m) {
     html += '<tr style="border-bottom:1px solid #333;">' +
-      '<td style="padding:4px;">' + (data.username || data.email || 'N/A') + '</td>' +
-      '<td style="padding:4px;">' + (data.role || 'CIVILIAN') + '</td>' +
-      '<td style="padding:4px;">#' + (data.userId || 'N/A') + '</td>' +
+      '<td style="padding:4px;">' +
+        '<span style="color:#d4af37;cursor:pointer;text-decoration:underline;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
+      '</td>' +
+      '<td style="padding:4px;">' + m.role + '</td>' +
+      '<td style="padding:4px;">#' + m.userId + '</td>' +
     '</tr>';
   });
+
   html += '</table>';
   userListEl.innerHTML = html;
 };
