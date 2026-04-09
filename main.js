@@ -213,10 +213,7 @@ async function checkInboxNotifications(uid) {
     var snap = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending")));
     if (snap.size > 0) {
       var notif = document.getElementById('inboxNotif');
-      if (notif) {
-        notif.textContent = snap.size;
-        notif.style.display = 'inline-block';
-      }
+      if (notif) { notif.textContent = snap.size; notif.style.display = 'inline-block'; }
     }
   } catch(e) {}
 }
@@ -257,11 +254,8 @@ function showRoleBadge(email, username, role, avatar, userId) {
     e.stopPropagation();
     e.preventDefault();
     var isAdmin = this.dataset.isadmin === 'true';
-    if (isAdmin) {
-      showAdminMembersPopup();
-    } else {
-      showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
-    }
+    if (isAdmin) { showAdminMembersPopup(); }
+    else { showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role); }
   });
 
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
@@ -274,13 +268,10 @@ function showRoleBadge(email, username, role, avatar, userId) {
 window.showRolePopup = function(username, userId, role) {
   var existing = document.querySelector('.role-popup');
   if (existing) { existing.remove(); return; }
-
   var popup = document.createElement('div');
   popup.className = 'role-popup';
   popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-
   var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
-
   popup.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
       '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
@@ -289,37 +280,25 @@ window.showRolePopup = function(username, userId, role) {
     '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + username + '</div>' +
     '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + roleLabel + '</div>' +
     '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + (userId || 'N/A') + '</div>';
-
   document.body.appendChild(popup);
-
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) {
-    e.stopPropagation();
-    popup.remove();
-  });
+  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
 };
 
 // ========== ADMIN MEMBERS POPUP ==========
 window.showAdminMembersPopup = async function() {
   var existing = document.querySelector('.role-popup');
   if (existing) { existing.remove(); return; }
-
   var popup = document.createElement('div');
   popup.className = 'role-popup';
   popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-
   popup.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
       '<span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">ALL MEMBERS</span>' +
       '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
     '</div>' +
     '<div id="adminMembersList" style="font-size:0.8rem;">Loading...</div>';
-
   document.body.appendChild(popup);
-
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) {
-    e.stopPropagation();
-    popup.remove();
-  });
+  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
 
   var snap = await getDocs(collection(db, "users"));
   var members = [];
@@ -329,7 +308,6 @@ window.showAdminMembersPopup = async function() {
     var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
     members.push({ uid: d.id, name, role });
   });
-
   members.sort(function(a, b) { return a.name.localeCompare(b.name); });
 
   var html = members.map(function(m) {
@@ -365,14 +343,9 @@ async function getUserRoleFromDB(uid, email) {
   var avatar = data.avatar || null;
   var userId = data.userId || '';
   var role = data.role || 'CIVILIAN';
-
   if (OWNER_EMAILS.includes(email)) role = 'OWNER';
   else if (ADMIN_EMAILS.includes(email)) role = 'ADMIN';
-
-  if (!docSnap.exists()) {
-    await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  }
-
+  if (!docSnap.exists()) { await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' }); }
   return { role, username, avatar, userId };
 }
 
@@ -381,27 +354,20 @@ onAuthStateChanged(auth, async function(user) {
   if (user) {
     if (!user.emailVerified && user.providerData[0].providerId === 'password') {
       alert('Please verify your email before signing in. Check your inbox for a verification link.');
-      signOut(auth);
-      return;
+      signOut(auth); return;
     }
     var data = await getUserRoleFromDB(user.uid, user.email);
     showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
   } else {
-    try {
-      var saved = localStorage.getItem('sorc_google_user');
-      if (saved) googleUser = JSON.parse(saved);
-    } catch(e) {}
-
+    try { var saved = localStorage.getItem('sorc_google_user'); if (saved) googleUser = JSON.parse(saved); } catch(e) {}
     if (googleUser) {
       try {
         var role = googleUser.role || 'CIVILIAN';
         var username = googleUser.username || googleUser.name || '';
         var avatar = googleUser.avatar || null;
         var userId = googleUser.userId || '';
-
         if (OWNER_EMAILS.includes(googleUser.email)) role = 'OWNER';
         else if (ADMIN_EMAILS.includes(googleUser.email)) role = 'ADMIN';
-
         if (googleUser.googleId) {
           try {
             var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
@@ -409,22 +375,14 @@ onAuthStateChanged(auth, async function(user) {
               username = docSnap.data().username || docSnap.data().displayName || username;
               avatar = docSnap.data().avatar || avatar;
               userId = docSnap.data().userId || userId;
-              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) {
-                role = docSnap.data().role || role;
-              }
-              googleUser.username = username;
-              googleUser.avatar = avatar;
-              googleUser.userId = userId;
-              googleUser.role = role;
+              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = docSnap.data().role || role; }
+              googleUser.username = username; googleUser.avatar = avatar; googleUser.userId = userId; googleUser.role = role;
               localStorage.setItem('sorc_google_user', JSON.stringify(googleUser));
             }
           } catch(e) {}
         }
-
         showRoleBadge(googleUser.email, username, role, avatar, userId);
-      } catch(e) {
-        localStorage.removeItem('sorc_google_user');
-      }
+      } catch(e) { localStorage.removeItem('sorc_google_user'); }
     }
   }
 });
@@ -441,9 +399,7 @@ window.addEventListener('storage', async function(e) {
       if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
       else if (ADMIN_EMAILS.includes(userInfo.email)) role = 'ADMIN';
       showRoleBadge(userInfo.email, username, role, avatar, userId);
-    } catch(err) {
-      console.error(err);
-    }
+    } catch(err) { console.error(err); }
   }
 });
 
@@ -452,9 +408,7 @@ window.sorcSignUp = function(email, password) {
   if (!email || !password) { alert('Please enter an email and password.'); return; }
   createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
     await sendEmailVerification(result.user);
-    await setDoc(doc(db, "users", result.user.uid), {
-      email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN'
-    });
+    await setDoc(doc(db, "users", result.user.uid), { email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN' });
     signOut(auth);
     document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
     document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
@@ -467,8 +421,7 @@ window.sorcSignIn = function(email, password) {
   signInWithEmailAndPassword(auth, email, password).then(async function(result) {
     if (!result.user.emailVerified) {
       alert('Please verify your email first. Check your inbox for a verification link.');
-      signOut(auth);
-      return;
+      signOut(auth); return;
     }
     var data = await getUserRoleFromDB(result.user.uid, result.user.email);
     showRoleBadge(result.user.email, data.username, data.role, data.avatar, data.userId);
@@ -498,11 +451,8 @@ function showAdminPanel() {
 window.toggleAdminPanel = function() {
   var content = document.getElementById('adminPanelContent');
   var btn = document.querySelector('.admin-panel button');
-  if (content.style.display === 'none') {
-    content.style.display = 'block'; btn.textContent = '−';
-  } else {
-    content.style.display = 'none'; btn.textContent = '+';
-  }
+  if (content.style.display === 'none') { content.style.display = 'block'; btn.textContent = '−'; }
+  else { content.style.display = 'none'; btn.textContent = '+'; }
 };
 
 window.generateGMCode = async function() {
@@ -523,24 +473,19 @@ window.loadUsers = async function() {
     members.push({ uid: d.id, name, role, userId: data.userId || '' });
   });
   members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-
   var html = '<table style="width:100%;border-collapse:collapse;">' +
     '<tr style="color:#d4af37;border-bottom:1px solid #444;">' +
       '<th style="text-align:left;padding:4px;">Username</th>' +
       '<th style="text-align:left;padding:4px;">Role</th>' +
       '<th style="text-align:left;padding:4px;">ID</th>' +
     '</tr>';
-
   members.forEach(function(m) {
     html += '<tr style="border-bottom:1px solid #333;">' +
-      '<td style="padding:4px;">' +
-        '<span style="color:#d4af37;cursor:pointer;text-decoration:underline;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
-      '</td>' +
+      '<td style="padding:4px;"><span style="color:#d4af37;cursor:pointer;text-decoration:underline;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span></td>' +
       '<td style="padding:4px;">' + m.role + '</td>' +
       '<td style="padding:4px;">#' + m.userId + '</td>' +
     '</tr>';
   });
-
   html += '</table>';
   userListEl.innerHTML = html;
 };
