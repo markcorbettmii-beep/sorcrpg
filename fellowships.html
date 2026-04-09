@@ -1,1 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fellowships | Slayers of Rings § Crowns</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
+        .f-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 2rem; border-bottom: 2px solid #d0021b; text-align: center; }
+        .f-hero h1 { color: #d0021b; font-size: 1.8rem; margin-bottom: 0.25rem; }
+        .f-hero p { color: #666; font-size: 0.85rem; margin: 0; }
+        .f-container { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
+        .f-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .f-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; }
+        .f-tab.active { background: #d0021b; color: #fff; border-color: #d0021b; }
+        .f-tab:hover { border-color: #d0021b; }
+        .f-tab .badge { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; }
+        .f-panel { display: none; }
+        .f-panel.active { display: block; }
+        .fellow-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; transition: border-color 0.2s; }
+        .fellow-card:hover { border-color: #d0021b; }
+        .fellow-avatar { width: 44px; height: 44px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #888; border: 2px solid #333; flex-shrink: 0; position: relative; }
+        .status-dot { position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #1a1a1a; }
+        .status-dot.online { background: #4caf50; }
+        .status-dot.offline { background: #444; }
+        .status-dot.lobby { background: #d4af37; }
+        .status-dot.campaign { background: #d0021b; }
+        .fellow-info { flex: 1; min-width: 0; }
+        .fellow-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
+        .fellow-status { font-size: 0.75rem; color: #555; margin-top: 2px; }
+        .fellow-role-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-left: 4px; }
+        .fellow-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .btn { padding: 7px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .btn-red { background: #d0021b; color: #fff; }
+        .btn-red:hover { background: #a50013; }
+        .btn-gold { background: #d4af37; color: #222; }
+        .btn-gold:hover { background: #c19b2b; }
+        .btn-grey { background: #333; color: #888; }
+        .btn-grey:hover { background: #444; color: #e0cfc0; }
+        .btn-ghost { background: none; border: 1px solid #333; color: #888; }
+        .btn-ghost:hover { border-color: #d0021b; color: #e0cfc0; }
+        .request-card { background: #1a1a1a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .request-info { flex: 1; }
+        .request-name { font-weight: bold; color: #e0cfc0; }
+        .request-text { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .request-actions { display: flex; gap: 0.5rem; }
+        .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; line-height: 1.7; }
+        .locked-state { text-align: center; padding: 3rem; }
+        .locked-state h2 { color: #d4af37; margin-bottom: 0.5rem; }
+        .locked-state p { color: #666; font-size: 0.9rem; line-height: 1.7; }
+        .post-composer { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; }
+        .post-composer textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; resize: none; box-sizing: border-box; font-family: sans-serif; }
+        .post-composer textarea:focus { outline: none; border-color: #d0021b; }
+        .post-composer-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+        .media-input { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.8rem; min-width: 0; }
+        .media-input:focus { outline: none; border-color: #d0021b; }
+        .post-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; }
+        .post-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .post-avatar { width: 36px; height: 36px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #888; border: 2px solid #333; flex-shrink: 0; }
+        .post-author { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
+        .post-time { font-size: 0.75rem; color: #555; margin-top: 1px; }
+        .post-text { font-size: 0.9rem; color: #c0b090; line-height: 1.6; margin-bottom: 0.75rem; }
+        .post-media { width: 100%; border-radius: 8px; margin-bottom: 0.75rem; max-height: 400px; object-fit: cover; }
+        .post-reactions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+        .reaction-btn { background: #222; border: 1px solid #333; border-radius: 20px; padding: 4px 10px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px; color: #888; }
+        .reaction-btn:hover { border-color: #d4af37; color: #e0cfc0; }
+        .reaction-btn.reacted { border-color: #d4af37; background: #2a1a00; color: #d4af37; }
+        .reaction-count { font-size: 0.75rem; }
+        .post-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #2a2a2a; padding-top: 0.5rem; margin-top: 0.5rem; }
+        .comment-section { margin-top: 0.75rem; border-top: 1px solid #2a2a2a; padding-top: 0.75rem; display: none; }
+        .comment-section.open { display: block; }
+        .comment { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: flex-start; }
+        .comment-avatar { width: 28px; height: 28px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #888; flex-shrink: 0; border: 1px solid #333; }
+        .comment-bubble { background: #222; border-radius: 8px; padding: 6px 10px; flex: 1; }
+        .comment-author { font-size: 0.75rem; font-weight: bold; color: #d4af37; }
+        .comment-text { font-size: 0.82rem; color: #c0b090; margin-top: 2px; }
+        .comment-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .comment-input-row input { flex: 1; padding: 7px 10px; border-radius: 6px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.82rem; }
+        .comment-input-row input:focus { outline: none; border-color: #d0021b; }
+        .comment-input-row button { padding: 7px 14px; background: #d0021b; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .media-tab-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+        .media-thumb { aspect-ratio: 1; border-radius: 8px; object-fit: cover; width: 100%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s; }
+        .media-thumb:hover { border-color: #d0021b; }
+        .media-lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; align-items: center; justify-content: center; }
+        .media-lightbox.open { display: flex; }
+        .media-lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+        .media-lightbox-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #fff; font-size: 2rem; cursor: pointer; }
+        .not-logged-in { text-align: center; padding: 3rem; color: #555; }
+        .not-logged-in a { color: #d4af37; }
+        .msg { font-size: 0.85rem; margin-top: 0.5rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #d0021b; }
+        .points-note { font-size: 0.75rem; color: #555; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="f-hero">
+        <h1>⚔️ Fellowships</h1>
+        <p>Your companions across Essentia</p>
+    </div>
 
+    <div class="f-container" id="fApp">
+        <div class="not-logged-in"><p>Loading...</p></div>
+    </div>
+
+    <!-- Media Lightbox -->
+    <div class="media-lightbox" id="mediaLightbox" onclick="closeLightbox()">
+        <button class="media-lightbox-close" onclick="closeLightbox()">✕</button>
+        <img id="lightboxImg" src="" alt="Media" onclick="event.stopPropagation()" />
+    </div>
+
+    <div id="footer"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, addDoc, updateDoc, orderBy, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
+        const FELLOWSHIP_POINTS_REQUIRED = 100;
+        const FELLOWSHIP_ROLE_REQUIRED = ['PLAYER', 'MASTER', 'ADMIN', 'OWNER'];
+        const REACTIONS = ['⚔️', '🎲', '🛡️', '🔥', '👏', '😂'];
+
+        var currentUser = null;
+        var currentUserData = null;
+        var googleUser = null;
+        var myUid = null;
+        var myUsername = null;
+        var myRole = null;
+        var myPoints = 0;
+
+        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
+
+        function getUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
+        function getEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
+
+        function getRoleColor(role) {
+            if (role === 'OWNER') return 'background:#d4af37;color:#222;';
+            if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
+            if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
+            if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
+            return 'background:#333;color:#e0cfc0;';
+        }
+        function getRoleAbbr(role) {
+            if (role === 'OWNER') return '[OWN]';
+            if (role === 'ADMIN') return '[AD]';
+            if (role === 'MASTER') return '[GM]';
+            if (role === 'PLAYER') return '[PC]';
+            return '[CIV]';
+        }
+        function timeAgo(timestamp) {
+            if (!timestamp) return '';
+            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+        function getFellowshipId(uid1, uid2) {
+            return [uid1, uid2].sort().join('_');
+        }
+        function isEligible() {
+            return FELLOWSHIP_ROLE_REQUIRED.includes(myRole) && myPoints >= FELLOWSHIP_POINTS_REQUIRED;
+        }
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.f-tab').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.f-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('tab_' + tab).classList.add('active');
+            document.getElementById('panel_' + tab).classList.add('active');
+        };
+
+        window.openLightbox = function(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('mediaLightbox').classList.add('open');
+        };
+        window.closeLightbox = function() {
+            document.getElementById('mediaLightbox').classList.remove('open');
+        };
+
+        onAuthStateChanged(auth, async function(user) {
+            if (user) {
+                currentUser = user;
+                var docSnap = await getDoc(doc(db, "users", user.uid));
+                if (docSnap.exists()) currentUserData = docSnap.data();
+            } else if (googleUser) {
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
+                } catch(e) {}
+            }
+
+            myUid = getUid();
+            if (!myUid) {
+                document.getElementById('fApp').innerHTML = '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to use Fellowships.</p></div>';
+                return;
+            }
+
+            var data = currentUserData || {};
+            var email = getEmail();
+            myRole = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : (data.role || 'CIVILIAN');
+            myPoints = data.communityPoints || 0;
+            myUsername = data.username || data.displayName || email.split('@')[0];
+
+            if (!isEligible()) {
+                document.getElementById('fApp').innerHTML =
+                    '<div class="locked-state">' +
+                        '<h2>⚔️ Fellowships</h2>' +
+                        '<p>Fellowships require a <b>PLAYER</b> role or higher and at least <b>' + FELLOWSHIP_POINTS_REQUIRED + ' community points</b>.</p>' +
+                        '<p style="margin-top:0.5rem;color:#555;">Your role: <b style="color:#e0cfc0;">' + myRole + '</b> &nbsp;·&nbsp; Your points: <b style="color:#d4af37;">' + myPoints + '</b></p>' +
+                        (myRole === 'CIVILIAN' ? '<p style="margin-top:1rem;"><a href="profile.html" style="color:#d4af37;">Upgrade your account →</a></p>' : '') +
+                    '</div>';
+                return;
+            }
+
+            await renderApp();
+        });
+
+        async function renderApp() {
+            // Count pending requests
+            var reqSnap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "pending")));
+            var reqCount = reqSnap.size;
+
+            document.getElementById('fApp').innerHTML =
+                '<div class="f-tabs">' +
+                    '<button class="f-tab active" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows</button>' +
+                    '<button class="f-tab" id="tab_requests" onclick="switchTab(\'requests\')">' +
+                        'Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') +
+                    '</button>' +
+                    '<button class="f-tab" id="tab_feed" onclick="switchTab(\'feed\')">Feed</button>' +
+                    '<button class="f-tab" id="tab_media" onclick="switchTab(\'media\')">Media</button>' +
+                '</div>' +
+                '<div class="f-panel active" id="panel_fellows"></div>' +
+                '<div class="f-panel" id="panel_requests"></div>' +
+                '<div class="f-panel" id="panel_feed"></div>' +
+                '<div class="f-panel" id="panel_media"></div>';
+
+            await loadFellows();
+            await loadRequests();
+            await loadFeed();
+            await loadMedia();
+        }
+
+        async function loadFellows() {
+            var el = document.getElementById('panel_fellows');
+            el.innerHTML = '<div style="color:#555;font-size:0.85rem;text-align:center;padding:1rem;">Loading...</div>';
+
+            var snap1 = await getDocs(query(collection(db, "fellowships"), where("senderUid", "==", myUid), where("status", "==", "accepted")));
+            var snap2 = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "accepted")));
+
+            var fellows = [];
+            var seen = new Set();
+            snap1.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); fellows.push({ id: d.id, ...d.data() }); } });
+            snap2.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); fellows.push({ id: d.id, ...d.data() }); } });
+
+            if (fellows.length === 0) {
+                el.innerHTML = '<div class="empty-state">No Fellows yet.<br/>Visit someone\'s profile to send a Fellowship request.</div>';
+                return;
+            }
+
+            var html = '';
+            for (var f of fellows) {
+                var otherUid = f.senderUid === myUid ? f.receiverUid : f.senderUid;
+                var otherName = f.senderUid === myUid ? f.receiverName : f.senderName;
+                var userDoc = await getDoc(doc(db, "users", otherUid));
+                var userData = userDoc.exists() ? userDoc.data() : {};
+                var role = OWNER_EMAILS.includes(userData.email) ? 'OWNER' : ADMIN_EMAILS.includes(userData.email) ? 'ADMIN' : (userData.role || 'CIVILIAN');
+                var status = userData.currentStatus || 'offline';
+                var statusLabel = status === 'online' ? '🟢 Online' : status === 'lobby' ? '🟡 In a Lobby' : status === 'campaign' ? '🔴 In a Campaign' : '⚫ Offline';
+                var fellowId = f.id;
+
+                html +=
+                    '<div class="fellow-card">' +
+                        '<div class="fellow-avatar">' +
+                            (otherName ? otherName.charAt(0).toUpperCase() : '?') +
+                            '<div class="status-dot ' + status + '"></div>' +
+                        '</div>' +
+                        '<div class="fellow-info">' +
+                            '<div class="fellow-name">' +
+                                '<a href="public-profile.html?uid=' + otherUid + '" style="color:#e0cfc0;text-decoration:none;">' + otherName + '</a>' +
+                                '<span class="fellow-role-tag" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>' +
+                            '</div>' +
+                            '<div class="fellow-status">' + statusLabel + '</div>' +
+                        '</div>' +
+                        '<div class="fellow-actions">' +
+                            '<a href="public-profile.html?uid=' + otherUid + '&msg=1" class="btn btn-gold" style="text-decoration:none;font-size:0.78rem;">✉</a>' +
+                            '<button class="btn btn-ghost" onclick="removeFellow(\'' + fellowId + '\', \'' + otherName + '\')" style="font-size:0.78rem;">Remove</button>' +
+                        '</div>' +
+                    '</div>';
+            }
+            el.innerHTML = '<div style="font-size:0.8rem;color:#555;margin-bottom:1rem;">' + fellows.length + ' Fellow' + (fellows.length !== 1 ? 's' : '') + '</div>' + html;
+        }
+
+        async function loadRequests() {
+            var el = document.getElementById('panel_requests');
+
+            var snap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "pending")));
+            var requests = [];
+            snap.forEach(function(d) { requests.push({ id: d.id, ...d.data() }); });
+
+            if (requests.length === 0) {
+                el.innerHTML = '<div class="empty-state">No pending Fellowship requests.</div>';
+                return;
+            }
+
+            var html = requests.map(function(req) {
+                return '<div class="request-card">' +
+                    '<div class="fellow-avatar">' + (req.senderName ? req.senderName.charAt(0).toUpperCase() : '?') + '</div>' +
+                    '<div class="request-info">' +
+                        '<div class="request-name">' + (req.senderName || 'Unknown') + '</div>' +
+                        '<div class="request-text">wants to join your Fellowship</div>' +
+                    '</div>' +
+                    '<div class="request-actions">' +
+                        '<button class="btn btn-red" onclick="acceptFellowship(\'' + req.id + '\')">Accept</button>' +
+                        '<button class="btn btn-grey" onclick="declineFellowship(\'' + req.id + '\')">Decline</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            el.innerHTML = html;
+        }
+
+        async function loadFeed() {
+            var el = document.getElementById('panel_feed');
+
+            // Get my fellows' UIDs
+            var snap1 = await getDocs(query(collection(db, "fellowships"), where("senderUid", "==", myUid), where("status", "==", "accepted")));
+            var snap2 = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "accepted")));
+            var fellowUids = [myUid];
+            snap1.forEach(function(d) { fellowUids.push(d.data().receiverUid); });
+            snap2.forEach(function(d) { fellowUids.push(d.data().senderUid); });
+
+            // Post composer
+            var composerHtml =
+                '<div class="post-composer">' +
+                    '<textarea id="postText" rows="3" placeholder="Share something with your Fellows..."></textarea>' +
+                    '<div class="post-composer-footer">' +
+                        '<input type="url" id="postMedia" class="media-input" placeholder="Image URL (optional)" />' +
+                        '<button class="btn btn-red" onclick="submitPost()">Post</button>' +
+                    '</div>' +
+                    '<div id="postMsg" class="msg"></div>' +
+                '</div>';
+
+            // Get posts
+            var postsSnap = await getDocs(query(collection(db, "fellowship_posts"), orderBy("createdAt", "desc")));
+            var posts = [];
+            postsSnap.forEach(function(d) {
+                var data = d.data();
+                if (fellowUids.includes(data.authorUid)) {
+                    posts.push({ id: d.id, ...data });
+                }
+            });
+
+            if (posts.length === 0) {
+                el.innerHTML = composerHtml + '<div class="empty-state">No posts yet.<br/>Be the first to share something with your Fellows!</div>';
+                return;
+            }
+
+            var postsHtml = posts.map(function(post) {
+                return renderPost(post);
+            }).join('');
+
+            el.innerHTML = composerHtml + postsHtml;
+        }
+
+        function renderPost(post) {
+            var reactions = post.reactions || {};
+            var reactionsHtml = REACTIONS.map(function(emoji) {
+                var users = reactions[emoji] || [];
+                var hasReacted = users.includes(myUid);
+                var count = users.length;
+                return '<button class="reaction-btn ' + (hasReacted ? 'reacted' : '') + '" onclick="toggleReaction(\'' + post.id + '\', \'' + emoji + '\')">' +
+                    emoji + (count > 0 ? ' <span class="reaction-count">' + count + '</span>' : '') +
+                '</button>';
+            }).join('');
+
+            var comments = post.comments || [];
+            var commentsHtml = comments.map(function(c) {
+                return '<div class="comment">' +
+                    '<div class="comment-avatar">' + (c.authorName ? c.authorName.charAt(0).toUpperCase() : '?') + '</div>' +
+                    '<div class="comment-bubble">' +
+                        '<div class="comment-author">' + (c.authorName || 'Unknown') + '</div>' +
+                        '<div class="comment-text">' + c.text + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            var mediaHtml = post.mediaUrl ? '<img src="' + post.mediaUrl + '" class="post-media" onclick="openLightbox(\'' + post.mediaUrl + '\')" onerror="this.style.display=\'none\'" />' : '';
+            var isOwn = post.authorUid === myUid;
+
+            return '<div class="post-card" id="post_' + post.id + '">' +
+                '<div class="post-header">' +
+                    '<div class="post-avatar">' + (post.authorName ? post.authorName.charAt(0).toUpperCase() : '?') + '</div>' +
+                    '<div>' +
+                        '<div class="post-author"><a href="public-profile.html?uid=' + post.authorUid + '" style="color:#e0cfc0;text-decoration:none;">' + (post.authorName || 'Unknown') + '</a></div>' +
+                        '<div class="post-time">' + timeAgo(post.createdAt) + '</div>' +
+                    '</div>' +
+                    (isOwn ? '<button class="btn btn-ghost" style="margin-left:auto;font-size:0.75rem;" onclick="deletePost(\'' + post.id + '\')">Delete</button>' : '') +
+                '</div>' +
+                (post.text ? '<div class="post-text">' + post.text + '</div>' : '') +
+                mediaHtml +
+                '<div class="post-reactions">' + reactionsHtml + '</div>' +
+                '<div class="post-footer">' +
+                    '<button class="btn btn-ghost" style="font-size:0.78rem;" onclick="toggleComments(\'' + post.id + '\')">' +
+                        '💬 ' + comments.length + ' Comment' + (comments.length !== 1 ? 's' : '') +
+                    '</button>' +
+                '</div>' +
+                '<div class="comment-section" id="comments_' + post.id + '">' +
+                    commentsHtml +
+                    '<div class="comment-input-row">' +
+                        '<input type="text" placeholder="Write a comment..." id="commentInput_' + post.id + '" onkeydown="if(event.key===\'Enter\') addComment(\'' + post.id + '\')" />' +
+                        '<button onclick="addComment(\'' + post.id + '\')">Post</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        }
+
+        async function loadMedia() {
+            var el = document.getElementById('panel_media');
+
+            var snap1 = await getDocs(query(collection(db, "fellowships"), where("senderUid", "==", myUid), where("status", "==", "accepted")));
+            var snap2 = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "accepted")));
+            var fellowUids = [myUid];
+            snap1.forEach(function(d) { fellowUids.push(d.data().receiverUid); });
+            snap2.forEach(function(d) { fellowUids.push(d.data().senderUid); });
+
+            var postsSnap = await getDocs(query(collection(db, "fellowship_posts"), orderBy("createdAt", "desc")));
+            var mediaItems = [];
+            postsSnap.forEach(function(d) {
+                var data = d.data();
+                if (data.mediaUrl && fellowUids.includes(data.authorUid)) {
+                    mediaItems.push({ id: d.id, ...data });
+                }
+            });
+
+            if (mediaItems.length === 0) {
+                el.innerHTML = '<div class="empty-state">No media shared yet.<br/>Share an image URL in the Feed to see it here.</div>';
+                return;
+            }
+
+            el.innerHTML =
+                '<div class="media-tab-grid">' +
+                mediaItems.map(function(item) {
+                    return '<img src="' + item.mediaUrl + '" class="media-thumb" onclick="openLightbox(\'' + item.mediaUrl + '\')" onerror="this.style.display=\'none\'" />';
+                }).join('') +
+                '</div>';
+        }
+
+        window.submitPost = async function() {
+            var text = document.getElementById('postText').value.trim();
+            var mediaUrl = document.getElementById('postMedia').value.trim();
+            var msgEl = document.getElementById('postMsg');
+            if (!text && !mediaUrl) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write something or add an image.'; return; }
+            await addDoc(collection(db, "fellowship_posts"), {
+                authorUid: myUid,
+                authorName: myUsername,
+                text: text,
+                mediaUrl: mediaUrl || null,
+                reactions: {},
+                comments: [],
+                createdAt: serverTimestamp()
+            });
+            document.getElementById('postText').value = '';
+            document.getElementById('postMedia').value = '';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Posted!';
+            setTimeout(function() { loadFeed(); }, 800);
+        };
+
+        window.toggleReaction = async function(postId, emoji) {
+            var postRef = doc(db, "fellowship_posts", postId);
+            var postSnap = await getDoc(postRef);
+            if (!postSnap.exists()) return;
+            var reactions = postSnap.data().reactions || {};
+            var users = reactions[emoji] || [];
+            var update = {};
+            if (users.includes(myUid)) {
+                update['reactions.' + emoji] = arrayRemove(myUid);
+            } else {
+                update['reactions.' + emoji] = arrayUnion(myUid);
+            }
+            await updateDoc(postRef, update);
+            await loadFeed();
+        };
+
+        window.toggleComments = function(postId) {
+            var el = document.getElementById('comments_' + postId);
+            if (el) el.classList.toggle('open');
+        };
+
+        window.addComment = async function(postId) {
+            var input = document.getElementById('commentInput_' + postId);
+            var text = input ? input.value.trim() : '';
+            if (!text) return;
+            var postRef = doc(db, "fellowship_posts", postId);
+            await updateDoc(postRef, {
+                comments: arrayUnion({
+                    authorUid: myUid,
+                    authorName: myUsername,
+                    text: text,
+                    createdAt: new Date().toISOString()
+                })
+            });
+            input.value = '';
+            await loadFeed();
+        };
+
+        window.deletePost = async function(postId) {
+            if (!confirm('Delete this post?')) return;
+            await deleteDoc(doc(db, "fellowship_posts", postId));
+            await loadFeed();
+        };
+
+        window.acceptFellowship = async function(fellowshipId) {
+            await updateDoc(doc(db, "fellowships", fellowshipId), { status: 'accepted', acceptedAt: serverTimestamp() });
+            await renderApp();
+        };
+
+        window.declineFellowship = async function(fellowshipId) {
+            await deleteDoc(doc(db, "fellowships", fellowshipId));
+            await loadRequests();
+        };
+
+        window.removeFellow = async function(fellowshipId, name) {
+            if (!confirm('Remove ' + name + ' from your Fellowships?')) return;
+            await deleteDoc(doc(db, "fellowships", fellowshipId));
+            await loadFellows();
+        };
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
