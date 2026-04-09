@@ -1,3 +1,6 @@
+ No other files need changing — just `public-profile.html`. Here it is:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,6 +54,16 @@
         .msg { font-size: 0.85rem; margin-top: 0.5rem; }
         .msg.success { color: #4caf50; }
         .msg.error { color: #d0021b; }
+        .message-compose { margin-top: 0.5rem; display: none; }
+        .message-compose.open { display: block; }
+        .message-compose textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; resize: none; box-sizing: border-box; font-family: sans-serif; margin-bottom: 0.5rem; }
+        .message-compose textarea:focus { outline: none; border-color: #d0021b; }
+        .message-compose-row { display: flex; gap: 0.5rem; }
+        .message-compose-row button { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-send { background: #d0021b; color: #fff; }
+        .btn-send:hover { background: #a50013; }
+        .btn-cancel { background: #333; color: #888; }
+        .btn-cancel:hover { background: #444; color: #e0cfc0; }
     </style>
 </head>
 <body>
@@ -62,7 +75,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, deleteDoc, updateDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -145,30 +158,29 @@
             return '<span class="hidden-val">hidden</span>';
         }
 
-        // ===== MESSAGE BUTTON HANDLER =====
-        // If Fellows — go straight to inbox (conversation already accepted)
-        // If not — create a request then go to inbox
-        window.handleMessageBtn = async function() {
+        window.showMessageCompose = function() {
+            var compose = document.getElementById('messageCompose');
+            var btn = document.getElementById('msgInitBtn');
+            if (compose) compose.classList.add('open');
+            if (btn) btn.style.display = 'none';
+        };
+
+        window.cancelMessage = function() {
+            var compose = document.getElementById('messageCompose');
+            var btn = document.getElementById('msgInitBtn');
+            if (compose) compose.classList.remove('open');
+            if (btn) btn.style.display = 'block';
+        };
+
+        window.sendFirstMessage = async function() {
             var myUid = getMyUid();
             var myEmail = getMyEmail();
-            if (!myUid) { window.location.href = 'signin.html'; return; }
+            var text = document.getElementById('msgTextarea') ? document.getElementById('msgTextarea').value.trim() : '';
+            var msgEl = document.getElementById('actionMsg');
+
+            if (!text) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write a message first.'; return; }
 
             var convId = [myUid, targetUid].sort().join('_');
-            var convDoc = await getDoc(doc(db, "conversations", convId));
-
-            if (convDoc.exists() && convDoc.data().status === 'accepted') {
-                // Already connected — go straight to inbox
-                window.location.href = 'inbox.html';
-                return;
-            }
-
-            if (convDoc.exists() && convDoc.data().status === 'pending') {
-                // Request already sent — just go to inbox
-                window.location.href = 'inbox.html';
-                return;
-            }
-
-            // No conversation yet — create one
             var isAdmin = isAdminOrOwner(myEmail);
             var status = (isFellows || isAdmin) ? 'accepted' : 'pending';
 
@@ -179,9 +191,30 @@
                 receiverName: targetData.username || targetData.displayName || 'Unknown',
                 status: status,
                 createdAt: serverTimestamp(),
-                lastMessageAt: serverTimestamp()
+                lastMessageAt: serverTimestamp(),
+                lastMessageText: text
             });
 
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: myUid,
+                senderName: getMyUsername(),
+                text: text,
+                createdAt: serverTimestamp()
+            });
+
+            // Stay on page — show confirmation
+            var msgSection = document.getElementById('msgSection');
+            if (msgSection) {
+                msgSection.innerHTML = status === 'accepted'
+                    ? '<button class="action-btn action-btn-green" disabled>✅ Message Sent!</button>' +
+                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>'
+                    : '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
+                      '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
+                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>';
+            }
+        };
+
+        window.goToInbox = function() {
             window.location.href = 'inbox.html';
         };
 
@@ -207,11 +240,11 @@
                 ? '<span class="pro-badge">SorC Beyond Pro</span>'
                 : '<span class="basic-badge">SorC Basic</span>';
 
-            // ===== BIO =====
+            // Bio
             var bioValue = (data.privacyBio && data.bio) ? '<p>' + data.bio + '</p>' : hiddenVal();
             var bioSection = '<div class="profile-section"><h3>About</h3><div class="profile-field">' + bioValue + '</div></div>';
 
-            // ===== INFO =====
+            // Info
             var ageValue = data.birthday
                 ? (data.privacyBirthday ? '<p>' + calculateAge(data.birthday) + '</p>' : hiddenVal())
                 : '<span class="hidden-val">not set</span>';
@@ -223,7 +256,7 @@
                     '<div class="profile-field"><label>SORC BEYOND</label><p>' + (isPro ? '⭐ SorC Beyond Pro' : 'SorC Basic') + '</p></div>' +
                 '</div>';
 
-            // ===== LINKS =====
+            // Links
             var linksContent = '';
             if (isPro) {
                 if (data.privacySocial) {
@@ -243,7 +276,7 @@
             }
             var linksSection = '<div class="profile-section"><h3>Links</h3>' + linksContent + '</div>';
 
-            // ===== ACHIEVEMENTS =====
+            // Achievements
             var achievementsSection = '';
             if (isPro && achievements.length > 0) {
                 achievementsSection =
@@ -267,7 +300,7 @@
                     '</div>';
             }
 
-            // ===== FELLOWSHIP + MESSAGE =====
+            // Fellowship + Message
             var actionSection = '';
             if (!isSelf && myUid) {
                 var fellowshipId = [myUid, targetUid].sort().join('_');
@@ -276,7 +309,7 @@
                 var fellowSender = fellowDoc.exists() ? fellowDoc.data().senderUid : null;
                 isFellows = fellowStatus === 'accepted';
 
-                // Fellowship section
+                // Fellowship button
                 var fellowBtn = '';
                 if (!isFellowshipEligible()) {
                     fellowBtn =
@@ -300,17 +333,40 @@
                         '<button class="action-btn action-btn-dark" onclick="removeFellowship()">⚔️ Fellows ✓ &nbsp;<span style="font-size:0.75rem;color:#555;">(click to remove)</span></button>';
                 }
 
-                // Message button — goes to inbox, no page refresh
+                // Check conversation status
+                var convId = [myUid, targetUid].sort().join('_');
+                var convDoc = await getDoc(doc(db, "conversations", convId));
+                var convStatus = convDoc.exists() ? convDoc.data().status : 'none';
                 var msgBtnClass = isAdmin ? 'action-btn action-btn-gold' : 'action-btn action-btn-red';
-                var msgLabel = isFellows ? '✉ Message ' + username : '✉ Send Message Request';
+
+                var msgSectionHtml = '';
+                if (convStatus === 'accepted' || isFellows) {
+                    msgSectionHtml =
+                        '<button class="' + msgBtnClass + '" onclick="goToInbox()">✉ Open Conversation</button>';
+                } else if (convStatus === 'pending') {
+                    msgSectionHtml =
+                        '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
+                        '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
+                        '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>';
+                } else {
+                    msgSectionHtml =
+                        '<button class="' + msgBtnClass + '" id="msgInitBtn" onclick="showMessageCompose()">✉ Send Message</button>' +
+                        '<div class="message-compose" id="messageCompose">' +
+                            '<textarea id="msgTextarea" rows="4" placeholder="Write your message to ' + username + '..."></textarea>' +
+                            '<p style="font-size:0.75rem;color:#555;margin:0 0 0.5rem 0;">They must accept before they can reply — but your message will be waiting for them.</p>' +
+                            '<div class="message-compose-row">' +
+                                '<button class="btn-send" onclick="sendFirstMessage()">Send</button>' +
+                                '<button class="btn-cancel" onclick="cancelMessage()">Cancel</button>' +
+                            '</div>' +
+                        '</div>';
+                }
 
                 actionSection =
                     '<div class="profile-section">' +
                         fellowBtn +
                         '<h3 style="margin-top:1rem;">Message</h3>' +
-                        '<button class="' + msgBtnClass + '" onclick="handleMessageBtn()">' + msgLabel + '</button>' +
-                        (!isFellows && !isAdmin ? '<p style="font-size:0.75rem;color:#555;margin:0 0 0.5rem 0;">They must accept before you can message each other.</p>' : '') +
-                        '<div id="fellowMsg" class="msg"></div>' +
+                        '<div id="msgSection">' + msgSectionHtml + '</div>' +
+                        '<div id="actionMsg" class="msg"></div>' +
                     '</div>';
 
             } else if (!myUid) {
@@ -346,7 +402,7 @@
 
         window.sendFellowshipRequest = async function() {
             var myUid = getMyUid();
-            var msgEl = document.getElementById('fellowMsg');
+            var msgEl = document.getElementById('actionMsg');
             var fellowshipId = [myUid, targetUid].sort().join('_');
             await setDoc(doc(db, "fellowships", fellowshipId), {
                 senderUid: myUid,
@@ -368,7 +424,7 @@
                 status: 'accepted',
                 acceptedAt: serverTimestamp()
             });
-            var msgEl = document.getElementById('fellowMsg');
+            var msgEl = document.getElementById('actionMsg');
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ You are now Fellows!';
             setTimeout(function() { location.reload(); }, 1000);
