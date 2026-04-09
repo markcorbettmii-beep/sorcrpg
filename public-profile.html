@@ -28,17 +28,41 @@
         .profile-field { margin-bottom: 0.75rem; }
         .profile-field label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 3px; }
         .profile-field p { font-size: 0.9rem; color: #c0b090; margin: 0; line-height: 1.6; }
-        .social-link { display: inline-block; color: #d4af37; text-decoration: none; font-size: 0.85rem; margin-right: 1rem; }
-        .social-link:hover { text-decoration: underline; }
+        .msg-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s; margin-bottom: 0.75rem; }
+        .msg-btn-primary { background: #d0021b; color: #fff; }
+        .msg-btn-primary:hover { background: #a50013; }
+        .msg-btn-admin { background: #d4af37; color: #222; }
+        .msg-btn-admin:hover { background: #c19b2b; }
+        .msg-status { text-align: center; font-size: 0.85rem; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.75rem; }
+        .msg-status.pending { background: #1a1a00; border: 1px solid #555; color: #888; }
+        .msg-status.accepted { background: #1a2a1a; border: 1px solid #4caf50; color: #4caf50; }
+        .msg-status.declined { background: #2a1a1a; border: 1px solid #555; color: #666; }
+        .message-thread { background: #222; border-radius: 8px; padding: 1rem; min-height: 150px; max-height: 300px; overflow-y: auto; margin-top: 0.75rem; margin-bottom: 0.75rem; }
+        .message-bubble { margin-bottom: 0.75rem; display: flex; flex-direction: column; }
+        .message-bubble.mine { align-items: flex-end; }
+        .message-bubble.theirs { align-items: flex-start; }
+        .bubble-content { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
+        .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
+        .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
+        .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
+        .message-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .message-input-row input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem; }
+        .message-input-row input:focus { outline: none; border-color: #d0021b; }
+        .message-input-row button { padding: 8px 16px; background: #d0021b; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .message-input-row button:hover { background: #a50013; }
+        .accept-decline-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-red { background: #d0021b; color: #fff; }
+        .btn-red:hover { background: #a50013; }
+        .btn-grey { background: #333; color: #888; }
+        .btn-grey:hover { background: #444; color: #e0cfc0; }
+        .msg { font-size: 0.85rem; margin-top: 0.5rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #d0021b; }
         .not-found { text-align: center; padding: 3rem; color: #555; }
         .loading { text-align: center; padding: 3rem; color: #555; }
-        .pro-badge { display: inline-block; background: #d0021b; color: #fff; font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
-        .basic-badge { display: inline-block; background: #333; color: #888; font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
-        .locked-achievements { opacity: 0.4; }
-        .message-icon-btn { display: inline-flex; align-items: center; gap: 6px; background: #d0021b; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-decoration: none; transition: background 0.2s; }
-        .message-icon-btn:hover { background: #a50013; }
-        .message-icon-btn.admin { background: #d4af37; color: #222; }
-        .message-icon-btn.admin:hover { background: #c19b2b; }
+        .social-link { display: inline-block; color: #d4af37; text-decoration: none; font-size: 0.85rem; margin-right: 1rem; }
+        .social-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -50,7 +74,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, orderBy, getDocs, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -72,11 +96,14 @@
         var currentUserData = null;
         var googleUser = null;
         var targetUid = null;
+        var targetData = null;
+        var conversationId = null;
 
         try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
 
         var params = new URLSearchParams(window.location.search);
         targetUid = params.get('uid');
+        var openMsg = params.get('msg') === '1';
 
         function getRoleColor(role) {
             if (role === 'OWNER') return 'background:#d4af37;color:#222;';
@@ -99,21 +126,173 @@
             if (role === 'PLAYER') return 'Player Character';
             return 'Civilian';
         }
+        function timeAgo(timestamp) {
+            if (!timestamp) return '';
+            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
         function getMyUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
         function getMyEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
-        function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
+        function getMyUsername() {
+            var data = currentUserData || {};
+            return data.username || data.displayName || (getMyEmail() || '').split('@')[0];
+        }
+        function isAdminOrOwner(email) { return OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email); }
 
-        function calculateAge(birthday) {
-            if (!birthday) return null;
-            var today = new Date();
-            var birth = new Date(birthday);
-            var age = today.getFullYear() - birth.getFullYear();
-            var m = today.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-            return age;
+        async function getConvId(uid1, uid2) {
+            var ids = [uid1, uid2].sort();
+            return ids[0] + '_' + ids[1];
         }
 
+        async function loadConversation() {
+            var myUid = getMyUid();
+            if (!myUid || !targetUid) return;
+            conversationId = await getConvId(myUid, targetUid);
+            var convDoc = await getDoc(doc(db, "conversations", conversationId));
+
+            if (!convDoc.exists()) {
+                renderMessagingSection('none');
+                return;
+            }
+
+            var conv = convDoc.data();
+            if (conv.status === 'pending') {
+                if (conv.senderUid === myUid) {
+                    renderMessagingSection('pending_sent');
+                } else if (conv.receiverUid === myUid) {
+                    renderMessagingSection('pending_received', conversationId);
+                }
+            } else if (conv.status === 'accepted') {
+                renderMessagingSection('accepted', conversationId);
+                await loadMessages(conversationId);
+            } else if (conv.status === 'declined') {
+                renderMessagingSection('declined');
+            }
+        }
+
+        function renderMessagingSection(status, convId) {
+            var el = document.getElementById('messagingSection');
+            if (!el) return;
+            var myUid = getMyUid();
+            var myEmail = getMyEmail();
+
+            if (!myUid) {
+                el.innerHTML = '<p style="color:#555;font-size:0.85rem;"><a href="signin.html" style="color:#d4af37;">Sign in</a> to send messages.</p>';
+                return;
+            }
+            if (myUid === targetUid) {
+                el.innerHTML = '<p style="color:#555;font-size:0.85rem;">This is your own profile.</p>';
+                return;
+            }
+
+            if (status === 'none') {
+                var isAdmin = isAdminOrOwner(myEmail);
+                el.innerHTML =
+                    '<button class="msg-btn ' + (isAdmin ? 'msg-btn-admin' : 'msg-btn-primary') + '" onclick="sendMessageRequest()">' +
+                        (isAdmin ? '✉ Send Message' : '✉ Send Message Request') +
+                    '</button>' +
+                    (!isAdmin ? '<p style="font-size:0.75rem;color:#555;margin:0;">They must accept before you can message each other.</p>' : '') +
+                    '<div id="msgRequestMsg" class="msg"></div>';
+
+            } else if (status === 'pending_sent') {
+                el.innerHTML = '<div class="msg-status pending">⏳ Message request sent — waiting for them to accept.</div>';
+
+            } else if (status === 'pending_received') {
+                el.innerHTML =
+                    '<div class="msg-status pending">📨 This person wants to message you.</div>' +
+                    '<div class="accept-decline-row">' +
+                        '<button class="btn btn-red" onclick="acceptRequest(\'' + convId + '\')">Accept</button>' +
+                        '<button class="btn btn-grey" onclick="declineRequest(\'' + convId + '\')">Decline</button>' +
+                    '</div>';
+
+            } else if (status === 'accepted') {
+                el.innerHTML =
+                    '<div class="msg-status accepted">✅ Connected</div>' +
+                    '<div class="message-thread" id="messageThread"></div>' +
+                    '<div class="message-input-row">' +
+                        '<input type="text" id="messageInput" placeholder="Write a message..." onkeydown="if(event.key===\'Enter\') sendMessage()" />' +
+                        '<button onclick="sendMessage()">Send</button>' +
+                    '</div>';
+
+            } else if (status === 'declined') {
+                el.innerHTML = '<div class="msg-status declined">❌ Message request was declined.</div>';
+            }
+        }
+
+        async function loadMessages(convId) {
+            var q = query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc"));
+            var snap = await getDocs(q);
+            var myUid = getMyUid();
+            var html = '';
+            snap.forEach(function(d) {
+                var msg = d.data();
+                var isMine = msg.senderUid === myUid;
+                html +=
+                    '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
+                        '<div class="bubble-content">' + msg.text + '</div>' +
+                        '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
+                    '</div>';
+            });
+            var el = document.getElementById('messageThread');
+            if (el) {
+                el.innerHTML = html || '<p style="color:#444;font-size:0.8rem;text-align:center;">No messages yet. Say hello!</p>';
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+
+        window.sendMessageRequest = async function() {
+            var myUid = getMyUid();
+            var myEmail = getMyEmail();
+            var msgEl = document.getElementById('msgRequestMsg');
+            if (!myUid) return;
+            conversationId = await getConvId(myUid, targetUid);
+            var isAdmin = isAdminOrOwner(myEmail);
+            var status = isAdmin ? 'accepted' : 'pending';
+            await setDoc(doc(db, "conversations", conversationId), {
+                senderUid: myUid,
+                senderName: getMyUsername(),
+                receiverUid: targetUid,
+                receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: status,
+                createdAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp()
+            });
+            if (msgEl) { msgEl.className = 'msg success'; msgEl.textContent = status === 'accepted' ? '✅ Conversation started!' : '✅ Request sent!'; }
+            setTimeout(function() { loadConversation(); }, 800);
+        };
+
+        window.acceptRequest = async function(convId) {
+            await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
+            await loadConversation();
+        };
+
+        window.declineRequest = async function(convId) {
+            await updateDoc(doc(db, "conversations", convId), { status: 'declined' });
+            renderMessagingSection('declined');
+        };
+
+        window.sendMessage = async function() {
+            var input = document.getElementById('messageInput');
+            var text = input ? input.value.trim() : '';
+            if (!text || !conversationId) return;
+            var myUid = getMyUid();
+            await addDoc(collection(db, "conversations", conversationId, "messages"), {
+                senderUid: myUid,
+                senderName: getMyUsername(),
+                text: text,
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "conversations", conversationId), { lastMessageAt: serverTimestamp() });
+            input.value = '';
+            await loadMessages(conversationId);
+        };
+
         async function renderProfile(data) {
+            targetData = data;
             var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
             var username = data.username || data.displayName || 'Unknown Adventurer';
             var communityPoints = data.communityPoints || 0;
@@ -121,37 +300,21 @@
             var titles = data.titles || [];
             var joinDate = data.joinDate || '';
             var isPro = data.isPro || false;
-            var achievements = data.achievements || [];
-
-            var myUid = getMyUid();
-            var myEmail = getMyEmail();
-            var isSelf = myUid === targetUid;
-            var isAdmin = isAdminOrOwner(myEmail);
 
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
-
-            // Bio — only if toggled public
-            var bioSection = '';
-            if (data.privacyBio && data.bio) {
-                bioSection = '<div class="profile-section"><h3>About</h3><div class="profile-field"><p>' + data.bio + '</p></div></div>';
-            }
-
-            // Birthday — only if toggled public
+            var bioSection = data.privacyBio && data.bio ? '<div class="profile-section"><h3>About</h3><div class="profile-field"><p>' + data.bio + '</p></div></div>' : '';
             var birthdaySection = '';
             if (data.privacyBirthday && data.birthday) {
-                var age = calculateAge(data.birthday);
+                var birth = new Date(data.birthday);
+                var today = new Date();
+                var age = today.getFullYear() - birth.getFullYear();
+                var m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
                 birthdaySection = '<div class="profile-field"><label>AGE</label><p>' + age + '</p></div>';
             }
-
-            // Email — only if toggled public
-            var emailSection = '';
-            if (data.privacyEmail && data.email) {
-                emailSection = '<div class="profile-field"><label>EMAIL</label><p>' + data.email + '</p></div>';
-            }
-
-            // Social links — only if Pro and toggled public
+            var emailSection = data.privacyEmail ? '<div class="profile-field"><label>EMAIL</label><p>' + data.email + '</p></div>' : '';
             var socialSection = '';
-            if (isPro && data.privacySocial) {
+            if (data.privacySocial && isPro) {
                 var links = '';
                 if (data.website) links += '<a href="' + data.website + '" target="_blank" class="social-link">🌐 Website</a>';
                 if (data.socialTwitter) links += '<a href="https://x.com/' + data.socialTwitter + '" target="_blank" class="social-link">𝕏 ' + data.socialTwitter + '</a>';
@@ -159,51 +322,13 @@
                 if (links) socialSection = '<div class="profile-section"><h3>Links</h3>' + links + '</div>';
             }
 
-            // Achievements — locked if not Pro
-            var achievementsSection = '';
-            if (isPro && achievements.length > 0) {
-                achievementsSection = '<div class="profile-section"><h3>Achievements</h3>' +
-                    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
-                    achievements.map(function(a) {
-                        return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>';
-                    }).join('') +
-                    '</div></div>';
-            } else {
-                achievementsSection =
-                    '<div class="profile-section">' +
-                        '<h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">— SorC Beyond Pro</span></h3>' +
-                        '<div class="locked-achievements" style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
-                            '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                            '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                            '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                        '</div>' +
-                        '<div style="font-size:0.72rem;color:#444;margin-top:6px;">🔒 Unlocks with SorC Beyond Pro</div>' +
-                    '</div>';
-            }
-
-            // Message button — icon only, goes to public-profile with &msg=1
-            var messageBtn = '';
-            if (!isSelf && myUid) {
-                var btnClass = isAdmin ? 'message-icon-btn admin' : 'message-icon-btn';
-                messageBtn = '<div class="profile-section">' +
-                    '<a href="public-profile.html?uid=' + targetUid + '&msg=1" class="' + btnClass + '">✉ Message ' + username + '</a>' +
-                '</div>';
-            } else if (!myUid) {
-                messageBtn = '<div class="profile-section"><p style="font-size:0.85rem;color:#555;"><a href="signin.html" style="color:#d4af37;">Sign in</a> to send messages.</p></div>';
-            }
-
-            // SorC Beyond status badge
-            var statusBadge = isPro
-                ? '<span class="pro-badge">SorC Beyond Pro</span>'
-                : '<span class="basic-badge">SorC Basic</span>';
-
             document.getElementById('profileApp').innerHTML =
                 '<div class="profile-card">' +
                     '<div class="profile-banner"></div>' +
                     '<div class="profile-info-row">' +
                         '<div class="profile-avatar-large">' + username.charAt(0).toUpperCase() + '</div>' +
                         '<div class="profile-name-block">' +
-                            '<div class="profile-username">' + username + statusBadge + '</div>' +
+                            '<div class="profile-username">' + username + '</div>' +
                             '<span class="profile-role-tag" style="' + getRoleColor(role) + '">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>' +
                             titleDisplay +
                         '</div>' +
@@ -217,11 +342,15 @@
                         (joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : '') +
                     '</div>' +
                     bioSection +
-                    ((birthdaySection || emailSection) ? '<div class="profile-section">' + birthdaySection + emailSection + '</div>' : '') +
+                    (birthdaySection || emailSection ? '<div class="profile-section">' + birthdaySection + emailSection + '</div>' : '') +
                     socialSection +
-                    achievementsSection +
-                    messageBtn +
+                    '<div class="profile-section">' +
+                        '<h3>Message</h3>' +
+                        '<div id="messagingSection">Loading...</div>' +
+                    '</div>' +
                 '</div>';
+
+            await loadConversation();
         }
 
         onAuthStateChanged(auth, async function(user) {
