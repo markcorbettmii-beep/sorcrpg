@@ -183,6 +183,8 @@ const db = getFirestore(app);
 const OWNER_EMAILS = ["corbett@sorcrpg.com"];
 const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
+var googleUser = null;
+
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
   if (role === 'OWNER') return '[OWN]';
@@ -230,46 +232,53 @@ function showRoleBadge(email, username, role, avatar, userId) {
   var signinLink = document.getElementById('signinLink');
   if (signinLink) signinLink.style.display = 'none';
 
-  var badge = document.createElement('div');
-  badge.className = 'role-badge';
-  var colors = getRoleColor(role);
-  badge.style.cssText = 'position:fixed;top:10px;right:10px;padding:8px 16px;border-radius:8px;font-weight:bold;z-index:9999;font-size:0.9rem;background:' + colors.bg + ';color:' + colors.color + ';display:flex;align-items:center;gap:8px;';
-
   var displayName = username || email.split('@')[0];
   var abbr = getRoleAbbr(role);
+  var colors = getRoleColor(role);
+  var safeUserId = String(userId || '');
+  var isAdminUser = OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
 
   var avatarHtml = '';
   if (avatar) {
     var avatarPath = getAvatarPath(avatar);
-    avatarHtml = '<img src="' + avatarPath + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);" onerror="this.style.display=\'none\'" />';
+    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
 
-  var safeUserId = String(userId || '');
-  var isAdminUser = OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
+  // Insert badge below the theme toggle buttons in the nav
+  var themeContainer = document.querySelector('.theme-toggle-container');
+  if (themeContainer) {
+    var existingNavBadge = document.getElementById('navRoleBadge');
+    if (existingNavBadge) existingNavBadge.remove();
 
-  badge.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
-    ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;">📬<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span> Inbox</a>' +
-    ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
-    ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
+    var navBadge = document.createElement('div');
+    navBadge.id = 'navRoleBadge';
+    navBadge.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 10px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:8px;font-size:0.8rem;font-weight:bold;flex-wrap:wrap;margin-top:4px;';
 
-  document.body.appendChild(badge);
+    navBadge.innerHTML =
+      avatarHtml +
+      displayName +
+      ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+      ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
+      ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox <span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;"></span></a>' +
+      ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
+      ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.8rem;">Logout</button>';
 
-  badge.querySelector('.role-tag').addEventListener('click', function(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    var isAdmin = this.dataset.isadmin === 'true';
-    if (isAdmin) {
-      showAdminMembersPopup();
-    } else {
-      showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
-    }
-  });
+    themeContainer.insertAdjacentElement('afterend', navBadge);
+
+    navBadge.querySelector('.role-tag').addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      var isAdmin = this.dataset.isadmin === 'true';
+      if (isAdmin) {
+        showAdminMembersPopup();
+      } else {
+        showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
+      }
+    });
+  }
 
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 
-  // Check notifications
   var uid = auth.currentUser ? auth.currentUser.uid : (googleUser ? googleUser.googleId : null);
   if (uid) checkInboxNotifications(uid);
 }
@@ -281,7 +290,7 @@ window.showRolePopup = function(username, userId, role) {
 
   var popup = document.createElement('div');
   popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50px;right:10px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  popup.style.cssText = 'position:fixed;top:80px;left:10px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
 
   var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
 
@@ -309,7 +318,7 @@ window.showAdminMembersPopup = async function() {
 
   var popup = document.createElement('div');
   popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50px;right:10px;background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  popup.style.cssText = 'position:fixed;top:80px;left:10px;background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
 
   popup.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
@@ -391,38 +400,41 @@ onAuthStateChanged(auth, async function(user) {
     var data = await getUserRoleFromDB(user.uid, user.email);
     showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
   } else {
-    var savedGoogle = localStorage.getItem('sorc_google_user');
-    if (savedGoogle) {
+    try {
+      var saved = localStorage.getItem('sorc_google_user');
+      if (saved) googleUser = JSON.parse(saved);
+    } catch(e) {}
+
+    if (googleUser) {
       try {
-        var userInfo = JSON.parse(savedGoogle);
-        var role = userInfo.role || 'CIVILIAN';
-        var username = userInfo.username || userInfo.name || '';
-        var avatar = userInfo.avatar || null;
-        var userId = userInfo.userId || '';
+        var role = googleUser.role || 'CIVILIAN';
+        var username = googleUser.username || googleUser.name || '';
+        var avatar = googleUser.avatar || null;
+        var userId = googleUser.userId || '';
 
-        if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
-        else if (ADMIN_EMAILS.includes(userInfo.email)) role = 'ADMIN';
+        if (OWNER_EMAILS.includes(googleUser.email)) role = 'OWNER';
+        else if (ADMIN_EMAILS.includes(googleUser.email)) role = 'ADMIN';
 
-        if (userInfo.googleId) {
+        if (googleUser.googleId) {
           try {
-            var docSnap = await getDoc(doc(db, "users", userInfo.googleId));
+            var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
             if (docSnap.exists()) {
               username = docSnap.data().username || docSnap.data().displayName || username;
               avatar = docSnap.data().avatar || avatar;
               userId = docSnap.data().userId || userId;
-              if (!OWNER_EMAILS.includes(userInfo.email) && !ADMIN_EMAILS.includes(userInfo.email)) {
+              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) {
                 role = docSnap.data().role || role;
               }
-              userInfo.username = username;
-              userInfo.avatar = avatar;
-              userInfo.userId = userId;
-              userInfo.role = role;
-              localStorage.setItem('sorc_google_user', JSON.stringify(userInfo));
+              googleUser.username = username;
+              googleUser.avatar = avatar;
+              googleUser.userId = userId;
+              googleUser.role = role;
+              localStorage.setItem('sorc_google_user', JSON.stringify(googleUser));
             }
           } catch(e) {}
         }
 
-        showRoleBadge(userInfo.email, username, role, avatar, userId);
+        showRoleBadge(googleUser.email, username, role, avatar, userId);
       } catch(e) {
         localStorage.removeItem('sorc_google_user');
       }
