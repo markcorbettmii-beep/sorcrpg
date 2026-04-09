@@ -63,6 +63,8 @@
         .loading { text-align: center; padding: 3rem; color: #555; }
         .social-link { display: inline-block; color: #d4af37; text-decoration: none; font-size: 0.85rem; margin-right: 1rem; }
         .social-link:hover { text-decoration: underline; }
+        .locked-section { opacity: 0.4; pointer-events: none; position: relative; }
+        .locked-section-label { font-size: 0.75rem; color: #555; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
     </style>
 </head>
 <body>
@@ -103,6 +105,7 @@
 
         var params = new URLSearchParams(window.location.search);
         targetUid = params.get('uid');
+        var openMsg = params.get('msg') === '1';
 
         function getRoleColor(role) {
             if (role === 'OWNER') return 'background:#d4af37;color:#222;';
@@ -196,6 +199,7 @@
                     '</button>' +
                     (!isAdmin ? '<p style="font-size:0.75rem;color:#555;margin:0;">They must accept before you can message each other.</p>' : '') +
                     '<div id="msgRequestMsg" class="msg"></div>';
+                if (openMsg) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth' }); }, 300);
 
             } else if (status === 'pending_sent') {
                 el.innerHTML = '<div class="msg-status pending">⏳ Message request sent — waiting for them to accept.</div>';
@@ -230,11 +234,16 @@
             snap.forEach(function(d) {
                 var msg = d.data();
                 var isMine = msg.senderUid === myUid;
-                html +=
-                    '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
-                        '<div class="bubble-content">' + msg.text + '</div>' +
-                        '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
-                    '</div>';
+                var isSystem = msg.isSystem === true;
+                if (isSystem) {
+                    html += '<div style="text-align:center;margin:0.5rem 0;"><span style="background:#1a1a2a;color:#666;font-size:0.78rem;padding:4px 12px;border-radius:10px;font-style:italic;">' + msg.text + '</span></div>';
+                } else {
+                    html +=
+                        '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
+                            '<div class="bubble-content">' + msg.text + '</div>' +
+                            '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
+                        '</div>';
+                }
             });
             var el = document.getElementById('messageThread');
             if (el) {
@@ -260,21 +269,14 @@
                 createdAt: serverTimestamp(),
                 lastMessageAt: serverTimestamp()
             });
-            if (msgEl) {
-                msgEl.className = 'msg success';
-                msgEl.textContent = status === 'accepted' ? '✅ Conversation started!' : '✅ Request sent!';
-            }
+            if (msgEl) { msgEl.className = 'msg success'; msgEl.textContent = status === 'accepted' ? '✅ Conversation started!' : '✅ Request sent!'; }
             setTimeout(function() { loadConversation(); }, 800);
         };
 
         window.acceptRequest = async function(convId) {
             var myUsername = getMyUsername();
             var myUid = getMyUid();
-
-            // Accept the request
             await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
-
-            // Send auto message: "X accepted your message request"
             await addDoc(collection(db, "conversations", convId, "messages"), {
                 senderUid: myUid,
                 senderName: myUsername,
@@ -286,7 +288,6 @@
                 lastMessageAt: serverTimestamp(),
                 lastMessageText: myUsername + ' accepted your message request.'
             });
-
             await loadConversation();
         };
 
@@ -320,6 +321,7 @@
             var titles = data.titles || [];
             var joinDate = data.joinDate || '';
             var isPro = data.isPro || false;
+            var achievements = data.achievements || [];
 
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
             var bioSection = data.privacyBio && data.bio ? '<div class="profile-section"><h3>About</h3><div class="profile-field"><p>' + data.bio + '</p></div></div>' : '';
@@ -340,6 +342,30 @@
                 if (data.socialTwitter) links += '<a href="https://x.com/' + data.socialTwitter + '" target="_blank" class="social-link">𝕏 ' + data.socialTwitter + '</a>';
                 if (data.socialInstagram) links += '<a href="https://instagram.com/' + data.socialInstagram + '" target="_blank" class="social-link">📷 ' + data.socialInstagram + '</a>';
                 if (links) socialSection = '<div class="profile-section"><h3>Links</h3>' + links + '</div>';
+            }
+
+            // Achievements section — locked behind SorC Beyond Pro
+            var achievementsSection = '';
+            if (isPro && achievements.length > 0) {
+                achievementsSection = '<div class="profile-section"><h3>Achievements</h3>' +
+                    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+                    achievements.map(function(a) {
+                        return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>';
+                    }).join('') +
+                    '</div></div>';
+            } else {
+                achievementsSection =
+                    '<div class="profile-section">' +
+                        '<h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">— SorC Beyond Pro</span></h3>' +
+                        '<div class="locked-section">' +
+                            '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+                                '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
+                                '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
+                                '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="locked-section-label">🔒 Unlocks with SorC Beyond Pro</div>' +
+                    '</div>';
             }
 
             document.getElementById('profileApp').innerHTML =
@@ -364,6 +390,7 @@
                     bioSection +
                     (birthdaySection || emailSection ? '<div class="profile-section">' + birthdaySection + emailSection + '</div>' : '') +
                     socialSection +
+                    achievementsSection +
                     '<div class="profile-section">' +
                         '<h3>Message</h3>' +
                         '<div id="messagingSection">Loading...</div>' +
