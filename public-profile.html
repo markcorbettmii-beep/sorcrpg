@@ -28,6 +28,7 @@
         .profile-field { margin-bottom: 0.75rem; }
         .profile-field label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 3px; }
         .profile-field p { font-size: 0.9rem; color: #c0b090; margin: 0; line-height: 1.6; }
+        .profile-field .hidden-val { font-size: 0.85rem; color: #444; font-style: italic; }
         .social-link { display: inline-block; color: #d4af37; text-decoration: none; font-size: 0.85rem; margin-right: 1rem; }
         .social-link:hover { text-decoration: underline; }
         .not-found { text-align: center; padding: 3rem; color: #555; }
@@ -44,7 +45,7 @@
         .action-btn-blue:hover { background: #122a55; }
         .action-btn-green { background: #1a6b1a; color: #fff; }
         .action-btn-green:hover { background: #125012; }
-        .action-btn-grey { background: #333; color: #888; cursor: not-allowed; }
+        .action-btn-grey { background: #333; color: #555; cursor: not-allowed; }
         .action-btn-dark { background: #222; color: #666; border: 1px solid #333; }
         .action-btn-dark:hover { border-color: #d0021b; color: #e0cfc0; }
         .msg { font-size: 0.85rem; margin-top: 0.5rem; }
@@ -141,6 +142,10 @@
             return age;
         }
 
+        function hiddenVal() {
+            return '<span class="hidden-val">hidden</span>';
+        }
+
         async function renderProfile(data) {
             targetData = data;
             var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
@@ -159,44 +164,63 @@
 
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
 
-            // Bio
-            var bioSection = '';
-            if (data.privacyBio && data.bio) {
-                bioSection = '<div class="profile-section"><h3>About</h3><div class="profile-field"><p>' + data.bio + '</p></div></div>';
+            // SorC Beyond status badge
+            var statusBadge = isPro
+                ? '<span class="pro-badge">SorC Beyond Pro</span>'
+                : '<span class="basic-badge">SorC Basic</span>';
+
+            // ===== ABOUT SECTION — always shown, hidden if toggled =====
+            var bioValue = (data.privacyBio && data.bio) ? '<p>' + data.bio + '</p>' : hiddenVal();
+            var bioSection = '<div class="profile-section"><h3>About</h3><div class="profile-field">' + bioValue + '</div></div>';
+
+            // ===== INFO SECTION — always shown =====
+            var ageValue = '';
+            if (data.birthday) {
+                ageValue = data.privacyBirthday ? '<p>' + calculateAge(data.birthday) + '</p>' : hiddenVal();
+            } else {
+                ageValue = '<span class="hidden-val">not set</span>';
             }
 
-            // Birthday
-            var birthdaySection = '';
-            if (data.privacyBirthday && data.birthday) {
-                var age = calculateAge(data.birthday);
-                birthdaySection = '<div class="profile-field"><label>AGE</label><p>' + age + '</p></div>';
-            }
+            var emailValue = data.privacyEmail ? '<p>' + data.email + '</p>' : hiddenVal();
 
-            // Email
-            var emailSection = '';
-            if (data.privacyEmail && data.email) {
-                emailSection = '<div class="profile-field"><label>EMAIL</label><p>' + data.email + '</p></div>';
-            }
+            var infoSection =
+                '<div class="profile-section"><h3>Info</h3>' +
+                    '<div class="profile-field"><label>AGE</label>' + ageValue + '</div>' +
+                    '<div class="profile-field"><label>EMAIL</label>' + emailValue + '</div>' +
+                    '<div class="profile-field"><label>SORC BEYOND</label><p>' + (isPro ? '⭐ SorC Beyond Pro' : 'SorC Basic') + '</p></div>' +
+                '</div>';
 
-            // Social links
-            var socialSection = '';
-            if (isPro && data.privacySocial) {
-                var links = '';
-                if (data.website) links += '<a href="' + data.website + '" target="_blank" class="social-link">🌐 Website</a>';
-                if (data.socialTwitter) links += '<a href="https://x.com/' + data.socialTwitter + '" target="_blank" class="social-link">𝕏 ' + data.socialTwitter + '</a>';
-                if (data.socialInstagram) links += '<a href="https://instagram.com/' + data.socialInstagram + '" target="_blank" class="social-link">📷 ' + data.socialInstagram + '</a>';
-                if (links) socialSection = '<div class="profile-section"><h3>Links</h3>' + links + '</div>';
+            // ===== LINKS SECTION — always shown =====
+            var linksContent = '';
+            if (isPro) {
+                if (data.privacySocial) {
+                    var hasLinks = data.website || data.socialTwitter || data.socialInstagram;
+                    if (hasLinks) {
+                        if (data.website) linksContent += '<a href="' + data.website + '" target="_blank" class="social-link">🌐 Website</a>';
+                        if (data.socialTwitter) linksContent += '<a href="https://x.com/' + data.socialTwitter + '" target="_blank" class="social-link">𝕏 ' + data.socialTwitter + '</a>';
+                        if (data.socialInstagram) linksContent += '<a href="https://instagram.com/' + data.socialInstagram + '" target="_blank" class="social-link">📷 ' + data.socialInstagram + '</a>';
+                    } else {
+                        linksContent = '<span class="hidden-val">none set</span>';
+                    }
+                } else {
+                    linksContent = hiddenVal();
+                }
+            } else {
+                linksContent = '<span class="hidden-val">not available</span>';
             }
+            var linksSection = '<div class="profile-section"><h3>Links</h3>' + linksContent + '</div>';
 
-            // Achievements
+            // ===== ACHIEVEMENTS =====
             var achievementsSection = '';
             if (isPro && achievements.length > 0) {
-                achievementsSection = '<div class="profile-section"><h3>Achievements</h3>' +
-                    '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
-                    achievements.map(function(a) {
-                        return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>';
-                    }).join('') +
-                    '</div></div>';
+                achievementsSection =
+                    '<div class="profile-section"><h3>Achievements</h3>' +
+                        '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+                        achievements.map(function(a) {
+                            return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>';
+                        }).join('') +
+                        '</div>' +
+                    '</div>';
             } else {
                 achievementsSection =
                     '<div class="profile-section">' +
@@ -210,10 +234,9 @@
                     '</div>';
             }
 
-            // Fellowship + Message buttons
+            // ===== FELLOWSHIP + MESSAGE BUTTONS =====
             var actionSection = '';
             if (!isSelf && myUid) {
-                // Check fellowship status
                 var fellowshipId = [myUid, targetUid].sort().join('_');
                 var fellowDoc = await getDoc(doc(db, "fellowships", fellowshipId));
                 var fellowStatus = fellowDoc.exists() ? fellowDoc.data().status : 'none';
@@ -221,7 +244,7 @@
 
                 var fellowBtn = '';
                 if (!isFellowshipEligible()) {
-                    fellowBtn = '<button class="action-btn action-btn-grey" disabled>⚔️ Fellowship (PLAYER + 100pts required)</button>';
+                    fellowBtn = '<div style="font-size:0.72rem;color:#444;margin-bottom:0.75rem;">🔒 Unlocks with Player status</div>';
                 } else if (fellowStatus === 'none') {
                     fellowBtn = '<button class="action-btn action-btn-blue" onclick="sendFellowshipRequest()">⚔️ Add to Fellowship</button>';
                 } else if (fellowStatus === 'pending' && fellowSender === myUid) {
@@ -245,11 +268,6 @@
                 actionSection = '<div class="profile-section"><p style="font-size:0.85rem;color:#555;"><a href="signin.html" style="color:#d4af37;">Sign in</a> to connect with ' + username + '.</p></div>';
             }
 
-            // SorC Beyond status badge
-            var statusBadge = isPro
-                ? '<span class="pro-badge">SorC Beyond Pro</span>'
-                : '<span class="basic-badge">SorC Basic</span>';
-
             document.getElementById('profileApp').innerHTML =
                 '<div class="profile-card">' +
                     '<div class="profile-banner"></div>' +
@@ -270,8 +288,8 @@
                         (joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : '') +
                     '</div>' +
                     bioSection +
-                    ((birthdaySection || emailSection) ? '<div class="profile-section">' + birthdaySection + emailSection + '</div>' : '') +
-                    socialSection +
+                    infoSection +
+                    linksSection +
                     achievementsSection +
                     actionSection +
                 '</div>';
