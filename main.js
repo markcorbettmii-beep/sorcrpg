@@ -206,9 +206,10 @@ function showRoleBadge(email, username, role, avatar, userId) {
   }
 
   var safeUserId = String(userId || '');
+  var isAdminUser = OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
 
   badge.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
@@ -218,12 +219,18 @@ function showRoleBadge(email, username, role, avatar, userId) {
   badge.querySelector('.role-tag').addEventListener('click', function(e) {
     e.stopPropagation();
     e.preventDefault();
-    showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
+    var isAdmin = this.dataset.isadmin === 'true';
+    if (isAdmin) {
+      showAdminMembersPopup();
+    } else {
+      showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
+    }
   });
 
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 }
 
+// ========== OWN ROLE POPUP (non-admin) ==========
 window.showRolePopup = function(username, userId, role) {
   var existing = document.querySelector('.role-popup');
   if (existing) { existing.remove(); return; }
@@ -249,6 +256,58 @@ window.showRolePopup = function(username, userId, role) {
     e.stopPropagation();
     popup.remove();
   });
+};
+
+// ========== ADMIN MEMBERS POPUP ==========
+window.showAdminMembersPopup = async function() {
+  var existing = document.querySelector('.role-popup');
+  if (existing) { existing.remove(); return; }
+
+  var popup = document.createElement('div');
+  popup.className = 'role-popup';
+  popup.style.cssText = 'position:fixed;top:50px;right:10px;background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+
+  popup.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
+      '<span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">ALL MEMBERS</span>' +
+      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
+    '</div>' +
+    '<div id="adminMembersList" style="font-size:0.8rem;">Loading...</div>';
+
+  document.body.appendChild(popup);
+
+  document.getElementById('closeRolePopup').addEventListener('click', function(e) {
+    e.stopPropagation();
+    popup.remove();
+  });
+
+  // Load all members
+  var snap = await getDocs(collection(db, "users"));
+  var members = [];
+  snap.forEach(function(d) {
+    var data = d.data();
+    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
+    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
+    members.push({ uid: d.id, name, role });
+  });
+
+  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  var html = members.map(function(m) {
+    var colors = getRoleColor(m.role);
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2a2a;">' +
+      '<div style="display:flex;align-items:center;gap:6px;">' +
+        '<span style="background:' + colors.bg + ';color:' + colors.color + ';padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:bold;">' + getRoleAbbr(m.role) + '</span>' +
+        '<span style="color:#e0cfc0;">' + m.name + '</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;">' +
+        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
+        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="Send Message">✉</a>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('adminMembersList').innerHTML = html || '<span style="color:#555;">No members found.</span>';
 };
 
 // ========== SIGN OUT ==========
