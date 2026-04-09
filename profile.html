@@ -71,7 +71,6 @@
     <div id="profileApp">
         <div class="not-logged-in"><p>Loading...</p></div>
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -266,7 +265,7 @@
                                 <label>USERNAME ${surnameUnlocked ? '<span style="color:#4caf50;font-size:0.7rem;">· Surname unlocked!</span>' : ''}</label>
                                 ${!surnameUnlocked ? `
                                 <div class="surname-locked">
-                                    🔒 Surname locked — earn <span>${SURNAME_UNLOCK_POINTS - communityPoints} more community points</span> to unlock spaces in your name (e.g. <i>Elise Darkwood</i>).
+                                    🔒 Surname locked — earn <span>${SURNAME_UNLOCK_POINTS - communityPoints} more community points</span> to unlock spaces in your name.
                                     <div class="points-bar-bg"><div class="points-bar-fill" style="width:${pointsPct}%"></div></div>
                                     <div class="points-milestone">${communityPoints} / ${SURNAME_UNLOCK_POINTS} points</div>
                                 </div>` : ''}
@@ -321,6 +320,7 @@
                             </div>
                         </div>
 
+                        <!-- SorC Beyond Pro Features -->
                         <div class="profile-section">
                             <h3>SorC Beyond Pro <span style="color:#555;font-weight:normal;font-size:0.75rem;">— <a href="sorc-beyond.html" style="color:#d4af37;">Learn more</a></span></h3>
 
@@ -345,6 +345,16 @@
                                 <button class="btn btn-gold btn-sm" onclick="saveSocial('${uid}')" style="margin-top:6px;">Save</button>
                                 <div id="socialMsg" class="msg"></div>
                             </div>
+
+                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
+                                <label>ACHIEVEMENTS</label>
+                                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:4px;">
+                                    <div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>
+                                    <div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>
+                                    <div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>
+                                </div>
+                                <div style="font-size:0.75rem;color:#555;margin-top:6px;">Achievements are earned through gameplay and community activity.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -367,9 +377,7 @@
         window.saveUsername = async function(uid, surnameUnlocked) {
             var newUsername = document.getElementById('usernameInput').value.trim();
             var msgEl = document.getElementById('usernameMsg');
-            if (!surnameUnlocked && newUsername.includes(' ')) {
-                msgEl.className = 'msg error'; msgEl.textContent = 'Earn 500 community points to unlock surnames.'; return;
-            }
+            if (!surnameUnlocked && newUsername.includes(' ')) { msgEl.className = 'msg error'; msgEl.textContent = 'Earn 500 community points to unlock surnames.'; return; }
             if (newUsername.length < 3) { msgEl.className = 'msg error'; msgEl.textContent = 'Username must be at least 3 characters.'; return; }
             if (newUsername.length > 30) { msgEl.className = 'msg error'; msgEl.textContent = 'Username must be 30 characters or less.'; return; }
             if (!/^[a-zA-Z0-9_ ]+$/.test(newUsername)) { msgEl.className = 'msg error'; msgEl.textContent = 'Letters, numbers, underscores and spaces only.'; return; }
@@ -382,11 +390,9 @@
             if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That username is already taken.'; return; }
             await updateDoc(doc(db, "users", uid), { username: newUsername, displayName: newUsername });
             var savedGoogle = localStorage.getItem('sorc_google_user');
-            if (savedGoogle) {
-                try { var userInfo = JSON.parse(savedGoogle); userInfo.username = newUsername; localStorage.setItem('sorc_google_user', JSON.stringify(userInfo)); } catch(e) {}
-            }
-            var headerUsername = document.querySelector('.profile-username');
-            if (headerUsername) headerUsername.textContent = newUsername;
+            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = newUsername; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
+            var h = document.querySelector('.profile-username');
+            if (h) h.textContent = newUsername;
             msgEl.className = 'msg success'; msgEl.textContent = '✅ Username saved!';
             setTimeout(function() { msgEl.textContent = ''; }, 2000);
         };
@@ -396,9 +402,7 @@
             if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar.'; return; }
             await updateDoc(doc(db, "users", uid), { avatar: selectedAvatar });
             var savedGoogle = localStorage.getItem('sorc_google_user');
-            if (savedGoogle) {
-                try { var userInfo = JSON.parse(savedGoogle); userInfo.avatar = selectedAvatar; localStorage.setItem('sorc_google_user', JSON.stringify(userInfo)); } catch(e) {}
-            }
+            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.avatar = selectedAvatar; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
             msgEl.className = 'msg success'; msgEl.textContent = '✅ Avatar saved!';
             setTimeout(function() { msgEl.textContent = ''; }, 2000);
         };
@@ -437,8 +441,7 @@
         };
 
         window.savePrivacy = async function(uid, field, value) {
-            var update = {};
-            update[field] = value;
+            var update = {}; update[field] = value;
             await updateDoc(doc(db, "users", uid), update);
         };
 
@@ -458,15 +461,8 @@
             codesSnap.forEach(function(d) { if (d.data().code === code && !d.data().used) matched = d.id; });
             if (!matched) { msgEl.className = 'msg error'; msgEl.textContent = 'Invalid or already used code.'; return; }
             await updateDoc(doc(db, "users", uid), { role: 'MASTER' });
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ You are now a MASTER! Reload to see your updated role.';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ You are now a MASTER! Reload to see your updated role.';
         };
-
-        function containsBadWord(str) {
-            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
-            var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
-            return badWords.some(function(w) { return lower.includes(w); });
-        }
     </script>
     <script type="module" src="main.js"></script>
 </body>
