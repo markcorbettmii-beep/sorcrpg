@@ -103,7 +103,6 @@
 
         var params = new URLSearchParams(window.location.search);
         targetUid = params.get('uid');
-        var openMsg = params.get('msg') === '1';
 
         function getRoleColor(role) {
             if (role === 'OWNER') return 'background:#d4af37;color:#222;';
@@ -261,12 +260,33 @@
                 createdAt: serverTimestamp(),
                 lastMessageAt: serverTimestamp()
             });
-            if (msgEl) { msgEl.className = 'msg success'; msgEl.textContent = status === 'accepted' ? '✅ Conversation started!' : '✅ Request sent!'; }
+            if (msgEl) {
+                msgEl.className = 'msg success';
+                msgEl.textContent = status === 'accepted' ? '✅ Conversation started!' : '✅ Request sent!';
+            }
             setTimeout(function() { loadConversation(); }, 800);
         };
 
         window.acceptRequest = async function(convId) {
+            var myUsername = getMyUsername();
+            var myUid = getMyUid();
+
+            // Accept the request
             await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
+
+            // Send auto message: "X accepted your message request"
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: myUid,
+                senderName: myUsername,
+                text: myUsername + ' accepted your message request.',
+                isSystem: true,
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "conversations", convId), {
+                lastMessageAt: serverTimestamp(),
+                lastMessageText: myUsername + ' accepted your message request.'
+            });
+
             await loadConversation();
         };
 
