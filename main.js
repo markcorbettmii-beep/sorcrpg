@@ -339,9 +339,9 @@ window.showAdminMembersPopup = async function() {
         '<span style="background:' + colors.bg + ';color:' + colors.color + ';padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:bold;">' + getRoleAbbr(m.role) + '</span>' +
         '<span style="color:#e0cfc0;cursor:pointer;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
       '</div>' +
-      '<div style="display:flex;gap:6px;">' +
-        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;">👤</a>' +
-        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;">✉</a>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
+        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="Send Message">✉</a>' +
       '</div>' +
     '</div>';
   }).join('');
