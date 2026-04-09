@@ -223,8 +223,8 @@ async function checkInboxNotifications(uid) {
 
 // ========== ROLE BADGE ==========
 function showRoleBadge(email, username, role, avatar, userId) {
-  var existing = document.querySelector('.role-badge');
-  if (existing) existing.remove();
+  var existing = document.getElementById('navRoleBadge');
+  if (!existing) return;
 
   var existingPopup = document.querySelector('.role-popup');
   if (existingPopup) existingPopup.remove();
@@ -244,38 +244,25 @@ function showRoleBadge(email, username, role, avatar, userId) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
 
-  // Insert badge below the theme toggle buttons in the nav
-  var themeContainer = document.querySelector('.theme-toggle-container');
-  if (themeContainer) {
-    var existingNavBadge = document.getElementById('navRoleBadge');
-    if (existingNavBadge) existingNavBadge.remove();
+  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
-    var navBadge = document.createElement('div');
-    navBadge.id = 'navRoleBadge';
-    navBadge.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 10px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:8px;font-size:0.8rem;font-weight:bold;flex-wrap:wrap;margin-top:4px;';
+  existing.innerHTML = avatarHtml + displayName +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+    ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
+    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span></a>' +
+    ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
+    ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
 
-    navBadge.innerHTML =
-      avatarHtml +
-      displayName +
-      ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
-      ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-      ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox <span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;"></span></a>' +
-      ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
-      ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.8rem;">Logout</button>';
-
-    themeContainer.insertAdjacentElement('afterend', navBadge);
-
-    navBadge.querySelector('.role-tag').addEventListener('click', function(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      var isAdmin = this.dataset.isadmin === 'true';
-      if (isAdmin) {
-        showAdminMembersPopup();
-      } else {
-        showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
-      }
-    });
-  }
+  existing.querySelector('.role-tag').addEventListener('click', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    var isAdmin = this.dataset.isadmin === 'true';
+    if (isAdmin) {
+      showAdminMembersPopup();
+    } else {
+      showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
+    }
+  });
 
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 
@@ -290,7 +277,7 @@ window.showRolePopup = function(username, userId, role) {
 
   var popup = document.createElement('div');
   popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:80px;left:10px;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
 
   var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
 
@@ -318,7 +305,7 @@ window.showAdminMembersPopup = async function() {
 
   var popup = document.createElement('div');
   popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:80px;left:10px;background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
 
   popup.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
@@ -353,8 +340,8 @@ window.showAdminMembersPopup = async function() {
         '<span style="color:#e0cfc0;cursor:pointer;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
       '</div>' +
       '<div style="display:flex;gap:6px;">' +
-        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
-        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="Send Message">✉</a>' +
+        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;">👤</a>' +
+        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;">✉</a>' +
       '</div>' +
     '</div>';
   }).join('');
