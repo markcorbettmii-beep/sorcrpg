@@ -48,6 +48,7 @@
         .bubble-content { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
         .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
         .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
+        .bubble-content.system { background: #1a1a2a; color: #888; font-style: italic; border-radius: 10px; }
         .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
         .message-input-row { display: flex; gap: 0.5rem; }
         .message-input-row input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem; }
@@ -117,6 +118,7 @@
         var googleUser = null;
         var currentConvId = null;
         var currentOtherUid = null;
+        var currentOtherName = null;
 
         try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
 
@@ -197,7 +199,7 @@
             el.innerHTML = conversations.map(function(conv) {
                 var otherName = conv.senderUid === uid ? conv.receiverName : conv.senderName;
                 var otherUid = conv.senderUid === uid ? conv.receiverUid : conv.senderUid;
-                return '<div class="conversation-card" onclick="openConversation(\'' + conv.id + '\', \'' + otherName + '\', \'' + otherUid + '\')">' +
+                return '<div class="conversation-card" onclick="openConversation(\'' + conv.id + '\', \'' + (otherName || '').replace(/'/g, "\\'") + '\', \'' + otherUid + '\')">' +
                     '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
                     '<div class="conv-info">' +
                         '<div class="conv-name">' + (otherName || 'Unknown') + '</div>' +
@@ -238,13 +240,27 @@
         window.acceptRequest = async function(convId) {
             await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
             await loadInbox();
-            // Open the conversation immediately after accepting
             var convDoc = await getDoc(doc(db, "conversations", convId));
             if (convDoc.exists()) {
                 var conv = convDoc.data();
                 var myUid = getMyUid();
+                var myUsername = getMyUsername();
                 var otherName = conv.senderUid === myUid ? conv.receiverName : conv.senderName;
                 var otherUid = conv.senderUid === myUid ? conv.receiverUid : conv.senderUid;
+
+                // Send auto message
+                await addDoc(collection(db, "conversations", convId, "messages"), {
+                    senderUid: myUid,
+                    senderName: myUsername,
+                    text: myUsername + ' accepted your message request.',
+                    isSystem: true,
+                    createdAt: serverTimestamp()
+                });
+                await updateDoc(doc(db, "conversations", convId), {
+                    lastMessageAt: serverTimestamp(),
+                    lastMessageText: myUsername + ' accepted your message request.'
+                });
+
                 openConversation(convId, otherName, otherUid);
             }
         };
@@ -257,25 +273,26 @@
         window.openConversation = async function(convId, otherName, otherUid) {
             currentConvId = convId;
             currentOtherUid = otherUid;
+            currentOtherName = otherName;
 
             document.getElementById('inboxList').classList.add('hidden');
             document.getElementById('convView').classList.add('active');
 
-            var otherDoc = await getDoc(doc(db, "users", otherUid));
+            var otherDoc = await getDoc(doc(db, "users", currentOtherUid));
             var otherRole = 'CIVILIAN';
             if (otherDoc.exists()) {
                 var otherEmail = otherDoc.data().email || '';
                 otherRole = OWNER_EMAILS.includes(otherEmail) ? 'OWNER' : ADMIN_EMAILS.includes(otherEmail) ? 'ADMIN' : (otherDoc.data().role || 'CIVILIAN');
             }
 
-            // Profile link has NO &msg=1 — goes straight to profile
+            // Use currentOtherUid for the profile link — guaranteed to be set
             document.getElementById('convHeader').innerHTML =
-                '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
+                '<div class="conv-avatar">' + (currentOtherName ? currentOtherName.charAt(0).toUpperCase() : '?') + '</div>' +
                 '<div>' +
-                    '<div class="conv-header-name">' + otherName +
+                    '<div class="conv-header-name">' + currentOtherName +
                         ' <span style="' + getRoleColor(otherRole) + 'padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:bold;">' + getRoleAbbr(otherRole) + '</span>' +
                     '</div>' +
-                    '<a href="public-profile.html?uid=' + otherUid + '" style="color:#d4af37;font-size:0.75rem;text-decoration:none;">View Profile</a>' +
+                    '<a href="public-profile.html?uid=' + currentOtherUid + '" style="color:#d4af37;font-size:0.75rem;text-decoration:none;">View Profile</a>' +
                 '</div>';
 
             await loadMessages(convId);
@@ -283,6 +300,8 @@
 
         window.backToInbox = function() {
             currentConvId = null;
+            currentOtherUid = null;
+            currentOtherName = null;
             document.getElementById('inboxList').classList.remove('hidden');
             document.getElementById('convView').classList.remove('active');
             loadInbox();
@@ -296,12 +315,20 @@
             snap.forEach(function(d) {
                 var msg = d.data();
                 var isMine = msg.senderUid === myUid;
-                html +=
-                    '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
-                        (!isMine ? '<div class="bubble-author">' + (msg.senderName || '') + '</div>' : '') +
-                        '<div class="bubble-content">' + msg.text + '</div>' +
-                        '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
-                    '</div>';
+                var isSystem = msg.isSystem === true;
+                if (isSystem) {
+                    html +=
+                        '<div style="text-align:center;margin:0.5rem 0;">' +
+                            '<span style="background:#1a1a2a;color:#666;font-size:0.78rem;padding:4px 12px;border-radius:10px;font-style:italic;">' + msg.text + '</span>' +
+                        '</div>';
+                } else {
+                    html +=
+                        '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
+                            (!isMine ? '<div class="bubble-author">' + (msg.senderName || '') + '</div>' : '') +
+                            '<div class="bubble-content">' + msg.text + '</div>' +
+                            '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
+                        '</div>';
+                }
             });
             var el = document.getElementById('messageThread');
             el.innerHTML = html || '<p style="color:#444;font-size:0.85rem;text-align:center;margin-top:2rem;">No messages yet. Say hello!</p>';
