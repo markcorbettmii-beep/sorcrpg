@@ -8,93 +8,186 @@
     <link rel="stylesheet" href="styles.css" />
     <style>
         body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
-        .profile-container { max-width: 680px; margin: 2rem auto; padding: 2rem; }
-        .profile-card { background: #1a1a1a; border-radius: 1rem; border: 1px solid #333; overflow: hidden; margin-bottom: 1rem; }
+
+        .profile-container { max-width: 680px; margin: 2rem auto; padding: 1rem; }
+
+        .back-link {
+            display: inline-block;
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        .profile-card {
+            background: #1a1a1a;
+            border-radius: 1rem;
+            border: 1px solid #333;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
         .profile-banner {
-            width: 100%; height: 120px;
+            width: 100%;
+            height: 120px;
             background: linear-gradient(135deg, #1a0a0a, #2a0808, #d0021b22);
-            display: flex; align-items: center; justify-content: center;
-            color: #333; font-size: 0.8rem; position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            font-size: 0.8rem;
         }
-        .profile-banner.locked { filter: grayscale(1); opacity: 0.4; }
+
         .profile-info-row {
-            display: flex; align-items: flex-end; gap: 1rem;
-            padding: 0 1.5rem; margin-top: -40px; margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            padding: 0 1.5rem;
+            margin-top: -40px;
+            margin-bottom: 1rem;
         }
+
         .profile-avatar-large {
-            width: 80px; height: 80px; border-radius: 50%; border: 3px solid #d0021b;
-            background: #2a2a2a; display: flex; align-items: center; justify-content: center;
-            font-size: 0.7rem; color: #555; overflow: hidden; flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #d0021b;
+            background: #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #555;
+            overflow: hidden;
+            flex-shrink: 0;
         }
+
         .profile-name-block { flex: 1; padding-bottom: 0.5rem; }
         .profile-username { font-size: 1.3rem; font-weight: bold; color: #e0cfc0; }
-        .profile-role-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 3px; }
-        .profile-title { font-size: 0.8rem; color: #d4af37; margin-top: 2px; font-style: italic; }
-        .profile-section { padding: 1rem 1.5rem; border-top: 1px solid #2a2a2a; }
-        .profile-section h3 { color: #d4af37; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem 0; }
-        .profile-field { margin-bottom: 0.75rem; }
-        .profile-field label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 3px; }
-        .profile-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box; }
-        .profile-input:focus { outline: none; border-color: #d0021b; }
-        .profile-input:disabled { opacity: 0.5; cursor: not-allowed; background: #1a1a1a; }
-        .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
-        .toggle-row label { font-size: 0.8rem; color: #888; }
-        .toggle-switch { position: relative; width: 36px; height: 20px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #444; border-radius: 20px; transition: 0.3s; }
-        .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
-        input:checked + .toggle-slider { background: #d0021b; }
-        input:checked + .toggle-slider:before { transform: translateX(16px); }
-        .points-bar-bg { background: #2a2a2a; border-radius: 8px; height: 8px; margin-top: 4px; overflow: hidden; }
-        .points-bar-fill { background: linear-gradient(90deg, #d0021b, #d4af37); height: 100%; border-radius: 8px; transition: width 0.5s; }
-        .points-milestone { font-size: 0.75rem; color: #555; margin-top: 4px; }
-        .locked-feature { opacity: 0.45; pointer-events: none; position: relative; }
-        .locked-feature::after {
-            content: '🔒 SorC Beyond Pro'; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); background: #1a1a1a; border: 1px solid #333;
-            border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; color: #555;
-            white-space: nowrap; pointer-events: auto;
+        .profile-role-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 3px;
         }
-        .upgrade-section { margin-top: 1rem; padding: 1rem 1.5rem; background: #1a1a2a; border: 1px solid #444; border-radius: 8px; }
-        .upgrade-section h3 { color: #d4af37; margin-bottom: 0.5rem; font-size: 0.85rem; }
-        .upgrade-btn { display: block; width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 2px solid #444; background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.9rem; text-align: left; transition: border-color 0.2s; }
-        .upgrade-btn:hover { border-color: #d4af37; }
-        .upgrade-info { display: none; background: #2a1a00; border: 1px solid #d4af37; color: #d4af37; border-radius: 8px; padding: 1rem; margin-top: 0.5rem; font-size: 0.85rem; line-height: 1.6; }
-        .master-code-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; margin-top: 8px; margin-bottom: 8px; box-sizing: border-box; }
-        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
-        .btn-red { background: #d0021b; color: #fff; }
-        .btn-gold { background: #d4af37; color: #222; }
-        .btn-green { background: #1a6b1a; color: #fff; }
-        .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
-        .msg { margin-top: 0.5rem; font-size: 0.85rem; }
-        .msg.success { color: #4caf50; }
-        .msg.error { color: #d0021b; }
-        .not-logged-in { text-align: center; padding: 3rem; }
-        .not-logged-in a { color: #d0021b; }
-        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
-        .avatar-option { border: 3px solid transparent; border-radius: 8px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; background: #2a2a2a; }
-        .avatar-option:hover { border-color: #d4af37; }
-        .avatar-option.selected { border-color: #d0021b; }
-        .avatar-placeholder { width: 100%; aspect-ratio: 1; background: #2a2a2a; display: flex; align-items: center; justify-content: center; color: #555; font-size: 0.7rem; }
+        .profile-title { font-size: 0.8rem; color: #d4af37; margin-top: 2px; font-style: italic; }
+
+        .profile-section { padding: 1rem 1.5rem; border-top: 1px solid #2a2a2a; }
+        .profile-section h3 {
+            color: #d4af37;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 0.75rem 0;
+        }
+
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
         .stat-box { background: #222; border-radius: 8px; padding: 0.75rem; text-align: center; border: 1px solid #333; }
         .stat-box .stat-val { font-size: 1.2rem; font-weight: bold; color: #d4af37; }
         .stat-box .stat-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
-        .username-locked-note { background: #1a1a00; border: 1px solid #555; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem; color: #666; margin-bottom: 0.75rem; }
-        .username-locked-note span { color: #d4af37; }
-        .surname-note { background: #1a1a2a; border: 1px solid #333; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem; color: #666; margin-top: 0.5rem; }
-        .surname-note span { color: #d4af37; }
+
+        .profile-field { margin-bottom: 0.75rem; }
+        .profile-field label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 3px; }
+        .profile-field p { font-size: 0.9rem; color: #c0b090; margin: 0; line-height: 1.6; }
+
+        .msg-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 0.75rem;
+        }
+        .msg-btn-primary { background: #d0021b; color: #fff; }
+        .msg-btn-primary:hover { background: #a50013; }
+        .msg-btn-admin { background: #d4af37; color: #222; }
+        .msg-btn-admin:hover { background: #c19b2b; }
+        .msg-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+
+        .msg-status {
+            text-align: center;
+            font-size: 0.85rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+        }
+        .msg-status.pending { background: #1a1a00; border: 1px solid #555; color: #888; }
+        .msg-status.accepted { background: #1a2a1a; border: 1px solid #4caf50; color: #4caf50; }
+        .msg-status.declined { background: #2a1a1a; border: 1px solid #555; color: #666; }
+
+        .message-thread {
+            background: #222;
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .message-bubble { margin-bottom: 0.75rem; display: flex; flex-direction: column; }
+        .message-bubble.mine { align-items: flex-end; }
+        .message-bubble.theirs { align-items: flex-start; }
+        .bubble-content {
+            max-width: 80%; padding: 8px 12px; border-radius: 10px;
+            font-size: 0.88rem; line-height: 1.5;
+        }
+        .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
+        .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
+        .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
+
+        .message-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .message-input-row input {
+            flex: 1; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem;
+        }
+        .message-input-row input:focus { outline: none; border-color: #d0021b; }
+        .message-input-row button {
+            padding: 8px 16px; background: #d0021b; color: #fff;
+            border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+        .message-input-row button:hover { background: #a50013; }
+
+        .accept-decline-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-red { background: #d0021b; color: #fff; }
+        .btn-red:hover { background: #a50013; }
+        .btn-grey { background: #333; color: #888; }
+        .btn-grey:hover { background: #444; color: #e0cfc0; }
+
+        .msg { font-size: 0.85rem; margin-top: 0.5rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #d0021b; }
+
+        .not-found { text-align: center; padding: 3rem; color: #555; }
+        .loading { text-align: center; padding: 3rem; color: #555; }
+
+        .social-link {
+            display: inline-block; color: #d4af37; text-decoration: none;
+            font-size: 0.85rem; margin-right: 1rem;
+        }
+        .social-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div id="profileApp">
-        <div class="not-logged-in"><p style="text-align:center;padding:3rem;color:#888;">Loading...</p></div>
+    <div class="profile-container">
+        <a href="javascript:history.back()" class="back-link">← Back</a>
+        <div id="profileApp"><div class="loading">Loading profile...</div></div>
     </div>
+
+    <div id="footer"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, getDocs, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -111,453 +204,340 @@
 
         const OWNER_EMAILS = ["corbett@sorcrpg.com"];
         const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-        const SURNAME_UNLOCK_POINTS = 500;
 
-        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
-        function containsBadWord(str) {
-            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
-            return badWords.some(function(w) { return lower.includes(w); });
-        }
+        var currentUser = null;
+        var currentUserData = null;
+        var googleUser = null;
+        var targetUid = null;
+        var targetData = null;
+        var conversationId = null;
 
-        function roleColor(role) {
+        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
+
+        var params = new URLSearchParams(window.location.search);
+        targetUid = params.get('uid');
+        // Only open message if msg=1 AND user explicitly clicked message link
+        var openMsg = params.get('msg') === '1';
+
+        function getRoleColor(role) {
             if (role === 'OWNER') return 'background:#d4af37;color:#222;';
             if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
             if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
             if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
             return 'background:#333;color:#e0cfc0;';
         }
-        function roleAbbr(role) {
+        function getRoleAbbr(role) {
             if (role === 'OWNER') return '[OWN]';
             if (role === 'ADMIN') return '[AD]';
             if (role === 'MASTER') return '[GM]';
             if (role === 'PLAYER') return '[PC]';
             return '[CIV]';
         }
-
-        function calculateAge(birthday) {
-            if (!birthday) return null;
-            var today = new Date();
-            var birth = new Date(birthday);
-            var age = today.getFullYear() - birth.getFullYear();
-            var m = today.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-            return age;
+        function getRoleLabel(role) {
+            if (role === 'OWNER') return 'Owner';
+            if (role === 'ADMIN') return 'Admin';
+            if (role === 'MASTER') return 'Game Master';
+            if (role === 'PLAYER') return 'Player Character';
+            return 'Civilian';
+        }
+        function timeAgo(timestamp) {
+            if (!timestamp) return '';
+            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
         }
 
-        function isRandomName(username) {
-            // Check if name matches our random generation pattern e.g. IronSlayer4821
-            return /^[A-Z][a-z]+[A-Z][a-z]+\d{4}$/.test(username);
+        function getMyUid() {
+            return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null);
+        }
+        function getMyEmail() {
+            return currentUser ? currentUser.email : (googleUser ? googleUser.email : null);
+        }
+        function getMyUsername() {
+            var data = currentUserData || {};
+            return data.username || data.displayName || (getMyEmail() || '').split('@')[0];
+        }
+        function isAdminOrOwner(email) {
+            return OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
         }
 
-        var selectedAvatar = null;
-        var currentUid = null;
-
-        function buildAvatarGrid(currentAvatar) {
-            var avatars = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11','avatar12'];
-            return avatars.map(function(id) {
-                var sel = id === currentAvatar ? ' selected' : '';
-                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')">' +
-                    '<div class="avatar-placeholder">' + id + '</div>' +
-                '</div>';
-            }).join('');
+        async function getConversationId(uid1, uid2) {
+            var ids = [uid1, uid2].sort();
+            return ids[0] + '_' + ids[1];
         }
 
-        window.pickAvatar = function(el, id) {
-            document.querySelectorAll('.avatar-option').forEach(function(o) { o.classList.remove('selected'); });
-            el.classList.add('selected');
-            selectedAvatar = id;
+        async function loadConversation() {
+            var myUid = getMyUid();
+            if (!myUid || !targetUid) return;
+            conversationId = await getConversationId(myUid, targetUid);
+            var convDoc = await getDoc(doc(db, "conversations", conversationId));
+
+            if (!convDoc.exists()) {
+                renderMessagingSection('none');
+                return;
+            }
+
+            var conv = convDoc.data();
+            var status = conv.status;
+
+            if (status === 'pending') {
+                if (conv.senderUid === myUid) {
+                    renderMessagingSection('pending_sent');
+                } else if (conv.receiverUid === myUid) {
+                    renderMessagingSection('pending_received', conversationId);
+                }
+            } else if (status === 'accepted') {
+                renderMessagingSection('accepted', conversationId);
+                await loadMessages(conversationId);
+            } else if (status === 'declined') {
+                renderMessagingSection('declined');
+            }
+        }
+
+        function renderMessagingSection(status, convId) {
+            var el = document.getElementById('messagingSection');
+            if (!el) return;
+
+            var myUid = getMyUid();
+            var myEmail = getMyEmail();
+
+            if (!myUid) {
+                el.innerHTML = '<p style="color:#555;font-size:0.85rem;"><a href="signin.html" style="color:#d4af37;">Sign in</a> to send messages.</p>';
+                return;
+            }
+
+            if (myUid === targetUid) {
+                el.innerHTML = '<p style="color:#555;font-size:0.85rem;">This is your own profile.</p>';
+                return;
+            }
+
+            if (status === 'none') {
+                var isAdmin = isAdminOrOwner(myEmail);
+                el.innerHTML = `
+                    <button class="msg-btn ${isAdmin ? 'msg-btn-admin' : 'msg-btn-primary'}" onclick="sendMessageRequest()">
+                        ${isAdmin ? '✉ Send Message' : '✉ Send Message Request'}
+                    </button>
+                    ${!isAdmin ? '<p style="font-size:0.75rem;color:#555;margin:0;">They must accept before you can message each other.</p>' : ''}
+                    <div id="msgRequestMsg" class="msg"></div>`;
+
+                // Auto scroll to message section if msg=1
+                if (openMsg) {
+                    setTimeout(function() {
+                        el.scrollIntoView({ behavior: 'smooth' });
+                    }, 300);
+                }
+            } else if (status === 'pending_sent') {
+                el.innerHTML = '<div class="msg-status pending">⏳ Message request sent — waiting for them to accept.</div>';
+            } else if (status === 'pending_received') {
+                el.innerHTML = `
+                    <div class="msg-status pending">📨 This person wants to message you.</div>
+                    <div class="accept-decline-row">
+                        <button class="btn btn-red" onclick="acceptRequest('${convId}')">Accept</button>
+                        <button class="btn btn-grey" onclick="declineRequest('${convId}')">Decline</button>
+                    </div>`;
+            } else if (status === 'accepted') {
+                el.innerHTML = `
+                    <div class="msg-status accepted">✅ Connected</div>
+                    <div class="message-thread" id="messageThread"></div>
+                    <div class="message-input-row">
+                        <input type="text" id="messageInput" placeholder="Write a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
+                        <button onclick="sendMessage()">Send</button>
+                    </div>`;
+            } else if (status === 'declined') {
+                el.innerHTML = '<div class="msg-status declined">❌ Message request was declined.</div>';
+            }
+        }
+
+        async function loadMessages(convId) {
+            var q = query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc"));
+            var snap = await getDocs(q);
+            var myUid = getMyUid();
+            var html = '';
+            snap.forEach(function(d) {
+                var msg = d.data();
+                var isMine = msg.senderUid === myUid;
+                html += `
+                    <div class="message-bubble ${isMine ? 'mine' : 'theirs'}">
+                        <div class="bubble-content">${msg.text}</div>
+                        <div class="bubble-time">${timeAgo(msg.createdAt)}</div>
+                    </div>`;
+            });
+            var el = document.getElementById('messageThread');
+            if (el) {
+                el.innerHTML = html || '<p style="color:#444;font-size:0.8rem;text-align:center;">No messages yet. Say hello!</p>';
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+
+        window.sendMessageRequest = async function() {
+            var myUid = getMyUid();
+            var myEmail = getMyEmail();
+            var msgEl = document.getElementById('msgRequestMsg');
+            if (!myUid) return;
+
+            conversationId = await getConversationId(myUid, targetUid);
+            var isAdmin = isAdminOrOwner(myEmail);
+            var status = isAdmin ? 'accepted' : 'pending';
+
+            await setDoc(doc(db, "conversations", conversationId), {
+                senderUid: myUid,
+                senderName: getMyUsername(),
+                receiverUid: targetUid,
+                receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: status,
+                createdAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp()
+            });
+
+            if (msgEl) {
+                msgEl.className = 'msg success';
+                msgEl.textContent = status === 'accepted' ? '✅ Conversation started!' : '✅ Request sent!';
+            }
+            setTimeout(function() { loadConversation(); }, 800);
         };
 
-        var googleUser = null;
-        try {
-            var saved = localStorage.getItem('sorc_google_user');
-            if (saved) googleUser = JSON.parse(saved);
-        } catch(e) {}
+        window.acceptRequest = async function(convId) {
+            await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
+            await loadConversation();
+        };
 
-        async function saveField(fields) {
-            if (!currentUid) return;
-            await setDoc(doc(db, "users", currentUid), fields, { merge: true });
-        }
+        window.declineRequest = async function(convId) {
+            await updateDoc(doc(db, "conversations", convId), { status: 'declined' });
+            renderMessagingSection('declined');
+        };
 
-        async function loadProfile(uid, email, role, firestoreData) {
-            currentUid = uid;
-            var data = firestoreData || {};
-            var username = data.username || data.displayName || email.split('@')[0];
-            var avatar = data.avatar || null;
-            var userId = data.userId || '';
-            var bio = data.bio || '';
-            var birthday = data.birthday || '';
-            var website = data.website || '';
-            var socialTwitter = data.socialTwitter || '';
-            var socialInstagram = data.socialInstagram || '';
+        window.sendMessage = async function() {
+            var input = document.getElementById('messageInput');
+            var text = input ? input.value.trim() : '';
+            if (!text || !conversationId) return;
+            var myUid = getMyUid();
+            await addDoc(collection(db, "conversations", conversationId, "messages"), {
+                senderUid: myUid,
+                senderName: getMyUsername(),
+                text: text,
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "conversations", conversationId), { lastMessageAt: serverTimestamp() });
+            input.value = '';
+            await loadMessages(conversationId);
+        };
+
+        async function renderProfile(data) {
+            targetData = data;
+            var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
+            var username = data.username || data.displayName || 'Unknown Adventurer';
             var communityPoints = data.communityPoints || 0;
-            var joinDate = data.joinDate || '';
             var postCount = data.postCount || 0;
             var titles = data.titles || [];
+            var joinDate = data.joinDate || '';
             var isPro = data.isPro || false;
-            var usernameLocked = data.usernameLocked === true;
-
-            // Privacy defaults to false (hidden)
-            var privacyEmail = data.privacyEmail === true;
-            var privacyBirthday = data.privacyBirthday === true;
-            var privacyBio = data.privacyBio === true;
-            var privacySocial = data.privacySocial === true;
-
-            var surnameUnlocked = communityPoints >= SURNAME_UNLOCK_POINTS;
-            var pointsPct = Math.min((communityPoints / SURNAME_UNLOCK_POINTS) * 100, 100);
-            var age = calculateAge(birthday);
-            selectedAvatar = avatar;
 
             var titleDisplay = titles.length > 0
                 ? '<div class="profile-title">' + titles.join(' · ') + '</div>'
                 : '';
 
-            // Username section — locked after first set, surname unlock shown separately
-            var usernameSection = '';
-            if (usernameLocked) {
-                usernameSection = `
-                    <div class="username-locked-note">
-                        🔒 Username locked as <span>${username}</span> — usernames cannot be changed after being set.
-                        ${surnameUnlocked
-                            ? '<br/><br/>✅ Surname unlocked! Add a surname below (e.g. <i>' + username + ' Darkwood</i>):<br/><input type="text" id="surnameInput" class="profile-input" placeholder="Add surname" maxlength="20" style="margin-top:6px;" /><button class="btn btn-gold btn-sm" onclick="saveSurname()" style="margin-top:6px;">Save Surname</button><div id="surnameMsg" class="msg"></div>'
-                            : '<br/><br/><div style="margin-top:0.5rem;">Earn <span>' + (SURNAME_UNLOCK_POINTS - communityPoints) + ' more community points</span> to add a surname.<div class="points-bar-bg"><div class="points-bar-fill" style="width:' + pointsPct + '%"></div></div><div class="points-milestone">' + communityPoints + ' / ' + SURNAME_UNLOCK_POINTS + ' points</div></div>'
-                        }
-                    </div>`;
-            } else {
-                usernameSection = `
-                    <input type="text" id="usernameInput" class="profile-input" value="${username}" maxlength="20" placeholder="Choose your username" />
-                    <p style="font-size:0.75rem;color:#555;margin-top:4px;">Choose carefully — usernames cannot be changed after being set. Surnames can be added later at 500 community points.</p>
-                    <button class="btn btn-gold btn-sm" onclick="saveUsername()" style="margin-top:6px;">Set Username</button>
-                    <div id="usernameMsg" class="msg"></div>`;
+            var bioSection = data.privacyBio && data.bio
+                ? `<div class="profile-section"><h3>About</h3><div class="profile-field"><p>${data.bio}</p></div></div>`
+                : '';
+
+            var birthdaySection = '';
+            if (data.privacyBirthday && data.birthday) {
+                var birth = new Date(data.birthday);
+                var today = new Date();
+                var age = today.getFullYear() - birth.getFullYear();
+                var m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                birthdaySection = `<div class="profile-field"><label>AGE</label><p>${age}</p></div>`;
             }
 
-            var upgradeSection = '';
-            if (role === 'CIVILIAN') {
-                upgradeSection = `
-                <div class="upgrade-section">
-                    <h3>Upgrade Your Account</h3>
-                    <button class="upgrade-btn" onclick="toggleInfo('pc-info')">▶ Upgrade to PLAYER</button>
-                    <div class="upgrade-info" id="pc-info">
-                        To upgrade to PLAYER, you must pass a <b>SorC Player Assessment</b>. Coming soon.
-                    </div>
-                    <button class="upgrade-btn" onclick="toggleInfo('gm-info')">▶ Upgrade to MASTER</button>
-                    <div class="upgrade-info" id="gm-info">
-                        To upgrade to MASTER, pass a <b>SorC Master Assessment</b> AND redeem a Master Code.<br/><br/>
-                        Have a code?<br/>
-                        <input type="text" id="masterCodeInput" class="master-code-input" placeholder="Enter Master Code" />
-                        <button class="btn btn-green btn-sm" onclick="redeemCode()">Redeem</button>
-                        <div id="codeMsg" class="msg"></div>
-                    </div>
-                </div>`;
-            } else if (role === 'PLAYER') {
-                upgradeSection = `
-                <div class="upgrade-section">
-                    <h3>Upgrade to MASTER</h3>
-                    <button class="upgrade-btn" onclick="toggleInfo('gm-info-pc')">▶ Upgrade to MASTER</button>
-                    <div class="upgrade-info" id="gm-info-pc">
-                        Pass a <b>SorC Master Assessment</b> AND redeem a Master Code.<br/><br/>
-                        <input type="text" id="masterCodeInput" class="master-code-input" placeholder="Enter Master Code" />
-                        <button class="btn btn-green btn-sm" onclick="redeemCode()">Redeem</button>
-                        <div id="codeMsg" class="msg"></div>
-                    </div>
-                </div>`;
+            var emailSection = data.privacyEmail
+                ? `<div class="profile-field"><label>EMAIL</label><p>${data.email}</p></div>`
+                : '';
+
+            var socialSection = '';
+            if (data.privacySocial && isPro) {
+                var links = '';
+                if (data.website) links += `<a href="${data.website}" target="_blank" class="social-link">🌐 Website</a>`;
+                if (data.socialTwitter) links += `<a href="https://x.com/${data.socialTwitter}" target="_blank" class="social-link">𝕏 ${data.socialTwitter}</a>`;
+                if (data.socialInstagram) links += `<a href="https://instagram.com/${data.socialInstagram}" target="_blank" class="social-link">📷 ${data.socialInstagram}</a>`;
+                if (links) socialSection = `<div class="profile-section"><h3>Links</h3>${links}</div>`;
             }
 
             document.getElementById('profileApp').innerHTML = `
-                <div class="profile-container">
-                    <div class="profile-card">
-                        <div class="profile-banner ${isPro ? '' : 'locked'}">
-                            ${isPro ? 'Custom Banner' : '🔒 Banner — SorC Beyond Pro'}
+                <div class="profile-card">
+                    <div class="profile-banner"></div>
+                    <div class="profile-info-row">
+                        <div class="profile-avatar-large">
+                            ${data.avatar ? '<div style="font-size:0.7rem;color:#555;">' + data.avatar + '</div>' : username.charAt(0).toUpperCase()}
                         </div>
-                        <div class="profile-info-row">
-                            <div class="profile-avatar-large">
-                                <div style="font-size:0.7rem;color:#555;">${avatar || 'No avatar'}</div>
-                            </div>
-                            <div class="profile-name-block">
-                                <div class="profile-username" id="headerUsername">${username}</div>
-                                <span class="profile-role-tag" style="${roleColor(role)}">${role} ${roleAbbr(role)}</span>
-                                ${titleDisplay}
-                                ${userId ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + userId + '</div>' : ''}
-                            </div>
-                        </div>
-                        <div class="profile-section">
-                            <div class="stat-grid">
-                                <div class="stat-box">
-                                    <div class="stat-val">${communityPoints}</div>
-                                    <div class="stat-label">Community Points</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-val">${postCount}</div>
-                                    <div class="stat-label">Forum Posts</div>
-                                </div>
-                                <div class="stat-box">
-                                    <div class="stat-val">${titles.length}</div>
-                                    <div class="stat-label">Titles Earned</div>
-                                </div>
-                            </div>
-                            ${joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : ''}
+                        <div class="profile-name-block">
+                            <div class="profile-username">${username}</div>
+                            <span class="profile-role-tag" style="${getRoleColor(role)}">${getRoleLabel(role)} ${getRoleAbbr(role)}</span>
+                            ${titleDisplay}
                         </div>
                     </div>
 
-                    <div class="profile-card">
-                        <div class="profile-section">
-                            <h3>Edit Profile</h3>
-
-                            <div class="profile-field">
-                                <label>USERNAME</label>
-                                ${usernameSection}
+                    <div class="profile-section">
+                        <div class="stat-grid">
+                            <div class="stat-box">
+                                <div class="stat-val">${communityPoints}</div>
+                                <div class="stat-label">Community Points</div>
                             </div>
-
-                            <div class="profile-field">
-                                <label>AVATAR</label>
-                                <div class="avatar-grid">${buildAvatarGrid(avatar)}</div>
-                                <button class="btn btn-gold btn-sm" onclick="saveAvatar()">Save Avatar</button>
-                                <div id="avatarMsg" class="msg"></div>
+                            <div class="stat-box">
+                                <div class="stat-val">${postCount}</div>
+                                <div class="stat-label">Forum Posts</div>
                             </div>
-
-                            <div class="profile-field">
-                                <div class="toggle-row">
-                                    <label>BIO <span style="font-size:0.7rem;color:#555;">(toggle to show publicly)</span></label>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleBio" ${privacyBio ? 'checked' : ''} onchange="savePrivacy('privacyBio', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <textarea id="bioInput" class="profile-input" rows="3" maxlength="300" placeholder="Tell Essentia about yourself...">${bio}</textarea>
-                                <button class="btn btn-gold btn-sm" onclick="saveBio()" style="margin-top:6px;">Save Bio</button>
-                                <div id="bioMsg" class="msg"></div>
-                            </div>
-
-                            <div class="profile-field">
-                                <div class="toggle-row">
-                                    <label>BIRTHDAY <span style="font-size:0.7rem;color:#555;">(toggle to show publicly)</span></label>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleBirthday" ${privacyBirthday ? 'checked' : ''} onchange="savePrivacy('privacyBirthday', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <input type="date" id="birthdayInput" class="profile-input" value="${birthday}" />
-                                ${age !== null ? '<div style="font-size:0.8rem;color:#888;margin-top:4px;">Age: ' + age + '</div>' : ''}
-                                <button class="btn btn-gold btn-sm" onclick="saveBirthday()" style="margin-top:6px;">Save Birthday</button>
-                                <div id="birthdayMsg" class="msg"></div>
-                            </div>
-
-                            <div class="profile-field">
-                                <div class="toggle-row">
-                                    <label>EMAIL <span style="font-size:0.7rem;color:#555;">(toggle to show publicly)</span></label>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleEmail" ${privacyEmail ? 'checked' : ''} onchange="savePrivacy('privacyEmail', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div style="font-size:0.8rem;color:#555;">${email}</div>
+                            <div class="stat-box">
+                                <div class="stat-val">${titles.length}</div>
+                                <div class="stat-label">Titles Earned</div>
                             </div>
                         </div>
-
-                        <div class="profile-section">
-                            <h3>SorC Beyond Pro <span style="color:#555;font-weight:normal;font-size:0.75rem;">— <a href="sorc-beyond.html" style="color:#d4af37;">Learn more</a></span></h3>
-                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
-                                <label>WEBSITE</label>
-                                <input type="url" id="websiteInput" class="profile-input" value="${website}" placeholder="https://yoursite.com" />
-                                <button class="btn btn-gold btn-sm" onclick="saveWebsite()" style="margin-top:6px;">Save</button>
-                                <div id="websiteMsg" class="msg"></div>
-                            </div>
-                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
-                                <label>SOCIAL LINKS</label>
-                                <input type="text" id="twitterInput" class="profile-input" value="${socialTwitter}" placeholder="X / Twitter handle" style="margin-bottom:6px;" />
-                                <input type="text" id="instagramInput" class="profile-input" value="${socialInstagram}" placeholder="Instagram handle" />
-                                <div class="toggle-row" style="margin-top:6px;">
-                                    <label style="font-size:0.7rem;color:#555;">Show social links publicly</label>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" ${privacySocial ? 'checked' : ''} onchange="savePrivacy('privacySocial', this.checked)">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <button class="btn btn-gold btn-sm" onclick="saveSocial()" style="margin-top:6px;">Save</button>
-                                <div id="socialMsg" class="msg"></div>
-                            </div>
-                        </div>
+                        ${joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : ''}
                     </div>
 
-                    ${upgradeSection}
+                    ${bioSection}
+                    ${birthdaySection || emailSection ? `<div class="profile-section">${birthdaySection}${emailSection}</div>` : ''}
+                    ${socialSection}
 
-                    <div style="margin-top:1rem;">
-                        <button class="btn btn-red" onclick="doSignOut()">Logout</button>
-                        &nbsp;
-                        <a href="index.html" class="btn btn-gold" style="text-decoration:none;">Home</a>
+                    <div class="profile-section">
+                        <h3>Message</h3>
+                        <div id="messagingSection">Loading...</div>
                     </div>
                 </div>
             `;
+
+            await loadConversation();
         }
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
-                var email = user.email;
-                var uid = user.uid;
-                var role = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : 'CIVILIAN';
-                var docSnap = await getDoc(doc(db, "users", uid));
-                var data = docSnap.exists() ? docSnap.data() : {};
-                if (!OWNER_EMAILS.includes(email) && !ADMIN_EMAILS.includes(email)) {
-                    role = data.role || 'CIVILIAN';
-                }
-                if (!docSnap.exists()) {
-                    await setDoc(doc(db, "users", uid), {
-                        email: email, role: 'CIVILIAN', displayName: '',
-                        communityPoints: 0, postCount: 0, titles: [], isPro: false,
-                        usernameLocked: false,
-                        joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                    });
-                    data = { email: email, role: 'CIVILIAN', communityPoints: 0, postCount: 0, titles: [], isPro: false, usernameLocked: false };
-                }
-                loadProfile(uid, email, role, data);
+                currentUser = user;
+                var docSnap = await getDoc(doc(db, "users", user.uid));
+                if (docSnap.exists()) currentUserData = docSnap.data();
             } else if (googleUser) {
-                var email = googleUser.email;
-                var uid = googleUser.googleId;
-                var role = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
-                var data = {};
                 try {
-                    var docSnap = await getDoc(doc(db, "users", uid));
-                    if (docSnap.exists()) {
-                        data = docSnap.data();
-                        if (!OWNER_EMAILS.includes(email) && !ADMIN_EMAILS.includes(email)) {
-                            role = data.role || role;
-                        }
-                    }
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
                 } catch(e) {}
-                loadProfile(uid, email, role, data);
-            } else {
-                document.getElementById('profileApp').innerHTML =
-                    '<div class="not-logged-in"><h2 style="color:#d0021b;">Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
             }
+
+            if (!targetUid) {
+                document.getElementById('profileApp').innerHTML = '<div class="not-found">No profile specified.</div>';
+                return;
+            }
+
+            var targetDoc = await getDoc(doc(db, "users", targetUid));
+            if (!targetDoc.exists()) {
+                document.getElementById('profileApp').innerHTML = '<div class="not-found">Profile not found.</div>';
+                return;
+            }
+
+            await renderProfile(targetDoc.data());
         });
-
-        window.toggleInfo = function(id) {
-            var el = document.getElementById(id);
-            if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        };
-
-        window.saveUsername = async function() {
-            var newUsername = document.getElementById('usernameInput').value.trim();
-            var msgEl = document.getElementById('usernameMsg');
-            if (newUsername.length < 3) { msgEl.className = 'msg error'; msgEl.textContent = 'Username must be at least 3 characters.'; return; }
-            if (newUsername.length > 20) { msgEl.className = 'msg error'; msgEl.textContent = 'Username must be 20 characters or less.'; return; }
-            if (!/^[a-zA-Z0-9_]+$/.test(newUsername)) { msgEl.className = 'msg error'; msgEl.textContent = 'Letters, numbers and underscores only.'; return; }
-            if (containsBadWord(newUsername)) { msgEl.className = 'msg error'; msgEl.textContent = 'Username contains inappropriate language.'; return; }
-
-            var q = query(collection(db, "users"), where("username", "==", newUsername));
-            var existing = await getDocs(q);
-            var taken = false;
-            existing.forEach(function(d) { if (d.id !== currentUid) taken = true; });
-            if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That username is already taken.'; return; }
-
-            await setDoc(doc(db, "users", currentUid), {
-                username: newUsername, displayName: newUsername, usernameLocked: true
-            }, { merge: true });
-
-            var saved = localStorage.getItem('sorc_google_user');
-            if (saved) {
-                try { var u = JSON.parse(saved); u.username = newUsername; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {}
-            }
-
-            var headerUsername = document.getElementById('headerUsername');
-            if (headerUsername) headerUsername.textContent = newUsername;
-
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Username set! This cannot be changed.';
-            setTimeout(function() { location.reload(); }, 1500);
-        };
-
-        window.saveSurname = async function() {
-            var surname = document.getElementById('surnameInput').value.trim();
-            var msgEl = document.getElementById('surnameMsg');
-            if (!surname) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a surname.'; return; }
-            if (!/^[a-zA-Z]+$/.test(surname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname can only contain letters.'; return; }
-            if (containsBadWord(surname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname contains inappropriate language.'; return; }
-
-            var docSnap = await getDoc(doc(db, "users", currentUid));
-            var currentUsername = docSnap.data().username || '';
-            if (currentUsername.includes(' ')) { msgEl.className = 'msg error'; msgEl.textContent = 'You already have a surname.'; return; }
-
-            var newUsername = currentUsername + ' ' + surname;
-            await setDoc(doc(db, "users", currentUid), { username: newUsername, displayName: newUsername }, { merge: true });
-
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Surname added!';
-            setTimeout(function() { location.reload(); }, 1500);
-        };
-
-        window.saveAvatar = async function() {
-            var msgEl = document.getElementById('avatarMsg');
-            if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar.'; return; }
-            await setDoc(doc(db, "users", currentUid), { avatar: selectedAvatar }, { merge: true });
-            var saved = localStorage.getItem('sorc_google_user');
-            if (saved) {
-                try { var u = JSON.parse(saved); u.avatar = selectedAvatar; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {}
-            }
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Avatar saved!';
-            setTimeout(function() { msgEl.textContent = ''; }, 2000);
-        };
-
-        window.saveBio = async function() {
-            var bio = document.getElementById('bioInput').value.trim();
-            await setDoc(doc(db, "users", currentUid), { bio: bio }, { merge: true });
-            var msgEl = document.getElementById('bioMsg');
-            msgEl.className = 'msg success'; msgEl.textContent = '✅ Bio saved!';
-            setTimeout(function() { msgEl.textContent = ''; }, 2000);
-        };
-
-        window.saveBirthday = async function() {
-            var birthday = document.getElementById('birthdayInput').value;
-            await setDoc(doc(db, "users", currentUid), { birthday: birthday }, { merge: true });
-            var msgEl = document.getElementById('birthdayMsg');
-            msgEl.className = 'msg success'; msgEl.textContent = '✅ Birthday saved!';
-            setTimeout(function() { msgEl.textContent = ''; }, 2000);
-        };
-
-        window.saveWebsite = async function() {
-            var website = document.getElementById('websiteInput').value.trim();
-            await setDoc(doc(db, "users", currentUid), { website: website }, { merge: true });
-            var msgEl = document.getElementById('websiteMsg');
-            msgEl.className = 'msg success'; msgEl.textContent = '✅ Saved!';
-            setTimeout(function() { msgEl.textContent = ''; }, 2000);
-        };
-
-        window.saveSocial = async function() {
-            var twitter = document.getElementById('twitterInput').value.trim();
-            var instagram = document.getElementById('instagramInput').value.trim();
-            await setDoc(doc(db, "users", currentUid), { socialTwitter: twitter, socialInstagram: instagram }, { merge: true });
-            var msgEl = document.getElementById('socialMsg');
-            msgEl.className = 'msg success'; msgEl.textContent = '✅ Saved!';
-            setTimeout(function() { msgEl.textContent = ''; }, 2000);
-        };
-
-        window.savePrivacy = async function(field, value) {
-            var update = {};
-            update[field] = value;
-            await setDoc(doc(db, "users", currentUid), update, { merge: true });
-        };
-
-        window.doSignOut = function() {
-            signOut(auth).then(function() {
-                localStorage.removeItem('sorc_google_user');
-                window.location.href = 'index.html';
-            });
-        };
-
-        window.redeemCode = async function() {
-            var code = document.getElementById('masterCodeInput').value.trim();
-            var msgEl = document.getElementById('codeMsg');
-            if (!code) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a code.'; return; }
-            var codesSnap = await getDocs(collection(db, "gm_codes"));
-            var matched = null;
-            codesSnap.forEach(function(d) { if (d.data().code === code && !d.data().used) matched = d.id; });
-            if (!matched) { msgEl.className = 'msg error'; msgEl.textContent = 'Invalid or already used code.'; return; }
-            await setDoc(doc(db, "users", currentUid), { role: 'MASTER' }, { merge: true });
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ You are now a MASTER! Reloading...';
-            setTimeout(function() { location.reload(); }, 1500);
-        };
     </script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
