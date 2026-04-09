@@ -207,13 +207,17 @@ function getAvatarPath(avatarId) {
   return 'assets/images/avatars/' + avatarId + '.png';
 }
 
-// ========== CHECK INBOX NOTIFICATIONS ==========
+// ========== CHECK NOTIFICATIONS ==========
 async function checkInboxNotifications(uid) {
   try {
-    var snap = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending")));
-    if (snap.size > 0) {
+    // Message requests
+    var msgSnap = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending")));
+    // Fellowship requests
+    var fellowSnap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending")));
+    var total = msgSnap.size + fellowSnap.size;
+    if (total > 0) {
       var notif = document.getElementById('inboxNotif');
-      if (notif) { notif.textContent = snap.size; notif.style.display = 'inline-block'; }
+      if (notif) { notif.textContent = total; notif.style.display = 'inline-block'; }
     }
   } catch(e) {}
 }
@@ -247,6 +251,7 @@ function showRoleBadge(email, username, role, avatar, userId) {
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span></a>' +
+    ' &nbsp;|&nbsp; <a href="fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
 
