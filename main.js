@@ -86,27 +86,22 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// ========== USER MINI POPUP (must be before module import) ==========
+// ========== USER MINI POPUP (must be outside module scope) ==========
 window.showUserMiniPopup = function(e, uid, name) {
   e.stopPropagation();
   var existing = document.querySelector('.user-mini-popup');
   if (existing) { existing.remove(); return; }
-
   var popup = document.createElement('div');
   popup.className = 'user-mini-popup';
   popup.style.cssText = 'position:fixed;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:0.75rem 1rem;z-index:999999;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.6);font-size:0.85rem;';
-
   var rect = e.target.getBoundingClientRect();
   popup.style.top = (rect.bottom + 8) + 'px';
   popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
-
   popup.innerHTML =
     '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + name + '</div>' +
     '<a href="public-profile.html?uid=' + uid + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
     '<a href="public-profile.html?uid=' + uid + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
-
   document.body.appendChild(popup);
-
   setTimeout(function() {
     document.addEventListener('click', function removePopup() {
       var p = document.querySelector('.user-mini-popup');
@@ -170,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -210,6 +205,20 @@ function getAvatarPath(avatarId) {
   return 'assets/images/avatars/' + avatarId + '.png';
 }
 
+// ========== CHECK INBOX NOTIFICATIONS ==========
+async function checkInboxNotifications(uid) {
+  try {
+    var snap = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending")));
+    if (snap.size > 0) {
+      var notif = document.getElementById('inboxNotif');
+      if (notif) {
+        notif.textContent = snap.size;
+        notif.style.display = 'inline-block';
+      }
+    }
+  } catch(e) {}
+}
+
 // ========== ROLE BADGE ==========
 function showRoleBadge(email, username, role, avatar, userId) {
   var existing = document.querySelector('.role-badge');
@@ -241,6 +250,7 @@ function showRoleBadge(email, username, role, avatar, userId) {
   badge.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
+    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;">📬<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span> Inbox</a>' +
     ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">Logout</button>';
 
@@ -258,6 +268,10 @@ function showRoleBadge(email, username, role, avatar, userId) {
   });
 
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
+
+  // Check notifications
+  var uid = auth.currentUser ? auth.currentUser.uid : (googleUser ? googleUser.googleId : null);
+  if (uid) checkInboxNotifications(uid);
 }
 
 // ========== OWN ROLE POPUP ==========
