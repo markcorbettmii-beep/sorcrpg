@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// ========== USER MINI POPUP (must be outside module scope) ==========
+// ========== USER MINI POPUP ==========
 window.showUserMiniPopup = function(e, uid, name) {
   e.stopPropagation();
   var existing = document.querySelector('.user-mini-popup');
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========== FIREBASE ==========
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -207,12 +207,30 @@ function getAvatarPath(avatarId) {
   return 'assets/images/avatars/' + avatarId + '.png';
 }
 
+// ========== GRANT ROLE UPGRADE POINTS ==========
+async function grantRoleUpgradePoints(uid, role, data) {
+  var updates = {};
+  var currentPoints = data.communityPoints || 0;
+
+  if (role === 'PLAYER' && !data.playerPointsGranted) {
+    updates.communityPoints = currentPoints + 500;
+    updates.playerPointsGranted = true;
+  } else if (role === 'MASTER' && !data.gmPointsGranted) {
+    updates.communityPoints = currentPoints + 1000;
+    updates.gmPointsGranted = true;
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await updateDoc(doc(db, "users", uid), updates);
+    return updates.communityPoints;
+  }
+  return currentPoints;
+}
+
 // ========== CHECK NOTIFICATIONS ==========
 async function checkInboxNotifications(uid) {
   try {
-    // Message requests
     var msgSnap = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending")));
-    // Fellowship requests
     var fellowSnap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending")));
     var total = msgSnap.size + fellowSnap.size;
     if (total > 0) {
@@ -348,9 +366,19 @@ async function getUserRoleFromDB(uid, email) {
   var avatar = data.avatar || null;
   var userId = data.userId || '';
   var role = data.role || 'CIVILIAN';
+
   if (OWNER_EMAILS.includes(email)) role = 'OWNER';
   else if (ADMIN_EMAILS.includes(email)) role = 'ADMIN';
-  if (!docSnap.exists()) { await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' }); }
+
+  if (!docSnap.exists()) {
+    await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
+  }
+
+  // Grant upgrade points if eligible
+  if (role === 'PLAYER' || role === 'MASTER') {
+    await grantRoleUpgradePoints(uid, role, data);
+  }
+
   return { role, username, avatar, userId };
 }
 
@@ -377,10 +405,15 @@ onAuthStateChanged(auth, async function(user) {
           try {
             var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
             if (docSnap.exists()) {
-              username = docSnap.data().username || docSnap.data().displayName || username;
-              avatar = docSnap.data().avatar || avatar;
-              userId = docSnap.data().userId || userId;
-              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = docSnap.data().role || role; }
+              var data = docSnap.data();
+              username = data.username || data.displayName || username;
+              avatar = data.avatar || avatar;
+              userId = data.userId || userId;
+              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = data.role || role; }
+              // Grant upgrade points if eligible
+              if (role === 'PLAYER' || role === 'MASTER') {
+                await grantRoleUpgradePoints(googleUser.googleId, role, data);
+              }
               googleUser.username = username; googleUser.avatar = avatar; googleUser.userId = userId; googleUser.role = role;
               localStorage.setItem('sorc_google_user', JSON.stringify(googleUser));
             }
@@ -413,7 +446,7 @@ window.sorcSignUp = function(email, password) {
   if (!email || !password) { alert('Please enter an email and password.'); return; }
   createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
     await sendEmailVerification(result.user);
-    await setDoc(doc(db, "users", result.user.uid), { email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN' });
+    await setDoc(doc(db, "users", result.user.uid), { email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN', communityPoints: 0 });
     signOut(auth);
     document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
     document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
