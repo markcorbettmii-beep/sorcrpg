@@ -89,8 +89,6 @@
 
         const OWNER_EMAILS = ["corbett@sorcrpg.com"];
         const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-        const FELLOWSHIP_POINTS_REQUIRED = 100;
-        const FELLOWSHIP_ROLES = ['PLAYER', 'MASTER', 'ADMIN', 'OWNER'];
 
         var currentUser = null;
         var currentUserData = null;
@@ -137,14 +135,17 @@
             if (ADMIN_EMAILS.includes(email)) return 'ADMIN';
             return (currentUserData || {}).role || 'CIVILIAN';
         }
-        function getMyPoints() { return (currentUserData || {}).communityPoints || 0; }
         function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
         function isGMOrAbove(role) { return ['MASTER', 'ADMIN', 'OWNER'].includes(role); }
+
+        // Fellowship eligible = Admin/Owner always, others need unlockedFellowships
         function isFellowshipEligible() {
-            return FELLOWSHIP_ROLES.includes(getMyRole()) && getMyPoints() >= FELLOWSHIP_POINTS_REQUIRED;
+            var myRole = getMyRole();
+            if (myRole === 'ADMIN' || myRole === 'OWNER') return true;
+            return (currentUserData || {}).unlockedFellowships === true;
         }
 
-        // No request needed if: Admin, Owner, GM/Master, or in a Fellowship with the target
+        // No request needed if Admin, Owner, GM/Master, or in a Fellowship
         function canMessageDirectly() {
             return isGMOrAbove(getMyRole()) || isFellowship;
         }
@@ -158,9 +159,7 @@
             if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
             return age;
         }
-        function hiddenVal() {
-            return '<span class="hidden-val">hidden</span>';
-        }
+        function hiddenVal() { return '<span class="hidden-val">hidden</span>'; }
 
         window.showMessageCompose = function() {
             var compose = document.getElementById('messageCompose');
@@ -180,13 +179,10 @@
             var myUid = getMyUid();
             var text = document.getElementById('msgTextarea') ? document.getElementById('msgTextarea').value.trim() : '';
             var msgEl = document.getElementById('actionMsg');
-
             if (!text) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write a message first.'; return; }
-
             var convId = [myUid, targetUid].sort().join('_');
             var direct = canMessageDirectly();
             var status = direct ? 'accepted' : 'pending';
-
             await setDoc(doc(db, "conversations", convId), {
                 senderUid: myUid,
                 senderName: getMyUsername(),
@@ -197,14 +193,12 @@
                 lastMessageAt: serverTimestamp(),
                 lastMessageText: text
             });
-
             await addDoc(collection(db, "conversations", convId, "messages"), {
                 senderUid: myUid,
                 senderName: getMyUsername(),
                 text: text,
                 createdAt: serverTimestamp()
             });
-
             var msgSection = document.getElementById('msgSection');
             if (msgSection) {
                 msgSection.innerHTML = status === 'accepted'
@@ -216,9 +210,7 @@
             }
         };
 
-        window.goToInbox = function() {
-            window.location.href = 'inbox.html';
-        };
+        window.goToInbox = function() { window.location.href = 'inbox.html'; };
 
         async function renderProfile(data) {
             targetData = data;
@@ -228,7 +220,7 @@
             var postCount = data.postCount || 0;
             var titles = data.titles || [];
             var joinDate = data.joinDate || '';
-            var isPro = data.isPro || false;
+            var isPro = data.unlockedPro === true || data.isPro === true;
             var achievements = data.achievements || [];
 
             var myUid = getMyUid();
@@ -237,10 +229,7 @@
             var isSelf = myUid === targetUid;
 
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
-
-            var statusBadge = isPro
-                ? '<span class="pro-badge">SORC Beyond Pro</span>'
-                : '<span class="basic-badge">SORC Basic</span>';
+            var statusBadge = isPro ? '<span class="pro-badge">SORC Beyond Pro</span>' : '<span class="basic-badge">SORC Basic</span>';
 
             // Bio
             var bioValue = (data.privacyBio && data.bio) ? '<p>' + data.bio + '</p>' : hiddenVal();
@@ -267,15 +256,9 @@
                         if (data.website) linksContent += '<a href="' + data.website + '" target="_blank" class="social-link">🌐 Website</a>';
                         if (data.socialTwitter) linksContent += '<a href="https://x.com/' + data.socialTwitter + '" target="_blank" class="social-link">𝕏 ' + data.socialTwitter + '</a>';
                         if (data.socialInstagram) linksContent += '<a href="https://instagram.com/' + data.socialInstagram + '" target="_blank" class="social-link">📷 ' + data.socialInstagram + '</a>';
-                    } else {
-                        linksContent = '<span class="hidden-val">none set</span>';
-                    }
-                } else {
-                    linksContent = hiddenVal();
-                }
-            } else {
-                linksContent = '<span class="hidden-val">not available</span>';
-            }
+                    } else { linksContent = '<span class="hidden-val">none set</span>'; }
+                } else { linksContent = hiddenVal(); }
+            } else { linksContent = '<span class="hidden-val">not available</span>'; }
             var linksSection = '<div class="profile-section"><h3>Links</h3>' + linksContent + '</div>';
 
             // Achievements
@@ -287,8 +270,7 @@
                         achievements.map(function(a) {
                             return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>';
                         }).join('') +
-                        '</div>' +
-                    '</div>';
+                        '</div></div>';
             } else {
                 achievementsSection =
                     '<div class="profile-section">' +
@@ -335,7 +317,7 @@
                         '<button class="action-btn action-btn-dark" onclick="removeFellowship()">⚔️ Fellowship ✓ &nbsp;<span style="font-size:0.75rem;color:#555;">(click to remove)</span></button>';
                 }
 
-                // Check conversation status
+                // Message section
                 var convId = [myUid, targetUid].sort().join('_');
                 var convDoc = await getDoc(doc(db, "conversations", convId));
                 var convStatus = convDoc.exists() ? convDoc.data().status : 'none';
@@ -344,17 +326,14 @@
 
                 var msgSectionHtml = '';
                 if (convStatus === 'accepted' || direct) {
-                    msgSectionHtml =
-                        '<button class="' + msgBtnClass + '" onclick="goToInbox()">✉ Open Conversation</button>';
+                    msgSectionHtml = '<button class="' + msgBtnClass + '" onclick="goToInbox()">✉ Open Conversation</button>';
                 } else if (convStatus === 'pending') {
                     msgSectionHtml =
                         '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
                         '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
                         '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>';
                 } else {
-                    var placeholder = direct
-                        ? 'Write your message to ' + username + '...'
-                        : 'Write your message to ' + username + '... They must accept before they can reply.';
+                    var placeholder = direct ? 'Write your message to ' + username + '...' : 'Write your message to ' + username + '... They must accept before they can reply.';
                     msgSectionHtml =
                         '<button class="' + msgBtnClass + '" id="msgInitBtn" onclick="showMessageCompose()">✉ Send Message</button>' +
                         '<div class="message-compose" id="messageCompose">' +
@@ -426,10 +405,7 @@
         window.acceptFellowshipRequest = async function() {
             var myUid = getMyUid();
             var fellowshipId = [myUid, targetUid].sort().join('_');
-            await updateDoc(doc(db, "fellowships", fellowshipId), {
-                status: 'accepted',
-                acceptedAt: serverTimestamp()
-            });
+            await updateDoc(doc(db, "fellowships", fellowshipId), { status: 'accepted', acceptedAt: serverTimestamp() });
             var msgEl = document.getElementById('actionMsg');
             msgEl.className = 'msg success';
             msgEl.textContent = '✅ You are now in a Fellowship!';
@@ -455,18 +431,15 @@
                     if (docSnap.exists()) currentUserData = docSnap.data();
                 } catch(e) {}
             }
-
             if (!targetUid) {
                 document.getElementById('profileApp').innerHTML = '<div class="not-found">No profile specified.</div>';
                 return;
             }
-
             var targetDoc = await getDoc(doc(db, "users", targetUid));
             if (!targetDoc.exists()) {
                 document.getElementById('profileApp').innerHTML = '<div class="not-found">Profile not found.</div>';
                 return;
             }
-
             await renderProfile(targetDoc.data());
         });
     </script>
