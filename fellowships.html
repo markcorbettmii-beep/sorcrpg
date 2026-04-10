@@ -92,7 +92,8 @@
         .msg { font-size: 0.85rem; margin-top: 0.5rem; }
         .msg.success { color: #4caf50; }
         .msg.error { color: #d0021b; }
-        .points-note { font-size: 0.75rem; color: #555; margin-top: 4px; }
+        .system-msg { text-align: center; padding: 0.5rem; }
+        .system-msg span { background: #1a1a2a; color: #666; font-size: 0.78rem; padding: 4px 12px; border-radius: 10px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -105,7 +106,6 @@
         <div class="not-logged-in"><p>Loading...</p></div>
     </div>
 
-    <!-- Media Lightbox -->
     <div class="media-lightbox" id="mediaLightbox" onclick="closeLightbox()">
         <button class="media-lightbox-close" onclick="closeLightbox()">✕</button>
         <img id="lightboxImg" src="" alt="Media" onclick="event.stopPropagation()" />
@@ -116,7 +116,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, getDocs, addDoc, updateDoc, orderBy, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, where, getDocs, updateDoc, orderBy, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -133,8 +133,6 @@
 
         const OWNER_EMAILS = ["corbett@sorcrpg.com"];
         const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-        const FELLOWSHIP_POINTS_REQUIRED = 100;
-        const FELLOWSHIP_ROLE_REQUIRED = ['PLAYER', 'MASTER', 'ADMIN', 'OWNER'];
         const REACTIONS = ['⚔️', '🎲', '🛡️', '🔥', '👏', '😂'];
 
         var currentUser = null;
@@ -173,11 +171,11 @@
             if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
             return Math.floor(seconds / 86400) + 'd ago';
         }
-        function getFellowshipId(uid1, uid2) {
-            return [uid1, uid2].sort().join('_');
-        }
+        function getFellowshipId(uid1, uid2) { return [uid1, uid2].sort().join('_'); }
+
         function isEligible() {
-            return FELLOWSHIP_ROLE_REQUIRED.includes(myRole) && myPoints >= FELLOWSHIP_POINTS_REQUIRED;
+            if (myRole === 'ADMIN' || myRole === 'OWNER') return true;
+            return currentUserData && currentUserData.unlockedFellowships === true;
         }
 
         window.switchTab = function(tab) {
@@ -194,6 +192,32 @@
         window.closeLightbox = function() {
             document.getElementById('mediaLightbox').classList.remove('open');
         };
+
+        // Send system inbox message about points grant
+        async function sendPointsGrantMessage(uid, role, points) {
+            var convId = 'system_' + uid + '_upgrade';
+            var text = role === 'MASTER'
+                ? 'Welcome to your Master account! ' + points + ' community points have been added to your balance. Head to your profile to spend them on unlocks like Fellowships, SORC Beyond Pro, surname, prefixes, suffixes, and more.'
+                : 'Welcome to your Player account! ' + points + ' community points have been added to your balance. Head to your profile to spend them on unlocks like Fellowships, SORC Beyond Basic, surname, and more.';
+
+            await setDoc(doc(db, "conversations", convId), {
+                senderUid: 'system',
+                senderName: 'Ogre Adventurer',
+                receiverUid: uid,
+                receiverName: myUsername,
+                status: 'accepted',
+                createdAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp(),
+                lastMessageText: text
+            });
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: 'system',
+                senderName: 'Ogre Adventurer',
+                text: text,
+                isSystem: true,
+                createdAt: serverTimestamp()
+            });
+        }
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
@@ -223,8 +247,8 @@
                 document.getElementById('fApp').innerHTML =
                     '<div class="locked-state">' +
                         '<h2>⚔️ Fellowships</h2>' +
-                        '<p>Fellowships require a <b>PLAYER</b> role or higher and at least <b>' + FELLOWSHIP_POINTS_REQUIRED + ' community points</b>.</p>' +
-                        '<p style="margin-top:0.5rem;color:#555;">Your role: <b style="color:#e0cfc0;">' + myRole + '</b> &nbsp;·&nbsp; Your points: <b style="color:#d4af37;">' + myPoints + '</b></p>' +
+                        '<p>Sending Fellowship requests requires the <b>Fellowships</b> feature to be unlocked from your <a href="profile.html" style="color:#d4af37;">profile page</a>.</p>' +
+                        '<p style="margin-top:0.5rem;color:#555;">Your points: <b style="color:#d4af37;">' + myPoints + '</b></p>' +
                         (myRole === 'CIVILIAN' ? '<p style="margin-top:1rem;"><a href="profile.html" style="color:#d4af37;">Upgrade your account →</a></p>' : '') +
                     '</div>';
                 return;
@@ -234,7 +258,6 @@
         });
 
         async function renderApp() {
-            // Count pending requests
             var reqSnap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "pending")));
             var reqCount = reqSnap.size;
 
@@ -284,7 +307,6 @@
                 var role = OWNER_EMAILS.includes(userData.email) ? 'OWNER' : ADMIN_EMAILS.includes(userData.email) ? 'ADMIN' : (userData.role || 'CIVILIAN');
                 var status = userData.currentStatus || 'offline';
                 var statusLabel = status === 'online' ? '🟢 Online' : status === 'lobby' ? '🟡 In a Lobby' : status === 'campaign' ? '🔴 In a Campaign' : '⚫ Offline';
-                var fellowId = f.id;
 
                 html +=
                     '<div class="fellow-card">' +
@@ -301,7 +323,7 @@
                         '</div>' +
                         '<div class="fellow-actions">' +
                             '<a href="public-profile.html?uid=' + otherUid + '&msg=1" class="btn btn-gold" style="text-decoration:none;font-size:0.78rem;">✉</a>' +
-                            '<button class="btn btn-ghost" onclick="removeFellow(\'' + fellowId + '\', \'' + otherName + '\')" style="font-size:0.78rem;">Remove</button>' +
+                            '<button class="btn btn-ghost" onclick="removeFellow(\'' + f.id + '\', \'' + (otherName || '').replace(/'/g, "\\'") + '\')" style="font-size:0.78rem;">Remove</button>' +
                         '</div>' +
                     '</div>';
             }
@@ -310,7 +332,6 @@
 
         async function loadRequests() {
             var el = document.getElementById('panel_requests');
-
             var snap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "pending")));
             var requests = [];
             snap.forEach(function(d) { requests.push({ id: d.id, ...d.data() }); });
@@ -320,7 +341,7 @@
                 return;
             }
 
-            var html = requests.map(function(req) {
+            el.innerHTML = requests.map(function(req) {
                 return '<div class="request-card">' +
                     '<div class="fellow-avatar">' + (req.senderName ? req.senderName.charAt(0).toUpperCase() : '?') + '</div>' +
                     '<div class="request-info">' +
@@ -333,21 +354,17 @@
                     '</div>' +
                 '</div>';
             }).join('');
-
-            el.innerHTML = html;
         }
 
         async function loadFeed() {
             var el = document.getElementById('panel_feed');
 
-            // Get my fellows' UIDs
             var snap1 = await getDocs(query(collection(db, "fellowships"), where("senderUid", "==", myUid), where("status", "==", "accepted")));
             var snap2 = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "accepted")));
             var fellowUids = [myUid];
             snap1.forEach(function(d) { fellowUids.push(d.data().receiverUid); });
             snap2.forEach(function(d) { fellowUids.push(d.data().senderUid); });
 
-            // Post composer
             var composerHtml =
                 '<div class="post-composer">' +
                     '<textarea id="postText" rows="3" placeholder="Share something with your Fellows..."></textarea>' +
@@ -358,14 +375,11 @@
                     '<div id="postMsg" class="msg"></div>' +
                 '</div>';
 
-            // Get posts
             var postsSnap = await getDocs(query(collection(db, "fellowship_posts"), orderBy("createdAt", "desc")));
             var posts = [];
             postsSnap.forEach(function(d) {
                 var data = d.data();
-                if (fellowUids.includes(data.authorUid)) {
-                    posts.push({ id: d.id, ...data });
-                }
+                if (fellowUids.includes(data.authorUid)) posts.push({ id: d.id, ...data });
             });
 
             if (posts.length === 0) {
@@ -373,11 +387,7 @@
                 return;
             }
 
-            var postsHtml = posts.map(function(post) {
-                return renderPost(post);
-            }).join('');
-
-            el.innerHTML = composerHtml + postsHtml;
+            el.innerHTML = composerHtml + posts.map(function(post) { return renderPost(post); }).join('');
         }
 
         function renderPost(post) {
@@ -434,7 +444,6 @@
 
         async function loadMedia() {
             var el = document.getElementById('panel_media');
-
             var snap1 = await getDocs(query(collection(db, "fellowships"), where("senderUid", "==", myUid), where("status", "==", "accepted")));
             var snap2 = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", myUid), where("status", "==", "accepted")));
             var fellowUids = [myUid];
@@ -445,9 +454,7 @@
             var mediaItems = [];
             postsSnap.forEach(function(d) {
                 var data = d.data();
-                if (data.mediaUrl && fellowUids.includes(data.authorUid)) {
-                    mediaItems.push({ id: d.id, ...data });
-                }
+                if (data.mediaUrl && fellowUids.includes(data.authorUid)) mediaItems.push({ id: d.id, ...data });
             });
 
             if (mediaItems.length === 0) {
@@ -490,11 +497,8 @@
             var reactions = postSnap.data().reactions || {};
             var users = reactions[emoji] || [];
             var update = {};
-            if (users.includes(myUid)) {
-                update['reactions.' + emoji] = arrayRemove(myUid);
-            } else {
-                update['reactions.' + emoji] = arrayUnion(myUid);
-            }
+            if (users.includes(myUid)) { update['reactions.' + emoji] = arrayRemove(myUid); }
+            else { update['reactions.' + emoji] = arrayUnion(myUid); }
             await updateDoc(postRef, update);
             await loadFeed();
         };
