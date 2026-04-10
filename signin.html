@@ -8,81 +8,34 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body {
-            background: #111;
-            color: #e0cfc0;
-            font-family: sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        .signin-wrapper {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem 1rem;
-        }
-        .signin-card {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 1rem;
-            padding: 2.5rem 2rem;
-            max-width: 420px;
-            width: 100%;
-            text-align: center;
-        }
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #1a1a1a; border: 1px solid #333; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
         .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
         .signin-card h1 { color: #d0021b; font-size: 1.6rem; margin-bottom: 0.5rem; }
         .signin-card p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .signin-input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            background: #222;
-            color: #fff;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
+        .signin-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; font-size: 1rem; box-sizing: border-box; }
         .signin-input:focus { outline: none; border-color: #d0021b; }
         .password-wrapper { position: relative; margin-bottom: 12px; }
         .password-wrapper .signin-input { margin-bottom: 0; padding-right: 44px; }
-        .toggle-pw {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; color: #888; cursor: pointer; font-size: 1rem; padding: 0;
-        }
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #888; cursor: pointer; font-size: 1rem; padding: 0; }
         .toggle-pw:hover { color: #e0cfc0; }
-        .signin-btn {
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s;
-        }
+        .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
         .signin-btn-primary { background: #d0021b; color: #fff; }
         .signin-btn-primary:hover { background: #a50013; }
         .signin-btn-apple { background: #000; color: #fff; }
         .signin-btn-apple:hover { background: #222; }
-        .signin-btn-resend {
-            background: none; border: 1px solid #d4af37; color: #d4af37;
-            padding: 8px; font-size: 0.85rem; margin-bottom: 12px;
-        }
-        .signin-divider {
-            display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: #555; font-size: 0.85rem;
-        }
+        .signin-btn-resend { background: none; border: 1px solid #d4af37; color: #d4af37; padding: 8px; font-size: 0.85rem; margin-bottom: 12px; }
+        .signin-divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: #555; font-size: 0.85rem; }
         .signin-divider::before, .signin-divider::after { content: ''; flex: 1; height: 1px; background: #333; }
         .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #888; }
         .signin-links a { color: #d4af37; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
         .account-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; }
-        .account-type-btn {
-            padding: 0.4rem 0.8rem; border: 2px solid #444; border-radius: 8px;
-            background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
-        }
+        .account-type-btn { padding: 0.4rem 0.8rem; border: 2px solid #444; border-radius: 8px; background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
         .account-type-btn.active { border-color: #d0021b; background: #d0021b; color: #fff; }
-        .account-info {
-            background: #1a1a2a; border: 1px solid #444; color: #e0cfc0; border-radius: 8px;
-            padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6; text-align: left; display: none;
-        }
+        .account-type-btn:hover { border-color: #d0021b; }
+        .account-info { background: #1a1a2a; border: 1px solid #444; color: #e0cfc0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6; text-align: left; display: none; }
         .account-info.coming-soon { border-color: #d4af37; background: #2a1a00; color: #d4af37; }
         .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
         .status-msg.success { background: #1a2a1a; border: 1px solid #4caf50; color: #4caf50; }
@@ -110,17 +63,17 @@
             </div>
 
             <div class="account-info" id="civilianInfo" style="display:block;border-color:#555;background:#1a1a1a;">
-                <b>CIVILIAN</b> — Our free starter account. Browse the library, access basic rules, join forums, and get ready for the full SorC Beyond experience.
+                <b>CIVILIAN</b> — Our free starter account. Browse the library, access basic rules, join forums, and start earning community points toward SORC Beyond unlocks.
             </div>
             <div class="account-info coming-soon" id="playerInfo">
-                <b>PLAYER</b> — Short for <b>Player Character</b>. Players join SorC Beyond online lobbies and digital campaigns as active adventurers.<br /><br />
-                To become a Player, you must pass a <b>SorC Player Assessment</b> (Beginner, Intermediate, or Advanced). Assessments are currently under heavy development.<br /><br />
-                Create a <b>Civilian</b> account now — it will be linked when assessments launch.
+                <b>PLAYER</b> — Short for <b>Player Character</b>. Players join SORC Beyond online lobbies and digital campaigns as active adventurers.<br /><br />
+                To become a Player, you must pass a <b>SorC Player Assessment</b>. Assessments are currently under development. Upon upgrading you will receive <b>500 community points</b> to spend on unlocks.<br /><br />
+                Create a <b>Civilian</b> account now — it will be upgraded when assessments launch.
             </div>
             <div class="account-info coming-soon" id="masterInfo">
                 <b>MASTER</b> — Short for <b>Game Master</b>. Masters run campaigns, host online lobbies, and guide players through Essentia.<br /><br />
-                To become a Master, you must pass a <b>SorC Master Assessment</b> AND receive an official Master Code from Ogre Adventurer.<br /><br />
-                Create a <b>Civilian</b> account now — it will be linked when assessments launch.
+                To become a Master, you must pass a <b>SorC Master Assessment</b> AND receive an official Master Code. Upon upgrading you will receive <b>1,000 community points</b> to spend on unlocks.<br /><br />
+                Create a <b>Civilian</b> account now — it will be upgraded when assessments launch.
             </div>
 
             <div class="status-msg" id="statusMsg"></div>
@@ -144,7 +97,7 @@
                 </div>
                 <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a username" maxlength="30" />
                 <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
-                    Letters, numbers and underscores only. Surnames (e.g. <i>Elise Darkwood</i>) unlock at 500 community points and will allow one space in your name. Change your username and choose an avatar from your profile page.
+                    Letters, numbers and underscores only. This change is permanent — your first name will be locked once set. You do not need to include a surname now. Surnames, prefixes (Dr., Sir, Ms.) and suffixes (Jr., II, III, etc.) unlock later through SORC Beyond.
                 </p>
 
                 <button class="signin-btn" onclick="handleSignUp()" style="background:#555;color:#fff;">
@@ -178,10 +131,10 @@
             return badWords.some(function(word) { return lower.includes(word); });
         }
         function isValidUsername(username) {
-            if (username.length < 3) return 'Username must be at least 3 characters.';
-            if (username.length > 30) return 'Username must be 30 characters or less.';
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Username can only contain letters, numbers and underscores. Surnames unlock at 500 community points.';
-            if (containsBadWord(username)) return 'Username contains inappropriate language.';
+            if (username.length < 3) return 'Name must be at least 3 characters.';
+            if (username.length > 30) return 'Name must be 30 characters or less.';
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Letters, numbers and underscores only.';
+            if (containsBadWord(username)) return 'Name contains inappropriate language.';
             return null;
         }
 
@@ -194,9 +147,7 @@
             return adj + noun + num;
         }
 
-        function generateUserId() {
-            return Math.floor(Math.random() * 90000) + 10000;
-        }
+        function generateUserId() { return Math.floor(Math.random() * 90000) + 10000; }
 
         window.togglePassword = function(inputId, btn) {
             var input = document.getElementById(inputId);
@@ -218,9 +169,7 @@
             localStorage.setItem('sorc_google_user', userData);
             showStatus('✅ Signed in! Redirecting...', 'success');
             var encoded = encodeURIComponent(userData);
-            setTimeout(function() {
-                window.location.href = 'https://sorcrpg.com/?guser=' + encoded;
-            }, 800);
+            setTimeout(function() { window.location.href = 'https://sorcrpg.com/?guser=' + encoded; }, 800);
         }
 
         window.addEventListener('load', function() {
@@ -277,6 +226,8 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
         onAuthStateChanged(auth, function(user) {
             if (user && user.emailVerified) {
@@ -292,14 +243,11 @@
                 if (!result.user.emailVerified && !OWNER_EMAILS.includes(result.user.email) && !ADMIN_EMAILS.includes(result.user.email)) {
                     showStatus('Please verify your email first. Check your inbox.', 'error');
                     document.getElementById('resendBtn').style.display = 'block';
-                    window._unverifiedUser = result.user;
                     signOut(auth);
                     return;
                 }
                 window.location.href = 'https://sorcrpg.com/?loggedin=1';
-            }).catch(function(error) {
-                showStatus('Sign in failed: ' + error.message, 'error');
-            });
+            }).catch(function(error) { showStatus('Sign in failed: ' + error.message, 'error'); });
         };
 
         window.resendVerification = async function() {
@@ -311,9 +259,7 @@
                 showStatus('✅ Verification email sent! Check your inbox and spam.', 'success');
                 document.getElementById('resendBtn').style.display = 'none';
                 signOut(auth);
-            }).catch(function(error) {
-                showStatus('Failed: ' + error.message, 'error');
-            });
+            }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
         };
 
         window.showForgotPassword = function() {
@@ -321,9 +267,7 @@
             if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
             sendPasswordResetEmail(auth, email).then(function() {
                 showStatus('✅ Password reset email sent to ' + email, 'success');
-            }).catch(function(error) {
-                showStatus('Failed: ' + error.message, 'error');
-            });
+            }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
         };
 
         window.handleSignUp = async function() {
@@ -336,26 +280,43 @@
             var usernameError = isValidUsername(username);
             if (usernameError) { showStatus(usernameError, 'error'); return; }
 
-            var q = query(collection(db, "users"), where("username", "==", username));
+            var q = query(collection(db, "users"), where("firstName", "==", username));
             var existing = await getDocs(q);
-            if (!existing.empty) { showStatus('That username is already taken. Please choose another.', 'error'); return; }
+            if (!existing.empty) { showStatus('That name is already taken. Please choose another.', 'error'); return; }
 
             var userId = generateUserId();
 
             createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
                 await sendEmailVerification(result.user);
                 await setDoc(doc(db, "users", result.user.uid), {
-                    email: email, role: 'CIVILIAN', username: username,
-                    userId: userId, avatar: null, displayName: username,
-                    communityPoints: 0, joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-                    postCount: 0, titles: [], isPro: false
+                    email: email,
+                    role: 'CIVILIAN',
+                    username: username,
+                    firstName: username,
+                    surname: '',
+                    prefix: '',
+                    suffix: '',
+                    usernameChanged: false,
+                    userId: userId,
+                    avatar: null,
+                    displayName: username,
+                    communityPoints: 0,
+                    joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    postCount: 0,
+                    titles: [],
+                    isPro: false,
+                    unlockedFellowships: false,
+                    unlockedBasic: false,
+                    unlockedSurname: false,
+                    unlockedPrefixSuffix: false,
+                    unlockedPro: false,
+                    playerPointsGranted: false,
+                    gmPointsGranted: false
                 });
                 signOut(auth);
                 document.getElementById('signinForm').style.display = 'none';
                 showStatus('✅ Profile created! Check your email to verify before signing in.', 'success');
-            }).catch(function(error) {
-                showStatus('Sign up failed: ' + error.message, 'error');
-            });
+            }).catch(function(error) { showStatus('Sign up failed: ' + error.message, 'error'); });
         };
     </script>
 </body>
