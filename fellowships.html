@@ -92,8 +92,26 @@
         .msg { font-size: 0.85rem; margin-top: 0.5rem; }
         .msg.success { color: #4caf50; }
         .msg.error { color: #d0021b; }
-        .system-msg { text-align: center; padding: 0.5rem; }
-        .system-msg span { background: #1a1a2a; color: #666; font-size: 0.78rem; padding: 4px 12px; border-radius: 10px; font-style: italic; }
+
+        /* Taverns */
+        .tavern-coming-soon {
+            background: linear-gradient(135deg, #1a0a00, #2a1500, #1a0a00);
+            border: 1px solid #d4af37;
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .tavern-coming-soon .tavern-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .tavern-coming-soon h2 { color: #d4af37; font-size: 1.4rem; margin: 0 0 0.5rem 0; }
+        .tavern-coming-soon .tavern-subtitle { color: #888; font-size: 0.85rem; margin-bottom: 1.5rem; font-style: italic; }
+        .tavern-coming-soon p { color: #777; font-size: 0.88rem; line-height: 1.8; max-width: 500px; margin: 0 auto; }
+        .tavern-feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 1.5rem; }
+        .tavern-feature-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 1rem; text-align: left; }
+        .tavern-feature-card .tf-icon { font-size: 1.3rem; margin-bottom: 0.4rem; }
+        .tavern-feature-card h4 { color: #e0cfc0; font-size: 0.85rem; margin: 0 0 0.25rem 0; }
+        .tavern-feature-card p { color: #555; font-size: 0.78rem; margin: 0; line-height: 1.5; }
+        .coming-soon-badge { display: inline-block; background: #2a1500; border: 1px solid #d4af37; color: #d4af37; font-size: 0.7rem; font-weight: bold; padding: 3px 10px; border-radius: 10px; margin-bottom: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -171,7 +189,6 @@
             if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
             return Math.floor(seconds / 86400) + 'd ago';
         }
-        function getFellowshipId(uid1, uid2) { return [uid1, uid2].sort().join('_'); }
 
         function isEligible() {
             if (myRole === 'ADMIN' || myRole === 'OWNER') return true;
@@ -192,32 +209,6 @@
         window.closeLightbox = function() {
             document.getElementById('mediaLightbox').classList.remove('open');
         };
-
-        // Send system inbox message about points grant
-        async function sendPointsGrantMessage(uid, role, points) {
-            var convId = 'system_' + uid + '_upgrade';
-            var text = role === 'MASTER'
-                ? 'Welcome to your Master account! ' + points + ' community points have been added to your balance. Head to your profile to spend them on unlocks like Fellowships, SORC Beyond Pro, surname, prefixes, suffixes, and more.'
-                : 'Welcome to your Player account! ' + points + ' community points have been added to your balance. Head to your profile to spend them on unlocks like Fellowships, SORC Beyond Basic, surname, and more.';
-
-            await setDoc(doc(db, "conversations", convId), {
-                senderUid: 'system',
-                senderName: 'Ogre Adventurer',
-                receiverUid: uid,
-                receiverName: myUsername,
-                status: 'accepted',
-                createdAt: serverTimestamp(),
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: text
-            });
-            await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: 'system',
-                senderName: 'Ogre Adventurer',
-                text: text,
-                isSystem: true,
-                createdAt: serverTimestamp()
-            });
-        }
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
@@ -269,16 +260,63 @@
                     '</button>' +
                     '<button class="f-tab" id="tab_feed" onclick="switchTab(\'feed\')">Feed</button>' +
                     '<button class="f-tab" id="tab_media" onclick="switchTab(\'media\')">Media</button>' +
+                    '<button class="f-tab" id="tab_taverns" onclick="switchTab(\'taverns\')">🍺 Taverns</button>' +
                 '</div>' +
                 '<div class="f-panel active" id="panel_fellows"></div>' +
                 '<div class="f-panel" id="panel_requests"></div>' +
                 '<div class="f-panel" id="panel_feed"></div>' +
-                '<div class="f-panel" id="panel_media"></div>';
+                '<div class="f-panel" id="panel_media"></div>' +
+                '<div class="f-panel" id="panel_taverns"></div>';
 
             await loadFellows();
             await loadRequests();
             await loadFeed();
             await loadMedia();
+            loadTaverns();
+        }
+
+        function loadTaverns() {
+            var el = document.getElementById('panel_taverns');
+            el.innerHTML =
+                '<div class="tavern-coming-soon">' +
+                    '<div class="tavern-icon">🍺</div>' +
+                    '<div class="coming-soon-badge">Coming Soon</div>' +
+                    '<h2>Taverns</h2>' +
+                    '<div class="tavern-subtitle">Where adventurers gather before the quest</div>' +
+                    '<p>Taverns are the waiting rooms of Essentia — public and Fellowship lobbies where players meet up, form parties, and prepare to enter Online Lobby sessions together. Browse open Taverns, join one that fits your play style, or open your own and wait for your Fellows to arrive.</p>' +
+                    '<div class="tavern-feature-grid">' +
+                        '<div class="tavern-feature-card">' +
+                            '<div class="tf-icon">🗺️</div>' +
+                            '<h4>Browse Open Taverns</h4>' +
+                            '<p>Find public Taverns by game type, skill level, or Fellowship.</p>' +
+                        '</div>' +
+                        '<div class="tavern-feature-card">' +
+                            '<div class="tf-icon">⚔️</div>' +
+                            '<h4>Fellowship Taverns</h4>' +
+                            '<p>Private Taverns only your Fellows can see and join.</p>' +
+                        '</div>' +
+                        '<div class="tavern-feature-card">' +
+                            '<div class="tf-icon">🎲</div>' +
+                            '<h4>Party Up</h4>' +
+                            '<p>Assemble your party before entering a recorded Online Lobby session.</p>' +
+                        '</div>' +
+                        '<div class="tavern-feature-card">' +
+                            '<div class="tf-icon">📣</div>' +
+                            '<h4>Call to Arms</h4>' +
+                            '<p>Signal your Fellows from a Tavern — pull them into your session fast.</p>' +
+                        '</div>' +
+                        '<div class="tavern-feature-card">' +
+                            '<div class="tf-icon">🏆</div>' +
+                            '<h4>Skill-Based Rooms</h4>' +
+                            '<p>Beginner, Intermediate, and Advanced Taverns for every level of play.</p>' +
+                        '</div>' +
+                        '<div class="tavern-feature-card">' +
+                            '<div class="tf-icon">🔒</div>' +
+                            '<h4>Assessment Required</h4>' +
+                            '<p>Tavern access is tied to your Player or Master assessment level.</p>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
         }
 
         async function loadFellows() {
@@ -306,7 +344,7 @@
                 var userData = userDoc.exists() ? userDoc.data() : {};
                 var role = OWNER_EMAILS.includes(userData.email) ? 'OWNER' : ADMIN_EMAILS.includes(userData.email) ? 'ADMIN' : (userData.role || 'CIVILIAN');
                 var status = userData.currentStatus || 'offline';
-                var statusLabel = status === 'online' ? '🟢 Online' : status === 'lobby' ? '🟡 In a Lobby' : status === 'campaign' ? '🔴 In a Campaign' : '⚫ Offline';
+                var statusLabel = status === 'online' ? '🟢 Online' : status === 'lobby' ? '🟡 In a Tavern' : status === 'campaign' ? '🔴 In a Campaign' : '⚫ Offline';
 
                 html +=
                     '<div class="fellow-card">' +
@@ -346,7 +384,7 @@
                     '<div class="fellow-avatar">' + (req.senderName ? req.senderName.charAt(0).toUpperCase() : '?') + '</div>' +
                     '<div class="request-info">' +
                         '<div class="request-name">' + (req.senderName || 'Unknown') + '</div>' +
-                        '<div class="request-text">wants to join your Fellowship</div>' +
+                        '<div class="request-text">wants to be your Fellow</div>' +
                     '</div>' +
                     '<div class="request-actions">' +
                         '<button class="btn btn-red" onclick="acceptFellowship(\'' + req.id + '\')">Accept</button>' +
