@@ -8,93 +8,112 @@
     <link rel="stylesheet" href="styles.css" />
     <style>
         body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
-        .inbox-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 2rem; border-bottom: 2px solid #d0021b; text-align: center; }
-        .inbox-hero h1 { color: #d0021b; font-size: 1.8rem; margin-bottom: 0.25rem; }
-        .inbox-hero p { color: #666; font-size: 0.85rem; }
-        .inbox-container { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
+        .inbox-container { max-width: 700px; margin: 0 auto; padding: 1rem; }
+        .inbox-header { padding: 1.5rem 0 1rem 0; }
+        .inbox-header h1 { color: #d0021b; font-size: 1.5rem; margin: 0 0 0.25rem 0; }
+        .inbox-header p { color: #555; font-size: 0.85rem; margin: 0; }
         .inbox-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-        .inbox-tab { padding: 8px 20px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; }
+        .inbox-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; }
         .inbox-tab.active { background: #d0021b; color: #fff; border-color: #d0021b; }
         .inbox-tab:hover { border-color: #d0021b; }
         .inbox-tab .badge { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; }
-        .conversation-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 1rem; }
-        .conversation-card:hover { border-color: #d0021b; }
+        .inbox-panel { display: none; }
+        .inbox-panel.active { display: block; }
+        .conversation-item { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 1rem; }
+        .conversation-item:hover { border-color: #d0021b; }
+        .conversation-item.unread { border-color: #d4af37; }
         .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #888; border: 2px solid #333; flex-shrink: 0; }
         .conv-info { flex: 1; min-width: 0; }
-        .conv-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
-        .conv-preview { font-size: 0.8rem; color: #555; margin-top: 2px; }
-        .conv-meta { text-align: right; font-size: 0.75rem; color: #555; flex-shrink: 0; }
-        .request-card { background: #1a1a1a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .request-info { flex: 1; }
-        .request-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
-        .request-text { font-size: 0.8rem; color: #888; margin-top: 2px; }
-        .request-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-        .btn { padding: 7px 16px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
-        .btn-red { background: #d0021b; color: #fff; }
-        .btn-red:hover { background: #a50013; }
-        .btn-grey { background: #333; color: #888; }
-        .btn-grey:hover { background: #444; color: #e0cfc0; }
-        .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; }
-        .conv-view { display: none; }
-        .conv-view.active { display: block; }
-        .inbox-list.hidden { display: none; }
-        .conv-header { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
-        .conv-header-name { font-weight: bold; font-size: 1rem; color: #e0cfc0; }
-        .message-thread { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem; min-height: 300px; max-height: 450px; overflow-y: auto; margin-bottom: 1rem; }
+        .conv-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
+        .conv-preview { font-size: 0.78rem; color: #555; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .conv-time { font-size: 0.72rem; color: #444; flex-shrink: 0; }
+        .conv-badge { display: inline-block; background: #d4af37; color: #222; border-radius: 8px; padding: 1px 7px; font-size: 0.68rem; font-weight: bold; margin-left: 6px; }
+        .request-item { background: #1a1a2a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; }
+        .request-item .req-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .request-item .req-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888; border: 2px solid #d4af37; flex-shrink: 0; }
+        .request-item .req-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
+        .request-item .req-text { font-size: 0.82rem; color: #888; margin-top: 2px; }
+        .request-item .req-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .btn { padding: 8px 18px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+        .btn-accept { background: #1a6b1a; color: #fff; }
+        .btn-accept:hover { background: #125012; }
+        .btn-decline { background: #333; color: #888; }
+        .btn-decline:hover { background: #444; color: #e0cfc0; }
+        .btn-view { background: #1a3a6b; color: #fff; }
+        .btn-view:hover { background: #122a55; }
+        .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; line-height: 1.7; }
+        .conversation-view { display: none; }
+        .conversation-view.open { display: block; }
+        .conv-view-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 0; border-bottom: 1px solid #2a2a2a; margin-bottom: 1rem; }
+        .back-btn { background: none; border: none; color: #d4af37; cursor: pointer; font-size: 0.85rem; font-weight: bold; padding: 0; }
+        .back-btn:hover { text-decoration: underline; }
+        .conv-view-name { font-weight: bold; color: #e0cfc0; font-size: 1rem; flex: 1; }
+        .conv-view-link { font-size: 0.78rem; color: #d4af37; text-decoration: none; }
+        .conv-view-link:hover { text-decoration: underline; }
+        .messages-list { max-height: 420px; overflow-y: auto; padding: 0.5rem 0; margin-bottom: 1rem; }
         .message-bubble { margin-bottom: 0.75rem; display: flex; flex-direction: column; }
         .message-bubble.mine { align-items: flex-end; }
         .message-bubble.theirs { align-items: flex-start; }
-        .bubble-author { font-size: 0.7rem; color: #555; margin-bottom: 2px; }
-        .bubble-content { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.88rem; line-height: 1.5; }
-        .mine .bubble-content { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
-        .theirs .bubble-content { background: #2a2a2a; color: #e0cfc0; border-bottom-left-radius: 3px; }
-        .bubble-time { font-size: 0.7rem; color: #444; margin-top: 2px; }
-        .message-input-row { display: flex; gap: 0.5rem; }
-        .message-input-row input { flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #e0cfc0; font-size: 0.9rem; }
-        .message-input-row input:focus { outline: none; border-color: #d0021b; }
-        .message-input-row button { padding: 10px 20px; background: #d0021b; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .message-input-row button:hover { background: #a50013; }
+        .message-bubble.system-msg { align-items: center; }
+        .bubble-inner { max-width: 75%; padding: 8px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; }
+        .message-bubble.mine .bubble-inner { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
+        .message-bubble.theirs .bubble-inner { background: #222; color: #e0cfc0; border-bottom-left-radius: 3px; }
+        .message-bubble.system-msg .bubble-inner { background: #1a1a2a; color: #666; font-style: italic; font-size: 0.8rem; border-radius: 10px; }
+        .bubble-sender { font-size: 0.7rem; color: #555; margin-bottom: 2px; }
+        .msg-input-row { display: flex; gap: 0.5rem; }
+        .msg-input-row input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; }
+        .msg-input-row input:focus { outline: none; border-color: #d0021b; }
+        .msg-input-row button { padding: 10px 20px; background: #d0021b; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .msg-input-row button:hover { background: #a50013; }
         .not-logged-in { text-align: center; padding: 3rem; color: #555; }
         .not-logged-in a { color: #d4af37; }
+
+        /* Fellowship request message card inside inbox */
+        .fellowship-request-card {
+            background: #1a1a00;
+            border: 1px solid #d4af37;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+        .fellowship-request-card .fr-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .fellowship-request-card .fr-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #2a2a2a;
+            border: 2px solid #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            color: #d4af37;
+            flex-shrink: 0;
+        }
+        .fellowship-request-card .fr-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
+        .fellowship-request-card .fr-text { font-size: 0.85rem; color: #888; margin-top: 2px; }
+        .fellowship-request-card .fr-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .fellowship-request-card .fr-status { font-size: 0.82rem; color: #4caf50; margin-top: 0.5rem; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="inbox-hero">
-        <h1>Inbox</h1>
-        <p>Your messages and requests</p>
-    </div>
-
     <div class="inbox-container">
-        <div class="inbox-list" id="inboxList">
-            <div class="inbox-tabs">
-                <button class="inbox-tab active" id="tabMessages" onclick="switchTab('messages')">Messages</button>
-                <button class="inbox-tab" id="tabRequests" onclick="switchTab('requests')">
-                    Requests <span class="badge" id="requestsBadge" style="display:none;">0</span>
-                </button>
-            </div>
-            <div id="messagesList"></div>
-            <div id="requestsList" style="display:none;"></div>
+        <div class="inbox-header">
+            <h1>Inbox</h1>
+            <p>Your messages and requests</p>
         </div>
-
-        <div class="conv-view" id="convView">
-            <div style="margin-bottom:1rem;">
-                <button class="btn btn-grey" onclick="backToInbox()" style="font-size:0.85rem;padding:6px 14px;">← Back to Inbox</button>
-            </div>
-            <div class="conv-header" id="convHeader"></div>
-            <div class="message-thread" id="messageThread"></div>
-            <div class="message-input-row">
-                <input type="text" id="messageInput" placeholder="Write a message..." onkeydown="if(event.key==='Enter') sendMessage()" />
-                <button onclick="sendMessage()">Send</button>
-            </div>
-        </div>
+        <div id="inboxApp"><div class="not-logged-in"><p>Loading...</p></div></div>
     </div>
-
     <div id="footer"></div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, query, where, orderBy, getDocs, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -115,255 +134,315 @@
         var currentUser = null;
         var currentUserData = null;
         var googleUser = null;
-        var currentConvId = null;
+        var myUid = null;
+        var myUsername = null;
         var currentOtherUid = null;
-        var currentOtherName = null;
 
         try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
 
-        function getMyUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
-        function getMyEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
-        function getMyUsername() {
-            var data = currentUserData || {};
-            return data.username || data.displayName || (getMyEmail() || '').split('@')[0];
+        function getUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
+        function getEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
+        function timeAgo(ts) {
+            if (!ts) return '';
+            var d = ts.toDate ? ts.toDate() : new Date(ts);
+            var s = Math.floor((new Date() - d) / 1000);
+            if (s < 60) return 'Just now';
+            if (s < 3600) return Math.floor(s / 60) + 'm ago';
+            if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+            return Math.floor(s / 86400) + 'd ago';
         }
-
-        function timeAgo(timestamp) {
-            if (!timestamp) return '';
-            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            var seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return 'Just now';
-            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-            return Math.floor(seconds / 86400) + 'd ago';
-        }
-
-        function getRoleColor(role) {
-            if (role === 'OWNER') return 'background:#d4af37;color:#222;';
-            if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
-            if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
-            if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
-            return 'background:#333;color:#e0cfc0;';
-        }
-        function getRoleAbbr(role) {
-            if (role === 'OWNER') return '[OWN]';
-            if (role === 'ADMIN') return '[AD]';
-            if (role === 'MASTER') return '[GM]';
-            if (role === 'PLAYER') return '[PC]';
-            return '[CIV]';
-        }
-
-        async function loadInbox() {
-            var uid = getMyUid();
-            if (!uid) {
-                document.getElementById('inboxList').innerHTML = '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
-                return;
-            }
-
-            var snap1 = await getDocs(query(collection(db, "conversations"), where("senderUid", "==", uid)));
-            var snap2 = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid)));
-
-            var conversations = [];
-            var seen = new Set();
-            snap1.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); conversations.push({ id: d.id, ...d.data() }); } });
-            snap2.forEach(function(d) { if (!seen.has(d.id)) { seen.add(d.id); conversations.push({ id: d.id, ...d.data() }); } });
-
-            conversations.sort(function(a, b) {
-                var aTime = a.lastMessageAt ? (a.lastMessageAt.toDate ? a.lastMessageAt.toDate() : new Date(a.lastMessageAt)) : new Date(0);
-                var bTime = b.lastMessageAt ? (b.lastMessageAt.toDate ? b.lastMessageAt.toDate() : new Date(b.lastMessageAt)) : new Date(0);
-                return bTime - aTime;
-            });
-
-            var accepted = conversations.filter(function(c) { return c.status === 'accepted'; });
-            var pending = conversations.filter(function(c) { return c.status === 'pending' && c.receiverUid === uid; });
-
-            var badge = document.getElementById('requestsBadge');
-            if (pending.length > 0) {
-                badge.textContent = pending.length;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
-
-            renderMessages(accepted, uid);
-            renderRequests(pending);
-        }
-
-        function renderMessages(conversations, uid) {
-            var el = document.getElementById('messagesList');
-            if (conversations.length === 0) {
-                el.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit someone\'s profile to start a conversation.</div>';
-                return;
-            }
-            el.innerHTML = conversations.map(function(conv) {
-                var otherName = conv.senderUid === uid ? conv.receiverName : conv.senderName;
-                var otherUid = conv.senderUid === uid ? conv.receiverUid : conv.senderUid;
-                return '<div class="conversation-card" onclick="openConversation(\'' + conv.id + '\', \'' + (otherName || '').replace(/'/g, "\\'") + '\', \'' + otherUid + '\')">' +
-                    '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
-                    '<div class="conv-info">' +
-                        '<div class="conv-name">' + (otherName || 'Unknown') + '</div>' +
-                        '<div class="conv-preview">' + timeAgo(conv.lastMessageAt) + '</div>' +
-                    '</div>' +
-                '</div>';
-            }).join('');
-        }
-
-        function renderRequests(requests) {
-            var el = document.getElementById('requestsList');
-            if (requests.length === 0) {
-                el.innerHTML = '<div class="empty-state">No pending message requests.</div>';
-                return;
-            }
-            el.innerHTML = requests.map(function(req) {
-                return '<div class="request-card">' +
-                    '<div class="conv-avatar">' + (req.senderName ? req.senderName.charAt(0).toUpperCase() : '?') + '</div>' +
-                    '<div class="request-info">' +
-                        '<div class="request-name">' + (req.senderName || 'Unknown') + '</div>' +
-                        '<div class="request-text">wants to send you a message</div>' +
-                    '</div>' +
-                    '<div class="request-actions">' +
-                        '<button class="btn btn-red" onclick="acceptRequest(\'' + req.id + '\', \'' + (req.senderUid || '') + '\', \'' + (req.senderName || '').replace(/'/g, "\\'") + '\')">Accept</button>' +
-                        '<button class="btn btn-grey" onclick="declineRequest(\'' + req.id + '\')">Decline</button>' +
-                    '</div>' +
-                '</div>';
-            }).join('');
-        }
-
-        window.switchTab = function(tab) {
-            document.getElementById('tabMessages').classList.toggle('active', tab === 'messages');
-            document.getElementById('tabRequests').classList.toggle('active', tab === 'requests');
-            document.getElementById('messagesList').style.display = tab === 'messages' ? 'block' : 'none';
-            document.getElementById('requestsList').style.display = tab === 'requests' ? 'block' : 'none';
-        };
-
-        window.acceptRequest = async function(convId, senderUid, senderName) {
-            var myUsername = getMyUsername();
-            var myUid = getMyUid();
-
-            await updateDoc(doc(db, "conversations", convId), { status: 'accepted' });
-
-            // Auto system message
-            await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: myUid,
-                senderName: myUsername,
-                text: myUsername + ' accepted your message request.',
-                isSystem: true,
-                createdAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, "conversations", convId), {
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: myUsername + ' accepted your message request.'
-            });
-
-            await loadInbox();
-            openConversation(convId, senderName, senderUid);
-        };
-
-        window.declineRequest = async function(convId) {
-            await updateDoc(doc(db, "conversations", convId), { status: 'declined' });
-            await loadInbox();
-        };
-
-        window.openConversation = async function(convId, otherName, otherUid) {
-            currentConvId = convId;
-            currentOtherUid = otherUid;
-            currentOtherName = otherName;
-
-            document.getElementById('inboxList').classList.add('hidden');
-            document.getElementById('convView').classList.add('active');
-
-            // Fetch other user's role
-            var otherRole = 'CIVILIAN';
-            try {
-                var otherDoc = await getDoc(doc(db, "users", currentOtherUid));
-                if (otherDoc.exists()) {
-                    var otherEmail = otherDoc.data().email || '';
-                    otherRole = OWNER_EMAILS.includes(otherEmail) ? 'OWNER' : ADMIN_EMAILS.includes(otherEmail) ? 'ADMIN' : (otherDoc.data().role || 'CIVILIAN');
-                }
-            } catch(e) {}
-
-            // Build header — use currentOtherUid for the profile link
-            document.getElementById('convHeader').innerHTML =
-                '<div class="conv-avatar">' + (currentOtherName ? currentOtherName.charAt(0).toUpperCase() : '?') + '</div>' +
-                '<div>' +
-                    '<div class="conv-header-name">' + currentOtherName +
-                        ' <span style="' + getRoleColor(otherRole) + 'padding:1px 6px;border-radius:4px;font-size:0.7rem;font-weight:bold;">' + getRoleAbbr(otherRole) + '</span>' +
-                    '</div>' +
-                    '<a href="public-profile.html?uid=' + currentOtherUid + '" style="color:#d4af37;font-size:0.75rem;text-decoration:none;">View Profile</a>' +
-                '</div>';
-
-            await loadMessages(convId);
-        };
-
-        window.backToInbox = function() {
-            currentConvId = null;
-            currentOtherUid = null;
-            currentOtherName = null;
-            document.getElementById('inboxList').classList.remove('hidden');
-            document.getElementById('convView').classList.remove('active');
-            loadInbox();
-        };
-
-        async function loadMessages(convId) {
-            var q = query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc"));
-            var snap = await getDocs(q);
-            var myUid = getMyUid();
-            var html = '';
-            snap.forEach(function(d) {
-                var msg = d.data();
-                var isMine = msg.senderUid === myUid;
-                var isSystem = msg.isSystem === true;
-                if (isSystem) {
-                    html +=
-                        '<div style="text-align:center;margin:0.5rem 0;">' +
-                            '<span style="background:#1a1a2a;color:#666;font-size:0.78rem;padding:4px 12px;border-radius:10px;font-style:italic;">' + msg.text + '</span>' +
-                        '</div>';
-                } else {
-                    html +=
-                        '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
-                            (!isMine ? '<div class="bubble-author">' + (msg.senderName || '') + '</div>' : '') +
-                            '<div class="bubble-content">' + msg.text + '</div>' +
-                            '<div class="bubble-time">' + timeAgo(msg.createdAt) + '</div>' +
-                        '</div>';
-                }
-            });
-            var el = document.getElementById('messageThread');
-            el.innerHTML = html || '<p style="color:#444;font-size:0.85rem;text-align:center;margin-top:2rem;">No messages yet. Say hello!</p>';
-            el.scrollTop = el.scrollHeight;
-        }
-
-        window.sendMessage = async function() {
-            var input = document.getElementById('messageInput');
-            var text = input ? input.value.trim() : '';
-            if (!text || !currentConvId) return;
-            var myUid = getMyUid();
-            await addDoc(collection(db, "conversations", currentConvId, "messages"), {
-                senderUid: myUid,
-                senderName: getMyUsername(),
-                text: text,
-                createdAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, "conversations", currentConvId), {
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: text
-            });
-            input.value = '';
-            await loadMessages(currentConvId);
-        };
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
                 currentUser = user;
-                var docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) currentUserData = docSnap.data();
+                var snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists()) currentUserData = snap.data();
             } else if (googleUser) {
                 try {
-                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-                    if (docSnap.exists()) currentUserData = docSnap.data();
+                    var snap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (snap.exists()) currentUserData = snap.data();
                 } catch(e) {}
             }
-            await loadInbox();
+
+            myUid = getUid();
+            if (!myUid) {
+                document.getElementById('inboxApp').innerHTML = '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
+                return;
+            }
+
+            var data = currentUserData || {};
+            var email = getEmail();
+            myUsername = data.username || data.displayName || email.split('@')[0];
+
+            await renderInbox();
         });
+
+        async function renderInbox() {
+            // Load message conversations (non-fellowship-request)
+            var msgSnap1 = await getDocs(query(collection(db, "conversations"), where("senderUid", "==", myUid)));
+            var msgSnap2 = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", myUid)));
+
+            var conversations = [];
+            var pendingRequests = [];
+            var fellowshipRequests = [];
+            var seen = new Set();
+
+            function processConv(d) {
+                if (seen.has(d.id)) return;
+                seen.add(d.id);
+                var data = d.data();
+
+                // Fellowship request inbox messages
+                if (data.isFellowshipRequest && data.receiverUid === myUid) {
+                    fellowshipRequests.push({ id: d.id, ...data });
+                    return;
+                }
+                if (data.isFellowshipRequest) return; // sender sees it in profile
+
+                if (data.status === 'accepted') {
+                    conversations.push({ id: d.id, ...data });
+                } else if (data.status === 'pending' && data.receiverUid === myUid) {
+                    pendingRequests.push({ id: d.id, ...data });
+                }
+            }
+
+            msgSnap1.forEach(processConv);
+            msgSnap2.forEach(processConv);
+
+            conversations.sort(function(a, b) {
+                var ta = a.lastMessageAt ? (a.lastMessageAt.toDate ? a.lastMessageAt.toDate() : new Date(a.lastMessageAt)) : new Date(0);
+                var tb = b.lastMessageAt ? (b.lastMessageAt.toDate ? b.lastMessageAt.toDate() : new Date(b.lastMessageAt)) : new Date(0);
+                return tb - ta;
+            });
+
+            var reqCount = pendingRequests.length + fellowshipRequests.length;
+
+            document.getElementById('inboxApp').innerHTML =
+                '<div class="inbox-tabs">' +
+                    '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>' +
+                    '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">' +
+                        'Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') +
+                    '</button>' +
+                '</div>' +
+                '<div class="inbox-panel active" id="panel_messages"></div>' +
+                '<div class="inbox-panel" id="panel_requests"></div>' +
+                '<div class="conversation-view" id="convView"></div>';
+
+            // Messages tab
+            var msgPanel = document.getElementById('panel_messages');
+            if (conversations.length === 0) {
+                msgPanel.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit someone\'s profile to start a conversation.</div>';
+            } else {
+                msgPanel.innerHTML = conversations.map(function(conv) {
+                    var otherName = conv.senderUid === myUid ? conv.receiverName : conv.senderName;
+                    var otherUid = conv.senderUid === myUid ? conv.receiverUid : conv.senderUid;
+                    return '<div class="conversation-item" onclick="openConversation(\'' + conv.id + '\', \'' + otherUid + '\', \'' + (otherName || 'Unknown').replace(/'/g, "\\'") + '\')">' +
+                        '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
+                        '<div class="conv-info">' +
+                            '<div class="conv-name">' + (otherName || 'Unknown') + '</div>' +
+                            '<div class="conv-preview">' + (conv.lastMessageText || '...') + '</div>' +
+                        '</div>' +
+                        '<div class="conv-time">' + timeAgo(conv.lastMessageAt) + '</div>' +
+                    '</div>';
+                }).join('');
+            }
+
+            // Requests tab — message requests + fellowship requests
+            var reqPanel = document.getElementById('panel_requests');
+            var reqHtml = '';
+
+            // Fellowship requests first
+            fellowshipRequests.forEach(function(conv) {
+                var senderName = conv.senderName || 'Unknown';
+                reqHtml +=
+                    '<div class="fellowship-request-card" id="fr_' + conv.id + '">' +
+                        '<div class="fr-header">' +
+                            '<div class="fr-avatar">⚔️</div>' +
+                            '<div>' +
+                                '<div class="fr-name">' + senderName + '</div>' +
+                                '<div class="fr-text">wants to be your Fellow...</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="fr-actions">' +
+                            '<button class="btn btn-accept" onclick="acceptFellowshipFromInbox(\'' + conv.id + '\', \'' + conv.fellowshipId + '\', \'' + conv.senderUid + '\', \'' + senderName.replace(/'/g, "\\'") + '\')">✅ Accept</button>' +
+                            '<button class="btn btn-decline" onclick="declineFellowshipFromInbox(\'' + conv.id + '\', \'' + conv.fellowshipId + '\')">Decline</button>' +
+                            '<a href="public-profile.html?uid=' + conv.senderUid + '" class="btn btn-view" style="text-decoration:none;">👤 View Profile</a>' +
+                        '</div>' +
+                    '</div>';
+            });
+
+            // Message requests
+            pendingRequests.forEach(function(conv) {
+                var senderName = conv.senderName || 'Unknown';
+                reqHtml +=
+                    '<div class="request-item" id="req_' + conv.id + '">' +
+                        '<div class="req-header">' +
+                            '<div class="req-avatar">' + senderName.charAt(0).toUpperCase() + '</div>' +
+                            '<div>' +
+                                '<div class="req-name">' + senderName + '</div>' +
+                                '<div class="req-text">sent you a message request</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="req-actions">' +
+                            '<button class="btn btn-accept" onclick="acceptMessageRequest(\'' + conv.id + '\', \'' + conv.senderUid + '\', \'' + senderName.replace(/'/g, "\\'") + '\')">Accept</button>' +
+                            '<button class="btn btn-decline" onclick="declineMessageRequest(\'' + conv.id + '\')">Decline</button>' +
+                            '<button class="btn btn-view" onclick="openConversation(\'' + conv.id + '\', \'' + conv.senderUid + '\', \'' + senderName.replace(/'/g, "\\'") + '\')">Read</button>' +
+                        '</div>' +
+                    '</div>';
+            });
+
+            if (!reqHtml) {
+                reqPanel.innerHTML = '<div class="empty-state">No pending requests.</div>';
+            } else {
+                reqPanel.innerHTML = reqHtml;
+            }
+        }
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.inbox-tab').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.inbox-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('tab_' + tab).classList.add('active');
+            document.getElementById('panel_' + tab).classList.add('active');
+            document.getElementById('convView').classList.remove('open');
+        };
+
+        window.openConversation = async function(convId, otherUid, otherName) {
+            currentOtherUid = otherUid;
+            var tabsEl = document.querySelector('.inbox-tabs');
+            var panelsEl = document.querySelectorAll('.inbox-panel');
+            if (tabsEl) tabsEl.style.display = 'none';
+            panelsEl.forEach(function(p) { p.style.display = 'none'; });
+
+            var convView = document.getElementById('convView');
+            convView.classList.add('open');
+            convView.innerHTML =
+                '<div class="conv-view-header">' +
+                    '<button class="back-btn" onclick="closeConversation()">← Back</button>' +
+                    '<div class="conv-view-name">' + otherName + '</div>' +
+                    '<a href="public-profile.html?uid=' + otherUid + '" class="conv-view-link">View Profile</a>' +
+                '</div>' +
+                '<div class="messages-list" id="messagesList">Loading...</div>' +
+                '<div class="msg-input-row">' +
+                    '<input type="text" id="msgInput" placeholder="Write a message..." onkeydown="if(event.key===\'Enter\') sendMessage(\'' + convId + '\')" />' +
+                    '<button onclick="sendMessage(\'' + convId + '\')">Send</button>' +
+                '</div>';
+
+            var messagesSnap = await getDocs(query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc")));
+            var messages = [];
+            messagesSnap.forEach(function(d) { messages.push({ id: d.id, ...d.data() }); });
+
+            var listEl = document.getElementById('messagesList');
+            if (messages.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:1rem;">No messages yet.</div>';
+            } else {
+                listEl.innerHTML = messages.map(function(msg) {
+                    if (msg.isSystem) {
+                        return '<div class="message-bubble system-msg"><div class="bubble-inner">' + msg.text + '</div></div>';
+                    }
+                    var isMine = msg.senderUid === myUid;
+                    return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
+                        (!isMine ? '<div class="bubble-sender">' + (msg.senderName || '') + '</div>' : '') +
+                        '<div class="bubble-inner">' + msg.text + '</div>' +
+                    '</div>';
+                }).join('');
+                listEl.scrollTop = listEl.scrollHeight;
+            }
+        };
+
+        window.closeConversation = function() {
+            currentOtherUid = null;
+            var tabsEl = document.querySelector('.inbox-tabs');
+            var panelsEl = document.querySelectorAll('.inbox-panel');
+            if (tabsEl) tabsEl.style.display = '';
+            panelsEl.forEach(function(p) { p.style.display = ''; });
+            document.getElementById('convView').classList.remove('open');
+            document.querySelectorAll('.inbox-panel').forEach(function(p) { p.style.display = ''; });
+            document.getElementById('panel_messages').classList.add('active');
+            document.getElementById('tab_messages').classList.add('active');
+        };
+
+        window.sendMessage = async function(convId) {
+            var input = document.getElementById('msgInput');
+            var text = input ? input.value.trim() : '';
+            if (!text) return;
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: myUid,
+                senderName: myUsername,
+                text: text,
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "conversations", convId), {
+                lastMessageAt: serverTimestamp(),
+                lastMessageText: text
+            });
+            input.value = '';
+            await openConversation(convId, currentOtherUid, document.querySelector('.conv-view-name') ? document.querySelector('.conv-view-name').textContent : '');
+        };
+
+        window.acceptMessageRequest = async function(convId, senderUid, senderName) {
+            await updateDoc(doc(db, "conversations", convId), { status: 'accepted', acceptedAt: serverTimestamp() });
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: 'system',
+                senderName: 'System',
+                text: myUsername + ' accepted your message request.',
+                isSystem: true,
+                createdAt: serverTimestamp()
+            });
+            await renderInbox();
+        };
+
+        window.declineMessageRequest = async function(convId) {
+            await updateDoc(doc(db, "conversations", convId), { status: 'declined' });
+            await renderInbox();
+        };
+
+        // Accept Fellowship from inbox
+        window.acceptFellowshipFromInbox = async function(convId, fellowshipId, senderUid, senderName) {
+            // Accept the fellowship
+            await updateDoc(doc(db, "fellowships", fellowshipId), {
+                status: 'accepted',
+                acceptedAt: serverTimestamp()
+            });
+
+            // Remove the fellowship request conversation
+            await deleteDoc(doc(db, "conversations", convId));
+
+            // Create a real accepted conversation between the two so they can message freely
+            var realConvId = [myUid, senderUid].sort().join('_');
+            var realConvSnap = await getDoc(doc(db, "conversations", realConvId));
+            if (!realConvSnap.exists()) {
+                await setDoc(doc(db, "conversations", realConvId), {
+                    senderUid: senderUid,
+                    senderName: senderName,
+                    receiverUid: myUid,
+                    receiverName: myUsername,
+                    status: 'accepted',
+                    createdAt: serverTimestamp(),
+                    lastMessageAt: serverTimestamp(),
+                    lastMessageText: 'You are now Fellows!'
+                });
+            } else {
+                await updateDoc(doc(db, "conversations", realConvId), { status: 'accepted' });
+            }
+
+            // Send system message to both
+            await addDoc(collection(db, "conversations", realConvId, "messages"), {
+                senderUid: 'system',
+                senderName: 'System',
+                text: myUsername + ' and ' + senderName + ' are now Fellows! You can message each other directly anytime.',
+                isSystem: true,
+                createdAt: serverTimestamp()
+            });
+
+            await renderInbox();
+        };
+
+        // Decline Fellowship from inbox
+        window.declineFellowshipFromInbox = async function(convId, fellowshipId) {
+            await deleteDoc(doc(db, "fellowships", fellowshipId));
+            await deleteDoc(doc(db, "conversations", convId));
+            await renderInbox();
+        };
     </script>
     <script type="module" src="main.js"></script>
 </body>
