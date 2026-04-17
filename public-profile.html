@@ -159,6 +159,7 @@
         }
         function hiddenVal() { return '<span class="hidden-val">hidden</span>'; }
 
+        // All window functions defined before renderProfile
         window.showMessageCompose = function() {
             var compose = document.getElementById('messageCompose');
             var btn = document.getElementById('msgInitBtn');
@@ -201,23 +202,21 @@
             if (msgSection) {
                 msgSection.innerHTML = status === 'accepted'
                     ? '<button class="action-btn action-btn-green" disabled>✅ Message Sent!</button>' +
-                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>'
+                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>'
                     : '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
                       '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
-                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>';
+                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>';
             }
         };
 
         window.goToInbox = function() { window.location.href = 'inbox.html'; };
 
-        // Send Fellowship request AND inbox message to receiver
         window.sendFellowshipRequest = async function() {
             var myUid = getMyUid();
             var myUsername = getMyUsername();
             var msgEl = document.getElementById('actionMsg');
             var fellowshipId = [myUid, targetUid].sort().join('_');
 
-            // Save fellowship request
             await setDoc(doc(db, "fellowships", fellowshipId), {
                 senderUid: myUid,
                 senderName: myUsername,
@@ -227,7 +226,6 @@
                 createdAt: serverTimestamp()
             });
 
-            // Send inbox message to receiver
             var convId = 'fellowship_request_' + fellowshipId;
             await setDoc(doc(db, "conversations", convId), {
                 senderUid: myUid,
@@ -364,7 +362,7 @@
                 } else if (fellowStatus === 'none') {
                     fellowBtn =
                         '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-blue" onclick="sendFellowshipRequest()">⚔️ Add to Fellowship</button>';
+                        '<button class="action-btn action-btn-blue" onclick="window.sendFellowshipRequest()">⚔️ Add to Fellowship</button>';
                 } else if (fellowStatus === 'pending' && fellowSender === myUid) {
                     fellowBtn =
                         '<h3>Fellowship</h3>' +
@@ -372,14 +370,14 @@
                 } else if (fellowStatus === 'pending' && fellowSender !== myUid) {
                     fellowBtn =
                         '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-green" onclick="acceptFellowshipRequest()">✅ Accept Fellowship Request</button>';
+                        '<button class="action-btn action-btn-green" onclick="window.acceptFellowshipRequest()">✅ Accept Fellowship Request</button>';
                 } else if (fellowStatus === 'accepted') {
                     fellowBtn =
                         '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-dark" onclick="removeFellowship()">⚔️ Fellowship ✓ &nbsp;<span style="font-size:0.75rem;color:#555;">(click to remove)</span></button>';
+                        '<button class="action-btn action-btn-dark" onclick="window.removeFellowship()">⚔️ Fellowship ✓ &nbsp;<span style="font-size:0.75rem;color:#555;">(click to remove)</span></button>';
                 }
 
-                // Message section
+                // Message section — only check the real sorted-UID conversation, never the fellowship_request_ one
                 var convId = [myUid, targetUid].sort().join('_');
                 var convDoc = await getDoc(doc(db, "conversations", convId));
                 var convStatus = convDoc.exists() ? convDoc.data().status : 'none';
@@ -387,23 +385,26 @@
                 var msgBtnClass = isGMOrAbove(myRole) || isAdminOrOwner(myEmail) ? 'action-btn action-btn-gold' : 'action-btn action-btn-red';
 
                 var msgSectionHtml = '';
-                if (convStatus === 'accepted' || direct) {
-                    msgSectionHtml = '<button class="' + msgBtnClass + '" onclick="goToInbox()">✉ Open Conversation</button>';
+                if (convStatus === 'accepted' || (direct && convStatus !== 'none')) {
+                    msgSectionHtml = '<button class="' + msgBtnClass + '" onclick="window.goToInbox()">✉ Open Conversation</button>';
                 } else if (convStatus === 'pending') {
                     msgSectionHtml =
                         '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
                         '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
-                        '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="goToInbox()">View in Inbox</button>';
+                        '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>';
                 } else {
-                    var placeholder = direct ? 'Write your message to ' + username + '...' : 'Write your message to ' + username + '... They must accept before they can reply.';
+                    // No conversation yet — show compose button
+                    var placeholder = direct
+                        ? 'Write your message to ' + username + '...'
+                        : 'Write your message to ' + username + '... They must accept before they can reply.';
                     msgSectionHtml =
-                        '<button class="' + msgBtnClass + '" id="msgInitBtn" onclick="showMessageCompose()">✉ Send Message</button>' +
+                        '<button class="' + msgBtnClass + '" id="msgInitBtn" onclick="window.showMessageCompose()">✉ Send Message</button>' +
                         '<div class="message-compose" id="messageCompose">' +
                             '<textarea id="msgTextarea" rows="4" placeholder="' + placeholder + '"></textarea>' +
                             (!direct ? '<p style="font-size:0.75rem;color:#555;margin:0 0 0.5rem 0;">They must accept before they can reply — but your message will be waiting for them.</p>' : '') +
                             '<div class="message-compose-row">' +
-                                '<button class="btn-send" onclick="sendFirstMessage()">Send</button>' +
-                                '<button class="btn-cancel" onclick="cancelMessage()">Cancel</button>' +
+                                '<button class="btn-send" onclick="window.sendFirstMessage()">Send</button>' +
+                                '<button class="btn-cancel" onclick="window.cancelMessage()">Cancel</button>' +
                             '</div>' +
                         '</div>';
                 }
