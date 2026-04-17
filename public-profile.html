@@ -138,14 +138,12 @@
         function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
         function isGMOrAbove(role) { return ['MASTER', 'ADMIN', 'OWNER'].includes(role); }
 
-        // Fellowship eligible = Admin/Owner always, others need unlockedFellowships
         function isFellowshipEligible() {
             var myRole = getMyRole();
             if (myRole === 'ADMIN' || myRole === 'OWNER') return true;
             return (currentUserData || {}).unlockedFellowships === true;
         }
 
-        // No request needed if Admin, Owner, GM/Master, or in a Fellowship
         function canMessageDirectly() {
             return isGMOrAbove(getMyRole()) || isFellowship;
         }
@@ -211,6 +209,70 @@
         };
 
         window.goToInbox = function() { window.location.href = 'inbox.html'; };
+
+        // Send Fellowship request AND inbox message to receiver
+        window.sendFellowshipRequest = async function() {
+            var myUid = getMyUid();
+            var myUsername = getMyUsername();
+            var msgEl = document.getElementById('actionMsg');
+            var fellowshipId = [myUid, targetUid].sort().join('_');
+
+            // Save fellowship request
+            await setDoc(doc(db, "fellowships", fellowshipId), {
+                senderUid: myUid,
+                senderName: myUsername,
+                receiverUid: targetUid,
+                receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: 'pending',
+                createdAt: serverTimestamp()
+            });
+
+            // Send inbox message to receiver
+            var convId = 'fellowship_request_' + fellowshipId;
+            await setDoc(doc(db, "conversations", convId), {
+                senderUid: myUid,
+                senderName: myUsername,
+                receiverUid: targetUid,
+                receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: 'accepted',
+                isFellowshipRequest: true,
+                fellowshipId: fellowshipId,
+                createdAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp(),
+                lastMessageText: myUsername + ' wants to be your Fellow...'
+            });
+            await addDoc(collection(db, "conversations", convId, "messages"), {
+                senderUid: myUid,
+                senderName: myUsername,
+                text: myUsername + ' wants to be your Fellow...',
+                isFellowshipRequest: true,
+                fellowshipId: fellowshipId,
+                isSystem: false,
+                createdAt: serverTimestamp()
+            });
+
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Fellowship request sent!';
+            setTimeout(function() { location.reload(); }, 1000);
+        };
+
+        window.acceptFellowshipRequest = async function() {
+            var myUid = getMyUid();
+            var fellowshipId = [myUid, targetUid].sort().join('_');
+            await updateDoc(doc(db, "fellowships", fellowshipId), { status: 'accepted', acceptedAt: serverTimestamp() });
+            var msgEl = document.getElementById('actionMsg');
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ You are now in a Fellowship!';
+            setTimeout(function() { location.reload(); }, 1000);
+        };
+
+        window.removeFellowship = async function() {
+            if (!confirm('Remove this Fellowship?')) return;
+            var myUid = getMyUid();
+            var fellowshipId = [myUid, targetUid].sort().join('_');
+            await deleteDoc(doc(db, "fellowships", fellowshipId));
+            setTimeout(function() { location.reload(); }, 500);
+        };
 
         async function renderProfile(data) {
             targetData = data;
@@ -384,41 +446,6 @@
                     actionSection +
                 '</div>';
         }
-
-        window.sendFellowshipRequest = async function() {
-            var myUid = getMyUid();
-            var msgEl = document.getElementById('actionMsg');
-            var fellowshipId = [myUid, targetUid].sort().join('_');
-            await setDoc(doc(db, "fellowships", fellowshipId), {
-                senderUid: myUid,
-                senderName: getMyUsername(),
-                receiverUid: targetUid,
-                receiverName: targetData.username || targetData.displayName || 'Unknown',
-                status: 'pending',
-                createdAt: serverTimestamp()
-            });
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Fellowship request sent!';
-            setTimeout(function() { location.reload(); }, 1000);
-        };
-
-        window.acceptFellowshipRequest = async function() {
-            var myUid = getMyUid();
-            var fellowshipId = [myUid, targetUid].sort().join('_');
-            await updateDoc(doc(db, "fellowships", fellowshipId), { status: 'accepted', acceptedAt: serverTimestamp() });
-            var msgEl = document.getElementById('actionMsg');
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ You are now in a Fellowship!';
-            setTimeout(function() { location.reload(); }, 1000);
-        };
-
-        window.removeFellowship = async function() {
-            if (!confirm('Remove this Fellowship?')) return;
-            var myUid = getMyUid();
-            var fellowshipId = [myUid, targetUid].sort().join('_');
-            await deleteDoc(doc(db, "fellowships", fellowshipId));
-            setTimeout(function() { location.reload(); }, 500);
-        };
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
