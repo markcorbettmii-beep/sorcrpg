@@ -5,29 +5,6 @@
   <title>Slayers of Rings &amp; Crowns (SorC) - Basic Rules Pg. 5</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="../../styles.css">
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; }
-    .page-wrapper { width: 100%; overflow-x: hidden; }
-    main { padding: 12px; }
-    h2 { font-size: 1.2rem; }
-    h3 { font-size: 1rem; }
-    p, li, td, th { font-size: 0.95rem; line-height: 1.6; }
-    table { display: block; overflow-x: auto; width: 100%; }
-    .page-bar { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; padding: 10px; background: #f5f5f5; border: 1px solid #ccc; border-radius: 4px; }
-    .page-bar a { color: #000; text-decoration: none; font-size: 0.9rem; padding: 4px 0; }
-    .page-bar a:hover { text-decoration: underline; }
-    .page-bar .current-page { font-weight: bold; font-size: 0.9rem; padding: 4px 0; }
-    @media (min-width: 768px) {
-      main { padding: 24px 40px; }
-      h2 { font-size: 1.5rem; }
-      h3 { font-size: 1.2rem; }
-      p, li, td, th { font-size: 1rem; }
-      table { display: table; }
-      .page-bar { flex-direction: row; flex-wrap: wrap; gap: 10px; align-items: center; }
-      .page-bar a, .page-bar .current-page { font-size: 0.95rem; }
-    }
-  </style>
 </head>
 <body>
   <div class="page-wrapper">
@@ -53,16 +30,15 @@
             <li><a href="#" id="closeLink">Close</a></li>
         </ul>
     </nav>
+    <nav class="page-nav">
+      <a href="basic_rules_1.html">PG. 1</a>
+      <a href="basic_rules_2.html">PG. 2</a>
+      <a href="basic_rules_3.html">PG. 3</a>
+      <a href="basic_rules_4.html">PG. 4</a>
+      <span>PG. 5</span>
+    </nav>
     <main>
       <section class="rules-section">
-        <div class="page-bar">
-      <a href="basic_rules_1.html">PG. 1 — Introduction &amp; GM Introduction</a>
-      <a href="basic_rules_2.html">PG. 2 — Character Creation, Progression, TST, Abilities &amp; SorC Cards</a>
-      <a href="basic_rules_3.html">PG. 3 — Background, Mission Statement, Exploration &amp; Relations</a>
-      <a href="basic_rules_4.html">PG. 4 — Attributes and Secondary Attributes</a>
-      <span class="current-page">PG. 5 — Movement, Initiative, Traveling, Terms &amp; Definitions</span>
-    </div>
-        <hr>
         <h2>Species</h2>
         <p>A <strong>species</strong> refers to a distinct group of living beings within the game world, categorized based on shared biological, cultural, or magical characteristics. Each species may possess unique traits, abilities, and cultural significance, shaping their interactions and roles within the game environment.</p>
 
@@ -248,16 +224,15 @@
         </ul>
         <p>Materials can also be ordered via mail using the SORC Catalog included in each box set.</p>
         <p><em>Other Resources and Links (under development) — Vocational and Profession Trees (link pending).</em></p>
-        <hr>
-        <div class="page-bar">
-      <a href="basic_rules_1.html">PG. 1 — Introduction &amp; GM Introduction</a>
-      <a href="basic_rules_2.html">PG. 2 — Character Creation, Progression, TST, Abilities &amp; SorC Cards</a>
-      <a href="basic_rules_3.html">PG. 3 — Background, Mission Statement, Exploration &amp; Relations</a>
-      <a href="basic_rules_4.html">PG. 4 — Attributes and Secondary Attributes</a>
-      <span class="current-page">PG. 5 — Movement, Initiative, Traveling, Terms &amp; Definitions</span>
-    </div>
       </section>
     </main>
+    <nav class="page-nav">
+      <a href="basic_rules_1.html">PG. 1</a>
+      <a href="basic_rules_2.html">PG. 2</a>
+      <a href="basic_rules_3.html">PG. 3</a>
+      <a href="basic_rules_4.html">PG. 4</a>
+      <span>PG. 5</span>
+    </nav>
     <footer>
       <div class="container">
         <span>Slayers of Rings &amp; Crowns &copy; 2026 Ogre Adventurer. All Rights Reserved. ESRB 18+.</span>
@@ -266,20 +241,46 @@
   </div>
   <script src="../../main.js"></script>
   <script>
-    var toggle = document.getElementById('menuToggle');
-    var nav = document.getElementById('navLinks');
-    var closeLink = document.getElementById('closeLink');
-    if (toggle && nav) {
-      toggle.addEventListener('click', function() {
-        nav.style.display = (nav.style.display === 'block') ? 'none' : 'block';
-      });
-    }
-    if (closeLink && nav) {
-      closeLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        nav.style.display = 'none';
-      });
-    }
+    (function() {
+      var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+      if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+    document.addEventListener('DOMContentLoaded', function() {
+      var toggle = document.getElementById('menuToggle');
+      var nav = document.getElementById('navLinks');
+      var closeLink = document.getElementById('closeLink');
+      if (toggle && nav) {
+        toggle.addEventListener('click', function() {
+          nav.classList.toggle('active');
+        });
+      }
+      if (closeLink && nav) {
+        closeLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          nav.classList.remove('active');
+        });
+      }
+      var evilBtn = document.querySelector('.theme-toggle-btn.evil');
+      var lawfulBtn = document.querySelector('.theme-toggle-btn.lawful');
+      if (evilBtn && lawfulBtn) {
+        function updateBtns() {
+          var t = localStorage.getItem('themeSelected') || 'evil';
+          evilBtn.classList.toggle('active', t === 'evil');
+          lawfulBtn.classList.toggle('active', t === 'lawful');
+        }
+        updateBtns();
+        evilBtn.addEventListener('click', function() {
+          localStorage.setItem('themeSelected', 'evil');
+          document.body.classList.remove('lawful-mode');
+          updateBtns();
+        });
+        lawfulBtn.addEventListener('click', function() {
+          localStorage.setItem('themeSelected', 'lawful');
+          document.body.classList.add('lawful-mode');
+          updateBtns();
+        });
+      }
+    });
   </script>
 </body>
 </html>
