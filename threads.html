@@ -225,7 +225,7 @@
     </style>
 </head>
 <body>
-    <div class="threads-hero" id="threadsHero">
+    <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
         <a href="forum.html">← Forums</a>
         <h1 id="categoryTitle">Loading...</h1>
     </div>
@@ -247,8 +247,8 @@
             </div>
             <div id="adminThreadBar" class="admin-thread-bar" style="display:none;">
                 <span>⚙️ Admin Tools:</span>
-                <button class="post-action-btn admin-btn" onclick="togglePin()">📌 Toggle Pin</button>
-                <button class="post-action-btn admin-btn" onclick="toggleLock()">🔒 Toggle Lock</button>
+                <button class="post-action-btn admin-btn" id="pinBtn" onclick="togglePin()">📌 Pin</button>
+                <button class="post-action-btn admin-btn" id="lockBtn" onclick="toggleLock()">🔒 Lock</button>
                 <button class="post-action-btn danger-btn" onclick="deleteThread()">🗑 Delete Thread</button>
             </div>
             <div id="threadContent"></div>
@@ -658,7 +658,21 @@
             }
             var thread = { id: threadDoc.id, ...threadDoc.data() };
             currentThreadData = thread;
-            if (canModerate()) document.getElementById('adminThreadBar').style.display = 'flex';
+            if (canModerate()) {
+                document.getElementById('adminThreadBar').style.display = 'flex';
+                var pinBtn = document.getElementById('pinBtn');
+                var lockBtn = document.getElementById('lockBtn');
+                if (pinBtn) {
+                    pinBtn.textContent = thread.pinned ? '📌 Pinned ✓' : '📌 Pin';
+                    pinBtn.style.background = thread.pinned ? '#d4af37' : '';
+                    pinBtn.style.color = thread.pinned ? '#222' : '';
+                }
+                if (lockBtn) {
+                    lockBtn.textContent = thread.locked ? '🔒 Locked ✓' : '🔒 Lock';
+                    lockBtn.style.background = thread.locked ? '#8B0000' : '';
+                    lockBtn.style.color = thread.locked ? '#fff' : '';
+                }
+            }
 
             var posts = [{ id: threadId, isOP: true, ...thread }];
             postsSnap.forEach(function(d) { posts.push({ id: d.id, isOP: false, ...d.data() }); });
@@ -833,12 +847,18 @@
 
         window.togglePin = async function() {
             var snap = await getDoc(doc(db, "threads", currentThread));
-            await updateDoc(doc(db, "threads", currentThread), { pinned: !snap.data().pinned });
+            var newVal = !snap.data().pinned;
+            await updateDoc(doc(db, "threads", currentThread), { pinned: newVal });
+            var btn = document.getElementById('pinBtn');
+            if (btn) btn.textContent = newVal ? '📌 Unpin' : '📌 Pin';
             await loadThreadContent(currentThread);
         };
         window.toggleLock = async function() {
             var snap = await getDoc(doc(db, "threads", currentThread));
-            await updateDoc(doc(db, "threads", currentThread), { locked: !snap.data().locked });
+            var newVal = !snap.data().locked;
+            await updateDoc(doc(db, "threads", currentThread), { locked: newVal });
+            var btn = document.getElementById('lockBtn');
+            if (btn) btn.textContent = newVal ? '🔒 Unlock' : '🔒 Lock';
             await loadThreadContent(currentThread);
         };
         window.deleteThread = async function() {
