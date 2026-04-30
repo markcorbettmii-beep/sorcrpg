@@ -243,6 +243,23 @@ async function checkInboxNotifications(uid) {
   } catch(e) {}
 }
 
+// ========== DAILY LOGIN BONUS ==========
+async function awardDailyLoginBonus(uid) {
+  try {
+    var userSnap = await getDoc(doc(db, "users", uid));
+    if (!userSnap.exists()) return;
+    var data = userSnap.data();
+    var now = Date.now();
+    var lastLogin = data.lastLoginBonusAt ? (data.lastLoginBonusAt.toMillis ? data.lastLoginBonusAt.toMillis() : Number(data.lastLoginBonusAt)) : 0;
+    var twentyHours = 20 * 60 * 60 * 1000;
+    if (now - lastLogin < twentyHours) return; // not yet 20 hours
+    await updateDoc(doc(db, "users", uid), {
+      communityPoints: (data.communityPoints || 0) + 1,
+      lastLoginBonusAt: new Date()
+    });
+  } catch(e) {}
+}
+
 // ========== ROLE BADGE ==========
 function showRoleBadge(email, username, role, avatar, userId) {
   var existing = document.getElementById('navRoleBadge');
@@ -287,7 +304,10 @@ function showRoleBadge(email, username, role, avatar, userId) {
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 
   var uid = auth.currentUser ? auth.currentUser.uid : (googleUser ? googleUser.googleId : null);
-  if (uid) checkInboxNotifications(uid);
+  if (uid) {
+    checkInboxNotifications(uid);
+    awardDailyLoginBonus(uid);
+  }
 }
 
 // ========== OWN ROLE POPUP ==========
