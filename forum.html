@@ -535,24 +535,32 @@
 
         // ========== PARALLEL category stats ==========
         async function loadCategoryStats() {
-            var results = await Promise.all(CATEGORIES.map(function(cat) {
-                return getDocs(query(collection(db, "threads"), where("categoryId", "==", cat.id)));
-            }));
-            var stats = {};
-            CATEGORIES.forEach(function(cat, i) {
-                var snap = results[i];
-                var threadCount = snap.size;
-                var postCount = 0;
-                var lastPost = null;
-                snap.forEach(function(d) {
-                    postCount += (d.data().replyCount || 0) + 1;
-                    if (!lastPost || (d.data().lastReplyAt && d.data().lastReplyAt > lastPost.time)) {
-                        lastPost = { time: d.data().lastReplyAt || d.data().createdAt, user: d.data().lastReplyBy || d.data().authorName };
-                    }
+            try {
+                var results = await Promise.all(CATEGORIES.map(function(cat) {
+                    return getDocs(query(collection(db, "threads"), where("categoryId", "==", cat.id)));
+                }));
+                var stats = {};
+                CATEGORIES.forEach(function(cat, i) {
+                    var snap = results[i];
+                    var threadCount = snap.size;
+                    var postCount = 0;
+                    var lastPost = null;
+                    snap.forEach(function(d) {
+                        postCount += (d.data().replyCount || 0) + 1;
+                        if (!lastPost || (d.data().lastReplyAt && d.data().lastReplyAt > lastPost.time)) {
+                            lastPost = { time: d.data().lastReplyAt || d.data().createdAt, user: d.data().lastReplyBy || d.data().authorName };
+                        }
+                    });
+                    stats[cat.id] = { threadCount, postCount, lastPost };
                 });
-                stats[cat.id] = { threadCount, postCount, lastPost };
-            });
-            return stats;
+                return stats;
+            } catch(e) {
+                console.error('loadCategoryStats failed:', e);
+                // Return empty stats so categories still render
+                var stats = {};
+                CATEGORIES.forEach(function(cat) { stats[cat.id] = { threadCount: 0, postCount: 0, lastPost: null }; });
+                return stats;
+            }
         }
 
         async function loadLastVisited() {
@@ -573,11 +581,16 @@
         // ========== PARALLEL unread checks ==========
         async function checkAllUnread(lastVisited) {
             var checks = await Promise.all(CATEGORIES.map(async function(cat) {
-                if (!lastVisited[cat.id]) return true;
-                var lastTime = lastVisited[cat.id].toDate ? lastVisited[cat.id].toDate() : new Date(lastVisited[cat.id]);
-                var q = query(collection(db, "threads"), where("categoryId", "==", cat.id), where("createdAt", ">", lastTime), limit(1));
-                var snap = await getDocs(q);
-                return !snap.empty;
+                if (!lastVisited[cat.id]) return false;
+                try {
+                    var lastTime = lastVisited[cat.id].toDate ? lastVisited[cat.id].toDate() : new Date(lastVisited[cat.id]);
+                    var q = query(collection(db, "threads"), where("categoryId", "==", cat.id), where("createdAt", ">", lastTime), limit(1));
+                    var snap = await getDocs(q);
+                    return !snap.empty;
+                } catch(e) {
+                    console.warn('checkAllUnread index missing for', cat.id, '— skipping unread dots. Create a composite index on threads(categoryId, createdAt) in Firebase console.');
+                    return false;
+                }
             }));
             var unreadMap = {};
             CATEGORIES.forEach(function(cat, i) { unreadMap[cat.id] = checks[i]; });
@@ -647,6 +660,7 @@
         }
 
         async function renderCategories() {
+            try {
             var [stats, lastVisited] = await Promise.all([
                 loadCategoryStats(),
                 loadLastVisited()
@@ -667,6 +681,11 @@
             }).join('');
 
             document.getElementById('forumCategories').innerHTML = html;
+            } catch(e) {
+                console.error('renderCategories failed:', e);
+                document.getElementById('forumCategories').innerHTML =
+                    '<p style="color:#d0021b;padding:1rem;">⚠️ Could not load forum categories. Check your Firestore security rules — the <b>threads</b> collection must allow public reads. (<code>' + e.message + '</code>)</p>';
+            }
         }
 
         window.openCategory = async function(categoryId, categoryName) {
@@ -734,8 +753,10 @@
         onAuthStateChanged(auth, async function(user) {
             if (user) {
                 currentUser = user;
-                var docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) currentUserData = docSnap.data();
+                try {
+                    var docSnap = await getDoc(doc(db, "users", user.uid));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
+                } catch(e) { console.warn('Could not load user profile:', e.message); }
             } else if (googleUser) {
                 try {
                     var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
@@ -746,12 +767,16 @@
                 document.getElementById('newThreadBtn').disabled = true;
             }
 
-            await updateLastSeen();
-            await Promise.all([
-                loadForumStats(),
-                renderCategories(),
-                loadOnlineUsers()
-            ]);
+            try { await updateLastSeen(); } catch(e) { console.warn('updateLastSeen failed:', e.message); }
+            try {
+                await Promise.all([
+                    loadForumStats(),
+                    renderCategories(),
+                    loadOnlineUsers()
+                ]);
+            } catch(e) {
+                console.error('Forum page load error:', e);
+            }
         });
     </script>
 </body>
