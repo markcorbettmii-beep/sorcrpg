@@ -565,17 +565,22 @@
             currentThread = threadId;
             document.getElementById('threadsList').classList.add('hidden');
             document.getElementById('threadView').classList.add('active');
-            await Promise.all([
-                updateDoc(doc(db, "threads", threadId), { views: increment(1) }),
-                loadThreadContent(threadId)
-            ]);
+            try { updateDoc(doc(db, "threads", threadId), { views: increment(1) }); } catch(e) {}
+            await loadThreadContent(threadId);
         };
 
         async function loadThreadContent(threadId) {
-            var [threadDoc, postsSnap] = await Promise.all([
-                getDoc(doc(db, "threads", threadId)),
-                getDocs(query(collection(db, "posts"), where("threadId", "==", threadId), orderBy("createdAt", "asc")))
-            ]);
+            var threadDoc, postsSnap;
+            try {
+                [threadDoc, postsSnap] = await Promise.all([
+                    getDoc(doc(db, "threads", threadId)),
+                    getDocs(query(collection(db, "posts"), where("threadId", "==", threadId), orderBy("createdAt", "asc")))
+                ]);
+            } catch(e) {
+                console.warn('Posts index missing — falling back. Create index on posts(threadId ASC, createdAt ASC).', e.message);
+                threadDoc = await getDoc(doc(db, "threads", threadId));
+                postsSnap = await getDocs(query(collection(db, "posts"), where("threadId", "==", threadId)));
+            }
 
             if (!threadDoc.exists()) {
                 document.getElementById('threadContent').innerHTML = '<p style="color:#d0021b;">Thread not found.</p>';
