@@ -48,6 +48,12 @@
         .action-btn-grey { background: #333; color: #555; cursor: not-allowed; }
         .action-btn-dark { background: #222; color: #888; border: 1px solid #333; }
         .action-btn-dark:hover { border-color: #d0021b; color: #e0cfc0; }
+        .action-btn-teal { background: #0f3a3a; color: #4cdfdf; border: 1px solid #1a6b6b; }
+        .action-btn-teal:hover { background: #1a6b6b; color: #fff; }
+        .action-btn-block { background: transparent; color: #444; border: 1px solid #2a2a2a; font-size: 0.85rem; padding: 8px 12px; }
+        .action-btn-block:hover { border-color: #8B0000; color: #d0021b; }
+        .action-btn-blocked { background: #1a0000; color: #d0021b; border: 1px solid #8B0000; font-size: 0.85rem; padding: 8px 12px; }
+        .action-btn-blocked:hover { background: #2a0000; }
         .msg { font-size: 0.85rem; margin-top: 0.5rem; }
         .msg.success { color: #4caf50; }
         .msg.error { color: #d0021b; }
@@ -64,6 +70,7 @@
     </style>
 </head>
 <body>
+    <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
     <div class="profile-container">
         <a href="javascript:history.back()" class="back-link">← Back</a>
         <div id="profileApp"><div class="loading">Loading profile...</div></div>
@@ -137,16 +144,12 @@
         }
         function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
         function isGMOrAbove(role) { return ['MASTER', 'ADMIN', 'OWNER'].includes(role); }
-
         function isFellowshipEligible() {
             var myRole = getMyRole();
             if (myRole === 'ADMIN' || myRole === 'OWNER') return true;
             return (currentUserData || {}).unlockedFellowships === true;
         }
-
-        function canMessageDirectly() {
-            return isGMOrAbove(getMyRole()) || isFellowship;
-        }
+        function canMessageDirectly() { return isGMOrAbove(getMyRole()) || isFellowship; }
 
         function calculateAge(birthday) {
             if (!birthday) return null;
@@ -159,21 +162,55 @@
         }
         function hiddenVal() { return '<span class="hidden-val">hidden</span>'; }
 
-        // All window functions defined before renderProfile
+        // ========== FOLLOW ==========
+        window.followUser = async function() {
+            var myUid = getMyUid();
+            await setDoc(doc(db, "follows", myUid + '_' + targetUid), {
+                followerUid: myUid, followingUid: targetUid, createdAt: serverTimestamp()
+            });
+            var btn = document.getElementById('followBtn');
+            if (btn) { btn.className = 'action-btn action-btn-teal'; btn.textContent = '👁 Following ✓'; btn.setAttribute('onclick', 'window.unfollowUser()'); }
+        };
+
+        window.unfollowUser = async function() {
+            var myUid = getMyUid();
+            await deleteDoc(doc(db, "follows", myUid + '_' + targetUid));
+            var btn = document.getElementById('followBtn');
+            if (btn) { btn.className = 'action-btn action-btn-dark'; btn.textContent = '👁 Follow'; btn.setAttribute('onclick', 'window.followUser()'); }
+        };
+
+        // ========== BLOCK ==========
+        window.blockUser = async function() {
+            var name = targetData ? (targetData.username || targetData.displayName || 'this user') : 'this user';
+            if (!confirm('Block ' + name + '? Their posts will be hidden and they cannot message you.')) return;
+            var myUid = getMyUid();
+            await setDoc(doc(db, "blocks", myUid + '_' + targetUid), {
+                blockerUid: myUid, blockedUid: targetUid, createdAt: serverTimestamp()
+            });
+            var btn = document.getElementById('blockBtn');
+            if (btn) { btn.className = 'action-btn action-btn-blocked'; btn.textContent = '🚫 Blocked (click to unblock)'; btn.setAttribute('onclick', 'window.unblockUser()'); }
+        };
+
+        window.unblockUser = async function() {
+            var myUid = getMyUid();
+            await deleteDoc(doc(db, "blocks", myUid + '_' + targetUid));
+            var btn = document.getElementById('blockBtn');
+            if (btn) { btn.className = 'action-btn action-btn-block'; btn.textContent = '🚫 Block'; btn.setAttribute('onclick', 'window.blockUser()'); }
+        };
+
+        // ========== MESSAGE ==========
         window.showMessageCompose = function() {
             var compose = document.getElementById('messageCompose');
             var btn = document.getElementById('msgInitBtn');
             if (compose) compose.classList.add('open');
             if (btn) btn.style.display = 'none';
         };
-
         window.cancelMessage = function() {
             var compose = document.getElementById('messageCompose');
             var btn = document.getElementById('msgInitBtn');
             if (compose) compose.classList.remove('open');
             if (btn) btn.style.display = 'block';
         };
-
         window.sendFirstMessage = async function() {
             var myUid = getMyUid();
             var text = document.getElementById('msgTextarea') ? document.getElementById('msgTextarea').value.trim() : '';
@@ -183,87 +220,57 @@
             var direct = canMessageDirectly();
             var status = direct ? 'accepted' : 'pending';
             await setDoc(doc(db, "conversations", convId), {
-                senderUid: myUid,
-                senderName: getMyUsername(),
-                receiverUid: targetUid,
-                receiverName: targetData.username || targetData.displayName || 'Unknown',
-                status: status,
-                createdAt: serverTimestamp(),
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: text
+                senderUid: myUid, senderName: getMyUsername(),
+                receiverUid: targetUid, receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: status, createdAt: serverTimestamp(), lastMessageAt: serverTimestamp(), lastMessageText: text
             });
             await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: myUid,
-                senderName: getMyUsername(),
-                text: text,
-                createdAt: serverTimestamp()
+                senderUid: myUid, senderName: getMyUsername(), text: text, createdAt: serverTimestamp()
             });
             var msgSection = document.getElementById('msgSection');
             if (msgSection) {
                 msgSection.innerHTML = status === 'accepted'
-                    ? '<button class="action-btn action-btn-green" disabled>✅ Message Sent!</button>' +
-                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>'
-                    : '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
-                      '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
-                      '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>';
+                    ? '<button class="action-btn action-btn-green" disabled>✅ Message Sent!</button><button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>'
+                    : '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button><p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">Awaiting approval.</p><button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>';
             }
         };
-
         window.goToInbox = function() { window.location.href = 'inbox.html'; };
 
+        // ========== FELLOWSHIP ==========
         window.sendFellowshipRequest = async function() {
             var myUid = getMyUid();
             var myUsername = getMyUsername();
             var msgEl = document.getElementById('actionMsg');
             var fellowshipId = [myUid, targetUid].sort().join('_');
-
             await setDoc(doc(db, "fellowships", fellowshipId), {
-                senderUid: myUid,
-                senderName: myUsername,
-                receiverUid: targetUid,
-                receiverName: targetData.username || targetData.displayName || 'Unknown',
-                status: 'pending',
-                createdAt: serverTimestamp()
+                senderUid: myUid, senderName: myUsername,
+                receiverUid: targetUid, receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: 'pending', createdAt: serverTimestamp()
             });
-
             var convId = 'fellowship_request_' + fellowshipId;
             await setDoc(doc(db, "conversations", convId), {
-                senderUid: myUid,
-                senderName: myUsername,
-                receiverUid: targetUid,
-                receiverName: targetData.username || targetData.displayName || 'Unknown',
-                status: 'accepted',
-                isFellowshipRequest: true,
-                fellowshipId: fellowshipId,
-                createdAt: serverTimestamp(),
-                lastMessageAt: serverTimestamp(),
+                senderUid: myUid, senderName: myUsername,
+                receiverUid: targetUid, receiverName: targetData.username || targetData.displayName || 'Unknown',
+                status: 'accepted', isFellowshipRequest: true, fellowshipId: fellowshipId,
+                createdAt: serverTimestamp(), lastMessageAt: serverTimestamp(),
                 lastMessageText: myUsername + ' wants to be your Fellow...'
             });
             await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: myUid,
-                senderName: myUsername,
+                senderUid: myUid, senderName: myUsername,
                 text: myUsername + ' wants to be your Fellow...',
-                isFellowshipRequest: true,
-                fellowshipId: fellowshipId,
-                isSystem: false,
-                createdAt: serverTimestamp()
+                isFellowshipRequest: true, fellowshipId: fellowshipId, isSystem: false, createdAt: serverTimestamp()
             });
-
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Fellowship request sent!';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Fellowship request sent!';
             setTimeout(function() { location.reload(); }, 1000);
         };
-
         window.acceptFellowshipRequest = async function() {
             var myUid = getMyUid();
             var fellowshipId = [myUid, targetUid].sort().join('_');
             await updateDoc(doc(db, "fellowships", fellowshipId), { status: 'accepted', acceptedAt: serverTimestamp() });
             var msgEl = document.getElementById('actionMsg');
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ You are now in a Fellowship!';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ You are now in a Fellowship!';
             setTimeout(function() { location.reload(); }, 1000);
         };
-
         window.removeFellowship = async function() {
             if (!confirm('Remove this Fellowship?')) return;
             var myUid = getMyUid();
@@ -291,11 +298,9 @@
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
             var statusBadge = isPro ? '<span class="pro-badge">SORC Beyond Pro</span>' : '<span class="basic-badge">SORC Basic</span>';
 
-            // Bio
             var bioValue = (data.privacyBio && data.bio) ? '<p>' + data.bio + '</p>' : hiddenVal();
             var bioSection = '<div class="profile-section"><h3>About</h3><div class="profile-field">' + bioValue + '</div></div>';
 
-            // Info
             var ageValue = data.birthday
                 ? (data.privacyBirthday ? '<p>' + calculateAge(data.birthday) + '</p>' : hiddenVal())
                 : '<span class="hidden-val">not set</span>';
@@ -307,7 +312,6 @@
                     '<div class="profile-field"><label>SORC BEYOND</label><p>' + (isPro ? '⭐ SORC Beyond Pro' : 'SORC Basic') + '</p></div>' +
                 '</div>';
 
-            // Links
             var linksContent = '';
             if (isPro) {
                 if (data.privacySocial) {
@@ -321,102 +325,94 @@
             } else { linksContent = '<span class="hidden-val">not available</span>'; }
             var linksSection = '<div class="profile-section"><h3>Links</h3>' + linksContent + '</div>';
 
-            // Achievements
             var achievementsSection = '';
             if (isPro && achievements.length > 0) {
-                achievementsSection =
-                    '<div class="profile-section"><h3>Achievements</h3>' +
-                        '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
-                        achievements.map(function(a) {
-                            return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>';
-                        }).join('') +
-                        '</div></div>';
+                achievementsSection = '<div class="profile-section"><h3>Achievements</h3><div style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+                    achievements.map(function(a) { return '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#d4af37;">🏆 ' + a + '</div>'; }).join('') +
+                    '</div></div>';
             } else {
-                achievementsSection =
-                    '<div class="profile-section">' +
-                        '<h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">— SORC Beyond Pro</span></h3>' +
-                        '<div class="locked-achievements" style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
-                            '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                            '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                            '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                        '</div>' +
-                        '<div style="font-size:0.72rem;color:#444;margin-top:6px;">🔒 Unlocks with SORC Beyond Pro</div>' +
-                    '</div>';
+                achievementsSection = '<div class="profile-section"><h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">— SORC Beyond Pro</span></h3>' +
+                    '<div class="locked-achievements" style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
+                    '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
+                    '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
+                    '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div></div>' +
+                    '<div style="font-size:0.72rem;color:#444;margin-top:6px;">🔒 Unlocks with SORC Beyond Pro</div></div>';
             }
 
-            // Fellowship + Message
             var actionSection = '';
             if (!isSelf && myUid) {
                 var fellowshipId = [myUid, targetUid].sort().join('_');
-                var fellowDoc = await getDoc(doc(db, "fellowships", fellowshipId));
+
+                var [fellowDoc, convDoc, followDoc, blockDoc] = await Promise.all([
+                    getDoc(doc(db, "fellowships", fellowshipId)),
+                    getDoc(doc(db, "conversations", [myUid, targetUid].sort().join('_'))),
+                    getDoc(doc(db, "follows", myUid + '_' + targetUid)),
+                    getDoc(doc(db, "blocks", myUid + '_' + targetUid))
+                ]);
+
                 var fellowStatus = fellowDoc.exists() ? fellowDoc.data().status : 'none';
                 var fellowSender = fellowDoc.exists() ? fellowDoc.data().senderUid : null;
                 isFellowship = fellowStatus === 'accepted';
+                var isFollowing = followDoc.exists();
+                var isBlocked = blockDoc.exists();
 
-                // Fellowship button
-                var fellowBtn = '';
-                if (!isFellowshipEligible()) {
-                    fellowBtn =
-                        '<h3>Fellowship</h3>' +
-                        '<div style="font-size:0.72rem;color:#444;margin-bottom:0.75rem;">🔒 Unlocks with Player status</div>';
-                } else if (fellowStatus === 'none') {
-                    fellowBtn =
-                        '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-blue" onclick="window.sendFellowshipRequest()">⚔️ Add to Fellowship</button>';
-                } else if (fellowStatus === 'pending' && fellowSender === myUid) {
-                    fellowBtn =
-                        '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-grey" disabled>⏳ Fellowship Request Sent</button>';
-                } else if (fellowStatus === 'pending' && fellowSender !== myUid) {
-                    fellowBtn =
-                        '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-green" onclick="window.acceptFellowshipRequest()">✅ Accept Fellowship Request</button>';
-                } else if (fellowStatus === 'accepted') {
-                    fellowBtn =
-                        '<h3>Fellowship</h3>' +
-                        '<button class="action-btn action-btn-dark" onclick="window.removeFellowship()">⚔️ Fellowship ✓ &nbsp;<span style="font-size:0.75rem;color:#555;">(click to remove)</span></button>';
-                }
-
-                // Message section — only check the real sorted-UID conversation, never the fellowship_request_ one
-                var convId = [myUid, targetUid].sort().join('_');
-                var convDoc = await getDoc(doc(db, "conversations", convId));
-                var convStatus = convDoc.exists() ? convDoc.data().status : 'none';
-                var direct = canMessageDirectly();
-                var msgBtnClass = isGMOrAbove(myRole) || isAdminOrOwner(myEmail) ? 'action-btn action-btn-gold' : 'action-btn action-btn-red';
-
-                var msgSectionHtml = '';
-                if (convStatus === 'accepted' || (direct && convStatus !== 'none')) {
-                    msgSectionHtml = '<button class="' + msgBtnClass + '" onclick="window.goToInbox()">✉ Open Conversation</button>';
-                } else if (convStatus === 'pending') {
-                    msgSectionHtml =
-                        '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
-                        '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">⏳ Awaiting approval from member.</p>' +
-                        '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>';
+                if (isBlocked) {
+                    actionSection = '<div class="profile-section">' +
+                        '<button id="blockBtn" class="action-btn action-btn-blocked" onclick="window.unblockUser()">🚫 Blocked (click to unblock)</button>' +
+                        '<div id="actionMsg" class="msg"></div></div>';
                 } else {
-                    // No conversation yet — show compose button
-                    var placeholder = direct
-                        ? 'Write your message to ' + username + '...'
-                        : 'Write your message to ' + username + '... They must accept before they can reply.';
-                    msgSectionHtml =
-                        '<button class="' + msgBtnClass + '" id="msgInitBtn" onclick="window.showMessageCompose()">✉ Send Message</button>' +
-                        '<div class="message-compose" id="messageCompose">' +
-                            '<textarea id="msgTextarea" rows="4" placeholder="' + placeholder + '"></textarea>' +
-                            (!direct ? '<p style="font-size:0.75rem;color:#555;margin:0 0 0.5rem 0;">They must accept before they can reply — but your message will be waiting for them.</p>' : '') +
-                            '<div class="message-compose-row">' +
-                                '<button class="btn-send" onclick="window.sendFirstMessage()">Send</button>' +
-                                '<button class="btn-cancel" onclick="window.cancelMessage()">Cancel</button>' +
-                            '</div>' +
-                        '</div>';
-                }
+                    // Fellowship
+                    var fellowBtn = '';
+                    if (!isFellowshipEligible()) {
+                        fellowBtn = '<h3>Fellowship</h3><div style="font-size:0.72rem;color:#444;margin-bottom:0.75rem;">🔒 Unlocks with Player status</div>';
+                    } else if (fellowStatus === 'none') {
+                        fellowBtn = '<h3>Fellowship</h3><button class="action-btn action-btn-blue" onclick="window.sendFellowshipRequest()">⚔️ Add to Fellowship</button>';
+                    } else if (fellowStatus === 'pending' && fellowSender === myUid) {
+                        fellowBtn = '<h3>Fellowship</h3><button class="action-btn action-btn-grey" disabled>⏳ Fellowship Request Sent</button>';
+                    } else if (fellowStatus === 'pending' && fellowSender !== myUid) {
+                        fellowBtn = '<h3>Fellowship</h3><button class="action-btn action-btn-green" onclick="window.acceptFellowshipRequest()">✅ Accept Fellowship Request</button>';
+                    } else {
+                        fellowBtn = '<h3>Fellowship</h3><button class="action-btn action-btn-dark" onclick="window.removeFellowship()">⚔️ Fellowship ✓ &nbsp;<span style="font-size:0.75rem;color:#555;">(click to remove)</span></button>';
+                    }
 
-                actionSection =
-                    '<div class="profile-section">' +
+                    // Follow
+                    var followBtn = isFollowing
+                        ? '<button id="followBtn" class="action-btn action-btn-teal" onclick="window.unfollowUser()">👁 Following ✓</button>'
+                        : '<button id="followBtn" class="action-btn action-btn-dark" onclick="window.followUser()">👁 Follow</button>';
+
+                    // Message
+                    var convStatus = convDoc.exists() ? convDoc.data().status : 'none';
+                    var direct = canMessageDirectly();
+                    var msgBtnClass = isGMOrAbove(myRole) || isAdminOrOwner(myEmail) ? 'action-btn action-btn-gold' : 'action-btn action-btn-red';
+                    var msgSectionHtml = '';
+                    if (convStatus === 'accepted' || (direct && convStatus !== 'none')) {
+                        msgSectionHtml = '<button class="' + msgBtnClass + '" onclick="window.goToInbox()">✉ Open Conversation</button>';
+                    } else if (convStatus === 'pending') {
+                        msgSectionHtml = '<button class="action-btn action-btn-grey" disabled>⏳ Message Request Sent</button>' +
+                            '<p style="font-size:0.85rem;color:#888;margin:0 0 0.75rem 0;text-align:center;">Awaiting approval.</p>' +
+                            '<button class="action-btn action-btn-dark" style="font-size:0.85rem;" onclick="window.goToInbox()">View in Inbox</button>';
+                    } else {
+                        var placeholder = direct ? 'Write your message to ' + username + '...' : 'Write your message to ' + username + '... They must accept before they can reply.';
+                        msgSectionHtml = '<button class="' + msgBtnClass + '" id="msgInitBtn" onclick="window.showMessageCompose()">✉ Send Message</button>' +
+                            '<div class="message-compose" id="messageCompose">' +
+                                '<textarea id="msgTextarea" rows="4" placeholder="' + placeholder + '"></textarea>' +
+                                (!direct ? '<p style="font-size:0.75rem;color:#555;margin:0 0 0.5rem 0;">They must accept before they can reply.</p>' : '') +
+                                '<div class="message-compose-row"><button class="btn-send" onclick="window.sendFirstMessage()">Send</button><button class="btn-cancel" onclick="window.cancelMessage()">Cancel</button></div>' +
+                            '</div>';
+                    }
+
+                    actionSection = '<div class="profile-section">' +
                         fellowBtn +
+                        '<h3 style="margin-top:1rem;">Follow</h3>' +
+                        followBtn +
                         '<h3 style="margin-top:1rem;">Message</h3>' +
                         '<div id="msgSection">' + msgSectionHtml + '</div>' +
+                        '<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #1a1a1a;">' +
+                            '<button id="blockBtn" class="action-btn action-btn-block" onclick="window.blockUser()">🚫 Block</button>' +
+                        '</div>' +
                         '<div id="actionMsg" class="msg"></div>' +
                     '</div>';
-
+                }
             } else if (!myUid) {
                 actionSection = '<div class="profile-section"><p style="font-size:0.85rem;color:#555;"><a href="signin.html" style="color:#d4af37;">Sign in</a> to connect with ' + username + '.</p></div>';
             }
@@ -440,11 +436,7 @@
                         '</div>' +
                         (joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : '') +
                     '</div>' +
-                    bioSection +
-                    infoSection +
-                    linksSection +
-                    achievementsSection +
-                    actionSection +
+                    bioSection + infoSection + linksSection + achievementsSection + actionSection +
                 '</div>';
         }
 
@@ -459,15 +451,9 @@
                     if (docSnap.exists()) currentUserData = docSnap.data();
                 } catch(e) {}
             }
-            if (!targetUid) {
-                document.getElementById('profileApp').innerHTML = '<div class="not-found">No profile specified.</div>';
-                return;
-            }
+            if (!targetUid) { document.getElementById('profileApp').innerHTML = '<div class="not-found">No profile specified.</div>'; return; }
             var targetDoc = await getDoc(doc(db, "users", targetUid));
-            if (!targetDoc.exists()) {
-                document.getElementById('profileApp').innerHTML = '<div class="not-found">Profile not found.</div>';
-                return;
-            }
+            if (!targetDoc.exists()) { document.getElementById('profileApp').innerHTML = '<div class="not-found">Profile not found.</div>'; return; }
             await renderProfile(targetDoc.data());
         });
     </script>
