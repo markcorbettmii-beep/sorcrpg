@@ -229,6 +229,7 @@
         <a href="forum.html">← Forums</a>
         <h1 id="categoryTitle">Loading...</h1>
     </div>
+    <div id="pointsProgressBar" style="max-width:900px;margin:0.5rem auto 0 auto;padding:0.4rem 1rem;background:#161616;border-bottom:1px solid #1a1a1a;"></div>
 
     <div class="threads-container">
         <div class="threads-list" id="threadsList">
@@ -346,6 +347,75 @@
         var reportingPostId = null;
 
         try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
+
+        // ========== COMMUNITY POINTS ENGINE ==========
+        // Points per action (per sorc-beyond.html rules)
+        const POINT_VALUES = { thread: 10, reply: 5, likeReceived: 2 };
+        // Next unlock thresholds for progress display
+        const UNLOCK_TIERS = [
+            { pts: 100,  label: 'Fellowships' },
+            { pts: 250,  label: 'SORC Beyond Basic' },
+            { pts: 500,  label: 'Surname Unlock' },
+            { pts: 750,  label: 'Prefix & Suffix' },
+            { pts: 1000, label: 'SORC Beyond Pro' }
+        ];
+
+        // Award points with daily cap enforcement.
+        // action: 'thread' | 'reply'
+        // Each action type can only earn points once per calendar day.
+        async function awardForumPoints(uid, action) {
+            try {
+                var points = POINT_VALUES[action];
+                if (!points) return;
+                var today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+                var userSnap = await getDoc(doc(db, "users", uid));
+                if (!userSnap.exists()) return;
+                var data = userSnap.data();
+                var lastKey = 'last' + action.charAt(0).toUpperCase() + action.slice(1) + 'PointsDate';
+                if (data[lastKey] === today) return; // already earned today
+                var update = {};
+                update.communityPoints = (data.communityPoints || 0) + points;
+                update[lastKey] = today;
+                await updateDoc(doc(db, "users", uid), update);
+                currentUserData = Object.assign({}, currentUserData, update);
+                updatePointsDisplay(update.communityPoints);
+            } catch(e) { console.warn('awardForumPoints failed:', e.message); }
+        }
+
+        // Award +2 to post/thread author when liked (per unique like, no daily cap per rules)
+        async function awardLikePoints(authorUid) {
+            try {
+                if (!authorUid || authorUid === getUserUid()) return; // can't farm your own likes
+                await updateDoc(doc(db, "users", authorUid), {
+                    communityPoints: increment(POINT_VALUES.likeReceived)
+                });
+            } catch(e) { console.warn('awardLikePoints failed:', e.message); }
+        }
+
+        // Render the points progress bar in the UI
+        function updatePointsDisplay(pts) {
+            var el = document.getElementById('pointsProgressBar');
+            if (!el) return;
+            var current = pts || (currentUserData && currentUserData.communityPoints) || 0;
+            var next = UNLOCK_TIERS.find(function(t) { return t.pts > current; });
+            if (!next) {
+                el.innerHTML = '<span style="color:#d4af37;font-weight:bold;">⭐ ' + current + ' pts</span> <span style="color:#555;font-size:0.75rem;">— All tiers unlocked!</span>';
+                return;
+            }
+            var prev = UNLOCK_TIERS.slice().reverse().find(function(t) { return t.pts <= current; });
+            var base = prev ? prev.pts : 0;
+            var pct = Math.min(100, Math.round(((current - base) / (next.pts - base)) * 100));
+            el.innerHTML =
+                '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
+                    '<span style="color:#d4af37;font-weight:bold;font-size:0.85rem;">⭐ ' + current + ' pts</span>' +
+                    '<div style="flex:1;min-width:100px;">' +
+                        '<div style="background:#2a2a2a;border-radius:6px;height:6px;overflow:hidden;">' +
+                            '<div style="width:' + pct + '%;background:linear-gradient(90deg,#d0021b,#d4af37);height:100%;border-radius:6px;transition:width 0.5s;"></div>' +
+                        '</div>' +
+                        '<div style="font-size:0.7rem;color:#555;margin-top:2px;">' + (next.pts - current) + ' pts to <b style="color:#888;">' + next.label + '</b></div>' +
+                    '</div>' +
+                '</div>';
+        }
 
         var params = new URLSearchParams(window.location.search);
         categoryId = params.get('cat');
@@ -678,9 +748,10 @@
                 await Promise.all([
                     addDoc(collection(db, "posts"), postData),
                     updateDoc(doc(db, "threads", currentThread), { replyCount: increment(1), lastReplyAt: serverTimestamp(), lastReplyBy: username }),
-                    setDoc(doc(db, "users", uid), { communityPoints: increment(10), postCount: increment(1) }, { merge: true }),
+                    setDoc(doc(db, "users", uid), { postCount: increment(1) }, { merge: true }),
                     sendReplyNotification(uid, username)
                 ]);
+                await awardForumPoints(uid, 'reply');
                 quotedPost = null;
                 document.getElementById('replyBody').value = '';
                 clearQuote();
@@ -694,11 +765,18 @@
             if (!uid) return;
             var ref = isOP ? doc(db, "threads", postId) : doc(db, "posts", postId);
             var snap = await getDoc(ref);
-            var likedBy = snap.data().likedBy || [];
+            var data = snap.data();
+            var likedBy = data.likedBy || [];
+            var authorUid = data.authorUid || null;
             if (likedBy.includes(uid)) {
                 await updateDoc(ref, { likedBy: arrayRemove(uid), likeCount: increment(-1) });
+                // Revoke +2 from author when unliked (if not own post)
+                if (authorUid && authorUid !== uid) {
+                    try { await updateDoc(doc(db, "users", authorUid), { communityPoints: increment(-POINT_VALUES.likeReceived) }); } catch(e) {}
+                }
             } else {
                 await updateDoc(ref, { likedBy: arrayUnion(uid), likeCount: increment(1) });
+                await awardLikePoints(authorUid);
             }
             await loadThreadContent(currentThread);
         };
@@ -799,7 +877,8 @@
                     createdAt: serverTimestamp(), lastReplyAt: serverTimestamp(), lastReplyBy: username,
                     replyCount: 0, likeCount: 0, likedBy: [], pinned: false, locked: false, views: 0, edited: false
                 });
-                await setDoc(doc(db, "users", uid), { communityPoints: increment(10), postCount: increment(1) }, { merge: true });
+                await setDoc(doc(db, "users", uid), { postCount: increment(1) }, { merge: true });
+                await awardForumPoints(uid, 'thread');
                 msgEl.className = 'msg success'; msgEl.textContent = '✅ Thread posted!';
                 setTimeout(function() { closeNewThread(); openThread(threadRef.id); }, 800);
             } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + e.message; }
@@ -820,6 +899,7 @@
             }
             if (threadParam) { await openThread(threadParam); }
             else { await loadThreads(1); }
+            if (currentUserData) updatePointsDisplay(currentUserData.communityPoints || 0);
         });
     </script>
 </body>
