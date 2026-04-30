@@ -83,6 +83,7 @@
     </style>
 </head>
 <body>
+    <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
     <div id="profileApp">
         <div class="not-logged-in"><p>Loading...</p></div>
     </div>
@@ -106,7 +107,6 @@
         const OWNER_EMAILS = ["corbett@sorcrpg.com"];
         const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
-        // Feature unlock costs in community points
         const UNLOCK_COSTS = {
             fellowships: 100,
             sorcBeyondBasic: 250,
@@ -115,7 +115,6 @@
             sorcBeyondPro: 1000
         };
 
-        // Prefixes and suffixes allowed
         const PREFIXES = ['', 'Dr.', 'Sir', 'Ms.'];
         const SUFFIXES = ['', 'Jr.', 'II', 'III', 'IV', 'V', 'VI'];
 
@@ -152,7 +151,6 @@
             return age;
         }
 
-        // Build full display name from parts
         function buildFullName(prefix, firstName, surname, suffix) {
             var parts = [];
             if (prefix) parts.push(prefix);
@@ -228,7 +226,6 @@
             var privacySocial = data.privacySocial !== false;
             var age = calculateAge(birthday);
 
-            // Name parts
             var firstName = data.firstName || data.username || data.displayName || email.split('@')[0];
             var surname = data.surname || '';
             var prefix = data.prefix || '';
@@ -236,7 +233,6 @@
             var usernameChanged = data.usernameChanged === true;
             var fullName = buildFullName(prefix, firstName, surname, suffix);
 
-            // Unlocked features — Admins/Owners get everything
             var isAdmin = isAdminOrOwner(role);
             var unlockedFellowships = isAdmin || data.unlockedFellowships === true;
             var unlockedBasic = isAdmin || data.unlockedBasic === true;
@@ -250,6 +246,27 @@
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
             var avatarDisplay = avatar ? '<div style="font-size:0.7rem;color:#555;">' + avatar + '</div>' : '<div style="font-size:0.7rem;color:#555;">No avatar</div>';
 
+            // ===== POINTS PROGRESS BAR =====
+            var UNLOCK_TIERS = [
+                { pts: 100, label: 'Fellowships' },
+                { pts: 250, label: 'SORC Beyond Basic' },
+                { pts: 500, label: 'Surname' },
+                { pts: 750, label: 'Prefix & Suffix' },
+                { pts: 1000, label: 'SORC Beyond Pro' }
+            ];
+            var nextTier = UNLOCK_TIERS.find(function(t) { return t.pts > communityPoints; });
+            var prevTier = UNLOCK_TIERS.slice().reverse().find(function(t) { return t.pts <= communityPoints; });
+            var progressBarHtml = '';
+            if (nextTier) {
+                var base = prevTier ? prevTier.pts : 0;
+                var pct = Math.min(100, Math.round(((communityPoints - base) / (nextTier.pts - base)) * 100));
+                progressBarHtml =
+                    '<div class="points-bar-bg"><div class="points-bar-fill" style="width:' + pct + '%;"></div></div>' +
+                    '<div class="points-milestone">' + (nextTier.pts - communityPoints) + ' pts to <b>' + nextTier.label + '</b></div>';
+            } else {
+                progressBarHtml = '<div class="points-milestone" style="color:#d4af37;">⭐ All tiers unlocked!</div>';
+            }
+
             // ===== NAME SECTION =====
             var nameFieldHtml = '';
             if (!usernameChanged) {
@@ -261,10 +278,8 @@
                     '<button class="btn btn-gold btn-sm" onclick="saveFirstName(\'' + uid + '\')" style="margin-top:6px;">Save Name</button>' +
                     '<div id="usernameMsg" class="msg"></div>';
             } else {
-                // First name locked — show prefix, first name, surname, suffix fields
                 nameFieldHtml =
                     '<div class="name-locked-note">🔒 First name locked: <span>' + firstName + '</span></div>' +
-                    // Prefix
                     (unlockedPrefixSuffix
                         ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">PREFIX</label>' +
                           '<select id="prefixSelect" class="profile-select">' +
@@ -272,16 +287,13 @@
                           '</select></div>'
                         : '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">PREFIX</label><input class="profile-input" value="' + (prefix || '—') + '" disabled /></div>'
                     ) +
-                    // First name (always locked)
                     '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">FIRST NAME</label>' +
                     '<input type="text" class="profile-input" value="' + firstName + '" disabled /></div>' +
-                    // Surname
                     (unlockedSurname
                         ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">SURNAME</label>' +
                           '<input type="text" id="surnameInput" class="profile-input" value="' + surname + '" maxlength="20" placeholder="Surname (optional)" /></div>'
                         : '<div class="surname-locked">🔒 Surname — <span>unlock with 500 community points</span></div>'
                     ) +
-                    // Suffix
                     (unlockedPrefixSuffix
                         ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">SUFFIX</label>' +
                           '<select id="suffixSelect" class="profile-select">' +
@@ -296,7 +308,7 @@
                     '<div id="usernameMsg" class="msg"></div>';
             }
 
-            // ===== FEATURE UNLOCKS SECTION =====
+            // ===== FEATURE UNLOCKS =====
             var unlockSectionHtml = '';
             if (!isAdmin) {
                 var features = [
@@ -400,7 +412,8 @@
                                 <div class="stat-box"><div class="stat-val">${postCount}</div><div class="stat-label">Forum Posts</div></div>
                                 <div class="stat-box"><div class="stat-val">${titles.length}</div><div class="stat-label">Titles Earned</div></div>
                             </div>
-                            ${joinDate ? '<div style="font-size:0.75rem;color:#555;">Member since ' + joinDate + '</div>' : ''}
+                            ${progressBarHtml}
+                            ${joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : ''}
                         </div>
                     </div>
 
@@ -513,32 +526,24 @@
             if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
         };
 
-        // Unlock a feature by spending community points
         window.unlockFeature = async function(uid, featureKey, cost) {
             var msgEl = document.getElementById('unlockMsg');
             var docSnap = await getDoc(doc(db, "users", uid));
             if (!docSnap.exists()) return;
             var currentPoints = docSnap.data().communityPoints || 0;
-            if (currentPoints < cost) {
-                msgEl.className = 'msg error';
-                msgEl.textContent = 'Not enough community points.';
-                return;
-            }
+            if (currentPoints < cost) { msgEl.className = 'msg error'; msgEl.textContent = 'Not enough community points.'; return; }
             var update = { communityPoints: currentPoints - cost };
             update['unlocked_' + featureKey] = true;
-            // Map to correct field names
             if (featureKey === 'fellowships') update.unlockedFellowships = true;
             if (featureKey === 'sorcBeyondBasic') update.unlockedBasic = true;
             if (featureKey === 'surname') update.unlockedSurname = true;
             if (featureKey === 'prefixSuffix') update.unlockedPrefixSuffix = true;
             if (featureKey === 'sorcBeyondPro') { update.unlockedPro = true; update.isPro = true; }
             await updateDoc(doc(db, "users", uid), update);
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Unlocked!';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Unlocked!';
             setTimeout(function() { location.reload(); }, 1000);
         };
 
-        // Save first name — one time, locks it
         window.saveFirstName = async function(uid) {
             var newName = document.getElementById('usernameInput') ? document.getElementById('usernameInput').value.trim() : '';
             var msgEl = document.getElementById('usernameMsg');
@@ -551,20 +556,13 @@
             var taken = false;
             existing.forEach(function(d) { if (d.id !== uid) taken = true; });
             if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That name is already taken.'; return; }
-            await updateDoc(doc(db, "users", uid), {
-                firstName: newName,
-                username: newName,
-                displayName: newName,
-                usernameChanged: true
-            });
+            await updateDoc(doc(db, "users", uid), { firstName: newName, username: newName, displayName: newName, usernameChanged: true });
             var savedGoogle = localStorage.getItem('sorc_google_user');
             if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = newName; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Name saved! Your first name is now locked.';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Name saved! Your first name is now locked.';
             setTimeout(function() { location.reload(); }, 1500);
         };
 
-        // Save surname, prefix, suffix
         window.saveNameParts = async function(uid) {
             var msgEl = document.getElementById('usernameMsg');
             var docSnap = await getDoc(doc(db, "users", uid));
@@ -574,23 +572,14 @@
             var newSurname = document.getElementById('surnameInput') ? document.getElementById('surnameInput').value.trim() : (data.surname || '');
             var newPrefix = document.getElementById('prefixSelect') ? document.getElementById('prefixSelect').value : (data.prefix || '');
             var newSuffix = document.getElementById('suffixSelect') ? document.getElementById('suffixSelect').value : (data.suffix || '');
-
             if (newSurname && containsBadWord(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname contains inappropriate language.'; return; }
             if (newSurname && !/^[a-zA-Z0-9_]+$/.test(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname: letters, numbers and underscores only.'; return; }
             if (newSurname && newSurname.length > 20) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname must be 20 characters or less.'; return; }
-
             var fullName = buildFullName(newPrefix, firstName, newSurname, newSuffix);
-            await updateDoc(doc(db, "users", uid), {
-                surname: newSurname,
-                prefix: newPrefix,
-                suffix: newSuffix,
-                username: fullName,
-                displayName: fullName
-            });
+            await updateDoc(doc(db, "users", uid), { surname: newSurname, prefix: newPrefix, suffix: newSuffix, username: fullName, displayName: fullName });
             var savedGoogle = localStorage.getItem('sorc_google_user');
             if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = fullName; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
-            msgEl.className = 'msg success';
-            msgEl.textContent = '✅ Name updated!';
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Name updated!';
             setTimeout(function() { location.reload(); }, 1000);
         };
 
@@ -655,28 +644,17 @@
             if (!code) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a code.'; return; }
             var codesSnap = await getDocs(collection(db, "gm_codes"));
             var matched = null;
-            var matchedDoc = null;
-            codesSnap.forEach(function(d) { if (d.data().code === code && !d.data().used) { matched = d.id; matchedDoc = d; } });
+            codesSnap.forEach(function(d) { if (d.data().code === code && !d.data().used) { matched = d.id; } });
             if (!matched) { msgEl.className = 'msg error'; msgEl.textContent = 'Invalid or already used code.'; return; }
-
-            // Mark code as used
             await updateDoc(doc(db, "gm_codes", matched), { used: true });
-
-            // Get current points
             var userSnap = await getDoc(doc(db, "users", uid));
             var currentPoints = userSnap.exists() ? (userSnap.data().communityPoints || 0) : 0;
             var alreadyGm = userSnap.exists() && userSnap.data().gmPointsGranted === true;
-
             var updateData = { role: 'MASTER' };
-            if (!alreadyGm) {
-                updateData.communityPoints = currentPoints + 1000;
-                updateData.gmPointsGranted = true;
-            }
+            if (!alreadyGm) { updateData.communityPoints = currentPoints + 1000; updateData.gmPointsGranted = true; }
             await updateDoc(doc(db, "users", uid), updateData);
             msgEl.className = 'msg success';
-            msgEl.textContent = alreadyGm
-                ? '✅ You are now a MASTER! Reload to see your updated role.'
-                : '✅ You are now a MASTER! 1,000 community points have been added to your account.';
+            msgEl.textContent = alreadyGm ? '✅ You are now a MASTER!' : '✅ You are now a MASTER! 1,000 community points added.';
             setTimeout(function() { location.reload(); }, 2000);
         };
     </script>
