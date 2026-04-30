@@ -230,9 +230,12 @@ async function grantRoleUpgradePoints(uid, role, data) {
 // ========== CHECK NOTIFICATIONS ==========
 async function checkInboxNotifications(uid) {
   try {
-    var msgSnap = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending")));
-    var fellowSnap = await getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending")));
-    var total = msgSnap.size + fellowSnap.size;
+    var [msgSnap, fellowSnap, forumSnap] = await Promise.all([
+      getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
+      getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
+      getDocs(query(collection(db, "notifications"), where("recipientUid", "==", uid), where("read", "==", false)))
+    ]);
+    var total = msgSnap.size + fellowSnap.size + forumSnap.size;
     if (total > 0) {
       var notif = document.getElementById('inboxNotif');
       if (notif) { notif.textContent = total; notif.style.display = 'inline-block'; }
