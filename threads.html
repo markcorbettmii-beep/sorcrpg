@@ -515,8 +515,20 @@
             if (READONLY_CATEGORIES.includes(categoryId) && !canModerate()) {
                 document.getElementById('newThreadBtn').style.display = 'none';
             }
-            var q = query(collection(db, "threads"), where("categoryId", "==", categoryId), orderBy("pinned", "desc"), orderBy("lastReplyAt", "desc"));
-            var snap = await getDocs(q);
+            var snap;
+            try {
+                var q = query(collection(db, "threads"), where("categoryId", "==", categoryId), orderBy("pinned", "desc"), orderBy("lastReplyAt", "desc"));
+                snap = await getDocs(q);
+            } catch(e) {
+                console.warn('Composite index missing — falling back to unordered query. Create a composite index on threads(categoryId ASC, pinned DESC, lastReplyAt DESC) in Firebase console.', e.message);
+                try {
+                    var q2 = query(collection(db, "threads"), where("categoryId", "==", categoryId));
+                    snap = await getDocs(q2);
+                } catch(e2) {
+                    container.innerHTML = '<p style="color:#d0021b;padding:1rem;">⚠️ Could not load threads: ' + e2.message + '</p>';
+                    return;
+                }
+            }
             var threads = [];
             snap.forEach(function(d) { threads.push({ id: d.id, ...d.data() }); });
             document.getElementById('threadCount').textContent = threads.length + ' thread' + (threads.length !== 1 ? 's' : '');
@@ -791,8 +803,10 @@
         onAuthStateChanged(auth, async function(user) {
             if (user) {
                 currentUser = user;
-                var docSnap = await getDoc(doc(db, "users", user.uid));
-                if (docSnap.exists()) currentUserData = docSnap.data();
+                try {
+                    var docSnap = await getDoc(doc(db, "users", user.uid));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
+                } catch(e) { console.warn('Could not load user profile:', e.message); }
             } else if (googleUser) {
                 try {
                     var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
