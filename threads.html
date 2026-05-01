@@ -466,6 +466,8 @@
         function canPost() {
             var email = getUserEmail();
             if (!email) return false;
+            // Block unverified Firebase email/password accounts
+            if (currentUser && !currentUser.emailVerified && currentUser.providerData[0] && currentUser.providerData[0].providerId === 'password') return false;
             if (ADMIN_ONLY_CATEGORIES.includes(categoryId)) return isAdminOrOwner(email);
             return true;
         }
@@ -710,7 +712,9 @@
                 '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.authorName) + '</span><span>·</span><span>' + timeAgo(thread.createdAt) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + (posts.length - 1) + ' replies</span></div></div>' +
                 html;
 
-            if (uid && !thread.locked) {
+            var unverified = currentUser && !currentUser.emailVerified && currentUser.providerData[0] && currentUser.providerData[0].providerId === 'password';
+
+            if (uid && !thread.locked && !unverified) {
                 document.getElementById('replyFormContainer').innerHTML =
                     '<div class="reply-form"><h3>Post a Reply</h3>' +
                     '<div class="quote-preview" id="quotePreview"></div>' +
@@ -723,6 +727,8 @@
                     '<div id="replyMsg" class="msg"></div>' +
                     '<div class="reply-actions"><button class="btn btn-grey" onclick="clearQuote()">Clear Quote</button><button class="btn btn-red" onclick="submitReply()">Post Reply</button></div>' +
                     '</div>';
+            } else if (unverified) {
+                document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">📧 Please verify your email before posting. Check your inbox for a verification link.</div>';
             } else if (thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">🔒 This thread is locked.</div>';
             } else if (!uid) {
