@@ -95,9 +95,9 @@
                     <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" />
                     <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
                 </div>
-                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a username" maxlength="30" />
+                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose your first name" maxlength="30" />
                 <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
-                    Letters, numbers and underscores only. This change is permanent — your first name will be locked once set. You do not need to include a surname now. Surnames, prefixes (Dr., Sir, Ms.) and suffixes (Jr., II, III, etc.) unlock later through SORC Beyond.
+                    ⚠️ <b style="color:#888;">First name only — this is permanent.</b> Do not use hyphens or underscores to add a surname (e.g. avoid "Jon_Doe" or "Jon-Doe"). Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper surname with a real space — e.g. <b style="color:#d4af37;">Jon Doe</b>.
                 </p>
 
                 <button class="signin-btn" onclick="handleSignUp()" style="background:#555;color:#fff;">
@@ -133,7 +133,7 @@
         function isValidUsername(username) {
             if (username.length < 3) return 'Name must be at least 3 characters.';
             if (username.length > 30) return 'Name must be 30 characters or less.';
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Letters, numbers and underscores only.';
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) return 'Letters, numbers and underscores only. No spaces — surnames unlock later.';
             if (containsBadWord(username)) return 'Name contains inappropriate language.';
             return null;
         }
@@ -241,7 +241,7 @@
             if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
             signInWithEmailAndPassword(auth, email, password).then(function(result) {
                 if (!result.user.emailVerified && !OWNER_EMAILS.includes(result.user.email) && !ADMIN_EMAILS.includes(result.user.email)) {
-                    showStatus('Please verify your email first. Check your inbox.', 'error');
+                    showStatus('Please verify your email first. Check your inbox or use the button below to resend.', 'error');
                     document.getElementById('resendBtn').style.display = 'block';
                     signOut(auth);
                     return;
@@ -256,7 +256,7 @@
             if (!email || !password) { showStatus('Enter your email and password first.', 'error'); return; }
             signInWithEmailAndPassword(auth, email, password).then(async function(result) {
                 await sendEmailVerification(result.user);
-                showStatus('✅ Verification email sent! Check your inbox and spam.', 'success');
+                showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
                 document.getElementById('resendBtn').style.display = 'none';
                 signOut(auth);
             }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
@@ -296,7 +296,7 @@
                     surname: '',
                     prefix: '',
                     suffix: '',
-                    usernameChanged: false,
+                    usernameChanged: true,
                     userId: userId,
                     avatar: null,
                     displayName: username,
