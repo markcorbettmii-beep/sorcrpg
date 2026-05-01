@@ -97,7 +97,7 @@
                 </div>
                 <input type="text" id="signupUsername" class="signin-input" placeholder="Choose your first name" maxlength="30" />
                 <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
-                    ⚠️ <b style="color:#888;">First name only — this is permanent.</b> Do not use hyphens or underscores to add a surname (e.g. avoid "Jon_Doe" or "Jon-Doe"). Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper surname with a real space — e.g. <b style="color:#d4af37;">Jon Doe</b>.
+                    ⚠️ <b style="color:#888;">First name only — this is permanent.</b> You can use hyphens or underscores now (e.g. "Jon_Doe"), but once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper surname with a real space — e.g. <b style="color:#d4af37;">Jon Doe</b>.
                 </p>
 
                 <button class="signin-btn" onclick="handleSignUp()" style="background:#555;color:#fff;">
@@ -241,13 +241,21 @@
             if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
             signInWithEmailAndPassword(auth, email, password).then(function(result) {
                 if (!result.user.emailVerified && !OWNER_EMAILS.includes(result.user.email) && !ADMIN_EMAILS.includes(result.user.email)) {
-                    showStatus('Please verify your email first. Check your inbox or use the button below to resend.', 'error');
+                    showStatus('Please verify your email before signing in.', 'error');
                     document.getElementById('resendBtn').style.display = 'block';
                     signOut(auth);
                     return;
                 }
                 window.location.href = 'https://sorcrpg.com/?loggedin=1';
-            }).catch(function(error) { showStatus('Sign in failed: ' + error.message, 'error'); });
+            }).catch(function(error) {
+                document.getElementById('resendBtn').style.display = 'none';
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    showStatus('Sign in failed: incorrect email or password. If you haven\'t verified your email yet, enter your credentials and use Resend Verification below.', 'error');
+                    document.getElementById('resendBtn').style.display = 'block';
+                } else {
+                    showStatus('Sign in failed: ' + error.message, 'error');
+                }
+            });
         };
 
         window.resendVerification = async function() {
@@ -266,7 +274,8 @@
             var email = document.getElementById('emailInput').value.trim();
             if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
             sendPasswordResetEmail(auth, email).then(function() {
-                showStatus('✅ Password reset email sent to ' + email, 'success');
+                showStatus('✅ Password reset email sent to ' + email + '. Also use Resend Verification below if you haven\'t verified your email yet.', 'success');
+                document.getElementById('resendBtn').style.display = 'block';
             }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
         };
 
