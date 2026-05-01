@@ -261,13 +261,21 @@
         window.resendVerification = async function() {
             var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
-            if (!email || !password) { showStatus('Enter your email and password first.', 'error'); return; }
+            if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
+            if (!password) { showStatus('Enter your password in the Sign In section, then click Resend.', 'error'); return; }
+            showStatus('Sending verification email...', 'success');
             signInWithEmailAndPassword(auth, email, password).then(async function(result) {
                 await sendEmailVerification(result.user);
-                showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                showStatus('✅ Verification email sent to ' + email + '. Check your inbox and spam folder.', 'success');
                 document.getElementById('resendBtn').style.display = 'none';
                 signOut(auth);
-            }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
+            }).catch(function(error) {
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    showStatus('Incorrect password — use Forgot Password to reset it first, then try again.', 'error');
+                } else {
+                    showStatus('Could not resend: ' + error.message, 'error');
+                }
+            });
         };
 
         window.showForgotPassword = function() {
@@ -280,22 +288,24 @@
         };
 
         window.handleSignUp = async function() {
-            var email = document.getElementById('signupEmail').value.trim();
-            var password = document.getElementById('signupPassword').value;
-            var username = document.getElementById('signupUsername').value.trim();
+            try {
+                var email = document.getElementById('signupEmail').value.trim();
+                var password = document.getElementById('signupPassword').value;
+                var username = document.getElementById('signupUsername').value.trim();
 
-            if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
+                if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
+                if (!username) { showStatus('Please choose a first name.', 'error'); return; }
 
-            var usernameError = isValidUsername(username);
-            if (usernameError) { showStatus(usernameError, 'error'); return; }
+                var usernameError = isValidUsername(username);
+                if (usernameError) { showStatus(usernameError, 'error'); return; }
 
-            var q = query(collection(db, "users"), where("firstName", "==", username));
-            var existing = await getDocs(q);
-            if (!existing.empty) { showStatus('That name is already taken. Please choose another.', 'error'); return; }
+                var q = query(collection(db, "users"), where("firstName", "==", username));
+                var existing = await getDocs(q);
+                if (!existing.empty) { showStatus('That name is already taken. Please choose another.', 'error'); return; }
 
-            var userId = generateUserId();
+                var userId = generateUserId();
 
-            createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
+                var result = await createUserWithEmailAndPassword(auth, email, password);
                 await sendEmailVerification(result.user);
                 await setDoc(doc(db, "users", result.user.uid), {
                     email: email,
@@ -322,10 +332,20 @@
                     playerPointsGranted: false,
                     gmPointsGranted: false
                 });
-                signOut(auth);
+                await signOut(auth);
                 document.getElementById('signinForm').style.display = 'none';
                 showStatus('✅ Profile created! Check your email to verify before signing in.', 'success');
-            }).catch(function(error) { showStatus('Sign up failed: ' + error.message, 'error'); });
+            } catch(error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    showStatus('An account with that email already exists. Try signing in or use Forgot Password.', 'error');
+                } else if (error.code === 'auth/weak-password') {
+                    showStatus('Password must be at least 6 characters.', 'error');
+                } else if (error.code === 'auth/invalid-email') {
+                    showStatus('Please enter a valid email address.', 'error');
+                } else {
+                    showStatus('Sign up failed: ' + error.message, 'error');
+                }
+            }
         };
     </script>
 </body>
