@@ -682,6 +682,7 @@
                 var liked = post.likedBy && uid && post.likedBy.includes(uid);
                 var isOwnPost = post.authorUid === uid;
                 var quoteText = post.body ? post.body.substring(0, 100) + (post.body.length > 100 ? '...' : '') : '';
+                var quoteDataAttr = 'data-postid="' + post.id + '" data-author="' + escapeAttr(post.authorName) + '" data-text="' + escapeAttr(quoteText) + '"';
                 var roleTag = makeRoleTag(post.authorUid, post.authorName, post.authorRole || 'CIVILIAN', isOwnPost);
                 return '<div class="post-card ' + (post.isOP ? 'op' : '') + '" id="post-' + post.id + '">' +
                     '<div class="post-author-row">' +
@@ -695,7 +696,7 @@
                     '<div class="post-body">' + renderPostBody(post.body || '') + '</div>' +
                     '<div class="post-actions">' +
                         (uid ? '<button class="post-action-btn ' + (liked ? 'liked' : '') + '" onclick="toggleLike(\'' + post.id + '\', ' + post.isOP + ')">❤️ ' + (post.likeCount || 0) + '</button>' : '') +
-                        (uid && !thread.locked ? '<button class="post-action-btn" onclick="quotePost(\'' + post.id + '\', \'' + escapeAttr(post.authorName) + '\', \'' + escapeAttr(quoteText) + '\')">💬 Quote</button>' : '') +
+                        (uid && !thread.locked ? '<button class="post-action-btn quote-btn" ' + quoteDataAttr + '>💬 Quote</button>' : '') +
                         (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '') +
                         (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '') +
                         (uid && !isOwnPost ? '<button class="post-action-btn" onclick="reportPost(\'' + post.id + '\')">🚨 Report</button>' : '') +
@@ -741,8 +742,18 @@
             quotedPost = { postId, authorName, text };
             var preview = document.getElementById('quotePreview');
             if (preview) { preview.innerHTML = '💬 Quoting <b>' + authorName + '</b>: ' + text; preview.classList.add('active'); }
-            document.getElementById('replyBody').focus();
+            var replyBody = document.getElementById('replyBody');
+            if (replyBody) replyBody.focus();
         };
+
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.quote-btn');
+            if (!btn) return;
+            var postId = btn.getAttribute('data-postid');
+            var author = btn.getAttribute('data-author');
+            var text = btn.getAttribute('data-text');
+            window.quotePost(postId, author, text);
+        });
         window.clearQuote = function() {
             quotedPost = null;
             var preview = document.getElementById('quotePreview');
