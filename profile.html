@@ -272,14 +272,15 @@
             if (!usernameChanged) {
                 nameFieldHtml =
                     '<div class="name-locked-note">' +
-                        '⚠️ <span>This change is permanent.</span> Once you set your name your first name is locked forever. You do not need to include a surname now — once you unlock the surname feature you can add one. Prefixes (Dr., Sir, Ms.) and suffixes (Jr., II, III, etc.) can also be added later.' +
+                        '⚠️ <span>Choose carefully — this is permanent.</span> Your first name is locked the moment you save it and cannot be changed.' +
+                        '<br/><br/>Enter your first name only. Do <b style="color:#d4af37;">not</b> include a surname here — once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock the Surname feature and add one separately, including spaces (e.g. Kaida Darkwood). Prefixes (Dr., Sir, Ms.) and suffixes (Jr., II, III, etc.) can also be added later.' +
                     '</div>' +
-                    '<input type="text" id="usernameInput" class="profile-input" value="' + firstName + '" maxlength="30" placeholder="Choose your name" />' +
+                    '<input type="text" id="usernameInput" class="profile-input" value="' + firstName + '" maxlength="30" placeholder="First name only" />' +
                     '<button class="btn btn-gold btn-sm" onclick="saveFirstName(\'' + uid + '\')" style="margin-top:6px;">Save Name</button>' +
                     '<div id="usernameMsg" class="msg"></div>';
             } else {
                 nameFieldHtml =
-                    '<div class="name-locked-note">🔒 First name locked: <span>' + firstName + '</span></div>' +
+                    '<div class="name-locked-note">🔒 First name locked: <span>' + firstName + '</span><br/><span style="color:#555;font-size:0.75rem;">First names cannot be changed. Earn 500 CP to unlock a surname — surnames support spaces (e.g. Darkwood, Van Halen).</span></div>' +
                     (unlockedPrefixSuffix
                         ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">PREFIX</label>' +
                           '<select id="prefixSelect" class="profile-select">' +
@@ -573,7 +574,7 @@
             var newPrefix = document.getElementById('prefixSelect') ? document.getElementById('prefixSelect').value : (data.prefix || '');
             var newSuffix = document.getElementById('suffixSelect') ? document.getElementById('suffixSelect').value : (data.suffix || '');
             if (newSurname && containsBadWord(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname contains inappropriate language.'; return; }
-            if (newSurname && !/^[a-zA-Z0-9_]+$/.test(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname: letters, numbers and underscores only.'; return; }
+            if (newSurname && !/^[a-zA-Z0-9_ ]+$/.test(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname: letters, numbers, underscores and spaces only.'; return; }
             if (newSurname && newSurname.length > 20) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname must be 20 characters or less.'; return; }
             var fullName = buildFullName(newPrefix, firstName, newSurname, newSuffix);
             await updateDoc(doc(db, "users", uid), { surname: newSurname, prefix: newPrefix, suffix: newSuffix, username: fullName, displayName: fullName });
