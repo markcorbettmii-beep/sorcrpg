@@ -417,6 +417,17 @@
                 '</div>';
         }
 
+        // Handle browser back button
+        window.addEventListener('popstate', function(e) {
+            if (e.state && e.state.threadId) {
+                openThread(e.state.threadId);
+            } else {
+                document.getElementById('threadsList').classList.remove('hidden');
+                document.getElementById('threadView').classList.remove('active');
+                currentThread = null;
+            }
+        });
+
         var params = new URLSearchParams(window.location.search);
         categoryId = params.get('cat');
         categoryName = decodeURIComponent(params.get('name') || '');
@@ -637,6 +648,9 @@
             currentThread = threadId;
             document.getElementById('threadsList').classList.add('hidden');
             document.getElementById('threadView').classList.add('active');
+            // Update URL so this thread can be shared/linked directly
+            var newUrl = 'threads.html?cat=' + encodeURIComponent(categoryId) + '&name=' + encodeURIComponent(categoryName) + '&thread=' + threadId;
+            history.pushState({ threadId: threadId }, '', newUrl);
             try { updateDoc(doc(db, "threads", threadId), { views: increment(1) }); } catch(e) {}
             await loadThreadContent(threadId);
         };
