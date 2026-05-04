@@ -269,12 +269,18 @@
 
             // ===== NAME SECTION =====
             var nameFieldHtml = '';
-            if (!usernameChanged) {
+            if (!usernameChanged || unlockedSurname) {
+                var lockMsg = usernameChanged && unlockedSurname
+                    ? '<div class="name-locked-note">✏️ <span>Surname unlocked.</span> You can now update your first name and add a surname. This will be your permanent full name going forward.</div>'
+                    : '<div class="name-locked-note">⚠️ <span>Choose 1st Name (Later Surname).</span> Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space — e.g. Jon Doe. Hyphens allowed but no underscores.</div>';
                 nameFieldHtml =
-                    '<div class="name-locked-note">' +
-                        '⚠️ <span>Choose 1st Name (Later Surname).</span> Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space — e.g. Jon Doe. Hyphens allowed but no underscores.' +
-                    '</div>' +
+                    lockMsg +
                     '<input type="text" id="usernameInput" class="profile-input" value="' + firstName + '" maxlength="30" placeholder="Choose 1st Name (Later Surname)" />' +
+                    (unlockedSurname
+                        ? '<div style="margin-top:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">SURNAME <span style="color:#555;">(optional, spaces allowed)</span></label>' +
+                          '<input type="text" id="surnameInputFirst" class="profile-input" value="' + surname + '" maxlength="20" placeholder="Surname (optional)" /></div>'
+                        : ''
+                    ) +
                     '<button class="btn btn-gold btn-sm" onclick="saveFirstName(\'' + uid + '\')" style="margin-top:6px;">Save Name</button>' +
                     '<div id="usernameMsg" class="msg"></div>';
             } else {
@@ -556,10 +562,24 @@
             var taken = false;
             existing.forEach(function(d) { if (d.id !== uid) taken = true; });
             if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That name is already taken.'; return; }
-            await updateDoc(doc(db, "users", uid), { firstName: newName, username: newName, displayName: newName, usernameChanged: true });
+
+            // Check if surname field is also present (surname unlocked)
+            var newSurname = document.getElementById('surnameInputFirst') ? document.getElementById('surnameInputFirst').value.trim() : '';
+            if (newSurname && containsBadWord(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname contains inappropriate language.'; return; }
+            if (newSurname && !/^[a-zA-Z0-9- ]+$/.test(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname: letters, numbers, hyphens and spaces only.'; return; }
+
+            var fullName = newSurname ? newName + ' ' + newSurname : newName;
+            await updateDoc(doc(db, "users", uid), {
+                firstName: newName,
+                surname: newSurname,
+                username: fullName,
+                displayName: fullName,
+                usernameChanged: true
+            });
             var savedGoogle = localStorage.getItem('sorc_google_user');
-            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = newName; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
-            msgEl.className = 'msg success'; msgEl.textContent = '✅ Name saved! Your first name is now locked.';
+            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = fullName; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Name saved!';
             setTimeout(function() { location.reload(); }, 1500);
         };
 
