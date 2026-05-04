@@ -272,9 +272,9 @@
             if (!usernameChanged) {
                 nameFieldHtml =
                     '<div class="name-locked-note">' +
-                        '⚠️ <span>First name only — this is permanent.</span> Do not use hyphens or underscores to fake a surname (e.g. avoid "Jon_Doe" or "Jon-Doe"). Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper surname with a real space — e.g. <b style="color:#d4af37;">Jon Doe</b>.' +
+                        '⚠️ <span>Choose 1st Name (Later Surname).</span> Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space — e.g. Jon Doe. Hyphens allowed but no underscores.' +
                     '</div>' +
-                    '<input type="text" id="usernameInput" class="profile-input" value="' + firstName + '" maxlength="30" placeholder="First name only" />' +
+                    '<input type="text" id="usernameInput" class="profile-input" value="' + firstName + '" maxlength="30" placeholder="Choose 1st Name (Later Surname)" />' +
                     '<button class="btn btn-gold btn-sm" onclick="saveFirstName(\'' + uid + '\')" style="margin-top:6px;">Save Name</button>' +
                     '<div id="usernameMsg" class="msg"></div>';
             } else {
@@ -549,7 +549,7 @@
             var msgEl = document.getElementById('usernameMsg');
             if (newName.length < 3) { msgEl.className = 'msg error'; msgEl.textContent = 'Name must be at least 3 characters.'; return; }
             if (newName.length > 30) { msgEl.className = 'msg error'; msgEl.textContent = 'Name must be 30 characters or less.'; return; }
-            if (!/^[a-zA-Z0-9_]+$/.test(newName)) { msgEl.className = 'msg error'; msgEl.textContent = 'Letters, numbers and underscores only.'; return; }
+            if (!/^[a-zA-Z0-9-]+$/.test(newName)) { msgEl.className = 'msg error'; msgEl.textContent = 'Letters, numbers and hyphens only. No underscores or spaces.'; return; }
             if (containsBadWord(newName)) { msgEl.className = 'msg error'; msgEl.textContent = 'Name contains inappropriate language.'; return; }
             var q = query(collection(db, "users"), where("firstName", "==", newName));
             var existing = await getDocs(q);
