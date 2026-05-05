@@ -157,11 +157,17 @@
 
         function handleGoogleCredential(response) {
             showStatus('Signing in...', 'success');
-            if (window._handleGoogleSignIn) {
-                window._handleGoogleSignIn(response.credential);
-            } else {
-                showStatus('Sign in failed. Please refresh and try again.', 'error');
-            }
+            var attempts = 0;
+            var interval = setInterval(function() {
+                attempts++;
+                if (window._handleGoogleSignIn) {
+                    clearInterval(interval);
+                    window._handleGoogleSignIn(response.credential);
+                } else if (attempts > 20) {
+                    clearInterval(interval);
+                    showStatus('Sign in failed. Please refresh and try again.', 'error');
+                }
+            }, 100);
         }
 
         window.addEventListener('load', function() {
