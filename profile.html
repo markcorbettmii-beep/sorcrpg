@@ -13,7 +13,7 @@
         .profile-banner { width: 100%; height: 120px; background: linear-gradient(135deg, #1a0a0a, #2a0808, #d0021b22); display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.8rem; position: relative; }
         .profile-banner.locked { filter: grayscale(1); opacity: 0.4; }
         .profile-banner .lock-icon { position: absolute; top: 8px; right: 8px; font-size: 1rem; color: #555; }
-        .profile-info-row { display: flex; align-items: flex-end; gap: 1rem; padding: 0 1.5rem; margin-top: -40px; margin-bottom: 1rem; }
+        .profile-info-row { display: flex; align-items: flex-end; gap: 1rem; padding: 0 1.5rem; margin-top: -40px; margin-bottom: 1rem; position: relative; z-index: 1; }
         .profile-avatar-large { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #d0021b; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #555; overflow: hidden; flex-shrink: 0; }
         .profile-name-block { flex: 1; padding-bottom: 0.5rem; }
         .profile-username { font-size: 1.3rem; font-weight: bold; color: #e0cfc0; }
@@ -194,7 +194,8 @@
             '953d2b9a-3239-485b-b725-6a8ec7b198a6.png',
             '9900c8e6-3b22-4926-924c-63995c96f50b.png',
             'aba62c03-4bae-49e8-a8bb-88b00459b241.png',
-            'b4d464f7-1923-409f-883a-1648018b9483.png'
+            'b4d464f7-1923-409f-883a-1648018b9483.png',
+            'Fang, a Pinkling rogue._20260504_220543_0000.png'
         ];
 
         var selectedAvatar = null;
@@ -207,8 +208,8 @@
 
             var gridHtml = AVATARS.map(function(filename) {
                 var sel = filename === currentAvatar ? ' selected' : '';
-                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + filename + '\')">' +
-                    '<img src="images/avatars/' + filename + '" alt="Avatar" loading="lazy" onerror="this.parentElement.style.display=\'none\'" />' +
+                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + filename.replace(/'/g, "\\'") + '\')">' +
+                    '<img src="images/avatars/' + filename + '" alt="Avatar" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;" />' +
                     '</div>';
             }).join('');
 
@@ -296,7 +297,9 @@
             var avatar = data.avatar || null;
             var userId = data.userId || '';
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
-            var avatarDisplay = avatar ? '<div style="font-size:0.7rem;color:#555;">' + avatar + '</div>' : '<div style="font-size:0.7rem;color:#555;">No avatar</div>';
+            var avatarDisplay = avatar
+                ? '<img src="images/avatars/' + avatar + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display=\'none\'" />'
+                : '<span style="font-size:1.5rem;color:#555;">👤</span>';
 
             // ===== POINTS PROGRESS BAR =====
             var UNLOCK_TIERS = [
@@ -662,7 +665,7 @@
             var savedGoogle = localStorage.getItem('sorc_google_user');
             if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.avatar = selectedAvatar; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
             msgEl.className = 'msg success'; msgEl.textContent = '✅ Avatar saved!';
-            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+            setTimeout(function() { location.reload(); }, 1000);
         };
 
         window.saveBio = async function(uid) {
