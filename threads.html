@@ -336,6 +336,7 @@
 
         var currentUser = null;
         var currentUserData = null;
+        var googleUser = null;
         var categoryId = null;
         var categoryName = null;
         var currentThread = null;
@@ -344,6 +345,8 @@
         var quotedPost = null;
         var editingPostId = null;
         var reportingPostId = null;
+
+        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
 
         // ========== COMMUNITY POINTS ENGINE ==========
         // Points per action (per sorc-beyond.html rules)
@@ -434,8 +437,8 @@
         document.title = categoryName + ' | SorC Forums';
 
         function isAdminOrOwner(email) { return OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email); }
-        function getUserEmail() { return currentUser ? currentUser.email : null; }
-        function getUserUid() { return currentUser ? currentUser.uid : null; }
+        function getUserEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
+        function getUserUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
         function getUsername() {
             var data = currentUserData || {};
             var email = getUserEmail() || '';
@@ -939,6 +942,11 @@
                     var docSnap = await getDoc(doc(db, "users", user.uid));
                     if (docSnap.exists()) currentUserData = docSnap.data();
                 } catch(e) { console.warn('Could not load user profile:', e.message); }
+            } else if (googleUser) {
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
+                } catch(e) {}
             }
             if (threadParam) { await openThread(threadParam); }
             else { await loadThreads(1); }
