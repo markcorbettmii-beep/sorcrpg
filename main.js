@@ -184,8 +184,6 @@ const db = getFirestore(app);
 const OWNER_EMAILS = ["corbett@sorcrpg.com"];
 const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
-var googleUser = null;
-
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
   if (role === 'OWNER') return '[OWN]';
@@ -304,7 +302,7 @@ function showRoleBadge(email, username, role, avatar, userId) {
 
   if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
 
-  var uid = auth.currentUser ? auth.currentUser.uid : (googleUser ? googleUser.googleId : null);
+  var uid = auth.currentUser ? auth.currentUser.uid : null;
   if (uid) {
     checkInboxNotifications(uid);
     awardDailyLoginBonus(uid);
@@ -380,8 +378,6 @@ window.sorcSignOut = function() {
   localStorage.removeItem('sorc_google_user');
   window.location.reload();
 };
-
-// ========== GET OR SET USER ROLE ==========
 async function getUserRoleFromDB(uid, email) {
   var docRef = doc(db, "users", uid);
   var docSnap = await getDoc(docRef);
@@ -415,53 +411,6 @@ onAuthStateChanged(auth, async function(user) {
     }
     var data = await getUserRoleFromDB(user.uid, user.email);
     showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
-  } else {
-    // Check for legacy localStorage Google user (transitional support)
-    try { var saved = localStorage.getItem('sorc_google_user'); if (saved) googleUser = JSON.parse(saved); } catch(e) {}
-    if (googleUser) {
-      try {
-        var role = googleUser.role || 'CIVILIAN';
-        var username = googleUser.username || googleUser.name || '';
-        var avatar = googleUser.avatar || null;
-        var userId = googleUser.userId || '';
-        if (OWNER_EMAILS.includes(googleUser.email)) role = 'OWNER';
-        else if (ADMIN_EMAILS.includes(googleUser.email)) role = 'ADMIN';
-        if (googleUser.googleId) {
-          try {
-            var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-            if (docSnap.exists()) {
-              var data = docSnap.data();
-              username = data.username || data.displayName || username;
-              avatar = data.avatar || avatar;
-              userId = data.userId || userId;
-              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = data.role || role; }
-              if (role === 'PLAYER' || role === 'MASTER') {
-                await grantRoleUpgradePoints(googleUser.googleId, role, data);
-              }
-              googleUser.username = username; googleUser.avatar = avatar; googleUser.userId = userId; googleUser.role = role;
-              localStorage.setItem('sorc_google_user', JSON.stringify(googleUser));
-            }
-          } catch(e) {}
-        }
-        showRoleBadge(googleUser.email, username, role, avatar, userId);
-      } catch(e) { localStorage.removeItem('sorc_google_user'); }
-    }
-  }
-});
-
-// ========== LISTEN FOR GOOGLE LOGIN FROM SIGNIN TAB ==========
-window.addEventListener('storage', async function(e) {
-  if (e.key === 'sorc_google_user' && e.newValue) {
-    try {
-      var userInfo = JSON.parse(e.newValue);
-      var role = userInfo.role || 'CIVILIAN';
-      var username = userInfo.username || userInfo.name || '';
-      var avatar = userInfo.avatar || null;
-      var userId = userInfo.userId || '';
-      if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
-      else if (ADMIN_EMAILS.includes(userInfo.email)) role = 'ADMIN';
-      showRoleBadge(userInfo.email, username, role, avatar, userId);
-    } catch(err) { console.error(err); }
   }
 });
 
