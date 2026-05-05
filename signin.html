@@ -156,28 +156,48 @@
         };
 
         function handleGoogleCredential(response) {
-            var base64Url = response.credential.split('.')[1];
-            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            var userInfo = JSON.parse(window.atob(base64));
-            var googleId = String(userInfo.sub).trim();
-            var role = OWNER_EMAILS.includes(userInfo.email) ? 'OWNER' : ADMIN_EMAILS.includes(userInfo.email) ? 'ADMIN' : 'CIVILIAN';
+            showStatus('Signing in...', 'success');
+            // Use Firebase's built-in Google Auth instead of manual JWT decode
+            // This gives the user a real Firebase Auth session and request.auth works
+            import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js").then(function(firebaseAuth) {
+                var credential = firebaseAuth.GoogleAuthProvider.credential(response.credential);
+                firebaseAuth.signInWithCredential(auth, credential).then(async function(result) {
+                    var user = result.user;
+                    var role = OWNER_EMAILS.includes(user.email) ? 'OWNER' : ADMIN_EMAILS.includes(user.email) ? 'ADMIN' : 'CIVILIAN';
 
-            // Store basic info first so the site can load
-            var existing = null;
-            try { existing = JSON.parse(localStorage.getItem('sorc_google_user')); } catch(e) {}
+                    // Create Firestore profile if first time Google sign-in
+                    var docSnap = await getDoc(doc(db, "users", user.uid));
+                    if (!docSnap.exists()) {
+                        var randomUsername = generateRandomUsername();
+                        var userId = generateUserId();
+                        await setDoc(doc(db, "users", user.uid), {
+                            email: user.email,
+                            role: 'CIVILIAN',
+                            username: randomUsername,
+                            firstName: randomUsername,
+                            displayName: randomUsername,
+                            surname: '', prefix: '', suffix: '',
+                            usernameChanged: false,
+                            userId: userId,
+                            avatar: null,
+                            communityPoints: 0,
+                            joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                            postCount: 0, titles: [], isPro: false,
+                            unlockedFellowships: false, unlockedBasic: false,
+                            unlockedSurname: false, unlockedPrefixSuffix: false, unlockedPro: false,
+                            playerPointsGranted: false, gmPointsGranted: false
+                        });
+                    }
 
-            // Only generate random username/userId if this is a brand new sign-in
-            var username = (existing && existing.googleId === googleId && existing.username) ? existing.username : generateRandomUsername();
-            var userId = (existing && existing.googleId === googleId && existing.userId) ? existing.userId : generateUserId();
+                    // Clear old localStorage Google user — no longer needed
+                    localStorage.removeItem('sorc_google_user');
 
-            var userData = JSON.stringify({
-                email: userInfo.email, name: userInfo.name, googleId: googleId,
-                role: role, username: username, userId: userId
+                    showStatus('✅ Signed in! Redirecting...', 'success');
+                    setTimeout(function() { window.location.href = 'https://sorcrpg.com/?loggedin=1'; }, 800);
+                }).catch(function(error) {
+                    showStatus('Google sign in failed: ' + error.message, 'error');
+                });
             });
-            localStorage.setItem('sorc_google_user', userData);
-            showStatus('✅ Signed in! Redirecting...', 'success');
-            var encoded = encodeURIComponent(userData);
-            setTimeout(function() { window.location.href = 'https://sorcrpg.com/?guser=' + encoded; }, 800);
         }
 
         window.addEventListener('load', function() {
@@ -219,8 +239,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
