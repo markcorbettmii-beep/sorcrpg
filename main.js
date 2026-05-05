@@ -411,6 +411,32 @@ onAuthStateChanged(auth, async function(user) {
     }
     var data = await getUserRoleFromDB(user.uid, user.email);
     showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
+  } else {
+    // Check for Google localStorage session
+    try {
+      var saved = localStorage.getItem('sorc_google_user');
+      if (saved) {
+        var googleUser = JSON.parse(saved);
+        var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
+        var username = googleUser.username || googleUser.name || '';
+        var avatar = googleUser.avatar || null;
+        var userId = googleUser.userId || '';
+        if (googleUser.googleId) {
+          try {
+            var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+            if (docSnap.exists()) {
+              var data = docSnap.data();
+              username = data.username || data.displayName || username;
+              avatar = data.avatar || avatar;
+              userId = data.userId || userId;
+              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = data.role || role; }
+              if (role === 'PLAYER' || role === 'MASTER') { await grantRoleUpgradePoints(googleUser.googleId, role, data); }
+            }
+          } catch(e) {}
+        }
+        showRoleBadge(googleUser.email, username, role, avatar, userId);
+      }
+    } catch(e) { localStorage.removeItem('sorc_google_user'); }
   }
 });
 
