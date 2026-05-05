@@ -58,11 +58,15 @@
         .msg.error { color: #d0021b; }
         .not-logged-in { text-align: center; padding: 3rem; }
         .not-logged-in a { color: #d0021b; }
-        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
-        .avatar-option { border: 3px solid transparent; border-radius: 8px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; background: #2a2a2a; }
+        .avatar-preview-box { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #d0021b; background: #2a2a2a; overflow: hidden; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; }
+        .avatar-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-preview-box .no-avatar { color: #555; font-size: 0.75rem; }
+        .avatar-scroll { max-height: 260px; overflow-y: auto; padding-right: 4px; }
+        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+        .avatar-option { border: 3px solid transparent; border-radius: 8px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; background: #2a2a2a; aspect-ratio: 1; }
         .avatar-option:hover { border-color: #d4af37; }
         .avatar-option.selected { border-color: #d0021b; }
-        .avatar-placeholder { width: 100%; aspect-ratio: 1; background: #2a2a2a; display: flex; align-items: center; justify-content: center; color: #555; font-size: 0.7rem; }
+        .avatar-option img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
         .stat-box { background: #222; border-radius: 8px; padding: 0.75rem; text-align: center; border: 1px solid #333; }
         .stat-box .stat-val { font-size: 1.2rem; font-weight: bold; color: #d4af37; }
@@ -160,22 +164,70 @@
             return parts.join(' ');
         }
 
+        var AVATARS = [
+            '01deb0d8-fb1e-4e18-8048-020d8ea56272.png',
+            '037b9199-2abf-47a3-9b34-0b912a0675a6.png',
+            '1dc7c652-c366-4ed6-babb-50e9db131cf6.png',
+            '1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png',
+            '20241110_092140_IMG_7001_Original.PNG',
+            '20241110_092207_IMG_2908_Original.PNG',
+            '20241110_092216_IMG_0070_Original.JPG',
+            '20241110_092217_IMG_0077_Original.PNG',
+            '20241110_092217_IMG_0090_Original.PNG',
+            '20241110_092220_IMG_0084_Original.PNG',
+            '2855038f-8581-4061-b60a-e0629ec1f683.png',
+            '2e98fc95-753a-4aaa-855b-79dd6bb17c09.png',
+            '3631e3d3-79bd-4fd2-b588-ec80fabc5ae4.png',
+            '3dba5b21-7dcc-4e9a-a309-1f42d010d58f.png',
+            '3ff4851b-f3ee-4f23-9a1d-57c88547a1c6.png',
+            '45cc24a0-0873-48da-aeb5-afad6c36d887.png',
+            '4c16641d-eee1-4bd5-bd8a-ec0611f928b7.png',
+            '5142b751-8cb6-4f19-ac2b-6880c241ab56.png',
+            '51cb2423-194f-4bd1-8229-7fe356f17c32.png',
+            '6a04a2c0-ab6a-4fb7-8f2e-f29a5241095e.png',
+            '6a955b49-f706-4e8d-a04c-af0daca538f0.png',
+            '6b87456a-88d9-4535-9f45-4f7274865156.png',
+            '6c37d5d1-76c4-4391-ac12-6ca2a1109026.png',
+            '7ad2053e-a2a7-4f23-af8e-902b2d243fa2.png',
+            '8368be40-e509-4f84-8ff4-b41cb8e6b263.png',
+            '8ea1641c-5cdf-4e58-b28a-60f2f7822d7a.png',
+            '953d2b9a-3239-485b-b725-6a8ec7b198a6.png',
+            '9900c8e6-3b22-4926-924c-63995c96f50b.png',
+            'aba62c03-4bae-49e8-a8bb-88b00459b241.png',
+            'b4d464f7-1923-409f-883a-1648018b9483.png'
+        ];
+
         var selectedAvatar = null;
 
         function buildAvatarGrid(currentAvatar) {
-            var avatars = ['avatar1','avatar2','avatar3','avatar4','avatar5','avatar6','avatar7','avatar8','avatar9','avatar10','avatar11','avatar12'];
-            return avatars.map(function(id) {
-                var sel = id === currentAvatar ? ' selected' : '';
-                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + id + '\')">' +
-                    '<div class="avatar-placeholder">' + id + '</div>' +
-                '</div>';
+            var previewSrc = currentAvatar ? 'images/avatars/' + currentAvatar : null;
+            var previewHtml = previewSrc
+                ? '<img id="avatarPreviewImg" src="' + previewSrc + '" alt="Selected avatar" />'
+                : '<span class="no-avatar" id="avatarPreviewImg">No avatar selected</span>';
+
+            var gridHtml = AVATARS.map(function(filename) {
+                var sel = filename === currentAvatar ? ' selected' : '';
+                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + filename + '\')">' +
+                    '<img src="images/avatars/' + filename + '" alt="Avatar" loading="lazy" onerror="this.parentElement.style.display=\'none\'" />' +
+                    '</div>';
             }).join('');
+
+            return '<div class="avatar-preview-box">' + previewHtml + '</div>' +
+                   '<div class="avatar-scroll"><div class="avatar-grid">' + gridHtml + '</div></div>';
         }
 
-        window.pickAvatar = function(el, id) {
+        window.pickAvatar = function(el, filename) {
             document.querySelectorAll('.avatar-option').forEach(function(o) { o.classList.remove('selected'); });
             el.classList.add('selected');
-            selectedAvatar = id;
+            selectedAvatar = filename;
+            var preview = document.getElementById('avatarPreviewImg');
+            if (preview) {
+                var img = document.createElement('img');
+                img.src = 'images/avatars/' + filename;
+                img.alt = 'Selected avatar';
+                img.id = 'avatarPreviewImg';
+                preview.parentNode.replaceChild(img, preview);
+            }
         };
 
         var googleUser = null;
