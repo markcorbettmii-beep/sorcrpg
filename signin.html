@@ -80,9 +80,9 @@
 
             <div id="signinForm">
                 <p style="text-align:left;color:#888;font-size:0.8rem;margin-bottom:0.5rem;">Sign In</p>
-                <input type="email" id="emailInput" class="signin-input" placeholder="Email address" autocomplete="email" />
+                <input type="email" id="emailInput" class="signin-input" placeholder="Email address" />
                 <div class="password-wrapper">
-                    <input type="password" id="passwordInput" class="signin-input" placeholder="Password" autocomplete="current-password" />
+                    <input type="password" id="passwordInput" class="signin-input" placeholder="Password" />
                     <button class="toggle-pw" onclick="togglePassword('passwordInput', this)" type="button">👁</button>
                 </div>
                 <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
@@ -90,12 +90,12 @@
 
                 <div class="signin-divider">or create account</div>
 
-                <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" autocomplete="email" />
+                <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" />
                 <div class="password-wrapper">
-                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" autocomplete="new-password" />
+                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" />
                     <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
                 </div>
-                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose 1st Name (Later Surname)" maxlength="30" autocomplete="username" />
+                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose 1st Name (Later Surname)" maxlength="30" />
                 <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
                     Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space — e.g. <b style="color:#d4af37;">Jon Doe</b>. Hyphens allowed but no underscores.
                 </p>
@@ -110,7 +110,7 @@
             <button class="signin-btn signin-btn-apple">Continue with Apple</button>
 
             <div class="signin-links">
-                <a href="javascript:void(0)" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
+                <a href="#" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
                 <a href="index.html">Back to site</a>
             </div>
         </div>
@@ -155,24 +155,29 @@
             else { input.type = 'password'; btn.textContent = '👁'; }
         };
 
-        // ========== GOOGLE SIGN IN — localStorage approach ==========
         function handleGoogleCredential(response) {
             var base64Url = response.credential.split('.')[1];
             var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             var userInfo = JSON.parse(window.atob(base64));
             var googleId = String(userInfo.sub).trim();
             var role = OWNER_EMAILS.includes(userInfo.email) ? 'OWNER' : ADMIN_EMAILS.includes(userInfo.email) ? 'ADMIN' : 'CIVILIAN';
+
+            // Store basic info first so the site can load
             var existing = null;
             try { existing = JSON.parse(localStorage.getItem('sorc_google_user')); } catch(e) {}
+
+            // Only generate random username/userId if this is a brand new sign-in
             var username = (existing && existing.googleId === googleId && existing.username) ? existing.username : generateRandomUsername();
             var userId = (existing && existing.googleId === googleId && existing.userId) ? existing.userId : generateUserId();
+
             var userData = JSON.stringify({
                 email: userInfo.email, name: userInfo.name, googleId: googleId,
                 role: role, username: username, userId: userId
             });
             localStorage.setItem('sorc_google_user', userData);
             showStatus('✅ Signed in! Redirecting...', 'success');
-            setTimeout(function() { window.location.href = 'https://sorcrpg.com/'; }, 800);
+            var encoded = encodeURIComponent(userData);
+            setTimeout(function() { window.location.href = 'https://sorcrpg.com/?guser=' + encoded; }, 800);
         }
 
         window.addEventListener('load', function() {
@@ -190,10 +195,10 @@
             }
         });
 
-        window.showStatus = function(msg, type) {
+        function showStatus(msg, type) {
             var el = document.getElementById('statusMsg');
             el.textContent = msg; el.className = 'status-msg ' + type; el.style.display = 'block';
-        };
+        }
 
         window.selectType = function(type, btn) {
             document.querySelectorAll('.account-type-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -215,7 +220,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
@@ -232,28 +237,33 @@
         const OWNER_EMAILS = ["corbett@sorcrpg.com"];
         const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
-        window.handleSignIn = async function() {
+        onAuthStateChanged(auth, function(user) {
+            if (user && user.emailVerified) {
+                window.location.href = 'https://sorcrpg.com/?loggedin=1';
+            }
+        });
+
+        window.handleSignIn = function() {
             var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
             if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
-            try {
-                var result = await signInWithEmailAndPassword(auth, email, password);
+            signInWithEmailAndPassword(auth, email, password).then(function(result) {
                 if (!result.user.emailVerified && !OWNER_EMAILS.includes(result.user.email) && !ADMIN_EMAILS.includes(result.user.email)) {
                     showStatus('Please verify your email before signing in.', 'error');
                     document.getElementById('resendBtn').style.display = 'block';
                     signOut(auth);
                     return;
                 }
-                showStatus('✅ Signed in! Redirecting...', 'success');
-                setTimeout(function() { window.location.href = 'https://sorcrpg.com/'; }, 800);
-            } catch(error) {
+                window.location.href = 'https://sorcrpg.com/?loggedin=1';
+            }).catch(function(error) {
+                document.getElementById('resendBtn').style.display = 'none';
                 if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    showStatus('Sign in failed: incorrect email or password. If you haven\'t verified your email yet, enter your credentials and use the button below.', 'error');
+                    showStatus('Sign in failed: incorrect email or password. If you haven\'t verified your email yet, enter your credentials and use Resend Verification below.', 'error');
+                    document.getElementById('resendBtn').style.display = 'block';
                 } else {
                     showStatus('Sign in failed: ' + error.message, 'error');
                 }
-                document.getElementById('resendBtn').style.display = 'block';
-            }
+            });
         };
 
         window.resendVerification = async function() {
@@ -261,7 +271,7 @@
             if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
             showStatus('Sending email...', 'success');
             sendPasswordResetEmail(auth, email).then(function() {
-                showStatus('✅ Email sent to ' + email + '. Reset your password, then sign in.', 'success');
+                showStatus('✅ Email sent to ' + email + '. Reset your password, then sign in — your account will be active.', 'success');
                 document.getElementById('resendBtn').style.display = 'none';
             }).catch(function(error) {
                 showStatus('Could not send email: ' + error.message, 'error');
@@ -272,7 +282,7 @@
             var email = document.getElementById('emailInput').value.trim();
             if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
             sendPasswordResetEmail(auth, email).then(function() {
-                showStatus('✅ Password reset email sent to ' + email, 'success');
+                showStatus('✅ Password reset email sent to ' + email + '. Also use Resend Verification below if you haven\'t verified your email yet.', 'success');
                 document.getElementById('resendBtn').style.display = 'block';
             }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
         };
@@ -294,17 +304,33 @@
                 if (!existing.empty) { showStatus('That name is already taken. Please choose another.', 'error'); return; }
 
                 var userId = generateUserId();
+
                 var result = await createUserWithEmailAndPassword(auth, email, password);
                 await sendEmailVerification(result.user);
                 await setDoc(doc(db, "users", result.user.uid), {
-                    email: email, role: 'CIVILIAN', username: username, firstName: username,
-                    surname: '', prefix: '', suffix: '', usernameChanged: true,
-                    userId: userId, avatar: null, displayName: username, communityPoints: 0,
+                    email: email,
+                    role: 'CIVILIAN',
+                    username: username,
+                    firstName: username,
+                    surname: '',
+                    prefix: '',
+                    suffix: '',
+                    usernameChanged: true,
+                    userId: userId,
+                    avatar: null,
+                    displayName: username,
+                    communityPoints: 0,
                     joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-                    postCount: 0, titles: [], isPro: false,
-                    unlockedFellowships: false, unlockedBasic: false,
-                    unlockedSurname: false, unlockedPrefixSuffix: false, unlockedPro: false,
-                    playerPointsGranted: false, gmPointsGranted: false
+                    postCount: 0,
+                    titles: [],
+                    isPro: false,
+                    unlockedFellowships: false,
+                    unlockedBasic: false,
+                    unlockedSurname: false,
+                    unlockedPrefixSuffix: false,
+                    unlockedPro: false,
+                    playerPointsGranted: false,
+                    gmPointsGranted: false
                 });
                 await signOut(auth);
                 document.getElementById('signinForm').style.display = 'none';
