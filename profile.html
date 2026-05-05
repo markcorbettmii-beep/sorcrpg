@@ -231,7 +231,9 @@
             }
         };
 
-        // Profile page — uses Firebase Auth only
+        var googleUser = null;
+        var savedGoogle = localStorage.getItem('sorc_google_user');
+        if (savedGoogle) { try { googleUser = JSON.parse(savedGoogle); } catch(e) {} }
 
         onAuthStateChanged(auth, async function(user) {
             if (user) {
@@ -247,6 +249,14 @@
                     }
                 }
                 renderProfile(uid, email, role, data);
+            } else if (googleUser) {
+                var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
+                var data = {};
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) data = docSnap.data();
+                } catch(e) {}
+                renderProfile(googleUser.googleId, googleUser.email, role, data);
             } else {
                 document.getElementById('profileApp').innerHTML =
                     '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
