@@ -1,528 +1,735 @@
-// ========== THEME SYSTEM ==========
-(function() {
-  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
-  if (savedTheme === 'lawful') {
-    document.body.classList.add('lawful-mode');
-  }
-})();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile | Slayers of Rings § Crowns</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
+        .profile-container { max-width: 680px; margin: 2rem auto; padding: 2rem; }
+        .profile-card { background: #1a1a1a; border-radius: 1rem; border: 1px solid #333; overflow: hidden; margin-bottom: 1rem; }
+        .profile-banner { width: 100%; height: 120px; background: linear-gradient(135deg, #1a0a0a, #2a0808, #d0021b22); display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.8rem; position: relative; }
+        .profile-banner.locked { filter: grayscale(1); opacity: 0.4; }
+        .profile-banner .lock-icon { position: absolute; top: 8px; right: 8px; font-size: 1rem; color: #555; }
+        .profile-info-row { display: flex; align-items: flex-end; gap: 1rem; padding: 0 1.5rem; margin-top: -40px; margin-bottom: 1rem; }
+        .profile-avatar-large { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #d0021b; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #555; overflow: hidden; flex-shrink: 0; }
+        .profile-name-block { flex: 1; padding-bottom: 0.5rem; }
+        .profile-username { font-size: 1.3rem; font-weight: bold; color: #e0cfc0; }
+        .profile-role-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 3px; }
+        .profile-title { font-size: 0.8rem; color: #d4af37; margin-top: 2px; font-style: italic; }
+        .profile-section { padding: 1rem 1.5rem; border-top: 1px solid #2a2a2a; }
+        .profile-section h3 { color: #d4af37; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem 0; }
+        .profile-field { margin-bottom: 0.75rem; }
+        .profile-field label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 3px; }
+        .profile-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box; }
+        .profile-input:focus { outline: none; border-color: #d0021b; }
+        .profile-input:disabled { background: #1a1a1a; color: #555; border-color: #333; cursor: not-allowed; }
+        .profile-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box; margin-bottom: 6px; }
+        .profile-select:disabled { background: #1a1a1a; color: #555; border-color: #333; cursor: not-allowed; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+        .toggle-row label { font-size: 0.8rem; color: #888; }
+        .toggle-switch { position: relative; width: 36px; height: 20px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #444; border-radius: 20px; transition: 0.3s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+        input:checked + .toggle-slider { background: #d0021b; }
+        input:checked + .toggle-slider:before { transform: translateX(16px); }
+        .points-bar-bg { background: #2a2a2a; border-radius: 8px; height: 8px; margin-top: 4px; overflow: hidden; }
+        .points-bar-fill { background: linear-gradient(90deg, #d0021b, #d4af37); height: 100%; border-radius: 8px; transition: width 0.5s; }
+        .points-milestone { font-size: 0.75rem; color: #555; margin-top: 4px; }
+        .locked-feature { opacity: 0.45; pointer-events: none; position: relative; }
+        .locked-feature::after { content: '🔒 SORC Beyond Pro'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; color: #555; white-space: nowrap; pointer-events: auto; }
+        .upgrade-section { margin-top: 1rem; padding: 1rem 1.5rem; background: #1a1a2a; border: 1px solid #444; border-radius: 8px; }
+        .upgrade-section h3 { color: #d4af37; margin-bottom: 0.5rem; font-size: 0.85rem; }
+        .upgrade-btn { display: block; width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 2px solid #444; background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.9rem; text-align: left; transition: border-color 0.2s; }
+        .upgrade-btn:hover { border-color: #d4af37; }
+        .upgrade-info { display: none; background: #2a1a00; border: 1px solid #d4af37; color: #d4af37; border-radius: 8px; padding: 1rem; margin-top: 0.5rem; font-size: 0.85rem; line-height: 1.6; }
+        .master-code-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; margin-top: 8px; margin-bottom: 8px; box-sizing: border-box; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-red { background: #d0021b; color: #fff; }
+        .btn-gold { background: #d4af37; color: #222; }
+        .btn-green { background: #1a6b1a; color: #fff; }
+        .btn-blue { background: #1a3a6b; color: #fff; }
+        .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+        .msg { margin-top: 0.5rem; font-size: 0.85rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #d0021b; }
+        .not-logged-in { text-align: center; padding: 3rem; }
+        .not-logged-in a { color: #d0021b; }
+        .avatar-preview-box { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #d0021b; background: #2a2a2a; overflow: hidden; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; }
+        .avatar-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-preview-box .no-avatar { color: #555; font-size: 0.75rem; }
+        .avatar-scroll { max-height: 260px; overflow-y: auto; padding-right: 4px; }
+        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+        .avatar-option { border: 3px solid transparent; border-radius: 8px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; background: #2a2a2a; aspect-ratio: 1; }
+        .avatar-option:hover { border-color: #d4af37; }
+        .avatar-option.selected { border-color: #d0021b; }
+        .avatar-option img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+        .stat-box { background: #222; border-radius: 8px; padding: 0.75rem; text-align: center; border: 1px solid #333; }
+        .stat-box .stat-val { font-size: 1.2rem; font-weight: bold; color: #d4af37; }
+        .stat-box .stat-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
+        .name-locked-note { background: #1a1a00; border: 1px solid #555; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem; color: #666; margin-bottom: 0.75rem; }
+        .name-locked-note span { color: #d4af37; }
+        .surname-locked { background: #1a1a00; border: 1px solid #555; border-radius: 8px; padding: 0.75rem; font-size: 0.8rem; color: #666; margin-bottom: 0.75rem; }
+        .surname-locked span { color: #d4af37; }
+        .unlock-feature-card { background: #1a1a2a; border: 1px solid #333; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+        .unlock-feature-card.unlocked { border-color: #1a6b1a; }
+        .unlock-feature-info { flex: 1; }
+        .unlock-feature-info h4 { color: #e0cfc0; margin: 0 0 4px 0; font-size: 0.9rem; }
+        .unlock-feature-info p { color: #555; margin: 0; font-size: 0.78rem; }
+        .unlock-feature-cost { font-size: 0.85rem; color: #d4af37; font-weight: bold; white-space: nowrap; }
+        .points-balance { background: #1a1a00; border: 1px solid #d4af37; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+        .points-balance .balance-val { font-size: 1.3rem; font-weight: bold; color: #d4af37; }
+        .points-balance .balance-label { font-size: 0.75rem; color: #888; }
+    </style>
+</head>
+<body>
+    <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
+    <div id="profileApp">
+        <div class="not-logged-in"><p>Loading...</p></div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', function() {
-  var evilBtn = document.querySelector('.theme-toggle-btn.evil') || document.getElementById('theme-evil');
-  var lawfulBtn = document.querySelector('.theme-toggle-btn.lawful') || document.getElementById('theme-lawful');
-  if (evilBtn && lawfulBtn) {
-    function updateButtonStates() {
-      var currentTheme = localStorage.getItem('themeSelected') || 'evil';
-      if (currentTheme === 'evil') {
-        evilBtn.classList.add('active');
-        lawfulBtn.classList.remove('active');
-      } else {
-        lawfulBtn.classList.add('active');
-        evilBtn.classList.remove('active');
-      }
-    }
-    updateButtonStates();
-    evilBtn.addEventListener('click', function() {
-      localStorage.setItem('themeSelected', 'evil');
-      document.body.classList.remove('lawful-mode');
-      updateButtonStates();
-    });
-    lawfulBtn.addEventListener('click', function() {
-      localStorage.setItem('themeSelected', 'lawful');
-      document.body.classList.add('lawful-mode');
-      updateButtonStates();
-    });
-  }
-});
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
 
-// ========== FOOTER INJECTION ==========
-document.addEventListener('DOMContentLoaded', function() {
-  var footerDiv = document.getElementById('footer');
-  if (footerDiv) {
-    footerDiv.innerHTML = '<footer>' +
-      '<div class="container">' +
-        '<p>&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer. All rights reserved.</p>' +
-        '<nav class="footer-links">' +
-          '<a href="/terms.html">Terms of Service</a>' +
-          '<a href="/privacy.html">Privacy Policy</a>' +
-          '<a href="/conduct.html">Code of Conduct</a>' +
-          '<a href="/forum.html">Forums</a>' +
-          '<a href="/sorc-beyond.html">SORC Beyond</a>' +
-          '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
-        '</nav>' +
-      '</div>' +
-    '</footer>';
-  }
-});
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
-// ========== NAVIGATION MENU ==========
-document.addEventListener('DOMContentLoaded', function() {
-  const menuToggle = document.getElementById('menuToggle');
-  const navLinks = document.getElementById('navLinks');
-  const closeLink = document.getElementById('closeLink');
-  if (menuToggle && navLinks) {
-    menuToggle.addEventListener('click', function() {
-      navLinks.classList.toggle('active');
-    });
-    if (closeLink) {
-      closeLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        navLinks.classList.remove('active');
-      });
-    }
-  }
-});
+        const UNLOCK_COSTS = {
+            fellowships: 100,
+            sorcBeyondBasic: 250,
+            surname: 500,
+            prefixSuffix: 750,
+            sorcBeyondPro: 1000
+        };
 
-// ========== COOKIE CONSENT ==========
-document.addEventListener("DOMContentLoaded", function() {
-  var cookieConsent = document.getElementById('cookieConsent');
-  var acceptBtn = document.getElementById('acceptCookiesBtn');
-  var hasConsent = localStorage.getItem('sorcCookieConsent') === 'true';
-  if (!hasConsent && cookieConsent) cookieConsent.style.display = 'flex';
-  if (acceptBtn) {
-    acceptBtn.onclick = function() {
-      localStorage.setItem('sorcCookieConsent', 'true');
-      cookieConsent.style.display = 'none';
-    };
-  }
-});
+        const PREFIXES = ['', 'Dr.', 'Sir', 'Ms.'];
+        const SUFFIXES = ['', 'Jr.', 'II', 'III', 'IV', 'V', 'VI'];
 
-// ========== USER MINI POPUP ==========
-window.showUserMiniPopup = function(e, uid, name) {
-  e.stopPropagation();
-  var existing = document.querySelector('.user-mini-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'user-mini-popup';
-  popup.style.cssText = 'position:fixed;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:0.75rem 1rem;z-index:999999;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.6);font-size:0.85rem;';
-  var rect = e.target.getBoundingClientRect();
-  popup.style.top = (rect.bottom + 8) + 'px';
-  popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
-  popup.innerHTML =
-    '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + name + '</div>' +
-    '<a href="public-profile.html?uid=' + uid + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
-    '<a href="public-profile.html?uid=' + uid + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
-  document.body.appendChild(popup);
-  setTimeout(function() {
-    document.addEventListener('click', function removePopup() {
-      var p = document.querySelector('.user-mini-popup');
-      if (p) p.remove();
-      document.removeEventListener('click', removePopup);
-    });
-  }, 100);
-};
-
-// ========== NEWS CARDS SLIDER ==========
-document.addEventListener("DOMContentLoaded", function() {
-  const newsCards = document.querySelectorAll('.news-card');
-  const rightArrows = document.querySelectorAll('.arrow-right');
-  const leftArrows = document.querySelectorAll('.arrow-left');
-  let currentIndex = 0;
-  if (newsCards.length > 0) {
-    function showCard(index) {
-      newsCards.forEach((card, i) => {
-        card.style.display = i === index ? 'flex' : 'none';
-      });
-    }
-    showCard(currentIndex);
-    rightArrows.forEach(arrow => {
-      arrow.style.pointerEvents = 'auto';
-      arrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        currentIndex = (currentIndex + 1) % newsCards.length;
-        showCard(currentIndex);
-      });
-    });
-    leftArrows.forEach(arrow => {
-      arrow.style.pointerEvents = 'auto';
-      arrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
-        showCard(currentIndex);
-      });
-    });
-  }
-});
-
-// ========== AGE VERIFICATION ==========
-document.addEventListener('DOMContentLoaded', function() {
-  const ageModal = document.getElementById('age-verification');
-  const btnYes = document.getElementById('age-yes');
-  const btnNo = document.getElementById('age-no');
-  if (ageModal && btnYes && btnNo) {
-    const ageVerified = sessionStorage.getItem('ageVerified');
-    if (!ageVerified) ageModal.style.display = 'flex';
-    btnYes.onclick = function() {
-      sessionStorage.setItem('ageVerified', 'true');
-      ageModal.style.display = 'none';
-    };
-    btnNo.onclick = function() {
-      alert('You must be of age to view this site.');
-      window.location.href = 'https://www.google.com';
-    };
-  }
-});
-
-// ========== FIREBASE ==========
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, setPersistence, browserLocalStoragePersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-  authDomain: "sorc-a1393.firebaseapp.com",
-  projectId: "sorc-a1393",
-  storageBucket: "sorc-a1393.firebasestorage.app",
-  messagingSenderId: "303646936307",
-  appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-setPersistence(auth, browserLocalStoragePersistence).catch(function(e) { console.warn('Persistence error:', e); });
-const db = getFirestore(app);
-
-const OWNER_EMAILS = ["corbett@sorcrpg.com"];
-const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-
-// ========== ROLE HELPERS ==========
-function getRoleAbbr(role) {
-  if (role === 'OWNER') return '[OWN]';
-  if (role === 'ADMIN') return '[AD]';
-  if (role === 'MASTER') return '[GM]';
-  if (role === 'PLAYER') return '[PC]';
-  return '[CIV]';
-}
-
-function getRoleColor(role) {
-  if (role === 'OWNER') return { bg: '#d4af37', color: '#222' };
-  if (role === 'ADMIN') return { bg: '#8B0000', color: '#fff' };
-  if (role === 'MASTER') return { bg: '#1a6b1a', color: '#fff' };
-  if (role === 'PLAYER') return { bg: '#1a3a6b', color: '#fff' };
-  return { bg: '#333', color: '#e0cfc0' };
-}
-
-function getAvatarPath(avatarId) {
-  if (!avatarId) return null;
-  return 'images/avatars/' + avatarId;
-}
-
-// ========== GRANT ROLE UPGRADE POINTS ==========
-async function grantRoleUpgradePoints(uid, role, data) {
-  var updates = {};
-  var currentPoints = data.communityPoints || 0;
-
-  if (role === 'PLAYER' && !data.playerPointsGranted) {
-    updates.communityPoints = currentPoints + 500;
-    updates.playerPointsGranted = true;
-  } else if (role === 'MASTER' && !data.gmPointsGranted) {
-    updates.communityPoints = currentPoints + 1000;
-    updates.gmPointsGranted = true;
-  }
-
-  if (Object.keys(updates).length > 0) {
-    await updateDoc(doc(db, "users", uid), updates);
-    return updates.communityPoints;
-  }
-  return currentPoints;
-}
-
-// ========== CHECK NOTIFICATIONS ==========
-async function checkInboxNotifications(uid) {
-  try {
-    var [msgSnap, fellowSnap, forumSnap] = await Promise.all([
-      getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
-      getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
-      getDocs(query(collection(db, "notifications"), where("recipientUid", "==", uid), where("read", "==", false)))
-    ]);
-    var total = msgSnap.size + fellowSnap.size + forumSnap.size;
-    if (total > 0) {
-      var notif = document.getElementById('inboxNotif');
-      if (notif) { notif.textContent = total; notif.style.display = 'inline-block'; }
-    }
-  } catch(e) {}
-}
-
-// ========== DAILY LOGIN BONUS ==========
-async function awardDailyLoginBonus(uid) {
-  try {
-    var userSnap = await getDoc(doc(db, "users", uid));
-    if (!userSnap.exists()) return;
-    var data = userSnap.data();
-    var now = Date.now();
-    var lastLogin = data.lastLoginBonusAt ? (data.lastLoginBonusAt.toMillis ? data.lastLoginBonusAt.toMillis() : Number(data.lastLoginBonusAt)) : 0;
-    var twentyHours = 20 * 60 * 60 * 1000;
-    if (now - lastLogin < twentyHours) return; // not yet 20 hours
-    await updateDoc(doc(db, "users", uid), {
-      communityPoints: (data.communityPoints || 0) + 1,
-      lastLoginBonusAt: new Date()
-    });
-  } catch(e) {}
-}
-
-// ========== ROLE BADGE ==========
-function showRoleBadge(email, username, role, avatar, userId) {
-  var existing = document.getElementById('navRoleBadge');
-  if (!existing) return;
-
-  var existingPopup = document.querySelector('.role-popup');
-  if (existingPopup) existingPopup.remove();
-
-  var signinLink = document.getElementById('signinLink');
-  if (signinLink) signinLink.style.display = 'none';
-
-  var displayName = username || email.split('@')[0];
-  var abbr = getRoleAbbr(role);
-  var colors = getRoleColor(role);
-  var safeUserId = String(userId || '');
-  var isAdminUser = OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
-
-  var avatarHtml = '';
-  if (avatar) {
-    var avatarPath = getAvatarPath(avatar);
-    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
-  }
-
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
-
-  existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
-    ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span></a>' +
-    ' &nbsp;|&nbsp; <a href="fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
-    ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
-    ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
-
-  existing.querySelector('.role-tag').addEventListener('click', function(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    var isAdmin = this.dataset.isadmin === 'true';
-    if (isAdmin) { showAdminMembersPopup(); }
-    else { showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role); }
-  });
-
-  if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
-
-  var uid = auth.currentUser ? auth.currentUser.uid : null;
-  if (uid) {
-    checkInboxNotifications(uid);
-    awardDailyLoginBonus(uid);
-  }
-}
-
-// ========== OWN ROLE POPUP ==========
-window.showRolePopup = function(username, userId, role) {
-  var existing = document.querySelector('.role-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-  var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
-  popup.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
-      '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
-      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
-    '</div>' +
-    '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + username + '</div>' +
-    '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + roleLabel + '</div>' +
-    '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + (userId || 'N/A') + '</div>';
-  document.body.appendChild(popup);
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
-};
-
-// ========== ADMIN MEMBERS POPUP ==========
-window.showAdminMembersPopup = async function() {
-  var existing = document.querySelector('.role-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-  popup.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
-      '<span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">ALL MEMBERS</span>' +
-      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
-    '</div>' +
-    '<div id="adminMembersList" style="font-size:0.8rem;">Loading...</div>';
-  document.body.appendChild(popup);
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
-
-  var snap = await getDocs(collection(db, "users"));
-  var members = [];
-  snap.forEach(function(d) {
-    var data = d.data();
-    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
-    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
-    members.push({ uid: d.id, name, role });
-  });
-  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-  var html = members.map(function(m) {
-    var colors = getRoleColor(m.role);
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2a2a;">' +
-      '<div style="display:flex;align-items:center;gap:6px;">' +
-        '<span style="background:' + colors.bg + ';color:' + colors.color + ';padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:bold;">' + getRoleAbbr(m.role) + '</span>' +
-        '<span style="color:#e0cfc0;cursor:pointer;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;">' +
-        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
-        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="Send Message">✉</a>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  document.getElementById('adminMembersList').innerHTML = html || '<span style="color:#555;">No members found.</span>';
-};
-
-// ========== SIGN OUT ==========
-window.sorcSignOut = function() {
-  signOut(auth);
-  localStorage.removeItem('sorc_google_user');
-  window.location.reload();
-};
-async function getUserRoleFromDB(uid, email) {
-  var docRef = doc(db, "users", uid);
-  var docSnap = await getDoc(docRef);
-  var data = docSnap.exists() ? docSnap.data() : {};
-  var username = data.username || data.displayName || '';
-  var avatar = data.avatar || null;
-  var userId = data.userId || '';
-  var role = data.role || 'CIVILIAN';
-
-  if (OWNER_EMAILS.includes(email)) role = 'OWNER';
-  else if (ADMIN_EMAILS.includes(email)) role = 'ADMIN';
-
-  if (!docSnap.exists()) {
-    await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  }
-
-  // Grant upgrade points if eligible
-  if (role === 'PLAYER' || role === 'MASTER') {
-    await grantRoleUpgradePoints(uid, role, data);
-  }
-
-  return { role, username, avatar, userId };
-}
-
-// ========== AUTH STATE ==========
-onAuthStateChanged(auth, async function(user) {
-  if (user) {
-    if (!user.emailVerified && user.providerData[0] && user.providerData[0].providerId === 'password') {
-      alert('Please verify your email before signing in. Check your inbox for a verification link.');
-      signOut(auth); return;
-    }
-    var data = await getUserRoleFromDB(user.uid, user.email);
-    showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
-  } else {
-    // Check for Google localStorage session
-    try {
-      var saved = localStorage.getItem('sorc_google_user');
-      if (saved) {
-        var googleUser = JSON.parse(saved);
-        var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
-        var username = googleUser.username || googleUser.name || '';
-        var avatar = googleUser.avatar || null;
-        var userId = googleUser.userId || '';
-        if (googleUser.googleId) {
-          try {
-            var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-            if (docSnap.exists()) {
-              var data = docSnap.data();
-              username = data.username || data.displayName || username;
-              avatar = data.avatar || avatar;
-              userId = data.userId || userId;
-              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = data.role || role; }
-              if (role === 'PLAYER' || role === 'MASTER') { await grantRoleUpgradePoints(googleUser.googleId, role, data); }
-            }
-          } catch(e) {}
+        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+        function containsBadWord(str) {
+            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return badWords.some(function(w) { return lower.includes(w); });
         }
-        showRoleBadge(googleUser.email, username, role, avatar, userId);
-      }
-    } catch(e) { localStorage.removeItem('sorc_google_user'); }
-  }
-});
 
-// ========== EMAIL SIGNUP ==========
-window.sorcSignUp = function(email, password) {
-  if (!email || !password) { alert('Please enter an email and password.'); return; }
-  createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
-    await sendEmailVerification(result.user);
-    await setDoc(doc(db, "users", result.user.uid), { email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN', communityPoints: 0 });
-    signOut(auth);
-    document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
-    document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
-  }).catch(function(error) { alert('Sign up failed: ' + error.message); });
-};
+        function roleColor(role) {
+            if (role === 'OWNER') return 'background:#d4af37;color:#222;';
+            if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
+            if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
+            if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
+            return 'background:#333;color:#e0cfc0;';
+        }
+        function roleAbbr(role) {
+            if (role === 'OWNER') return '[OWN]';
+            if (role === 'ADMIN') return '[AD]';
+            if (role === 'MASTER') return '[GM]';
+            if (role === 'PLAYER') return '[PC]';
+            return '[CIV]';
+        }
 
-// ========== EMAIL SIGN IN ==========
-window.sorcSignIn = function(email, password) {
-  if (!email || !password) { alert('Please enter your email and password.'); return; }
-  signInWithEmailAndPassword(auth, email, password).then(async function(result) {
-    if (!result.user.emailVerified) {
-      alert('Please verify your email first. Check your inbox for a verification link.');
-      signOut(auth); return;
-    }
-    var data = await getUserRoleFromDB(result.user.uid, result.user.email);
-    showRoleBadge(result.user.email, data.username, data.role, data.avatar, data.userId);
-  }).catch(function(error) { alert('Sign in failed: ' + error.message); });
-};
+        function isAdminOrOwner(role) { return role === 'OWNER' || role === 'ADMIN'; }
 
-// ========== ADMIN PANEL ==========
-function showAdminPanel() {
-  if (document.querySelector('.admin-panel')) return;
-  var panel = document.createElement('div');
-  panel.className = 'admin-panel';
-  panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #d4af37;';
-  panel.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-      '<h3 style="color:#d4af37;margin:0;">Admin Panel</h3>' +
-      '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#d4af37;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
-    '</div>' +
-    '<div id="adminPanelContent">' +
-      '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
-      '<button onclick="loadUsers()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">View All Users</button>' +
-      '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
-      '<div id="userList" style="margin-top:10px;font-size:0.8rem;max-height:200px;overflow-y:auto;"></div>' +
-    '</div>';
-  document.body.appendChild(panel);
-}
+        function calculateAge(birthday) {
+            if (!birthday) return null;
+            var today = new Date();
+            var birth = new Date(birthday);
+            var age = today.getFullYear() - birth.getFullYear();
+            var m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
 
-window.toggleAdminPanel = function() {
-  var content = document.getElementById('adminPanelContent');
-  var btn = document.querySelector('.admin-panel button');
-  if (content.style.display === 'none') { content.style.display = 'block'; btn.textContent = '−'; }
-  else { content.style.display = 'none'; btn.textContent = '+'; }
-};
+        function buildFullName(prefix, firstName, surname, suffix) {
+            var parts = [];
+            if (prefix) parts.push(prefix);
+            if (firstName) parts.push(firstName);
+            if (surname) parts.push(surname);
+            if (suffix) parts.push(suffix);
+            return parts.join(' ');
+        }
 
-window.generateGMCode = async function() {
-  var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-  await addDoc(collection(db, "gm_codes"), { code: code, used: false, createdAt: new Date() });
-  document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
-};
+        var AVATARS = [
+            '01deb0d8-fb1e-4e18-8048-020d8ea56272.png',
+            '037b9199-2abf-47a3-9b34-0b912a0675a6.png',
+            '1dc7c652-c366-4ed6-babb-50e9db131cf6.png',
+            '1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png',
+            '20241110_092140_IMG_7001_Original.PNG',
+            '20241110_092207_IMG_2908_Original.PNG',
+            '20241110_092216_IMG_0070_Original.JPG',
+            '20241110_092217_IMG_0077_Original.PNG',
+            '20241110_092217_IMG_0090_Original.PNG',
+            '20241110_092220_IMG_0084_Original.PNG',
+            '2855038f-8581-4061-b60a-e0629ec1f683.png',
+            '2e98fc95-753a-4aaa-855b-79dd6bb17c09.png',
+            '3631e3d3-79bd-4fd2-b588-ec80fabc5ae4.png',
+            '3dba5b21-7dcc-4e9a-a309-1f42d010d58f.png',
+            '3ff4851b-f3ee-4f23-9a1d-57c88547a1c6.png',
+            '45cc24a0-0873-48da-aeb5-afad6c36d887.png',
+            '4c16641d-eee1-4bd5-bd8a-ec0611f928b7.png',
+            '5142b751-8cb6-4f19-ac2b-6880c241ab56.png',
+            '51cb2423-194f-4bd1-8229-7fe356f17c32.png',
+            '6a04a2c0-ab6a-4fb7-8f2e-f29a5241095e.png',
+            '6a955b49-f706-4e8d-a04c-af0daca538f0.png',
+            '6b87456a-88d9-4535-9f45-4f7274865156.png',
+            '6c37d5d1-76c4-4391-ac12-6ca2a1109026.png',
+            '7ad2053e-a2a7-4f23-af8e-902b2d243fa2.png',
+            '8368be40-e509-4f84-8ff4-b41cb8e6b263.png',
+            '8ea1641c-5cdf-4e58-b28a-60f2f7822d7a.png',
+            '953d2b9a-3239-485b-b725-6a8ec7b198a6.png',
+            '9900c8e6-3b22-4926-924c-63995c96f50b.png',
+            'aba62c03-4bae-49e8-a8bb-88b00459b241.png',
+            'b4d464f7-1923-409f-883a-1648018b9483.png'
+        ];
 
-window.loadUsers = async function() {
-  var userListEl = document.getElementById('userList');
-  userListEl.innerHTML = 'Loading...';
-  var snap = await getDocs(collection(db, "users"));
-  var members = [];
-  snap.forEach(function(d) {
-    var data = d.data();
-    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
-    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
-    members.push({ uid: d.id, name, role, userId: data.userId || '' });
-  });
-  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-  var html = '<table style="width:100%;border-collapse:collapse;">' +
-    '<tr style="color:#d4af37;border-bottom:1px solid #444;">' +
-      '<th style="text-align:left;padding:4px;">Username</th>' +
-      '<th style="text-align:left;padding:4px;">Role</th>' +
-      '<th style="text-align:left;padding:4px;">ID</th>' +
-    '</tr>';
-  members.forEach(function(m) {
-    html += '<tr style="border-bottom:1px solid #333;">' +
-      '<td style="padding:4px;"><span style="color:#d4af37;cursor:pointer;text-decoration:underline;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span></td>' +
-      '<td style="padding:4px;">' + m.role + '</td>' +
-      '<td style="padding:4px;">#' + m.userId + '</td>' +
-    '</tr>';
-  });
-  html += '</table>';
-  userListEl.innerHTML = html;
-};
+        var selectedAvatar = null;
+
+        function buildAvatarGrid(currentAvatar) {
+            var previewSrc = currentAvatar ? 'images/avatars/' + currentAvatar : null;
+            var previewHtml = previewSrc
+                ? '<img id="avatarPreviewImg" src="' + previewSrc + '" alt="Selected avatar" />'
+                : '<span class="no-avatar" id="avatarPreviewImg">No avatar selected</span>';
+
+            var gridHtml = AVATARS.map(function(filename) {
+                var sel = filename === currentAvatar ? ' selected' : '';
+                return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + filename + '\')">' +
+                    '<img src="images/avatars/' + filename + '" alt="Avatar" loading="lazy" onerror="this.parentElement.style.display=\'none\'" />' +
+                    '</div>';
+            }).join('');
+
+            return '<div class="avatar-preview-box">' + previewHtml + '</div>' +
+                   '<div class="avatar-scroll"><div class="avatar-grid">' + gridHtml + '</div></div>';
+        }
+
+        window.pickAvatar = function(el, filename) {
+            document.querySelectorAll('.avatar-option').forEach(function(o) { o.classList.remove('selected'); });
+            el.classList.add('selected');
+            selectedAvatar = filename;
+            var preview = document.getElementById('avatarPreviewImg');
+            if (preview) {
+                var img = document.createElement('img');
+                img.src = 'images/avatars/' + filename;
+                img.alt = 'Selected avatar';
+                img.id = 'avatarPreviewImg';
+                preview.parentNode.replaceChild(img, preview);
+            }
+        };
+
+        var googleUser = null;
+        var savedGoogle = localStorage.getItem('sorc_google_user');
+        if (savedGoogle) { try { googleUser = JSON.parse(savedGoogle); } catch(e) {} }
+
+        onAuthStateChanged(auth, async function(user) {
+            if (user) {
+                var uid = user.uid;
+                var email = user.email;
+                var role = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : 'CIVILIAN';
+                var data = {};
+                var docSnap = await getDoc(doc(db, "users", uid));
+                if (docSnap.exists()) {
+                    data = docSnap.data();
+                    if (!OWNER_EMAILS.includes(email) && !ADMIN_EMAILS.includes(email)) {
+                        role = data.role || 'CIVILIAN';
+                    }
+                }
+                renderProfile(uid, email, role, data);
+            } else if (googleUser) {
+                var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
+                var data = {};
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) data = docSnap.data();
+                } catch(e) {}
+                renderProfile(googleUser.googleId, googleUser.email, role, data);
+            } else {
+                document.getElementById('profileApp').innerHTML =
+                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="index.html">Go back and sign in</a></p></div>';
+            }
+        });
+
+        function renderProfile(uid, email, role, data) {
+            var communityPoints = data.communityPoints || 0;
+            var joinDate = data.joinDate || '';
+            var postCount = data.postCount || 0;
+            var titles = data.titles || [];
+            var bio = data.bio || '';
+            var birthday = data.birthday || '';
+            var website = data.website || '';
+            var socialTwitter = data.socialTwitter || '';
+            var socialInstagram = data.socialInstagram || '';
+            var privacyEmail = data.privacyEmail !== false;
+            var privacyBirthday = data.privacyBirthday !== false;
+            var privacyBio = data.privacyBio !== false;
+            var privacySocial = data.privacySocial !== false;
+            var age = calculateAge(birthday);
+
+            var firstName = data.firstName || data.username || data.displayName || email.split('@')[0];
+            var surname = data.surname || '';
+            var prefix = data.prefix || '';
+            var suffix = data.suffix || '';
+            var usernameChanged = data.usernameChanged === true;
+            var fullName = buildFullName(prefix, firstName, surname, suffix);
+
+            var isAdmin = isAdminOrOwner(role);
+            var unlockedFellowships = isAdmin || data.unlockedFellowships === true;
+            var unlockedBasic = isAdmin || data.unlockedBasic === true;
+            var unlockedSurname = isAdmin || data.unlockedSurname === true;
+            var unlockedPrefixSuffix = isAdmin || data.unlockedPrefixSuffix === true;
+            var unlockedPro = isAdmin || data.unlockedPro === true;
+            var isPro = unlockedPro;
+
+            var avatar = data.avatar || null;
+            var userId = data.userId || '';
+            var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
+            var avatarDisplay = avatar ? '<div style="font-size:0.7rem;color:#555;">' + avatar + '</div>' : '<div style="font-size:0.7rem;color:#555;">No avatar</div>';
+
+            // ===== POINTS PROGRESS BAR =====
+            var UNLOCK_TIERS = [
+                { pts: 100, label: 'Fellowships' },
+                { pts: 250, label: 'SORC Beyond Basic' },
+                { pts: 500, label: 'Surname' },
+                { pts: 750, label: 'Prefix & Suffix' },
+                { pts: 1000, label: 'SORC Beyond Pro' }
+            ];
+            var nextTier = UNLOCK_TIERS.find(function(t) { return t.pts > communityPoints; });
+            var prevTier = UNLOCK_TIERS.slice().reverse().find(function(t) { return t.pts <= communityPoints; });
+            var progressBarHtml = '';
+            if (nextTier) {
+                var base = prevTier ? prevTier.pts : 0;
+                var pct = Math.min(100, Math.round(((communityPoints - base) / (nextTier.pts - base)) * 100));
+                progressBarHtml =
+                    '<div class="points-bar-bg"><div class="points-bar-fill" style="width:' + pct + '%;"></div></div>' +
+                    '<div class="points-milestone">' + (nextTier.pts - communityPoints) + ' pts to <b>' + nextTier.label + '</b></div>';
+            } else {
+                progressBarHtml = '<div class="points-milestone" style="color:#d4af37;">⭐ All tiers unlocked!</div>';
+            }
+
+            // ===== NAME SECTION =====
+            var nameFieldHtml = '';
+            if (!usernameChanged || unlockedSurname) {
+                var lockMsg = usernameChanged && unlockedSurname
+                    ? '<div class="name-locked-note">✏️ <span>Surname unlocked.</span> You can now update your first name and add a surname. This will be your permanent full name going forward.</div>'
+                    : '<div class="name-locked-note">⚠️ <span>Choose 1st Name (Later Surname).</span> Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space — e.g. Jon Doe. Hyphens allowed but no underscores.</div>';
+                nameFieldHtml =
+                    lockMsg +
+                    '<input type="text" id="usernameInput" class="profile-input" value="' + firstName + '" maxlength="30" placeholder="Choose 1st Name (Later Surname)" />' +
+                    (unlockedSurname
+                        ? '<div style="margin-top:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">SURNAME <span style="color:#555;">(optional, spaces allowed)</span></label>' +
+                          '<input type="text" id="surnameInputFirst" class="profile-input" value="' + surname + '" maxlength="20" placeholder="Surname (optional)" /></div>'
+                        : ''
+                    ) +
+                    '<button class="btn btn-gold btn-sm" onclick="saveFirstName(\'' + uid + '\')" style="margin-top:6px;">Save Name</button>' +
+                    '<div id="usernameMsg" class="msg"></div>';
+            } else {
+                nameFieldHtml =
+                    '<div class="name-locked-note">🔒 First name locked: <span>' + firstName + '</span><br/><span style="color:#555;font-size:0.75rem;">First names cannot be changed. Earn 500 CP to unlock a surname — surnames support spaces (e.g. Darkwood, Van Halen).</span></div>' +
+                    (unlockedPrefixSuffix
+                        ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">PREFIX</label>' +
+                          '<select id="prefixSelect" class="profile-select">' +
+                          PREFIXES.map(function(p) { return '<option value="' + p + '"' + (p === prefix ? ' selected' : '') + '>' + (p || '— none —') + '</option>'; }).join('') +
+                          '</select></div>'
+                        : '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">PREFIX</label><input class="profile-input" value="' + (prefix || '—') + '" disabled /></div>'
+                    ) +
+                    '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">FIRST NAME</label>' +
+                    '<input type="text" class="profile-input" value="' + firstName + '" disabled /></div>' +
+                    (unlockedSurname
+                        ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">SURNAME</label>' +
+                          '<input type="text" id="surnameInput" class="profile-input" value="' + surname + '" maxlength="20" placeholder="Surname (optional)" /></div>'
+                        : '<div class="surname-locked">🔒 Surname — <span>unlock with 500 community points</span></div>'
+                    ) +
+                    (unlockedPrefixSuffix
+                        ? '<div style="margin-bottom:6px;"><label style="font-size:0.75rem;color:#888;display:block;margin-bottom:3px;">SUFFIX</label>' +
+                          '<select id="suffixSelect" class="profile-select">' +
+                          SUFFIXES.map(function(s) { return '<option value="' + s + '"' + (s === suffix ? ' selected' : '') + '>' + (s || '— none —') + '</option>'; }).join('') +
+                          '</select></div>'
+                        : '<div class="surname-locked">🔒 Prefix &amp; Suffix — <span>unlock with 750 community points</span></div>'
+                    ) +
+                    (unlockedSurname || unlockedPrefixSuffix
+                        ? '<button class="btn btn-gold btn-sm" onclick="saveNameParts(\'' + uid + '\')">Save Name</button>'
+                        : ''
+                    ) +
+                    '<div id="usernameMsg" class="msg"></div>';
+            }
+
+            // ===== FEATURE UNLOCKS =====
+            var unlockSectionHtml = '';
+            if (!isAdmin) {
+                var features = [
+                    { key: 'fellowships', label: 'Fellowships', desc: 'Connect with other players, track status, share media, and message directly.', cost: UNLOCK_COSTS.fellowships, unlocked: unlockedFellowships, requires: ['PLAYER','MASTER'] },
+                    { key: 'sorcBeyondBasic', label: 'SORC Beyond Basic', desc: 'Server-backed character profiles, verified RNG, Tavern Lobby participation, achievements, leaderboards.', cost: UNLOCK_COSTS.sorcBeyondBasic, unlocked: unlockedBasic, requires: ['PLAYER','MASTER'] },
+                    { key: 'surname', label: 'Surname', desc: 'Add a surname to your name (e.g. Kaida Darkwood).', cost: UNLOCK_COSTS.surname, unlocked: unlockedSurname, requires: null },
+                    { key: 'prefixSuffix', label: 'Prefixes &amp; Suffixes', desc: 'Add Dr., Sir, Ms. before your name and Jr., II, III, IV, V, VI after.', cost: UNLOCK_COSTS.prefixSuffix, unlocked: unlockedPrefixSuffix, requires: null },
+                    { key: 'sorcBeyondPro', label: 'SORC Beyond Pro', desc: 'Private Campaign Rooms, custom banner, website, social links, full achievements, Character\'s Home, Auction House, and more.', cost: UNLOCK_COSTS.sorcBeyondPro, unlocked: unlockedPro, requires: ['PLAYER','MASTER'] }
+                ];
+
+                unlockSectionHtml =
+                    '<div class="profile-card"><div class="profile-section">' +
+                    '<h3>Feature Unlocks</h3>' +
+                    '<div class="points-balance">' +
+                        '<div><div class="balance-val">' + communityPoints + '</div><div class="balance-label">Community Points Available</div></div>' +
+                    '</div>' +
+                    features.map(function(f) {
+                        var roleOk = !f.requires || f.requires.includes(role);
+                        if (f.unlocked) {
+                            return '<div class="unlock-feature-card unlocked">' +
+                                '<div class="unlock-feature-info"><h4>✅ ' + f.label + '</h4><p>' + f.desc + '</p></div>' +
+                                '<div class="unlock-feature-cost" style="color:#4caf50;">Unlocked</div>' +
+                            '</div>';
+                        } else if (!roleOk) {
+                            return '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>🔒 ' + f.label + '</h4><p>' + f.desc + '</p></div>' +
+                                '<div class="unlock-feature-cost" style="color:#555;">Requires ' + f.requires.join(' or ') + '</div>' +
+                            '</div>';
+                        } else if (communityPoints < f.cost) {
+                            var needed = f.cost - communityPoints;
+                            return '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>🔒 ' + f.label + '</h4><p>' + f.desc + '</p></div>' +
+                                '<div class="unlock-feature-cost" style="color:#555;">' + f.cost + ' pts<br/><span style="font-size:0.7rem;">need ' + needed + ' more</span></div>' +
+                            '</div>';
+                        } else {
+                            return '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>' + f.label + '</h4><p>' + f.desc + '</p></div>' +
+                                '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">' +
+                                    '<div class="unlock-feature-cost">' + f.cost + ' pts</div>' +
+                                    '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'' + uid + '\', \'' + f.key + '\', ' + f.cost + ')">Unlock</button>' +
+                                '</div>' +
+                            '</div>';
+                        }
+                    }).join('') +
+                    '<div id="unlockMsg" class="msg"></div>' +
+                    '</div></div>';
+            }
+
+            // ===== UPGRADE SECTION =====
+            var upgradeSection = '';
+            if (role === 'CIVILIAN') {
+                upgradeSection = `
+                <div class="upgrade-section">
+                    <h3>Upgrade Your Account</h3>
+                    <button class="upgrade-btn" onclick="toggleInfo('pc-info')">▶ Upgrade to PLAYER</button>
+                    <div class="upgrade-info" id="pc-info">
+                        To upgrade to PLAYER you must pass a <b>SorC Player Assessment</b>. Assessments are currently under development. Upon upgrading you will receive <b>500 community points</b> to spend on unlocks.
+                    </div>
+                    <button class="upgrade-btn" onclick="toggleInfo('gm-info')">▶ Upgrade to MASTER</button>
+                    <div class="upgrade-info" id="gm-info">
+                        To upgrade to MASTER you must pass a <b>SorC Master Assessment</b> AND redeem an official Master Code. Upon upgrading you will receive <b>1,000 community points</b> to spend on unlocks.<br/><br/>
+                        Have a code?<br/>
+                        <input type="text" id="masterCodeInput" class="master-code-input" placeholder="Enter Master Code" />
+                        <button class="btn btn-green btn-sm" onclick="redeemCode('${uid}')">Redeem</button>
+                        <div id="codeMsg" class="msg"></div>
+                    </div>
+                </div>`;
+            } else if (role === 'PLAYER') {
+                upgradeSection = `
+                <div class="upgrade-section">
+                    <h3>Upgrade to MASTER</h3>
+                    <button class="upgrade-btn" onclick="toggleInfo('gm-info-pc')">▶ Upgrade to MASTER</button>
+                    <div class="upgrade-info" id="gm-info-pc">
+                        To upgrade from PLAYER to MASTER you must pass a <b>SorC Master Assessment</b> AND redeem an official Master Code. Upon upgrading you will receive <b>1,000 community points</b> to spend on unlocks.<br/><br/>
+                        Have a code?<br/>
+                        <input type="text" id="masterCodeInput" class="master-code-input" placeholder="Enter Master Code" />
+                        <button class="btn btn-green btn-sm" onclick="redeemCode('${uid}')">Redeem</button>
+                        <div id="codeMsg" class="msg"></div>
+                    </div>
+                </div>`;
+            }
+
+            document.getElementById('profileApp').innerHTML = `
+                <div class="profile-container">
+                    <div class="profile-card">
+                        <div class="profile-banner ${isPro ? '' : 'locked'}">
+                            ${isPro ? 'Custom Banner' : '<span class="lock-icon">🔒</span> Banner — SORC Beyond Pro'}
+                        </div>
+                        <div class="profile-info-row">
+                            <div class="profile-avatar-large">${avatarDisplay}</div>
+                            <div class="profile-name-block">
+                                <div class="profile-username">${fullName}</div>
+                                <span class="profile-role-tag" style="${roleColor(role)}">${role} ${roleAbbr(role)}</span>
+                                ${titleDisplay}
+                                ${userId ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + userId + '</div>' : ''}
+                            </div>
+                        </div>
+                        <div class="profile-section">
+                            <div class="stat-grid">
+                                <div class="stat-box"><div class="stat-val">${communityPoints}</div><div class="stat-label">Community Points</div></div>
+                                <div class="stat-box"><div class="stat-val">${postCount}</div><div class="stat-label">Forum Posts</div></div>
+                                <div class="stat-box"><div class="stat-val">${titles.length}</div><div class="stat-label">Titles Earned</div></div>
+                            </div>
+                            ${progressBarHtml}
+                            ${joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + joinDate + '</div>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="profile-card">
+                        <div class="profile-section">
+                            <h3>Edit Profile</h3>
+
+                            <div class="profile-field">
+                                <label>NAME</label>
+                                ${nameFieldHtml}
+                            </div>
+
+                            <div class="profile-field">
+                                <label>AVATAR</label>
+                                <div class="avatar-grid">${buildAvatarGrid(avatar)}</div>
+                                <button class="btn btn-gold btn-sm" onclick="saveAvatar('${uid}')">Save Avatar</button>
+                                <div id="avatarMsg" class="msg"></div>
+                            </div>
+
+                            <div class="profile-field">
+                                <div class="toggle-row">
+                                    <label>BIO <span style="font-size:0.7rem;color:#555;">(public/hidden)</span></label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleBio" ${privacyBio ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacyBio', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <textarea id="bioInput" class="profile-input" rows="3" maxlength="300" placeholder="Tell Essentia about yourself...">${bio}</textarea>
+                                <button class="btn btn-gold btn-sm" onclick="saveBio('${uid}')" style="margin-top:6px;">Save Bio</button>
+                                <div id="bioMsg" class="msg"></div>
+                            </div>
+
+                            <div class="profile-field">
+                                <div class="toggle-row">
+                                    <label>BIRTHDAY <span style="font-size:0.7rem;color:#555;">(public/hidden)</span></label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleBirthday" ${privacyBirthday ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacyBirthday', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <input type="date" id="birthdayInput" class="profile-input" value="${birthday}" />
+                                ${age !== null ? '<div style="font-size:0.8rem;color:#888;margin-top:4px;">Age: ' + age + '</div>' : ''}
+                                <button class="btn btn-gold btn-sm" onclick="saveBirthday('${uid}')" style="margin-top:6px;">Save Birthday</button>
+                                <div id="birthdayMsg" class="msg"></div>
+                            </div>
+
+                            <div class="profile-field">
+                                <div class="toggle-row">
+                                    <label>EMAIL <span style="font-size:0.7rem;color:#555;">(show on profile)</span></label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleEmail" ${privacyEmail ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacyEmail', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div style="font-size:0.8rem;color:#555;">${email}</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3>SORC Beyond Pro <span style="color:#555;font-weight:normal;font-size:0.75rem;">— <a href="sorc-beyond.html" style="color:#d4af37;">Learn more</a></span></h3>
+
+                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
+                                <label>WEBSITE</label>
+                                <input type="url" id="websiteInput" class="profile-input" value="${website}" placeholder="https://yoursite.com" />
+                                <button class="btn btn-gold btn-sm" onclick="saveWebsite('${uid}')" style="margin-top:6px;">Save</button>
+                                <div id="websiteMsg" class="msg"></div>
+                            </div>
+
+                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
+                                <label>SOCIAL LINKS</label>
+                                <input type="text" id="twitterInput" class="profile-input" value="${socialTwitter}" placeholder="X / Twitter handle" style="margin-bottom:6px;" />
+                                <input type="text" id="instagramInput" class="profile-input" value="${socialInstagram}" placeholder="Instagram handle" />
+                                <div class="toggle-row" style="margin-top:6px;">
+                                    <label style="font-size:0.7rem;color:#555;">Show social links publicly</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleSocial" ${privacySocial ? 'checked' : ''} onchange="savePrivacy('${uid}', 'privacySocial', this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <button class="btn btn-gold btn-sm" onclick="saveSocial('${uid}')" style="margin-top:6px;">Save</button>
+                                <div id="socialMsg" class="msg"></div>
+                            </div>
+
+                            <div class="profile-field ${isPro ? '' : 'locked-feature'}">
+                                <label>ACHIEVEMENTS</label>
+                                <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:4px;">
+                                    <div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>
+                                    <div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>
+                                    <div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>
+                                </div>
+                                <div style="font-size:0.75rem;color:#555;margin-top:6px;">Achievements are earned through gameplay and community activity.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${unlockSectionHtml}
+                    ${upgradeSection}
+
+                    <div style="margin-top:1rem;">
+                        <button class="btn btn-red" onclick="doSignOut()">Logout</button>
+                        &nbsp;
+                        <a href="index.html" class="btn btn-gold" style="text-decoration:none;">Home</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.toggleInfo = function(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.unlockFeature = async function(uid, featureKey, cost) {
+            var msgEl = document.getElementById('unlockMsg');
+            var docSnap = await getDoc(doc(db, "users", uid));
+            if (!docSnap.exists()) return;
+            var currentPoints = docSnap.data().communityPoints || 0;
+            if (currentPoints < cost) { msgEl.className = 'msg error'; msgEl.textContent = 'Not enough community points.'; return; }
+            var update = { communityPoints: currentPoints - cost };
+            update['unlocked_' + featureKey] = true;
+            if (featureKey === 'fellowships') update.unlockedFellowships = true;
+            if (featureKey === 'sorcBeyondBasic') update.unlockedBasic = true;
+            if (featureKey === 'surname') update.unlockedSurname = true;
+            if (featureKey === 'prefixSuffix') update.unlockedPrefixSuffix = true;
+            if (featureKey === 'sorcBeyondPro') { update.unlockedPro = true; update.isPro = true; }
+            await updateDoc(doc(db, "users", uid), update);
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Unlocked!';
+            setTimeout(function() { location.reload(); }, 1000);
+        };
+
+        window.saveFirstName = async function(uid) {
+            var newName = document.getElementById('usernameInput') ? document.getElementById('usernameInput').value.trim() : '';
+            var msgEl = document.getElementById('usernameMsg');
+            if (newName.length < 3) { msgEl.className = 'msg error'; msgEl.textContent = 'Name must be at least 3 characters.'; return; }
+            if (newName.length > 30) { msgEl.className = 'msg error'; msgEl.textContent = 'Name must be 30 characters or less.'; return; }
+            if (!/^[a-zA-Z0-9-]+$/.test(newName)) { msgEl.className = 'msg error'; msgEl.textContent = 'Letters, numbers and hyphens only. No underscores or spaces.'; return; }
+            if (containsBadWord(newName)) { msgEl.className = 'msg error'; msgEl.textContent = 'Name contains inappropriate language.'; return; }
+            var q = query(collection(db, "users"), where("firstName", "==", newName));
+            var existing = await getDocs(q);
+            var taken = false;
+            existing.forEach(function(d) { if (d.id !== uid) taken = true; });
+            if (taken) { msgEl.className = 'msg error'; msgEl.textContent = 'That name is already taken.'; return; }
+
+            // Check if surname field is also present (surname unlocked)
+            var newSurname = document.getElementById('surnameInputFirst') ? document.getElementById('surnameInputFirst').value.trim() : '';
+            if (newSurname && containsBadWord(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname contains inappropriate language.'; return; }
+            if (newSurname && !/^[a-zA-Z0-9- ]+$/.test(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname: letters, numbers, hyphens and spaces only.'; return; }
+
+            var fullName = newSurname ? newName + ' ' + newSurname : newName;
+            await updateDoc(doc(db, "users", uid), {
+                firstName: newName,
+                surname: newSurname,
+                username: fullName,
+                displayName: fullName,
+                usernameChanged: true
+            });
+            var savedGoogle = localStorage.getItem('sorc_google_user');
+            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = fullName; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
+            msgEl.className = 'msg success';
+            msgEl.textContent = '✅ Name saved!';
+            setTimeout(function() { location.reload(); }, 1500);
+        };
+
+        window.saveNameParts = async function(uid) {
+            var msgEl = document.getElementById('usernameMsg');
+            var docSnap = await getDoc(doc(db, "users", uid));
+            if (!docSnap.exists()) return;
+            var data = docSnap.data();
+            var firstName = data.firstName || '';
+            var newSurname = document.getElementById('surnameInput') ? document.getElementById('surnameInput').value.trim() : (data.surname || '');
+            var newPrefix = document.getElementById('prefixSelect') ? document.getElementById('prefixSelect').value : (data.prefix || '');
+            var newSuffix = document.getElementById('suffixSelect') ? document.getElementById('suffixSelect').value : (data.suffix || '');
+            if (newSurname && containsBadWord(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname contains inappropriate language.'; return; }
+            if (newSurname && !/^[a-zA-Z0-9_ ]+$/.test(newSurname)) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname: letters, numbers, underscores and spaces only.'; return; }
+            if (newSurname && newSurname.length > 20) { msgEl.className = 'msg error'; msgEl.textContent = 'Surname must be 20 characters or less.'; return; }
+            var fullName = buildFullName(newPrefix, firstName, newSurname, newSuffix);
+            await updateDoc(doc(db, "users", uid), { surname: newSurname, prefix: newPrefix, suffix: newSuffix, username: fullName, displayName: fullName });
+            var savedGoogle = localStorage.getItem('sorc_google_user');
+            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.username = fullName; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Name updated!';
+            setTimeout(function() { location.reload(); }, 1000);
+        };
+
+        window.saveAvatar = async function(uid) {
+            var msgEl = document.getElementById('avatarMsg');
+            if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar.'; return; }
+            await updateDoc(doc(db, "users", uid), { avatar: selectedAvatar });
+            var savedGoogle = localStorage.getItem('sorc_google_user');
+            if (savedGoogle) { try { var u = JSON.parse(savedGoogle); u.avatar = selectedAvatar; localStorage.setItem('sorc_google_user', JSON.stringify(u)); } catch(e) {} }
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Avatar saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveBio = async function(uid) {
+            var bio = document.getElementById('bioInput').value.trim();
+            await updateDoc(doc(db, "users", uid), { bio: bio });
+            var msgEl = document.getElementById('bioMsg');
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Bio saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveBirthday = async function(uid) {
+            var birthday = document.getElementById('birthdayInput').value;
+            await updateDoc(doc(db, "users", uid), { birthday: birthday });
+            var msgEl = document.getElementById('birthdayMsg');
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Birthday saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveWebsite = async function(uid) {
+            var website = document.getElementById('websiteInput').value.trim();
+            await updateDoc(doc(db, "users", uid), { website: website });
+            var msgEl = document.getElementById('websiteMsg');
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.saveSocial = async function(uid) {
+            var twitter = document.getElementById('twitterInput').value.trim();
+            var instagram = document.getElementById('instagramInput').value.trim();
+            await updateDoc(doc(db, "users", uid), { socialTwitter: twitter, socialInstagram: instagram });
+            var msgEl = document.getElementById('socialMsg');
+            msgEl.className = 'msg success'; msgEl.textContent = '✅ Saved!';
+            setTimeout(function() { msgEl.textContent = ''; }, 2000);
+        };
+
+        window.savePrivacy = async function(uid, field, value) {
+            var update = {}; update[field] = value;
+            await updateDoc(doc(db, "users", uid), update);
+        };
+
+        window.doSignOut = function() {
+            signOut(auth).then(function() {
+                localStorage.removeItem('sorc_google_user');
+                window.location.href = 'index.html';
+            });
+        };
+
+        window.redeemCode = async function(uid) {
+            var code = document.getElementById('masterCodeInput').value.trim();
+            var msgEl = document.getElementById('codeMsg');
+            if (!code) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a code.'; return; }
+            var codesSnap = await getDocs(collection(db, "gm_codes"));
+            var matched = null;
+            codesSnap.forEach(function(d) { if (d.data().code === code && !d.data().used) { matched = d.id; } });
+            if (!matched) { msgEl.className = 'msg error'; msgEl.textContent = 'Invalid or already used code.'; return; }
+            await updateDoc(doc(db, "gm_codes", matched), { used: true });
+            var userSnap = await getDoc(doc(db, "users", uid));
+            var currentPoints = userSnap.exists() ? (userSnap.data().communityPoints || 0) : 0;
+            var alreadyGm = userSnap.exists() && userSnap.data().gmPointsGranted === true;
+            var updateData = { role: 'MASTER' };
+            if (!alreadyGm) { updateData.communityPoints = currentPoints + 1000; updateData.gmPointsGranted = true; }
+            await updateDoc(doc(db, "users", uid), updateData);
+            msgEl.className = 'msg success';
+            msgEl.textContent = alreadyGm ? '✅ You are now a MASTER!' : '✅ You are now a MASTER! 1,000 community points added.';
+            setTimeout(function() { location.reload(); }, 2000);
+        };
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
