@@ -1,552 +1,372 @@
-// ========== THEME SYSTEM ==========
-(function() {
-  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
-  if (savedTheme === 'lawful') {
-    document.body.classList.add('lawful-mode');
-  }
-})();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | Slayers of Rings § Crowns</title>
+    <link rel="icon" href="IMG_3419.jpeg" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { background: #111; color: #e0cfc0; font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #1a1a1a; border: 1px solid #333; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #d0021b; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .signin-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; font-size: 1rem; box-sizing: border-box; }
+        .signin-input:focus { outline: none; border-color: #d0021b; }
+        .password-wrapper { position: relative; margin-bottom: 12px; }
+        .password-wrapper .signin-input { margin-bottom: 0; padding-right: 44px; }
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #888; cursor: pointer; font-size: 1rem; padding: 0; }
+        .toggle-pw:hover { color: #e0cfc0; }
+        .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
+        .signin-btn-primary { background: #d0021b; color: #fff; }
+        .signin-btn-primary:hover { background: #a50013; }
+        .signin-btn-apple { background: #000; color: #fff; }
+        .signin-btn-apple:hover { background: #222; }
+        .signin-btn-resend { background: none; border: 1px solid #d4af37; color: #d4af37; padding: 8px; font-size: 0.85rem; margin-bottom: 12px; }
+        .signin-divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: #555; font-size: 0.85rem; }
+        .signin-divider::before, .signin-divider::after { content: ''; flex: 1; height: 1px; background: #333; }
+        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #888; }
+        .signin-links a { color: #d4af37; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        .account-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; }
+        .account-type-btn { padding: 0.4rem 0.8rem; border: 2px solid #444; border-radius: 8px; background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .account-type-btn.active { border-color: #d0021b; background: #d0021b; color: #fff; }
+        .account-type-btn:hover { border-color: #d0021b; }
+        .account-info { background: #1a1a2a; border: 1px solid #444; color: #e0cfc0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6; text-align: left; display: none; }
+        .account-info.coming-soon { border-color: #d4af37; background: #2a1a00; color: #d4af37; }
+        .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
+        .status-msg.success { background: #1a2a1a; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #2a1a1a; border: 1px solid #d0021b; color: #d0021b; }
+        #googleBtn { display: flex; justify-content: center; margin-bottom: 12px; }
+        #resendBtn { display: none; }
+        body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #e0e0e0; }
+        body.lawful-mode .signin-input { background: #f5f5f0; color: #2c2c2c; border-color: #ccc; }
+        body.lawful-mode .account-type-btn { background: #f5f5f0; color: #2c2c2c; }
+        body.lawful-mode .account-info { background: #fff; }
+    </style>
+</head>
+<body>
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters.png" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Welcome to Essentia</h1>
+            <p>Sign in to continue your adventure</p>
 
-document.addEventListener('DOMContentLoaded', function() {
-  var evilBtn = document.querySelector('.theme-toggle-btn.evil') || document.getElementById('theme-evil');
-  var lawfulBtn = document.querySelector('.theme-toggle-btn.lawful') || document.getElementById('theme-lawful');
-  if (evilBtn && lawfulBtn) {
-    function updateButtonStates() {
-      var currentTheme = localStorage.getItem('themeSelected') || 'evil';
-      if (currentTheme === 'evil') {
-        evilBtn.classList.add('active');
-        lawfulBtn.classList.remove('active');
-      } else {
-        lawfulBtn.classList.add('active');
-        evilBtn.classList.remove('active');
-      }
-    }
-    updateButtonStates();
-    evilBtn.addEventListener('click', function() {
-      localStorage.setItem('themeSelected', 'evil');
-      document.body.classList.remove('lawful-mode');
-      updateButtonStates();
-    });
-    lawfulBtn.addEventListener('click', function() {
-      localStorage.setItem('themeSelected', 'lawful');
-      document.body.classList.add('lawful-mode');
-      updateButtonStates();
-    });
-  }
-});
+            <div class="account-type-selector">
+                <button class="account-type-btn active" onclick="selectType('civilian', this)">CIVILIAN</button>
+                <button class="account-type-btn" onclick="selectType('player', this)">PLAYER</button>
+                <button class="account-type-btn" onclick="selectType('master', this)">MASTER</button>
+            </div>
 
-// ========== FOOTER INJECTION ==========
-document.addEventListener('DOMContentLoaded', function() {
-  var footerDiv = document.getElementById('footer');
-  if (footerDiv) {
-    footerDiv.innerHTML = '<footer>' +
-      '<div class="container">' +
-        '<p>&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer. All rights reserved.</p>' +
-        '<nav class="footer-links">' +
-          '<a href="/terms.html">Terms of Service</a>' +
-          '<a href="/privacy.html">Privacy Policy</a>' +
-          '<a href="/conduct.html">Code of Conduct</a>' +
-          '<a href="/forum.html">Forums</a>' +
-          '<a href="/sorc-beyond.html">SORC Beyond</a>' +
-          '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
-        '</nav>' +
-      '</div>' +
-    '</footer>';
-  }
-});
+            <div class="account-info" id="civilianInfo" style="display:block;border-color:#555;background:#1a1a1a;">
+                <b>CIVILIAN</b> — Our free starter account. Browse the library, access basic rules, join forums, and start earning community points toward SORC Beyond unlocks.
+            </div>
+            <div class="account-info coming-soon" id="playerInfo">
+                <b>PLAYER</b> — Short for <b>Player Character</b>. Players join SORC Beyond online lobbies and digital campaigns as active adventurers.<br /><br />
+                To become a Player, you must pass a <b>SorC Player Assessment</b>. Assessments are currently under development. Upon upgrading you will receive <b>500 community points</b> to spend on unlocks.<br /><br />
+                Create a <b>Civilian</b> account now — it will be upgraded when assessments launch.
+            </div>
+            <div class="account-info coming-soon" id="masterInfo">
+                <b>MASTER</b> — Short for <b>Game Master</b>. Masters run campaigns, host online lobbies, and guide players through Essentia.<br /><br />
+                To become a Master, you must pass a <b>SorC Master Assessment</b> AND receive an official Master Code. Upon upgrading you will receive <b>1,000 community points</b> to spend on unlocks.<br /><br />
+                Create a <b>Civilian</b> account now — it will be upgraded when assessments launch.
+            </div>
 
-// ========== NAVIGATION MENU ==========
-document.addEventListener('DOMContentLoaded', function() {
-  const menuToggle = document.getElementById('menuToggle');
-  const navLinks = document.getElementById('navLinks');
-  const closeLink = document.getElementById('closeLink');
-  if (menuToggle && navLinks) {
-    menuToggle.addEventListener('click', function() {
-      navLinks.classList.toggle('active');
-    });
-    if (closeLink) {
-      closeLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        navLinks.classList.remove('active');
-      });
-    }
-  }
-});
+            <div class="status-msg" id="statusMsg"></div>
 
-// ========== COOKIE CONSENT ==========
-document.addEventListener("DOMContentLoaded", function() {
-  var cookieConsent = document.getElementById('cookieConsent');
-  var acceptBtn = document.getElementById('acceptCookiesBtn');
-  var hasConsent = localStorage.getItem('sorcCookieConsent') === 'true';
-  if (!hasConsent && cookieConsent) cookieConsent.style.display = 'flex';
-  if (acceptBtn) {
-    acceptBtn.onclick = function() {
-      localStorage.setItem('sorcCookieConsent', 'true');
-      cookieConsent.style.display = 'none';
-    };
-  }
-});
+            <div id="signinForm">
+                <p style="text-align:left;color:#888;font-size:0.8rem;margin-bottom:0.5rem;">Sign In</p>
+                <input type="email" id="emailInput" class="signin-input" placeholder="Email address" />
+                <div class="password-wrapper">
+                    <input type="password" id="passwordInput" class="signin-input" placeholder="Password" />
+                    <button class="toggle-pw" onclick="togglePassword('passwordInput', this)" type="button">👁</button>
+                </div>
+                <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
+                <button class="signin-btn signin-btn-resend" id="resendBtn" onclick="resendVerification()">Trouble signing in? Send account recovery email</button>
 
-// ========== USER MINI POPUP ==========
-window.showUserMiniPopup = function(e, uid, name) {
-  e.stopPropagation();
-  var existing = document.querySelector('.user-mini-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'user-mini-popup';
-  popup.style.cssText = 'position:fixed;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:0.75rem 1rem;z-index:999999;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.6);font-size:0.85rem;';
-  var rect = e.target.getBoundingClientRect();
-  popup.style.top = (rect.bottom + 8) + 'px';
-  popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
-  popup.innerHTML =
-    '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + name + '</div>' +
-    '<a href="public-profile.html?uid=' + uid + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
-    '<a href="public-profile.html?uid=' + uid + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
-  document.body.appendChild(popup);
-  setTimeout(function() {
-    document.addEventListener('click', function removePopup() {
-      var p = document.querySelector('.user-mini-popup');
-      if (p) p.remove();
-      document.removeEventListener('click', removePopup);
-    });
-  }, 100);
-};
+                <div class="signin-divider">or create account</div>
 
-// ========== NEWS CARDS SLIDER ==========
-document.addEventListener("DOMContentLoaded", function() {
-  const newsCards = document.querySelectorAll('.news-card');
-  const rightArrows = document.querySelectorAll('.arrow-right');
-  const leftArrows = document.querySelectorAll('.arrow-left');
-  let currentIndex = 0;
-  if (newsCards.length > 0) {
-    function showCard(index) {
-      newsCards.forEach((card, i) => {
-        card.style.display = i === index ? 'flex' : 'none';
-      });
-    }
-    showCard(currentIndex);
-    rightArrows.forEach(arrow => {
-      arrow.style.pointerEvents = 'auto';
-      arrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        currentIndex = (currentIndex + 1) % newsCards.length;
-        showCard(currentIndex);
-      });
-    });
-    leftArrows.forEach(arrow => {
-      arrow.style.pointerEvents = 'auto';
-      arrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
-        showCard(currentIndex);
-      });
-    });
-  }
-});
+                <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" />
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" />
+                    <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
+                </div>
+                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose 1st Name (Later Surname)" maxlength="30" />
+                <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
+                    Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space — e.g. <b style="color:#d4af37;">Jon Doe</b>. Hyphens allowed but no underscores.
+                </p>
 
-// ========== AGE VERIFICATION ==========
-document.addEventListener('DOMContentLoaded', function() {
-  const ageModal = document.getElementById('age-verification');
-  const btnYes = document.getElementById('age-yes');
-  const btnNo = document.getElementById('age-no');
-  if (ageModal && btnYes && btnNo) {
-    const ageVerified = sessionStorage.getItem('ageVerified');
-    if (!ageVerified) ageModal.style.display = 'flex';
-    btnYes.onclick = function() {
-      sessionStorage.setItem('ageVerified', 'true');
-      ageModal.style.display = 'none';
-    };
-    btnNo.onclick = function() {
-      alert('You must be of age to view this site.');
-      window.location.href = 'https://www.google.com';
-    };
-  }
-});
+                <button class="signin-btn" onclick="handleSignUp()" style="background:#555;color:#fff;">
+                    Create Profile
+                </button>
+            </div>
 
-// ========== FIREBASE ==========
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+            <div class="signin-divider">or</div>
+            <div id="googleBtn"></div>
+            <button class="signin-btn signin-btn-apple">Continue with Apple</button>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-  authDomain: "sorc-a1393.firebaseapp.com",
-  projectId: "sorc-a1393",
-  storageBucket: "sorc-a1393.firebasestorage.app",
-  messagingSenderId: "303646936307",
-  appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
-};
+            <div class="signin-links">
+                <a href="#" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
+                <a href="index.html">Back to site</a>
+            </div>
+        </div>
+    </div>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+        })();
 
-const OWNER_EMAILS = ["corbett@sorcrpg.com"];
-const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
+        var OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        var ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
-var googleUser = null;
-
-// ========== ROLE HELPERS ==========
-function getRoleAbbr(role) {
-  if (role === 'OWNER') return '[OWN]';
-  if (role === 'ADMIN') return '[AD]';
-  if (role === 'MASTER') return '[GM]';
-  if (role === 'PLAYER') return '[PC]';
-  return '[CIV]';
-}
-
-function getRoleColor(role) {
-  if (role === 'OWNER') return { bg: '#d4af37', color: '#222' };
-  if (role === 'ADMIN') return { bg: '#8B0000', color: '#fff' };
-  if (role === 'MASTER') return { bg: '#1a6b1a', color: '#fff' };
-  if (role === 'PLAYER') return { bg: '#1a3a6b', color: '#fff' };
-  return { bg: '#333', color: '#e0cfc0' };
-}
-
-function getAvatarPath(avatarId) {
-  if (!avatarId) return null;
-  return 'images/avatars/' + avatarId;
-}
-
-// ========== GRANT ROLE UPGRADE POINTS ==========
-async function grantRoleUpgradePoints(uid, role, data) {
-  var updates = {};
-  var currentPoints = data.communityPoints || 0;
-
-  if (role === 'PLAYER' && !data.playerPointsGranted) {
-    updates.communityPoints = currentPoints + 500;
-    updates.playerPointsGranted = true;
-  } else if (role === 'MASTER' && !data.gmPointsGranted) {
-    updates.communityPoints = currentPoints + 1000;
-    updates.gmPointsGranted = true;
-  }
-
-  if (Object.keys(updates).length > 0) {
-    await updateDoc(doc(db, "users", uid), updates);
-    return updates.communityPoints;
-  }
-  return currentPoints;
-}
-
-// ========== CHECK NOTIFICATIONS ==========
-async function checkInboxNotifications(uid) {
-  try {
-    var [msgSnap, fellowSnap, forumSnap] = await Promise.all([
-      getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
-      getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
-      getDocs(query(collection(db, "notifications"), where("recipientUid", "==", uid), where("read", "==", false)))
-    ]);
-    var total = msgSnap.size + fellowSnap.size + forumSnap.size;
-    if (total > 0) {
-      var notif = document.getElementById('inboxNotif');
-      if (notif) { notif.textContent = total; notif.style.display = 'inline-block'; }
-    }
-  } catch(e) {}
-}
-
-// ========== DAILY LOGIN BONUS ==========
-async function awardDailyLoginBonus(uid) {
-  try {
-    var userSnap = await getDoc(doc(db, "users", uid));
-    if (!userSnap.exists()) return;
-    var data = userSnap.data();
-    var now = Date.now();
-    var lastLogin = data.lastLoginBonusAt ? (data.lastLoginBonusAt.toMillis ? data.lastLoginBonusAt.toMillis() : Number(data.lastLoginBonusAt)) : 0;
-    var twentyHours = 20 * 60 * 60 * 1000;
-    if (now - lastLogin < twentyHours) return; // not yet 20 hours
-    await updateDoc(doc(db, "users", uid), {
-      communityPoints: (data.communityPoints || 0) + 1,
-      lastLoginBonusAt: new Date()
-    });
-  } catch(e) {}
-}
-
-// ========== ROLE BADGE ==========
-function showRoleBadge(email, username, role, avatar, userId) {
-  var existing = document.getElementById('navRoleBadge');
-  if (!existing) return;
-
-  var existingPopup = document.querySelector('.role-popup');
-  if (existingPopup) existingPopup.remove();
-
-  var signinLink = document.getElementById('signinLink');
-  if (signinLink) signinLink.style.display = 'none';
-
-  var displayName = username || email.split('@')[0];
-  var abbr = getRoleAbbr(role);
-  var colors = getRoleColor(role);
-  var safeUserId = String(userId || '');
-  var isAdminUser = OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
-
-  var avatarHtml = '';
-  if (avatar) {
-    var avatarPath = getAvatarPath(avatar);
-    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
-  }
-
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
-
-  existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
-    ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span></a>' +
-    ' &nbsp;|&nbsp; <a href="fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
-    ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
-    ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
-
-  existing.querySelector('.role-tag').addEventListener('click', function(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    var isAdmin = this.dataset.isadmin === 'true';
-    if (isAdmin) { showAdminMembersPopup(); }
-    else { showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role); }
-  });
-
-  if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
-
-  var uid = auth.currentUser ? auth.currentUser.uid : (googleUser ? googleUser.googleId : null);
-  if (uid) {
-    checkInboxNotifications(uid);
-    awardDailyLoginBonus(uid);
-  }
-}
-
-// ========== OWN ROLE POPUP ==========
-window.showRolePopup = function(username, userId, role) {
-  var existing = document.querySelector('.role-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-  var roleLabel = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Admin' : role === 'MASTER' ? 'Game Master' : role === 'PLAYER' ? 'Player Character' : 'Civilian';
-  popup.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
-      '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
-      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
-    '</div>' +
-    '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + username + '</div>' +
-    '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + roleLabel + '</div>' +
-    '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + (userId || 'N/A') + '</div>';
-  document.body.appendChild(popup);
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
-};
-
-// ========== ADMIN MEMBERS POPUP ==========
-window.showAdminMembersPopup = async function() {
-  var existing = document.querySelector('.role-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-  popup.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
-      '<span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">ALL MEMBERS</span>' +
-      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
-    '</div>' +
-    '<div id="adminMembersList" style="font-size:0.8rem;">Loading...</div>';
-  document.body.appendChild(popup);
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
-
-  var snap = await getDocs(collection(db, "users"));
-  var members = [];
-  snap.forEach(function(d) {
-    var data = d.data();
-    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
-    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
-    members.push({ uid: d.id, name, role });
-  });
-  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-  var html = members.map(function(m) {
-    var colors = getRoleColor(m.role);
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2a2a;">' +
-      '<div style="display:flex;align-items:center;gap:6px;">' +
-        '<span style="background:' + colors.bg + ';color:' + colors.color + ';padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:bold;">' + getRoleAbbr(m.role) + '</span>' +
-        '<span style="color:#e0cfc0;cursor:pointer;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;">' +
-        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
-        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="Send Message">✉</a>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  document.getElementById('adminMembersList').innerHTML = html || '<span style="color:#555;">No members found.</span>';
-};
-
-// ========== SIGN OUT ==========
-window.sorcSignOut = function() {
-  signOut(auth);
-  localStorage.removeItem('sorc_google_user');
-  window.location.reload();
-};
-
-// ========== GET OR SET USER ROLE ==========
-async function getUserRoleFromDB(uid, email) {
-  var docRef = doc(db, "users", uid);
-  var docSnap = await getDoc(docRef);
-  var data = docSnap.exists() ? docSnap.data() : {};
-  var username = data.username || data.displayName || '';
-  var avatar = data.avatar || null;
-  var userId = data.userId || '';
-  var role = data.role || 'CIVILIAN';
-
-  if (OWNER_EMAILS.includes(email)) role = 'OWNER';
-  else if (ADMIN_EMAILS.includes(email)) role = 'ADMIN';
-
-  if (!docSnap.exists()) {
-    await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  }
-
-  // Grant upgrade points if eligible
-  if (role === 'PLAYER' || role === 'MASTER') {
-    await grantRoleUpgradePoints(uid, role, data);
-  }
-
-  return { role, username, avatar, userId };
-}
-
-// ========== AUTH STATE ==========
-onAuthStateChanged(auth, async function(user) {
-  if (user) {
-    if (!user.emailVerified && user.providerData[0] && user.providerData[0].providerId === 'password') {
-      alert('Please verify your email before signing in. Check your inbox for a verification link.');
-      signOut(auth); return;
-    }
-    var data = await getUserRoleFromDB(user.uid, user.email);
-    showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
-  } else {
-    // Check for legacy localStorage Google user (transitional support)
-    try { var saved = localStorage.getItem('sorc_google_user'); if (saved) googleUser = JSON.parse(saved); } catch(e) {}
-    if (googleUser) {
-      try {
-        var role = googleUser.role || 'CIVILIAN';
-        var username = googleUser.username || googleUser.name || '';
-        var avatar = googleUser.avatar || null;
-        var userId = googleUser.userId || '';
-        if (OWNER_EMAILS.includes(googleUser.email)) role = 'OWNER';
-        else if (ADMIN_EMAILS.includes(googleUser.email)) role = 'ADMIN';
-        if (googleUser.googleId) {
-          try {
-            var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-            if (docSnap.exists()) {
-              var data = docSnap.data();
-              username = data.username || data.displayName || username;
-              avatar = data.avatar || avatar;
-              userId = data.userId || userId;
-              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = data.role || role; }
-              if (role === 'PLAYER' || role === 'MASTER') {
-                await grantRoleUpgradePoints(googleUser.googleId, role, data);
-              }
-              googleUser.username = username; googleUser.avatar = avatar; googleUser.userId = userId; googleUser.role = role;
-              localStorage.setItem('sorc_google_user', JSON.stringify(googleUser));
-            }
-          } catch(e) {}
+        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+        function containsBadWord(str) {
+            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return badWords.some(function(word) { return lower.includes(word); });
         }
-        showRoleBadge(googleUser.email, username, role, avatar, userId);
-      } catch(e) { localStorage.removeItem('sorc_google_user'); }
-    }
-  }
-});
+        function isValidUsername(username) {
+            if (username.length < 3) return 'Name must be at least 3 characters.';
+            if (username.length > 30) return 'Name must be 30 characters or less.';
+            if (!/^[a-zA-Z0-9-]+$/.test(username)) return 'Letters, numbers and hyphens only. No underscores or spaces — surnames with spaces unlock later.';
+            if (containsBadWord(username)) return 'Name contains inappropriate language.';
+            return null;
+        }
 
-// ========== LISTEN FOR GOOGLE LOGIN FROM SIGNIN TAB ==========
-window.addEventListener('storage', async function(e) {
-  if (e.key === 'sorc_google_user' && e.newValue) {
-    try {
-      var userInfo = JSON.parse(e.newValue);
-      var role = userInfo.role || 'CIVILIAN';
-      var username = userInfo.username || userInfo.name || '';
-      var avatar = userInfo.avatar || null;
-      var userId = userInfo.userId || '';
-      if (OWNER_EMAILS.includes(userInfo.email)) role = 'OWNER';
-      else if (ADMIN_EMAILS.includes(userInfo.email)) role = 'ADMIN';
-      showRoleBadge(userInfo.email, username, role, avatar, userId);
-    } catch(err) { console.error(err); }
-  }
-});
+        function generateRandomUsername() {
+            var adjectives = ['Shadow','Iron','Storm','Fire','Dark','Swift','Wild','Stone','Frost','Silver'];
+            var nouns = ['Slayer','Adventurer','Wanderer','Knight','Ranger','Mage','Rogue','Hunter','Warrior','Scout'];
+            var adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            var noun = nouns[Math.floor(Math.random() * nouns.length)];
+            var num = Math.floor(Math.random() * 9000) + 1000;
+            return adj + noun + num;
+        }
 
-// ========== EMAIL SIGNUP ==========
-window.sorcSignUp = function(email, password) {
-  if (!email || !password) { alert('Please enter an email and password.'); return; }
-  createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
-    await sendEmailVerification(result.user);
-    await setDoc(doc(db, "users", result.user.uid), { email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN', communityPoints: 0 });
-    signOut(auth);
-    document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
-    document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
-  }).catch(function(error) { alert('Sign up failed: ' + error.message); });
-};
+        function generateUserId() { return Math.floor(Math.random() * 90000) + 10000; }
 
-// ========== EMAIL SIGN IN ==========
-window.sorcSignIn = function(email, password) {
-  if (!email || !password) { alert('Please enter your email and password.'); return; }
-  signInWithEmailAndPassword(auth, email, password).then(async function(result) {
-    if (!result.user.emailVerified) {
-      alert('Please verify your email first. Check your inbox for a verification link.');
-      signOut(auth); return;
-    }
-    var data = await getUserRoleFromDB(result.user.uid, result.user.email);
-    showRoleBadge(result.user.email, data.username, data.role, data.avatar, data.userId);
-  }).catch(function(error) { alert('Sign in failed: ' + error.message); });
-};
+        window.togglePassword = function(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+            else { input.type = 'password'; btn.textContent = '👁'; }
+        };
 
-// ========== ADMIN PANEL ==========
-function showAdminPanel() {
-  if (document.querySelector('.admin-panel')) return;
-  var panel = document.createElement('div');
-  panel.className = 'admin-panel';
-  panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #d4af37;';
-  panel.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-      '<h3 style="color:#d4af37;margin:0;">Admin Panel</h3>' +
-      '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#d4af37;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
-    '</div>' +
-    '<div id="adminPanelContent">' +
-      '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
-      '<button onclick="loadUsers()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">View All Users</button>' +
-      '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
-      '<div id="userList" style="margin-top:10px;font-size:0.8rem;max-height:200px;overflow-y:auto;"></div>' +
-    '</div>';
-  document.body.appendChild(panel);
-}
+        function handleGoogleCredential(response) {
+            showStatus('Signing in...', 'success');
+            // Use Firebase's built-in Google Auth instead of manual JWT decode
+            // This gives the user a real Firebase Auth session and request.auth works
+            import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js").then(function(firebaseAuth) {
+                var credential = firebaseAuth.GoogleAuthProvider.credential(response.credential);
+                firebaseAuth.signInWithCredential(auth, credential).then(async function(result) {
+                    var user = result.user;
+                    var role = OWNER_EMAILS.includes(user.email) ? 'OWNER' : ADMIN_EMAILS.includes(user.email) ? 'ADMIN' : 'CIVILIAN';
 
-window.toggleAdminPanel = function() {
-  var content = document.getElementById('adminPanelContent');
-  var btn = document.querySelector('.admin-panel button');
-  if (content.style.display === 'none') { content.style.display = 'block'; btn.textContent = '−'; }
-  else { content.style.display = 'none'; btn.textContent = '+'; }
-};
+                    // Create Firestore profile if first time Google sign-in
+                    var docSnap = await getDoc(doc(db, "users", user.uid));
+                    if (!docSnap.exists()) {
+                        var randomUsername = generateRandomUsername();
+                        var userId = generateUserId();
+                        await setDoc(doc(db, "users", user.uid), {
+                            email: user.email,
+                            role: 'CIVILIAN',
+                            username: randomUsername,
+                            firstName: randomUsername,
+                            displayName: randomUsername,
+                            surname: '', prefix: '', suffix: '',
+                            usernameChanged: false,
+                            userId: userId,
+                            avatar: null,
+                            communityPoints: 0,
+                            joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                            postCount: 0, titles: [], isPro: false,
+                            unlockedFellowships: false, unlockedBasic: false,
+                            unlockedSurname: false, unlockedPrefixSuffix: false, unlockedPro: false,
+                            playerPointsGranted: false, gmPointsGranted: false
+                        });
+                    }
 
-window.generateGMCode = async function() {
-  var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-  await addDoc(collection(db, "gm_codes"), { code: code, used: false, createdAt: new Date() });
-  document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
-};
+                    // Clear old localStorage Google user — no longer needed
+                    localStorage.removeItem('sorc_google_user');
 
-window.loadUsers = async function() {
-  var userListEl = document.getElementById('userList');
-  userListEl.innerHTML = 'Loading...';
-  var snap = await getDocs(collection(db, "users"));
-  var members = [];
-  snap.forEach(function(d) {
-    var data = d.data();
-    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
-    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
-    members.push({ uid: d.id, name, role, userId: data.userId || '' });
-  });
-  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-  var html = '<table style="width:100%;border-collapse:collapse;">' +
-    '<tr style="color:#d4af37;border-bottom:1px solid #444;">' +
-      '<th style="text-align:left;padding:4px;">Username</th>' +
-      '<th style="text-align:left;padding:4px;">Role</th>' +
-      '<th style="text-align:left;padding:4px;">ID</th>' +
-    '</tr>';
-  members.forEach(function(m) {
-    html += '<tr style="border-bottom:1px solid #333;">' +
-      '<td style="padding:4px;"><span style="color:#d4af37;cursor:pointer;text-decoration:underline;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span></td>' +
-      '<td style="padding:4px;">' + m.role + '</td>' +
-      '<td style="padding:4px;">#' + m.userId + '</td>' +
-    '</tr>';
-  });
-  html += '</table>';
-  userListEl.innerHTML = html;
-};
+                    showStatus('✅ Signed in! Redirecting...', 'success');
+                    setTimeout(function() { window.location.href = 'https://sorcrpg.com/?loggedin=1'; }, 800);
+                }).catch(function(error) {
+                    showStatus('Google sign in failed: ' + error.message, 'error');
+                });
+            });
+        }
+
+        window.addEventListener('load', function() {
+            if (typeof google !== 'undefined') {
+                google.accounts.id.initialize({
+                    client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+                    callback: handleGoogleCredential,
+                    auto_select: false,
+                    cancel_on_tap_outside: true
+                });
+                google.accounts.id.renderButton(document.getElementById('googleBtn'), {
+                    type: 'standard', shape: 'rectangular', theme: 'filled_black',
+                    text: 'signin_with', size: 'large', logo_alignment: 'left', width: 350
+                });
+            }
+        });
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.textContent = msg; el.className = 'status-msg ' + type; el.style.display = 'block';
+        }
+
+        window.selectType = function(type, btn) {
+            document.querySelectorAll('.account-type-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            document.querySelectorAll('.account-info').forEach(function(el) { el.style.display = 'none'; });
+            if (type === 'civilian') {
+                document.getElementById('civilianInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'block';
+            } else if (type === 'player') {
+                document.getElementById('playerInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'none';
+            } else if (type === 'master') {
+                document.getElementById('masterInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'none';
+            }
+        };
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
+            authDomain: "sorc-a1393.firebaseapp.com",
+            projectId: "sorc-a1393",
+            storageBucket: "sorc-a1393.firebasestorage.app",
+            messagingSenderId: "303646936307",
+            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
+        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
+
+        onAuthStateChanged(auth, function(user) {
+            if (user && user.emailVerified) {
+                window.location.href = 'https://sorcrpg.com/?loggedin=1';
+            }
+        });
+
+        window.handleSignIn = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            var password = document.getElementById('passwordInput').value;
+            if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
+            signInWithEmailAndPassword(auth, email, password).then(function(result) {
+                if (!result.user.emailVerified && !OWNER_EMAILS.includes(result.user.email) && !ADMIN_EMAILS.includes(result.user.email)) {
+                    showStatus('Please verify your email before signing in.', 'error');
+                    document.getElementById('resendBtn').style.display = 'block';
+                    signOut(auth);
+                    return;
+                }
+                window.location.href = 'https://sorcrpg.com/?loggedin=1';
+            }).catch(function(error) {
+                document.getElementById('resendBtn').style.display = 'none';
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    showStatus('Sign in failed: incorrect email or password. If you haven\'t verified your email yet, enter your credentials and use Resend Verification below.', 'error');
+                    document.getElementById('resendBtn').style.display = 'block';
+                } else {
+                    showStatus('Sign in failed: ' + error.message, 'error');
+                }
+            });
+        };
+
+        window.resendVerification = async function() {
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
+            showStatus('Sending email...', 'success');
+            sendPasswordResetEmail(auth, email).then(function() {
+                showStatus('✅ Email sent to ' + email + '. Reset your password, then sign in — your account will be active.', 'success');
+                document.getElementById('resendBtn').style.display = 'none';
+            }).catch(function(error) {
+                showStatus('Could not send email: ' + error.message, 'error');
+            });
+        };
+
+        window.showForgotPassword = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) { showStatus('Enter your email address in the Sign In section first.', 'error'); return; }
+            sendPasswordResetEmail(auth, email).then(function() {
+                showStatus('✅ Password reset email sent to ' + email + '. Also use Resend Verification below if you haven\'t verified your email yet.', 'success');
+                document.getElementById('resendBtn').style.display = 'block';
+            }).catch(function(error) { showStatus('Failed: ' + error.message, 'error'); });
+        };
+
+        window.handleSignUp = async function() {
+            try {
+                var email = document.getElementById('signupEmail').value.trim();
+                var password = document.getElementById('signupPassword').value;
+                var username = document.getElementById('signupUsername').value.trim();
+
+                if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
+                if (!username) { showStatus('Please choose a first name.', 'error'); return; }
+
+                var usernameError = isValidUsername(username);
+                if (usernameError) { showStatus(usernameError, 'error'); return; }
+
+                var q = query(collection(db, "users"), where("firstName", "==", username));
+                var existing = await getDocs(q);
+                if (!existing.empty) { showStatus('That name is already taken. Please choose another.', 'error'); return; }
+
+                var userId = generateUserId();
+
+                var result = await createUserWithEmailAndPassword(auth, email, password);
+                await sendEmailVerification(result.user);
+                await setDoc(doc(db, "users", result.user.uid), {
+                    email: email,
+                    role: 'CIVILIAN',
+                    username: username,
+                    firstName: username,
+                    surname: '',
+                    prefix: '',
+                    suffix: '',
+                    usernameChanged: true,
+                    userId: userId,
+                    avatar: null,
+                    displayName: username,
+                    communityPoints: 0,
+                    joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    postCount: 0,
+                    titles: [],
+                    isPro: false,
+                    unlockedFellowships: false,
+                    unlockedBasic: false,
+                    unlockedSurname: false,
+                    unlockedPrefixSuffix: false,
+                    unlockedPro: false,
+                    playerPointsGranted: false,
+                    gmPointsGranted: false
+                });
+                await signOut(auth);
+                document.getElementById('signinForm').style.display = 'none';
+                showStatus('✅ Profile created! Check your email to verify before signing in.', 'success');
+            } catch(error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    showStatus('An account with that email already exists. Try signing in or use Forgot Password.', 'error');
+                } else if (error.code === 'auth/weak-password') {
+                    showStatus('Password must be at least 6 characters.', 'error');
+                } else if (error.code === 'auth/invalid-email') {
+                    showStatus('Please enter a valid email address.', 'error');
+                } else {
+                    showStatus('Sign up failed: ' + error.message, 'error');
+                }
+            }
+        };
+    </script>
+</body>
+</html>
