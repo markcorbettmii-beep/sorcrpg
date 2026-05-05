@@ -99,9 +99,12 @@
 
         var currentUser = null;
         var currentUserData = null;
+        var googleUser = null;
         var targetUid = null;
         var targetData = null;
         var isFellowship = false;
+
+        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
 
         var params = new URLSearchParams(window.location.search);
         targetUid = params.get('uid');
@@ -127,8 +130,8 @@
             if (role === 'PLAYER') return 'Player Character';
             return 'Civilian';
         }
-        function getMyUid() { return currentUser ? currentUser.uid : null; }
-        function getMyEmail() { return currentUser ? currentUser.email : null; }
+        function getMyUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
+        function getMyEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
         function getMyUsername() {
             var data = currentUserData || {};
             return data.username || data.displayName || (getMyEmail() || '').split('@')[0];
@@ -442,6 +445,11 @@
                 currentUser = user;
                 var docSnap = await getDoc(doc(db, "users", user.uid));
                 if (docSnap.exists()) currentUserData = docSnap.data();
+            } else if (googleUser) {
+                try {
+                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+                    if (docSnap.exists()) currentUserData = docSnap.data();
+                } catch(e) {}
             }
             if (!targetUid) { document.getElementById('profileApp').innerHTML = '<div class="not-found">No profile specified.</div>'; return; }
             var targetDoc = await getDoc(doc(db, "users", targetUid));
