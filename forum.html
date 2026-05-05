@@ -460,8 +460,8 @@
 
         var currentUser = null;
         var currentUserData = null;
-        var googleUser = null;
-        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
+        var currentUser = null;
+        var currentUserData = null;
 
         function getRoleColor(role) {
             if (role === 'OWNER') return '#d4af37';
@@ -478,7 +478,7 @@
             return '[CIV]';
         }
         function isAdminOrOwner(email) { return OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email); }
-        function getUserEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
+        function getUserEmail() { return currentUser ? currentUser.email : null; }
         function timeAgo(timestamp) {
             if (!timestamp) return 'Never';
             var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -566,14 +566,14 @@
 
         async function loadLastVisited() {
             if (!currentUser && !googleUser) return {};
-            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var uid = currentUser ? currentUser.uid : null;
             var docSnap = await getDoc(doc(db, "lastVisited", uid));
             return docSnap.exists() ? docSnap.data() : {};
         }
 
         async function saveLastVisited(categoryId) {
             if (!currentUser && !googleUser) return;
-            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var uid = currentUser ? currentUser.uid : null;
             var update = {};
             update[categoryId] = new Date();
             await setDoc(doc(db, "lastVisited", uid), update, { merge: true });
@@ -643,7 +643,7 @@
 
         async function updateLastSeen() {
             if (!currentUser && !googleUser) return;
-            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var uid = currentUser ? currentUser.uid : null;
             await setDoc(doc(db, "users", uid), { lastSeen: new Date() }, { merge: true });
         }
 
@@ -716,7 +716,7 @@
             if (!validatePost(body, msgEl)) return;
             var cat = CATEGORIES.find(function(c) { return c.id === categoryId; });
             if (cat && cat.adminOnly && !isAdminOrOwner(getUserEmail() || '')) { msgEl.className = 'msg error'; msgEl.textContent = 'Only admins can post in this category.'; return; }
-            var uid = currentUser ? currentUser.uid : googleUser.googleId;
+            var uid = currentUser ? currentUser.uid : null;
             var email = getUserEmail();
             var username = (currentUserData || {}).username || (currentUserData || {}).displayName || email.split('@')[0];
             var role = OWNER_EMAILS.includes(email) ? 'OWNER' : ADMIN_EMAILS.includes(email) ? 'ADMIN' : ((currentUserData || {}).role || 'CIVILIAN');
@@ -758,11 +758,6 @@
                     var docSnap = await getDoc(doc(db, "users", user.uid));
                     if (docSnap.exists()) currentUserData = docSnap.data();
                 } catch(e) { console.warn('Could not load user profile:', e.message); }
-            } else if (googleUser) {
-                try {
-                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-                    if (docSnap.exists()) currentUserData = docSnap.data();
-                } catch(e) {}
             } else {
                 document.getElementById('notLoggedInBar').style.display = 'block';
                 document.getElementById('newThreadBtn').disabled = true;
