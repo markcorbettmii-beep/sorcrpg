@@ -192,9 +192,9 @@
                     // Clear old localStorage Google user — no longer needed
                     localStorage.removeItem('sorc_google_user');
 
-                    justSignedIn = true;
+                    
                     showStatus('✅ Signed in! Redirecting...', 'success');
-                    setTimeout(function() { window.location.href = 'https://sorcrpg.com/?loggedin=1'; }, 800);
+                    setTimeout(function() { window.location.href = 'https://sorcrpg.com/'; }, 800);
                 }).catch(function(error) {
                     showStatus('Google sign in failed: ' + error.message, 'error');
                 });
@@ -258,13 +258,7 @@
         const OWNER_EMAILS = ["corbett@sorcrpg.com"];
         const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
-        var justSignedIn = false;
-
-        onAuthStateChanged(auth, function(user) {
-            if (user && user.emailVerified && justSignedIn) {
-                window.location.href = 'https://sorcrpg.com/?loggedin=1';
-            }
-        });
+        // No auto-redirect on page load — main.js handles session display sitewide
 
         window.handleSignIn = function() {
             var email = document.getElementById('emailInput').value.trim();
@@ -277,8 +271,8 @@
                     signOut(auth);
                     return;
                 }
-                justSignedIn = true;
-                window.location.href = 'https://sorcrpg.com/?loggedin=1';
+                
+                window.location.href = 'https://sorcrpg.com/';
                 if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
                     showStatus('Sign in failed: incorrect email or password. If you haven\'t verified your email yet, enter your credentials and use Resend Verification below.', 'error');
                     document.getElementById('resendBtn').style.display = 'block';
