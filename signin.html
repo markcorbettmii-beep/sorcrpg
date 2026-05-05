@@ -209,7 +209,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithCredential, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -231,6 +231,7 @@
         window._handleGoogleSignIn = async function(credential) {
             try {
                 var googleCredential = GoogleAuthProvider.credential(credential);
+                await setPersistence(auth, browserLocalPersistence);
                 var result = await signInWithCredential(auth, googleCredential);
                 var user = result.user;
 
@@ -273,6 +274,7 @@
             var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
             if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
+            await setPersistence(auth, browserLocalPersistence);
             signInWithEmailAndPassword(auth, email, password).then(function(result) {
                 if (!result.user.emailVerified && !OWNER_EMAILS.includes(result.user.email) && !ADMIN_EMAILS.includes(result.user.email)) {
                     showStatus('Please verify your email before signing in.', 'error');
@@ -281,7 +283,7 @@
                     return;
                 }
                 
-                window.location.href = 'https://sorcrpg.com/';
+                setTimeout(function() { window.location.href = 'https://sorcrpg.com/'; }, 1000);
                 if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
                     showStatus('Sign in failed: incorrect email or password. If you haven\'t verified your email yet, enter your credentials and use Resend Verification below.', 'error');
                     document.getElementById('resendBtn').style.display = 'block';
