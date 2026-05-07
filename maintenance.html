@@ -10,3 +10,136 @@
 <p>Our website is currently undergoing maintenance. Please check back later.</p>
 </body>
 </html>
+mkdir -p sorc-app/src
+
+cat > sorc-app/src/index.ts << 'EOF'
+import { Hono } from 'hono';
+import { cors } from '@hono/cors';
+
+const app = new Hono();
+
+interface Env {
+  DB: D1Database;
+    AVATARS: R2Bucket;
+      FORUM_MEDIA: R2Bucket;
+        ENVIRONMENT: string;
+        }
+
+        app.use('*', cors({
+          origin: ['http://localhost:3000', 'https://sorcrpg.com', 'https://www.sorcrpg.com'],
+            allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+              credentials: true,
+              }));
+
+              const authMiddleware = async (c, next) => {
+                const authKey = c.req.header('X-Auth-Key');
+                  
+                    if (!authKey) {
+                        return c.json({ error: 'Missing auth key' }, 401);
+                          }
+
+                            const user = await c.env.DB.prepare(
+                                'SELECT * FROM users WHERE auth_key = ?'
+                                  ).bind(authKey).first();
+
+                                    if (!user) {
+                                        return c.json({ error: 'Invalid auth key' }, 401);
+                                          }
+
+                                            c.set('user', user);
+                                              c.set('authKey', authKey);
+                                                await next();
+                                                };
+
+                                                app.post('/api/auth/register', async (c) => {
+                                                  const { email, password, username, firstName, accountType } = await c.req.json();
+
+                                                    if (!email || !username) {
+                                                        return c.json({ error: 'Email and username required' }, 400);
+                                                          }
+
+                                                            if (!/^[a-zA-Z0-9-]+$/.test(username) || username.includes('_')) {
+                                                                return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+                                                                  }
+
+                                                                    const existingUser = await c.env.DB.prepare(
+                                                                        'SELECT id FROM users WHERE email = ? OR username = ?'
+                                                                          ).bind(email, username).first();
+
+                                                                            if (existingUser) {
+                                                                                return c.json({ error: 'Email or username already exists' }, 400);
+                                                                                  }
+
+                                                                                    const authKey = Buffer.from(`${email}:${Date.now()}:${Math.random()}`).toString('base64');
+                                                                                      const userId = Math.floor(Math.random() * 90000) + 10000;
+                                                                                        const now = new Date().toISOString();
+                                                                                          const uuid = crypto.randomUUID();
+
+                                                                                            try {
+                                                                                                await c.env.DB.prepare(`
+                                                                                                      INSERT INTO users (
+                                                                                                              id, email, auth_key, username, display_name, first_name, 
+                                                                                                                      role, join_date, created_at, updated_at, user_id
+                                                                                                                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                                                                                                                `).bind(
+                                                                                                                                      uuid,
+                                                                                                                                            email,
+                                                                                                                                                  authKey,
+                                                                                                                                                        username,
+                                                                                                                                                              firstName || username,
+                                                                                                                                                                    firstName || '',
+                                                                                                                                                                          'CIVILIAN',
+                                                                                                                                                                                now,
+                                                                                                                                                                                      now,
+                                                                                                                                                                                            now,
+                                                                                                                                                                                                  userId
+                                                                                                                                                                                                      ).run();
+
+                                                                                                                                                                                                          const newUser = await c.env.DB.prepare(
+                                                                                                                                                                                                                'SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?'
+                                                                                                                                                                                                                    ).bind(email).first();
+
+                                                                                                                                                                                                                        return c.json({
+                                                                                                                                                                                                                              success: true,
+                                                                                                                                                                                                                                    user: newUser,
+                                                                                                                                                                                                                                          authKey: authKey,
+                                                                                                                                                                                                                                              });
+                                                                                                                                                                                                                                                } catch (error) {
+                                                                                                                                                                                                                                                    return c.json({ error: 'Registration failed', details: error.message }, 500);
+                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                      });
+
+                                                                                                                                                                                                                                                      app.post('/api/auth/signin', async (c) => {
+                                                                                                                                                                                                                                                        const { email, username, password } = await c.req
+                                                                                                                                                                                                                                                        cat > sorc-app/README.md << 'EOF'
+                                                                                                                                                                                                                                                        # SorC RPG - Cloudflare Workers Backend
+
+                                                                                                                                                                                                                                                        Complete backend replacement for Firebase using Cloudflare Workers, D1, and R2.
+
+                                                                                                                                                                                                                                                        ## Files in This Folder
+
+                                                                                                                                                                                                                                                        ### Configuration
+                                                                                                                                                                                                                                                        - **wrangler.toml** — Cloudflare Workers config (D1 & R2 bindings)
+                                                                                                                                                                                                                                                        - **package.json** — Node.js dependencies
+                                                                                                                                                                                                                                                        - **tsconfig.json** — TypeScript compiler options
+                                                                                                                                                                                                                                                        - **.gitignore** — Ignore node_modules and build files
+
+                                                                                                                                                                                                                                                        ### Backend
+                                                                                                                                                                                                                                                        - **src/index.ts** — Main Worker with all API endpoints
+                                                                                                                                                                                                                                                          - Auth (register, signin)
+                                                                                                                                                                                                                                                            - Forums (threads, posts, likes)
+                                                                                                                                                                                                                                                              - Profiles (get, update)
+                                                                                                                                                                                                                                                                - Characters (create, list)
+                                                                                                                                                                                                                                                                  - Fellowships (requests)
+
+                                                                                                                                                                                                                                                                  ### Database
+                                                                                                                                                                                                                                                                  - **schema.sql** — D1 database schema (all tables)
+
+                                                                                                                                                                                                                                                                  ## Quick Start
+
+                                                                                                                                                                                                                                                                  ### 1. Install & Deploy
+                                                                                                                                                                                                                                                                  ```bash
+                                                                                                                                                                                                                                                                  git add .
+                                                                                                                                                                                                                                                                  git commit -m "Update all files to use Cloudflare API instead of Firebase"
+                                                                                                                                                                                                                                                                  git push
+                                                                                                                                                                                                                                                                  
