@@ -261,6 +261,7 @@ async function awardDailyLoginBonus(uid) {
 
 // ========== ROLE BADGE ==========
 function showRoleBadge(email, username, role, avatar, userId) {
+  console.log('showRoleBadge called:', email, username, role, avatar, userId);
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
 
@@ -418,23 +419,12 @@ onAuthStateChanged(auth, async function(user) {
       if (saved) {
         var googleUser = JSON.parse(saved);
         var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
-        var username = googleUser.username || googleUser.name || '';
-        var avatar = googleUser.avatar || null;
-        var userId = googleUser.userId || '';
-        if (googleUser.googleId) {
-          try {
-            var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-            if (docSnap.exists()) {
-              var data = docSnap.data();
-              username = data.username || data.displayName || username;
-              avatar = data.avatar || avatar;
-              userId = data.userId || userId;
-              if (!OWNER_EMAILS.includes(googleUser.email) && !ADMIN_EMAILS.includes(googleUser.email)) { role = data.role || role; }
-              if (role === 'PLAYER' || role === 'MASTER') { await grantRoleUpgradePoints(googleUser.googleId, role, data); }
-            }
-          } catch(e) {}
-        }
-        showRoleBadge(googleUser.email, username, role, avatar, userId);
+        var data = {};
+        try {
+          var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
+          if (docSnap.exists()) data = docSnap.data();
+        } catch(e) {}
+        showRoleBadge(googleUser.email, googleUser.username || googleUser.name || '', role, googleUser.avatar || null, googleUser.userId || '');
       }
     } catch(e) { localStorage.removeItem('sorc_google_user'); }
   }
