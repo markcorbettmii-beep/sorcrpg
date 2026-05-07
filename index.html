@@ -392,5 +392,32 @@
     };
     </script>
     <script type="module" src="main.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const headerControls = document.createElement('div');
+        headerControls.id = 'headerControls';
+        headerControls.style.cssText = 'position:fixed;top:1.2rem;right:1.5rem;display:flex;gap:0.75rem;align-items:center;z-index:500;';
+
+        const profileBtn = document.createElement('button');
+        profileBtn.id = 'profileBtn';
+        profileBtn.innerText = '👤';
+        profileBtn.title = 'Profile';
+        profileBtn.style.cssText = 'background:linear-gradient(135deg,#d0021b 0%,#ff3366 100%);border:2px solid #d0021b;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;box-shadow:0 4px 12px rgba(208,2,27,0.35);font-size:1.2rem;color:#fff;';
+
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var userData = null;
+            try { userData = JSON.parse(localStorage.getItem('sorc_google_user') || 'null'); } catch (err) { userData = null; }
+            if (userData && userData.username) {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'signin.html';
+            }
+        });
+
+        headerControls.appendChild(profileBtn);
+        document.body.appendChild(headerControls);
+    });
+    </script>
 </body>
 </html>
