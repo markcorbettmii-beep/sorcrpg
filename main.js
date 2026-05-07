@@ -1,3 +1,12 @@
+function showRoleBadge(email, username, role, avatar, userId) {
+  alert('showRoleBadge called: ' + email);
+  
+  // original code
+  var existing = document.getElementById('navRoleBadge');
+  if (!existing) return;
+
+  // ... rest of your code ...
+}
 // ========== THEME SYSTEM ==========
 (function() {
   var savedTheme = localStorage.getItem('themeSelected') || 'evil';
