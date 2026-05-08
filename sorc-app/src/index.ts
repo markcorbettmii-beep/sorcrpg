@@ -199,4 +199,6 @@ app.put('/api/profile', authMiddleware, async (c) => {
   }
 });
 
-export default app;
+export default {
+  fetch: (req: Request, env: Env, ctx: ExecutionContext) => app.fetch(req, env, ctx)
+};
