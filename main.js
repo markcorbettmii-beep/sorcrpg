@@ -1,12 +1,8 @@
-function showRoleBadge(email, username, role, avatar, userId) {
-  alert('showRoleBadge called: ' + email);
-  
-  // original code
-  var existing = document.getElementById('navRoleBadge');
-  if (!existing) return;
+var SORC_API = 'https://api.sorcrpg.com';
 
-  // ... rest of your code ...
-}
+var OWNER_EMAILS = ["corbett@sorcrpg.com"];
+var ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
+
 // ========== THEME SYSTEM ==========
 (function() {
   var savedTheme = localStorage.getItem('themeSelected') || 'evil';
@@ -171,28 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ========== FIREBASE ==========
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, setPersistence, browserLocalStoragePersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-  authDomain: "sorc-a1393.firebaseapp.com",
-  projectId: "sorc-a1393",
-  storageBucket: "sorc-a1393.firebasestorage.app",
-  messagingSenderId: "303646936307",
-  appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-setPersistence(auth, browserLocalStoragePersistence).catch(function(e) { console.warn('Persistence error:', e); });
-const db = getFirestore(app);
-
-const OWNER_EMAILS = ["corbett@sorcrpg.com"];
-const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
   if (role === 'OWNER') return '[OWN]';
@@ -215,89 +189,40 @@ function getAvatarPath(avatarId) {
   return 'images/avatars/' + avatarId;
 }
 
-// ========== GRANT ROLE UPGRADE POINTS ==========
-async function grantRoleUpgradePoints(uid, role, data) {
-  var updates = {};
-  var currentPoints = data.communityPoints || 0;
-
-  if (role === 'PLAYER' && !data.playerPointsGranted) {
-    updates.communityPoints = currentPoints + 500;
-    updates.playerPointsGranted = true;
-  } else if (role === 'MASTER' && !data.gmPointsGranted) {
-    updates.communityPoints = currentPoints + 1000;
-    updates.gmPointsGranted = true;
-  }
-
-  if (Object.keys(updates).length > 0) {
-    await updateDoc(doc(db, "users", uid), updates);
-    return updates.communityPoints;
-  }
-  return currentPoints;
-}
-
-// ========== CHECK NOTIFICATIONS ==========
-async function checkInboxNotifications(uid) {
-  try {
-    var [msgSnap, fellowSnap, forumSnap] = await Promise.all([
-      getDocs(query(collection(db, "conversations"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
-      getDocs(query(collection(db, "fellowships"), where("receiverUid", "==", uid), where("status", "==", "pending"))),
-      getDocs(query(collection(db, "notifications"), where("recipientUid", "==", uid), where("read", "==", false)))
-    ]);
-    var total = msgSnap.size + fellowSnap.size + forumSnap.size;
-    if (total > 0) {
-      var notif = document.getElementById('inboxNotif');
-      if (notif) { notif.textContent = total; notif.style.display = 'inline-block'; }
-    }
-  } catch(e) {}
-}
-
-// ========== DAILY LOGIN BONUS ==========
-async function awardDailyLoginBonus(uid) {
-  try {
-    var userSnap = await getDoc(doc(db, "users", uid));
-    if (!userSnap.exists()) return;
-    var data = userSnap.data();
-    var now = Date.now();
-    var lastLogin = data.lastLoginBonusAt ? (data.lastLoginBonusAt.toMillis ? data.lastLoginBonusAt.toMillis() : Number(data.lastLoginBonusAt)) : 0;
-    var twentyHours = 20 * 60 * 60 * 1000;
-    if (now - lastLogin < twentyHours) return; // not yet 20 hours
-    await updateDoc(doc(db, "users", uid), {
-      communityPoints: (data.communityPoints || 0) + 1,
-      lastLoginBonusAt: new Date()
-    });
-  } catch(e) {}
-}
+// ========== SIGN OUT ==========
+window.sorcSignOut = function() {
+  localStorage.removeItem('sorc_user');
+  if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
+  window.location.reload();
+};
 
 // ========== ROLE BADGE ==========
-function showRoleBadge(email, username, role, avatar, userId) {
-  console.log('showRoleBadge called:', email, username, role, avatar, userId);
+function showRoleBadge(user) {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
 
-  var existingPopup = document.querySelector('.role-popup');
-  if (existingPopup) existingPopup.remove();
+  var role = user.role || 'CIVILIAN';
+  if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
+  else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
 
-  var signinLink = document.getElementById('signinLink');
-  if (signinLink) signinLink.style.display = 'none';
-
-  var displayName = username || email.split('@')[0];
+  var displayName = user.username || user.display_name || user.email.split('@')[0];
   var abbr = getRoleAbbr(role);
   var colors = getRoleColor(role);
-  var safeUserId = String(userId || '');
-  var isAdminUser = OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email);
+  var safeId = String(user.id || '');
+  var isAdminUser = OWNER_EMAILS.includes(user.email) || ADMIN_EMAILS.includes(user.email);
 
   var avatarHtml = '';
-  if (avatar) {
-    var avatarPath = getAvatarPath(avatar);
+  if (user.avatar) {
+    var avatarPath = getAvatarPath(user.avatar);
     avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
 
   existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
   existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeUserId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;display:inline-flex;align-items:center;gap:3px;">Inbox<span id="inboxNotif" style="display:none;background:#fff;color:#d0021b;border-radius:10px;padding:0 5px;font-size:0.7rem;font-weight:bold;margin-left:2px;"></span></a>' +
+    ' &nbsp;|&nbsp; <a href="inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
     ' &nbsp;|&nbsp; <a href="fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' &nbsp;|&nbsp; <a href="forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
@@ -306,17 +231,9 @@ function showRoleBadge(email, username, role, avatar, userId) {
     e.stopPropagation();
     e.preventDefault();
     var isAdmin = this.dataset.isadmin === 'true';
-    if (isAdmin) { showAdminMembersPopup(); }
+    if (isAdmin) { showAdminPanel(); }
     else { showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role); }
   });
-
-  if (role === 'OWNER' || role === 'ADMIN') showAdminPanel();
-
-  var uid = auth.currentUser ? auth.currentUser.uid : null;
-  if (uid) {
-    checkInboxNotifications(uid);
-    awardDailyLoginBonus(uid);
-  }
 }
 
 // ========== OWN ROLE POPUP ==========
@@ -339,131 +256,6 @@ window.showRolePopup = function(username, userId, role) {
   document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
 };
 
-// ========== ADMIN MEMBERS POPUP ==========
-window.showAdminMembersPopup = async function() {
-  var existing = document.querySelector('.role-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'role-popup';
-  popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid #d4af37;border-radius:8px;padding:1rem 1.2rem;z-index:99999;min-width:260px;max-width:320px;max-height:400px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
-  popup.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">' +
-      '<span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">ALL MEMBERS</span>' +
-      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
-    '</div>' +
-    '<div id="adminMembersList" style="font-size:0.8rem;">Loading...</div>';
-  document.body.appendChild(popup);
-  document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
-
-  var snap = await getDocs(collection(db, "users"));
-  var members = [];
-  snap.forEach(function(d) {
-    var data = d.data();
-    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
-    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
-    members.push({ uid: d.id, name, role });
-  });
-  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-
-  var html = members.map(function(m) {
-    var colors = getRoleColor(m.role);
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2a2a2a;">' +
-      '<div style="display:flex;align-items:center;gap:6px;">' +
-        '<span style="background:' + colors.bg + ';color:' + colors.color + ';padding:1px 5px;border-radius:4px;font-size:0.65rem;font-weight:bold;">' + getRoleAbbr(m.role) + '</span>' +
-        '<span style="color:#e0cfc0;cursor:pointer;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;">' +
-        '<a href="public-profile.html?uid=' + m.uid + '" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="View Profile">👤</a>' +
-        '<a href="public-profile.html?uid=' + m.uid + '&msg=1" style="color:#d4af37;text-decoration:none;font-size:0.75rem;" title="Send Message">✉</a>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  document.getElementById('adminMembersList').innerHTML = html || '<span style="color:#555;">No members found.</span>';
-};
-
-// ========== SIGN OUT ==========
-window.sorcSignOut = function() {
-  signOut(auth);
-  localStorage.removeItem('sorc_google_user');
-  window.location.reload();
-};
-async function getUserRoleFromDB(uid, email) {
-  var docRef = doc(db, "users", uid);
-  var docSnap = await getDoc(docRef);
-  var data = docSnap.exists() ? docSnap.data() : {};
-  var username = data.username || data.displayName || '';
-  var avatar = data.avatar || null;
-  var userId = data.userId || '';
-  var role = data.role || 'CIVILIAN';
-
-  if (OWNER_EMAILS.includes(email)) role = 'OWNER';
-  else if (ADMIN_EMAILS.includes(email)) role = 'ADMIN';
-
-  if (!docSnap.exists()) {
-    await setDoc(docRef, { email: email, role: 'CIVILIAN', displayName: '' });
-  }
-
-  // Grant upgrade points if eligible
-  if (role === 'PLAYER' || role === 'MASTER') {
-    await grantRoleUpgradePoints(uid, role, data);
-  }
-
-  return { role, username, avatar, userId };
-}
-
-// ========== AUTH STATE ==========
-onAuthStateChanged(auth, async function(user) {
-  if (user) {
-    if (!user.emailVerified && user.providerData[0] && user.providerData[0].providerId === 'password') {
-      alert('Please verify your email before signing in. Check your inbox for a verification link.');
-      signOut(auth); return;
-    }
-    var data = await getUserRoleFromDB(user.uid, user.email);
-    showRoleBadge(user.email, data.username, data.role, data.avatar, data.userId);
-  } else {
-    // Check for Google localStorage session
-    try {
-      var saved = localStorage.getItem('sorc_google_user');
-      if (saved) {
-        var googleUser = JSON.parse(saved);
-        var role = OWNER_EMAILS.includes(googleUser.email) ? 'OWNER' : ADMIN_EMAILS.includes(googleUser.email) ? 'ADMIN' : (googleUser.role || 'CIVILIAN');
-        var data = {};
-        try {
-          var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-          if (docSnap.exists()) data = docSnap.data();
-        } catch(e) {}
-        showRoleBadge(googleUser.email, googleUser.username || googleUser.name || '', role, googleUser.avatar || null, googleUser.userId || '');
-      }
-    } catch(e) { localStorage.removeItem('sorc_google_user'); }
-  }
-});
-
-// ========== EMAIL SIGNUP ==========
-window.sorcSignUp = function(email, password) {
-  if (!email || !password) { alert('Please enter an email and password.'); return; }
-  createUserWithEmailAndPassword(auth, email, password).then(async function(result) {
-    await sendEmailVerification(result.user);
-    await setDoc(doc(db, "users", result.user.uid), { email: email, role: 'CIVILIAN', displayName: '', accountType: 'CIVILIAN', communityPoints: 0 });
-    signOut(auth);
-    document.querySelectorAll('.verify-notice').forEach(function(n) { n.style.display = 'block'; });
-    document.querySelectorAll('#signupForm, #signupForm2').forEach(function(f) { f.style.display = 'none'; });
-  }).catch(function(error) { alert('Sign up failed: ' + error.message); });
-};
-
-// ========== EMAIL SIGN IN ==========
-window.sorcSignIn = function(email, password) {
-  if (!email || !password) { alert('Please enter your email and password.'); return; }
-  signInWithEmailAndPassword(auth, email, password).then(async function(result) {
-    if (!result.user.emailVerified) {
-      alert('Please verify your email first. Check your inbox for a verification link.');
-      signOut(auth); return;
-    }
-    var data = await getUserRoleFromDB(result.user.uid, result.user.email);
-    showRoleBadge(result.user.email, data.username, data.role, data.avatar, data.userId);
-  }).catch(function(error) { alert('Sign in failed: ' + error.message); });
-};
-
 // ========== ADMIN PANEL ==========
 function showAdminPanel() {
   if (document.querySelector('.admin-panel')) return;
@@ -477,9 +269,7 @@ function showAdminPanel() {
     '</div>' +
     '<div id="adminPanelContent">' +
       '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
-      '<button onclick="loadUsers()" style="background:#555;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;">View All Users</button>' +
       '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
-      '<div id="userList" style="margin-top:10px;font-size:0.8rem;max-height:200px;overflow-y:auto;"></div>' +
     '</div>';
   document.body.appendChild(panel);
 }
@@ -491,37 +281,30 @@ window.toggleAdminPanel = function() {
   else { content.style.display = 'none'; btn.textContent = '+'; }
 };
 
-window.generateGMCode = async function() {
+window.generateGMCode = function() {
   var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-  await addDoc(collection(db, "gm_codes"), { code: code, used: false, createdAt: new Date() });
   document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
 };
 
-window.loadUsers = async function() {
-  var userListEl = document.getElementById('userList');
-  userListEl.innerHTML = 'Loading...';
-  var snap = await getDocs(collection(db, "users"));
-  var members = [];
-  snap.forEach(function(d) {
-    var data = d.data();
-    var role = OWNER_EMAILS.includes(data.email) ? 'OWNER' : ADMIN_EMAILS.includes(data.email) ? 'ADMIN' : (data.role || 'CIVILIAN');
-    var name = data.username || data.displayName || (data.email ? data.email.split('@')[0] : 'Unknown');
-    members.push({ uid: d.id, name, role, userId: data.userId || '' });
-  });
-  members.sort(function(a, b) { return a.name.localeCompare(b.name); });
-  var html = '<table style="width:100%;border-collapse:collapse;">' +
-    '<tr style="color:#d4af37;border-bottom:1px solid #444;">' +
-      '<th style="text-align:left;padding:4px;">Username</th>' +
-      '<th style="text-align:left;padding:4px;">Role</th>' +
-      '<th style="text-align:left;padding:4px;">ID</th>' +
-    '</tr>';
-  members.forEach(function(m) {
-    html += '<tr style="border-bottom:1px solid #333;">' +
-      '<td style="padding:4px;"><span style="color:#d4af37;cursor:pointer;text-decoration:underline;" onclick="showUserMiniPopup(event, \'' + m.uid + '\', \'' + m.name.replace(/'/g, "\\'") + '\')">' + m.name + '</span></td>' +
-      '<td style="padding:4px;">' + m.role + '</td>' +
-      '<td style="padding:4px;">#' + m.userId + '</td>' +
-    '</tr>';
-  });
-  html += '</table>';
-  userListEl.innerHTML = html;
-};
+// ========== AUTH STATE — reads from localStorage, no Firebase ==========
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    var saved = localStorage.getItem('sorc_user');
+    if (saved) {
+      var user = JSON.parse(saved);
+      if (user && user.authKey) {
+        // Show role badge
+        showRoleBadge(user);
+        // Update profile button
+        if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(user.avatar || null);
+      } else {
+        if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
+      }
+    } else {
+      if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
+    }
+  } catch(e) {
+    localStorage.removeItem('sorc_user');
+    if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
+  }
+});
