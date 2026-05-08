@@ -1,12 +1,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Env }>();
 
 interface Env {
   sorc_db: D1Database;
   sorc_files: R2Bucket;
-  Y: D1Database;
+  AVATARS: R2Bucket;
+  FORUM_MEDIA: R2Bucket;
+  SESSIONS: KVNamespace;
   ASSETS: Fetcher;
   OPENAI_API_KEY: string;
 }
@@ -17,120 +19,119 @@ app.use('*', cors({
   credentials: true,
 }));
 
-              const authMiddleware = async (c, next) => {
-                const authKey = c.req.header('X-Auth-Key');
-                  
-                    if (!authKey) {
-                        return c.json({ error: 'Missing auth key' }, 401);
-                          }
+const authMiddleware = async (c: any, next: any) => {
+  const authKey = c.req.header('X-Auth-Key');
 
-                            const user = await c.env.sorc_db.prepare(
-                                'SELECT * FROM users WHERE auth_key = ?'
-                                  ).bind(authKey).first();
+  if (!authKey) {
+    return c.json({ error: 'Missing auth key' }, 401);
+  }
 
-                                    if (!user) {
-                                        return c.json({ error: 'Invalid auth key' }, 401);
-                                          }
+  const user = await c.env.sorc_db.prepare(
+    'SELECT * FROM users WHERE auth_key = ?'
+  ).bind(authKey).first();
 
-                                            c.set('user', user);
-                                              c.set('authKey', authKey);
-                                                await next();
-                                                };
+  if (!user) {
+    return c.json({ error: 'Invalid auth key' }, 401);
+  }
 
-                                                app.post('/api/auth/register', async (c) => {
-                                                  const { email, password, username, firstName, accountType } = await c.req.json();
+  c.set('user', user);
+  c.set('authKey', authKey);
+  await next();
+};
 
-                                                    if (!email || !username) {
-                                                        return c.json({ error: 'Email and username required' }, 400);
-                                                          }
+app.post('/api/auth/register', async (c) => {
+  const { email, password, username, firstName, accountType } = await c.req.json();
 
-                                                            if (!/^[a-zA-Z0-9-]+$/.test(username) || username.includes('_')) {
-                                                                return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
-                                                                  }
+  if (!email || !username) {
+    return c.json({ error: 'Email and username required' }, 400);
+  }
 
-                                                                    const existingUser = await c.env.sorc_db.prepare(
-                                                                        'SELECT id FROM users WHERE email = ? OR username = ?'
-                                                                          ).bind(email, username).first();
+  if (!/^[a-zA-Z0-9-]+$/.test(username) || username.includes('_')) {
+    return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+  }
 
-                                                                            if (existingUser) {
-                                                                                return c.json({ error: 'Email or username already exists' }, 400);
-                                                                                  }
+  const existingUser = await c.env.sorc_db.prepare(
+    'SELECT id FROM users WHERE email = ? OR username = ?'
+  ).bind(email, username).first();
 
-                                                                                    const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
-                                                                                      const userId = Math.floor(Math.random() * 90000) + 10000;
-                                                                                        const now = new Date().toISOString();
-                                                                                          const uuid = crypto.randomUUID();
+  if (existingUser) {
+    return c.json({ error: 'Email or username already exists' }, 400);
+  }
 
-                                                                                            try {
-                                                                                                await c.env.sorc_db.prepare(`
-                                                                                                      INSERT INTO users (
-                                                                                                              id, email, auth_key, username, display_name, first_name, 
-                                                                                                                      role, join_date, created_at, updated_at, user_id
-                                                                                                                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                                                                                                                `).bind(
-                                                                                                                                      uuid,
-                                                                                                                                            email,
-                                                                                                                                                  authKey,
-                                                                                                                                                        username,
-                                                                                                                                                              firstName || username,
-                                                                                                                                                                    firstName || '',
-                                                                                                                                                                          'CIVILIAN',
-                                                                                                                                                                                now,
-                                                                                                                                                                                      now,
-                                                                                                                                                                                            now,
-                                                                                                                                                                                                  userId
-                                                                                                                                                                                                      ).run();
+  const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
+  const userId = Math.floor(Math.random() * 90000) + 10000;
+  const now = new Date().toISOString();
+  const uuid = crypto.randomUUID();
 
-                                                                                                                                                                                                          const newUser = await c.env.sorc_db.prepare(
-                                                                                                                                                                                                                'SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?'
-                                                                                                                                                                                                                    ).bind(email).first();
+  try {
+    await c.env.sorc_db.prepare(`
+      INSERT INTO users (
+        id, email, auth_key, username, display_name, first_name,
+        role, join_date, created_at, updated_at, user_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      uuid,
+      email,
+      authKey,
+      username,
+      firstName || username,
+      firstName || '',
+      'CIVILIAN',
+      now,
+      now,
+      now,
+      userId
+    ).run();
 
-                                                                                                                                                                                                                        return c.json({
-                                                                                                                                                                                                                              success: true,
-                                                                                                                                                                                                                                    user: newUser,
-                                                                                                                                                                                                                                          authKey: authKey,
-                                                                                                                                                                                                                                              });
-                                                                                                                                                                                                                                                } catch (error) {
-                                                                                                                                                                                                                                                    return c.json({ error: 'Registration failed', details: error.message }, 500);
-                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                      });
+    const newUser = await c.env.sorc_db.prepare(
+      'SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?'
+    ).bind(email).first();
 
-                                                                                                                                                                                                                                                      app.post('/api/auth/signin', async (c) => {
-                                                                                                                                                                                                                                                        const { email, username, password } = await c.req.json();
+    return c.json({
+      success: true,
+      user: newUser,
+      authKey: authKey,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Registration failed', details: error.message }, 500);
+  }
+});
 
-                                                                                                                                                                                                                                                          if (!email && !username) {
-                                                                                                                                                                                                                                                              return c.json({ error: 'Email or username required' }, 400);
-                                                                                                                                                                                                                                                                }
+app.post('/api/auth/signin', async (c) => {
+  const { email, username, password } = await c.req.json();
 
-                                                                                                                                                                                                                                                                  const user = await c.env.sorc_db.prepare(
-                                                                                                                                                                                                                                                                      'SELECT * FROM users WHERE email = ? OR username = ?'
-                                                                                                                                                                                                                                                                        ).bind(email || '', username || '').first();
+  if (!email && !username) {
+    return c.json({ error: 'Email or username required' }, 400);
+  }
 
-                                                                                                                                                                                                                                                                          if (!user) {
-                                                                                                                                                                                                                                                                              return c.json({ error: 'Invalid credentials' }, 401);
-                                                                                                                                                                                                                                                                        }
+  const user = await c.env.sorc_db.prepare(
+    'SELECT * FROM users WHERE email = ? OR username = ?'
+  ).bind(email || '', username || '').first();
 
-                                                                                                                                                                                                                                                                            // Generate new auth key
-                                                                                                                                                                                                                                                                            const authKey = btoa(`${user.email}:${Date.now()}:${Math.random()}`);
+  if (!user) {
+    return c.json({ error: 'Invalid credentials' }, 401);
+  }
 
-await c.env.sorc_db.prepare(
-                                                                                                                                                                                                                                                                                  'UPDATE users SET auth_key = ? WHERE id = ?'
-                                                                                                                                                                                                                                                                                    ).bind(authKey, user.id).run();
+  const authKey = btoa(`${user.email}:${Date.now()}:${Math.random()}`);
 
-                                                                                                                                                                                                                                                                                      return c.json({
-                                                                                                                                                                                                                                                                                          success: true,
-                                                                                                                                                                                                                                                                                            user: {
-                                                                                                                                                                                                                                                                                                id: user.id,
-                                                                                                                                                                                                                                                                                                  email: user.email,
-                                                                                                                                                                                                                                                                                                    username: user.username,
-                                                                                                                                                                                                                                                                                                      display_name: user.display_name,
-                                                                                                                                                                                                                                                                                                        role: user.role,
-                                                                                                                                                                                                                                                                                                          community_points: user.community_points,
-                                                                                                                                                                                                                                                                                                            created_at: user.created_at
-                                                                                                                                                                                                                                                                                                              },
-                                                                                                                                                                                                                                                                                                                authKey: authKey
-                                                                                                                                                                                                                                                                                                                  });
-                                                                                                                                                                                                                                                                                                                    });
+  await c.env.sorc_db.prepare(
+    'UPDATE users SET auth_key = ? WHERE id = ?'
+  ).bind(authKey, user.id).run();
+
+  return c.json({
+    success: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      display_name: user.display_name,
+      role: user.role,
+      community_points: user.community_points,
+      created_at: user.created_at
+    },
+    authKey: authKey
+  });
+});
 
 app.post('/api/ai/chat', authMiddleware, async (c) => {
   const body = await c.req.json();
@@ -154,12 +155,7 @@ app.post('/api/ai/chat', authMiddleware, async (c) => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: maxTokens,
-      temperature
-    })
+    body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature })
   });
 
   const aiData = await response.json();
@@ -182,11 +178,10 @@ app.get('/api/forum/categories', async (c) => {
       { id: 'lfg', name: 'Looking for Group', icon: '⚔️', desc: 'Find players and Game Masters for home campaigns and SORC Beyond lobbies.', color: '#3a1a00' }
     ];
 
-    // Add thread counts and last post info
-    for (const cat of categories) {
+    for (const cat of categories as any[]) {
       const threadCount = await c.env.sorc_db.prepare(
         'SELECT COUNT(*) as count FROM threads WHERE category_id = ?'
-      ).bind(cat.id).first();
+      ).bind(cat.id).first() as any;
 
       const lastPost = await c.env.sorc_db.prepare(`
         SELECT t.last_reply_at, t.title, u.username as author_name
@@ -195,9 +190,9 @@ app.get('/api/forum/categories', async (c) => {
         WHERE t.category_id = ?
         ORDER BY t.last_reply_at DESC
         LIMIT 1
-      `).bind(cat.id).first();
+      `).bind(cat.id).first() as any;
 
-      cat.threadCount = threadCount.count || 0;
+      cat.threadCount = threadCount?.count || 0;
       cat.lastPost = lastPost ? {
         time: lastPost.last_reply_at,
         title: lastPost.title,
@@ -206,7 +201,7 @@ app.get('/api/forum/categories', async (c) => {
     }
 
     return c.json({ categories });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ error: 'Failed to load categories', details: error.message }, 500);
   }
 });
@@ -229,7 +224,7 @@ app.get('/api/forum/category/:categoryId', authMiddleware, async (c) => {
 
     const totalThreads = await c.env.sorc_db.prepare(
       'SELECT COUNT(*) as count FROM threads WHERE category_id = ?'
-    ).bind(categoryId).first();
+    ).bind(categoryId).first() as any;
 
     return c.json({
       threads: threads.results,
@@ -237,7 +232,7 @@ app.get('/api/forum/category/:categoryId', authMiddleware, async (c) => {
       page,
       totalPages: Math.ceil(totalThreads.count / limit)
     });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ error: 'Failed to load threads', details: error.message }, 500);
   }
 });
@@ -265,23 +260,19 @@ app.get('/api/forum/thread/:threadId', authMiddleware, async (c) => {
       ORDER BY p.created_at ASC
     `).bind(threadId).all();
 
-    // Update view count
     await c.env.sorc_db.prepare(
       'UPDATE threads SET views = views + 1 WHERE id = ?'
     ).bind(threadId).run();
 
-    return c.json({
-      thread,
-      posts: posts.results
-    });
-  } catch (error) {
+    return c.json({ thread, posts: posts.results });
+  } catch (error: any) {
     return c.json({ error: 'Failed to load thread', details: error.message }, 500);
   }
 });
 
 app.post('/api/forum/thread', authMiddleware, async (c) => {
   const { categoryId, title, body } = await c.req.json();
-  const user = c.get('user');
+  const user = c.get('user') as any;
 
   if (!title || !body) {
     return c.json({ error: 'Title and body required' }, 400);
@@ -296,27 +287,25 @@ app.post('/api/forum/thread', authMiddleware, async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(threadId, categoryId, title, body, user.id, user.display_name || user.username, user.role, now, now).run();
 
-    // Create first post
     const postId = crypto.randomUUID();
     await c.env.sorc_db.prepare(`
       INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, now).run();
 
-    // Update user post count
     await c.env.sorc_db.prepare(
       'UPDATE users SET post_count = post_count + 1 WHERE id = ?'
     ).bind(user.id).run();
 
     return c.json({ success: true, threadId });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ error: 'Failed to create thread', details: error.message }, 500);
   }
 });
 
 app.post('/api/forum/post', authMiddleware, async (c) => {
   const { threadId, body } = await c.req.json();
-  const user = c.get('user');
+  const user = c.get('user') as any;
 
   if (!body) {
     return c.json({ error: 'Body required' }, 400);
@@ -331,18 +320,16 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, now).run();
 
-    // Update thread reply count and last reply
     await c.env.sorc_db.prepare(`
       UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ?, last_reply_by = ? WHERE id = ?
     `).bind(now, user.display_name || user.username, threadId).run();
 
-    // Update user post count
     await c.env.sorc_db.prepare(
       'UPDATE users SET post_count = post_count + 1 WHERE id = ?'
     ).bind(user.id).run();
 
     return c.json({ success: true, postId });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ error: 'Failed to create post', details: error.message }, 500);
   }
 });
@@ -354,7 +341,7 @@ app.get('/api/profile/:userId', async (c) => {
 
   try {
     const user = await c.env.sorc_db.prepare(`
-      SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, 
+      SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio,
              role, community_points, post_count, titles, join_date, last_seen, created_at
       FROM users WHERE id = ? OR username = ?
     `).bind(userId, userId).first();
@@ -364,23 +351,21 @@ app.get('/api/profile/:userId', async (c) => {
     }
 
     return c.json({ user });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
   }
 });
 
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
-  const user = c.get('user');
+  const user = c.get('user') as any;
 
   const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar'];
-  const updateData = {};
-  const setParts = [];
-  const values = [];
+  const setParts: string[] = [];
+  const values: any[] = [];
 
   for (const field of allowedFields) {
     if (updates[field] !== undefined) {
-      updateData[field] = updates[field];
       setParts.push(`${field} = ?`);
       values.push(updates[field]);
     }
@@ -389,8 +374,6 @@ app.put('/api/profile', authMiddleware, async (c) => {
   if (setParts.length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400);
   }
-
-  values.push(user.id);
 
   try {
     await c.env.sorc_db.prepare(`
@@ -402,9 +385,18 @@ app.put('/api/profile', authMiddleware, async (c) => {
     ).bind(user.id).first();
 
     return c.json({ success: true, user: updatedUser });
-  } catch (error) {
+  } catch (error: any) {
     return c.json({ error: 'Failed to update profile', details: error.message }, 500);
   }
 });
 
-export default app;
+// ========== EXPORT — API routes first, then static assets ==========
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/')) {
+      return app.fetch(request, env, ctx);
+    }
+    return env.ASSETS.fetch(request);
+  }
+};
