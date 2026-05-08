@@ -3,10 +3,8 @@ import { cors } from 'hono/cors';
 
 interface Env {
   sorc_db: D1Database;
-  sorc_files: R2Bucket;
   AVATARS: R2Bucket;
   FORUM_MEDIA: R2Bucket;
-  OPENAI_API_KEY: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -23,14 +21,13 @@ const authMiddleware = async (c: any, next: any) => {
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE auth_key = ?').bind(authKey).first();
   if (!user) return c.json({ error: 'Invalid auth key' }, 401);
   c.set('user', user);
-  c.set('authKey', authKey);
   await next();
 };
 
 app.post('/api/auth/register', async (c) => {
-  const { email, password, username, firstName, accountType } = await c.req.json();
+  const { email, username, firstName } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
-  if (!/^[a-zA-Z0-9-]+$/.test(username) || username.includes('_')) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+  if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
   const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').bind(email, username).first();
   if (existingUser) return c.json({ error: 'Email or username already exists' }, 400);
   const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
@@ -38,10 +35,7 @@ app.post('/api/auth/register', async (c) => {
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
   try {
-    await c.env.sorc_db.prepare(`
-      INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId).run();
+    await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId).run();
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?').bind(email).first();
     return c.json({ success: true, user: newUser, authKey });
   } catch (error: any) {
@@ -59,44 +53,22 @@ app.post('/api/auth/signin', async (c) => {
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
 
-app.post('/api/ai/chat', authMiddleware, async (c) => {
-  const body = await c.req.json();
-  const messages = body.messages;
-  const model = body.model || 'gpt-4o-mini';
-  const maxTokens = typeof body.max_tokens === 'number' ? body.max_tokens : 500;
-  const temperature = typeof body.temperature === 'number' ? body.temperature : 0.7;
-  if (!Array.isArray(messages) || messages.length === 0) return c.json({ error: 'messages array is required' }, 400);
-  const apiKey = c.env.OPENAI_API_KEY;
-  if (!apiKey) return c.json({ error: 'OpenAI API key is not configured' }, 500);
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature })
-  });
-  const aiData = await response.json();
-  return c.json(aiData, response.status);
-});
-
-// ========== FORUM ENDPOINTS ==========
-
 app.get('/api/forum/categories', async (c) => {
   try {
     const categories: any[] = [
       { id: 'announcements', name: 'News & Announcements', icon: '📣', desc: null, color: '#d0021b', readOnly: true, adminOnly: true },
       { id: 'conduct', name: 'Conduct & Rules', icon: '⚖️', desc: 'The laws of Essentia and the SorC community. Read before you post.', color: '#8B0000', readOnly: true, adminOnly: true },
-      { id: 'general', name: 'General Discussion', icon: '💬', desc: 'The heart of the SorC community. Talk about anything and everything.', color: '#333' },
+      { id: 'general', name: 'General Discussion', icon: '💬', desc: 'The heart of the SorC community.', color: '#333' },
       { id: 'sorc-beyond', name: 'SORC Beyond', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Beyond platform.', color: '#1a3a6b' },
-      { id: 'x-roads', name: 'The X Roads', icon: '🗺', desc: "Where lore, legend, and mystery converge. Share campaign stories, discuss Essentia's history, prophecies, and secrets.", color: '#4a1a6b' },
-      { id: 'rules', name: 'Rules & Gameplay Advice', icon: '📖', desc: 'Questions, clarifications, and discussions about SorC mechanics and rules.', color: '#1a4a1a' },
-      { id: 'majestic-worlds', name: 'The Majestic Worlds of Essentia', icon: '🌍', desc: 'Harnessing the powers of Adoria, the thirteen worlds of Essentia breathe with magic, war, and wonder.', color: '#1a3a1a' },
-      { id: 'tawdry-dwarf', name: 'Tawdry Dwarf & Beyond', icon: '🔭', desc: "Far from Adoria's reach, where magic fades and ingenuity reigns.", color: '#1a1a3a' },
-      { id: 'lfg', name: 'Looking for Group', icon: '⚔️', desc: 'Find players and Game Masters for home campaigns and SORC Beyond lobbies.', color: '#3a1a00' }
+      { id: 'x-roads', name: 'The X Roads', icon: '🗺', desc: "Where lore, legend, and mystery converge.", color: '#4a1a6b' },
+      { id: 'rules', name: 'Rules & Gameplay Advice', icon: '📖', desc: 'Questions and discussions about SorC mechanics.', color: '#1a4a1a' },
+      { id: 'majestic-worlds', name: 'The Majestic Worlds of Essentia', icon: '🌍', desc: 'The thirteen worlds of Essentia.', color: '#1a3a1a' },
+      { id: 'tawdry-dwarf', name: 'Tawdry Dwarf & Beyond', icon: '🔭', desc: "Far from Adoria's reach.", color: '#1a1a3a' },
+      { id: 'lfg', name: 'Looking for Group', icon: '⚔️', desc: 'Find players and Game Masters.', color: '#3a1a00' }
     ];
     for (const cat of categories) {
       const threadCount = await c.env.sorc_db.prepare('SELECT COUNT(*) as count FROM threads WHERE category_id = ?').bind(cat.id).first() as any;
-      const lastPost = await c.env.sorc_db.prepare(`SELECT t.last_reply_at, t.title, u.username as author_name FROM threads t JOIN users u ON t.author_uid = u.id WHERE t.category_id = ? ORDER BY t.last_reply_at DESC LIMIT 1`).bind(cat.id).first() as any;
       cat.threadCount = threadCount?.count || 0;
-      cat.lastPost = lastPost ? { time: lastPost.last_reply_at, title: lastPost.title, author: lastPost.author_name } : null;
     }
     return c.json({ categories });
   } catch (error: any) {
@@ -164,8 +136,6 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   }
 });
 
-// ========== PROFILE ENDPOINTS ==========
-
 app.get('/api/profile/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
@@ -199,6 +169,4 @@ app.put('/api/profile', authMiddleware, async (c) => {
   }
 });
 
-export default {
-  fetch: (req: Request, env: Env, ctx: ExecutionContext) => app.fetch(req, env, ctx)
-};
+export default app;
