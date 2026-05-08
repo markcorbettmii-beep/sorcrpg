@@ -1,0 +1,27 @@
+name = "sorc-rpg-api"
+main = "src/index.ts"
+compatibility_date = "2025-05-06"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sorc-rpg"
+database_id = "sorc-rpg-prod"
+
+[[r2_buckets]]
+binding = "AVATARS"
+bucket_name = "sorc-avatars"
+
+[[r2_buckets]]
+binding = "FORUM_MEDIA"
+bucket_name = "sorc-forum-media"
+
+[env.production]
+vars = { ENVIRONMENT = "production", API_URL = "https://api.sorcrpg.com" }
+
+# Set your OpenAI secret using Wrangler secrets or Cloudflare dashboard.
+# Example: wrangler secret put OPENAI_API_KEY
+[env.development]
+vars = { ENVIRONMENT = "development", API_URL = "http://localhost:8787" }
+
+[triggers]
+crons = ["0 0 * * *"]
