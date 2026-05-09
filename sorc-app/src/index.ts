@@ -64,11 +64,8 @@ app.post('/api/auth/register', async (c) => {
       INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, verification_token)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, ?)
     `).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken).run();
-    
     await sendVerificationEmail(email, username, verificationToken, c.env.RESEND_API_KEY);
-    
-    const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at, email_verified FROM users WHERE email = ?').bind(email).first();
-    return c.json({ success: true, user: newUser, authKey, message: 'Please check your email to verify your account.' });
+    return c.json({ success: true, message: 'Please check your email to verify your account.' });
   } catch (error: any) {
     return c.json({ error: 'Registration failed', details: error.message }, 500);
   }
@@ -80,7 +77,7 @@ app.get('/api/auth/verify-email', async (c) => {
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired token' }, 400);
   await c.env.sorc_db.prepare('UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?').bind(user.id).run();
-  return c.redirect('https://sorcrpg.com/?verified=true');
+  return c.redirect('https://sorcrpg.com/signin?verified=true');
 });
 
 app.post('/api/auth/resend-verification', async (c) => {
@@ -100,6 +97,9 @@ app.post('/api/auth/signin', async (c) => {
   if (!email && !username) return c.json({ error: 'Email or username required' }, 400);
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
+  if (!user.email_verified) {
+    return c.json({ error: 'Please verify your email before signing in. Check your spam folder if you did not receive it.', unverified: true }, 403);
+  }
   const authKey = btoa(`${user.email}:${Date.now()}:${Math.random()}`);
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
   return c.json({
