@@ -283,24 +283,47 @@
         } catch(e) {}
     }
 
+    function roleChip(role) {
+        var map = { OWNER: ['OWN','#d4af37','#222'], ADMIN: ['AD','#8B0000','#fff'], MASTER: ['GM','#1a6b1a','#fff'], PLAYER: ['PC','#1a3a6b','#fff'] };
+        var r = map[role] || ['CIV','#2a2a2a','#888'];
+        return '<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:0.6rem;font-weight:bold;background:' + r[1] + ';color:' + r[2] + ';margin-left:3px;">' + r[0] + '</span>';
+    }
+
+    function visitorChip(v) {
+        var name = v.display_name || v.username || 'Unknown';
+        var ago = Date.now() - new Date(v.last_seen).getTime();
+        var isOnline = ago < 10 * 60 * 1000;
+        var dot = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + (isOnline ? '#4caf50' : '#d4af37') + ';margin-right:4px;vertical-align:middle;"></span>';
+        return '<a href="/public-profile.html?uid=' + encodeURIComponent(v.id) + '" class="online-user-chip">' + dot + name + roleChip(v.role) + '</a>';
+    }
+
     async function loadOnlineUsers() {
-        // Online users need last_seen tracking — show D1 users for now
         try {
             var authKey = currentUser ? currentUser.authKey : null;
-            if (!authKey) {
-                document.getElementById('currentlyOnline').innerHTML = '<span style="color:#444;font-size:0.8rem;">Sign in to see who\'s online</span>';
-                document.getElementById('recentlyOnline').innerHTML = '';
-                return;
+            if (authKey) {
+                fetch(API_URL + '/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Auth-Key': authKey },
+                    body: JSON.stringify({ last_seen: new Date().toISOString() })
+                });
             }
-            // Update last seen
-            await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': authKey },
-                body: JSON.stringify({ last_seen: new Date().toISOString() })
-            });
-            document.getElementById('currentlyOnline').innerHTML = '<span style="color:#444;font-size:0.8rem;">Online tracking coming soon</span>';
-            document.getElementById('recentlyOnline').innerHTML = '';
-        } catch(e) {}
+            var res = await fetch(API_URL + '/api/forum/recent-visitors');
+            var data = await res.json();
+            var visitors = data.visitors || [];
+            var now = Date.now();
+            var online  = visitors.filter(function(v) { return now - new Date(v.last_seen).getTime() < 10 * 60 * 1000; });
+            var recent  = visitors.filter(function(v) { var ago = now - new Date(v.last_seen).getTime(); return ago >= 10 * 60 * 1000; });
+
+            var onlineEl  = document.getElementById('currentlyOnline');
+            var recentEl  = document.getElementById('recentlyOnline');
+            var panelTitle = document.getElementById('onlinePanelTitle');
+
+            onlineEl.innerHTML  = online.length  ? online.map(visitorChip).join('') : '<span style="color:#444;font-size:0.8rem;">No one online right now</span>';
+            recentEl.innerHTML  = recent.length  ? recent.map(visitorChip).join('') : '<span style="color:#444;font-size:0.8rem;">No recent visitors</span>';
+            if (panelTitle) panelTitle.textContent = 'Who\'s Online (' + online.length + ')';
+        } catch(e) {
+            document.getElementById('currentlyOnline').innerHTML = '<span style="color:#444;font-size:0.8rem;">Could not load visitors</span>';
+        }
     }
 
     window.loadAllMembers = function() {
