@@ -241,4 +241,20 @@ app.put('/api/profile', authMiddleware, async (c) => {
   }
 });
 
+app.get('/api/forum/recent-visitors', async (c) => {
+  try {
+    const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const result = await c.env.sorc_db.prepare(
+      `SELECT id, username, display_name, role, avatar, last_seen
+       FROM users
+       WHERE last_seen >= ?
+       ORDER BY last_seen DESC
+       LIMIT 50`
+    ).bind(cutoff).all();
+    return c.json({ visitors: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load recent visitors', details: error.message }, 500);
+  }
+});
+
 export default app;
