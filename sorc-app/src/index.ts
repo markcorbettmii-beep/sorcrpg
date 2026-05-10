@@ -241,6 +241,119 @@ app.put('/api/profile', authMiddleware, async (c) => {
   }
 });
 
+// ===== FELLOWSHIPS =====
+
+app.get('/api/fellowships', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const result = await c.env.sorc_db.prepare(
+      `SELECT f.*,
+        su.role as role, su.avatar as avatar, su.last_seen as last_seen
+       FROM fellowships f
+       LEFT JOIN users su ON su.id = CASE WHEN f.sender_uid = ? THEN f.receiver_uid ELSE f.sender_uid END
+       WHERE (f.sender_uid = ? OR f.receiver_uid = ?) AND f.status = 'accepted'
+       ORDER BY f.accepted_at DESC`
+    ).bind(user.id, user.id, user.id).all();
+    return c.json({ fellows: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load fellowships', details: error.message }, 500);
+  }
+});
+
+app.get('/api/fellowships/requests/incoming', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const result = await c.env.sorc_db.prepare(
+      `SELECT f.*, su.role as role, su.avatar as avatar, su.last_seen as last_seen
+       FROM fellowships f
+       LEFT JOIN users su ON su.id = f.sender_uid
+       WHERE f.receiver_uid = ? AND f.status = 'pending'
+       ORDER BY f.created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ requests: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load requests', details: error.message }, 500);
+  }
+});
+
+app.get('/api/fellowships/requests/outgoing', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const result = await c.env.sorc_db.prepare(
+      `SELECT f.*, su.role as role, su.avatar as avatar, su.last_seen as last_seen
+       FROM fellowships f
+       LEFT JOIN users su ON su.id = f.receiver_uid
+       WHERE f.sender_uid = ? AND f.status = 'pending'
+       ORDER BY f.created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ requests: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load outgoing requests', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/request', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const { receiver_uid } = await c.req.json();
+    if (!receiver_uid) return c.json({ error: 'receiver_uid required' }, 400);
+    const receiver = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ?').bind(receiver_uid).first() as any;
+    if (!receiver) return c.json({ error: 'User not found' }, 404);
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT id FROM fellowships WHERE ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)) AND status IN ('pending','accepted')`
+    ).bind(user.id, receiver_uid, receiver_uid, user.id).first();
+    if (existing) return c.json({ error: 'Request already exists or already fellows' }, 409);
+    const id = crypto.randomUUID();
+    const senderName = user.display_name || user.username;
+    const receiverName = receiver.display_name || receiver.username;
+    await c.env.sorc_db.prepare(
+      `INSERT INTO fellowships (id, sender_uid, sender_name, receiver_uid, receiver_name, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?)`
+    ).bind(id, user.id, senderName, receiver_uid, receiverName, new Date().toISOString()).run();
+    return c.json({ success: true, id });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send request', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/:id/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const id = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(
+      `UPDATE fellowships SET status = 'accepted', accepted_at = ? WHERE id = ? AND receiver_uid = ? AND status = 'pending'`
+    ).bind(new Date().toISOString(), id, user.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to accept', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/:id/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const id = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(
+      `UPDATE fellowships SET status = 'declined' WHERE id = ? AND receiver_uid = ? AND status = 'pending'`
+    ).bind(id, user.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to decline', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/fellowships/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const id = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(
+      `DELETE FROM fellowships WHERE id = ? AND (sender_uid = ? OR receiver_uid = ?)`
+    ).bind(id, user.id, user.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to remove', details: error.message }, 500);
+  }
+});
+
 app.get('/api/forum/recent-visitors', async (c) => {
   try {
     const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();

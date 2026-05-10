@@ -171,15 +171,22 @@
         }
 
         async function renderApp() {
-            var [fellowsData, incomingData, outgoingData] = await Promise.all([
-                apiFetch('/api/fellowships'),
-                apiFetch('/api/fellowships/requests/incoming'),
-                apiFetch('/api/fellowships/requests/outgoing')
-            ]);
+            var fellowsData, incomingData, outgoingData;
+            try {
+                [fellowsData, incomingData, outgoingData] = await Promise.all([
+                    apiFetch('/api/fellowships'),
+                    apiFetch('/api/fellowships/requests/incoming'),
+                    apiFetch('/api/fellowships/requests/outgoing')
+                ]);
+            } catch(e) {
+                document.getElementById('fApp').innerHTML =
+                    '<div class="f-empty" style="color:#d0021b;">Could not load Fellowships. Please try again.</div>';
+                return;
+            }
 
-            var fellows   = fellowsData.fellows   || [];
-            var incoming  = incomingData.requests  || [];
-            var outgoing  = outgoingData.requests  || [];
+            var fellows   = (fellowsData && fellowsData.fellows)   || [];
+            var incoming  = (incomingData && incomingData.requests) || [];
+            var outgoing  = (outgoingData && outgoingData.requests) || [];
             var reqCount  = incoming.length;
 
             var pts = myUser.community_points || 0;
