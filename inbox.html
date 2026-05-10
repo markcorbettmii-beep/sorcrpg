@@ -21,25 +21,23 @@
         .inbox-panel.active { display: block; }
         .conversation-item { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 1rem; }
         .conversation-item:hover { border-color: #d0021b; }
-        .conversation-item.unread { border-color: #d4af37; }
         .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #888; border: 2px solid #333; flex-shrink: 0; }
         .conv-info { flex: 1; min-width: 0; }
         .conv-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
         .conv-preview { font-size: 0.78rem; color: #555; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .conv-time { font-size: 0.72rem; color: #444; flex-shrink: 0; }
-        .conv-badge { display: inline-block; background: #d4af37; color: #222; border-radius: 8px; padding: 1px 7px; font-size: 0.68rem; font-weight: bold; margin-left: 6px; }
-        .request-item { background: #1a1a2a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; }
-        .request-item .req-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
-        .request-item .req-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888; border: 2px solid #d4af37; flex-shrink: 0; }
-        .request-item .req-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
-        .request-item .req-text { font-size: 0.82rem; color: #888; margin-top: 2px; }
-        .request-item .req-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .request-card { background: #1a1a2a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; }
+        .request-card .req-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .request-card .req-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888; border: 2px solid #d4af37; flex-shrink: 0; }
+        .request-card .req-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
+        .request-card .req-text { font-size: 0.82rem; color: #888; margin-top: 2px; }
+        .request-card .req-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
         .btn { padding: 8px 18px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
         .btn-accept { background: #1a6b1a; color: #fff; }
         .btn-accept:hover { background: #125012; }
         .btn-decline { background: #333; color: #888; }
         .btn-decline:hover { background: #444; color: #e0cfc0; }
-        .btn-view { background: #1a3a6b; color: #fff; }
+        .btn-view { background: #1a3a6b; color: #fff; text-decoration: none; display: inline-flex; align-items: center; }
         .btn-view:hover { background: #122a55; }
         .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; line-height: 1.7; }
         .conversation-view { display: none; }
@@ -54,11 +52,9 @@
         .message-bubble { margin-bottom: 0.75rem; display: flex; flex-direction: column; }
         .message-bubble.mine { align-items: flex-end; }
         .message-bubble.theirs { align-items: flex-start; }
-        .message-bubble.system-msg { align-items: center; }
-        .bubble-inner { max-width: 75%; padding: 8px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; }
+        .bubble-inner { max-width: 75%; padding: 8px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.5; word-break: break-word; }
         .message-bubble.mine .bubble-inner { background: #d0021b; color: #fff; border-bottom-right-radius: 3px; }
         .message-bubble.theirs .bubble-inner { background: #222; color: #e0cfc0; border-bottom-left-radius: 3px; }
-        .message-bubble.system-msg .bubble-inner { background: #1a1a2a; color: #666; font-style: italic; font-size: 0.8rem; border-radius: 10px; }
         .bubble-sender { font-size: 0.7rem; color: #555; margin-bottom: 2px; }
         .msg-input-row { display: flex; gap: 0.5rem; }
         .msg-input-row input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; }
@@ -67,238 +63,134 @@
         .msg-input-row button:hover { background: #a50013; }
         .not-logged-in { text-align: center; padding: 3rem; color: #555; }
         .not-logged-in a { color: #d4af37; }
-
-        /* Fellowship request message card inside inbox */
-        .fellowship-request-card {
-            background: #1a1a00;
-            border: 1px solid #d4af37;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 0.75rem;
-        }
-        .fellowship-request-card .fr-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.5rem;
-        }
-        .fellowship-request-card .fr-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #2a2a2a;
-            border: 2px solid #d4af37;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-            color: #d4af37;
-            flex-shrink: 0;
-        }
-        .fellowship-request-card .fr-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
-        .fellowship-request-card .fr-text { font-size: 0.85rem; color: #888; margin-top: 2px; }
-        .fellowship-request-card .fr-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-        .fellowship-request-card .fr-status { font-size: 0.82rem; color: #4caf50; margin-top: 0.5rem; font-style: italic; }
+        body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
+        body.lawful-mode .inbox-tab { background: #f5f5f0; color: #2c2c2c; border-color: #ccc; }
+        body.lawful-mode .conversation-item,
+        body.lawful-mode .request-card { background: #fff; border-color: #e0e0e0; }
+        body.lawful-mode .bubble-inner { background: #e0e0e0 !important; color: #2c2c2c !important; }
+        body.lawful-mode .message-bubble.mine .bubble-inner { background: #d0021b !important; color: #fff !important; }
     </style>
 </head>
 <body>
     <div class="inbox-container">
         <div class="inbox-header">
             <h1>Inbox</h1>
-            <p>Your messages and requests</p>
+            <p>Your messages and fellowship requests</p>
         </div>
         <div id="inboxApp"><div class="not-logged-in"><p>Loading...</p></div></div>
     </div>
     <div id="footer"></div>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // SECURITY: Firebase API keys are public by design, but you MUST enforce
-        // strict Firestore Security Rules in the Firebase console to prevent
-        // unauthorized reads/writes. Verify rules at:
-        // https://console.firebase.google.com/project/sorc-a1393/firestore/rules
-        const firebaseConfig = {
-            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-            authDomain: "sorc-a1393.firebaseapp.com",
-            projectId: "sorc-a1393",
-            storageBucket: "sorc-a1393.firebasestorage.app",
-            messagingSenderId: "303646936307",
-            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
-        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-
-        var currentUser = null;
-        var currentUserData = null;
-        var googleUser = null;
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+        var myUser = null;
         var myUid = null;
-        var myUsername = null;
-        var currentOtherUid = null;
+        var myAuthKey = null;
+        var activeConvId = null;
+        var activeOtherUid = null;
+        var activeOtherName = null;
 
-        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
+        (function() {
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) { try { myUser = JSON.parse(saved); } catch(e) {} }
+            if (myUser && myUser.authKey) {
+                myUid = myUser.id;
+                myAuthKey = myUser.authKey;
+            }
+            var theme = localStorage.getItem('themeSelected') || 'evil';
+            if (theme === 'lawful') document.body.classList.add('lawful-mode');
+        })();
 
-        function getUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
-        function getEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
         function timeAgo(ts) {
             if (!ts) return '';
-            var d = ts.toDate ? ts.toDate() : new Date(ts);
-            var s = Math.floor((new Date() - d) / 1000);
+            var d = new Date(ts);
+            var s = Math.floor((Date.now() - d) / 1000);
             if (s < 60) return 'Just now';
             if (s < 3600) return Math.floor(s / 60) + 'm ago';
             if (s < 86400) return Math.floor(s / 3600) + 'h ago';
             return Math.floor(s / 86400) + 'd ago';
         }
 
-        onAuthStateChanged(auth, async function(user) {
-            if (user) {
-                currentUser = user;
-                var snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists()) currentUserData = snap.data();
-            } else if (googleUser) {
-                try {
-                    var snap = await getDoc(doc(db, "users", googleUser.googleId));
-                    if (snap.exists()) currentUserData = snap.data();
-                } catch(e) {}
-            }
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'X-Auth-Key': myAuthKey };
+        }
 
-            myUid = getUid();
+        async function apiFetch(path, opts) {
+            var res = await fetch(API_URL + path, Object.assign({ headers: authHeaders() }, opts || {}));
+            return res.json();
+        }
+
+        async function init() {
             if (!myUid) {
-                document.getElementById('inboxApp').innerHTML = '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
+                document.getElementById('inboxApp').innerHTML =
+                    '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
                 return;
             }
-
-            var data = currentUserData || {};
-            var email = getEmail();
-            myUsername = data.username || data.displayName || email.split('@')[0];
-
             await renderInbox();
-        });
+        }
 
         async function renderInbox() {
-            // Load message conversations (non-fellowship-request)
-            var msgSnap1 = await getDocs(query(collection(db, "conversations"), where("senderUid", "==", myUid)));
-            var msgSnap2 = await getDocs(query(collection(db, "conversations"), where("receiverUid", "==", myUid)));
-
-            var conversations = [];
-            var pendingRequests = [];
-            var fellowshipRequests = [];
-            var seen = new Set();
-
-            function processConv(d) {
-                if (seen.has(d.id)) return;
-                seen.add(d.id);
-                var data = d.data();
-
-                // Fellowship request inbox messages
-                if (data.isFellowshipRequest && data.receiverUid === myUid) {
-                    fellowshipRequests.push({ id: d.id, ...data });
-                    return;
-                }
-                if (data.isFellowshipRequest) return; // sender sees it in profile
-
-                if (data.status === 'accepted') {
-                    conversations.push({ id: d.id, ...data });
-                } else if (data.status === 'pending' && data.receiverUid === myUid) {
-                    pendingRequests.push({ id: d.id, ...data });
-                }
-            }
-
-            msgSnap1.forEach(processConv);
-            msgSnap2.forEach(processConv);
-
-            conversations.sort(function(a, b) {
-                var ta = a.lastMessageAt ? (a.lastMessageAt.toDate ? a.lastMessageAt.toDate() : new Date(a.lastMessageAt)) : new Date(0);
-                var tb = b.lastMessageAt ? (b.lastMessageAt.toDate ? b.lastMessageAt.toDate() : new Date(b.lastMessageAt)) : new Date(0);
-                return tb - ta;
-            });
-
-            var reqCount = pendingRequests.length + fellowshipRequests.length;
+            var [convsData, reqData] = await Promise.all([
+                apiFetch('/api/conversations'),
+                apiFetch('/api/fellowships/requests/incoming')
+            ]);
+            var conversations = convsData.conversations || [];
+            var fellowRequests = reqData.requests || [];
+            var reqCount = fellowRequests.length;
 
             document.getElementById('inboxApp').innerHTML =
                 '<div class="inbox-tabs">' +
                     '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>' +
                     '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">' +
-                        'Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') +
+                        'Fellowship Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') +
                     '</button>' +
                 '</div>' +
                 '<div class="inbox-panel active" id="panel_messages"></div>' +
                 '<div class="inbox-panel" id="panel_requests"></div>' +
                 '<div class="conversation-view" id="convView"></div>';
 
-            // Messages tab
             var msgPanel = document.getElementById('panel_messages');
             if (conversations.length === 0) {
-                msgPanel.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit someone\'s profile to start a conversation.</div>';
+                msgPanel.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit a Fellow\'s profile to start a conversation.</div>';
             } else {
                 msgPanel.innerHTML = conversations.map(function(conv) {
-                    var otherName = conv.senderUid === myUid ? conv.receiverName : conv.senderName;
-                    var otherUid = conv.senderUid === myUid ? conv.receiverUid : conv.senderUid;
-                    return '<div class="conversation-item" onclick="openConversation(\'' + conv.id + '\', \'' + otherUid + '\', \'' + (otherName || 'Unknown').replace(/'/g, "\\'") + '\')">' +
-                        '<div class="conv-avatar">' + (otherName ? otherName.charAt(0).toUpperCase() : '?') + '</div>' +
+                    var otherUid = conv.user1_uid === myUid ? conv.user2_uid : conv.user1_uid;
+                    var otherName = conv.user1_uid === myUid ? conv.user2_name : conv.user1_name;
+                    return '<div class="conversation-item" onclick="openConversation(\'' + escapeHtml(conv.id) + '\', \'' + escapeHtml(otherUid) + '\', \'' + escapeHtml(otherName).replace(/'/g,"\\'") + '\')">' +
+                        '<div class="conv-avatar">' + escapeHtml((otherName || '?').charAt(0).toUpperCase()) + '</div>' +
                         '<div class="conv-info">' +
-                            '<div class="conv-name">' + (otherName || 'Unknown') + '</div>' +
-                            '<div class="conv-preview">' + (conv.lastMessageText || '...') + '</div>' +
+                            '<div class="conv-name">' + escapeHtml(otherName || 'Unknown') + '</div>' +
+                            '<div class="conv-preview">' + escapeHtml(conv.last_message_text || '...') + '</div>' +
                         '</div>' +
-                        '<div class="conv-time">' + timeAgo(conv.lastMessageAt) + '</div>' +
+                        '<div class="conv-time">' + timeAgo(conv.last_message_at) + '</div>' +
                     '</div>';
                 }).join('');
             }
 
-            // Requests tab — message requests + fellowship requests
             var reqPanel = document.getElementById('panel_requests');
-            var reqHtml = '';
-
-            // Fellowship requests first
-            fellowshipRequests.forEach(function(conv) {
-                var senderName = conv.senderName || 'Unknown';
-                reqHtml +=
-                    '<div class="fellowship-request-card" id="fr_' + conv.id + '">' +
-                        '<div class="fr-header">' +
-                            '<div class="fr-avatar">⚔️</div>' +
-                            '<div>' +
-                                '<div class="fr-name">' + senderName + '</div>' +
-                                '<div class="fr-text">wants to be your Fellow...</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="fr-actions">' +
-                            '<button class="btn btn-accept" onclick="acceptFellowshipFromInbox(\'' + conv.id + '\', \'' + conv.fellowshipId + '\', \'' + conv.senderUid + '\', \'' + senderName.replace(/'/g, "\\'") + '\')">✅ Accept</button>' +
-                            '<button class="btn btn-decline" onclick="declineFellowshipFromInbox(\'' + conv.id + '\', \'' + conv.fellowshipId + '\')">Decline</button>' +
-                            '<a href="public-profile.html?uid=' + conv.senderUid + '" class="btn btn-view" style="text-decoration:none;">👤 View Profile</a>' +
-                        '</div>' +
-                    '</div>';
-            });
-
-            // Message requests
-            pendingRequests.forEach(function(conv) {
-                var senderName = conv.senderName || 'Unknown';
-                reqHtml +=
-                    '<div class="request-item" id="req_' + conv.id + '">' +
+            if (fellowRequests.length === 0) {
+                reqPanel.innerHTML = '<div class="empty-state">No pending Fellowship requests.</div>';
+            } else {
+                reqPanel.innerHTML = fellowRequests.map(function(req) {
+                    return '<div class="request-card" id="fr_' + escapeHtml(req.id) + '">' +
                         '<div class="req-header">' +
-                            '<div class="req-avatar">' + senderName.charAt(0).toUpperCase() + '</div>' +
+                            '<div class="req-avatar">⚔️</div>' +
                             '<div>' +
-                                '<div class="req-name">' + senderName + '</div>' +
-                                '<div class="req-text">sent you a message request</div>' +
+                                '<div class="req-name">' + escapeHtml(req.sender_name) + '</div>' +
+                                '<div class="req-text">wants to be your Fellow</div>' +
                             '</div>' +
                         '</div>' +
                         '<div class="req-actions">' +
-                            '<button class="btn btn-accept" onclick="acceptMessageRequest(\'' + conv.id + '\', \'' + conv.senderUid + '\', \'' + senderName.replace(/'/g, "\\'") + '\')">Accept</button>' +
-                            '<button class="btn btn-decline" onclick="declineMessageRequest(\'' + conv.id + '\')">Decline</button>' +
-                            '<button class="btn btn-view" onclick="openConversation(\'' + conv.id + '\', \'' + conv.senderUid + '\', \'' + senderName.replace(/'/g, "\\'") + '\')">Read</button>' +
+                            '<button class="btn btn-accept" onclick="acceptFellowship(\'' + escapeHtml(req.id) + '\')">✅ Accept</button>' +
+                            '<button class="btn btn-decline" onclick="declineFellowship(\'' + escapeHtml(req.id) + '\')">Decline</button>' +
+                            '<a href="public-profile.html?uid=' + escapeHtml(req.sender_uid) + '" class="btn btn-view">👤 Profile</a>' +
                         '</div>' +
                     '</div>';
-            });
-
-            if (!reqHtml) {
-                reqPanel.innerHTML = '<div class="empty-state">No pending requests.</div>';
-            } else {
-                reqPanel.innerHTML = reqHtml;
+                }).join('');
             }
         }
 
@@ -311,142 +203,84 @@
         };
 
         window.openConversation = async function(convId, otherUid, otherName) {
-            currentOtherUid = otherUid;
-            var tabsEl = document.querySelector('.inbox-tabs');
-            var panelsEl = document.querySelectorAll('.inbox-panel');
-            if (tabsEl) tabsEl.style.display = 'none';
-            panelsEl.forEach(function(p) { p.style.display = 'none'; });
+            activeConvId = convId;
+            activeOtherUid = otherUid;
+            activeOtherName = otherName;
 
+            document.querySelector('.inbox-tabs').style.display = 'none';
+            document.querySelectorAll('.inbox-panel').forEach(function(p) { p.style.display = 'none'; });
             var convView = document.getElementById('convView');
             convView.classList.add('open');
             convView.innerHTML =
                 '<div class="conv-view-header">' +
                     '<button class="back-btn" onclick="closeConversation()">← Back</button>' +
-                    '<div class="conv-view-name">' + otherName + '</div>' +
-                    '<a href="public-profile.html?uid=' + otherUid + '" class="conv-view-link">View Profile</a>' +
+                    '<div class="conv-view-name">' + escapeHtml(otherName) + '</div>' +
+                    '<a href="public-profile.html?uid=' + escapeHtml(otherUid) + '" class="conv-view-link">View Profile</a>' +
                 '</div>' +
-                '<div class="messages-list" id="messagesList">Loading...</div>' +
+                '<div class="messages-list" id="messagesList"><p style="color:#555;text-align:center;">Loading...</p></div>' +
                 '<div class="msg-input-row">' +
-                    '<input type="text" id="msgInput" placeholder="Write a message..." onkeydown="if(event.key===\'Enter\') sendMessage(\'' + convId + '\')" />' +
-                    '<button onclick="sendMessage(\'' + convId + '\')">Send</button>' +
+                    '<input type="text" id="msgInput" placeholder="Write a message..." autocomplete="off" />' +
+                    '<button onclick="sendMessage()">Send</button>' +
                 '</div>';
 
-            var messagesSnap = await getDocs(query(collection(db, "conversations", convId, "messages"), orderBy("createdAt", "asc")));
-            var messages = [];
-            messagesSnap.forEach(function(d) { messages.push({ id: d.id, ...d.data() }); });
+            document.getElementById('msgInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') sendMessage();
+            });
 
+            await loadMessages();
+        };
+
+        async function loadMessages() {
+            var data = await apiFetch('/api/conversations/' + activeConvId);
+            var messages = data.messages || [];
             var listEl = document.getElementById('messagesList');
+            if (!listEl) return;
             if (messages.length === 0) {
                 listEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:1rem;">No messages yet.</div>';
             } else {
                 listEl.innerHTML = messages.map(function(msg) {
-                    if (msg.isSystem) {
-                        return '<div class="message-bubble system-msg"><div class="bubble-inner">' + msg.text + '</div></div>';
-                    }
-                    var isMine = msg.senderUid === myUid;
+                    var isMine = msg.sender_uid === myUid;
                     return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
-                        (!isMine ? '<div class="bubble-sender">' + (msg.senderName || '') + '</div>' : '') +
-                        '<div class="bubble-inner">' + msg.text + '</div>' +
+                        (!isMine ? '<div class="bubble-sender">' + escapeHtml(msg.sender_name) + '</div>' : '') +
+                        '<div class="bubble-inner">' + escapeHtml(msg.body) + '</div>' +
                     '</div>';
                 }).join('');
                 listEl.scrollTop = listEl.scrollHeight;
             }
-        };
+        }
 
         window.closeConversation = function() {
-            currentOtherUid = null;
-            var tabsEl = document.querySelector('.inbox-tabs');
-            var panelsEl = document.querySelectorAll('.inbox-panel');
-            if (tabsEl) tabsEl.style.display = '';
-            panelsEl.forEach(function(p) { p.style.display = ''; });
-            document.getElementById('convView').classList.remove('open');
+            activeConvId = null;
+            document.querySelector('.inbox-tabs').style.display = '';
             document.querySelectorAll('.inbox-panel').forEach(function(p) { p.style.display = ''; });
+            document.getElementById('convView').classList.remove('open');
             document.getElementById('panel_messages').classList.add('active');
             document.getElementById('tab_messages').classList.add('active');
         };
 
-        window.sendMessage = async function(convId) {
+        window.sendMessage = async function() {
             var input = document.getElementById('msgInput');
-            var text = input ? input.value.trim() : '';
-            if (!text) return;
-            await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: myUid,
-                senderName: myUsername,
-                text: text,
-                createdAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, "conversations", convId), {
-                lastMessageAt: serverTimestamp(),
-                lastMessageText: text
-            });
+            var body = input ? input.value.trim() : '';
+            if (!body) return;
             input.value = '';
-            await openConversation(convId, currentOtherUid, document.querySelector('.conv-view-name') ? document.querySelector('.conv-view-name').textContent : '');
-        };
-
-        window.acceptMessageRequest = async function(convId, senderUid, senderName) {
-            await updateDoc(doc(db, "conversations", convId), { status: 'accepted', acceptedAt: serverTimestamp() });
-            await addDoc(collection(db, "conversations", convId, "messages"), {
-                senderUid: 'system',
-                senderName: 'System',
-                text: myUsername + ' accepted your message request.',
-                isSystem: true,
-                createdAt: serverTimestamp()
+            await apiFetch('/api/conversations/' + activeConvId + '/messages', {
+                method: 'POST',
+                body: JSON.stringify({ body: body })
             });
+            await loadMessages();
+        };
+
+        window.acceptFellowship = async function(id) {
+            await apiFetch('/api/fellowships/' + id + '/accept', { method: 'POST', body: '{}' });
             await renderInbox();
         };
 
-        window.declineMessageRequest = async function(convId) {
-            await updateDoc(doc(db, "conversations", convId), { status: 'declined' });
+        window.declineFellowship = async function(id) {
+            await apiFetch('/api/fellowships/' + id + '/decline', { method: 'POST', body: '{}' });
             await renderInbox();
         };
 
-        // Accept Fellowship from inbox
-        window.acceptFellowshipFromInbox = async function(convId, fellowshipId, senderUid, senderName) {
-            // Accept the fellowship
-            await updateDoc(doc(db, "fellowships", fellowshipId), {
-                status: 'accepted',
-                acceptedAt: serverTimestamp()
-            });
-
-            // Remove the fellowship request conversation
-            await deleteDoc(doc(db, "conversations", convId));
-
-            // Create a real accepted conversation between the two so they can message freely
-            var realConvId = [myUid, senderUid].sort().join('_');
-            var realConvSnap = await getDoc(doc(db, "conversations", realConvId));
-            if (!realConvSnap.exists()) {
-                await setDoc(doc(db, "conversations", realConvId), {
-                    senderUid: senderUid,
-                    senderName: senderName,
-                    receiverUid: myUid,
-                    receiverName: myUsername,
-                    status: 'accepted',
-                    createdAt: serverTimestamp(),
-                    lastMessageAt: serverTimestamp(),
-                    lastMessageText: 'You are now Fellows!'
-                });
-            } else {
-                await updateDoc(doc(db, "conversations", realConvId), { status: 'accepted' });
-            }
-
-            // Send system message to both
-            await addDoc(collection(db, "conversations", realConvId, "messages"), {
-                senderUid: 'system',
-                senderName: 'System',
-                text: myUsername + ' and ' + senderName + ' are now Fellows! You can message each other directly anytime.',
-                isSystem: true,
-                createdAt: serverTimestamp()
-            });
-
-            await renderInbox();
-        };
-
-        // Decline Fellowship from inbox
-        window.declineFellowshipFromInbox = async function(convId, fellowshipId) {
-            await deleteDoc(doc(db, "fellowships", fellowshipId));
-            await deleteDoc(doc(db, "conversations", convId));
-            await renderInbox();
-        };
+        init();
     </script>
     <script type="module" src="main.js"></script>
 </body>
