@@ -86,3 +86,48 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE INDEX idx_posts_thread ON posts(thread_id);
 CREATE INDEX idx_posts_author ON posts(author_uid);
 CREATE INDEX idx_posts_created ON posts(created_at);
+
+CREATE TABLE IF NOT EXISTS fellowships (
+  id TEXT PRIMARY KEY,
+  sender_uid TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  receiver_uid TEXT NOT NULL,
+  receiver_name TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  accepted_at TIMESTAMP,
+  FOREIGN KEY (sender_uid) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_uid) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_fellowships_sender ON fellowships(sender_uid);
+CREATE INDEX idx_fellowships_receiver ON fellowships(receiver_uid);
+CREATE INDEX idx_fellowships_status ON fellowships(status);
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id TEXT PRIMARY KEY,
+  user1_uid TEXT NOT NULL,
+  user2_uid TEXT NOT NULL,
+  user1_name TEXT NOT NULL,
+  user2_name TEXT NOT NULL,
+  last_message_text TEXT,
+  last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user1_uid) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user2_uid) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_conversations_user1 ON conversations(user1_uid);
+CREATE INDEX idx_conversations_user2 ON conversations(user2_uid);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  sender_uid TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_uid) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX idx_messages_sender ON messages(sender_uid);
+CREATE INDEX idx_messages_created ON messages(created_at);

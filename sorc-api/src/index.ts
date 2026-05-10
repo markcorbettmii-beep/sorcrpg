@@ -9,11 +9,53 @@ interface Env {
 
 const app = new Hono<{ Bindings: Env }>();
 
+const ALLOWED_ORIGINS = new Set(['http://localhost:3000', 'https://sorcrpg.com', 'https://www.sorcrpg.com']);
+
+// Security headers on every response
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Frame-Options', 'DENY');
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+});
+
 app.use('*', cors({
   origin: ['http://localhost:3000', 'https://sorcrpg.com', 'https://www.sorcrpg.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
 }));
+
+// In-memory rate limiter for auth endpoints (resets per Worker instance; good-enough for basic abuse prevention)
+const authRateLimit = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string, max = 10, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const entry = authRateLimit.get(ip);
+  if (!entry || entry.resetAt < now) {
+    authRateLimit.set(ip, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  if (entry.count >= max) return true;
+  entry.count++;
+  return false;
+}
+
+// CSRF: reject POST requests to auth endpoints from disallowed origins
+app.use('/api/auth/*', async (c, next) => {
+  if (c.req.method === 'POST') {
+    const origin = c.req.header('Origin');
+    if (origin && !ALLOWED_ORIGINS.has(origin)) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+    const ip = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || 'unknown';
+    if (isRateLimited(ip)) {
+      return c.json({ error: 'Too many requests. Please try again later.' }, 429);
+    }
+  }
+  await next();
+});
 
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
@@ -133,6 +175,205 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
     return c.json({ success: true, postId });
   } catch (error: any) {
     return c.json({ error: 'Failed to create post', details: error.message }, 500);
+  }
+});
+
+// ===== FELLOWSHIPS =====
+
+app.get('/api/fellowships', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT f.*, u.avatar, u.role
+       FROM fellowships f
+       JOIN users u ON u.id = CASE WHEN f.sender_uid = ? THEN f.receiver_uid ELSE f.sender_uid END
+       WHERE (f.sender_uid = ? OR f.receiver_uid = ?) AND f.status = 'accepted'
+       ORDER BY f.accepted_at DESC`
+    ).bind(user.id, user.id, user.id).all();
+    return c.json({ fellows: rows.results });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load fellows', details: error.message }, 500);
+  }
+});
+
+app.get('/api/fellowships/requests/incoming', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT f.*, u.avatar FROM fellowships f
+       JOIN users u ON u.id = f.sender_uid
+       WHERE f.receiver_uid = ? AND f.status = 'pending'
+       ORDER BY f.created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ requests: rows.results });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load requests', details: error.message }, 500);
+  }
+});
+
+app.get('/api/fellowships/requests/outgoing', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT f.*, u.avatar FROM fellowships f
+       JOIN users u ON u.id = f.receiver_uid
+       WHERE f.sender_uid = ? AND f.status = 'pending'
+       ORDER BY f.created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ requests: rows.results });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load requests', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/request', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { receiverUid } = await c.req.json();
+  if (!receiverUid) return c.json({ error: 'receiverUid required' }, 400);
+  if (receiverUid === user.id) return c.json({ error: 'Cannot send request to yourself' }, 400);
+  try {
+    const receiver = await c.env.sorc_db.prepare('SELECT id, display_name, username FROM users WHERE id = ?').bind(receiverUid).first() as any;
+    if (!receiver) return c.json({ error: 'User not found' }, 404);
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT id FROM fellowships WHERE (sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)`
+    ).bind(user.id, receiverUid, receiverUid, user.id).first();
+    if (existing) return c.json({ error: 'Fellowship request already exists' }, 409);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO fellowships (id, sender_uid, sender_name, receiver_uid, receiver_name, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?)`
+    ).bind(id, user.id, user.display_name || user.username, receiverUid, receiver.display_name || receiver.username, now).run();
+    return c.json({ success: true, id });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send request', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/:id/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const fellowshipId = c.req.param('id');
+  try {
+    const fellowship = await c.env.sorc_db.prepare('SELECT * FROM fellowships WHERE id = ?').bind(fellowshipId).first() as any;
+    if (!fellowship) return c.json({ error: 'Not found' }, 404);
+    if (fellowship.receiver_uid !== user.id) return c.json({ error: 'Forbidden' }, 403);
+    if (fellowship.status !== 'pending') return c.json({ error: 'Request is not pending' }, 400);
+    await c.env.sorc_db.prepare(`UPDATE fellowships SET status = 'accepted', accepted_at = ? WHERE id = ?`).bind(new Date().toISOString(), fellowshipId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to accept', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/:id/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const fellowshipId = c.req.param('id');
+  try {
+    const fellowship = await c.env.sorc_db.prepare('SELECT * FROM fellowships WHERE id = ?').bind(fellowshipId).first() as any;
+    if (!fellowship) return c.json({ error: 'Not found' }, 404);
+    if (fellowship.receiver_uid !== user.id) return c.json({ error: 'Forbidden' }, 403);
+    await c.env.sorc_db.prepare('DELETE FROM fellowships WHERE id = ?').bind(fellowshipId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to decline', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/fellowships/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const fellowshipId = c.req.param('id');
+  try {
+    const fellowship = await c.env.sorc_db.prepare('SELECT * FROM fellowships WHERE id = ?').bind(fellowshipId).first() as any;
+    if (!fellowship) return c.json({ error: 'Not found' }, 404);
+    if (fellowship.sender_uid !== user.id && fellowship.receiver_uid !== user.id) return c.json({ error: 'Forbidden' }, 403);
+    await c.env.sorc_db.prepare('DELETE FROM fellowships WHERE id = ?').bind(fellowshipId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to remove', details: error.message }, 500);
+  }
+});
+
+// ===== INBOX / MESSAGES =====
+
+app.get('/api/conversations', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations
+       WHERE user1_uid = ? OR user2_uid = ?
+       ORDER BY last_message_at DESC`
+    ).bind(user.id, user.id).all();
+    return c.json({ conversations: rows.results });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load conversations', details: error.message }, 500);
+  }
+});
+
+app.get('/api/conversations/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const convId = c.req.param('id');
+  try {
+    const conv = await c.env.sorc_db.prepare('SELECT * FROM conversations WHERE id = ?').bind(convId).first() as any;
+    if (!conv) return c.json({ error: 'Not found' }, 404);
+    if (conv.user1_uid !== user.id && conv.user2_uid !== user.id) return c.json({ error: 'Forbidden' }, 403);
+    const messages = await c.env.sorc_db.prepare(
+      `SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC`
+    ).bind(convId).all();
+    return c.json({ conversation: conv, messages: messages.results });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load conversation', details: error.message }, 500);
+  }
+});
+
+app.post('/api/conversations', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { receiverUid, body } = await c.req.json();
+  if (!receiverUid || !body) return c.json({ error: 'receiverUid and body required' }, 400);
+  if (receiverUid === user.id) return c.json({ error: 'Cannot message yourself' }, 400);
+  try {
+    const receiver = await c.env.sorc_db.prepare('SELECT id, display_name, username FROM users WHERE id = ?').bind(receiverUid).first() as any;
+    if (!receiver) return c.json({ error: 'User not found' }, 404);
+    const [u1, u2] = [user.id, receiverUid].sort();
+    let conv = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
+    ).bind(u1, u2, u2, u1).first() as any;
+    const now = new Date().toISOString();
+    if (!conv) {
+      const convId = crypto.randomUUID();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, last_message_text, last_message_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(convId, user.id, receiverUid, user.display_name || user.username, receiver.display_name || receiver.username, body.slice(0, 80), now, now).run();
+      conv = { id: convId };
+    } else {
+      await c.env.sorc_db.prepare('UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?').bind(body.slice(0, 80), now, conv.id).run();
+    }
+    const msgId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(msgId, conv.id, user.id, user.display_name || user.username, body, now).run();
+    return c.json({ success: true, conversationId: conv.id, messageId: msgId });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send message', details: error.message }, 500);
+  }
+});
+
+app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const convId = c.req.param('id');
+  const { body } = await c.req.json();
+  if (!body) return c.json({ error: 'body required' }, 400);
+  try {
+    const conv = await c.env.sorc_db.prepare('SELECT * FROM conversations WHERE id = ?').bind(convId).first() as any;
+    if (!conv) return c.json({ error: 'Not found' }, 404);
+    if (conv.user1_uid !== user.id && conv.user2_uid !== user.id) return c.json({ error: 'Forbidden' }, 403);
+    const msgId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(msgId, convId, user.id, user.display_name || user.username, body, now).run();
+    await c.env.sorc_db.prepare('UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?').bind(body.slice(0, 80), now, convId).run();
+    return c.json({ success: true, messageId: msgId });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send message', details: error.message }, 500);
   }
 });
 
