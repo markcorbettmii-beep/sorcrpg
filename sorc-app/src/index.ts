@@ -146,7 +146,7 @@ app.get('/api/forum/categories', async (c) => {
   }
 });
 
-app.get('/api/forum/category/:categoryId', authMiddleware, async (c) => {
+app.get("/api/forum/category/:categoryId", async (c) => {
   const categoryId = c.req.param('categoryId');
   const page = parseInt(c.req.query('page') || '1');
   const limit = 20;
@@ -160,7 +160,7 @@ app.get('/api/forum/category/:categoryId', authMiddleware, async (c) => {
   }
 });
 
-app.get('/api/forum/thread/:threadId', authMiddleware, async (c) => {
+app.get("/api/forum/thread/:threadId", async (c) => {
   const threadId = c.req.param('threadId');
   try {
     const thread = await c.env.sorc_db.prepare(`SELECT t.*, u.username as author_name, u.display_name, u.role as author_role FROM threads t JOIN users u ON t.author_uid = u.id WHERE t.id = ?`).bind(threadId).first();
