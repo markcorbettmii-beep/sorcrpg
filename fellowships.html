@@ -7,62 +7,102 @@
     <link rel="icon" href="IMG_3419.jpeg" />
     <link rel="stylesheet" href="styles.css" />
     <style>
-        body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
-        .f-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 2rem; border-bottom: 2px solid #d0021b; text-align: center; }
-        .f-hero h1 { color: #d0021b; font-size: 1.8rem; margin-bottom: 0.25rem; }
-        .f-hero p { color: #666; font-size: 0.85rem; margin: 0; }
-        .f-container { max-width: 700px; margin: 0 auto; padding: 2rem 1rem; }
-        .f-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-        .f-tab { padding: 8px 16px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; font-weight: bold; transition: all 0.2s; }
-        .f-tab.active { background: #d0021b; color: #fff; border-color: #d0021b; }
-        .f-tab:hover { border-color: #d0021b; }
-        .f-tab .badge { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; }
+        body { background: #0d0d0d; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
+
+        /* Hero */
+        .f-hero { background: linear-gradient(135deg, #1a0505 0%, #2a0808 50%, #0d0d0d 100%); padding: 1.5rem 1.25rem; border-bottom: 2px solid #d0021b; display: flex; align-items: center; gap: 1rem; }
+        .f-hero-icon { font-size: 2rem; }
+        .f-hero h1 { color: #fff; font-size: 1.4rem; margin: 0 0 0.15rem; }
+        .f-hero p { color: #555; font-size: 0.8rem; margin: 0; }
+
+        /* Layout */
+        .f-wrap { max-width: 680px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+        /* Tabs — Xbox-style pill row */
+        .f-tabs { display: flex; gap: 0; margin-bottom: 1.25rem; border-bottom: 2px solid #1e1e1e; }
+        .f-tab { padding: 0.6rem 1.1rem; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #555; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: color 0.2s, border-color 0.2s; letter-spacing: 0.03em; }
+        .f-tab:hover { color: #e0cfc0; }
+        .f-tab.active { color: #fff; border-bottom-color: #d0021b; }
+        .f-tab .notif { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.65rem; margin-left: 5px; vertical-align: middle; }
         .f-panel { display: none; }
         .f-panel.active { display: block; }
-        .fellow-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; transition: border-color 0.2s; }
-        .fellow-card:hover { border-color: #d0021b; }
-        .fellow-avatar { width: 44px; height: 44px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #888; border: 2px solid #333; flex-shrink: 0; }
-        .fellow-info { flex: 1; min-width: 0; }
-        .fellow-name { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; }
-        .fellow-role { font-size: 0.75rem; color: #555; margin-top: 2px; }
-        .fellow-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-        .btn { padding: 7px 14px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; }
-        .btn-red { background: #d0021b; color: #fff; }
-        .btn-red:hover { background: #a50013; }
-        .btn-gold { background: #d4af37; color: #222; }
-        .btn-gold:hover { background: #c19b2b; }
-        .btn-grey { background: #333; color: #888; }
-        .btn-grey:hover { background: #444; color: #e0cfc0; }
-        .btn-ghost { background: none; border: 1px solid #333; color: #888; }
-        .btn-ghost:hover { border-color: #d0021b; color: #e0cfc0; }
-        .request-card { background: #1a1a1a; border: 1px solid #d4af37; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .request-info { flex: 1; }
-        .request-name { font-weight: bold; color: #e0cfc0; }
-        .request-text { font-size: 0.8rem; color: #888; margin-top: 2px; }
-        .request-actions { display: flex; gap: 0.5rem; }
-        .empty-state { text-align: center; padding: 3rem; color: #444; font-size: 0.9rem; line-height: 1.7; }
-        .locked-state { text-align: center; padding: 3rem; }
-        .locked-state h2 { color: #d4af37; margin-bottom: 0.5rem; }
-        .locked-state p { color: #666; font-size: 0.9rem; line-height: 1.7; }
-        .not-logged-in { text-align: center; padding: 3rem; color: #555; }
-        .not-logged-in a { color: #d4af37; }
-        .outgoing-card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 1rem; }
-        .outgoing-label { font-size: 0.75rem; color: #555; margin-top: 2px; }
-        body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
-        body.lawful-mode .f-tab,
-        body.lawful-mode .fellow-card,
-        body.lawful-mode .request-card,
-        body.lawful-mode .outgoing-card { background: #fff; border-color: #e0e0e0; }
+
+        /* Friend row — Xbox Live style */
+        .f-row { display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem 0.9rem; border-radius: 8px; margin-bottom: 0.3rem; background: #161616; border: 1px solid #1e1e1e; transition: background 0.15s, border-color 0.15s; }
+        .f-row:hover { background: #1c1c1c; border-color: #2a2a2a; }
+
+        /* Avatar with online dot */
+        .f-avatar-wrap { position: relative; flex-shrink: 0; }
+        .f-avatar { width: 46px; height: 46px; border-radius: 8px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; color: #e0cfc0; border: 2px solid #2a2a2a; overflow: hidden; }
+        .f-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .f-status-dot { position: absolute; bottom: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0d0d0d; background: #555; }
+        .f-status-dot.online { background: #4caf50; }
+        .f-status-dot.recent { background: #d4af37; }
+
+        /* Info */
+        .f-info { flex: 1; min-width: 0; }
+        .f-name { font-weight: bold; color: #fff; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+        .f-role-tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 0.62rem; font-weight: bold; letter-spacing: 0.05em; }
+        .role-OWN { background: #d4af37; color: #222; }
+        .role-AD  { background: #8B0000; color: #fff; }
+        .role-GM  { background: #1a6b1a; color: #fff; }
+        .role-PC  { background: #1a3a6b; color: #fff; }
+        .role-CIV { background: #2a2a2a; color: #888; }
+        .f-sub { font-size: 0.74rem; color: #555; margin-top: 2px; }
+
+        /* Actions */
+        .f-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .f-btn { padding: 6px 12px; border-radius: 5px; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .f-btn-ghost { background: none; border: 1px solid #2a2a2a; color: #666; }
+        .f-btn-ghost:hover { border-color: #d0021b; color: #e0cfc0; }
+        .f-btn-red { background: #d0021b; color: #fff; }
+        .f-btn-red:hover { background: #a50013; }
+        .f-btn-gold { background: #d4af37; color: #222; }
+        .f-btn-gold:hover { background: #c19b2b; }
+        .f-btn-grey { background: #222; color: #666; border: 1px solid #2a2a2a; }
+        .f-btn-grey:hover { background: #2a2a2a; color: #aaa; }
+
+        /* Section label */
+        .f-section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: #3a3a3a; margin: 1rem 0 0.5rem 0.1rem; font-weight: bold; }
+
+        /* States */
+        .f-empty { text-align: center; padding: 2.5rem 1rem; color: #3a3a3a; font-size: 0.9rem; line-height: 1.7; }
+        .f-empty a { color: #d4af37; text-decoration: none; }
+        .f-locked { text-align: center; padding: 2.5rem 1rem; }
+        .f-locked h2 { color: #d4af37; margin: 0 0 0.6rem; font-size: 1.1rem; }
+        .f-locked p { color: #555; font-size: 0.88rem; line-height: 1.7; margin: 0.4rem 0; }
+        .f-locked .cp-bar-wrap { background: #1a1a1a; border-radius: 20px; height: 8px; margin: 0.75rem auto; max-width: 260px; overflow: hidden; }
+        .f-locked .cp-bar { height: 100%; background: linear-gradient(90deg, #d0021b, #d4af37); border-radius: 20px; transition: width 0.4s; }
+        .f-not-logged { text-align: center; padding: 2.5rem; color: #444; }
+        .f-not-logged a { color: #d4af37; }
+
+        /* Incoming request highlight */
+        .f-row.incoming { border-color: #d4af3760; background: #1a1500; }
+        .f-row.incoming:hover { border-color: #d4af37; }
+
+        /* Lawful mode */
+        body.lawful-mode { background: #f0f0ec; color: #2c2c2c; }
+        body.lawful-mode .f-hero { background: #fff; border-bottom-color: #d4af37; }
+        body.lawful-mode .f-hero h1 { color: #2c2c2c; }
+        body.lawful-mode .f-row { background: #fff; border-color: #e0e0e0; }
+        body.lawful-mode .f-row:hover { background: #f8f8f8; }
+        body.lawful-mode .f-name { color: #2c2c2c; }
+        body.lawful-mode .f-tabs { border-bottom-color: #ddd; }
+        body.lawful-mode .f-tab { color: #aaa; }
+        body.lawful-mode .f-tab.active { color: #2c2c2c; border-bottom-color: #d0021b; }
     </style>
 </head>
 <body>
     <div class="f-hero">
-        <h1>⚔️ Fellowships</h1>
-        <p>Your companions across Essentia</p>
+        <div class="f-hero-icon">⚔️</div>
+        <div>
+            <h1>Fellowships</h1>
+            <p>Your companions across Essentia</p>
+        </div>
     </div>
 
-    <div class="f-container" id="fApp">
-        <div class="not-logged-in"><p>Loading...</p></div>
+    <div class="f-wrap" id="fApp">
+        <div class="f-not-logged"><p>Loading…</p></div>
     </div>
 
     <div id="footer"></div>
@@ -76,15 +116,12 @@
         (function() {
             var saved = localStorage.getItem('sorc_user');
             if (saved) { try { myUser = JSON.parse(saved); } catch(e) {} }
-            if (myUser && myUser.authKey) {
-                myUid = myUser.id;
-                myAuthKey = myUser.authKey;
-            }
+            if (myUser && myUser.authKey) { myUid = myUser.id; myAuthKey = myUser.authKey; }
             var theme = localStorage.getItem('themeSelected') || 'evil';
             if (theme === 'lawful') document.body.classList.add('lawful-mode');
         })();
 
-        function escapeHtml(str) {
+        function esc(str) {
             return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
@@ -97,29 +134,39 @@
             return res.json();
         }
 
-        function getRoleTag(role) {
-            var colors = { OWNER: '#d4af37;color:#222', ADMIN: '#8B0000;color:#fff', MASTER: '#1a6b1a;color:#fff', PLAYER: '#1a3a6b;color:#fff' };
-            var labels = { OWNER: 'OWN', ADMIN: 'AD', MASTER: 'GM', PLAYER: 'PC', CIVILIAN: 'CIV' };
-            var c = colors[role] || '#333;color:#e0cfc0';
-            return '<span style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:0.65rem;font-weight:bold;background:' + c + ';margin-left:4px;">[' + (labels[role] || 'CIV') + ']</span>';
+        function roleTag(role) {
+            var map = { OWNER: ['OWN','role-OWN'], ADMIN: ['AD','role-AD'], MASTER: ['GM','role-GM'], PLAYER: ['PC','role-PC'], CIVILIAN: ['CIV','role-CIV'] };
+            var r = map[role] || ['CIV','role-CIV'];
+            return '<span class="f-role-tag ' + r[1] + '">' + r[0] + '</span>';
         }
+
+        function avatarHtml(name, avatarFile) {
+            if (avatarFile) {
+                return '<img src="/images/avatars/' + esc(avatarFile) + '" onerror="this.style.display=\'none\'" />';
+            }
+            return esc((name || '?').charAt(0).toUpperCase());
+        }
+
+        function onlineDot(lastSeen) {
+            if (!lastSeen) return '<div class="f-status-dot"></div>';
+            var ago = Date.now() - new Date(lastSeen).getTime();
+            if (ago < 10 * 60 * 1000) return '<div class="f-status-dot online" title="Online"></div>';
+            if (ago < 24 * 60 * 60 * 1000) return '<div class="f-status-dot recent" title="Recently online"></div>';
+            return '<div class="f-status-dot" title="Offline"></div>';
+        }
+
+        var canSend = false;
 
         async function init() {
             if (!myUid) {
                 document.getElementById('fApp').innerHTML =
-                    '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to use Fellowships.</p></div>';
+                    '<div class="f-not-logged"><p>Please <a href="/signin.html">sign in</a> to view Fellowships.</p></div>';
                 return;
             }
-            if (myUser.role === 'CIVILIAN' && !myUser.unlocked_fellowships) {
-                document.getElementById('fApp').innerHTML =
-                    '<div class="locked-state">' +
-                        '<h2>⚔️ Fellowships</h2>' +
-                        '<p>Fellowships are unlocked at <b style="color:#d4af37;">100 Community Points</b>. Earn points by posting in the forums, submitting session recaps, and contributing to the community.</p>' +
-                        '<p style="margin-top:0.5rem;color:#555;">Your points: <b style="color:#d4af37;">' + (myUser.community_points || 0) + '</b> / 100</p>' +
-                        '<p style="margin-top:0.5rem;">Once unlocked, activate the feature from your <a href="/profile.html" style="color:#d4af37;">profile page</a>.</p>' +
-                    '</div>';
-                return;
-            }
+            var pts = myUser.community_points || 0;
+            var unlocked = myUser.unlocked_fellowships || myUser.role !== 'CIVILIAN';
+            canSend = unlocked || pts >= 100;
+
             await renderApp();
         }
 
@@ -130,88 +177,130 @@
                 apiFetch('/api/fellowships/requests/outgoing')
             ]);
 
-            var fellows = fellowsData.fellows || [];
-            var incoming = incomingData.requests || [];
-            var outgoing = outgoingData.requests || [];
-            var reqCount = incoming.length;
+            var fellows   = fellowsData.fellows   || [];
+            var incoming  = incomingData.requests  || [];
+            var outgoing  = outgoingData.requests  || [];
+            var reqCount  = incoming.length;
+
+            var pts = myUser.community_points || 0;
+            var lockBanner = !canSend
+                ? '<div style="background:#1a1000;border:1px solid #3a2a00;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#888;">' +
+                      '🔒 Sending Fellowship requests unlocks at <b style="color:#d4af37;">100 Community Points</b>. ' +
+                      'You have <b style="color:#d4af37;">' + pts + ' / 100</b>. ' +
+                      '<div class="cp-bar-wrap" style="background:#1a1a1a;border-radius:20px;height:6px;margin:0.5rem 0 0;overflow:hidden;">' +
+                          '<div class="cp-bar" style="width:' + Math.min(100, Math.round(pts)) + '%;height:100%;background:linear-gradient(90deg,#d0021b,#d4af37);border-radius:20px;"></div>' +
+                      '</div>' +
+                  '</div>'
+                : '';
 
             document.getElementById('fApp').innerHTML =
+                lockBanner +
                 '<div class="f-tabs">' +
-                    '<button class="f-tab active" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows <span style="color:#555;font-weight:normal;font-size:0.75rem;">(' + fellows.length + ')</span></button>' +
-                    '<button class="f-tab" id="tab_requests" onclick="switchTab(\'requests\')">' +
-                        'Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') +
+                    '<button class="f-tab active" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows' +
+                        (fellows.length ? ' <span style="color:#555;font-size:0.75rem;font-weight:normal;">(' + fellows.length + ')</span>' : '') +
+                    '</button>' +
+                    '<button class="f-tab" id="tab_incoming" onclick="switchTab(\'incoming\')">' +
+                        'Requests' + (reqCount > 0 ? ' <span class="notif">' + reqCount + '</span>' : '') +
                     '</button>' +
                     '<button class="f-tab" id="tab_sent" onclick="switchTab(\'sent\')">Sent</button>' +
                 '</div>' +
                 '<div class="f-panel active" id="panel_fellows"></div>' +
-                '<div class="f-panel" id="panel_requests"></div>' +
+                '<div class="f-panel" id="panel_incoming"></div>' +
                 '<div class="f-panel" id="panel_sent"></div>';
 
-            // Fellows panel
-            var fellowsPanel = document.getElementById('panel_fellows');
-            if (fellows.length === 0) {
-                fellowsPanel.innerHTML = '<div class="empty-state">No Fellows yet.<br/>Visit someone\'s profile to send a Fellowship request.</div>';
+            /* ---- Fellows ---- */
+            var fp = document.getElementById('panel_fellows');
+            if (!fellows.length) {
+                fp.innerHTML = '<div class="f-empty">No Fellows yet.<br/><a href="/forum.html">Visit the forums</a> and check someone\'s profile to send a request.</div>';
             } else {
-                fellowsPanel.innerHTML = fellows.map(function(f) {
-                    var otherUid = f.sender_uid === myUid ? f.receiver_uid : f.sender_uid;
-                    var otherName = f.sender_uid === myUid ? f.receiver_name : f.sender_name;
+                var online = fellows.filter(function(f) {
+                    var ls = f.last_seen;
+                    return ls && (Date.now() - new Date(ls).getTime()) < 10 * 60 * 1000;
+                });
+                var offline = fellows.filter(function(f) {
+                    var ls = f.last_seen;
+                    return !ls || (Date.now() - new Date(ls).getTime()) >= 10 * 60 * 1000;
+                });
+
+                function fellowRow(f) {
+                    var uid  = f.sender_uid === myUid ? f.receiver_uid : f.sender_uid;
+                    var name = f.sender_uid === myUid ? f.receiver_name : f.sender_name;
                     var role = f.role || 'CIVILIAN';
-                    return '<div class="fellow-card">' +
-                        '<div class="fellow-avatar">' + escapeHtml((otherName || '?').charAt(0).toUpperCase()) + '</div>' +
-                        '<div class="fellow-info">' +
-                            '<div class="fellow-name">' +
-                                '<a href="public-profile.html?uid=' + escapeHtml(otherUid) + '" style="color:#e0cfc0;text-decoration:none;">' + escapeHtml(otherName) + '</a>' +
-                                getRoleTag(role) +
-                            '</div>' +
+                    return '<div class="f-row">' +
+                        '<div class="f-avatar-wrap">' +
+                            '<div class="f-avatar">' + avatarHtml(name, f.avatar) + '</div>' +
+                            onlineDot(f.last_seen) +
                         '</div>' +
-                        '<div class="fellow-actions">' +
-                            '<a href="public-profile.html?uid=' + escapeHtml(otherUid) + '" class="btn btn-gold" title="View Profile">👤</a>' +
-                            '<button class="btn btn-ghost" onclick="removeFellow(\'' + escapeHtml(f.id) + '\', \'' + escapeHtml(otherName).replace(/'/g,"\\'") + '\')">Remove</button>' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(name) + roleTag(role) + '</div>' +
+                            '<div class="f-sub">' + (f.last_seen ? 'Last seen ' + timeAgo(f.last_seen) : 'Offline') + '</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<a href="/public-profile.html?uid=' + esc(uid) + '" class="f-btn f-btn-ghost" title="View profile">👤</a>' +
+                            '<button class="f-btn f-btn-grey" onclick="removeFellow(\'' + esc(f.id) + '\',\'' + esc(name).replace(/'/g,"\\'") + '\')">Remove</button>' +
+                        '</div>' +
+                    '</div>';
+                }
+
+                fp.innerHTML =
+                    (online.length ? '<div class="f-section-label">Online (' + online.length + ')</div>' + online.map(fellowRow).join('') : '') +
+                    (offline.length ? '<div class="f-section-label">Offline (' + offline.length + ')</div>' + offline.map(fellowRow).join('') : '');
+            }
+
+            /* ---- Incoming ---- */
+            var ip = document.getElementById('panel_incoming');
+            if (!incoming.length) {
+                ip.innerHTML = '<div class="f-empty">No pending Fellowship requests.</div>';
+            } else {
+                ip.innerHTML = incoming.map(function(req) {
+                    return '<div class="f-row incoming">' +
+                        '<div class="f-avatar-wrap">' +
+                            '<div class="f-avatar">' + avatarHtml(req.sender_name, req.avatar) + '</div>' +
+                            onlineDot(req.last_seen) +
+                        '</div>' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(req.sender_name) + roleTag(req.role || 'CIVILIAN') + '</div>' +
+                            '<div class="f-sub">Wants to be your Fellow</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<button class="f-btn f-btn-gold" onclick="acceptFellowship(\'' + esc(req.id) + '\')">Accept</button>' +
+                            '<button class="f-btn f-btn-grey" onclick="declineFellowship(\'' + esc(req.id) + '\')">Decline</button>' +
+                            '<a href="/public-profile.html?uid=' + esc(req.sender_uid) + '" class="f-btn f-btn-ghost">Profile</a>' +
                         '</div>' +
                     '</div>';
                 }).join('');
             }
 
-            // Incoming requests panel
-            var reqPanel = document.getElementById('panel_requests');
-            if (incoming.length === 0) {
-                reqPanel.innerHTML = '<div class="empty-state">No pending Fellowship requests.</div>';
+            /* ---- Sent ---- */
+            var sp = document.getElementById('panel_sent');
+            if (!outgoing.length) {
+                sp.innerHTML = '<div class="f-empty">No outgoing requests.</div>';
             } else {
-                reqPanel.innerHTML = incoming.map(function(req) {
-                    return '<div class="request-card">' +
-                        '<div class="fellow-avatar">' + escapeHtml((req.sender_name || '?').charAt(0).toUpperCase()) + '</div>' +
-                        '<div class="request-info">' +
-                            '<div class="request-name">' + escapeHtml(req.sender_name) + '</div>' +
-                            '<div class="request-text">wants to be your Fellow</div>' +
+                sp.innerHTML = outgoing.map(function(req) {
+                    return '<div class="f-row">' +
+                        '<div class="f-avatar-wrap">' +
+                            '<div class="f-avatar">' + avatarHtml(req.receiver_name, req.avatar) + '</div>' +
+                            onlineDot(req.last_seen) +
                         '</div>' +
-                        '<div class="request-actions">' +
-                            '<button class="btn btn-red" onclick="acceptFellowship(\'' + escapeHtml(req.id) + '\')">Accept</button>' +
-                            '<button class="btn btn-grey" onclick="declineFellowship(\'' + escapeHtml(req.id) + '\')">Decline</button>' +
-                            '<a href="public-profile.html?uid=' + escapeHtml(req.sender_uid) + '" class="btn btn-ghost">Profile</a>' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(req.receiver_name) + roleTag(req.role || 'CIVILIAN') + '</div>' +
+                            '<div class="f-sub">Pending their response</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<a href="/public-profile.html?uid=' + esc(req.receiver_uid) + '" class="f-btn f-btn-ghost">Profile</a>' +
+                            '<button class="f-btn f-btn-grey" onclick="cancelRequest(\'' + esc(req.id) + '\')">Cancel</button>' +
                         '</div>' +
                     '</div>';
                 }).join('');
             }
+        }
 
-            // Outgoing requests panel
-            var sentPanel = document.getElementById('panel_sent');
-            if (outgoing.length === 0) {
-                sentPanel.innerHTML = '<div class="empty-state">No outgoing requests.</div>';
-            } else {
-                sentPanel.innerHTML = outgoing.map(function(req) {
-                    return '<div class="outgoing-card">' +
-                        '<div class="fellow-avatar">' + escapeHtml((req.receiver_name || '?').charAt(0).toUpperCase()) + '</div>' +
-                        '<div class="fellow-info">' +
-                            '<div class="fellow-name">' + escapeHtml(req.receiver_name) + '</div>' +
-                            '<div class="outgoing-label">Pending their response</div>' +
-                        '</div>' +
-                        '<div class="fellow-actions">' +
-                            '<a href="public-profile.html?uid=' + escapeHtml(req.receiver_uid) + '" class="btn btn-ghost">Profile</a>' +
-                            '<button class="btn btn-grey" onclick="cancelRequest(\'' + escapeHtml(req.id) + '\')">Cancel</button>' +
-                        '</div>' +
-                    '</div>';
-                }).join('');
-            }
+        function timeAgo(iso) {
+            var ago = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+            if (ago < 60) return 'just now';
+            if (ago < 3600) return Math.floor(ago / 60) + 'm ago';
+            if (ago < 86400) return Math.floor(ago / 3600) + 'h ago';
+            return Math.floor(ago / 86400) + 'd ago';
         }
 
         window.switchTab = function(tab) {
@@ -225,18 +314,15 @@
             await apiFetch('/api/fellowships/' + id + '/accept', { method: 'POST', body: '{}' });
             await renderApp();
         };
-
         window.declineFellowship = async function(id) {
             await apiFetch('/api/fellowships/' + id + '/decline', { method: 'POST', body: '{}' });
             await renderApp();
         };
-
         window.removeFellow = async function(id, name) {
             if (!confirm('Remove ' + name + ' from your Fellowships?')) return;
             await apiFetch('/api/fellowships/' + id, { method: 'DELETE' });
             await renderApp();
         };
-
         window.cancelRequest = async function(id) {
             if (!confirm('Cancel this Fellowship request?')) return;
             await apiFetch('/api/fellowships/' + id, { method: 'DELETE' });
