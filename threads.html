@@ -8,228 +8,93 @@
     <link rel="stylesheet" href="styles.css" />
     <style>
         body { background: #111; color: #e0cfc0; font-family: sans-serif; margin: 0; padding: 0; }
-
-        .threads-hero {
-            background: linear-gradient(135deg, #1a0505, #2a0808, #111);
-            padding: 1.5rem 2rem;
-            border-bottom: 2px solid #d0021b;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
+        .threads-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 1.5rem 2rem; border-bottom: 2px solid #d0021b; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .threads-hero a { color: #d4af37; text-decoration: none; font-size: 0.85rem; }
         .threads-hero a:hover { text-decoration: underline; }
         .threads-hero h1 { color: #e0cfc0; font-size: 1.4rem; margin: 0; flex: 1; }
-
         .threads-container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
-
-        .threads-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .new-thread-btn {
-            background: #d0021b; color: #fff; border: none;
-            padding: 8px 20px; border-radius: 8px; font-weight: bold;
-            cursor: pointer; font-size: 0.9rem; transition: background 0.2s;
-        }
+        .threads-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .new-thread-btn { background: #d0021b; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .new-thread-btn:hover { background: #a50013; }
         .new-thread-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
-
-        .thread-card {
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: border-color 0.2s;
-            display: flex;
-            gap: 1rem;
-            align-items: flex-start;
-        }
+        .thread-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; gap: 1rem; align-items: flex-start; }
         .thread-card:hover { border-color: #d0021b; }
         .thread-card.pinned { border-left: 3px solid #d4af37; }
         .thread-card.locked { opacity: 0.7; }
-
         .thread-icon { font-size: 1.2rem; padding-top: 2px; flex-shrink: 0; }
         .thread-info { flex: 1; min-width: 0; }
-        .thread-title {
-            font-weight: bold; color: #e0cfc0; font-size: 0.95rem;
-            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-        }
+        .thread-title { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
         .pin-badge { font-size: 0.7rem; background: #2a2000; color: #d4af37; padding: 1px 6px; border-radius: 4px; }
         .lock-badge { font-size: 0.7rem; background: #222; color: #555; padding: 1px 6px; border-radius: 4px; }
-        .thread-meta {
-            font-size: 0.75rem; color: #555; margin-top: 3px;
-            display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;
-        }
+        .thread-meta { font-size: 0.75rem; color: #555; margin-top: 3px; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
         .thread-stats { text-align: right; font-size: 0.75rem; color: #555; flex-shrink: 0; min-width: 80px; }
         .thread-stats b { color: #888; display: block; }
-
         .thread-view { display: none; }
         .thread-view.active { display: block; }
         .threads-list.hidden { display: none; }
-
-        .thread-header {
-            background: #1a1a1a; border: 1px solid #2a2a2a;
-            border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem;
-        }
+        .thread-header { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
         .thread-header h2 { color: #e0cfc0; font-size: 1.2rem; margin-bottom: 0.5rem; }
         .thread-header-meta { font-size: 0.8rem; color: #555; display: flex; gap: 1rem; flex-wrap: wrap; }
-
-        .post-card {
-            background: #1a1a1a; border: 1px solid #2a2a2a;
-            border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem;
-        }
+        .post-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; }
         .post-card.op { border-left: 3px solid #d0021b; }
-
-        .post-author-row {
-            display: flex; align-items: center; gap: 0.75rem;
-            margin-bottom: 0.75rem; flex-wrap: wrap;
-        }
-        .post-avatar {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: #2a2a2a; display: flex; align-items: center;
-            justify-content: center; font-size: 1rem; color: #888;
-            border: 2px solid #333; flex-shrink: 0;
-        }
+        .post-author-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .post-avatar { width: 36px; height: 36px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888; border: 2px solid #333; flex-shrink: 0; overflow: hidden; }
         .post-author-info { flex: 1; }
         .post-author-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
-        .post-author-role {
-            display: inline-block; padding: 1px 6px; border-radius: 4px;
-            font-size: 0.7rem; font-weight: bold; margin-left: 4px;
-        }
+        .post-author-role { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-left: 4px; }
         .post-timestamp { font-size: 0.75rem; color: #444; margin-top: 2px; }
-
-        .post-body {
-            color: #c0b090; font-size: 0.9rem; line-height: 1.7;
-            white-space: pre-wrap; word-break: break-word;
-        }
+        .post-body { color: #c0b090; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
         .post-body a { color: #d4af37; text-decoration: underline; }
-        .quote-block {
-            background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem;
-            margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.85rem; color: #777;
-        }
+        .quote-block { background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.85rem; color: #777; }
         .post-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap; }
-        .post-action-btn {
-            background: none; border: 1px solid #333; color: #666;
-            padding: 4px 10px; border-radius: 6px; cursor: pointer;
-            font-size: 0.78rem; transition: all 0.2s;
-        }
+        .post-action-btn { background: none; border: 1px solid #333; color: #666; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; transition: all 0.2s; }
         .post-action-btn:hover { border-color: #d0021b; color: #e0cfc0; }
         .post-action-btn.liked { border-color: #d0021b; color: #d0021b; }
         .post-action-btn.admin-btn { border-color: #d4af37; color: #d4af37; }
-        .post-action-btn.admin-btn:hover { background: #d4af37; color: #222; }
         .post-action-btn.danger-btn { border-color: #8B0000; color: #8B0000; }
-        .post-action-btn.danger-btn:hover { background: #8B0000; color: #fff; }
-
-        .reply-form {
-            background: #1a1a1a; border: 1px solid #2a2a2a;
-            border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1rem;
-        }
+        .reply-form { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1rem; }
         .reply-form h3 { color: #d4af37; font-size: 0.9rem; margin-bottom: 0.75rem; }
-        .reply-form textarea {
-            width: 100%; min-height: 100px; padding: 10px; border-radius: 8px;
-            border: 1px solid #333; background: #222; color: #e0cfc0;
-            font-size: 0.9rem; box-sizing: border-box; resize: vertical; font-family: sans-serif;
-        }
+        .reply-form textarea { width: 100%; min-height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; box-sizing: border-box; resize: vertical; font-family: sans-serif; }
         .reply-form textarea:focus { outline: none; border-color: #d0021b; }
-        .quote-preview {
-            background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem;
-            margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.8rem; color: #666; display: none;
-        }
+        .quote-preview { background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.8rem; color: #666; display: none; }
         .quote-preview.active { display: block; }
         .reply-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; justify-content: flex-end; flex-wrap: wrap; }
-
-        .post-toolbar {
-            display: flex; align-items: center; gap: 0.5rem;
-            margin-bottom: 0.5rem; flex-wrap: wrap;
-        }
-        .toolbar-btn {
-            background: #2a2a2a; border: 1px solid #333; color: #aaa;
-            padding: 4px 10px; border-radius: 6px; cursor: pointer;
-            font-size: 0.8rem; transition: all 0.2s;
-        }
+        .post-toolbar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .toolbar-btn { background: #2a2a2a; border: 1px solid #333; color: #aaa; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
         .toolbar-btn:hover { border-color: #d4af37; color: #d4af37; }
         .toolbar-hint { font-size: 0.72rem; color: #444; }
         .char-counter { font-size: 0.72rem; color: #555; margin-left: auto; }
         .char-counter.warning { color: #d4af37; }
         .char-counter.over { color: #d0021b; font-weight: bold; }
-
         .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-red { background: #d0021b; color: #fff; }
         .btn-red:hover { background: #a50013; }
         .btn-grey { background: #333; color: #888; }
         .btn-grey:hover { background: #444; }
-
         .msg { font-size: 0.85rem; margin-top: 0.5rem; }
         .msg.success { color: #4caf50; }
         .msg.error { color: #d0021b; }
-
-        .modal-overlay {
-            display: none; position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); z-index: 99999;
-            align-items: center; justify-content: center;
-        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 99999; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
-        .modal {
-            background: #1a1a1a; border: 1px solid #333;
-            border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%;
-        }
+        .modal { background: #1a1a1a; border: 1px solid #333; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; }
         .modal h2 { color: #d0021b; margin-bottom: 1rem; font-size: 1.1rem; }
-        .modal textarea, .modal input {
-            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333;
-            background: #222; color: #e0cfc0; font-size: 0.9rem;
-            box-sizing: border-box; margin-bottom: 0.75rem; font-family: sans-serif;
-        }
+        .modal textarea, .modal input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; box-sizing: border-box; margin-bottom: 0.75rem; font-family: sans-serif; }
         .modal-btns { display: flex; gap: 0.75rem; justify-content: flex-end; }
-
-        .admin-thread-bar {
-            background: #1a1a00; border: 1px solid #d4af37; border-radius: 8px;
-            padding: 0.75rem 1.25rem; margin-bottom: 1rem;
-            display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;
-        }
+        .admin-thread-bar { background: #1a1a00; border: 1px solid #d4af37; border-radius: 8px; padding: 0.75rem 1.25rem; margin-bottom: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
         .admin-thread-bar span { color: #d4af37; font-size: 0.85rem; font-weight: bold; }
-
-        .locked-notice {
-            background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
-            padding: 0.75rem 1.25rem; margin-top: 1rem; text-align: center;
-            color: #555; font-size: 0.85rem;
-        }
-
+        .locked-notice { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 0.75rem 1.25rem; margin-top: 1rem; text-align: center; color: #555; font-size: 0.85rem; }
         .pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
-        .page-btn {
-            padding: 6px 12px; border-radius: 6px; border: 1px solid #333;
-            background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem;
-        }
+        .page-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; }
         .page-btn.active { background: #d0021b; color: #fff; border-color: #d0021b; }
         .page-btn:hover { border-color: #d0021b; }
-
-        .user-tag-popup {
-            position: fixed;
-            background: #1a1a1a; border: 1px solid #444; border-radius: 8px;
-            padding: 0.75rem 1rem; z-index: 99999; min-width: 160px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 0.85rem;
-        }
-        .user-tag-popup a {
-            display: flex; align-items: center; gap: 0.5rem;
-            color: #d4af37; text-decoration: none; padding: 4px 0;
-        }
-        .user-tag-popup a:hover { color: #fff; }
     </style>
 </head>
 <body>
     <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
+    <div class="threads-hero">
         <a href="forum.html">← Forums</a>
         <h1 id="categoryTitle">Loading...</h1>
     </div>
-    <div id="pointsProgressBar" style="max-width:900px;margin:0.5rem auto 0 auto;padding:0.4rem 1rem;background:#161616;border-bottom:1px solid #1a1a1a;"></div>
 
     <div class="threads-container">
         <div class="threads-list" id="threadsList">
@@ -256,19 +121,6 @@
         </div>
     </div>
 
-    <!-- Report Modal -->
-    <div class="modal-overlay" id="reportModal">
-        <div class="modal">
-            <h2>Report Post</h2>
-            <textarea id="reportReason" placeholder="Describe the issue..." rows="4"></textarea>
-            <div id="reportMsg" class="msg"></div>
-            <div class="modal-btns">
-                <button class="btn btn-grey" onclick="closeReport()">Cancel</button>
-                <button class="btn btn-red" onclick="submitReport()">Submit Report</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Edit Modal -->
     <div class="modal-overlay" id="editModal">
         <div class="modal">
@@ -290,7 +142,7 @@
     <!-- New Thread Modal -->
     <div class="modal-overlay" id="newThreadModal">
         <div class="modal">
-            <h2 id="newThreadModalTitle">New Thread</h2>
+            <h2>New Thread</h2>
             <input type="text" id="threadTitle" placeholder="Thread title" maxlength="100" />
             <div class="post-toolbar">
                 <button class="toolbar-btn" onclick="insertLink('threadBody')">🔗 Add Link</button>
@@ -307,415 +159,192 @@
     </div>
 
     <div id="footer"></div>
+    <script type="module" src="main.js"></script>
+    <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var OWNER_EMAILS = ['corbett@sorcrpg.com'];
+    var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+    var READONLY_CATEGORIES = ['announcements', 'conduct'];
+    var ADMIN_ONLY_CATEGORIES = ['announcements', 'conduct'];
+    var THREADS_PER_PAGE = 20;
+    var MAX_CHARS = 10000;
+    var MAX_LINKS = 1;
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limit, getDocs, updateDoc, deleteDoc, serverTimestamp, increment, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    var currentUser = null;
+    var categoryId = null;
+    var categoryName = null;
+    var currentThread = null;
+    var currentThreadData = null;
+    var currentPage = 1;
+    var quotedPost = null;
+    var editingPostId = null;
+    var allThreads = [];
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDu25MxYjeu-g6YjPjaOpfUSUw97yJj-Xg",
-            authDomain: "sorc-a1393.firebaseapp.com",
-            projectId: "sorc-a1393",
-            storageBucket: "sorc-a1393.firebasestorage.app",
-            messagingSenderId: "303646936307",
-            appId: "1:303646936307:web:806bdcdc37c9e5c024bb86"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        const OWNER_EMAILS = ["corbett@sorcrpg.com"];
-        const ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
-        const READONLY_CATEGORIES = ['announcements', 'conduct'];
-        const ADMIN_ONLY_CATEGORIES = ['announcements', 'conduct'];
-        const THREADS_PER_PAGE = 20;
-        const MAX_CHARS = 10000;
-        const MAX_LINKS = 1;
-
-        var currentUser = null;
-        var currentUserData = null;
-        var googleUser = null;
-        var categoryId = null;
-        var categoryName = null;
-        var currentThread = null;
-        var currentThreadData = null;
-        var currentPage = 1;
-        var quotedPost = null;
-        var editingPostId = null;
-        var reportingPostId = null;
-
-        try { var s = localStorage.getItem('sorc_google_user'); if (s) googleUser = JSON.parse(s); } catch(e) {}
-
-        // ========== COMMUNITY POINTS ENGINE ==========
-        // Points per action (per sorc-beyond.html rules)
-        const POINT_VALUES = { thread: 10, reply: 5, likeReceived: 2 };
-        // Next unlock thresholds for progress display
-        const UNLOCK_TIERS = [
-            { pts: 100,  label: 'Fellowships' },
-            { pts: 250,  label: 'SORC Beyond Basic' },
-            { pts: 500,  label: 'Surname Unlock' },
-            { pts: 750,  label: 'Prefix & Suffix' },
-            { pts: 1000, label: 'SORC Beyond Pro' }
-        ];
-
-        // Award points with daily cap enforcement.
-        // action: 'thread' | 'reply'
-        // Each action type can only earn points once per calendar day.
-        async function awardForumPoints(uid, action) {
-            try {
-                var points = POINT_VALUES[action];
-                if (!points) return;
-                var today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-                var userSnap = await getDoc(doc(db, "users", uid));
-                if (!userSnap.exists()) return;
-                var data = userSnap.data();
-                var lastKey = 'last' + action.charAt(0).toUpperCase() + action.slice(1) + 'PointsDate';
-                if (data[lastKey] === today) return; // already earned today
-                var update = {};
-                update.communityPoints = (data.communityPoints || 0) + points;
-                update[lastKey] = today;
-                await updateDoc(doc(db, "users", uid), update);
-                currentUserData = Object.assign({}, currentUserData, update);
-                updatePointsDisplay(update.communityPoints);
-            } catch(e) { console.warn('awardForumPoints failed:', e.message); }
-        }
-
-        // Award +2 to post/thread author when liked (per unique like, no daily cap per rules)
-        async function awardLikePoints(authorUid) {
-            try {
-                if (!authorUid || authorUid === getUserUid()) return; // can't farm your own likes
-                await updateDoc(doc(db, "users", authorUid), {
-                    communityPoints: increment(POINT_VALUES.likeReceived)
-                });
-            } catch(e) { console.warn('awardLikePoints failed:', e.message); }
-        }
-
-        // Render the points progress bar in the UI
-        function updatePointsDisplay(pts) {
-            var el = document.getElementById('pointsProgressBar');
-            if (!el) return;
-            var current = pts || (currentUserData && currentUserData.communityPoints) || 0;
-            var next = UNLOCK_TIERS.find(function(t) { return t.pts > current; });
-            if (!next) {
-                el.innerHTML = '<span style="color:#d4af37;font-weight:bold;">⭐ ' + current + ' pts</span> <span style="color:#555;font-size:0.75rem;">— All tiers unlocked!</span>';
-                return;
-            }
-            var prev = UNLOCK_TIERS.slice().reverse().find(function(t) { return t.pts <= current; });
-            var base = prev ? prev.pts : 0;
-            var pct = Math.min(100, Math.round(((current - base) / (next.pts - base)) * 100));
-            el.innerHTML =
-                '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
-                    '<span style="color:#d4af37;font-weight:bold;font-size:0.85rem;">⭐ ' + current + ' pts</span>' +
-                    '<div style="flex:1;min-width:100px;">' +
-                        '<div style="background:#2a2a2a;border-radius:6px;height:6px;overflow:hidden;">' +
-                            '<div style="width:' + pct + '%;background:linear-gradient(90deg,#d0021b,#d4af37);height:100%;border-radius:6px;transition:width 0.5s;"></div>' +
-                        '</div>' +
-                        '<div style="font-size:0.7rem;color:#555;margin-top:2px;">' + (next.pts - current) + ' pts to <b style="color:#888;">' + next.label + '</b></div>' +
-                    '</div>' +
-                '</div>';
-        }
-
-        // Handle browser back button
-        window.addEventListener('popstate', function(e) {
-            if (e.state && e.state.threadId) {
-                openThread(e.state.threadId);
-            } else {
-                document.getElementById('threadsList').classList.remove('hidden');
-                document.getElementById('threadView').classList.remove('active');
-                currentThread = null;
-            }
+    function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
+    function canPost() {
+        if (!currentUser) return false;
+        if (ADMIN_ONLY_CATEGORIES.includes(categoryId)) return isAdminOrOwner(currentUser.email);
+        return true;
+    }
+    function canModerate() { return currentUser && isAdminOrOwner(currentUser.email); }
+    function escapeHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escapeAttr(str) { return String(str).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+    function timeAgo(ts) {
+        if (!ts) return '';
+        var d = new Date(ts);
+        var s = Math.floor((new Date() - d) / 1000);
+        if (s < 60) return 'Just now';
+        if (s < 3600) return Math.floor(s/60) + 'm ago';
+        if (s < 86400) return Math.floor(s/3600) + 'h ago';
+        if (s < 604800) return Math.floor(s/86400) + 'd ago';
+        return d.toLocaleDateString();
+    }
+    function getRoleColor(role) {
+        if (role === 'OWNER') return 'background:#d4af37;color:#222;';
+        if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
+        if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
+        if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
+        return 'background:#333;color:#e0cfc0;';
+    }
+    function getRoleAbbr(role) {
+        if (role === 'OWNER') return '[OWN]';
+        if (role === 'ADMIN') return '[AD]';
+        if (role === 'MASTER') return '[GM]';
+        if (role === 'PLAYER') return '[PC]';
+        return '[CIV]';
+    }
+    function countLinks(text) { var m = text.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g); return m ? m.length : 0; }
+    function renderPostBody(text) {
+        var escaped = escapeHtml(text);
+        return escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, function(m, t, u) {
+            return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + t + '</a>';
         });
+    }
+    function validatePost(body, msgEl) {
+        if (!body) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write something.'; return false; }
+        if (body.length > MAX_CHARS) { msgEl.className = 'msg error'; msgEl.textContent = 'Post exceeds limit.'; return false; }
+        if (countLinks(body) > MAX_LINKS) { msgEl.className = 'msg error'; msgEl.textContent = 'Only 1 link per post.'; return false; }
+        return true;
+    }
+    window.insertLink = function(textareaId) {
+        var ta = document.getElementById(textareaId);
+        if (!ta || countLinks(ta.value) >= MAX_LINKS) { alert('Only 1 link per post.'); return; }
+        var linkText = prompt('Link text:'); if (!linkText) return;
+        var url = prompt('URL (https://):'); if (!url || !/^https?:\/\/.+/.test(url)) { alert('Invalid URL'); return; }
+        var md = '[' + linkText + '](' + url + ')';
+        ta.value = ta.value.substring(0, ta.selectionStart) + md + ta.value.substring(ta.selectionEnd);
+        var counterId = textareaId === 'replyBody' ? 'replyCharCount' : textareaId === 'threadBody' ? 'threadBodyCount' : 'editCharCount';
+        updateCharCount(textareaId, counterId);
+    };
+    window.updateCharCount = function(textareaId, counterId) {
+        var ta = document.getElementById(textareaId); var counter = document.getElementById(counterId);
+        if (!ta || !counter) return;
+        var len = ta.value.length;
+        counter.textContent = len.toLocaleString() + ' / ' + MAX_CHARS.toLocaleString();
+        counter.className = 'char-counter' + (len > MAX_CHARS ? ' over' : len > 9000 ? ' warning' : '');
+    };
 
-        var params = new URLSearchParams(window.location.search);
-        categoryId = params.get('cat');
-        categoryName = decodeURIComponent(params.get('name') || '');
-        var threadParam = params.get('thread');
+    var params = new URLSearchParams(window.location.search);
+    categoryId = params.get('cat');
+    categoryName = decodeURIComponent(params.get('name') || '');
+    var threadParam = params.get('thread');
+    document.getElementById('categoryTitle').textContent = categoryName;
+    document.title = categoryName + ' | SorC Forums';
 
-        document.getElementById('categoryTitle').textContent = categoryName;
-        document.title = categoryName + ' | SorC Forums';
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.threadId) { openThread(e.state.threadId); }
+        else { backToThreads(); }
+    });
 
-        function isAdminOrOwner(email) { return OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email); }
-        function getUserEmail() { return currentUser ? currentUser.email : (googleUser ? googleUser.email : null); }
-        function getUserUid() { return currentUser ? currentUser.uid : (googleUser ? googleUser.googleId : null); }
-        function getUsername() {
-            var data = currentUserData || {};
-            var email = getUserEmail() || '';
-            return data.username || data.displayName || email.split('@')[0];
-        }
-        function getRole() {
-            var email = getUserEmail() || '';
-            if (OWNER_EMAILS.includes(email)) return 'OWNER';
-            if (ADMIN_EMAILS.includes(email)) return 'ADMIN';
-            return (currentUserData || {}).role || 'CIVILIAN';
-        }
-        function getRoleAbbr(role) {
-            if (role === 'OWNER') return '[OWN]';
-            if (role === 'ADMIN') return '[AD]';
-            if (role === 'MASTER') return '[GM]';
-            if (role === 'PLAYER') return '[PC]';
-            return '[CIV]';
-        }
-        function getRoleColor(role) {
-            if (role === 'OWNER') return 'background:#d4af37;color:#222;';
-            if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
-            if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
-            if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
-            return 'background:#333;color:#e0cfc0;';
-        }
-        function timeAgo(timestamp) {
-            if (!timestamp) return '';
-            var date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            var seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return 'Just now';
-            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-            if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
-            return date.toLocaleDateString();
-        }
-        function canPost() {
-            var email = getUserEmail();
-            if (!email) return false;
-            // Block unverified Firebase email/password accounts
-            if (currentUser && !currentUser.emailVerified && currentUser.providerData[0] && currentUser.providerData[0].providerId === 'password') return false;
-            if (ADMIN_ONLY_CATEGORIES.includes(categoryId)) return isAdminOrOwner(email);
-            return true;
-        }
-        function canModerate() { return isAdminOrOwner(getUserEmail() || ''); }
-        function escapeHtml(str) {
-            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-        function escapeAttr(str) { return String(str).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
-
-        // ========== LINK + CHAR HELPERS ==========
-        function countLinks(text) {
-            var matches = text.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g);
-            return matches ? matches.length : 0;
-        }
-        function renderPostBody(text) {
-            var escaped = escapeHtml(text);
-            escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, function(match, linkText, url) {
-                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + linkText + '</a>';
-            });
-            return escaped;
-        }
-        function validatePost(body, msgEl) {
-            if (!body) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write something.'; return false; }
-            if (body.length > MAX_CHARS) { msgEl.className = 'msg error'; msgEl.textContent = 'Post exceeds ' + MAX_CHARS.toLocaleString() + ' character limit.'; return false; }
-            if (body.includes('![')) { msgEl.className = 'msg error'; msgEl.textContent = 'Direct image embeds are not allowed.'; return false; }
-            if (countLinks(body) > MAX_LINKS) { msgEl.className = 'msg error'; msgEl.textContent = 'Only ' + MAX_LINKS + ' link per post allowed.'; return false; }
-            return true;
-        }
-        window.insertLink = function(textareaId) {
-            var ta = document.getElementById(textareaId);
-            if (!ta) return;
-            var currentText = ta.value;
-            if (countLinks(currentText) >= MAX_LINKS) {
-                alert('Only ' + MAX_LINKS + ' link per post. Remove your existing link first.');
-                return;
-            }
-            var linkText = prompt('Link text (what readers see):');
-            if (!linkText) return;
-            var url = prompt('URL (must start with https://):');
-            if (!url) return;
-            if (!/^https?:\/\/.+/.test(url)) { alert('URL must start with https://'); return; }
-            var markdown = '[' + linkText + '](' + url + ')';
-            var start = ta.selectionStart;
-            var end = ta.selectionEnd;
-            ta.value = currentText.substring(0, start) + markdown + currentText.substring(end);
-            ta.selectionStart = ta.selectionEnd = start + markdown.length;
-            ta.focus();
-            var counterId = textareaId === 'replyBody' ? 'replyCharCount' : (textareaId === 'threadBody' ? 'threadBodyCount' : (textareaId === 'editBody' ? 'editCharCount' : null));
-            if (counterId) updateCharCount(textareaId, counterId);
-        };
-        window.updateCharCount = function(textareaId, counterId) {
-            var ta = document.getElementById(textareaId);
-            var counter = document.getElementById(counterId);
-            if (!ta || !counter) return;
-            var len = ta.value.length;
-            counter.textContent = len.toLocaleString() + ' / ' + MAX_CHARS.toLocaleString();
-            counter.className = 'char-counter' + (len > MAX_CHARS ? ' over' : len > 9000 ? ' warning' : '');
-        };
-
-        // ========== NOTIFICATIONS ==========
-        async function sendReplyNotification(replyAuthorUid, replyAuthorName) {
-            if (!currentThreadData) return;
-            var threadAuthorUid = currentThreadData.authorUid;
-            if (!threadAuthorUid || threadAuthorUid === replyAuthorUid) return;
-            try {
-                await addDoc(collection(db, "forumNotifications"), {
-                    recipientUid: threadAuthorUid,
-                    type: 'forum_reply',
-                    threadId: currentThread,
-                    threadTitle: currentThreadData.title || '',
-                    categoryId: categoryId,
-                    replyAuthorName: replyAuthorName,
-                    replyAuthorUid: replyAuthorUid,
-                    createdAt: serverTimestamp(),
-                    read: false
-                });
-            } catch(e) { console.warn('Notification write failed:', e); }
-        }
-
-        function makeRoleTag(authorUid, authorName, authorRole, isMyPost) {
-            var abbr = getRoleAbbr(authorRole);
-            var style = getRoleColor(authorRole);
-            if (isMyPost) {
-                return '<span class="post-author-role" style="' + style + '">' + abbr + '</span>';
-            }
-            return '<span class="post-author-role" style="' + style + ';cursor:pointer;" onclick="showUserTagPopup(event, \'' + authorUid + '\')">' + abbr + '</span>';
-        }
-
-        window.showUserTagPopup = function(e, uid) {
-            e.stopPropagation();
-            var existing = document.querySelector('.user-tag-popup');
-            if (existing) existing.remove();
-            var popup = document.createElement('div');
-            popup.className = 'user-tag-popup';
-            popup.style.top = (e.clientY + 10) + 'px';
-            popup.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-            popup.innerHTML =
-                '<a href="public-profile.html?uid=' + uid + '">👤 View Profile</a>' +
-                '<a href="public-profile.html?uid=' + uid + '&msg=1">✉ Send Message</a>' +
-                '<div style="margin-top:4px;padding-top:4px;border-top:1px solid #333;"><button onclick="document.querySelector(\'.user-tag-popup\').remove()" style="background:none;border:none;color:#555;cursor:pointer;font-size:0.75rem;padding:0;">Close</button></div>';
-            document.body.appendChild(popup);
-            setTimeout(function() {
-                document.addEventListener('click', function removePopup() {
-                    var p = document.querySelector('.user-tag-popup');
-                    if (p) p.remove();
-                    document.removeEventListener('click', removePopup);
-                });
-            }, 100);
-        };
-
-        // ========== THREAD LIST ==========
-        async function loadThreads(page) {
-            currentPage = page || 1;
-            var container = document.getElementById('threadsContainer');
-            container.innerHTML = '<p style="color:#555;padding:1rem;">Loading threads...</p>';
-            if (!canPost()) document.getElementById('newThreadBtn').disabled = true;
-            if (READONLY_CATEGORIES.includes(categoryId) && !canModerate()) {
-                document.getElementById('newThreadBtn').style.display = 'none';
-            }
-            var snap;
-            try {
-                var q = query(collection(db, "threads"), where("categoryId", "==", categoryId), orderBy("pinned", "desc"), orderBy("lastReplyAt", "desc"));
-                snap = await getDocs(q);
-            } catch(e) {
-                console.warn('Composite index missing — falling back to unordered query. Create a composite index on threads(categoryId ASC, pinned DESC, lastReplyAt DESC) in Firebase console.', e.message);
-                try {
-                    var q2 = query(collection(db, "threads"), where("categoryId", "==", categoryId));
-                    snap = await getDocs(q2);
-                } catch(e2) {
-                    container.innerHTML = '<p style="color:#d0021b;padding:1rem;">⚠️ Could not load threads: ' + e2.message + '</p>';
-                    return;
-                }
-            }
-            var threads = [];
-            snap.forEach(function(d) { threads.push({ id: d.id, ...d.data() }); });
-            document.getElementById('threadCount').textContent = threads.length + ' thread' + (threads.length !== 1 ? 's' : '');
-            var start = (currentPage - 1) * THREADS_PER_PAGE;
-            var pageThreads = threads.slice(start, start + THREADS_PER_PAGE);
-            if (pageThreads.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:3rem;color:#444;">No threads yet. Be the first to post!</div>';
-                return;
-            }
-            var myUid = getUserUid();
-            container.innerHTML = pageThreads.map(function(t) {
-                var roleTag = makeRoleTag(t.authorUid, t.authorName, t.authorRole, t.authorUid === myUid);
+    async function loadThreads(page) {
+        currentPage = page || 1;
+        var container = document.getElementById('threadsContainer');
+        container.innerHTML = '<p style="color:#555;padding:1rem;">Loading threads...</p>';
+        if (!canPost()) document.getElementById('newThreadBtn').disabled = true;
+        if (READONLY_CATEGORIES.includes(categoryId) && !canModerate()) document.getElementById('newThreadBtn').style.display = 'none';
+        try {
+            var headers = {};
+            if (currentUser && currentUser.authKey) headers['X-Auth-Key'] = currentUser.authKey;
+            var res = await fetch(API_URL + '/api/forum/category/' + categoryId + '?page=' + currentPage, { headers });
+            var data = await res.json();
+            allThreads = data.threads || [];
+            document.getElementById('threadCount').textContent = (data.total || 0) + ' thread' + ((data.total || 0) !== 1 ? 's' : '');
+            if (allThreads.length === 0) { container.innerHTML = '<div style="text-align:center;padding:3rem;color:#444;">No threads yet. Be the first to post!</div>'; return; }
+            container.innerHTML = allThreads.map(function(t) {
+                var role = t.author_role || 'CIVILIAN';
+                var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
                 return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">' +
                     '<div class="thread-icon">' + (t.pinned ? '📌' : t.locked ? '🔒' : '💬') + '</div>' +
                     '<div class="thread-info">' +
                         '<div class="thread-title">' + escapeHtml(t.title) + (t.pinned ? '<span class="pin-badge">Pinned</span>' : '') + (t.locked ? '<span class="lock-badge">Locked</span>' : '') + '</div>' +
-                        '<div class="thread-meta">' + roleTag + '<span>' + escapeHtml(t.authorName) + '</span><span>·</span><span>' + timeAgo(t.createdAt) + '</span><span>·</span><span>👁 ' + (t.views || 0) + '</span><span>❤️ ' + (t.likeCount || 0) + '</span></div>' +
+                        '<div class="thread-meta">' + roleTag + ' <span>' + escapeHtml(t.author_name || 'Unknown') + '</span><span>·</span><span>' + timeAgo(t.created_at) + '</span><span>·</span><span>👁 ' + (t.views || 0) + '</span></div>' +
                     '</div>' +
-                    '<div class="thread-stats"><b>' + (t.replyCount || 0) + ' replies</b><span style="font-size:0.7rem;color:#444;">Last: ' + timeAgo(t.lastReplyAt) + '</span></div>' +
+                    '<div class="thread-stats"><b>' + (t.reply_count || 0) + ' replies</b><span style="font-size:0.7rem;color:#444;">Last: ' + timeAgo(t.last_reply_at) + '</span></div>' +
                 '</div>';
             }).join('');
-            var totalPages = Math.ceil(threads.length / THREADS_PER_PAGE);
-            if (totalPages > 1) {
+            if (data.totalPages > 1) {
                 var paginationHtml = '';
-                for (var i = 1; i <= totalPages; i++) {
+                for (var i = 1; i <= data.totalPages; i++) {
                     paginationHtml += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="loadThreads(' + i + ')">' + i + '</button>';
                 }
                 document.getElementById('threadPagination').innerHTML = paginationHtml;
             }
+        } catch(e) {
+            container.innerHTML = '<p style="color:#d0021b;">Could not load threads. <a href="signin.html" style="color:#d4af37;">Sign in</a> to view.</p>';
         }
+    }
 
-        // ========== OPEN THREAD ==========
-        window.openThread = async function(threadId) {
-            currentThread = threadId;
-            document.getElementById('threadsList').classList.add('hidden');
-            document.getElementById('threadView').classList.add('active');
-            // Update URL so this thread can be shared/linked directly
-            var newUrl = 'threads.html?cat=' + encodeURIComponent(categoryId) + '&name=' + encodeURIComponent(categoryName) + '&thread=' + threadId;
-            history.pushState({ threadId: threadId }, '', newUrl);
-            try { updateDoc(doc(db, "threads", threadId), { views: increment(1) }); } catch(e) {}
-            await loadThreadContent(threadId);
-        };
+    window.openThread = async function(threadId) {
+        currentThread = threadId;
+        document.getElementById('threadsList').classList.add('hidden');
+        document.getElementById('threadView').classList.add('active');
+        history.pushState({ threadId }, '', 'threads.html?cat=' + categoryId + '&name=' + encodeURIComponent(categoryName) + '&thread=' + threadId);
+        await loadThreadContent(threadId);
+    };
 
-        async function loadThreadContent(threadId) {
-            var threadDoc, postsSnap;
-            try {
-                [threadDoc, postsSnap] = await Promise.all([
-                    getDoc(doc(db, "threads", threadId)),
-                    getDocs(query(collection(db, "posts"), where("threadId", "==", threadId), orderBy("createdAt", "asc")))
-                ]);
-            } catch(e) {
-                console.warn('Posts index missing — falling back. Create index on posts(threadId ASC, createdAt ASC).', e.message);
-                threadDoc = await getDoc(doc(db, "threads", threadId));
-                postsSnap = await getDocs(query(collection(db, "posts"), where("threadId", "==", threadId)));
-            }
-
-            if (!threadDoc.exists()) {
-                document.getElementById('threadContent').innerHTML = '<p style="color:#d0021b;">Thread not found.</p>';
-                return;
-            }
-            var thread = { id: threadDoc.id, ...threadDoc.data() };
+    async function loadThreadContent(threadId) {
+        document.getElementById('threadContent').innerHTML = '<p style="color:#555;">Loading...</p>';
+        try {
+            var headers = {};
+            if (currentUser && currentUser.authKey) headers['X-Auth-Key'] = currentUser.authKey;
+            var res = await fetch(API_URL + '/api/forum/thread/' + threadId, { headers });
+            var data = await res.json();
+            if (data.error) { document.getElementById('threadContent').innerHTML = '<p style="color:#d0021b;">' + escapeHtml(data.error) + '</p>'; return; }
+            var thread = data.thread;
+            var posts = data.posts || [];
             currentThreadData = thread;
+
             if (canModerate()) {
                 document.getElementById('adminThreadBar').style.display = 'flex';
-                var pinBtn = document.getElementById('pinBtn');
-                var lockBtn = document.getElementById('lockBtn');
-                if (pinBtn) {
-                    pinBtn.textContent = thread.pinned ? '📌 Pinned ✓' : '📌 Pin';
-                    pinBtn.style.background = thread.pinned ? '#d4af37' : '';
-                    pinBtn.style.color = thread.pinned ? '#222' : '';
-                }
-                if (lockBtn) {
-                    lockBtn.textContent = thread.locked ? '🔒 Locked ✓' : '🔒 Lock';
-                    lockBtn.style.background = thread.locked ? '#8B0000' : '';
-                    lockBtn.style.color = thread.locked ? '#fff' : '';
-                }
+                document.getElementById('pinBtn').textContent = thread.pinned ? '📌 Unpin' : '📌 Pin';
+                document.getElementById('lockBtn').textContent = thread.locked ? '🔒 Unlock' : '🔒 Lock';
             }
 
-            var posts = [{ id: threadId, isOP: true, ...thread }];
-            postsSnap.forEach(function(d) { posts.push({ id: d.id, isOP: false, ...d.data() }); });
+            var myId = currentUser ? currentUser.id : null;
+            var allPosts = [Object.assign({ id: threadId, isOP: true }, thread)].concat(posts.map(function(p) { return Object.assign({ isOP: false }, p); }));
 
-            var uid = getUserUid();
-            var html = posts.map(function(post) {
-                var liked = post.likedBy && uid && post.likedBy.includes(uid);
-                var isOwnPost = post.authorUid === uid;
-                var quoteText = post.body ? post.body.substring(0, 100) + (post.body.length > 100 ? '...' : '') : '';
-                var quoteDataAttr = 'data-postid="' + post.id + '" data-author="' + escapeAttr(post.authorName) + '" data-text="' + escapeAttr(quoteText) + '"';
-                var roleTag = makeRoleTag(post.authorUid, post.authorName, post.authorRole || 'CIVILIAN', isOwnPost);
+            var html = allPosts.map(function(post) {
+                var isOwnPost = myId && post.author_uid === myId;
+                var role = post.author_role || 'CIVILIAN';
+                var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
+                var avatarHtml = post.avatar
+                    ? '<img src="images/avatars/' + escapeHtml(post.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
+                    : (post.author_name ? post.author_name.charAt(0).toUpperCase() : '?');
+                var quoteText = post.body ? escapeAttr(post.body.substring(0, 100) + (post.body.length > 100 ? '...' : '')) : '';
                 return '<div class="post-card ' + (post.isOP ? 'op' : '') + '" id="post-' + post.id + '">' +
                     '<div class="post-author-row">' +
-                        '<div class="post-avatar">' + (post.authorName ? post.authorName.charAt(0).toUpperCase() : '?') + '</div>' +
+                        '<div class="post-avatar">' + avatarHtml + '</div>' +
                         '<div class="post-author-info">' +
-                            '<div class="post-author-name">' + escapeHtml(post.authorName || 'Unknown') + roleTag + '</div>' +
-                            '<div class="post-timestamp">' + timeAgo(post.createdAt) + (post.edited ? ' (edited)' : '') + '</div>' +
+                            '<div class="post-author-name">' + escapeHtml(post.author_name || post.display_name || 'Unknown') + roleTag + '</div>' +
+                            '<div class="post-timestamp">' + timeAgo(post.created_at) + '</div>' +
                         '</div>' +
                     '</div>' +
-                    (post.quotedText ? '<div class="quote-block">💬 <i>' + escapeHtml(post.quotedAuthor) + '</i>: ' + escapeHtml(post.quotedText) + '</div>' : '') +
+                    (post.quoted_text ? '<div class="quote-block">💬 <i>' + escapeHtml(post.quoted_author || '') + '</i>: ' + escapeHtml(post.quoted_text) + '</div>' : '') +
                     '<div class="post-body">' + renderPostBody(post.body || '') + '</div>' +
                     '<div class="post-actions">' +
-                        (uid ? '<button class="post-action-btn ' + (liked ? 'liked' : '') + '" onclick="toggleLike(\'' + post.id + '\', ' + post.isOP + ')">❤️ ' + (post.likeCount || 0) + '</button>' : '') +
-                        (uid && !thread.locked ? '<button class="post-action-btn quote-btn" ' + quoteDataAttr + '>💬 Quote</button>' : '') +
+                        (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">💬 Quote</button>' : '') +
                         (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '') +
                         (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '') +
-                        (uid && !isOwnPost ? '<button class="post-action-btn" onclick="reportPost(\'' + post.id + '\')">🚨 Report</button>' : '') +
                         (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" onclick="modDeletePost(\'' + post.id + '\')">🛡 Remove</button>' : '') +
                     '</div>' +
                 '</div>';
@@ -723,235 +352,141 @@
 
             document.getElementById('threadContent').innerHTML =
                 '<div class="thread-header"><h2>' + escapeHtml(thread.title) + '</h2>' +
-                '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.authorName) + '</span><span>·</span><span>' + timeAgo(thread.createdAt) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + (posts.length - 1) + ' replies</span></div></div>' +
+                '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>' +
                 html;
 
-            var unverified = currentUser && !currentUser.emailVerified && currentUser.providerData[0] && currentUser.providerData[0].providerId === 'password';
-
-            if (uid && !thread.locked && !unverified) {
+            if (myId && !thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML =
                     '<div class="reply-form"><h3>Post a Reply</h3>' +
                     '<div class="quote-preview" id="quotePreview"></div>' +
-                    '<div class="post-toolbar">' +
-                        '<button class="toolbar-btn" onclick="insertLink(\'replyBody\')">🔗 Add Link</button>' +
-                        '<span class="toolbar-hint">[text](url) · 1 per post</span>' +
-                        '<span class="char-counter" id="replyCharCount">0 / 10,000</span>' +
-                    '</div>' +
+                    '<div class="post-toolbar"><button class="toolbar-btn" onclick="insertLink(\'replyBody\')">🔗 Add Link</button><span class="toolbar-hint">[text](url) · 1 per post</span><span class="char-counter" id="replyCharCount">0 / 10,000</span></div>' +
                     '<textarea id="replyBody" placeholder="Write your reply..." oninput="updateCharCount(\'replyBody\',\'replyCharCount\')"></textarea>' +
                     '<div id="replyMsg" class="msg"></div>' +
                     '<div class="reply-actions"><button class="btn btn-grey" onclick="clearQuote()">Clear Quote</button><button class="btn btn-red" onclick="submitReply()">Post Reply</button></div>' +
                     '</div>';
-            } else if (unverified) {
-                document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">📧 Please verify your email before posting. Check your inbox for a verification link.</div>';
             } else if (thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">🔒 This thread is locked.</div>';
-            } else if (!uid) {
+            } else {
                 document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice"><a href="signin.html" style="color:#d4af37;">Sign in</a> to reply.</div>';
             }
+        } catch(e) {
+            document.getElementById('threadContent').innerHTML = '<p style="color:#d0021b;">Could not load thread.</p>';
         }
+    }
 
-        window.backToThreads = function() {
-            currentThread = null; currentThreadData = null; quotedPost = null;
-            document.getElementById('threadsList').classList.remove('hidden');
-            document.getElementById('threadView').classList.remove('active');
-            document.getElementById('adminThreadBar').style.display = 'none';
-            loadThreads(currentPage);
-        };
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.quote-btn');
+        if (!btn) return;
+        quotedPost = { postId: btn.getAttribute('data-postid'), authorName: btn.getAttribute('data-author'), text: btn.getAttribute('data-text') };
+        var preview = document.getElementById('quotePreview');
+        if (preview) { preview.innerHTML = '💬 Quoting <b>' + escapeHtml(quotedPost.authorName) + '</b>: ' + escapeHtml(quotedPost.text); preview.classList.add('active'); }
+        var replyBody = document.getElementById('replyBody');
+        if (replyBody) replyBody.focus();
+    });
+    window.clearQuote = function() {
+        quotedPost = null;
+        var preview = document.getElementById('quotePreview');
+        if (preview) { preview.innerHTML = ''; preview.classList.remove('active'); }
+    };
 
-        window.quotePost = function(postId, authorName, text) {
-            quotedPost = { postId, authorName, text };
-            var preview = document.getElementById('quotePreview');
-            if (preview) { preview.innerHTML = '💬 Quoting <b>' + authorName + '</b>: ' + text; preview.classList.add('active'); }
-            var replyBody = document.getElementById('replyBody');
-            if (replyBody) replyBody.focus();
-        };
+    window.backToThreads = function() {
+        currentThread = null; currentThreadData = null; quotedPost = null;
+        document.getElementById('threadsList').classList.remove('hidden');
+        document.getElementById('threadView').classList.remove('active');
+        document.getElementById('adminThreadBar').style.display = 'none';
+        loadThreads(currentPage);
+    };
 
-        document.addEventListener('click', function(e) {
-            var btn = e.target.closest('.quote-btn');
-            if (!btn) return;
-            var postId = btn.getAttribute('data-postid');
-            var author = btn.getAttribute('data-author');
-            var text = btn.getAttribute('data-text');
-            window.quotePost(postId, author, text);
-        });
-        window.clearQuote = function() {
-            quotedPost = null;
-            var preview = document.getElementById('quotePreview');
-            if (preview) { preview.innerHTML = ''; preview.classList.remove('active'); }
-        };
-
-        window.submitReply = async function() {
-            var body = document.getElementById('replyBody').value.trim();
-            var msgEl = document.getElementById('replyMsg');
-            if (!validatePost(body, msgEl)) return;
-            var uid = getUserUid();
-            var username = getUsername();
-            var role = getRole();
-            try {
-                var postData = { threadId: currentThread, body, authorUid: uid, authorName: username, authorRole: role, createdAt: serverTimestamp(), likeCount: 0, likedBy: [], edited: false };
-                if (quotedPost) { postData.quotedText = quotedPost.text; postData.quotedAuthor = quotedPost.authorName; }
-                await Promise.all([
-                    addDoc(collection(db, "posts"), postData),
-                    updateDoc(doc(db, "threads", currentThread), { replyCount: increment(1), lastReplyAt: serverTimestamp(), lastReplyBy: username }),
-                    setDoc(doc(db, "users", uid), { postCount: increment(1) }, { merge: true }),
-                    sendReplyNotification(uid, username)
-                ]);
-                await awardForumPoints(uid, 'reply');
+    window.submitReply = async function() {
+        var body = document.getElementById('replyBody').value.trim();
+        var msgEl = document.getElementById('replyMsg');
+        if (!validatePost(body, msgEl)) return;
+        try {
+            var payload = { threadId: currentThread, body };
+            if (quotedPost) { payload.quoted_text = quotedPost.text; payload.quoted_author = quotedPost.authorName; }
+            var res = await fetch(API_URL + '/api/forum/post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify(payload)
+            });
+            var data = await res.json();
+            if (data.success) {
                 quotedPost = null;
                 document.getElementById('replyBody').value = '';
                 clearQuote();
                 msgEl.className = 'msg success'; msgEl.textContent = '✅ Reply posted!';
                 setTimeout(function() { loadThreadContent(currentThread); }, 500);
-            } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + e.message; }
-        };
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
 
-        window.toggleLike = async function(postId, isOP) {
-            var uid = getUserUid();
-            if (!uid) return;
-            var ref = isOP ? doc(db, "threads", postId) : doc(db, "posts", postId);
-            var snap = await getDoc(ref);
-            var data = snap.data();
-            var likedBy = data.likedBy || [];
-            var authorUid = data.authorUid || null;
-            if (likedBy.includes(uid)) {
-                await updateDoc(ref, { likedBy: arrayRemove(uid), likeCount: increment(-1) });
-                // Revoke +2 from author when unliked (if not own post)
-                if (authorUid && authorUid !== uid) {
-                    try { await updateDoc(doc(db, "users", authorUid), { communityPoints: increment(-POINT_VALUES.likeReceived) }); } catch(e) {}
-                }
-            } else {
-                await updateDoc(ref, { likedBy: arrayUnion(uid), likeCount: increment(1) });
-                await awardLikePoints(authorUid);
-            }
-            await loadThreadContent(currentThread);
-        };
+    window.editPost = function(postId, isOP) {
+        editingPostId = { id: postId, isOP };
+        var postEl = document.getElementById('post-' + postId);
+        var bodyEl = postEl ? postEl.querySelector('.post-body') : null;
+        document.getElementById('editBody').value = bodyEl ? bodyEl.innerText : '';
+        document.getElementById('editModal').classList.add('active');
+        updateCharCount('editBody', 'editCharCount');
+    };
+    window.closeEdit = function() { document.getElementById('editModal').classList.remove('active'); editingPostId = null; };
+    window.submitEdit = async function() {
+        var body = document.getElementById('editBody').value.trim();
+        var msgEl = document.getElementById('editMsg');
+        if (!validatePost(body, msgEl)) return;
+        // Edit endpoint not yet in API — show coming soon
+        msgEl.className = 'msg error'; msgEl.textContent = 'Post editing coming soon.';
+    };
 
-        window.editPost = function(postId, isOP) {
-            editingPostId = { id: postId, isOP };
-            var postEl = document.getElementById('post-' + postId);
-            var bodyEl = postEl ? postEl.querySelector('.post-body') : null;
-            document.getElementById('editBody').value = bodyEl ? bodyEl.innerText : '';
-            document.getElementById('editModal').classList.add('active');
-            updateCharCount('editBody', 'editCharCount');
-        };
-        window.closeEdit = function() { document.getElementById('editModal').classList.remove('active'); editingPostId = null; };
-        window.submitEdit = async function() {
-            var body = document.getElementById('editBody').value.trim();
-            var msgEl = document.getElementById('editMsg');
-            if (!validatePost(body, msgEl)) return;
-            var ref = editingPostId.isOP ? doc(db, "threads", editingPostId.id) : doc(db, "posts", editingPostId.id);
-            await updateDoc(ref, { body, edited: true });
-            closeEdit();
-            await loadThreadContent(currentThread);
-        };
+    window.deletePost = async function(postId, isOP) {
+        if (!confirm('Delete this post?')) return;
+        // Delete endpoint not yet in API
+        alert('Post deletion coming soon.');
+    };
+    window.modDeletePost = async function(postId) {
+        if (!confirm('Remove this post?')) return;
+        alert('Mod deletion coming soon.');
+    };
 
-        window.deletePost = async function(postId, isOP) {
-            if (!confirm('Delete this post?')) return;
-            if (isOP) { await deleteDoc(doc(db, "threads", postId)); backToThreads(); }
-            else {
-                await Promise.all([
-                    deleteDoc(doc(db, "posts", postId)),
-                    updateDoc(doc(db, "threads", currentThread), { replyCount: increment(-1) })
-                ]);
-                await loadThreadContent(currentThread);
-            }
-        };
-        window.modDeletePost = async function(postId) {
-            if (!confirm('Remove this post?')) return;
-            await Promise.all([
-                deleteDoc(doc(db, "posts", postId)),
-                updateDoc(doc(db, "threads", currentThread), { replyCount: increment(-1) })
-            ]);
-            await loadThreadContent(currentThread);
-        };
+    window.togglePin = async function() { alert('Pin/unpin coming soon.'); };
+    window.toggleLock = async function() { alert('Lock/unlock coming soon.'); };
+    window.deleteThread = async function() { if (!confirm('Delete this entire thread?')) return; alert('Thread deletion coming soon.'); };
 
-        window.reportPost = function(postId) { reportingPostId = postId; document.getElementById('reportModal').classList.add('active'); };
-        window.closeReport = function() { document.getElementById('reportModal').classList.remove('active'); reportingPostId = null; document.getElementById('reportReason').value = ''; };
-        window.submitReport = async function() {
-            var reason = document.getElementById('reportReason').value.trim();
-            var msgEl = document.getElementById('reportMsg');
-            if (!reason) { msgEl.className = 'msg error'; msgEl.textContent = 'Please describe the issue.'; return; }
-            await addDoc(collection(db, "reports"), { postId: reportingPostId, threadId: currentThread, reason, reportedBy: getUserUid(), reportedAt: serverTimestamp() });
-            msgEl.className = 'msg success'; msgEl.textContent = '✅ Report submitted.';
-            setTimeout(closeReport, 1500);
-        };
-
-        window.togglePin = async function() {
-            var snap = await getDoc(doc(db, "threads", currentThread));
-            var newVal = !snap.data().pinned;
-            await updateDoc(doc(db, "threads", currentThread), { pinned: newVal });
-            var btn = document.getElementById('pinBtn');
-            if (btn) btn.textContent = newVal ? '📌 Unpin' : '📌 Pin';
-            await loadThreadContent(currentThread);
-        };
-        window.toggleLock = async function() {
-            var snap = await getDoc(doc(db, "threads", currentThread));
-            var newVal = !snap.data().locked;
-            await updateDoc(doc(db, "threads", currentThread), { locked: newVal });
-            var btn = document.getElementById('lockBtn');
-            if (btn) btn.textContent = newVal ? '🔒 Unlock' : '🔒 Lock';
-            await loadThreadContent(currentThread);
-        };
-        window.deleteThread = async function() {
-            if (!confirm('Delete this entire thread?')) return;
-            var postsSnap = await getDocs(query(collection(db, "posts"), where("threadId", "==", currentThread)));
-            await Promise.all([
-                ...postsSnap.docs.map(function(p) { return deleteDoc(p.ref); }),
-                deleteDoc(doc(db, "threads", currentThread))
-            ]);
-            backToThreads();
-        };
-
-        window.openNewThread = function() {
-            if (!getUserEmail()) { alert('Please sign in to post.'); return; }
-            document.getElementById('newThreadModal').classList.add('active');
-        };
-        window.closeNewThread = function() {
-            document.getElementById('newThreadModal').classList.remove('active');
-            document.getElementById('newThreadMsg').textContent = '';
-            document.getElementById('threadTitle').value = '';
-            document.getElementById('threadBody').value = '';
-            updateCharCount('threadBody', 'threadBodyCount');
-        };
-        window.submitThread = async function() {
-            var title = document.getElementById('threadTitle').value.trim();
-            var body = document.getElementById('threadBody').value.trim();
-            var msgEl = document.getElementById('newThreadMsg');
-            if (!title) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a title.'; return; }
-            if (!validatePost(body, msgEl)) return;
-            var uid = getUserUid();
-            var username = getUsername();
-            var role = getRole();
-            try {
-                var threadRef = await addDoc(collection(db, "threads"), {
-                    categoryId, title, body, authorUid: uid, authorName: username, authorRole: role,
-                    createdAt: serverTimestamp(), lastReplyAt: serverTimestamp(), lastReplyBy: username,
-                    replyCount: 0, likeCount: 0, likedBy: [], pinned: false, locked: false, views: 0, edited: false
-                });
-                await setDoc(doc(db, "users", uid), { postCount: increment(1) }, { merge: true });
-                await awardForumPoints(uid, 'thread');
+    window.openNewThread = function() {
+        if (!currentUser) { alert('Please sign in to post.'); return; }
+        document.getElementById('newThreadModal').classList.add('active');
+    };
+    window.closeNewThread = function() {
+        document.getElementById('newThreadModal').classList.remove('active');
+        document.getElementById('newThreadMsg').textContent = '';
+        document.getElementById('threadTitle').value = '';
+        document.getElementById('threadBody').value = '';
+    };
+    window.submitThread = async function() {
+        var title = document.getElementById('threadTitle').value.trim();
+        var body = document.getElementById('threadBody').value.trim();
+        var msgEl = document.getElementById('newThreadMsg');
+        if (!title) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a title.'; return; }
+        if (!validatePost(body, msgEl)) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/thread', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ categoryId, title, body })
+            });
+            var data = await res.json();
+            if (data.success) {
                 msgEl.className = 'msg success'; msgEl.textContent = '✅ Thread posted!';
-                setTimeout(function() { closeNewThread(); openThread(threadRef.id); }, 800);
-            } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Error: ' + e.message; }
-        };
+                setTimeout(function() { closeNewThread(); openThread(data.threadId); }, 800);
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
 
-        onAuthStateChanged(auth, async function(user) {
-            if (user) {
-                currentUser = user;
-                try {
-                    var docSnap = await getDoc(doc(db, "users", user.uid));
-                    if (docSnap.exists()) currentUserData = docSnap.data();
-                } catch(e) { console.warn('Could not load user profile:', e.message); }
-            } else if (googleUser) {
-                try {
-                    var docSnap = await getDoc(doc(db, "users", googleUser.googleId));
-                    if (docSnap.exists()) currentUserData = docSnap.data();
-                } catch(e) {}
-            }
-            if (threadParam) { await openThread(threadParam); }
-            else { await loadThreads(1); }
-            if (currentUserData) updatePointsDisplay(currentUserData.communityPoints || 0);
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!currentUser || !currentUser.authKey) currentUser = null;
+        if (threadParam) { openThread(threadParam); }
+        else { loadThreads(1); }
+    });
     </script>
 </body>
 </html>
