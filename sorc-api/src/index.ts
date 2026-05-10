@@ -9,11 +9,53 @@ interface Env {
 
 const app = new Hono<{ Bindings: Env }>();
 
+const ALLOWED_ORIGINS = new Set(['http://localhost:3000', 'https://sorcrpg.com', 'https://www.sorcrpg.com']);
+
+// Security headers on every response
+app.use('*', async (c, next) => {
+  await next();
+  c.header('X-Frame-Options', 'DENY');
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+});
+
 app.use('*', cors({
   origin: ['http://localhost:3000', 'https://sorcrpg.com', 'https://www.sorcrpg.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
 }));
+
+// In-memory rate limiter for auth endpoints (resets per Worker instance; good-enough for basic abuse prevention)
+const authRateLimit = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string, max = 10, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const entry = authRateLimit.get(ip);
+  if (!entry || entry.resetAt < now) {
+    authRateLimit.set(ip, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  if (entry.count >= max) return true;
+  entry.count++;
+  return false;
+}
+
+// CSRF: reject POST requests to auth endpoints from disallowed origins
+app.use('/api/auth/*', async (c, next) => {
+  if (c.req.method === 'POST') {
+    const origin = c.req.header('Origin');
+    if (origin && !ALLOWED_ORIGINS.has(origin)) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+    const ip = c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || 'unknown';
+    if (isRateLimited(ip)) {
+      return c.json({ error: 'Too many requests. Please try again later.' }, 429);
+    }
+  }
+  await next();
+});
 
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
