@@ -19,31 +19,17 @@
     <meta property="og:description" content="An epic sci-fantasy TTRPG by Ogre Adventurer. Join the adventure in Slayers of Rings & Crowns." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://sorcrpg.com/" />
-    <meta property="og:image" content="layers-letters.png" />
+    <meta property="og:image" content="slayers-letters.png" />
     <link rel="stylesheet" href="styles.css" />
     <style>
-        section, .about, .back-of-book, .explore-more, .level-up-game, .expand-library, .news-preview, .partnered-creators, .sorc-beyond {
+        section, .about, .back-of-book, .explore-more, .level-up-game, .expand-library, .news-preview, .partnered-creators, .features-preview {
             border: none !important;
         }
         .legend-slide { display: none; }
         .legend-slide.active { display: block; }
         .legend-video-wrapper { position: relative; }
-        .sorc-beyond {
-            margin: 2rem 0;
-            padding: 2rem 1rem;
-            background: #181818;
-            border-radius: 1rem;
-            color: #e0cfc0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.13);
-            text-align: center;
-        }
-        .sorc-beyond h2 { color: #d0021b; margin-bottom: 1rem; }
-        .sorc-beyond ul {
-            text-align: left;
-            display: inline-block;
-            margin: 1rem auto 0 auto;
-            padding-left: 1.2em;
-        }
+
+        /* Theme toggles */
         .theme-toggle-container {
             display: flex;
             gap: 0.5rem;
@@ -70,23 +56,27 @@
             .theme-toggle-container { padding: 0.3rem 0.5rem; gap: 0.3rem; }
             .theme-toggle-btn { padding: 0.4rem 0.8rem; font-size: 0.75rem; min-width: 100px; }
         }
+
+        /* Lawful mode overrides */
         body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
         body.lawful-mode header { background: #ffffff; border-bottom: 2px solid #d4af37; }
         body.lawful-mode nav a { color: #2c2c2c; }
         body.lawful-mode nav a:hover { color: #d4af37; }
         body.lawful-mode nav ul li a { color: #d4af37; }
         body.lawful-mode nav ul li a:hover { color: #c19b2b; }
-        body.lawful-mode .sorc-beyond { background: #ffffff; color: #2c2c2c; }
-        body.lawful-mode .sorc-beyond h2 { color: #d4af37; }
         body.lawful-mode section { background: #ffffff; color: #2c2c2c; }
         body.lawful-mode h2, body.lawful-mode h3 { color: #d4af37; }
-        body.lawful-mode .news-card, body.lawful-mode .creator-card, body.lawful-mode .tier-card {
+        body.lawful-mode .news-card, body.lawful-mode .creator-card, body.lawful-mode .tier-card, body.lawful-mode .feature-card {
             background: #ffffff; color: #2c2c2c; border: 1px solid #e0e0e0;
         }
         body.lawful-mode .cta-btn { background: #d4af37; color: #2c2c2c; }
         body.lawful-mode .cta-btn:hover { background: #c19b2b; }
         body.lawful-mode footer { background: #2c2c2c; color: #f5f5f0; }
         body.lawful-mode .menu-toggle { color: #2c2c2c; }
+        body.lawful-mode .level-up-game { color: #2c2c2c; }
+        body.lawful-mode .feature-card p, body.lawful-mode .feature-card h3 { color: #2c2c2c; }
+
+        /* Cookie banner */
         .cookie-banner {
             display: none;
             position: fixed;
@@ -117,6 +107,109 @@
             white-space: nowrap;
         }
         .cookie-accept-btn:hover { background: #a50013; }
+
+        /* Section scroll nav */
+        .section-scroll-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-scroll-btn {
+            background: rgba(208,2,27,0.8);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            font-size: 1.7rem;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            padding: 0;
+        }
+        .section-scroll-btn:hover { background: #d0021b; }
+
+        /* Game Features section */
+        .features-preview {
+            padding: 1.5rem 1rem;
+        }
+        .features-preview h2 {
+            color: #d0021b;
+            margin-bottom: 1rem;
+        }
+        .features-list {
+            display: flex;
+            flex-direction: row;
+            gap: 1.5rem;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 1rem;
+            flex: 1;
+            scrollbar-width: thin;
+            scrollbar-color: #d0021b #1a1a1a;
+        }
+        .features-list::-webkit-scrollbar { height: 5px; }
+        .features-list::-webkit-scrollbar-thumb { background: #d0021b; border-radius: 4px; }
+        .feature-card {
+            min-width: 280px;
+            max-width: 360px;
+            background: linear-gradient(140deg, #1a060c 55%, #0d1a36 100%);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 2px solid #d0021b;
+            box-shadow: 0 2px 18px rgba(208,2,27,0.18);
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+        }
+        .feature-card .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .feature-card h3 {
+            color: #d0021b;
+            margin: 0 0 0.6rem 0;
+            font-size: 1.2rem;
+        }
+        .feature-card p { color: #e0cfc0; flex: 1; margin: 0 0 1rem 0; }
+        .feature-card .feature-link {
+            color: #d4af37;
+            font-weight: bold;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        .feature-card .feature-link:hover { text-decoration: underline; }
+
+        /* Horizontal CTA buttons */
+        .cta-section {
+            text-align: center;
+            padding: 1.5rem 1rem;
+        }
+        .cta-buttons-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .cta-sm {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.82rem !important;
+            min-width: unset !important;
+        }
+
+        /* Trials tier highlight */
+        .tier-card.trials-tier {
+            border-color: #d4af37;
+            background: linear-gradient(140deg, #1a060c 60%, #1a1500 100%);
+        }
+        .tier-card.trials-tier h3 { color: #d4af37; }
     </style>
 </head>
 <body>
@@ -158,6 +251,7 @@
     </nav>
 
     <main>
+        <!-- Video / Legend -->
         <section class="legend">
             <div class="legend-slide active" id="legendSlide1">
                 <div class="legend-video-wrapper">
@@ -166,107 +260,145 @@
                         Your browser does not support the video tag.
                     </video>
                 </div>
-                <div class="expand-library-legend" style="margin: 2rem 0 1rem 0; text-align: left;">
-                    <div id="navRoleBadge"></div>
-                    <section class="sorc-beyond">
-                        <h2>SORC Beyond</h2>
-                        <p><b>SORC Beyond</b> is the free digital companion platform for Slayers of Rings &amp; Crowns — online lobbies, character profiles, card trading, and more. Build your reputation in Essentia and the platform grows with you.</p>
-                        <p style="margin-top:0.75rem;"><a href="sorc-beyond.html" style="color:#d4af37;">Learn more →</a></p>
-                    </section>
-                    <div style="text-align:center;margin:1.5rem 0;">
-                        <a href="character-customizer/creation-overview.html" class="cta-btn">Character Customization</a>
-                    </div>
-                    <div style="text-align:center;margin:1.5rem 0;">
-                        <a href="library.html" class="cta-btn">Browse Library</a>
-                    </div>
-                    <div style="text-align:center;margin:1.5rem 0;">
-                        <a href="forum.html" class="cta-btn">Community Forums</a>
-                    </div>
-                    <div style="text-align:center;margin:1.5rem 0;">
-                        <a href="sorc-beyond.html" class="cta-btn" style="background:#1a3a6b;border-color:#1a3a6b;">SORC Beyond</a>
-                    </div>
-                    <div class="social-links" style="margin-bottom:1.5rem; text-align:center;">
-                        <a href="https://www.youtube.com/@vanwulfgracevar" target="_blank" aria-label="YouTube">
-                            <img src="images/social_icons/IMG_2419.png" alt="YouTube" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                        </a>
-                        <a href="https://x.com/OGRE_SORC" target="_blank" aria-label="X">
-                            <img src="images/social_icons/x_icon.png" alt="X" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
-                        </a>
-                    </div>
-                </div>
+                <div id="navRoleBadge"></div>
             </div>
         </section>
 
+        <!-- About -->
         <section class="about">
             <h2>Explore Essentia</h2>
             <p>Begin on Zailister, a lush life-sustainable planet, where arcane sorcery and steel meet advanced technology. Journey between 13 planetary worlds using rifts, portals, starships, and forbidden hell gates.</p>
-            <p>Zailister is torn by war. Noble, Feral, and Purge factions unite against the Omnè, invaders from a desperate planet whose fate relies on the death of Adoria's sister star, Taedry Dwarf.</p>
+            <p>Zailister is torn by war. Noble, Feral, and Purge factions unite against the Omn&egrave;, invaders from a desperate planet whose fate relies on the death of Adoria's sister star, Taedry Dwarf.</p>
             <p>Choose your race, class and fulfill your destiny of becoming a legend. Build your reputation, earn notoriety, and shape your story throughout Essentia's history.</p>
         </section>
 
+        <!-- Game Features -->
+        <section class="features-preview">
+            <h2>Game Features</h2>
+            <div class="section-scroll-wrapper">
+                <button class="section-scroll-btn section-scroll-prev" aria-label="Previous" data-target="featuresScroll">&#8249;</button>
+                <div class="features-list" id="featuresScroll">
+                    <article class="feature-card">
+                        <div class="feature-icon">&#9670;</div>
+                        <h3>SORC Beyond</h3>
+                        <p>The free digital companion platform for Slayers of Rings &amp; Crowns. Build your Community Points, join Online Lobbies, manage character profiles, and unlock exclusive features. Pro membership — unlocked with a box set — opens the Trading Post, Character's Home, Private Campaign Rooms, and more.</p>
+                        <a href="sorc-beyond.html" class="feature-link">Explore SORC Beyond &rarr;</a>
+                    </article>
+                    <article class="feature-card">
+                        <div class="feature-icon">&#9632;</div>
+                        <h3>SORC Cards</h3>
+                        <p>A comprehensive card-based system to track abilities, equipment, fellowships, and more. Every box set includes punch-out Common and Uncommon Cards covering armaments, actions, encounters, and fellowships. Lore Cards carry QR codes for digital access — trade them on the server and digital ownership transfers automatically.</p>
+                        <a href="content/sorc-cards/sorc-cards-overview.html" class="feature-link">View SORC Cards &rarr;</a>
+                    </article>
+                </div>
+                <button class="section-scroll-btn section-scroll-next" aria-label="Next" data-target="featuresScroll">&#8250;</button>
+            </div>
+        </section>
+
+        <!-- Latest News -->
         <section class="news-preview">
             <h2>Latest News</h2>
-            <div class="news-list">
-                <article class="news-card first-card">
-                    <div class="news-img-wrapper">
-                        <img src="images/news_placeholder1.jpg" alt="News 1" class="news-img" />
-                        <div class="arrow arrow-right" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="12,9 39,24 12,39"></polygon>
-                            </svg>
+            <div class="section-scroll-wrapper">
+                <button class="section-scroll-btn section-scroll-prev" aria-label="Previous" data-target="newsScroll">&#8249;</button>
+                <div class="news-list" id="newsScroll">
+                    <article class="news-card first-card">
+                        <div class="news-img-wrapper">
+                            <img src="images/news_placeholder1.jpg" alt="News 1" class="news-img" />
+                            <div class="arrow arrow-right" tabindex="0">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <polygon points="12,9 39,24 12,39"></polygon>
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-                    <h3><a href="news.html">Welcome to Essentia!</a></h3>
-                    <p>The official SORC site is live. Begin your journey through Zailister and beyond.</p>
-                    <span class="date">2024-06-20</span>
-                </article>
-                <article class="news-card middle-card">
-                    <div class="news-img-wrapper">
-                        <div class="arrow arrow-left" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="36,9 9,24 36,39"></polygon>
-                            </svg>
+                        <h3><a href="prologue.html">Welcome to Essentia!</a></h3>
+                        <p>The official SORC site is live. Begin your journey through Zailister and beyond.</p>
+                        <span class="date">2024-06-20</span>
+                    </article>
+                    <article class="news-card middle-card">
+                        <div class="news-img-wrapper">
+                            <div class="arrow arrow-left" tabindex="0">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <polygon points="36,9 9,24 36,39"></polygon>
+                                </svg>
+                            </div>
+                            <img src="images/news_placeholder2.jpg" alt="News 2" class="news-img" />
+                            <div class="arrow arrow-right" tabindex="0">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <polygon points="12,9 39,24 12,39"></polygon>
+                                </svg>
+                            </div>
                         </div>
-                        <img src="images/news_placeholder2.jpg" alt="News 2" class="news-img" />
-                        <div class="arrow arrow-right" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="12,9 39,24 12,39"></polygon>
-                            </svg>
+                        <h3><a href="news.html">Dev Update: Limb Targeting Combat</a></h3>
+                        <p>Learn about SORC's unique combat systems including Limb Specific Targeting and Burning Streaks.</p>
+                        <span class="date">2024-06-15</span>
+                    </article>
+                    <article class="news-card last-card">
+                        <div class="news-img-wrapper">
+                            <div class="arrow arrow-left" tabindex="0">
+                                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                    <polygon points="36,9 9,24 36,39"></polygon>
+                                </svg>
+                            </div>
+                            <img src="images/news_placeholder3.jpg" alt="News 3" class="news-img" />
                         </div>
-                    </div>
-                    <h3><a href="news.html">Dev Update: Limb Targeting Combat</a></h3>
-                    <p>Learn about SORC's unique combat systems including Limb Specific Targeting and Burning Streaks.</p>
-                    <span class="date">2024-06-15</span>
-                </article>
-                <article class="news-card last-card">
-                    <div class="news-img-wrapper">
-                        <div class="arrow arrow-left" tabindex="0">
-                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                                <polygon points="36,9 9,24 36,39"></polygon>
-                            </svg>
-                        </div>
-                        <img src="images/news_placeholder3.jpg" alt="News 3" class="news-img" />
-                    </div>
-                    <h3><a href="news.html">Prologue Released</a></h3>
-                    <p>Essentia's prologue and setting revealed: the nineteen crowns, the prophecy, and the fate of the universe.</p>
-                    <span class="date">2024-06-10</span>
-                </article>
+                        <h3><a href="news.html">Prologue Released</a></h3>
+                        <p>Essentia's prologue and setting revealed: the nineteen crowns, the prophecy, and the fate of the universe.</p>
+                        <span class="date">2024-06-10</span>
+                    </article>
+                </div>
+                <button class="section-scroll-btn section-scroll-next" aria-label="Next" data-target="newsScroll">&#8250;</button>
             </div>
             <a href="news.html" class="more-news">More News</a>
         </section>
 
+        <!-- CTA Buttons (horizontal, smaller) + Social Links -->
+        <div class="cta-section">
+            <div class="cta-buttons-row">
+                <a href="character-customizer/creation-overview.html" class="cta-btn cta-sm">Character Customization</a>
+                <a href="library.html" class="cta-btn cta-sm">Browse Library</a>
+                <a href="forum.html" class="cta-btn cta-sm">Community Forums</a>
+                <a href="sorc-beyond.html" class="cta-btn cta-sm" style="background:#1a3a6b;border-color:#1a3a6b;">SORC Beyond</a>
+            </div>
+            <div class="social-links" style="text-align:center;">
+                <a href="https://www.youtube.com/@vanwulfgracevar" target="_blank" aria-label="YouTube">
+                    <img src="images/social_icons/IMG_2419.png" alt="YouTube" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                </a>
+                <a href="https://x.com/OGRE_SORC" target="_blank" aria-label="X">
+                    <img src="images/social_icons/x_icon.png" alt="X" style="height:32px;width:32px;vertical-align:middle;border-radius:6px;background:#fff;padding:2px;" />
+                </a>
+            </div>
+        </div>
+
+        <!-- Level Up Your Game -->
         <section class="level-up-game">
             <h2>Level Up Your Game</h2>
-            <p>Unlock digital tools, exclusive perks, and more with a SORC subscription.</p>
+            <p>Jump in free with Trials of Combat or unlock the full SORC Beyond experience with a box set.</p>
             <div class="subscription-tiers">
+                <article class="tier-card trials-tier">
+                    <div class="news-img-wrapper">
+                        <img src="images/placeholder_trials_tier.jpg" alt="Trials of Combat" class="news-img" />
+                    </div>
+                    <h3>Trials Tier &mdash; Free</h3>
+                    <p style="color:#c0c0c0;font-size:0.9rem;margin:0.5rem 0;">Open to all members. No box set required. No paid advantage.</p>
+                    <ul>
+                        <li>Arena &mdash; 1v1 through 5v5 PvP combat</li>
+                        <li>Proving Grounds &mdash; Battleground objectives</li>
+                        <li>Coliseum &mdash; Champion challenges vs. creatures</li>
+                        <li>War &mdash; Large-scale faction battles</li>
+                        <li>In-game rewards &amp; Trial currency only</li>
+                    </ul>
+                    <a href="content/trials-of-combat.html" class="cta-btn cta-sm" style="margin-top:1rem;display:inline-block;">Enter the Trials &rarr;</a>
+                </article>
                 <article class="tier-card">
                     <div class="news-img-wrapper">
                         <img src="images/placeholder_legend_tier.jpg" alt="Legend Tier" class="news-img" />
                     </div>
-                    <h3>Legend Tier</h3>
+                    <h3>Legend Tier &mdash; Pro</h3>
+                    <p style="color:#c0c0c0;font-size:0.9rem;margin:0.5rem 0;">Box set required. Unlocks full SORC Beyond.</p>
                     <ul>
-                        <li>Unlimited character slots</li>
-                        <li>Monthly SORC perks</li>
+                        <li>Private Campaign Rooms</li>
+                        <li>Character's Home</li>
+                        <li>Trading Post access</li>
                         <li>Early access to new features</li>
                     </ul>
                 </article>
@@ -274,11 +406,13 @@
                     <div class="news-img-wrapper">
                         <img src="images/placeholder_master_tier.jpg" alt="Crownmaster Tier" class="news-img" />
                     </div>
-                    <h3>Crownmaster Tier</h3>
+                    <h3>Crownmaster Tier &mdash; Pro</h3>
+                    <p style="color:#c0c0c0;font-size:0.9rem;margin:0.5rem 0;">Box set required. Full community tools.</p>
                     <ul>
                         <li>Share compendium content with your party</li>
-                        <li>Use homebrew SORC content</li>
+                        <li>Homebrew SORC content</li>
                         <li>Advanced campaign management</li>
+                        <li>SORC Ambiance App</li>
                     </ul>
                 </article>
             </div>
@@ -289,22 +423,40 @@
 
     <script type="module" src="main.js"></script>
     <script>
+    /* Section scroll navigation */
     document.addEventListener('DOMContentLoaded', function() {
-        const headerControls = document.createElement('div');
+        document.querySelectorAll('.section-scroll-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var targetId = btn.getAttribute('data-target');
+                var list = document.getElementById(targetId);
+                if (!list) return;
+                var scrollAmt = list.offsetWidth * 0.8 || 300;
+                if (btn.classList.contains('section-scroll-prev')) {
+                    list.scrollBy({ left: -scrollAmt, behavior: 'smooth' });
+                } else {
+                    list.scrollBy({ left: scrollAmt, behavior: 'smooth' });
+                }
+            });
+        });
+    });
+
+    /* Profile button */
+    document.addEventListener('DOMContentLoaded', function() {
+        var headerControls = document.createElement('div');
         headerControls.id = 'headerControls';
         headerControls.style.cssText = 'position:fixed;top:1.2rem;right:1.5rem;display:flex;gap:0.75rem;align-items:center;z-index:500;';
 
-        const profileBtn = document.createElement('button');
+        var profileBtn = document.createElement('button');
         profileBtn.id = 'profileBtn';
         profileBtn.title = 'Profile';
         profileBtn.style.cssText = 'background:linear-gradient(135deg,#d0021b 0%,#ff3366 100%);border:2px solid #d0021b;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;box-shadow:0 4px 12px rgba(208,2,27,0.35);font-size:1.2rem;color:#fff;overflow:hidden;padding:0;';
-        profileBtn.innerHTML = '👤';
+        profileBtn.innerHTML = '&#128100;';
 
         window._profileBtn_loggedIn = function(avatarFilename) {
             if (avatarFilename) {
-                profileBtn.innerHTML = '<img src="images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'👤\'" />';
+                profileBtn.innerHTML = '<img src="images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'&#128100;\'" />';
             } else {
-                profileBtn.innerHTML = '👤';
+                profileBtn.innerHTML = '&#128100;';
             }
             profileBtn.onclick = function(e) {
                 e.stopPropagation();
@@ -313,7 +465,7 @@
         };
 
         window._profileBtn_loggedOut = function() {
-            profileBtn.innerHTML = '👤';
+            profileBtn.innerHTML = '&#128100;';
             profileBtn.onclick = function(e) {
                 e.stopPropagation();
                 window.location.href = 'signin.html';
