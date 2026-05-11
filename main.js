@@ -221,7 +221,7 @@ function showRoleBadge(user) {
     : '';
 
   existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
     ' <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' <a href="/lobbies.html" style="color:inherit;text-decoration:underline;">Lobbies</a>' +
     ' <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
