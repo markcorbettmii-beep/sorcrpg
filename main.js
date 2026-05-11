@@ -39,6 +39,21 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// ========== HOME ICON INJECTION ==========
+document.addEventListener('DOMContentLoaded', function() {
+  var path = window.location.pathname;
+  var isHome = path === '/' || path.endsWith('/index.html');
+  if (isHome) return;
+  if (document.querySelector('.page-nav')) return;
+  var isSubdir = /\/(content|character-customizer|trait_trees|demos)\//.test(path);
+  var homeHref = isSubdir ? '../index.html' : '/index.html';
+  var ul = document.createElement('ul');
+  ul.className = 'page-nav';
+  ul.innerHTML = '<li><a href="' + homeHref + '">&#8962;</a></li>';
+  var nav = document.querySelector('nav');
+  if (nav) { nav.insertAdjacentElement('afterend', ul); }
+});
+
 // ========== FOOTER INJECTION ==========
 document.addEventListener('DOMContentLoaded', function() {
   var footerDiv = document.getElementById('footer');
