@@ -225,7 +225,7 @@ function showRoleBadge(user) {
     ' <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' <a href="/lobbies.html" style="color:inherit;text-decoration:underline;">Lobbies</a>' +
     ' <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
-    ' <a href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
+    ' <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' <a href="/forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
     ' <a href="/content.html" style="color:inherit;text-decoration:underline;">Content</a>' +
     adminLink +
@@ -293,19 +293,30 @@ async function checkNotifications(user) {
   if (!user || !user.authKey) return;
   try {
     var headers = { 'X-Auth-Key': user.authKey };
-    var [convRes, reqRes] = await Promise.all([
+    var [convRes, reqRes, fellowRes] = await Promise.all([
       fetch(SORC_API + '/api/conversations', { headers: headers }),
-      fetch(SORC_API + '/api/fellowships/requests/incoming', { headers: headers })
+      fetch(SORC_API + '/api/fellowships/requests/incoming', { headers: headers }),
+      fetch(SORC_API + '/api/fellowships/notifications', { headers: headers }).catch(function() { return null; })
     ]);
     var convData = await convRes.json();
     var reqData = await reqRes.json();
+    var fellowData = fellowRes ? await fellowRes.json().catch(function() { return {}; }) : {};
+
     var unread = (convData.unread_count || 0) + (reqData.requests ? reqData.requests.length : 0);
-    if (unread > 0) {
-      var badgeEl = document.getElementById('navRoleBadge');
-      if (badgeEl) {
+    var newFellows = fellowData.new_count || 0;
+
+    var badgeEl = document.getElementById('navRoleBadge');
+    if (badgeEl) {
+      if (unread > 0) {
         var inboxLink = badgeEl.querySelector('#badgeInboxLink');
         if (inboxLink) {
           inboxLink.innerHTML = 'Inbox <span style="background:#d0021b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>';
+        }
+      }
+      if (newFellows > 0) {
+        var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
+        if (fellowLink) {
+          fellowLink.innerHTML = 'Fellowships <span style="background:#1a3a6b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + newFellows + '</span>';
         }
       }
     }

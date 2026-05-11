@@ -113,6 +113,21 @@
       return res.json();
     }
 
+    async function sendRoleChangeMessage(uid, role) {
+      try {
+        var convRes = await apiFetch('/api/conversations', {
+          method: 'POST',
+          body: JSON.stringify({ recipient_uid: uid })
+        });
+        if (convRes.conversation_id) {
+          await apiFetch('/api/conversations/' + convRes.conversation_id + '/messages', {
+            method: 'POST',
+            body: JSON.stringify({ body: 'Your SORC role has been updated to ' + role + '. If you have questions about this change, please contact an admin.' })
+          });
+        }
+      } catch(e) {}
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       if (!currentUser || !currentUser.authKey) {
         renderUnauthorized(); return;
@@ -413,6 +428,7 @@
         });
         msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
         msgEl.textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
+        if (data.success) sendRoleChangeMessage(uid, role);
       } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
     };
 
@@ -428,7 +444,7 @@
         });
         document.getElementById('memberMsg').className = 'msg ' + (data.success ? 'success' : 'error');
         document.getElementById('memberMsg').textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
-        if (data.success) loadAllMembers();
+        if (data.success) { sendRoleChangeMessage(uid, role); loadAllMembers(); }
       } catch(e) {
         document.getElementById('memberMsg').className = 'msg error';
         document.getElementById('memberMsg').textContent = 'Connection error.';
