@@ -323,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (user && user.authKey) {
         showRoleBadge(user);
         checkNotifications(user);
+        setInterval(function() { checkNotifications(user); }, 30000);
         if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(user.avatar || null);
       } else {
         if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();

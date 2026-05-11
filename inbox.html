@@ -120,12 +120,16 @@
             return Math.floor(s / 86400) + 'd ago';
         }
 
-        function authHeaders() {
-            return { 'Content-Type': 'application/json', 'X-Auth-Key': myAuthKey };
+        function authHeaders(withBody) {
+            var h = { 'X-Auth-Key': myAuthKey };
+            if (withBody) h['Content-Type'] = 'application/json';
+            return h;
         }
 
         async function apiFetch(path, opts) {
-            var res = await fetch(API_URL + path, Object.assign({ headers: authHeaders() }, opts || {}));
+            var hasBody = opts && opts.body;
+            var res = await fetch(API_URL + path, Object.assign({ headers: authHeaders(hasBody) }, opts || {}));
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             return res.json();
         }
 
@@ -135,15 +139,14 @@
                     '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
                 return;
             }
+            var params = new URLSearchParams(window.location.search);
+            var toUid = params.get('to');
             try {
                 await renderInbox();
             } catch(e) {
                 document.getElementById('inboxApp').innerHTML =
-                    '<div class="empty-state">Could not load inbox. Please try again.</div>';
-                return;
+                    '<div class="empty-state">No messages yet.<br/>Visit a Fellow\'s profile to start a conversation.</div>';
             }
-            var params = new URLSearchParams(window.location.search);
-            var toUid = params.get('to');
             if (toUid) {
                 try {
                     var res = await apiFetch('/api/conversations', {
