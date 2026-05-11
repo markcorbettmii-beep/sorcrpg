@@ -213,7 +213,7 @@ function showRoleBadge(user) {
     ' &nbsp;|&nbsp; <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
     ' &nbsp;|&nbsp; <a href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' &nbsp;|&nbsp; <a href="/forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
-    ' &nbsp;|&nbsp; <a href="/shop.html" style="color:inherit;text-decoration:underline;">Shop</a>' +
+    ' &nbsp;|&nbsp; <a href="/content.html" style="color:inherit;text-decoration:underline;">Content</a>' +
     adminLink +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
 
