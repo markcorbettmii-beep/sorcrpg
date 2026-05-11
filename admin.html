@@ -110,7 +110,7 @@
 
     async function apiFetch(path, opts) {
       var res = await fetch(API_URL + path, Object.assign({ headers: authHeaders() }, opts || {}));
-      return res.json();
+      try { return await res.json(); } catch(e) { return { success: false, error: 'Server error (' + res.status + ')' }; }
     }
 
     async function sendRoleChangeMessage(uid, role) {
@@ -450,7 +450,7 @@
           msgEl.className = 'msg ' + (invData.success ? 'success' : 'error');
           msgEl.textContent = invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed to send invitation.');
           if (invData.success) sendAdminInvitation(uid);
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
         return;
       }
       if (!confirm('Set role to ' + role + ' for ' + uid + '?')) return;
@@ -462,7 +462,7 @@
         msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
         msgEl.textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
         if (data.success) sendRoleChangeMessage(uid, role);
-      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
     };
 
     window.applyRole = async function(uid) {
@@ -494,7 +494,7 @@
         if (data.success) { sendRoleChangeMessage(uid, role); loadAllMembers(); }
       } catch(e) {
         msgEl.className = 'msg error';
-        msgEl.textContent = 'Connection error.';
+        msgEl.textContent = 'Network error: ' + (e.message || 'check connection');
       }
     };
 

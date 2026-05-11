@@ -322,8 +322,9 @@
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
                 body: JSON.stringify({ role: role })
             });
-            var data = await res.json();
-            modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.'), data.success);
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
+            modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed (' + res.status + ')'), data.success);
             if (data.success) {
                 try {
                     var convRes2 = await fetch(API_URL + '/api/conversations', {
@@ -341,7 +342,7 @@
                     }
                 } catch(e) {}
             }
-        } catch(e) { modMsg('Connection error.', false); }
+        } catch(e) { modMsg('Network error: ' + (e.message || 'check connection'), false); }
     };
 
     window.startMessage = function() {
