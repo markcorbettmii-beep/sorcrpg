@@ -140,6 +140,44 @@
         }
     };
 
+    window.saveSignature = async function() {
+        var sig = document.getElementById('sigInput').value.trim();
+        var msgEl = document.getElementById('sigMsg');
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!saved || !saved.authKey) return;
+        try {
+            var res = await fetch(API_URL + '/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
+                body: JSON.stringify({ signature: sig })
+            });
+            var data = await res.json();
+            msgEl.className = data.success ? 'msg success' : 'msg error';
+            msgEl.textContent = data.success ? '✅ Signature saved!' : (data.error || 'Failed.');
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.saveSocials = async function() {
+        var website = document.getElementById('socialWebsite').value.trim();
+        var twitter = document.getElementById('socialTwitter').value.trim();
+        var twitch = document.getElementById('socialTwitch').value.trim();
+        var msgEl = document.getElementById('socialsMsg');
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!saved || !saved.authKey) return;
+        try {
+            var res = await fetch(API_URL + '/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
+                body: JSON.stringify({ socials: { website: website, twitter: twitter, twitch: twitch } })
+            });
+            var data = await res.json();
+            msgEl.className = data.success ? 'msg success' : 'msg error';
+            msgEl.textContent = data.success ? '✅ Socials saved!' : (data.error || 'Failed.');
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
     window.saveBio = async function() {
         var bio = document.getElementById('bioInput').value.trim();
         var msgEl = document.getElementById('bioMsg');
@@ -209,6 +247,17 @@
         var avatar = user.avatar || null;
         var communityPoints = user.community_points || 0;
         var postCount = user.post_count || 0;
+
+        if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
+            communityPoints = 10000;
+            user.community_points = 10000;
+            localStorage.setItem('sorc_user', JSON.stringify(user));
+            fetch(API_URL + '/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
+                body: JSON.stringify({ community_points: 10000 })
+            }).catch(function(){});
+        }
 
         var avatarDisplay = avatar
             ? '<img src="images/avatars/' + avatar + '" style="width:100%;height:100%;object-fit:cover;" />'
@@ -280,6 +329,45 @@
                             '<button class="btn btn-gold btn-sm" onclick="saveBio()" style="margin-top:6px;">Save Bio</button>' +
                             '<div id="bioMsg" class="msg"></div>' +
                         '</div>' +
+
+                        (communityPoints >= 100
+                            ? '<div class="profile-field">' +
+                                '<label>SIGNATURE <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
+                                '<input type="text" id="sigInput" class="profile-input" value="' + (user.signature || '').replace(/"/g,'&quot;') + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
+                                '<button class="btn btn-gold btn-sm" onclick="saveSignature()" style="margin-top:6px;">Save Signature</button>' +
+                                '<div id="sigMsg" class="msg"></div>' +
+                            '</div>'
+                            : '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>Signature</h4><p>A short line shown below your forum posts.</p></div>' +
+                                '<div style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 100 CP</div>' +
+                            '</div>'
+                        ) +
+
+                        (communityPoints >= 250
+                            ? '<div class="profile-field">' +
+                                '<label>SOCIAL LINKS <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
+                                '<input type="text" id="socialWebsite" class="profile-input" value="' + ((user.socials && user.socials.website) || '').replace(/"/g,'&quot;') + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
+                                '<input type="text" id="socialTwitter" class="profile-input" value="' + ((user.socials && user.socials.twitter) || '').replace(/"/g,'&quot;') + '" placeholder="Twitter / X handle" style="margin-bottom:4px;" />' +
+                                '<input type="text" id="socialTwitch" class="profile-input" value="' + ((user.socials && user.socials.twitch) || '').replace(/"/g,'&quot;') + '" placeholder="Twitch handle" />' +
+                                '<button class="btn btn-gold btn-sm" onclick="saveSocials()" style="margin-top:6px;">Save Socials</button>' +
+                                '<div id="socialsMsg" class="msg"></div>' +
+                            '</div>'
+                            : '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>Social Links</h4><p>Website, Twitter/X, and Twitch on your profile.</p></div>' +
+                                '<div style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 250 CP</div>' +
+                            '</div>'
+                        ) +
+
+                        (communityPoints >= 500
+                            ? '<div class="profile-field">' +
+                                '<label>PROFILE BANNER <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
+                                '<p style="font-size:0.8rem;color:#555;margin:0 0 4px 0;">Contact an admin to upload a custom banner image.</p>' +
+                            '</div>'
+                            : '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>Profile Banner</h4><p>Custom banner image at the top of your profile.</p></div>' +
+                                '<div style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 500 CP</div>' +
+                            '</div>'
+                        ) +
 
                         '<div class="profile-field">' +
                             '<label>EMAIL</label>' +

@@ -268,6 +268,30 @@ window.generateGMCode = function() {
   document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
 };
 
+// ========== NOTIFICATION BADGE ==========
+async function checkNotifications(user) {
+  if (!user || !user.authKey) return;
+  try {
+    var headers = { 'X-Auth-Key': user.authKey };
+    var [convRes, reqRes] = await Promise.all([
+      fetch(SORC_API + '/api/conversations', { headers: headers }),
+      fetch(SORC_API + '/api/fellowships/requests/incoming', { headers: headers })
+    ]);
+    var convData = await convRes.json();
+    var reqData = await reqRes.json();
+    var unread = (convData.unread_count || 0) + (reqData.requests ? reqData.requests.length : 0);
+    if (unread > 0) {
+      var badgeEl = document.getElementById('navRoleBadge');
+      if (badgeEl) {
+        var inboxLink = badgeEl.querySelector('a[href="/inbox.html"]');
+        if (inboxLink) {
+          inboxLink.innerHTML = 'Inbox <span style="background:#d0021b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>';
+        }
+      }
+    }
+  } catch(e) {}
+}
+
 // ========== AUTH STATE — reads from localStorage, no Firebase ==========
 document.addEventListener('DOMContentLoaded', function() {
   try {
@@ -275,9 +299,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (saved) {
       var user = JSON.parse(saved);
       if (user && user.authKey) {
-        // Show role badge
         showRoleBadge(user);
-        // Update profile button
+        checkNotifications(user);
         if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(user.avatar || null);
       } else {
         if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
