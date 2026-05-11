@@ -129,7 +129,6 @@
                 '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div></div>' +
                 '<div style="font-size:0.72rem;color:#444;margin-top:6px;">🔒 Unlocks with SORC Beyond Pro</div></div>';
 
-            // Check if viewer is logged in
             var currentUser = null;
             try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
             var isSelf = currentUser && (currentUser.id === user.id || currentUser.username === user.username);
@@ -186,7 +185,7 @@
                         '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
                         '<div class="profile-name-block">' +
                             '<div class="profile-username">' + escapeHtml(username) + statusBadge + '</div>' +
-                            '<span class="profile-role-tag" style="' + getRoleColor(role) + '">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>' +
+                            '<span class="profile-role-tag" style="' + getRoleColor(role) + ';cursor:pointer;user-select:none;-webkit-user-select:none;" data-username="' + escapeHtml(username) + '" data-uid="' + escapeHtml(String(user.user_id || user.id || '')) + '" data-role="' + role + '" onclick="var el=this;window.showRolePopup&&window.showRolePopup(el.dataset.username,el.dataset.uid,el.dataset.role)">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>' +
                             titleDisplay +
                             (user.user_id ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + user.user_id + '</div>' : '') +
                         '</div>' +
@@ -283,27 +282,58 @@
         var sel = document.getElementById('modRoleSelect');
         if (!sel) return;
         var role = sel.value;
-        if (!confirm('Set role to ' + role + '?')) return;
         var u = getModUser();
         var targetUid = getProfileUid();
+        if (role === 'ADMIN') {
+            if (!confirm('Send an Admin invitation to this member? They will receive an inbox message and must accept to receive the role and 10,000 CP.')) return;
+            try {
+                var invRes = await fetch(API_URL + '/api/admin/invitations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+                    body: JSON.stringify({ uid: targetUid })
+                });
+                var invData = await invRes.json();
+                modMsg(invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed.'), invData.success);
+                if (invData.success) {
+                    try {
+                        var convRes = await fetch(API_URL + '/api/conversations', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+                            body: JSON.stringify({ recipient_uid: targetUid })
+                        });
+                        var convData = await convRes.json();
+                        if (convData.conversation_id) {
+                            fetch(API_URL + '/api/conversations/' + convData.conversation_id + '/messages', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+                                body: JSON.stringify({ body: "You've been invited to become a SORC Admin [AD] by the Owner.\n\nAs an Admin, you'll help moderate the platform, manage members, and support the SORC community. Upon accepting, you will receive 10,000 Community Points.\n\nTo accept or decline, visit your Profile page — an invitation notice will be waiting for you there." })
+                            });
+                        }
+                    } catch(e) {}
+                }
+            } catch(e) { modMsg('Connection error.', false); }
+            return;
+        }
+        if (!confirm('Set role to ' + role + '?')) return;
         try {
             var res = await fetch(API_URL + '/api/admin/members/' + targetUid + '/role', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
                 body: JSON.stringify({ role: role })
             });
-            var data = await res.json();
-            modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.'), data.success);
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
+            modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed (' + res.status + ')'), data.success);
             if (data.success) {
                 try {
-                    var convRes = await fetch(API_URL + '/api/conversations', {
+                    var convRes2 = await fetch(API_URL + '/api/conversations', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
                         body: JSON.stringify({ recipient_uid: targetUid })
                     });
-                    var convData = await convRes.json();
-                    if (convData.conversation_id) {
-                        fetch(API_URL + '/api/conversations/' + convData.conversation_id + '/messages', {
+                    var convData2 = await convRes2.json();
+                    if (convData2.conversation_id) {
+                        fetch(API_URL + '/api/conversations/' + convData2.conversation_id + '/messages', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
                             body: JSON.stringify({ body: 'Your SORC role has been updated to ' + role + '. If you have questions about this change, please contact an admin.' })
@@ -311,7 +341,7 @@
                     }
                 } catch(e) {}
             }
-        } catch(e) { modMsg('Connection error.', false); }
+        } catch(e) { modMsg('Network error: ' + (e.message || 'check connection'), false); }
     };
 
     window.startMessage = function() {
@@ -324,9 +354,16 @@
         var currentUser = null;
         try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!currentUser || !currentUser.authKey) { window.location.href = 'signin.html'; return; }
+        var unlockedFeatures = currentUser.unlocked_features || [];
+        if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
+        var msgEl = document.getElementById('actionMsg');
+        if (!unlockedFeatures.includes('fellowships')) {
+            msgEl.className = 'msg error';
+            msgEl.textContent = '🔒 Fellowship sending requires the "Send Fellowship Requests" unlock (50 CP) in your profile.';
+            return;
+        }
         var params = new URLSearchParams(window.location.search);
         var uid = params.get('uid') || params.get('username');
-        var msgEl = document.getElementById('actionMsg');
         try {
             var res = await fetch(API_URL + '/api/fellowships/request', {
                 method: 'POST',

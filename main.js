@@ -221,7 +221,7 @@ function showRoleBadge(user) {
     : '';
 
   existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
     ' <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' <a href="/lobbies.html" style="color:inherit;text-decoration:underline;">Lobbies</a>' +
     ' <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
@@ -238,7 +238,7 @@ function showRoleBadge(user) {
   });
 }
 
-// ========== OWN ROLE POPUP ==========
+// ========== ROLE POPUP ==========
 window.showRolePopup = function(username, userId, role) {
   var existing = document.querySelector('.role-popup');
   if (existing) { existing.remove(); return; }
@@ -323,7 +323,7 @@ async function checkNotifications(user) {
   } catch(e) {}
 }
 
-// ========== AUTH STATE — reads from localStorage, no Firebase ==========
+// ========== AUTH STATE ==========
 document.addEventListener('DOMContentLoaded', function() {
   try {
     var saved = localStorage.getItem('sorc_user');
