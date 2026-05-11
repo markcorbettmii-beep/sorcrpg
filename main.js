@@ -261,7 +261,7 @@ window.showRolePopup = function(username, userId, role) {
 };
 
 // ========== ADMIN PANEL ==========
-function showAdminPanel() {
+window.showAdminPanel = function showAdminPanel() {
   if (document.querySelector('.admin-panel')) return;
   var panel = document.createElement('div');
   panel.className = 'admin-panel';
