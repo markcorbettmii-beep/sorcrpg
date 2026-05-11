@@ -143,7 +143,7 @@
             "You've been invited to become a SORC Admin [AD] by the Owner.\n\n" +
             "As an Admin, you'll help moderate the platform, manage members, and support the SORC community. " +
             "Upon accepting, you will receive 10,000 Community Points.\n\n" +
-            "To accept or decline, visit your Profile page — an invitation notice will be waiting for you there.";
+            "To accept or decline, visit your Profile page - an invitation notice will be waiting for you there.";
           await apiFetch('/api/conversations/' + convRes.conversation_id + '/messages', {
             method: 'POST',
             body: JSON.stringify({ body: body })
@@ -152,17 +152,21 @@
       } catch(e) {}
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      if (!currentUser || !currentUser.authKey) {
-        renderUnauthorized(); return;
-      }
+    function initAdminPanel() {
+      if (!currentUser || !currentUser.authKey) { renderUnauthorized(); return; }
       var email = currentUser.email || '';
       if (OWNER_EMAILS.includes(email)) currentRole = 'OWNER';
       else if (ADMIN_EMAILS.includes(email)) currentRole = 'ADMIN';
       else { renderUnauthorized(); return; }
-
       renderPanel();
-      setTimeout(loadModQueue, 100);
+      setTimeout(loadModQueue, 200);
+    }
+    document.addEventListener('DOMContentLoaded', initAdminPanel);
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var app = document.getElementById('adminApp');
+        if (app && app.innerHTML.indexOf('Loading') !== -1) { initAdminPanel(); }
+      }, 800);
     });
 
     function renderUnauthorized() {
@@ -317,9 +321,9 @@
             '<div class="report-count' + (isHigh ? ' high' : '') + '">' + (r.report_count || 1) + ' report' + ((r.report_count || 1) !== 1 ? 's' : '') + '</div>' +
             '<div class="report-actions">' +
               (r.type === 'post'
-                ? '<button class="act-remove-post" onclick="removeReportedPost(\'' + escapeHtml(String(r.target_id)) + '\', \'' + escapeHtml(String(r.id)) + \'\')>Remove Post</button>'
-                : '<button class="act-suspend-user" onclick="quickSuspend(\'' + escapeHtml(String(r.target_id)) + '\')>Suspend</button>') +
-              '<button class="act-dismiss" onclick="dismissReport(\'' + escapeHtml(String(r.id)) + '\')>Dismiss</button>' +
+                ? '<button class="act-remove-post" onclick="removeReportedPost(\'' + escapeHtml(String(r.target_id)) + '\', \'' + escapeHtml(String(r.id)) + '\')">Remove Post</button>'
+                : '<button class="act-suspend-user" onclick="quickSuspend(\'' + escapeHtml(String(r.target_id)) + '\')">Suspend</button>') +
+              '<button class="act-dismiss" onclick="dismissReport(\'' + escapeHtml(String(r.id)) + '\')">Dismiss</button>' +
             '</div>' +
           '</div>';
         }).join('');
@@ -404,8 +408,8 @@
             }).join('') +
           '</select>' +
           (isOwner
-            ? '<button class="act-role" onclick="applyRole(\'' + uid + '\')" style="padding:4px 10px;">Set</button>'
-            : '<button class="act-role" disabled style="padding:4px 10px;opacity:0.35;cursor:not-allowed;" title="Owner only">Set</button>');
+            ? '<button class="act-role" onclick="applyRole(\'' + uid + '\')">Set</button>'
+            : '<button class="act-role" disabled style="opacity:0.35;cursor:not-allowed;" title="Owner only">Set</button>');
         return '<div class="member-row">' +
           '<div class="member-row-info">' +
             '<div class="mname">' + escapeHtml(m.display_name || m.username) +
@@ -414,9 +418,9 @@
             '<div class="mdetail">' + escapeHtml(m.email || '') + ' · <span style="color:#d4af37;font-weight:bold;">UID: ' + uid + '</span></div>' +
           '</div>' +
           '<div class="member-actions" style="align-items:center;">' +
-            '<button class="act-warn" onclick="quickWarn(\'' + uid + \'\')>Warn</button>' +
-            '<button class="act-suspend" onclick="quickSuspend(\'' + uid + \'\')>Suspend</button>' +
-            (isOwner ? '<button class="act-ban" onclick="quickBan(\'' + uid + \'\')>Ban</button>' : '') +
+            '<button class="act-warn" onclick="quickWarn(\'' + uid + '\')">Warn</button>' +
+            '<button class="act-suspend" onclick="quickSuspend(\'' + uid + '\')">Suspend</button>' +
+            (isOwner ? '<button class="act-ban" onclick="quickBan(\'' + uid + '\')">Ban</button>' : '') +
             roleSelect +
           '</div>' +
         '</div>';
@@ -439,8 +443,8 @@
             var name = escapeHtml(m.display_name || m.username || '');
             var role = escapeHtml(m.role || 'CIVILIAN');
             return '<div class="role-search-item" tabindex="0" ' +
-              'onclick="selectRoleSearchResult(\'' + escapeHtml(String(uid)) + '\', \'' + name + '\')" ' +
-              'onkeydown="if(event.key===\'Enter\')selectRoleSearchResult(\'' + escapeHtml(String(uid)) + '\', \'' + name + '\')">' +
+              'onclick="selectRoleSearchResult(\'' + escapeHtml(String(uid)) + '\',\'' + name + '\')" ' +
+              'onkeydown="if(event.key===\'Enter\')selectRoleSearchResult(\'' + escapeHtml(String(uid)) + '\',\'' + name + '\')">' +
               '<span>' + name + ' <span style="font-size:0.72rem;color:#888;">[' + role + ']</span></span>' +
               '<span class="rs-uid">#' + escapeHtml(String(uid)) + '</span>' +
             '</div>';
@@ -523,7 +527,7 @@
           msgEl.className = 'msg ' + (invData.success ? 'success' : 'error');
           msgEl.textContent = invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed to send invitation.');
           if (invData.success) sendAdminInvitation(uid);
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
         return;
       }
       if (!confirm('Set role to ' + role + '?')) return;

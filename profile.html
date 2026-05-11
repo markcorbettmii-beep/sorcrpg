@@ -63,6 +63,9 @@
       <span class="sorc-letters">S O R C</span>
     </header>
     <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+    </ul>
     <div id="profileApp"><div style="text-align:center;padding:3rem;color:#555;">Loading...</div></div>
     <div id="footer"></div>
     <script type="module" src="main.js"></script>
@@ -214,6 +217,8 @@
                 saved.display_name = name;
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
                 msgEl.className = 'msg success'; msgEl.textContent = '✅ Name saved!';
+                var btn = document.getElementById('saveNameBtn');
+                if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; btn.title = 'Already saved'; }
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
     };
@@ -327,21 +332,21 @@
                     '</div>' +
                     '<div class="profile-section">' +
                         '<div class="stat-grid">' +
-                            '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div></div>' +
+                            '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div><a href="#unlocks" style="font-size:0.7rem;color:#d4af37;text-decoration:underline;display:block;margin-top:3px;">Spend Points</a></div>' +
                             '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>' +
                             '<div class="stat-box"><div class="stat-val">' + (user.email_verified ? '✅' : '❌') + '</div><div class="stat-label">Email Verified</div></div>' +
                         '</div>' +
                     '</div>' +
                 '</div>' +
 
-                '<div class="profile-card">' +
+                '<div class="profile-card" id="unlocks">' +
                     '<div class="profile-section">' +
                         '<h3>Edit Profile</h3>' +
 
                         '<div class="profile-field">' +
                             '<label>DISPLAY NAME</label>' +
                             '<input type="text" id="displayNameInput" class="profile-input" value="' + displayName + '" maxlength="30" />' +
-                            '<button class="btn btn-gold btn-sm" onclick="saveDisplayName()" style="margin-top:6px;">Save Name</button>' +
+                            '<button id="saveNameBtn" class="btn btn-gold btn-sm" onclick="saveDisplayName()" style="margin-top:6px;">Save Name</button>' +
                             '<div id="nameMsg" class="msg"></div>' +
                         '</div>' +
 
@@ -361,6 +366,20 @@
                             '<button class="btn btn-gold btn-sm" onclick="saveBio()" style="margin-top:6px;">Save Bio</button>' +
                             '<div id="bioMsg" class="msg"></div>' +
                         '</div>' +
+
+                        (unlockedFeatures.includes('fellowships')
+                            ? ''
+                            : '<div class="unlock-feature-card">' +
+                                '<div class="unlock-feature-info"><h4>Send Fellowship Requests</h4><p>Unlock the ability to send Fellowship requests to other members.</p></div>' +
+                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 50 CP</span>' +
+                                    (communityPoints >= 50
+                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'fellowships\',50)">Unlock</button>'
+                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (50 - communityPoints) + ' more CP</span>'
+                                    ) +
+                                '</div>' +
+                            '</div>'
+                        ) +
 
                         (unlockedFeatures.includes('signature')
                             ? '<div class="profile-field">' +
@@ -432,8 +451,61 @@
                     '<a href="character-customizer/creation-overview.html" class="btn btn-gold" style="text-decoration:none;">Character Sheet</a>' +
                     '<button class="btn btn-red" onclick="doSignOut()">Logout</button>' +
                 '</div>' +
-            '</div>';
+            '</div>' +
+            '<div id="adminInviteNotice"></div>';
+
+        checkAdminInvitation(user);
     });
+
+    async function checkAdminInvitation(user) {
+        try {
+            var res = await fetch(API_URL + '/api/admin/invitations/pending', {
+                headers: { 'X-Auth-Key': user.authKey }
+            });
+            var data = await res.json();
+            if (!data.invitation) return;
+            var el = document.getElementById('adminInviteNotice');
+            if (!el) return;
+            el.innerHTML =
+                '<div style="background:#1a0a0a;border:2px solid #d4af37;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1rem;">' +
+                '<div style="font-size:0.72rem;color:#d4af37;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Admin Invitation</div>' +
+                '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.75rem 0;">You\'ve been invited to become a <strong>SORC Admin [AD]</strong>. Upon accepting, you will receive <strong style="color:#d4af37;">10,000 Community Points</strong>.</p>' +
+                '<div style="display:flex;gap:0.75rem;">' +
+                '<button class="btn btn-gold" onclick="respondAdminInvite(true)">Accept</button>' +
+                '<button class="btn btn-dark" onclick="respondAdminInvite(false)">Decline</button>' +
+                '</div>' +
+                '<div id="inviteMsg" class="msg" style="margin-top:0.5rem;"></div>' +
+                '</div>';
+        } catch(e) {}
+    }
+
+    window.respondAdminInvite = async function(accept) {
+        var user = null;
+        try { user = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!user) return;
+        var msgEl = document.getElementById('inviteMsg');
+        try {
+            var res = await fetch(API_URL + '/api/admin/invitations/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
+                body: JSON.stringify({ accept: accept })
+            });
+            var data = await res.json();
+            if (data.success) {
+                if (accept) {
+                    user.role = 'ADMIN';
+                    user.community_points = (user.community_points || 0) + 10000;
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                    document.getElementById('adminInviteNotice').innerHTML =
+                        '<div style="background:#0a1a0a;border:1px solid #1a6b1a;border-radius:8px;padding:1rem 1.25rem;margin-top:1rem;color:#4caf50;font-size:0.9rem;">✅ You are now a SORC Admin [AD]. Reload the page to see your updated role.</div>';
+                } else {
+                    document.getElementById('adminInviteNotice').innerHTML = '';
+                }
+            } else {
+                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+            }
+        } catch(e) { if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; } }
+    };
     </script>
 </body>
 </html>
