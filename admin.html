@@ -327,20 +327,33 @@
     function renderMembers(members) {
       var listEl = document.getElementById('memberList');
       if (!members.length) { listEl.innerHTML = '<div class="empty">No members found.</div>'; return; }
+      var isOwner = currentRole === 'OWNER';
       listEl.innerHTML = members.map(function(m) {
         var role = m.role || 'CIVILIAN';
+        var uid = escapeHtml(String(m.id || m.user_id));
+        var roleSelect =
+          '<select class="admin-select role-select" id="rolesel_' + uid + '" ' +
+            (isOwner ? '' : 'disabled title="Owner only" ') +
+            'style="font-size:0.75rem;padding:4px 6px;' + (!isOwner ? 'opacity:0.35;cursor:not-allowed;' : '') + '">' +
+            ['CIVILIAN','PLAYER','MASTER','ADMIN'].map(function(r) {
+              return '<option value="' + r + '"' + (r === role ? ' selected' : '') + '>' + r + '</option>';
+            }).join('') +
+          '</select>' +
+          (isOwner
+            ? '<button class="act-role" onclick="applyRole(\'' + uid + '\')" style="padding:4px 10px;">Set</button>'
+            : '<button class="act-role" disabled style="padding:4px 10px;opacity:0.35;cursor:not-allowed;" title="Owner only">Set</button>');
         return '<div class="member-row">' +
           '<div class="member-row-info">' +
             '<div class="mname">' + escapeHtml(m.display_name || m.username) +
               ' <span class="role-pill role-' + role + '">' + role + '</span>' +
             '</div>' +
-            '<div class="mdetail">' + escapeHtml(m.email || '') + ' · ID: ' + escapeHtml(String(m.user_id || m.id || '')) + '</div>' +
+            '<div class="mdetail">' + escapeHtml(m.email || '') + ' · ID: ' + uid + '</div>' +
           '</div>' +
-          '<div class="member-actions">' +
-            '<button class="act-warn" onclick="quickWarn(\'' + escapeHtml(String(m.id || m.user_id)) + '\')">Warn</button>' +
-            '<button class="act-suspend" onclick="quickSuspend(\'' + escapeHtml(String(m.id || m.user_id)) + '\')">Suspend</button>' +
-            (currentRole === 'OWNER' ? '<button class="act-ban" onclick="quickBan(\'' + escapeHtml(String(m.id || m.user_id)) + '\')">Ban</button>' : '') +
-            '<button class="act-role" onclick="changeRole(\'' + escapeHtml(String(m.id || m.user_id)) + '\', \'' + escapeHtml(m.display_name || m.username) + '\')">Role</button>' +
+          '<div class="member-actions" style="align-items:center;">' +
+            '<button class="act-warn" onclick="quickWarn(\'' + uid + '\')">Warn</button>' +
+            '<button class="act-suspend" onclick="quickSuspend(\'' + uid + '\')">Suspend</button>' +
+            (isOwner ? '<button class="act-ban" onclick="quickBan(\'' + uid + '\')">Ban</button>' : '') +
+            roleSelect +
           '</div>' +
         '</div>';
       }).join('');
@@ -359,18 +372,18 @@
       if (el) { el.value = uid; el.scrollIntoView({ behavior: 'smooth' }); }
     };
 
-    window.changeRole = async function(uid, name) {
-      var role = prompt('Change role for ' + name + ':\nOptions: CIVILIAN, PLAYER, MASTER, ADMIN');
-      if (!role) return;
-      role = role.trim().toUpperCase();
-      if (!['CIVILIAN','PLAYER','MASTER','ADMIN'].includes(role)) { alert('Invalid role.'); return; }
+    window.applyRole = async function(uid) {
+      var sel = document.getElementById('rolesel_' + uid);
+      if (!sel) return;
+      var role = sel.value;
+      if (!confirm('Set role to ' + role + '?')) return;
       try {
         var data = await apiFetch('/api/admin/members/' + uid + '/role', {
           method: 'PUT',
           body: JSON.stringify({ role: role })
         });
         document.getElementById('memberMsg').className = 'msg ' + (data.success ? 'success' : 'error');
-        document.getElementById('memberMsg').textContent = data.success ? '✅ Role updated to ' + role : (data.error || 'Failed.');
+        document.getElementById('memberMsg').textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
         if (data.success) loadAllMembers();
       } catch(e) {
         document.getElementById('memberMsg').className = 'msg error';
