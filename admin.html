@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | Slayers of Rings § Crowns</title>
+  <link rel="icon" href="IMG_3419.jpeg" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .admin-container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+    .admin-container h1 { color: #d0021b; margin-bottom: 0.25rem; }
+    .admin-container > .sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+    .admin-section { margin-bottom: 2.5rem; }
+    .admin-section h2 { color: #d4af37; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; border-bottom: 1px solid #2a2a2a; padding-bottom: 0.5rem; }
+    .admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .admin-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem; }
+    .admin-card h3 { color: #e0cfc0; font-size: 0.9rem; margin: 0 0 0.5rem 0; }
+    .admin-card p { color: #555; font-size: 0.8rem; margin: 0 0 0.75rem 0; line-height: 1.5; }
+    .btn { padding: 8px 18px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+    .btn-gold { background: #d4af37; color: #222; }
+    .btn-gold:hover { background: #c19b2b; }
+    .btn-red { background: #d0021b; color: #fff; }
+    .btn-red:hover { background: #a50013; }
+    .btn-dark { background: #333; color: #e0cfc0; }
+    .btn-dark:hover { background: #444; }
+    .btn-block { width: 100%; display: block; text-align: center; margin-bottom: 6px; }
+    .input-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .admin-input { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.85rem; }
+    .admin-input:focus { outline: none; border-color: #d4af37; }
+    .admin-select { padding: 8px 10px; border-radius: 6px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.85rem; }
+    .output-box { background: #111; border: 1px solid #2a2a2a; border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem; font-size: 0.82rem; color: #d4af37; min-height: 1.5rem; word-break: break-all; }
+    .msg { font-size: 0.82rem; margin-top: 0.5rem; min-height: 1.2em; }
+    .msg.success { color: #4caf50; }
+    .msg.error { color: #d0021b; }
+    .member-row { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .member-row-info { flex: 1; }
+    .member-row-info .mname { font-weight: bold; color: #e0cfc0; font-size: 0.88rem; }
+    .member-row-info .mdetail { font-size: 0.75rem; color: #555; margin-top: 2px; }
+    .role-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+    .role-OWNER { background: #d4af37; color: #222; }
+    .role-ADMIN { background: #8B0000; color: #fff; }
+    .role-MASTER { background: #1a6b1a; color: #fff; }
+    .role-PLAYER { background: #1a3a6b; color: #fff; }
+    .role-CIVILIAN { background: #333; color: #e0cfc0; }
+    .member-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .member-actions button { padding: 4px 10px; border: none; border-radius: 5px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+    .act-warn { background: #d4af37; color: #222; }
+    .act-ban { background: #d0021b; color: #fff; }
+    .act-suspend { background: #555; color: #fff; }
+    .act-role { background: #1a3a6b; color: #fff; }
+    .not-authorized { text-align: center; padding: 4rem; color: #555; }
+    .not-authorized h2 { color: #d0021b; }
+    #memberList .empty { text-align: center; padding: 2rem; color: #444; font-size: 0.85rem; }
+    body.lawful-mode .admin-card, body.lawful-mode .member-row { background: #fff; border-color: #e0e0e0; }
+    body.lawful-mode .admin-card h3, body.lawful-mode .member-row-info .mname { color: #2c2c2c; }
+    .coming-soon-tag { font-size: 0.7rem; background: #333; color: #888; padding: 2px 7px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+    </header>
+    <nav><div id="navRoleBadge"></div></nav>
+
+    <div class="admin-container" id="adminApp">
+      <div style="text-align:center;padding:3rem;color:#555;">Loading...</div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var OWNER_EMAILS = ['corbett@sorcrpg.com'];
+    var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+    var currentUser = null;
+    var currentRole = null;
+
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'evil';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+      try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+    })();
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function authHeaders() {
+      return { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser ? currentUser.authKey : '' };
+    }
+
+    async function apiFetch(path, opts) {
+      var res = await fetch(API_URL + path, Object.assign({ headers: authHeaders() }, opts || {}));
+      return res.json();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!currentUser || !currentUser.authKey) {
+        renderUnauthorized(); return;
+      }
+      var email = currentUser.email || '';
+      if (OWNER_EMAILS.includes(email)) currentRole = 'OWNER';
+      else if (ADMIN_EMAILS.includes(email)) currentRole = 'ADMIN';
+      else { renderUnauthorized(); return; }
+
+      renderPanel();
+    });
+
+    function renderUnauthorized() {
+      document.getElementById('adminApp').innerHTML =
+        '<div class="not-authorized"><h2>Access Denied</h2><p>This panel is restricted to Admins and Owners.</p></div>';
+    }
+
+    function renderPanel() {
+      var isOwner = currentRole === 'OWNER';
+      document.getElementById('adminApp').innerHTML =
+        '<h1>' + (isOwner ? 'Owner' : 'Admin') + ' Panel</h1>' +
+        '<p class="sub">Site management tools for ' + escapeHtml(currentUser.display_name || currentUser.username || 'Admin') + ' [' + currentRole + ']</p>' +
+
+        // Member Management
+        '<div class="admin-section">' +
+          '<h2>Member Management</h2>' +
+          '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">' +
+            '<input type="text" id="memberSearch" class="admin-input" placeholder="Search by username or email..." style="max-width:340px;" />' +
+            '<button class="btn btn-gold" onclick="searchMembers()">Search</button>' +
+            '<button class="btn btn-dark" onclick="loadAllMembers()">View All</button>' +
+          '</div>' +
+          '<div id="memberList"><div class="empty">Search for a member or click View All.</div></div>' +
+          '<div id="memberMsg" class="msg"></div>' +
+        '</div>' +
+
+        // Codes
+        '<div class="admin-section">' +
+          '<h2>Codes</h2>' +
+          '<div class="admin-grid">' +
+            '<div class="admin-card">' +
+              '<h3>Generate Master Code</h3>' +
+              '<p>Issue a one-time code to allow a member to register as a Game Master [GM].</p>' +
+              '<button class="btn btn-gold btn-block" onclick="genCode(\'MASTER\')">Generate Master Code</button>' +
+              '<div class="output-box" id="masterCodeOut"></div>' +
+            '</div>' +
+            (isOwner
+              ? '<div class="admin-card">' +
+                  '<h3>Generate Box Set Code</h3>' +
+                  '<p>Issue a box set activation code for a physical product purchase.</p>' +
+                  '<button class="btn btn-gold btn-block" onclick="genCode(\'BOXSET\')">Generate Box Set Code</button>' +
+                  '<div class="output-box" id="boxsetCodeOut"></div>' +
+                '</div>'
+              : '') +
+          '</div>' +
+        '</div>' +
+
+        // Warnings & Actions
+        '<div class="admin-section">' +
+          '<h2>Warnings &amp; Actions <span class="coming-soon-tag">Coming Soon</span></h2>' +
+          '<div class="admin-grid">' +
+            '<div class="admin-card">' +
+              '<h3>Issue Warning</h3>' +
+              '<p>Send an official warning to a member. Warnings are logged to their account.</p>' +
+              '<input type="text" id="warnUid" class="admin-input" placeholder="Member username or ID" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+              '<textarea id="warnReason" class="admin-input" rows="2" placeholder="Reason for warning..." style="width:100%;box-sizing:border-box;resize:none;"></textarea>' +
+              '<button class="btn btn-gold btn-block" style="margin-top:6px;" onclick="issueWarning()">Issue Warning</button>' +
+              '<div id="warnMsg" class="msg"></div>' +
+            '</div>' +
+            '<div class="admin-card">' +
+              '<h3>Suspend Member</h3>' +
+              '<p>Temporarily restrict a member\'s access. They can log in but cannot post or interact.</p>' +
+              '<input type="text" id="suspendUid" class="admin-input" placeholder="Member username or ID" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+              '<select id="suspendDuration" class="admin-select" style="width:100%;margin-bottom:6px;">' +
+                '<option value="1">1 day</option>' +
+                '<option value="3">3 days</option>' +
+                '<option value="7">7 days</option>' +
+                '<option value="30">30 days</option>' +
+              '</select>' +
+              '<button class="btn btn-red btn-block" onclick="suspendMember()">Suspend</button>' +
+              '<div id="suspendMsg" class="msg"></div>' +
+            '</div>' +
+            (isOwner
+              ? '<div class="admin-card">' +
+                  '<h3>Ban Member</h3>' +
+                  '<p>Permanently ban a member from SORC. This action requires Owner authorization.</p>' +
+                  '<input type="text" id="banUid" class="admin-input" placeholder="Member username or ID" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+                  '<input type="text" id="banReason" class="admin-input" placeholder="Reason for ban" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+                  '<button class="btn btn-red btn-block" onclick="banMember()">Ban Member</button>' +
+                  '<div id="banMsg" class="msg"></div>' +
+                '</div>'
+              : '') +
+          '</div>' +
+        '</div>' +
+
+        // Post Moderation
+        '<div class="admin-section">' +
+          '<h2>Post Moderation</h2>' +
+          '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">' +
+            '<input type="text" id="postIdInput" class="admin-input" placeholder="Post ID to remove..." style="max-width:300px;" />' +
+            '<button class="btn btn-red" onclick="modDeletePost()">Remove Post</button>' +
+          '</div>' +
+          '<div id="postModMsg" class="msg"></div>' +
+          '<p style="font-size:0.78rem;color:#444;">Post IDs are visible in the forum thread URLs. Removed posts are logged.</p>' +
+        '</div>';
+    }
+
+    window.genCode = function(type) {
+      var prefix = type === 'MASTER' ? 'MASTER' : 'BOXSET';
+      var code = prefix + '-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+      var outEl = document.getElementById(type === 'MASTER' ? 'masterCodeOut' : 'boxsetCodeOut');
+      if (outEl) outEl.textContent = code;
+    };
+
+    window.loadAllMembers = async function() {
+      var listEl = document.getElementById('memberList');
+      listEl.innerHTML = '<div class="empty">Loading...</div>';
+      try {
+        var data = await apiFetch('/api/admin/members');
+        renderMembers(data.members || []);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty">Could not load members.</div>';
+      }
+    };
+
+    window.searchMembers = async function() {
+      var q = document.getElementById('memberSearch').value.trim();
+      if (!q) { loadAllMembers(); return; }
+      var listEl = document.getElementById('memberList');
+      listEl.innerHTML = '<div class="empty">Searching...</div>';
+      try {
+        var data = await apiFetch('/api/admin/members?search=' + encodeURIComponent(q));
+        renderMembers(data.members || []);
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty">Search failed.</div>';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var input = document.getElementById('memberSearch');
+        if (input) input.addEventListener('keydown', function(e) { if (e.key === 'Enter') searchMembers(); });
+      }, 500);
+    });
+
+    function renderMembers(members) {
+      var listEl = document.getElementById('memberList');
+      if (!members.length) { listEl.innerHTML = '<div class="empty">No members found.</div>'; return; }
+      listEl.innerHTML = members.map(function(m) {
+        var role = m.role || 'CIVILIAN';
+        return '<div class="member-row">' +
+          '<div class="member-row-info">' +
+            '<div class="mname">' + escapeHtml(m.display_name || m.username) +
+              ' <span class="role-pill role-' + role + '">' + role + '</span>' +
+            '</div>' +
+            '<div class="mdetail">' + escapeHtml(m.email || '') + ' · ID: ' + escapeHtml(String(m.user_id || m.id || '')) + '</div>' +
+          '</div>' +
+          '<div class="member-actions">' +
+            '<button class="act-warn" onclick="quickWarn(\'' + escapeHtml(String(m.id || m.user_id)) + '\')">Warn</button>' +
+            '<button class="act-suspend" onclick="quickSuspend(\'' + escapeHtml(String(m.id || m.user_id)) + '\')">Suspend</button>' +
+            (currentRole === 'OWNER' ? '<button class="act-ban" onclick="quickBan(\'' + escapeHtml(String(m.id || m.user_id)) + '\')">Ban</button>' : '') +
+            '<button class="act-role" onclick="changeRole(\'' + escapeHtml(String(m.id || m.user_id)) + '\', \'' + escapeHtml(m.display_name || m.username) + '\')">Role</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    window.quickWarn = function(uid) {
+      document.getElementById('warnUid').value = uid;
+      document.getElementById('warnUid').scrollIntoView({ behavior: 'smooth' });
+    };
+    window.quickSuspend = function(uid) {
+      document.getElementById('suspendUid').value = uid;
+      document.getElementById('suspendUid').scrollIntoView({ behavior: 'smooth' });
+    };
+    window.quickBan = function(uid) {
+      var el = document.getElementById('banUid');
+      if (el) { el.value = uid; el.scrollIntoView({ behavior: 'smooth' }); }
+    };
+
+    window.changeRole = async function(uid, name) {
+      var role = prompt('Change role for ' + name + ':\nOptions: CIVILIAN, PLAYER, MASTER, ADMIN');
+      if (!role) return;
+      role = role.trim().toUpperCase();
+      if (!['CIVILIAN','PLAYER','MASTER','ADMIN'].includes(role)) { alert('Invalid role.'); return; }
+      try {
+        var data = await apiFetch('/api/admin/members/' + uid + '/role', {
+          method: 'PUT',
+          body: JSON.stringify({ role: role })
+        });
+        document.getElementById('memberMsg').className = 'msg ' + (data.success ? 'success' : 'error');
+        document.getElementById('memberMsg').textContent = data.success ? '✅ Role updated to ' + role : (data.error || 'Failed.');
+        if (data.success) loadAllMembers();
+      } catch(e) {
+        document.getElementById('memberMsg').className = 'msg error';
+        document.getElementById('memberMsg').textContent = 'Connection error.';
+      }
+    };
+
+    window.issueWarning = async function() {
+      var uid = document.getElementById('warnUid').value.trim();
+      var reason = document.getElementById('warnReason').value.trim();
+      var msgEl = document.getElementById('warnMsg');
+      if (!uid || !reason) { msgEl.className = 'msg error'; msgEl.textContent = 'Username/ID and reason required.'; return; }
+      try {
+        var data = await apiFetch('/api/admin/members/' + uid + '/warn', {
+          method: 'POST',
+          body: JSON.stringify({ reason: reason })
+        });
+        msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+        msgEl.textContent = data.success ? '✅ Warning issued.' : (data.error || 'Failed.');
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.suspendMember = async function() {
+      var uid = document.getElementById('suspendUid').value.trim();
+      var days = document.getElementById('suspendDuration').value;
+      var msgEl = document.getElementById('suspendMsg');
+      if (!uid) { msgEl.className = 'msg error'; msgEl.textContent = 'Username or ID required.'; return; }
+      try {
+        var data = await apiFetch('/api/admin/members/' + uid + '/suspend', {
+          method: 'POST',
+          body: JSON.stringify({ days: parseInt(days) })
+        });
+        msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+        msgEl.textContent = data.success ? '✅ Member suspended for ' + days + ' day(s).' : (data.error || 'Failed.');
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.banMember = async function() {
+      var uid = document.getElementById('banUid') ? document.getElementById('banUid').value.trim() : '';
+      var reason = document.getElementById('banReason') ? document.getElementById('banReason').value.trim() : '';
+      var msgEl = document.getElementById('banMsg');
+      if (!uid) { msgEl.className = 'msg error'; msgEl.textContent = 'Username or ID required.'; return; }
+      if (!confirm('Permanently ban this member? This cannot be undone.')) return;
+      try {
+        var data = await apiFetch('/api/admin/members/' + uid + '/ban', {
+          method: 'POST',
+          body: JSON.stringify({ reason: reason })
+        });
+        msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+        msgEl.textContent = data.success ? '✅ Member banned.' : (data.error || 'Failed.');
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.modDeletePost = async function() {
+      var postId = document.getElementById('postIdInput').value.trim();
+      var msgEl = document.getElementById('postModMsg');
+      if (!postId) { msgEl.className = 'msg error'; msgEl.textContent = 'Post ID required.'; return; }
+      try {
+        var res = await fetch(API_URL + '/api/forum/posts/' + postId + '/mod', {
+          method: 'DELETE',
+          headers: authHeaders()
+        });
+        var data = await res.json();
+        msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+        msgEl.textContent = data.success ? '✅ Post removed.' : (data.error || 'Failed.');
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+  </script>
+  <script src="nav.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
