@@ -176,6 +176,26 @@
           '</div>' +
         '</div>' +
 
+        // Change Role
+        '<div class="admin-section">' +
+          '<h2>Change Role</h2>' +
+          '<div class="admin-card" style="max-width:480px;">' +
+            '<h3>Assign Role by UID or Username</h3>' +
+            '<p>Upgrade or downgrade any member\'s role. ' + (isOwner ? 'All roles available.' : '<span style="color:#555;">Role assignment is Owner-only. You can view but not apply changes.</span>') + '</p>' +
+            '<div style="display:flex;gap:0.5rem;margin-bottom:0.6rem;flex-wrap:wrap;">' +
+              '<input type="text" id="changeRoleUid" class="admin-input" placeholder="UID or username..." style="flex:1;min-width:140px;" />' +
+              '<select id="changeRoleSelect" class="admin-select" ' + (!isOwner ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : '') + '>' +
+                '<option value="CIVILIAN">CIVILIAN</option>' +
+                '<option value="PLAYER">PLAYER</option>' +
+                '<option value="MASTER">MASTER</option>' +
+                '<option value="ADMIN">ADMIN</option>' +
+              '</select>' +
+              '<button class="btn ' + (isOwner ? 'btn-gold' : 'btn-dark') + '" onclick="applyRoleById()" ' + (!isOwner ? 'disabled style="opacity:0.4;cursor:not-allowed;" title="Owner only"' : '') + '>Apply</button>' +
+            '</div>' +
+            '<div id="changeRoleMsg" class="msg"></div>' +
+          '</div>' +
+        '</div>' +
+
         // Warnings & Actions
         '<div class="admin-section">' +
           '<h2>Warnings &amp; Actions <span class="coming-soon-tag">Coming Soon</span></h2>' +
@@ -297,10 +317,18 @@
       var listEl = document.getElementById('memberList');
       listEl.innerHTML = '<div class="empty">Loading...</div>';
       try {
-        var data = await apiFetch('/api/admin/members');
-        renderMembers(data.members || []);
+        var res = await fetch(API_URL + '/api/admin/members', { headers: authHeaders() });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        var members = data.members || [];
+        members.sort(function(a, b) {
+          var na = (a.display_name || a.username || '').toLowerCase();
+          var nb = (b.display_name || b.username || '').toLowerCase();
+          return na < nb ? -1 : na > nb ? 1 : 0;
+        });
+        renderMembers(members);
       } catch(e) {
-        listEl.innerHTML = '<div class="empty">Could not load members.</div>';
+        listEl.innerHTML = '<div class="empty">Could not load members. The /api/admin/members endpoint may not be available yet.</div>';
       }
     };
 
@@ -347,7 +375,7 @@
             '<div class="mname">' + escapeHtml(m.display_name || m.username) +
               ' <span class="role-pill role-' + role + '">' + role + '</span>' +
             '</div>' +
-            '<div class="mdetail">' + escapeHtml(m.email || '') + ' · ID: ' + uid + '</div>' +
+            '<div class="mdetail">' + escapeHtml(m.email || '') + ' · <span style="color:#d4af37;font-weight:bold;">UID: ' + uid + '</span></div>' +
           '</div>' +
           '<div class="member-actions" style="align-items:center;">' +
             '<button class="act-warn" onclick="quickWarn(\'' + uid + '\')">Warn</button>' +
@@ -370,6 +398,22 @@
     window.quickBan = function(uid) {
       var el = document.getElementById('banUid');
       if (el) { el.value = uid; el.scrollIntoView({ behavior: 'smooth' }); }
+    };
+
+    window.applyRoleById = async function() {
+      var uid = document.getElementById('changeRoleUid').value.trim();
+      var role = document.getElementById('changeRoleSelect').value;
+      var msgEl = document.getElementById('changeRoleMsg');
+      if (!uid) { msgEl.className = 'msg error'; msgEl.textContent = 'Enter a UID or username.'; return; }
+      if (!confirm('Set role to ' + role + ' for ' + uid + '?')) return;
+      try {
+        var data = await apiFetch('/api/admin/members/' + uid + '/role', {
+          method: 'PUT',
+          body: JSON.stringify({ role: role })
+        });
+        msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+        msgEl.textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
+      } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
     };
 
     window.applyRole = async function(uid) {

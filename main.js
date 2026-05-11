@@ -234,9 +234,7 @@ function showRoleBadge(user) {
   existing.querySelector('.role-tag').addEventListener('click', function(e) {
     e.stopPropagation();
     e.preventDefault();
-    var isAdmin = this.dataset.isadmin === 'true';
-    if (isAdmin) { showAdminPanel(); }
-    else { showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role); }
+    showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
   });
 }
 
