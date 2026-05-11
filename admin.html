@@ -128,6 +128,26 @@
       } catch(e) {}
     }
 
+    async function sendAdminInvitation(uid) {
+      try {
+        var convRes = await apiFetch('/api/conversations', {
+          method: 'POST',
+          body: JSON.stringify({ recipient_uid: uid })
+        });
+        if (convRes.conversation_id) {
+          var body =
+            "You've been invited to become a SORC Admin [AD] by the Owner.\n\n" +
+            "As an Admin, you'll help moderate the platform, manage members, and support the SORC community. " +
+            "Upon accepting, you will receive 10,000 Community Points.\n\n" +
+            "To accept or decline, visit your Profile page — an invitation notice will be waiting for you there.";
+          await apiFetch('/api/conversations/' + convRes.conversation_id + '/messages', {
+            method: 'POST',
+            body: JSON.stringify({ body: body })
+          });
+        }
+      } catch(e) {}
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       if (!currentUser || !currentUser.authKey) {
         renderUnauthorized(); return;
@@ -420,6 +440,19 @@
       var role = document.getElementById('changeRoleSelect').value;
       var msgEl = document.getElementById('changeRoleMsg');
       if (!uid) { msgEl.className = 'msg error'; msgEl.textContent = 'Enter a UID or username.'; return; }
+      if (role === 'ADMIN') {
+        if (!confirm('Send an Admin invitation to ' + uid + '? They will receive an inbox message and must accept to receive the role and 10,000 CP.')) return;
+        try {
+          var invData = await apiFetch('/api/admin/invitations', {
+            method: 'POST',
+            body: JSON.stringify({ uid: uid })
+          });
+          msgEl.className = 'msg ' + (invData.success ? 'success' : 'error');
+          msgEl.textContent = invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed to send invitation.');
+          if (invData.success) sendAdminInvitation(uid);
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        return;
+      }
       if (!confirm('Set role to ' + role + ' for ' + uid + '?')) return;
       try {
         var data = await apiFetch('/api/admin/members/' + uid + '/role', {
@@ -436,18 +469,32 @@
       var sel = document.getElementById('rolesel_' + uid);
       if (!sel) return;
       var role = sel.value;
+      var msgEl = document.getElementById('memberMsg');
+      if (role === 'ADMIN') {
+        if (!confirm('Send an Admin invitation to this member? They will receive an inbox message and must accept to receive the role and 10,000 CP.')) return;
+        try {
+          var invData = await apiFetch('/api/admin/invitations', {
+            method: 'POST',
+            body: JSON.stringify({ uid: uid })
+          });
+          msgEl.className = 'msg ' + (invData.success ? 'success' : 'error');
+          msgEl.textContent = invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed to send invitation.');
+          if (invData.success) sendAdminInvitation(uid);
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        return;
+      }
       if (!confirm('Set role to ' + role + '?')) return;
       try {
         var data = await apiFetch('/api/admin/members/' + uid + '/role', {
           method: 'PUT',
           body: JSON.stringify({ role: role })
         });
-        document.getElementById('memberMsg').className = 'msg ' + (data.success ? 'success' : 'error');
-        document.getElementById('memberMsg').textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
+        msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+        msgEl.textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
         if (data.success) { sendRoleChangeMessage(uid, role); loadAllMembers(); }
       } catch(e) {
-        document.getElementById('memberMsg').className = 'msg error';
-        document.getElementById('memberMsg').textContent = 'Connection error.';
+        msgEl.className = 'msg error';
+        msgEl.textContent = 'Connection error.';
       }
     };
 
