@@ -135,6 +135,20 @@
                 return;
             }
             await renderInbox();
+            var params = new URLSearchParams(window.location.search);
+            var toUid = params.get('to');
+            if (toUid) {
+                try {
+                    var res = await apiFetch('/api/conversations', {
+                        method: 'POST',
+                        body: JSON.stringify({ recipient_uid: toUid })
+                    });
+                    if (res.conversation_id) {
+                        var name = res.other_name || 'Member';
+                        await openConversation(res.conversation_id, toUid, name);
+                    }
+                } catch(e) {}
+            }
         }
 
         async function renderInbox() {

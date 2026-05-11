@@ -437,18 +437,48 @@
         var body = document.getElementById('editBody').value.trim();
         var msgEl = document.getElementById('editMsg');
         if (!validatePost(body, msgEl)) return;
-        // Edit endpoint not yet in API — show coming soon
-        msgEl.className = 'msg error'; msgEl.textContent = 'Post editing coming soon.';
+        if (!editingPostId || !currentUser) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + editingPostId.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ body: body })
+            });
+            var data = await res.json();
+            if (data.success) {
+                msgEl.className = 'msg success'; msgEl.textContent = '✅ Post updated!';
+                setTimeout(function() { closeEdit(); loadThreadContent(currentThread); }, 500);
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
     };
 
     window.deletePost = async function(postId, isOP) {
         if (!confirm('Delete this post?')) return;
-        // Delete endpoint not yet in API
-        alert('Post deletion coming soon.');
+        if (!currentUser) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + postId, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
+            });
+            var data = await res.json();
+            if (data.success) {
+                if (isOP) { closeThread(); loadThreads(1); }
+                else { loadThreadContent(currentThread); }
+            } else { alert(data.error || 'Could not delete post.'); }
+        } catch(e) { alert('Connection error.'); }
     };
     window.modDeletePost = async function(postId) {
         if (!confirm('Remove this post?')) return;
-        alert('Mod deletion coming soon.');
+        if (!currentUser) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + postId + '/mod', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
+            });
+            var data = await res.json();
+            if (data.success) { loadThreadContent(currentThread); }
+            else { alert(data.error || 'Could not remove post.'); }
+        } catch(e) { alert('Connection error.'); }
     };
 
     window.togglePin = async function() { alert('Pin/unpin coming soon.'); };
