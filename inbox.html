@@ -76,6 +76,7 @@
     <header class="header-container">
       <span class="sorc-letters">S O R C</span>
     </header>
+    <nav><div id="navRoleBadge"></div></nav>
     <div class="inbox-container">
         <div class="inbox-header">
             <h1>Inbox</h1>
@@ -134,7 +135,13 @@
                     '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to view your inbox.</p></div>';
                 return;
             }
-            await renderInbox();
+            try {
+                await renderInbox();
+            } catch(e) {
+                document.getElementById('inboxApp').innerHTML =
+                    '<div class="empty-state">Could not load inbox. Please try again.</div>';
+                return;
+            }
             var params = new URLSearchParams(window.location.search);
             var toUid = params.get('to');
             if (toUid) {

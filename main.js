@@ -217,7 +217,7 @@ function showRoleBadge(user) {
   existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
   var adminLink = isAdminUser
-    ? ' <a href="/admin.html" style="color:inherit;text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
+    ? ' <a href="#" onclick="showAdminPanel();return false;" style="color:inherit;text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
     : '';
 
   existing.innerHTML = avatarHtml + displayName +
