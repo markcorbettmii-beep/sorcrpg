@@ -219,14 +219,6 @@ function showRoleBadge(user) {
 
   existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
-  // Update home page profile avatar if present
-  var homeAvatar = document.getElementById('homeProfileAvatar');
-  if (homeAvatar) {
-    if (user.avatar) {
-      homeAvatar.innerHTML = '<img src="' + getAvatarPath(user.avatar) + '" onerror="this.parentNode.innerHTML=\'<span class=home-avatar-placeholder>&#128100;</span>\'" />';
-    }
-  }
-
   existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
