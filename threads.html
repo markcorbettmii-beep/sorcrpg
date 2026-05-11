@@ -277,14 +277,14 @@
             container.innerHTML = allThreads.map(function(t) {
                 var role = t.author_role || 'CIVILIAN';
                 var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
-                return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">' +
-                    '<div class="thread-icon">' + (t.pinned ? '📌' : t.locked ? '🔒' : '💬') + '</div>' +
-                    '<div class="thread-info">' +
-                        '<div class="thread-title">' + escapeHtml(t.title) + (t.pinned ? '<span class="pin-badge">Pinned</span>' : '') + (t.locked ? '<span class="lock-badge">Locked</span>' : '') + '</div>' +
-                        '<div class="thread-meta">' + roleTag + ' <span>' + escapeHtml(t.author_name || 'Unknown') + '</span><span>·</span><span>' + timeAgo(t.created_at) + '</span><span>·</span><span>👁 ' + (t.views || 0) + '</span></div>' +
-                    '</div>' +
-                    '<div class="thread-stats"><b>' + (t.reply_count || 0) + ' replies</b><span style="font-size:0.7rem;color:#444;">Last: ' + timeAgo(t.last_reply_at) + '</span></div>' +
-                '</div>';
+                return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">'
+                    + '<div class="thread-icon">' + (t.pinned ? '📌' : t.locked ? '🔒' : '💬') + '</div>'
+                    + '<div class="thread-info">'
+                        + '<div class="thread-title">' + escapeHtml(t.title) + (t.pinned ? '<span class="pin-badge">Pinned</span>' : '') + (t.locked ? '<span class="lock-badge">Locked</span>' : '') + '</div>'
+                        + '<div class="thread-meta">' + roleTag + ' <span>' + escapeHtml(t.author_name || 'Unknown') + '</span><span>·</span><span>' + timeAgo(t.created_at) + '</span><span>·</span><span>👁 ' + (t.views || 0) + '</span></div>'
+                    + '</div>'
+                    + '<div class="thread-stats"><b>' + (t.reply_count || 0) + ' replies</b><span style="font-size:0.7rem;color:#444;">Last: ' + timeAgo(t.last_reply_at) + '</span></div>'
+                + '</div>';
             }).join('');
             if (data.totalPages > 1) {
                 var paginationHtml = '';
@@ -335,40 +335,40 @@
                     ? '<img src="images/avatars/' + escapeHtml(post.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
                     : (post.author_name ? post.author_name.charAt(0).toUpperCase() : '?');
                 var quoteText = post.body ? escapeAttr(post.body.substring(0, 100) + (post.body.length > 100 ? '...' : '')) : '';
-                return '<div class="post-card ' + (post.isOP ? 'op' : '') + '" id="post-' + post.id + '">' +
-                    '<div class="post-author-row">' +
-                        '<div class="post-avatar">' + avatarHtml + '</div>' +
-                        '<div class="post-author-info">' +
-                            '<div class="post-author-name">' + escapeHtml(post.author_name || post.display_name || 'Unknown') + roleTag + '</div>' +
-                            '<div class="post-timestamp">' + timeAgo(post.created_at) + '</div>' +
-                        '</div>' +
-                    '</div>' +
-                    (post.quoted_text ? '<div class="quote-block">💬 <i>' + escapeHtml(post.quoted_author || '') + '</i>: ' + escapeHtml(post.quoted_text) + '</div>' : '') +
-                    '<div class="post-body">' + renderPostBody(post.body || '') + '</div>' +
-                    '<div class="post-actions">' +
-                        (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">💬 Quote</button>' : '') +
-                        (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '') +
-                        (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '') +
-                        (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" onclick="modDeletePost(\'' + post.id + '\')">🛡 Remove</button>' : '') +
-                        (!isOwnPost && myId ? '<button class="post-action-btn" onclick="reportPost(\'' + post.id + '\')">🚩 Report</button>' : '') +
-                    '</div>' +
-                '</div>';
+                return '<div class="post-card ' + (post.isOP ? 'op' : '') + '" id="post-' + post.id + '">'
+                    + '<div class="post-author-row">'
+                        + '<div class="post-avatar">' + avatarHtml + '</div>'
+                        + '<div class="post-author-info">'
+                            + '<div class="post-author-name">' + escapeHtml(post.author_name || post.display_name || 'Unknown') + roleTag + '</div>'
+                            + '<div class="post-timestamp">' + timeAgo(post.created_at) + '</div>'
+                        + '</div>'
+                    + '</div>'
+                    + (post.quoted_text ? '<div class="quote-block">💬 <i>' + escapeHtml(post.quoted_author || '') + '</i>: ' + escapeHtml(post.quoted_text) + '</div>' : '')
+                    + '<div class="post-body">' + renderPostBody(post.body || '') + '</div>'
+                    + '<div class="post-actions">'
+                        + (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">💬 Quote</button>' : '')
+                        + (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '')
+                        + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '')
+                        + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" onclick="modDeletePost(\'' + post.id + \')">🛡 Remove</button>' : '')
+                        + (!isOwnPost && myId ? '<button class="post-action-btn" onclick="reportPost(\'' + post.id + \')">🚩 Report</button>' : '')
+                    + '</div>'
+                + '</div>';
             }).join('');
 
             document.getElementById('threadContent').innerHTML =
-                '<div class="thread-header"><h2>' + escapeHtml(thread.title) + '</h2>' +
-                '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>' +
-                html;
+                '<div class="thread-header"><h2>' + escapeHtml(thread.title) + '</h2>'
+                + '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>'
+                + html;
 
             if (myId && !thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML =
-                    '<div class="reply-form"><h3>Post a Reply</h3>' +
-                    '<div class="quote-preview" id="quotePreview"></div>' +
-                    '<div class="post-toolbar"><button class="toolbar-btn" onclick="insertLink(\'replyBody\')">🔗 Add Link</button><span class="toolbar-hint">[text](url) · 1 per post</span><span class="char-counter" id="replyCharCount">0 / 10,000</span></div>' +
-                    '<textarea id="replyBody" placeholder="Write your reply..." oninput="updateCharCount(\'replyBody\',\'replyCharCount\')"></textarea>' +
-                    '<div id="replyMsg" class="msg"></div>' +
-                    '<div class="reply-actions"><button class="btn btn-grey" onclick="clearQuote()">Clear Quote</button><button class="btn btn-red" onclick="submitReply()">Post Reply</button></div>' +
-                    '</div>';
+                    '<div class="reply-form"><h3>Post a Reply</h3>'
+                    + '<div class="quote-preview" id="quotePreview"></div>'
+                    + '<div class="post-toolbar"><button class="toolbar-btn" onclick="insertLink(\'replyBody\')">🔗 Add Link</button><span class="toolbar-hint">[text](url) · 1 per post</span><span class="char-counter" id="replyCharCount">0 / 10,000</span></div>'
+                    + '<textarea id="replyBody" placeholder="Write your reply..." oninput="updateCharCount(\'replyBody\',\'replyCharCount\')"></textarea>'
+                    + '<div id="replyMsg" class="msg"></div>'
+                    + '<div class="reply-actions"><button class="btn btn-grey" onclick="clearQuote()">Clear Quote</button><button class="btn btn-red" onclick="submitReply()">Post Reply</button></div>'
+                    + '</div>';
             } else if (thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">🔒 This thread is locked.</div>';
             } else {
@@ -445,28 +445,44 @@
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
                 body: JSON.stringify({ body: body })
             });
-            var data = await res.json();
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
             if (data.success) {
                 msgEl.className = 'msg success'; msgEl.textContent = '✅ Post updated!';
                 setTimeout(function() { closeEdit(); loadThreadContent(currentThread); }, 500);
-            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed (' + res.status + ').'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
     };
 
-    window.deletePost = async function(postId, isOP) {
-        if (!confirm('Delete this post?')) return;
+    window.deletePost = function(postId, isOP) {
+        var postEl = document.getElementById('post-' + postId);
+        if (!postEl) return;
+        var actions = postEl.querySelector('.post-actions');
+        if (!actions) return;
+        actions.innerHTML =
+            '<span style="font-size:0.82rem;color:#e0cfc0;margin-right:4px;">Delete this post?</span>'
+            + '<button class="post-action-btn danger-btn" onclick="confirmDeletePost(\'' + postId + '\',' + isOP + ')">Yes, Delete</button>'
+            + '<button class="post-action-btn" onclick="loadThreadContent(currentThread)">Cancel</button>';
+    };
+    window.confirmDeletePost = async function(postId, isOP) {
         if (!currentUser) return;
+        var msgEl = document.getElementById('replyMsg');
         try {
             var res = await fetch(API_URL + '/api/forum/posts/' + postId, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
             });
-            var data = await res.json();
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
             if (data.success) {
-                if (isOP) { closeThread(); loadThreads(1); }
+                if (isOP) { backToThreads(); }
                 else { loadThreadContent(currentThread); }
-            } else { alert(data.error || 'Could not delete post.'); }
-        } catch(e) { alert('Connection error.'); }
+            } else {
+                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Could not delete post.'; }
+            }
+        } catch(e) {
+            if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error.'; }
+        }
     };
     window.reportPost = async function(postId) {
         var reason = prompt('Reason for report:\n(harassment, spam, inappropriate content, other)');
@@ -487,18 +503,33 @@
         } catch(e) {}
     };
 
-    window.modDeletePost = async function(postId) {
-        if (!confirm('Remove this post?')) return;
+    window.modDeletePost = function(postId) {
+        var postEl = document.getElementById('post-' + postId);
+        if (!postEl) return;
+        var actions = postEl.querySelector('.post-actions');
+        if (!actions) return;
+        actions.innerHTML =
+            '<span style="font-size:0.82rem;color:#e0cfc0;margin-right:4px;">Remove this post?</span>'
+            + '<button class="post-action-btn danger-btn" onclick="confirmModDelete(\'' + postId + \')">Yes, Remove</button>'
+            + '<button class="post-action-btn" onclick="loadThreadContent(currentThread)">Cancel</button>';
+    };
+    window.confirmModDelete = async function(postId) {
         if (!currentUser) return;
+        var msgEl = document.getElementById('replyMsg');
         try {
             var res = await fetch(API_URL + '/api/forum/posts/' + postId + '/mod', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
             });
-            var data = await res.json();
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
             if (data.success) { loadThreadContent(currentThread); }
-            else { alert(data.error || 'Could not remove post.'); }
-        } catch(e) { alert('Connection error.'); }
+            else {
+                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Could not remove post.'; }
+            }
+        } catch(e) {
+            if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error.'; }
+        }
     };
 
     window.togglePin = async function() { alert('Pin/unpin coming soon.'); };

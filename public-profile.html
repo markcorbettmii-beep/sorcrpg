@@ -111,7 +111,9 @@
             var bio = user.bio || null;
 
             var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.join(' · ') + '</div>' : '';
-            var statusBadge = '<span class="basic-badge">SORC Basic</span>';
+            var statusBadge = (user.membership === 'pro' || user.pro_member || user.box_set_redeemed)
+                ? '<span class="pro-badge">SORC Pro</span>'
+                : '<span class="basic-badge">SORC Basic</span>';
 
             var avatarDisplay = avatar
                 ? '<img src="images/avatars/' + escapeHtml(avatar) + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentNode.innerHTML=\'👤\'" />'
@@ -122,12 +124,12 @@
                 : '';
 
             var achievementsSection =
-                '<div class="profile-section"><h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">— SORC Beyond Pro</span></h3>' +
-                '<div class="locked-achievements" style="display:flex;flex-wrap:wrap;gap:0.5rem;">' +
-                '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>' +
-                '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div></div>' +
-                '<div style="font-size:0.72rem;color:#444;margin-top:6px;">🔒 Unlocks with SORC Beyond Pro</div></div>';
+                '<div class="profile-section"><h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">(SORC Beyond Pro)</span></h3>'
+                + '<div class="locked-achievements" style="display:flex;flex-wrap:wrap;gap:0.5rem;">'
+                + '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>'
+                + '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div>'
+                + '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">🏆 ???</div></div>'
+                + '<div style="font-size:0.72rem;color:#444;margin-top:6px;">🔒 Unlocks with SORC Beyond Pro</div></div>';
 
             var currentUser = null;
             try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
@@ -147,61 +149,61 @@
                 var modSection = '';
                 if (isAdminViewer && !isSelf) {
                     var roleSelect =
-                        '<select id="modRoleSelect" style="padding:7px 8px;border-radius:6px;border:1px solid #444;background:#222;color:#e0cfc0;font-size:0.82rem;' + (!isOwnerViewer ? 'opacity:0.4;cursor:not-allowed;' : '') + '" ' + (!isOwnerViewer ? 'disabled title="Owner only"' : '') + '>' +
-                            ['CIVILIAN','PLAYER','MASTER','ADMIN'].map(function(r) {
+                        '<select id="modRoleSelect" style="padding:7px 8px;border-radius:6px;border:1px solid #444;background:#222;color:#e0cfc0;font-size:0.82rem;' + (!isOwnerViewer ? 'opacity:0.4;cursor:not-allowed;' : '') + '" ' + (!isOwnerViewer ? 'disabled title="Owner only"' : '') + '>'
+                            + ['CIVILIAN','PLAYER','MASTER','ADMIN'].map(function(r) {
                                 return '<option value="' + r + '"' + (r === role ? ' selected' : '') + '>' + r + '</option>';
-                            }).join('') +
-                        '</select>' +
-                        '<button onclick="modSetRole()" style="padding:7px 14px;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;' + (isOwnerViewer ? 'background:#d4af37;color:#222;' : 'background:#333;color:#555;cursor:not-allowed;') + '" ' + (!isOwnerViewer ? 'disabled title="Owner only"' : '') + '>Set Role</button>';
+                            }).join('')
+                        + '</select>'
+                        + '<button onclick="modSetRole()" style="padding:7px 14px;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;' + (isOwnerViewer ? 'background:#d4af37;color:#222;' : 'background:#333;color:#555;cursor:not-allowed;') + '" ' + (!isOwnerViewer ? 'disabled title="Owner only"' : '') + '>Set Role</button>';
 
                     modSection =
-                        '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #2a2a2a;">' +
-                        '<div style="font-size:0.72rem;color:#d4af37;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Moderation</div>' +
-                        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">' +
-                            '<button onclick="modWarn()" style="padding:7px 14px;background:#d4af37;color:#222;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">⚠ Warn</button>' +
-                            '<button onclick="modSuspend()" style="padding:7px 14px;background:#555;color:#fff;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">⏸ Suspend</button>' +
-                            (isOwnerViewer ? '<button onclick="modBan()" style="padding:7px 14px;background:#d0021b;color:#fff;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">🚫 Ban</button>' : '') +
-                            roleSelect +
-                        '</div>' +
-                        '<div id="modMsg" class="msg" style="margin-top:0.4rem;"></div>' +
-                        '</div>';
+                        '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #2a2a2a;">'
+                        + '<div style="font-size:0.72rem;color:#d4af37;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Moderation</div>'
+                        + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">'
+                            + '<button onclick="modWarn()" style="padding:7px 14px;background:#d4af37;color:#222;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">⚠ Warn</button>'
+                            + '<button onclick="modSuspend()" style="padding:7px 14px;background:#555;color:#fff;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">⏸ Suspend</button>'
+                            + (isOwnerViewer ? '<button onclick="modBan()" style="padding:7px 14px;background:#d0021b;color:#fff;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">🚫 Ban</button>' : '')
+                            + roleSelect
+                        + '</div>'
+                        + '<div id="modMsg" class="msg" style="margin-top:0.4rem;"></div>'
+                        + '</div>';
                 }
 
-                actionSection = '<div class="profile-section">' +
-                    '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">' +
-                        '<button onclick="startMessage()" style="padding:9px 18px;background:#d0021b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">✉ Message</button>' +
-                        '<button onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">⚔ Add Fellowship</button>' +
-                        '<button onclick="reportUser()" style="padding:9px 18px;background:#333;color:#e0cfc0;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">🚩 Report</button>' +
-                    '</div>' +
-                    modSection +
-                    '<div id="actionMsg" class="msg" style="margin-top:0.5rem;"></div>' +
-                '</div>';
+                actionSection = '<div class="profile-section">'
+                    + '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">'
+                        + '<button onclick="startMessage()" style="padding:9px 18px;background:#d0021b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">✉ Message</button>'
+                        + '<button onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">⚔ Add Fellowship</button>'
+                        + '<button onclick="reportUser()" style="padding:9px 18px;background:#333;color:#e0cfc0;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">🚩 Report</button>'
+                    + '</div>'
+                    + modSection
+                    + '<div id="actionMsg" class="msg" style="margin-top:0.5rem;"></div>'
+                + '</div>';
             }
 
             document.getElementById('profileApp').innerHTML =
-                '<div class="profile-card">' +
-                    '<div class="profile-banner"></div>' +
-                    '<div class="profile-info-row">' +
-                        '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
-                        '<div class="profile-name-block">' +
-                            '<div class="profile-username">' + escapeHtml(username) + statusBadge + '</div>' +
-                            '<span class="profile-role-tag" style="' + getRoleColor(role) + ';cursor:pointer;user-select:none;-webkit-user-select:none;" data-username="' + escapeHtml(username) + '" data-uid="' + escapeHtml(String(user.user_id || user.id || '')) + '" data-role="' + role + '" onclick="var el=this;window.showRolePopup&&window.showRolePopup(el.dataset.username,el.dataset.uid,el.dataset.role)">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>' +
-                            titleDisplay +
-                            (user.user_id ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + user.user_id + '</div>' : '') +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="profile-section">' +
-                        '<div class="stat-grid">' +
-                            '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div></div>' +
-                            '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>' +
-                            '<div class="stat-box"><div class="stat-val">' + titles.length + '</div><div class="stat-label">Titles Earned</div></div>' +
-                        '</div>' +
-                        (joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + new Date(joinDate).toLocaleDateString() + '</div>' : '') +
-                    '</div>' +
-                    bioSection +
-                    achievementsSection +
-                    actionSection +
-                '</div>';
+                '<div class="profile-card">'
+                    + '<div class="profile-banner"></div>'
+                    + '<div class="profile-info-row">'
+                        + '<div class="profile-avatar-large">' + avatarDisplay + '</div>'
+                        + '<div class="profile-name-block">'
+                            + '<div class="profile-username">' + escapeHtml(username) + statusBadge + '</div>'
+                            + '<span class="profile-role-tag" style="' + getRoleColor(role) + ';cursor:pointer;user-select:none;-webkit-user-select:none;" data-username="' + escapeHtml(username) + '" data-uid="' + escapeHtml(String(user.user_id || user.id || '')) + '" data-role="' + role + '" onclick="var el=this;window.showRolePopup&&window.showRolePopup(el.dataset.username,el.dataset.uid,el.dataset.role)">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>'
+                            + titleDisplay
+                            + (user.user_id ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + user.user_id + '</div>' : '')
+                        + '</div>'
+                    + '</div>'
+                    + '<div class="profile-section">'
+                        + '<div class="stat-grid">'
+                            + '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div></div>'
+                            + '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>'
+                            + '<div class="stat-box"><div class="stat-val">' + titles.length + '</div><div class="stat-label">Titles Earned</div></div>'
+                        + '</div>'
+                        + (joinDate ? '<div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">Member since ' + new Date(joinDate).toLocaleDateString() + '</div>' : '')
+                    + '</div>'
+                    + bioSection
+                    + achievementsSection
+                    + actionSection
+                + '</div>';
 
         } catch(e) {
             document.getElementById('profileApp').innerHTML = '<div class="not-found">Could not load profile.</div>';
@@ -306,7 +308,7 @@
                             fetch(API_URL + '/api/conversations/' + convData.conversation_id + '/messages', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
-                                body: JSON.stringify({ body: "You've been invited to become a SORC Admin [AD] by the Owner.\n\nAs an Admin, you'll help moderate the platform, manage members, and support the SORC community. Upon accepting, you will receive 10,000 Community Points.\n\nTo accept or decline, visit your Profile page — an invitation notice will be waiting for you there." })
+                                body: JSON.stringify({ body: "You've been invited to become a SORC Admin [AD] by the Owner.\n\nAs an Admin, you'll help moderate the platform, manage members, and support the SORC community. Upon accepting, you will receive 10,000 Community Points.\n\nTo accept or decline, visit your Profile page - an invitation notice will be waiting for you there." })
                             });
                         }
                     } catch(e) {}

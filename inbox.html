@@ -133,6 +133,17 @@
             return res.json();
         }
 
+        function renderEmptyInbox() {
+            document.getElementById('inboxApp').innerHTML =
+                '<div class="inbox-tabs">'
+                    + '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
+                    + '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">Fellowship Requests</button>'
+                + '</div>'
+                + '<div class="inbox-panel active" id="panel_messages"><div class="empty-state">No messages yet.<br/>Visit a member\'s profile to start a conversation.</div></div>'
+                + '<div class="inbox-panel" id="panel_requests"><div class="empty-state">No pending Fellowship requests.</div></div>'
+                + '<div class="conversation-view" id="convView"></div>';
+        }
+
         async function init() {
             if (!myUid) {
                 document.getElementById('inboxApp').innerHTML =
@@ -144,8 +155,7 @@
             try {
                 await renderInbox();
             } catch(e) {
-                document.getElementById('inboxApp').innerHTML =
-                    '<div class="empty-state">No messages yet.<br/>Visit a Fellow\'s profile to start a conversation.</div>';
+                renderEmptyInbox();
             }
             if (toUid) {
                 try {
@@ -156,6 +166,9 @@
                     if (res.conversation_id) {
                         var name = res.other_name || 'Member';
                         await openConversation(res.conversation_id, toUid, name);
+                    } else if (res.error) {
+                        var msgPanel = document.getElementById('panel_messages');
+                        if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d0021b;">' + escapeHtml(res.error) + '</div>';
                     }
                 } catch(e) {}
             }
@@ -171,19 +184,17 @@
             var reqCount = fellowRequests.length;
 
             document.getElementById('inboxApp').innerHTML =
-                '<div class="inbox-tabs">' +
-                    '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>' +
-                    '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">' +
-                        'Fellowship Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') +
-                    '</button>' +
-                '</div>' +
-                '<div class="inbox-panel active" id="panel_messages"></div>' +
-                '<div class="inbox-panel" id="panel_requests"></div>' +
-                '<div class="conversation-view" id="convView"></div>';
+                '<div class="inbox-tabs">'
+                    + '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
+                    + '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">' + 'Fellowship Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') + '</button>'
+                + '</div>'
+                + '<div class="inbox-panel active" id="panel_messages"></div>'
+                + '<div class="inbox-panel" id="panel_requests"></div>'
+                + '<div class="conversation-view" id="convView"></div>';
 
             var msgPanel = document.getElementById('panel_messages');
             if (conversations.length === 0) {
-                msgPanel.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit a Fellow\'s profile to start a conversation.</div>';
+                msgPanel.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit a member\'s profile and tap Message to start a conversation.</div>';
             } else {
                 msgPanel.innerHTML = conversations.map(function(conv) {
                     var otherUid = conv.user1_uid === myUid ? conv.user2_uid : conv.user1_uid;
@@ -204,20 +215,20 @@
                 reqPanel.innerHTML = '<div class="empty-state">No pending Fellowship requests.</div>';
             } else {
                 reqPanel.innerHTML = fellowRequests.map(function(req) {
-                    return '<div class="request-card" id="fr_' + escapeHtml(req.id) + '">' +
-                        '<div class="req-header">' +
-                            '<div class="req-avatar">⚔️</div>' +
-                            '<div>' +
-                                '<div class="req-name">' + escapeHtml(req.sender_name) + '</div>' +
-                                '<div class="req-text">wants to be your Fellow</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="req-actions">' +
-                            '<button class="btn btn-accept" onclick="acceptFellowship(\'' + escapeHtml(req.id) + '\')">✅ Accept</button>' +
-                            '<button class="btn btn-decline" onclick="declineFellowship(\'' + escapeHtml(req.id) + '\')">Decline</button>' +
-                            '<a href="public-profile.html?uid=' + escapeHtml(req.sender_uid) + '" class="btn btn-view">👤 Profile</a>' +
-                        '</div>' +
-                    '</div>';
+                    return '<div class="request-card" id="fr_' + escapeHtml(req.id) + '">'
+                        + '<div class="req-header">'
+                            + '<div class="req-avatar">⚔️</div>'
+                            + '<div>'
+                                + '<div class="req-name">' + escapeHtml(req.sender_name) + '</div>'
+                                + '<div class="req-text">wants to be your Fellow</div>'
+                            + '</div>'
+                        + '</div>'
+                        + '<div class="req-actions">'
+                            + '<button class="btn btn-accept" onclick="acceptFellowship(\'' + escapeHtml(req.id) + \')">✅ Accept</button>'
+                            + '<button class="btn btn-decline" onclick="declineFellowship(\'' + escapeHtml(req.id) + \')">Decline</button>'
+                            + '<a href="public-profile.html?uid=' + escapeHtml(req.sender_uid) + '" class="btn btn-view">👤 Profile</a>'
+                        + '</div>'
+                    + '</div>';
                 }).join('');
             }
         }
@@ -240,16 +251,16 @@
             var convView = document.getElementById('convView');
             convView.classList.add('open');
             convView.innerHTML =
-                '<div class="conv-view-header">' +
-                    '<button class="back-btn" onclick="closeConversation()">← Back</button>' +
-                    '<div class="conv-view-name">' + escapeHtml(otherName) + '</div>' +
-                    '<a href="public-profile.html?uid=' + escapeHtml(otherUid) + '" class="conv-view-link">View Profile</a>' +
-                '</div>' +
-                '<div class="messages-list" id="messagesList"><p style="color:#555;text-align:center;">Loading...</p></div>' +
-                '<div class="msg-input-row">' +
-                    '<input type="text" id="msgInput" placeholder="Write a message..." autocomplete="off" />' +
-                    '<button onclick="sendMessage()">Send</button>' +
-                '</div>';
+                '<div class="conv-view-header">'
+                    + '<button class="back-btn" onclick="closeConversation()">← Back</button>'
+                    + '<div class="conv-view-name">' + escapeHtml(otherName) + '</div>'
+                    + '<a href="public-profile.html?uid=' + escapeHtml(otherUid) + '" class="conv-view-link">View Profile</a>'
+                + '</div>'
+                + '<div class="messages-list" id="messagesList"><p style="color:#555;text-align:center;">Loading...</p></div>'
+                + '<div class="msg-input-row">'
+                    + '<input type="text" id="msgInput" placeholder="Write a message..." autocomplete="off" />'
+                    + '<button onclick="sendMessage()">Send</button>'
+                + '</div>';
 
             document.getElementById('msgInput').addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') sendMessage();
@@ -268,10 +279,10 @@
             } else {
                 listEl.innerHTML = messages.map(function(msg) {
                     var isMine = msg.sender_uid === myUid;
-                    return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">' +
-                        (!isMine ? '<div class="bubble-sender">' + escapeHtml(msg.sender_name) + '</div>' : '') +
-                        '<div class="bubble-inner">' + escapeHtml(msg.body) + '</div>' +
-                    '</div>';
+                    return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">'
+                        + (!isMine ? '<div class="bubble-sender">' + escapeHtml(msg.sender_name) + '</div>' : '')
+                        + '<div class="bubble-inner">' + escapeHtml(msg.body) + '</div>'
+                    + '</div>';
                 }).join('');
                 listEl.scrollTop = listEl.scrollHeight;
             }
