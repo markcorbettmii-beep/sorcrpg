@@ -209,6 +209,7 @@ function showRoleBadge(user) {
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
     ' &nbsp;|&nbsp; <a href="/character-customizer/creation-overview.html" style="color:inherit;text-decoration:underline;">Characters</a>' +
+    ' &nbsp;|&nbsp; <a href="/lobbies.html" style="color:inherit;text-decoration:underline;">Lobbies</a>' +
     ' &nbsp;|&nbsp; <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
     ' &nbsp;|&nbsp; <a href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' &nbsp;|&nbsp; <a href="/forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +

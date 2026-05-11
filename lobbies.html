@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lobbies | Slayers of Rings &sect; Crowns</title>
+  <link rel="icon" href="IMG_3419.jpeg" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .lobbies-container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+    .lobbies-container h1 { color: #d0021b; margin-bottom: 0.25rem; }
+    .lobbies-container > .sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+    .lobby-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
+    @media (max-width: 600px) { .lobby-actions { grid-template-columns: 1fr; } }
+    .lobby-action-card { background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; transition: border-color 0.2s; }
+    .lobby-action-card:hover { border-color: #d0021b; }
+    .lobby-action-card.create { border-color: #d4af37; }
+    .lobby-action-card h2 { margin: 0; font-size: 1.1rem; }
+    .lobby-action-card h2.create { color: #d4af37; }
+    .lobby-action-card h2.join { color: #d0021b; }
+    .lobby-action-card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.5; }
+    .lobby-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; box-sizing: border-box; }
+    .lobby-input:focus { outline: none; border-color: #d0021b; }
+    .lobby-btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; width: 100%; }
+    .lobby-btn.gold { background: #d4af37; color: #222; }
+    .lobby-btn.red { background: #d0021b; color: #fff; }
+    .lobby-btn.gold:hover { background: #c19b2b; }
+    .lobby-btn.red:hover { background: #a50013; }
+    .lobby-msg { font-size: 0.85rem; margin-top: 0.25rem; min-height: 1.2em; }
+    .lobby-msg.success { color: #4caf50; }
+    .lobby-msg.error { color: #d0021b; }
+    .lobbies-section h2 { color: #d4af37; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; border-bottom: 1px solid #2a2a2a; padding-bottom: 0.5rem; }
+    .lobby-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .lobby-card-info h3 { color: #e0cfc0; font-size: 0.95rem; margin: 0 0 0.25rem 0; }
+    .lobby-card-info p { color: #555; font-size: 0.8rem; margin: 0; }
+    .lobby-status { display: inline-block; font-size: 0.72rem; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+    .lobby-status.open { background: #1a6b1a; color: #fff; }
+    .lobby-status.full { background: #333; color: #888; }
+    .lobby-status.in-progress { background: #1a3a6b; color: #fff; }
+    .join-btn { padding: 6px 16px; background: #d0021b; color: #fff; border: none; border-radius: 6px; font-weight: bold; font-size: 0.82rem; cursor: pointer; }
+    .join-btn:hover { background: #a50013; }
+    .join-btn:disabled { background: #333; color: #555; cursor: default; }
+    .not-logged-in { text-align: center; padding: 3rem; color: #555; }
+    .not-logged-in a { color: #d4af37; }
+    .empty-state { text-align: center; padding: 2rem; color: #444; font-size: 0.9rem; }
+    body.lawful-mode .lobby-action-card,
+    body.lawful-mode .lobby-card { background: #fff; border-color: #e0e0e0; }
+    body.lawful-mode .lobby-card-info h3 { color: #2c2c2c; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+    </header>
+    <nav><div id="navRoleBadge"></div></nav>
+
+    <div class="lobbies-container">
+      <h1>Campaign Lobbies</h1>
+      <p class="sub">Join or host live SORC sessions online. Creating a lobby requires a box set code. Joining is free for all members.</p>
+
+      <div id="lobbiesApp"><div class="not-logged-in"><p>Loading...</p></div></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'evil';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function render() {
+      if (!currentUser || !currentUser.authKey) {
+        document.getElementById('lobbiesApp').innerHTML =
+          '<div class="not-logged-in"><p>Please <a href="signin.html">sign in</a> to access lobbies.</p></div>';
+        return;
+      }
+      document.getElementById('lobbiesApp').innerHTML =
+        '<div class="lobby-actions">' +
+          '<div class="lobby-action-card create">' +
+            '<h2 class="create">&#127981; Create Lobby</h2>' +
+            '<p>Host a live Campaign Mode session. A valid box set code is required to create a lobby. Players can join for free.</p>' +
+            '<input type="text" id="lobbyName" class="lobby-input" placeholder="Lobby name..." maxlength="60" />' +
+            '<input type="text" id="boxSetCode" class="lobby-input" placeholder="Box set code..." maxlength="40" />' +
+            '<input type="number" id="maxPlayers" class="lobby-input" placeholder="Max players (2-8)" min="2" max="8" value="5" />' +
+            '<button class="lobby-btn gold" onclick="createLobby()">Create Lobby</button>' +
+            '<div id="createMsg" class="lobby-msg"></div>' +
+          '</div>' +
+          '<div class="lobby-action-card">' +
+            '<h2 class="join">&#9876; Join Lobby</h2>' +
+            '<p>Join an existing lobby with a code from your Game Master, or browse open lobbies below.</p>' +
+            '<input type="text" id="joinCode" class="lobby-input" placeholder="Enter lobby code..." maxlength="20" />' +
+            '<button class="lobby-btn red" onclick="joinByCode()">Join</button>' +
+            '<div id="joinMsg" class="lobby-msg"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lobbies-section">' +
+          '<h2>Open Lobbies</h2>' +
+          '<div id="lobbyList"><div class="empty-state">Loading lobbies...</div></div>' +
+        '</div>';
+      loadLobbies();
+    }
+
+    async function loadLobbies() {
+      var listEl = document.getElementById('lobbyList');
+      if (!listEl) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies', {
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await res.json();
+        var lobbies = data.lobbies || [];
+        if (lobbies.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No open lobbies right now. Create one to get started.</div>';
+          return;
+        }
+        listEl.innerHTML = lobbies.map(function(lobby) {
+          var statusClass = lobby.status === 'open' ? 'open' : lobby.status === 'full' ? 'full' : 'in-progress';
+          var statusLabel = lobby.status === 'open' ? 'Open' : lobby.status === 'full' ? 'Full' : 'In Progress';
+          var canJoin = lobby.status === 'open';
+          return '<div class="lobby-card">' +
+            '<div class="lobby-card-info">' +
+              '<h3>' + escapeHtml(lobby.name) + '</h3>' +
+              '<p>GM: ' + escapeHtml(lobby.gm_name || 'Unknown') + ' &nbsp;·&nbsp; ' +
+              (lobby.player_count || 0) + '/' + (lobby.max_players || 5) + ' players</p>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+              '<span class="lobby-status ' + statusClass + '">' + statusLabel + '</span>' +
+              '<button class="join-btn" onclick="joinLobby(\'' + escapeHtml(lobby.id) + '\')" ' + (!canJoin ? 'disabled' : '') + '>Join</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } catch(e) {
+        listEl.innerHTML = '<div class="empty-state">Could not load lobbies.</div>';
+      }
+    }
+
+    window.createLobby = async function() {
+      var name = document.getElementById('lobbyName').value.trim();
+      var code = document.getElementById('boxSetCode').value.trim();
+      var max = parseInt(document.getElementById('maxPlayers').value) || 5;
+      var msgEl = document.getElementById('createMsg');
+      if (!name) { msgEl.className = 'lobby-msg error'; msgEl.textContent = 'Please enter a lobby name.'; return; }
+      if (!code) { msgEl.className = 'lobby-msg error'; msgEl.textContent = 'A box set code is required to create a lobby.'; return; }
+      msgEl.className = 'lobby-msg'; msgEl.textContent = 'Creating...';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ name: name, box_set_code: code, max_players: max })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.className = 'lobby-msg success'; msgEl.textContent = '✅ Lobby created! Code: ' + (data.lobby_code || '');
+          loadLobbies();
+        } else { msgEl.className = 'lobby-msg error'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
+      } catch(e) { msgEl.className = 'lobby-msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.joinByCode = async function() {
+      var code = document.getElementById('joinCode').value.trim();
+      var msgEl = document.getElementById('joinMsg');
+      if (!code) { msgEl.className = 'lobby-msg error'; msgEl.textContent = 'Please enter a lobby code.'; return; }
+      await joinLobby(null, code);
+    };
+
+    window.joinLobby = async function(lobbyId, code) {
+      var msgEl = document.getElementById('joinMsg');
+      try {
+        var body = lobbyId ? { lobby_id: lobbyId } : { lobby_code: code };
+        var res = await fetch(API_URL + '/api/lobbies/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (data.success) {
+          if (msgEl) { msgEl.className = 'lobby-msg success'; msgEl.textContent = '✅ Joined! Lobby: ' + escapeHtml(data.lobby_name || ''); }
+          loadLobbies();
+        } else {
+          if (msgEl) { msgEl.className = 'lobby-msg error'; msgEl.textContent = data.error || 'Could not join lobby.'; }
+          else { alert(data.error || 'Could not join lobby.'); }
+        }
+      } catch(e) {
+        if (msgEl) { msgEl.className = 'lobby-msg error'; msgEl.textContent = 'Connection error.'; }
+      }
+    };
+
+    render();
+  </script>
+  <script src="nav.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
