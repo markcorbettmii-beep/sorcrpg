@@ -119,8 +119,6 @@ window.showUserMiniPopup = function(e, uid, name) {
 // ========== NEWS CARDS SLIDER ==========
 document.addEventListener("DOMContentLoaded", function() {
   const newsCards = document.querySelectorAll('.news-card');
-  const rightArrows = document.querySelectorAll('.arrow-right');
-  const leftArrows = document.querySelectorAll('.arrow-left');
   let currentIndex = 0;
   if (newsCards.length > 0) {
     function showCard(index) {
@@ -129,22 +127,6 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     }
     showCard(currentIndex);
-    rightArrows.forEach(arrow => {
-      arrow.style.pointerEvents = 'auto';
-      arrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        currentIndex = (currentIndex + 1) % newsCards.length;
-        showCard(currentIndex);
-      });
-    });
-    leftArrows.forEach(arrow => {
-      arrow.style.pointerEvents = 'auto';
-      arrow.addEventListener('click', function(e) {
-        e.stopPropagation();
-        currentIndex = (currentIndex - 1 + newsCards.length) % newsCards.length;
-        showCard(currentIndex);
-      });
-    });
   }
 });
 
