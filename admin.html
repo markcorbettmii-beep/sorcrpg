@@ -54,6 +54,10 @@
     body.lawful-mode .admin-card, body.lawful-mode .member-row { background: #fff; border-color: #e0e0e0; }
     body.lawful-mode .admin-card h3, body.lawful-mode .member-row-info .mname { color: #2c2c2c; }
     .coming-soon-tag { font-size: 0.7rem; background: #333; color: #888; padding: 2px 7px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+    .role-search-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; color: #e0cfc0; border-bottom: 1px solid #2a2a2a; display: flex; justify-content: space-between; align-items: center; }
+    .role-search-item:last-child { border-bottom: none; }
+    .role-search-item:hover, .role-search-item:focus { background: #2a2a2a; outline: none; }
+    .role-search-item .rs-uid { font-size: 0.72rem; color: #d4af37; }
     .queue-count { font-size: 0.75rem; background: #d0021b; color: #fff; padding: 2px 8px; border-radius: 10px; margin-left: 6px; font-weight: bold; vertical-align: middle; }
     .report-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 0.6rem; display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
     .report-card.high { border-color: #d0021b; }
@@ -217,8 +221,11 @@
           '<div class="admin-card" style="max-width:480px;">' +
             '<h3>Assign Role by UID or Username</h3>' +
             '<p>Upgrade or downgrade any member\'s role. ' + (isOwner ? 'All roles available.' : '<span style="color:#555;">Role assignment is Owner-only. You can view but not apply changes.</span>') + '</p>' +
+            '<div style="position:relative;margin-bottom:0.6rem;">' +
+              '<input type="text" id="changeRoleUid" class="admin-input" placeholder="Type username or UID..." autocomplete="off" oninput="liveRoleSearch(this.value)" style="width:100%;box-sizing:border-box;" />' +
+              '<div id="roleSearchDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:#1a1a1a;border:1px solid #444;border-radius:6px;z-index:100;max-height:200px;overflow-y:auto;"></div>' +
+            '</div>' +
             '<div style="display:flex;gap:0.5rem;margin-bottom:0.6rem;flex-wrap:wrap;">' +
-              '<input type="text" id="changeRoleUid" class="admin-input" placeholder="UID or username..." style="flex:1;min-width:140px;" />' +
               '<select id="changeRoleSelect" class="admin-select" ' + (!isOwner ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : '') + '>' +
                 '<option value="CIVILIAN">CIVILIAN</option>' +
                 '<option value="PLAYER">PLAYER</option>' +
@@ -421,6 +428,48 @@
         '</div>';
       }).join('');
     }
+
+    var _roleSearchTimer = null;
+    window.liveRoleSearch = function(val) {
+      var dropdown = document.getElementById('roleSearchDropdown');
+      if (!dropdown) return;
+      if (!val || val.trim().length < 2) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
+      clearTimeout(_roleSearchTimer);
+      _roleSearchTimer = setTimeout(async function() {
+        try {
+          var data = await apiFetch('/api/admin/members?search=' + encodeURIComponent(val.trim()) + '&limit=8');
+          var members = data.members || data.users || [];
+          if (!members.length) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
+          dropdown.innerHTML = members.map(function(m) {
+            var uid = m.user_id || m.id || '';
+            var name = escapeHtml(m.display_name || m.username || '');
+            var role = escapeHtml(m.role || 'CIVILIAN');
+            return '<div class="role-search-item" tabindex="0" ' +
+              'onclick="selectRoleSearchResult(\'' + escapeHtml(String(uid)) + '\',\'' + name + '\')" ' +
+              'onkeydown="if(event.key===\'Enter\')selectRoleSearchResult(\'' + escapeHtml(String(uid)) + '\',\'' + name + '\')">' +
+              '<span>' + name + ' <span style="font-size:0.72rem;color:#888;">[' + role + ']</span></span>' +
+              '<span class="rs-uid">#' + escapeHtml(String(uid)) + '</span>' +
+            '</div>';
+          }).join('');
+          dropdown.style.display = 'block';
+        } catch(e) { dropdown.style.display = 'none'; }
+      }, 250);
+    };
+
+    window.selectRoleSearchResult = function(uid, name) {
+      var input = document.getElementById('changeRoleUid');
+      var dropdown = document.getElementById('roleSearchDropdown');
+      if (input) input.value = uid;
+      if (dropdown) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+    };
+
+    document.addEventListener('click', function(e) {
+      var dropdown = document.getElementById('roleSearchDropdown');
+      var input = document.getElementById('changeRoleUid');
+      if (dropdown && input && !input.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
 
     window.quickWarn = function(uid) {
       document.getElementById('warnUid').value = uid;
