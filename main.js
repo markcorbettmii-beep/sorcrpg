@@ -201,12 +201,19 @@ function showRoleBadge(user) {
 
   existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
+  var adminLink = isAdminUser
+    ? ' &nbsp;|&nbsp; <a href="/admin.html" style="color:inherit;text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
+    : '';
+
   existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;">' + abbr + '</span>' +
     ' &nbsp;|&nbsp; <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' &nbsp;|&nbsp; <a href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
+    ' &nbsp;|&nbsp; <a href="/character-customizer/creation-overview.html" style="color:inherit;text-decoration:underline;">Characters</a>' +
+    ' &nbsp;|&nbsp; <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
     ' &nbsp;|&nbsp; <a href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' &nbsp;|&nbsp; <a href="/forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
+    ' &nbsp;|&nbsp; <a href="/shop.html" style="color:inherit;text-decoration:underline;">Shop</a>' +
+    adminLink +
     ' &nbsp;|&nbsp; <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
 
   existing.querySelector('.role-tag').addEventListener('click', function(e) {
@@ -283,7 +290,7 @@ async function checkNotifications(user) {
     if (unread > 0) {
       var badgeEl = document.getElementById('navRoleBadge');
       if (badgeEl) {
-        var inboxLink = badgeEl.querySelector('a[href="/inbox.html"]');
+        var inboxLink = badgeEl.querySelector('#badgeInboxLink');
         if (inboxLink) {
           inboxLink.innerHTML = 'Inbox <span style="background:#d0021b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>';
         }
