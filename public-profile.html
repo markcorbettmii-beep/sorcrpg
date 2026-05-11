@@ -144,6 +144,7 @@
                     '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">' +
                         '<button onclick="startMessage()" style="padding:9px 18px;background:#d0021b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">✉ Message</button>' +
                         '<button onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">⚔ Add Fellowship</button>' +
+                        '<button onclick="reportUser()" style="padding:9px 18px;background:#333;color:#e0cfc0;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">🚩 Report</button>' +
                     '</div>' +
                     '<div id="actionMsg" class="msg" style="margin-top:0.5rem;"></div>' +
                 '</div>';
@@ -178,6 +179,27 @@
             document.getElementById('profileApp').innerHTML = '<div class="not-found">Could not load profile.</div>';
         }
     });
+
+    window.reportUser = async function() {
+        var currentUser = null;
+        try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!currentUser || !currentUser.authKey) { window.location.href = 'signin.html'; return; }
+        var params = new URLSearchParams(window.location.search);
+        var uid = params.get('uid') || params.get('username');
+        var reason = prompt('Reason for report:\n(harassment, spam, impersonation, inappropriate content, other)');
+        if (!reason) return;
+        var msgEl = document.getElementById('actionMsg');
+        try {
+            var res = await fetch(API_URL + '/api/users/' + uid + '/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ reason: reason })
+            });
+            var data = await res.json();
+            msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+            msgEl.textContent = data.success ? '✅ Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
 
     window.startMessage = function() {
         var params = new URLSearchParams(window.location.search);

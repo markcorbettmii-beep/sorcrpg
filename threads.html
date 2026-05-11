@@ -350,6 +350,7 @@
                         (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '') +
                         (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '') +
                         (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" onclick="modDeletePost(\'' + post.id + '\')">🛡 Remove</button>' : '') +
+                        (!isOwnPost && myId ? '<button class="post-action-btn" onclick="reportPost(\'' + post.id + '\')">🚩 Report</button>' : '') +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -467,6 +468,25 @@
             } else { alert(data.error || 'Could not delete post.'); }
         } catch(e) { alert('Connection error.'); }
     };
+    window.reportPost = async function(postId) {
+        var reason = prompt('Reason for report:\n(harassment, spam, inappropriate content, other)');
+        if (!reason) return;
+        if (!currentUser) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + postId + '/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ reason: reason })
+            });
+            var data = await res.json();
+            var msgEl = document.getElementById('replyMsg');
+            if (msgEl) {
+                msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+                msgEl.textContent = data.success ? '✅ Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
+            }
+        } catch(e) {}
+    };
+
     window.modDeletePost = async function(postId) {
         if (!confirm('Remove this post?')) return;
         if (!currentUser) return;
