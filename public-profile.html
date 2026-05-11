@@ -285,14 +285,32 @@
         var role = sel.value;
         if (!confirm('Set role to ' + role + '?')) return;
         var u = getModUser();
+        var targetUid = getProfileUid();
         try {
-            var res = await fetch(API_URL + '/api/admin/members/' + getProfileUid() + '/role', {
+            var res = await fetch(API_URL + '/api/admin/members/' + targetUid + '/role', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
                 body: JSON.stringify({ role: role })
             });
             var data = await res.json();
             modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.'), data.success);
+            if (data.success) {
+                try {
+                    var convRes = await fetch(API_URL + '/api/conversations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+                        body: JSON.stringify({ recipient_uid: targetUid })
+                    });
+                    var convData = await convRes.json();
+                    if (convData.conversation_id) {
+                        fetch(API_URL + '/api/conversations/' + convData.conversation_id + '/messages', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+                            body: JSON.stringify({ body: 'Your SORC role has been updated to ' + role + '. If you have questions about this change, please contact an admin.' })
+                        });
+                    }
+                } catch(e) {}
+            }
         } catch(e) { modMsg('Connection error.', false); }
     };
 
