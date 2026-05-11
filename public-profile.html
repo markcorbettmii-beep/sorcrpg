@@ -140,12 +140,41 @@
             } else if (!currentUser) {
                 actionSection = '<div class="profile-section"><p style="font-size:0.85rem;color:#555;"><a href="signin.html" style="color:#d4af37;">Sign in</a> to connect with ' + escapeHtml(username) + '.</p></div>';
             } else {
+                var viewerEmail = currentUser.email || '';
+                var isOwnerViewer = OWNER_EMAILS.includes(viewerEmail);
+                var isAdminViewer = isOwnerViewer || ADMIN_EMAILS.includes(viewerEmail);
+                var targetUid = escapeHtml(user.id || user.user_id || '');
+
+                var modSection = '';
+                if (isAdminViewer && !isSelf) {
+                    var roleSelect =
+                        '<select id="modRoleSelect" style="padding:7px 8px;border-radius:6px;border:1px solid #444;background:#222;color:#e0cfc0;font-size:0.82rem;' + (!isOwnerViewer ? 'opacity:0.4;cursor:not-allowed;' : '') + '" ' + (!isOwnerViewer ? 'disabled title="Owner only"' : '') + '>' +
+                            ['CIVILIAN','PLAYER','MASTER','ADMIN'].map(function(r) {
+                                return '<option value="' + r + '"' + (r === role ? ' selected' : '') + '>' + r + '</option>';
+                            }).join('') +
+                        '</select>' +
+                        '<button onclick="modSetRole()" style="padding:7px 14px;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;' + (isOwnerViewer ? 'background:#d4af37;color:#222;' : 'background:#333;color:#555;cursor:not-allowed;') + '" ' + (!isOwnerViewer ? 'disabled title="Owner only"' : '') + '>Set Role</button>';
+
+                    modSection =
+                        '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #2a2a2a;">' +
+                        '<div style="font-size:0.72rem;color:#d4af37;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">Moderation</div>' +
+                        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">' +
+                            '<button onclick="modWarn()" style="padding:7px 14px;background:#d4af37;color:#222;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">⚠ Warn</button>' +
+                            '<button onclick="modSuspend()" style="padding:7px 14px;background:#555;color:#fff;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">⏸ Suspend</button>' +
+                            (isOwnerViewer ? '<button onclick="modBan()" style="padding:7px 14px;background:#d0021b;color:#fff;border:none;border-radius:6px;font-weight:bold;font-size:0.82rem;cursor:pointer;">🚫 Ban</button>' : '') +
+                            roleSelect +
+                        '</div>' +
+                        '<div id="modMsg" class="msg" style="margin-top:0.4rem;"></div>' +
+                        '</div>';
+                }
+
                 actionSection = '<div class="profile-section">' +
                     '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">' +
                         '<button onclick="startMessage()" style="padding:9px 18px;background:#d0021b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">✉ Message</button>' +
                         '<button onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">⚔ Add Fellowship</button>' +
                         '<button onclick="reportUser()" style="padding:9px 18px;background:#333;color:#e0cfc0;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">🚩 Report</button>' +
                     '</div>' +
+                    modSection +
                     '<div id="actionMsg" class="msg" style="margin-top:0.5rem;"></div>' +
                 '</div>';
             }
@@ -199,6 +228,72 @@
             msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
             msgEl.textContent = data.success ? '✅ Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    function getProfileUid() {
+        var params = new URLSearchParams(window.location.search);
+        return params.get('uid') || params.get('username');
+    }
+    function getModUser() {
+        var u = null; try { u = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {} return u;
+    }
+    async function modApiCall(path, body) {
+        var u = getModUser();
+        var res = await fetch(API_URL + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+            body: JSON.stringify(body)
+        });
+        return res.json();
+    }
+    function modMsg(text, ok) {
+        var el = document.getElementById('modMsg');
+        if (el) { el.className = 'msg ' + (ok ? 'success' : 'error'); el.textContent = text; }
+    }
+
+    window.modWarn = async function() {
+        var reason = prompt('Warning reason:');
+        if (!reason) return;
+        try {
+            var data = await modApiCall('/api/admin/members/' + getProfileUid() + '/warn', { reason: reason });
+            modMsg(data.success ? '✅ Warning issued.' : (data.error || 'Failed.'), data.success);
+        } catch(e) { modMsg('Connection error.', false); }
+    };
+
+    window.modSuspend = async function() {
+        var days = prompt('Suspend for how many days? (1, 3, 7, 30)');
+        if (!days) return;
+        try {
+            var data = await modApiCall('/api/admin/members/' + getProfileUid() + '/suspend', { days: parseInt(days) });
+            modMsg(data.success ? '✅ Suspended for ' + days + ' day(s).' : (data.error || 'Failed.'), data.success);
+        } catch(e) { modMsg('Connection error.', false); }
+    };
+
+    window.modBan = async function() {
+        var reason = prompt('Ban reason (permanent):');
+        if (!reason) return;
+        if (!confirm('Permanently ban this member?')) return;
+        try {
+            var data = await modApiCall('/api/admin/members/' + getProfileUid() + '/ban', { reason: reason });
+            modMsg(data.success ? '✅ Member banned.' : (data.error || 'Failed.'), data.success);
+        } catch(e) { modMsg('Connection error.', false); }
+    };
+
+    window.modSetRole = async function() {
+        var sel = document.getElementById('modRoleSelect');
+        if (!sel) return;
+        var role = sel.value;
+        if (!confirm('Set role to ' + role + '?')) return;
+        var u = getModUser();
+        try {
+            var res = await fetch(API_URL + '/api/admin/members/' + getProfileUid() + '/role', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
+                body: JSON.stringify({ role: role })
+            });
+            var data = await res.json();
+            modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.'), data.success);
+        } catch(e) { modMsg('Connection error.', false); }
     };
 
     window.startMessage = function() {
