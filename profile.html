@@ -223,6 +223,35 @@
         if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
     };
 
+    window.unlockFeature = async function(feature, cost) {
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!saved || !saved.authKey) return;
+
+        var cp = saved.community_points || 0;
+        if (cp < cost) { alert('Not enough Community Points. Need ' + cost + ' CP.'); return; }
+
+        var unlocked = saved.unlocked_features || [];
+        if (typeof unlocked === 'string') { try { unlocked = JSON.parse(unlocked); } catch(e) { unlocked = []; } }
+        if (unlocked.includes(feature)) return;
+
+        var newCp = cp - cost;
+        unlocked = unlocked.concat([feature]);
+        saved.community_points = newCp;
+        saved.unlocked_features = unlocked;
+        localStorage.setItem('sorc_user', JSON.stringify(saved));
+
+        try {
+            await fetch(API_URL + '/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
+                body: JSON.stringify({ community_points: newCp, unlocked_features: unlocked })
+            });
+        } catch(e) {}
+
+        location.reload();
+    };
+
     window.doSignOut = function() {
         localStorage.removeItem('sorc_user');
         window.location.href = 'index.html';
@@ -247,6 +276,9 @@
         var avatar = user.avatar || null;
         var communityPoints = user.community_points || 0;
         var postCount = user.post_count || 0;
+
+        var unlockedFeatures = user.unlocked_features || [];
+        if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
 
         if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
             communityPoints = 10000;
@@ -330,7 +362,7 @@
                             '<div id="bioMsg" class="msg"></div>' +
                         '</div>' +
 
-                        (communityPoints >= 100
+                        (unlockedFeatures.includes('signature')
                             ? '<div class="profile-field">' +
                                 '<label>SIGNATURE <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
                                 '<input type="text" id="sigInput" class="profile-input" value="' + (user.signature || '').replace(/"/g,'&quot;') + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
@@ -339,11 +371,17 @@
                             '</div>'
                             : '<div class="unlock-feature-card">' +
                                 '<div class="unlock-feature-info"><h4>Signature</h4><p>A short line shown below your forum posts.</p></div>' +
-                                '<div style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 100 CP</div>' +
+                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 100 CP</span>' +
+                                    (communityPoints >= 100
+                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'signature\',100)">Unlock</button>'
+                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (100 - communityPoints) + ' more CP</span>'
+                                    ) +
+                                '</div>' +
                             '</div>'
                         ) +
 
-                        (communityPoints >= 250
+                        (unlockedFeatures.includes('socials')
                             ? '<div class="profile-field">' +
                                 '<label>SOCIAL LINKS <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
                                 '<input type="text" id="socialWebsite" class="profile-input" value="' + ((user.socials && user.socials.website) || '').replace(/"/g,'&quot;') + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
@@ -354,18 +392,30 @@
                             '</div>'
                             : '<div class="unlock-feature-card">' +
                                 '<div class="unlock-feature-info"><h4>Social Links</h4><p>Website, Twitter/X, and Twitch on your profile.</p></div>' +
-                                '<div style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 250 CP</div>' +
+                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 250 CP</span>' +
+                                    (communityPoints >= 250
+                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'socials\',250)">Unlock</button>'
+                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (250 - communityPoints) + ' more CP</span>'
+                                    ) +
+                                '</div>' +
                             '</div>'
                         ) +
 
-                        (communityPoints >= 500
+                        (unlockedFeatures.includes('banner')
                             ? '<div class="profile-field">' +
                                 '<label>PROFILE BANNER <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
                                 '<p style="font-size:0.8rem;color:#555;margin:0 0 4px 0;">Contact an admin to upload a custom banner image.</p>' +
                             '</div>'
                             : '<div class="unlock-feature-card">' +
                                 '<div class="unlock-feature-info"><h4>Profile Banner</h4><p>Custom banner image at the top of your profile.</p></div>' +
-                                '<div style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 500 CP</div>' +
+                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 500 CP</span>' +
+                                    (communityPoints >= 500
+                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'banner\',500)">Unlock</button>'
+                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (500 - communityPoints) + ' more CP</span>'
+                                    ) +
+                                '</div>' +
                             '</div>'
                         ) +
 
