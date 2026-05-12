@@ -252,8 +252,11 @@
     categoryId = params.get('cat');
     categoryName = decodeURIComponent(params.get('name') || '');
     var threadParam = params.get('thread');
-    document.getElementById('categoryTitle').textContent = categoryName;
-    document.title = categoryName + ' | SORC Forums';
+
+    if (!categoryId) { window.location.replace('forum.html'); }
+
+    document.getElementById('categoryTitle').textContent = categoryName || 'Forum';
+    document.title = (categoryName || 'Forum') + ' | SORC Forums';
 
     window.addEventListener('popstate', function(e) {
         if (e.state && e.state.threadId) { openThread(e.state.threadId); }
@@ -277,7 +280,7 @@
             container.innerHTML = allThreads.map(function(t) {
                 var role = t.author_role || 'CIVILIAN';
                 var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
-                return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">'
+                return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">' 
                     + '<div class="thread-icon">' + (t.pinned ? '📌' : t.locked ? '🔒' : '💬') + '</div>'
                     + '<div class="thread-info">'
                         + '<div class="thread-title">' + escapeHtml(t.title) + (t.pinned ? '<span class="pin-badge">Pinned</span>' : '') + (t.locked ? '<span class="lock-badge">Locked</span>' : '') + '</div>'
