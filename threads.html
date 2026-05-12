@@ -352,8 +352,8 @@
                         + (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">💬 Quote</button>' : '')
                         + (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '')
                         + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '')
-                        + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" onclick="modDeletePost(\'' + post.id + \')">🛡 Remove</button>' : '')
-                        + (!isOwnPost && myId ? '<button class="post-action-btn" onclick="reportPost(\'' + post.id + \')">🚩 Report</button>' : '')
+                        + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" data-pid="' + post.id + '" onclick="modDeletePost(this.dataset.pid)">🛡 Remove</button>' : '')
+                        + (!isOwnPost && myId ? '<button class="post-action-btn" data-pid="' + post.id + '" onclick="reportPost(this.dataset.pid)">🚩 Report</button>' : '')
                     + '</div>'
                 + '</div>';
             }).join('');
@@ -513,7 +513,7 @@
         if (!actions) return;
         actions.innerHTML =
             '<span style="font-size:0.82rem;color:#e0cfc0;margin-right:4px;">Remove this post?</span>'
-            + '<button class="post-action-btn danger-btn" onclick="confirmModDelete(\'' + postId + \')">Yes, Remove</button>'
+            + '<button class="post-action-btn danger-btn" data-pid="' + postId + '" onclick="confirmModDelete(this.dataset.pid)">Yes, Remove</button>'
             + '<button class="post-action-btn" onclick="loadThreadContent(currentThread)">Cancel</button>';
     };
     window.confirmModDelete = async function(postId) {
