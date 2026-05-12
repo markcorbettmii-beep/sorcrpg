@@ -164,6 +164,37 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// ========== ONLINE PRESENCE HEARTBEAT ==========
+(function() {
+  var _heartbeatInterval = null;
+  function sendHeartbeat() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+    if (!user || !user.authKey) return;
+    fetch(SORC_API + '/api/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
+      body: JSON.stringify({ status: 'online' })
+    }).catch(function(){});
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+    if (!user || !user.authKey) return;
+    sendHeartbeat();
+    _heartbeatInterval = setInterval(sendHeartbeat, 30000);
+    window.addEventListener('beforeunload', function() {
+      if (_heartbeatInterval) clearInterval(_heartbeatInterval);
+      try {
+        var u = JSON.parse(localStorage.getItem('sorc_user'));
+        if (u && u.authKey) {
+          navigator.sendBeacon(SORC_API + '/api/presence', JSON.stringify({ status: 'offline', auth_key: u.authKey }));
+        }
+      } catch(e) {}
+    });
+  });
+})();
+
 // ========== ROLE HELPERS ==========
 function getRoleAbbr(role) {
   if (role === 'OWNER') return '[OWN]';

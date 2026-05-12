@@ -345,8 +345,8 @@
 
                         '<div class="profile-field">' +
                             '<label>DISPLAY NAME</label>' +
-                            '<input type="text" id="displayNameInput" class="profile-input" value="' + displayName + '" maxlength="30" />' +
-                            '<button id="saveNameBtn" class="btn btn-gold btn-sm" onclick="saveDisplayName()" style="margin-top:6px;">Save Name</button>' +
+                            '<input type="text" id="displayNameInput" class="profile-input" value="' + displayName + '" maxlength="30" oninput="var btn=document.getElementById(\'saveNameBtn\');btn.disabled=this.value.trim()===\'' + displayName.replace(/'/g,"\\'") + '\';btn.style.opacity=btn.disabled?\'0.4\':\'1\';btn.style.cursor=btn.disabled?\'not-allowed\':\'pointer\';" />' +
+                            '<button id="saveNameBtn" class="btn btn-gold btn-sm" onclick="saveDisplayName()" style="margin-top:6px;opacity:0.4;cursor:not-allowed;" disabled>Save Name</button>' +
                             '<div id="nameMsg" class="msg"></div>' +
                         '</div>' +
 
@@ -367,76 +367,81 @@
                             '<div id="bioMsg" class="msg"></div>' +
                         '</div>' +
 
-                        (unlockedFeatures.includes('fellowships')
-                            ? ''
-                            : '<div class="unlock-feature-card">' +
+                        (function() {
+                            var locked = !unlockedFeatures.includes('fellowships');
+                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
                                 '<div class="unlock-feature-info"><h4>Send Fellowship Requests</h4><p>Unlock the ability to send Fellowship requests to other members.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 50 CP</span>' +
-                                    (communityPoints >= 50
-                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'fellowships\',50)">Unlock</button>'
-                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (50 - communityPoints) + ' more CP</span>'
-                                    ) +
+                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#d4af37') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 50 CP') + '</span>' +
+                                    (locked
+                                        ? (communityPoints >= 50
+                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'fellowships\',50)">Unlock</button>'
+                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (50 - communityPoints) + ' more CP</span>')
+                                        : '') +
                                 '</div>' +
-                            '</div>'
-                        ) +
+                            '</div>';
+                        })() +
 
-                        (unlockedFeatures.includes('signature')
-                            ? '<div class="profile-field">' +
-                                '<label>SIGNATURE <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
-                                '<input type="text" id="sigInput" class="profile-input" value="' + (user.signature || '').replace(/"/g,'&quot;') + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
-                                '<button class="btn btn-gold btn-sm" onclick="saveSignature()" style="margin-top:6px;">Save Signature</button>' +
-                                '<div id="sigMsg" class="msg"></div>' +
-                            '</div>'
-                            : '<div class="unlock-feature-card">' +
+                        (function() {
+                            var locked = !unlockedFeatures.includes('signature');
+                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
                                 '<div class="unlock-feature-info"><h4>Signature</h4><p>A short line shown below your forum posts.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 100 CP</span>' +
-                                    (communityPoints >= 100
-                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'signature\',100)">Unlock</button>'
-                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (100 - communityPoints) + ' more CP</span>'
-                                    ) +
+                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#d4af37') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 100 CP') + '</span>' +
+                                    (locked
+                                        ? (communityPoints >= 100
+                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'signature\',100)">Unlock</button>'
+                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (100 - communityPoints) + ' more CP</span>')
+                                        : '') +
                                 '</div>' +
-                            '</div>'
-                        ) +
+                            '</div>' +
+                            (!locked
+                                ? '<div class="profile-field" style="margin-top:0.5rem;">' +
+                                    '<input type="text" id="sigInput" class="profile-input" value="' + (user.signature || '').replace(/"/g,'&quot;') + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
+                                    '<button class="btn btn-gold btn-sm" onclick="saveSignature()" style="margin-top:6px;">Save Signature</button>' +
+                                    '<div id="sigMsg" class="msg"></div>' +
+                                '</div>'
+                                : '');
+                        })() +
 
-                        (unlockedFeatures.includes('socials')
-                            ? '<div class="profile-field">' +
-                                '<label>SOCIAL LINKS <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
-                                '<input type="text" id="socialWebsite" class="profile-input" value="' + ((user.socials && user.socials.website) || '').replace(/"/g,'&quot;') + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
-                                '<input type="text" id="socialTwitter" class="profile-input" value="' + ((user.socials && user.socials.twitter) || '').replace(/"/g,'&quot;') + '" placeholder="Twitter / X handle" style="margin-bottom:4px;" />' +
-                                '<input type="text" id="socialTwitch" class="profile-input" value="' + ((user.socials && user.socials.twitch) || '').replace(/"/g,'&quot;') + '" placeholder="Twitch handle" />' +
-                                '<button class="btn btn-gold btn-sm" onclick="saveSocials()" style="margin-top:6px;">Save Socials</button>' +
-                                '<div id="socialsMsg" class="msg"></div>' +
-                            '</div>'
-                            : '<div class="unlock-feature-card">' +
+                        (function() {
+                            var locked = !unlockedFeatures.includes('socials');
+                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
                                 '<div class="unlock-feature-info"><h4>Social Links</h4><p>Website, Twitter/X, and Twitch on your profile.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 250 CP</span>' +
-                                    (communityPoints >= 250
-                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'socials\',250)">Unlock</button>'
-                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (250 - communityPoints) + ' more CP</span>'
-                                    ) +
+                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#d4af37') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 250 CP') + '</span>' +
+                                    (locked
+                                        ? (communityPoints >= 250
+                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'socials\',250)">Unlock</button>'
+                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (250 - communityPoints) + ' more CP</span>')
+                                        : '') +
                                 '</div>' +
-                            '</div>'
-                        ) +
+                            '</div>' +
+                            (!locked
+                                ? '<div class="profile-field" style="margin-top:0.5rem;">' +
+                                    '<input type="text" id="socialWebsite" class="profile-input" value="' + ((user.socials && user.socials.website) || '').replace(/"/g,'&quot;') + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
+                                    '<input type="text" id="socialTwitter" class="profile-input" value="' + ((user.socials && user.socials.twitter) || '').replace(/"/g,'&quot;') + '" placeholder="Twitter / X handle" style="margin-bottom:4px;" />' +
+                                    '<input type="text" id="socialTwitch" class="profile-input" value="' + ((user.socials && user.socials.twitch) || '').replace(/"/g,'&quot;') + '" placeholder="Twitch handle" />' +
+                                    '<button class="btn btn-gold btn-sm" onclick="saveSocials()" style="margin-top:6px;">Save Socials</button>' +
+                                    '<div id="socialsMsg" class="msg"></div>' +
+                                '</div>'
+                                : '');
+                        })() +
 
-                        (unlockedFeatures.includes('banner')
-                            ? '<div class="profile-field">' +
-                                '<label>PROFILE BANNER <span style="font-size:0.7rem;color:#1a6b1a;">✅ Unlocked</span></label>' +
-                                '<p style="font-size:0.8rem;color:#555;margin:0 0 4px 0;">Contact an admin to upload a custom banner image.</p>' +
-                            '</div>'
-                            : '<div class="unlock-feature-card">' +
+                        (function() {
+                            var locked = !unlockedFeatures.includes('banner');
+                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
                                 '<div class="unlock-feature-info"><h4>Profile Banner</h4><p>Custom banner image at the top of your profile.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:#d4af37;font-weight:bold;">🔒 500 CP</span>' +
-                                    (communityPoints >= 500
-                                        ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'banner\',500)">Unlock</button>'
-                                        : '<span style="font-size:0.75rem;color:#555;">Need ' + (500 - communityPoints) + ' more CP</span>'
-                                    ) +
+                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#d4af37') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 500 CP') + '</span>' +
+                                    (locked
+                                        ? (communityPoints >= 500
+                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'banner\',500)">Unlock</button>'
+                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (500 - communityPoints) + ' more CP</span>')
+                                        : '<span style="font-size:0.75rem;color:#555;">Contact an admin to upload your banner.</span>') +
                                 '</div>' +
-                            '</div>'
-                        ) +
+                            '</div>';
+                        })() +
 
                         '<div class="profile-field">' +
                             '<label>EMAIL</label>' +
