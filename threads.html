@@ -405,10 +405,15 @@
         loadThreads(currentPage);
     };
 
+    var _replySubmitting = false;
     window.submitReply = async function() {
+        if (_replySubmitting) return;
         var body = document.getElementById('replyBody').value.trim();
         var msgEl = document.getElementById('replyMsg');
         if (!validatePost(body, msgEl)) return;
+        _replySubmitting = true;
+        var btn = document.querySelector('.reply-actions .btn-red');
+        if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
         try {
             var payload = { threadId: currentThread, body };
             if (quotedPost) { payload.quoted_text = quotedPost.text; payload.quoted_author = quotedPost.authorName; }
@@ -426,6 +431,7 @@
                 setTimeout(function() { loadThreadContent(currentThread); }, 500);
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        finally { _replySubmitting = false; if (btn) { btn.disabled = false; btn.textContent = 'Post Reply'; } }
     };
 
     window.editPost = function(postId, isOP) {
@@ -549,12 +555,17 @@
         document.getElementById('threadTitle').value = '';
         document.getElementById('threadBody').value = '';
     };
+    var _threadSubmitting = false;
     window.submitThread = async function() {
+        if (_threadSubmitting) return;
         var title = document.getElementById('threadTitle').value.trim();
         var body = document.getElementById('threadBody').value.trim();
         var msgEl = document.getElementById('newThreadMsg');
         if (!title) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a title.'; return; }
         if (!validatePost(body, msgEl)) return;
+        _threadSubmitting = true;
+        var btn = document.querySelector('#newThreadModal .btn-red');
+        if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
         try {
             var res = await fetch(API_URL + '/api/forum/thread', {
                 method: 'POST',
@@ -567,6 +578,7 @@
                 setTimeout(function() { closeNewThread(); openThread(data.threadId); }, 800);
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        finally { _threadSubmitting = false; if (btn) { btn.disabled = false; btn.textContent = 'Post Thread'; } }
     };
 
     document.addEventListener('DOMContentLoaded', function() {
