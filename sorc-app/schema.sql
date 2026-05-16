@@ -131,3 +131,19 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_messages_sender ON messages(sender_uid);
 CREATE INDEX idx_messages_created ON messages(created_at);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  target_id TEXT NOT NULL,
+  target_preview TEXT,
+  reason TEXT,
+  reporter_uid TEXT,
+  reporter_name TEXT,
+  report_count INTEGER DEFAULT 1,
+  dismissed INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_reports_target ON reports(target_id);
+CREATE INDEX idx_reports_dismissed ON reports(dismissed);

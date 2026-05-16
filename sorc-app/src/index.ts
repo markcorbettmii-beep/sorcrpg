@@ -181,8 +181,6 @@ app.post('/api/forum/thread', authMiddleware, async (c) => {
     const threadId = crypto.randomUUID();
     const now = new Date().toISOString();
     await c.env.sorc_db.prepare(`INSERT INTO threads (id, category_id, title, body, author_uid, author_name, author_role, created_at, last_reply_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(threadId, categoryId, title, body, user.id, user.display_name || user.username, user.role, now, now).run();
-    const postId = crypto.randomUUID();
-    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, now).run();
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, threadId });
   } catch (error: any) {
@@ -351,6 +349,241 @@ app.delete('/api/fellowships/:id', authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Failed to remove', details: error.message }, 500);
+  }
+});
+
+app.put('/api/forum/posts/:id', authMiddleware, async (c) => {
+  const postId = c.req.param('id');
+  const user = c.get('user') as any;
+  const { body } = await c.req.json();
+  if (!body) return c.json({ error: 'Body required' }, 400);
+  try {
+    const post = await c.env.sorc_db.prepare('SELECT * FROM posts WHERE id = ?').bind(postId).first() as any;
+    if (!post) {
+      // OP edit — update thread body
+      const thread = await c.env.sorc_db.prepare('SELECT * FROM threads WHERE id = ?').bind(postId).first() as any;
+      if (!thread) return c.json({ error: 'Post not found' }, 404);
+      if (thread.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
+      await c.env.sorc_db.prepare('UPDATE threads SET body = ?, updated_at = ? WHERE id = ?').bind(body, new Date().toISOString(), postId).run();
+      return c.json({ success: true });
+    }
+    if (post.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
+    await c.env.sorc_db.prepare('UPDATE posts SET body = ?, updated_at = ? WHERE id = ?').bind(body, new Date().toISOString(), postId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to edit post', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/forum/posts/:id', authMiddleware, async (c) => {
+  const postId = c.req.param('id');
+  const user = c.get('user') as any;
+  try {
+    const post = await c.env.sorc_db.prepare('SELECT * FROM posts WHERE id = ?').bind(postId).first() as any;
+    if (!post) {
+      // OP delete — delete whole thread
+      const thread = await c.env.sorc_db.prepare('SELECT * FROM threads WHERE id = ?').bind(postId).first() as any;
+      if (!thread) return c.json({ error: 'Post not found' }, 404);
+      if (thread.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
+      await c.env.sorc_db.prepare('DELETE FROM posts WHERE thread_id = ?').bind(postId).run();
+      await c.env.sorc_db.prepare('DELETE FROM threads WHERE id = ?').bind(postId).run();
+      return c.json({ success: true });
+    }
+    if (post.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
+    await c.env.sorc_db.prepare('DELETE FROM posts WHERE id = ?').bind(postId).run();
+    await c.env.sorc_db.prepare('UPDATE threads SET reply_count = MAX(0, reply_count - 1) WHERE id = ?').bind(post.thread_id).run();
+    await c.env.sorc_db.prepare('UPDATE users SET post_count = MAX(0, post_count - 1) WHERE id = ?').bind(user.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to delete post', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/forum/posts/:id/mod', authMiddleware, async (c) => {
+  const postId = c.req.param('id');
+  const user = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+  if (!OWNER_EMAILS.includes(user.email) && !ADMIN_EMAILS.includes(user.email)) return c.json({ error: 'Not authorized' }, 403);
+  try {
+    const post = await c.env.sorc_db.prepare('SELECT * FROM posts WHERE id = ?').bind(postId).first() as any;
+    if (!post) return c.json({ error: 'Post not found' }, 404);
+    await c.env.sorc_db.prepare('DELETE FROM posts WHERE id = ?').bind(postId).run();
+    await c.env.sorc_db.prepare('UPDATE threads SET reply_count = MAX(0, reply_count - 1) WHERE id = ?').bind(post.thread_id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to remove post', details: error.message }, 500);
+  }
+});
+
+app.post('/api/presence', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').bind(new Date().toISOString(), user.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to update presence', details: error.message }, 500);
+  }
+});
+
+app.post('/api/forum/posts/:id/report', authMiddleware, async (c) => {
+  const postId = c.req.param('id');
+  const user = c.get('user') as any;
+  const { reason } = await c.req.json();
+  if (!reason) return c.json({ error: 'Reason required' }, 400);
+  try {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const existing = await c.env.sorc_db.prepare('SELECT id, report_count FROM reports WHERE type = ? AND target_id = ?').bind('post', postId).first() as any;
+    if (existing) {
+      await c.env.sorc_db.prepare('UPDATE reports SET report_count = report_count + 1, reason = ?, updated_at = ? WHERE id = ?').bind(reason, now, existing.id).run();
+    } else {
+      const preview = await c.env.sorc_db.prepare('SELECT body FROM posts WHERE id = ?').bind(postId).first() as any;
+      await c.env.sorc_db.prepare('INSERT INTO reports (id, type, target_id, target_preview, reason, reporter_uid, reporter_name, report_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)').bind(id, 'post', postId, (preview?.body || '').substring(0, 120), reason, user.id, user.display_name || user.username, now, now).run();
+    }
+    const reportCount = existing ? existing.report_count + 1 : 1;
+    if (reportCount >= 3) {
+      await c.env.sorc_db.prepare('UPDATE posts SET hidden = 1 WHERE id = ?').bind(postId).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to submit report', details: error.message }, 500);
+  }
+});
+
+app.post('/api/users/:uid/report', authMiddleware, async (c) => {
+  const uid = c.req.param('uid');
+  const user = c.get('user') as any;
+  const { reason } = await c.req.json();
+  if (!reason) return c.json({ error: 'Reason required' }, 400);
+  try {
+    const target = await c.env.sorc_db.prepare('SELECT id, display_name, username FROM users WHERE id = ? OR username = ?').bind(uid, uid).first() as any;
+    if (!target) return c.json({ error: 'User not found' }, 404);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const existing = await c.env.sorc_db.prepare('SELECT id, report_count FROM reports WHERE type = ? AND target_id = ?').bind('user', target.id).first() as any;
+    if (existing) {
+      await c.env.sorc_db.prepare('UPDATE reports SET report_count = report_count + 1, reason = ?, updated_at = ? WHERE id = ?').bind(reason, now, existing.id).run();
+    } else {
+      await c.env.sorc_db.prepare('INSERT INTO reports (id, type, target_id, target_preview, reason, reporter_uid, reporter_name, report_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)').bind(id, 'user', target.id, target.display_name || target.username, reason, user.id, user.display_name || user.username, now, now).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to submit report', details: error.message }, 500);
+  }
+});
+
+const adminMiddleware = async (c: any, next: any) => {
+  const authKey = c.req.header('X-Auth-Key');
+  if (!authKey) return c.json({ error: 'Unauthorized' }, 401);
+  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE auth_key = ?').bind(authKey).first() as any;
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+  if (!OWNER_EMAILS.includes(user.email) && !ADMIN_EMAILS.includes(user.email)) return c.json({ error: 'Not authorized' }, 403);
+  c.set('user', user);
+  await next();
+};
+
+app.get('/api/admin/reports', adminMiddleware, async (c) => {
+  try {
+    const result = await c.env.sorc_db.prepare('SELECT * FROM reports WHERE dismissed = 0 ORDER BY report_count DESC, created_at DESC').all();
+    return c.json({ reports: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load reports', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/reports/:id/dismiss', adminMiddleware, async (c) => {
+  const id = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare('UPDATE reports SET dismissed = 1 WHERE id = ?').bind(id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to dismiss report', details: error.message }, 500);
+  }
+});
+
+app.get('/api/admin/members', adminMiddleware, async (c) => {
+  const search = c.req.query('search') || '';
+  const limit = parseInt(c.req.query('limit') || '100');
+  try {
+    let result;
+    if (search) {
+      result = await c.env.sorc_db.prepare('SELECT id, user_id, username, display_name, email, role, community_points, post_count, created_at, last_seen FROM users WHERE username LIKE ? OR display_name LIKE ? OR email LIKE ? OR CAST(user_id AS TEXT) = ? LIMIT ?').bind(`%${search}%`, `%${search}%`, `%${search}%`, search, limit).all();
+    } else {
+      result = await c.env.sorc_db.prepare('SELECT id, user_id, username, display_name, email, role, community_points, post_count, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT ?').bind(limit).all();
+    }
+    return c.json({ members: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load members', details: error.message }, 500);
+  }
+});
+
+app.put('/api/admin/members/:uid/role', adminMiddleware, async (c) => {
+  const uid = c.req.param('uid');
+  const admin = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
+  const { role } = await c.req.json();
+  const validRoles = ['CIVILIAN', 'PLAYER', 'MASTER', 'ADMIN'];
+  if (!validRoles.includes(role)) return c.json({ error: 'Invalid role' }, 400);
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET role = ? WHERE id = ? OR username = ?').bind(role, uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to update role', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/members/:uid/warn', adminMiddleware, async (c) => {
+  const uid = c.req.param('uid');
+  const { reason } = await c.req.json();
+  if (!reason) return c.json({ error: 'Reason required' }, 400);
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET warnings = COALESCE(warnings, 0) + 1, last_warning = ? WHERE id = ? OR username = ?').bind(reason, uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to warn member', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/members/:uid/suspend', adminMiddleware, async (c) => {
+  const uid = c.req.param('uid');
+  const { days } = await c.req.json();
+  const until = new Date(Date.now() + (days || 1) * 86400000).toISOString();
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET suspended_until = ? WHERE id = ? OR username = ?').bind(until, uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to suspend member', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/members/:uid/ban', adminMiddleware, async (c) => {
+  const uid = c.req.param('uid');
+  const admin = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
+  const { reason } = await c.req.json();
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET banned = 1, ban_reason = ? WHERE id = ? OR username = ?').bind(reason || '', uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to ban member', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/invitations', adminMiddleware, async (c) => {
+  const { uid } = await c.req.json();
+  const admin = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET admin_invited = 1 WHERE id = ? OR username = ?').bind(uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send invitation', details: error.message }, 500);
   }
 });
 
