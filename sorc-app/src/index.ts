@@ -189,13 +189,13 @@ app.post('/api/forum/thread', authMiddleware, async (c) => {
 });
 
 app.post('/api/forum/post', authMiddleware, async (c) => {
-  const { threadId, body } = await c.req.json();
+  const { threadId, body, quoted_text, quoted_author } = await c.req.json();
   const user = c.get('user') as any;
   if (!body) return c.json({ error: 'Body required' }, 400);
   try {
     const postId = crypto.randomUUID();
     const now = new Date().toISOString();
-    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, now).run();
+    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, quoted_text, quoted_author, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, quoted_text || null, quoted_author || null, now).run();
     await c.env.sorc_db.prepare(`UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ?, last_reply_by = ? WHERE id = ?`).bind(now, user.display_name || user.username, threadId).run();
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, postId });
