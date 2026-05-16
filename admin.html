@@ -401,14 +401,14 @@
         var uid = escapeHtml(String(m.id || m.user_id));
         var roleSelect =
           '<select class="admin-select role-select" id="rolesel_' + uid + '" ' +
-            (isOwner ? '' : 'disabled title="Owner only" ') +
+            (isOwner ? 'onchange="document.getElementById(\'setbtn_' + uid + '\').disabled=false;document.getElementById(\'setbtn_' + uid + '\').style.opacity=\'1\';" ' : 'disabled title="Owner only" ') +
             'style="font-size:0.75rem;padding:4px 6px;' + (!isOwner ? 'opacity:0.35;cursor:not-allowed;' : '') + '">' +
             ['CIVILIAN','PLAYER','MASTER','ADMIN'].map(function(r) {
               return '<option value="' + r + '"' + (r === role ? ' selected' : '') + '>' + r + '</option>';
             }).join('') +
           '</select>' +
           (isOwner
-            ? '<button class="act-role" onclick="applyRole(\'' + uid + '\')">Set</button>'
+            ? '<button class="act-role" id="setbtn_' + uid + '" onclick="applyRole(\'' + uid + '\')" disabled style="opacity:0.35;cursor:not-allowed;">Set</button>'
             : '<button class="act-role" disabled style="opacity:0.35;cursor:not-allowed;" title="Owner only">Set</button>');
         return '<div class="member-row">' +
           '<div class="member-row-info">' +
@@ -538,7 +538,12 @@
         });
         msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
         msgEl.textContent = data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed.');
-        if (data.success) { sendRoleChangeMessage(uid, role); loadAllMembers(); }
+        if (data.success) {
+          sendRoleChangeMessage(uid, role);
+          var btn = document.getElementById('setbtn_' + uid);
+          if (btn) { btn.disabled = true; btn.style.opacity = '0.35'; btn.style.cursor = 'not-allowed'; }
+          loadAllMembers();
+        }
       } catch(e) {
         msgEl.className = 'msg error';
         msgEl.textContent = 'Network error: ' + (e.message || 'check connection');
