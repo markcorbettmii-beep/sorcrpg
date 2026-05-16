@@ -262,7 +262,7 @@
         window.location.href = 'index.html';
     };
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
         var saved = null;
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
 
@@ -271,6 +271,18 @@
                 '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
             return;
         }
+
+        // Always fetch fresh data from server so role/points stay current
+        try {
+            var freshRes = await fetch(API_URL + '/api/profile/' + saved.id, {
+                headers: { 'X-Auth-Key': saved.authKey }
+            });
+            var freshData = await freshRes.json();
+            if (freshData.user) {
+                saved = Object.assign(saved, freshData.user);
+                localStorage.setItem('sorc_user', JSON.stringify(saved));
+            }
+        } catch(e) {}
 
         var user = saved;
         var role = user.role || 'CIVILIAN';
