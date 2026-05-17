@@ -164,8 +164,13 @@
                         body: JSON.stringify({ recipient_uid: toUid })
                     });
                     if (res.conversation_id) {
-                        var name = res.other_name || 'Member';
-                        await openConversation(res.conversation_id, toUid, name);
+                        if (res.status === 'pending') {
+                            var msgPanel = document.getElementById('panel_messages');
+                            if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d4af37;">✉️ Message request sent to ' + escapeHtml(res.other_name || 'Member') + '.<br/>They\'ll need to accept before you can chat.</div>';
+                        } else {
+                            var name = res.other_name || 'Member';
+                            await openConversation(res.conversation_id, toUid, name);
+                        }
                     } else if (res.error) {
                         var msgPanel = document.getElementById('panel_messages');
                         if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d0021b;">' + escapeHtml(res.error) + '</div>';
@@ -175,18 +180,20 @@
         }
 
         async function renderInbox() {
-            var [convsData, reqData] = await Promise.all([
+            var [convsData, fellowReqData, msgReqData] = await Promise.all([
                 apiFetch('/api/conversations'),
-                apiFetch('/api/fellowships/requests/incoming')
+                apiFetch('/api/fellowships/requests/incoming'),
+                apiFetch('/api/conversations/requests')
             ]);
             var conversations = convsData.conversations || [];
-            var fellowRequests = reqData.requests || [];
-            var reqCount = fellowRequests.length;
+            var fellowRequests = fellowReqData.requests || [];
+            var msgRequests = msgReqData.requests || [];
+            var reqCount = fellowRequests.length + msgRequests.length;
 
             document.getElementById('inboxApp').innerHTML =
                 '<div class="inbox-tabs">'
                     + '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
-                    + '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">' + 'Fellowship Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') + '</button>'
+                    + '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') + '</button>'
                 + '</div>'
                 + '<div class="inbox-panel active" id="panel_messages"></div>'
                 + '<div class="inbox-panel" id="panel_requests"></div>'
@@ -211,10 +218,32 @@
             }
 
             var reqPanel = document.getElementById('panel_requests');
-            if (fellowRequests.length === 0) {
-                reqPanel.innerHTML = '<div class="empty-state">No pending Fellowship requests.</div>';
-            } else {
-                reqPanel.innerHTML = fellowRequests.map(function(req) {
+            var reqHtml = '';
+
+            if (msgRequests.length > 0) {
+                reqHtml += '<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin:0.5rem 0 0.5rem 0.1rem;font-weight:bold;">Message Requests</div>';
+                reqHtml += msgRequests.map(function(req) {
+                    var senderName = req.user1_name;
+                    return '<div class="request-card" id="mr_' + escapeHtml(req.id) + '">'
+                        + '<div class="req-header">'
+                            + '<div class="req-avatar">✉️</div>'
+                            + '<div>'
+                                + '<div class="req-name">' + escapeHtml(senderName) + '</div>'
+                                + '<div class="req-text">wants to send you a message</div>'
+                            + '</div>'
+                        + '</div>'
+                        + '<div class="req-actions">'
+                            + '<button class="btn btn-accept" onclick="acceptMessage(\'' + escapeHtml(req.id) + '\', \'' + escapeHtml(req.user1_uid) + '\', \'' + escapeHtml(senderName).replace(/'/g,"\\'") + '\')">✅ Accept</button>'
+                            + '<button class="btn btn-decline" onclick="declineMessage(\'' + escapeHtml(req.id) + '\')">Decline</button>'
+                            + '<a href="public-profile.html?uid=' + escapeHtml(req.user1_uid) + '" class="btn btn-view">👤 Profile</a>'
+                        + '</div>'
+                    + '</div>';
+                }).join('');
+            }
+
+            if (fellowRequests.length > 0) {
+                reqHtml += '<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin:0.75rem 0 0.5rem 0.1rem;font-weight:bold;">Fellowship Requests</div>';
+                reqHtml += fellowRequests.map(function(req) {
                     return '<div class="request-card" id="fr_' + escapeHtml(req.id) + '">'
                         + '<div class="req-header">'
                             + '<div class="req-avatar">⚔️</div>'
@@ -224,13 +253,15 @@
                             + '</div>'
                         + '</div>'
                         + '<div class="req-actions">'
-                            + '<button class="btn btn-accept" onclick="acceptFellowship(\'' + escapeHtml(req.id) + \')">✅ Accept</button>'
-                            + '<button class="btn btn-decline" onclick="declineFellowship(\'' + escapeHtml(req.id) + \')">Decline</button>'
+                            + '<button class="btn btn-accept" onclick="acceptFellowship(\'' + escapeHtml(req.id) + '\')">✅ Accept</button>'
+                            + '<button class="btn btn-decline" onclick="declineFellowship(\'' + escapeHtml(req.id) + '\')">Decline</button>'
                             + '<a href="public-profile.html?uid=' + escapeHtml(req.sender_uid) + '" class="btn btn-view">👤 Profile</a>'
                         + '</div>'
                     + '</div>';
                 }).join('');
             }
+
+            reqPanel.innerHTML = reqHtml || '<div class="empty-state">No pending requests.</div>';
         }
 
         window.switchTab = function(tab) {
@@ -307,6 +338,17 @@
                 body: JSON.stringify({ body: body })
             });
             await loadMessages();
+        };
+
+        window.acceptMessage = async function(id, otherUid, otherName) {
+            await apiFetch('/api/conversations/' + id + '/accept', { method: 'POST', body: '{}' });
+            await renderInbox();
+            await openConversation(id, otherUid, otherName);
+        };
+
+        window.declineMessage = async function(id) {
+            await apiFetch('/api/conversations/' + id + '/decline', { method: 'POST', body: '{}' });
+            await renderInbox();
         };
 
         window.acceptFellowship = async function(id) {
