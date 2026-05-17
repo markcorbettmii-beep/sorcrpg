@@ -891,6 +891,21 @@ app.get('/api/conversations/sent', authMiddleware, async (c) => {
   }
 });
 
+// Conversation status with a specific user (for profile page button state)
+app.get('/api/conversations/status/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const uid = c.req.param('uid');
+  try {
+    const conv = await c.env.sorc_db.prepare(
+      `SELECT id, status, user1_uid FROM conversations WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
+    ).bind(user.id, uid, uid, user.id).first() as any;
+    if (!conv) return c.json({ status: 'none' });
+    return c.json({ status: conv.status, conversation_id: conv.id, i_am_sender: conv.user1_uid === user.id });
+  } catch (error: any) {
+    return c.json({ status: 'none' });
+  }
+});
+
 // Pending message requests sent TO the current user
 app.get('/api/conversations/requests', authMiddleware, async (c) => {
   const user = c.get('user') as any;

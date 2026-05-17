@@ -174,13 +174,18 @@
                 renderEmptyInbox();
             }
             if (toUid) {
-                // If a conversation already exists with this user, open it directly
                 var existing = _ongoingConvs.find(function(c) {
                     return c.user1_uid === toUid || c.user2_uid === toUid;
+                });
+                var sentPending = _sentConvs.find(function(c) {
+                    return c.user2_uid === toUid;
                 });
                 if (existing) {
                     var otherName = existing.user1_uid === myUid ? existing.user2_name : existing.user1_name;
                     await openConversation(existing.id, toUid, otherName);
+                } else if (sentPending) {
+                    // Already sent a request — just show the Sent tab
+                    switchTab('sent');
                 } else {
                     showComposeRequest(toUid);
                 }
