@@ -40,6 +40,12 @@ CREATE TABLE IF NOT EXISTS users (
   privacy_social BOOLEAN DEFAULT TRUE,
   last_thread_points_date TEXT,
   last_reply_points_date TEXT,
+  email_verified BOOLEAN DEFAULT FALSE,
+  verification_token TEXT,
+  password_hash TEXT,
+  banned BOOLEAN DEFAULT FALSE,
+  ban_reason TEXT DEFAULT '',
+  suspended_until TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
