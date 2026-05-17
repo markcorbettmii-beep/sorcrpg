@@ -160,6 +160,7 @@
         }
 
         var canSend = false;
+        var prevLastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
 
         async function init() {
             if (!myUid) {
@@ -172,6 +173,8 @@
             canSend = unlocked || pts >= 100;
 
             await renderApp();
+            // Mark fellowships as seen after rendering
+            localStorage.setItem('sorc_f_last_seen', String(Date.now()));
         }
 
         async function renderApp() {
@@ -204,19 +207,27 @@
                   '</div>'
                 : '';
 
+            // Count newly accepted (accepted after last visit)
+            var newlyAccepted = fellows.filter(function(f) {
+                return f.accepted_at && new Date(f.accepted_at).getTime() > prevLastSeen && f.sender_uid !== myUid;
+            });
+            var newCount = newlyAccepted.length;
+            var fellowsTabBadge = newCount > 0 ? ' <span class="notif">' + newCount + '</span>' : (fellows.length ? ' <span style="color:#555;font-size:0.75rem;font-weight:normal;">(' + fellows.length + ')</span>' : '');
+
+            // Auto-open Requests tab if there are pending incoming requests
+            var startTab = reqCount > 0 ? 'incoming' : 'fellows';
+
             document.getElementById('fApp').innerHTML =
                 lockBanner +
                 '<div class="f-tabs">' +
-                    '<button class="f-tab active" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows' +
-                        (fellows.length ? ' <span style="color:#555;font-size:0.75rem;font-weight:normal;">(' + fellows.length + ')</span>' : '') +
-                    '</button>' +
-                    '<button class="f-tab" id="tab_incoming" onclick="switchTab(\'incoming\')">' +
+                    '<button class="f-tab' + (startTab === 'fellows' ? ' active' : '') + '" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows' + fellowsTabBadge + '</button>' +
+                    '<button class="f-tab' + (startTab === 'incoming' ? ' active' : '') + '" id="tab_incoming" onclick="switchTab(\'incoming\')">' +
                         'Requests' + (reqCount > 0 ? ' <span class="notif">' + reqCount + '</span>' : '') +
                     '</button>' +
                     '<button class="f-tab" id="tab_sent" onclick="switchTab(\'sent\')">Sent</button>' +
                 '</div>' +
-                '<div class="f-panel active" id="panel_fellows"></div>' +
-                '<div class="f-panel" id="panel_incoming"></div>' +
+                '<div class="f-panel' + (startTab === 'fellows' ? ' active' : '') + '" id="panel_fellows"></div>' +
+                '<div class="f-panel' + (startTab === 'incoming' ? ' active' : '') + '" id="panel_incoming"></div>' +
                 '<div class="f-panel" id="panel_sent"></div>';
 
             /* ---- Fellows ---- */
@@ -237,14 +248,15 @@
                     var uid  = f.sender_uid === myUid ? f.receiver_uid : f.sender_uid;
                     var name = f.sender_uid === myUid ? f.receiver_name : f.sender_name;
                     var role = f.role || 'CIVILIAN';
-                    return '<div class="f-row">' +
+                    var isNew = f.accepted_at && new Date(f.accepted_at).getTime() > prevLastSeen && f.sender_uid !== myUid;
+                    return '<div class="f-row' + (isNew ? ' incoming' : '') + '">' +
                         '<div class="f-avatar-wrap">' +
                             '<div class="f-avatar">' + avatarHtml(name, f.avatar) + '</div>' +
                             onlineDot(f.last_seen) +
                         '</div>' +
                         '<div class="f-info">' +
-                            '<div class="f-name">' + esc(name) + roleTag(role) + '</div>' +
-                            '<div class="f-sub">' + (f.last_seen ? 'Last seen ' + timeAgo(f.last_seen) : 'Offline') + '</div>' +
+                            '<div class="f-name">' + esc(name) + roleTag(role) + (isNew ? ' <span class="notif" style="background:#d4af37;color:#222;">NEW</span>' : '') + '</div>' +
+                            '<div class="f-sub">' + (isNew ? 'Accepted your Fellowship!' : (f.last_seen ? 'Last seen ' + timeAgo(f.last_seen) : 'Offline')) + '</div>' +
                         '</div>' +
                         '<div class="f-actions">' +
                             '<a href="/public-profile.html?uid=' + esc(uid) + '" class="f-btn f-btn-ghost" title="View profile">👤</a>' +

@@ -381,6 +381,26 @@ app.get('/api/fellowships', authMiddleware, async (c) => {
   }
 });
 
+app.get('/api/fellowships/notifications', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const [incoming, accepted] = await Promise.all([
+      c.env.sorc_db.prepare(
+        `SELECT COUNT(*) as count FROM fellowships WHERE receiver_uid = ? AND status = 'pending'`
+      ).bind(user.id).first(),
+      c.env.sorc_db.prepare(
+        `SELECT id, receiver_name, accepted_at FROM fellowships WHERE sender_uid = ? AND status = 'accepted' ORDER BY accepted_at DESC LIMIT 50`
+      ).bind(user.id).all()
+    ]);
+    return c.json({
+      incoming_count: (incoming as any)?.count || 0,
+      recent_accepted: (accepted as any)?.results || []
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Failed', details: error.message }, 500);
+  }
+});
+
 app.get('/api/fellowships/requests/incoming', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {

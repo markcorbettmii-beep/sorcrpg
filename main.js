@@ -341,31 +341,35 @@ async function checkNotifications(user) {
   if (!user || !user.authKey) return;
   try {
     var headers = { 'X-Auth-Key': user.authKey };
-    var [convRes, reqRes, fellowRes] = await Promise.all([
+    var [convRes, fellowNotifRes] = await Promise.all([
       fetch(SORC_API + '/api/conversations', { headers: headers }),
-      fetch(SORC_API + '/api/fellowships/requests/incoming', { headers: headers }),
       fetch(SORC_API + '/api/fellowships/notifications', { headers: headers }).catch(function() { return null; })
     ]);
     var convData = await convRes.json();
-    var reqData = await reqRes.json();
-    var fellowData = fellowRes ? await fellowRes.json().catch(function() { return {}; }) : {};
+    var fellowNotif = fellowNotifRes ? await fellowNotifRes.json().catch(function() { return {}; }) : {};
 
-    var unread = (convData.unread_count || 0) + (reqData.requests ? reqData.requests.length : 0);
-    var newFellows = fellowData.new_count || 0;
+    var unread = convData.unread_count || 0;
+
+    var incomingCount = fellowNotif.incoming_count || 0;
+    var lastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
+    var acceptedCount = (fellowNotif.recent_accepted || []).filter(function(f) {
+      return f.accepted_at && new Date(f.accepted_at).getTime() > lastSeen;
+    }).length;
+    var fellowBadge = incomingCount + acceptedCount;
 
     var badgeEl = document.getElementById('navRoleBadge');
     if (badgeEl) {
-      if (unread > 0) {
-        var inboxLink = badgeEl.querySelector('#badgeInboxLink');
-        if (inboxLink) {
-          inboxLink.innerHTML = 'Inbox <span style="background:#d0021b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>';
-        }
+      var inboxLink = badgeEl.querySelector('#badgeInboxLink');
+      if (inboxLink) {
+        inboxLink.innerHTML = unread > 0
+          ? 'Inbox <span style="background:#d0021b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
+          : 'Inbox';
       }
-      if (newFellows > 0) {
-        var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
-        if (fellowLink) {
-          fellowLink.innerHTML = 'Fellowships <span style="background:#1a3a6b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + newFellows + '</span>';
-        }
+      var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
+      if (fellowLink) {
+        fellowLink.innerHTML = fellowBadge > 0
+          ? 'Fellowships <span style="background:#d4af37;color:#222;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
+          : 'Fellowships';
       }
     }
   } catch(e) {}
