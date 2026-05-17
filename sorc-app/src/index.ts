@@ -632,5 +632,7 @@ app.get('/api/forum/recent-visitors', async (c) => {
   }
 });
 
+app.get('/api/health', (c) => c.json({ ok: true }));
+
 export default app;
 
