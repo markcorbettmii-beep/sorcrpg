@@ -98,6 +98,8 @@
         var activeOtherUid = null;
         var activeOtherName = null;
         var activeTab = 'ongoing';
+        var _ongoingConvs = [];
+        var _sentConvs = [];
 
         function markRead(convId) {
             localStorage.setItem('sorc_conv_read_' + convId, String(Date.now()));
@@ -172,7 +174,16 @@
                 renderEmptyInbox();
             }
             if (toUid) {
-                showComposeRequest(toUid);
+                // If a conversation already exists with this user, open it directly
+                var existing = _ongoingConvs.find(function(c) {
+                    return c.user1_uid === toUid || c.user2_uid === toUid;
+                });
+                if (existing) {
+                    var otherName = existing.user1_uid === myUid ? existing.user2_name : existing.user1_name;
+                    await openConversation(existing.id, toUid, otherName);
+                } else {
+                    showComposeRequest(toUid);
+                }
             }
         }
 
@@ -185,6 +196,8 @@
             ]);
             var ongoing = convsData.conversations || [];
             var sent = sentData.conversations || [];
+            _ongoingConvs = ongoing;
+            _sentConvs = sent;
             var msgRequests = msgReqData.requests || [];
             var fellowRequests = fellowReqData.requests || [];
 
@@ -395,19 +408,21 @@
         };
 
         function showComposeRequest(toUid) {
-            switchTab('ongoing');
-            var msgPanel = document.getElementById('panel_ongoing');
-            if (!msgPanel) return;
-            msgPanel.innerHTML =
-                '<div style="background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem;">' +
-                    '<div style="font-size:0.8rem;color:#888;margin-bottom:0.75rem;">Write your first message. The recipient will decide whether to accept or decline — they won\'t see it until they accept.</div>' +
-                    '<textarea id="composeBody" style="width:100%;box-sizing:border-box;background:#222;border:1px solid #333;border-radius:8px;color:#e0cfc0;padding:10px;font-size:0.9rem;resize:vertical;min-height:90px;" placeholder="Write a message..." maxlength="2000"></textarea>' +
-                    '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">' +
-                        '<button onclick="submitMessageRequest(\'' + escapeHtml(toUid) + '\')" style="background:#d0021b;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-weight:bold;cursor:pointer;">Send Request</button>' +
-                        '<button onclick="location.href=\'inbox.html\'" style="background:#222;color:#888;border:1px solid #333;border-radius:8px;padding:9px 16px;cursor:pointer;">Cancel</button>' +
-                    '</div>' +
-                    '<div id="composeMsg" style="margin-top:0.5rem;font-size:0.82rem;"></div>' +
-                '</div>';
+            document.querySelector('.inbox-tabs').style.display = 'none';
+            document.querySelectorAll('.inbox-panel').forEach(function(p) { p.style.display = 'none'; });
+            var convView = document.getElementById('convView');
+            convView.classList.add('open');
+            convView.innerHTML =
+                '<div class="conv-view-header">'
+                    + '<button class="back-btn" onclick="location.href=\'inbox.html\'">← Back</button>'
+                    + '<div class="conv-view-name">New Message</div>'
+                + '</div>'
+                + '<div style="font-size:0.82rem;color:#666;margin-bottom:0.75rem;">They won\'t see your message until they accept.</div>'
+                + '<textarea id="composeBody" style="width:100%;box-sizing:border-box;background:#222;border:1px solid #333;border-radius:8px;color:#e0cfc0;padding:10px;font-size:0.9rem;resize:vertical;min-height:120px;" placeholder="Write a message..." maxlength="2000"></textarea>'
+                + '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">'
+                    + '<button onclick="submitMessageRequest(\'' + escapeHtml(toUid) + '\')" style="background:#d0021b;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-weight:bold;cursor:pointer;font-size:0.9rem;">Send Request</button>'
+                + '</div>'
+                + '<div id="composeMsg" style="margin-top:0.5rem;font-size:0.82rem;"></div>';
         }
 
         window.submitMessageRequest = async function(toUid) {
