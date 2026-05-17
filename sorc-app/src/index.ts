@@ -101,7 +101,7 @@ app.post('/api/auth/register', async (c) => {
   const passwordHash = await hashPassword(password);
   const authKey = crypto.randomUUID();
   const verificationToken = crypto.randomUUID();
-  const userId = Math.floor(Math.random() * 90000) + 10000;
+  const userId = Math.floor(Math.random() * 90000000) + 10000000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
   try {
