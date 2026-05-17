@@ -73,7 +73,7 @@
             </div>
 
             <div class="status-msg" id="statusMsg"></div>
-            <button class="signin-btn-resend" id="resendBtn" style="display:none;" onclick="handleResendVerification()">Resend verification email</button>
+            <a href="javascript:void(0)" id="resendBtn" style="display:none;color:#d4af37;font-size:0.85rem;text-decoration:underline;" onclick="handleResendVerification()">Resend verification email</a>
 
             <div id="signinForm">
                 <p style="text-align:left;color:#888;font-size:0.8rem;margin-bottom:0.5rem;">Sign In</p>
@@ -162,7 +162,7 @@
 
         function showStatus(msg, type) {
             var el = document.getElementById('statusMsg');
-            el.textContent = msg;
+            el.innerHTML = msg;
             el.className = 'status-msg ' + type;
             el.style.display = 'block';
         }
@@ -206,10 +206,13 @@
                 var data = await res.json();
 
                 if (!res.ok || !data.success) {
-                    showStatus(data.error || 'Sign in failed.', 'error');
                     if (data.unverified) {
                         lastUnverifiedEmail = email;
-                        document.getElementById('resendBtn').style.display = 'block';
+                        showStatus(data.error + ' <a href="javascript:void(0)" onclick="handleResendVerification()" style="color:#d4af37;text-decoration:underline;">Resend verification email</a>', 'error');
+                    } else if (res.status === 401 && data.error && data.error.includes('No password')) {
+                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendResetFromSignin(\'' + email.replace(/'/g, '') + '\')" style="color:#d4af37;text-decoration:underline;">Send me a reset link</a>', 'error');
+                    } else {
+                        showStatus(data.error || 'Sign in failed.', 'error');
                     }
                     return;
                 }
@@ -279,6 +282,20 @@
                 } else {
                     showStatus(data.error || 'Could not resend email.', 'error');
                 }
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.sendResetFromSignin = async function(email) {
+            showStatus('Sending reset link...', 'success');
+            try {
+                await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showStatus('Reset link sent to ' + email + '. Check your inbox.', 'success');
             } catch(e) {
                 showStatus('Connection error. Please try again.', 'error');
             }
