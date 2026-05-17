@@ -158,24 +158,7 @@
                 renderEmptyInbox();
             }
             if (toUid) {
-                try {
-                    var res = await apiFetch('/api/conversations', {
-                        method: 'POST',
-                        body: JSON.stringify({ recipient_uid: toUid })
-                    });
-                    if (res.conversation_id) {
-                        if (res.status === 'pending') {
-                            var msgPanel = document.getElementById('panel_messages');
-                            if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d4af37;">✉️ Message request sent to ' + escapeHtml(res.other_name || 'Member') + '.<br/>They\'ll need to accept before you can chat.</div>';
-                        } else {
-                            var name = res.other_name || 'Member';
-                            await openConversation(res.conversation_id, toUid, name);
-                        }
-                    } else if (res.error) {
-                        var msgPanel = document.getElementById('panel_messages');
-                        if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d0021b;">' + escapeHtml(res.error) + '</div>';
-                    }
-                } catch(e) {}
+                showComposeRequest(toUid);
             }
         }
 
@@ -338,6 +321,45 @@
                 body: JSON.stringify({ body: body })
             });
             await loadMessages();
+        };
+
+        function showComposeRequest(toUid) {
+            var msgPanel = document.getElementById('panel_messages');
+            if (!msgPanel) return;
+            msgPanel.innerHTML =
+                '<div style="background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem;">' +
+                    '<div style="font-size:0.8rem;color:#888;margin-bottom:0.75rem;">Write your first message. The recipient will decide whether to accept or decline — they won\'t see it until they accept.</div>' +
+                    '<textarea id="composeBody" style="width:100%;box-sizing:border-box;background:#222;border:1px solid #333;border-radius:8px;color:#e0cfc0;padding:10px;font-size:0.9rem;resize:vertical;min-height:90px;" placeholder="Write a message..." maxlength="2000"></textarea>' +
+                    '<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">' +
+                        '<button onclick="submitMessageRequest(\'' + escapeHtml(toUid) + '\')" style="background:#d0021b;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-weight:bold;cursor:pointer;">Send Request</button>' +
+                        '<button onclick="location.href=\'inbox.html\'" style="background:#222;color:#888;border:1px solid #333;border-radius:8px;padding:9px 16px;cursor:pointer;">Cancel</button>' +
+                    '</div>' +
+                    '<div id="composeMsg" style="margin-top:0.5rem;font-size:0.82rem;"></div>' +
+                '</div>';
+        }
+
+        window.submitMessageRequest = async function(toUid) {
+            var body = (document.getElementById('composeBody').value || '').trim();
+            var msgEl = document.getElementById('composeMsg');
+            if (!body) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Please write a message first.'; return; }
+            try {
+                var res = await apiFetch('/api/conversations', {
+                    method: 'POST',
+                    body: JSON.stringify({ recipient_uid: toUid, initial_message: body })
+                });
+                if (res.conversation_id) {
+                    if (res.status === 'accepted') {
+                        await renderInbox();
+                        await openConversation(res.conversation_id, toUid, res.other_name || 'Member');
+                    } else {
+                        var msgPanel = document.getElementById('panel_messages');
+                        if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d4af37;">✉️ Message request sent to <strong>' + escapeHtml(res.other_name || 'Member') + '</strong>.<br/><span style="color:#555;font-size:0.82rem;">They\'ll need to accept before you can chat.</span></div>';
+                    }
+                } else {
+                    msgEl.style.color = '#d0021b';
+                    msgEl.textContent = res.error || 'Could not send request. Please try again.';
+                }
+            } catch(e) { document.getElementById('composeMsg').style.color='#d0021b'; document.getElementById('composeMsg').textContent='Connection error. Please try again.'; }
         };
 
         window.acceptMessage = async function(id, otherUid, otherName) {
