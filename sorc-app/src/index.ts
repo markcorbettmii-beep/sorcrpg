@@ -393,7 +393,7 @@ app.post('/api/fellowships/request', authMiddleware, async (c) => {
   try {
     const { receiver_uid } = await c.req.json();
     if (!receiver_uid) return c.json({ error: 'receiver_uid required' }, 400);
-    const receiver = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ?').bind(receiver_uid).first() as any;
+    const receiver = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ? OR username = ?').bind(receiver_uid, receiver_uid).first() as any;
     if (!receiver) return c.json({ error: 'User not found' }, 404);
     const existing = await c.env.sorc_db.prepare(
       `SELECT id FROM fellowships WHERE ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)) AND status IN ('pending','accepted')`
