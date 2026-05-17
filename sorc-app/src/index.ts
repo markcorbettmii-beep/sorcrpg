@@ -307,7 +307,7 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
 app.get('/api/profile/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
-    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first();
+    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, website, social_twitter, social_twitch, signature, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first();
     if (!user) return c.json({ error: 'User not found' }, 404);
     return c.json({ user });
   } catch (error: any) {
