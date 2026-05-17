@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_verified BOOLEAN DEFAULT FALSE,
   verification_token TEXT,
   password_hash TEXT,
+  unlocked_features TEXT DEFAULT '[]',
   banned BOOLEAN DEFAULT FALSE,
   ban_reason TEXT DEFAULT '',
   suspended_until TIMESTAMP,
