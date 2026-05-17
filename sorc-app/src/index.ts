@@ -384,20 +384,23 @@ app.get('/api/fellowships', authMiddleware, async (c) => {
 app.get('/api/notifications', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
-    const [incoming, accepted] = await Promise.all([
+    const [incoming, accepted, pendingMsgs] = await Promise.all([
       c.env.sorc_db.prepare(
         `SELECT COUNT(*) as count FROM fellowships WHERE receiver_uid = ? AND status = 'pending'`
       ).bind(user.id).first(),
       c.env.sorc_db.prepare(
         `SELECT id, receiver_name, accepted_at FROM fellowships WHERE sender_uid = ? AND status = 'accepted' ORDER BY accepted_at DESC LIMIT 50`
-      ).bind(user.id).all()
+      ).bind(user.id).all(),
+      c.env.sorc_db.prepare(
+        `SELECT COUNT(*) as count FROM conversations WHERE user2_uid = ? AND status = 'pending'`
+      ).bind(user.id).first()
     ]);
     return c.json({
       fellowship_incoming_count: (incoming as any)?.count || 0,
       fellowship_recently_accepted: (accepted as any)?.results || [],
       admin_invite: user.admin_invited === 1 || user.admin_invited === true,
       community_points: user.community_points || 0,
-      inbox_unread: 0
+      inbox_unread: (pendingMsgs as any)?.count || 0
     });
   } catch (error: any) {
     return c.json({ error: 'Failed', details: error.message }, 500);
@@ -891,15 +894,16 @@ app.post('/api/conversations/:id/decline', authMiddleware, async (c) => {
   }
 });
 
-// Only accepted conversations can be read or messaged
+// Sender can view their pending conversation; recipient cannot until accepted
 app.get('/api/conversations/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const convId = c.req.param('id');
   try {
     const conv = await c.env.sorc_db.prepare(
-      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?) AND status = 'accepted'`
-    ).bind(convId, user.id, user.id).first();
+      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?)`
+    ).bind(convId, user.id, user.id).first() as any;
     if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+    if (conv.status === 'pending' && conv.user2_uid === user.id) return c.json({ error: 'Conversation not yet accepted' }, 403);
     const messages = await c.env.sorc_db.prepare(
       `SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 200`
     ).bind(convId).all();
