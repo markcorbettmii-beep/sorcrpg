@@ -91,6 +91,10 @@
                     <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" autocomplete="new-password" />
                     <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
                 </div>
+                <div class="password-wrapper">
+                    <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" autocomplete="new-password" />
+                    <button class="toggle-pw" onclick="togglePassword('signupConfirmPassword', this)" type="button">👁</button>
+                </div>
                 <input type="text" id="signupUsername" class="signin-input" placeholder="Choose 1st Name (Later Surname)" maxlength="30" />
                 <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
                     Once you earn <b style="color:#d4af37;">500 Community Points</b> you can unlock a proper Surname with a real space -  e.g. <b style="color:#d4af37;">Jon Doe</b>. Hyphens allowed but no underscores.
@@ -215,11 +219,13 @@
         window.handleSignUp = async function() {
             var email = document.getElementById('signupEmail').value.trim();
             var password = document.getElementById('signupPassword').value;
+            var confirmPassword = document.getElementById('signupConfirmPassword').value;
             var username = document.getElementById('signupUsername').value.trim();
 
             if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
             if (!username) { showStatus('Please choose a first name.', 'error'); return; }
             if (password.length < 6) { showStatus('Password must be at least 6 characters.', 'error'); return; }
+            if (password !== confirmPassword) { showStatus('Passwords do not match.', 'error'); return; }
 
             var usernameError = isValidUsername(username);
             if (usernameError) { showStatus(usernameError, 'error'); return; }

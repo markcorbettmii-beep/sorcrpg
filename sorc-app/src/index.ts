@@ -19,7 +19,9 @@ app.use('*', cors({
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
-  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE auth_key = ?').bind(authKey).first();
+  const user = await c.env.sorc_db.prepare(
+    'SELECT * FROM users WHERE auth_key = ? AND (banned IS NULL OR banned = 0) AND (suspended_until IS NULL OR suspended_until < datetime(\'now\'))'
+  ).bind(authKey).first();
   if (!user) return c.json({ error: 'Invalid auth key' }, 401);
   c.set('user', user);
   await next();
@@ -48,22 +50,45 @@ async function sendVerificationEmail(email: string, username: string, token: str
   });
 }
 
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, 256);
+  const saltHex = Array.from(salt).map((b: number) => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = Array.from(new Uint8Array(bits)).map((b: number) => b.toString(16).padStart(2, '0')).join('');
+  return `${saltHex}:${hashHex}`;
+}
+
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  const [saltHex, hashHex] = stored.split(':');
+  if (!saltHex || !hashHex) return false;
+  const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map((b: string) => parseInt(b, 16)));
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, 256);
+  const newHashHex = Array.from(new Uint8Array(bits)).map((b: number) => b.toString(16).padStart(2, '0')).join('');
+  return newHashHex === hashHex;
+}
+
 app.post('/api/auth/register', async (c) => {
-  const { email, username, firstName } = await c.req.json();
+  const { email, username, firstName, password } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
+  if (!password || password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
   const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').bind(email, username).first();
   if (existingUser) return c.json({ error: 'Email or username already exists' }, 400);
-  const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
+  const passwordHash = await hashPassword(password);
+  const authKey = crypto.randomUUID();
   const verificationToken = crypto.randomUUID();
   const userId = Math.floor(Math.random() * 90000) + 10000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
   try {
     await c.env.sorc_db.prepare(`
-      INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, verification_token)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, ?)
-    `).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken).run();
+      INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, verification_token, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, ?, ?)
+    `).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, passwordHash).run();
     await sendVerificationEmail(email, username, verificationToken, c.env.RESEND_API_KEY);
     return c.json({ success: true, message: 'Please check your email to verify your account.' });
   } catch (error: any) {
@@ -93,14 +118,18 @@ app.post('/api/auth/resend-verification', async (c) => {
 });
 
 app.post('/api/auth/signin', async (c) => {
-  const { email, username } = await c.req.json();
+  const { email, username, password } = await c.req.json();
   if (!email && !username) return c.json({ error: 'Email or username required' }, 400);
+  if (!password) return c.json({ error: 'Invalid credentials' }, 401);
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
+  if (!user.password_hash) return c.json({ error: 'Invalid credentials' }, 401);
+  const passwordValid = await verifyPassword(password, user.password_hash);
+  if (!passwordValid) return c.json({ error: 'Invalid credentials' }, 401);
   if (!user.email_verified) {
     return c.json({ error: 'Please verify your email before signing in. Check your spam folder if you did not receive it.', unverified: true }, 403);
   }
-  const authKey = btoa(`${user.email}:${Date.now()}:${Math.random()}`);
+  const authKey = crypto.randomUUID();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
   return c.json({
     success: true,
