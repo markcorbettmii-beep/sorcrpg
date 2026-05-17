@@ -11,7 +11,7 @@ interface Env {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use('*', cors({
-  origin: ['http://localhost:3000', 'https://sorcrpg.com', 'https://www.sorcrpg.com'],
+  origin: ['https://sorcrpg.com', 'https://www.sorcrpg.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true,
 }));
@@ -50,6 +50,20 @@ async function sendVerificationEmail(email: string, username: string, token: str
   });
 }
 
+async function checkRateLimit(db: D1Database, key: string, maxAttempts: number, windowSeconds: number): Promise<boolean> {
+  const now = Math.floor(Date.now() / 1000);
+  const windowStart = now - windowSeconds;
+  try {
+    await db.prepare('DELETE FROM rate_limits WHERE key = ? AND created_at < ?').bind(key, windowStart).run();
+    const row = await db.prepare('SELECT COUNT(*) as count FROM rate_limits WHERE key = ?').bind(key).first() as any;
+    if ((row?.count || 0) >= maxAttempts) return false;
+    await db.prepare('INSERT INTO rate_limits (key, created_at) VALUES (?, ?)').bind(key, now).run();
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -72,6 +86,9 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 }
 
 app.post('/api/auth/register', async (c) => {
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const allowed = await checkRateLimit(c.env.sorc_db, `register:${ip}`, 5, 3600);
+  if (!allowed) return c.json({ error: 'Too many attempts. Please try again later.' }, 429);
   const { email, username, firstName, password } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
   if (!password || password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400);
@@ -118,6 +135,9 @@ app.post('/api/auth/resend-verification', async (c) => {
 });
 
 app.post('/api/auth/signin', async (c) => {
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const allowed = await checkRateLimit(c.env.sorc_db, `signin:${ip}`, 10, 600);
+  if (!allowed) return c.json({ error: 'Too many sign-in attempts. Please wait 10 minutes.' }, 429);
   const { email, username, password } = await c.req.json();
   if (!email && !username) return c.json({ error: 'Email or username required' }, 400);
   if (!password) return c.json({ error: 'Invalid credentials' }, 401);

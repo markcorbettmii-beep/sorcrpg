@@ -3,6 +3,15 @@ var SORC_API = 'https://api.sorcrpg.com';
 var OWNER_EMAILS = ["corbett@sorcrpg.com"];
 var ADMIN_EMAILS = ["markcorbett.mii@gmail.com"];
 
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ========== THEME SYSTEM ==========
 (function() {
   var savedTheme = localStorage.getItem('themeSelected') || 'evil';
@@ -118,9 +127,9 @@ window.showUserMiniPopup = function(e, uid, name) {
   popup.style.top = (rect.bottom + 8) + 'px';
   popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
   popup.innerHTML =
-    '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + name + '</div>' +
-    '<a href="public-profile.html?uid=' + uid + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
-    '<a href="public-profile.html?uid=' + uid + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
+    '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + escapeHtml(name) + '</div>' +
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
   document.body.appendChild(popup);
   setTimeout(function() {
     document.addEventListener('click', function removePopup() {
@@ -233,10 +242,10 @@ function showRoleBadge(user) {
   if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
   else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
 
-  var displayName = user.username || user.display_name || user.email.split('@')[0];
+  var displayName = escapeHtml(user.username || user.display_name || user.email.split('@')[0]);
   var abbr = getRoleAbbr(role);
   var colors = getRoleColor(role);
-  var safeId = String(user.id || '');
+  var safeId = escapeHtml(String(user.id || ''));
   var isAdminUser = OWNER_EMAILS.includes(user.email) || ADMIN_EMAILS.includes(user.email);
 
   var avatarHtml = '';
@@ -282,9 +291,9 @@ window.showRolePopup = function(username, userId, role) {
       '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
       '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
     '</div>' +
-    '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + username + '</div>' +
-    '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + roleLabel + '</div>' +
-    '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + (userId || 'N/A') + '</div>';
+    '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + escapeHtml(username) + '</div>' +
+    '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + escapeHtml(roleLabel) + '</div>' +
+    '<div style="color:#555;font-size:0.75rem;margin-top:4px;">ID: #' + escapeHtml(userId || 'N/A') + '</div>';
   document.body.appendChild(popup);
   document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
 };

@@ -147,3 +147,10 @@ CREATE TABLE IF NOT EXISTS reports (
 );
 CREATE INDEX idx_reports_target ON reports(target_id);
 CREATE INDEX idx_reports_dismissed ON reports(dismissed);
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX idx_rate_limits_key ON rate_limits(key);
+CREATE INDEX idx_rate_limits_created ON rate_limits(created_at);
