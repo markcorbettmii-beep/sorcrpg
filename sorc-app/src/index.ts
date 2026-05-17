@@ -797,5 +797,89 @@ app.get('/api/forum/recent-visitors', async (c) => {
 
 app.get('/api/health', (c) => c.json({ ok: true }));
 
+// ===== CONVERSATIONS / INBOX =====
+
+app.get('/api/conversations', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const result = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE user1_uid = ? OR user2_uid = ? ORDER BY last_message_at DESC`
+    ).bind(user.id, user.id).all();
+    return c.json({ conversations: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load conversations', details: error.message }, 500);
+  }
+});
+
+app.post('/api/conversations', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { recipient_uid } = await c.req.json();
+  if (!recipient_uid) return c.json({ error: 'recipient_uid required' }, 400);
+  if (recipient_uid === user.id) return c.json({ error: 'Cannot message yourself' }, 400);
+  try {
+    const recipient = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ?').bind(recipient_uid).first() as any;
+    if (!recipient) return c.json({ error: 'User not found' }, 404);
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
+    ).bind(user.id, recipient_uid, recipient_uid, user.id).first() as any;
+    if (existing) {
+      const otherName = existing.user1_uid === user.id ? existing.user2_name : existing.user1_name;
+      return c.json({ conversation_id: existing.id, other_name: otherName });
+    }
+    const id = crypto.randomUUID();
+    const otherName = recipient.display_name || recipient.username;
+    const myName = user.display_name || user.username;
+    await c.env.sorc_db.prepare(
+      `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(id, user.id, recipient_uid, myName, otherName, new Date().toISOString(), new Date().toISOString()).run();
+    return c.json({ conversation_id: id, other_name: otherName });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to create conversation', details: error.message }, 500);
+  }
+});
+
+app.get('/api/conversations/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const convId = c.req.param('id');
+  try {
+    const conv = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?)`
+    ).bind(convId, user.id, user.id).first();
+    if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+    const messages = await c.env.sorc_db.prepare(
+      `SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 200`
+    ).bind(convId).all();
+    return c.json({ messages: messages.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load messages', details: error.message }, 500);
+  }
+});
+
+app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const convId = c.req.param('id');
+  const { body } = await c.req.json();
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty' }, 400);
+  if (body.length > 2000) return c.json({ error: 'Message too long (max 2000 chars)' }, 400);
+  try {
+    const conv = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?)`
+    ).bind(convId, user.id, user.id).first();
+    if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+    const msgId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const senderName = user.display_name || user.username;
+    await c.env.sorc_db.prepare(
+      `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(msgId, convId, user.id, senderName, body.trim(), now).run();
+    await c.env.sorc_db.prepare(
+      `UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?`
+    ).bind(body.trim().substring(0, 100), now, convId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send message', details: error.message }, 500);
+  }
+});
+
 export default app;
 
