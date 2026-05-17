@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS conversations (
   user2_uid TEXT NOT NULL,
   user1_name TEXT NOT NULL,
   user2_name TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
   last_message_text TEXT,
   last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

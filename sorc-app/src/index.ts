@@ -799,11 +799,12 @@ app.get('/api/health', (c) => c.json({ ok: true }));
 
 // ===== CONVERSATIONS / INBOX =====
 
+// Only accepted conversations appear in the main list
 app.get('/api/conversations', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
     const result = await c.env.sorc_db.prepare(
-      `SELECT * FROM conversations WHERE user1_uid = ? OR user2_uid = ? ORDER BY last_message_at DESC`
+      `SELECT * FROM conversations WHERE (user1_uid = ? OR user2_uid = ?) AND status = 'accepted' ORDER BY last_message_at DESC`
     ).bind(user.id, user.id).all();
     return c.json({ conversations: result.results || [] });
   } catch (error: any) {
@@ -811,6 +812,20 @@ app.get('/api/conversations', authMiddleware, async (c) => {
   }
 });
 
+// Pending message requests sent TO the current user
+app.get('/api/conversations/requests', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const result = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE user2_uid = ? AND status = 'pending' ORDER BY created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ requests: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load requests', details: error.message }, 500);
+  }
+});
+
+// Create or get a conversation — always starts as pending unless one already exists
 app.post('/api/conversations', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const { recipient_uid } = await c.req.json();
@@ -824,26 +839,58 @@ app.post('/api/conversations', authMiddleware, async (c) => {
     ).bind(user.id, recipient_uid, recipient_uid, user.id).first() as any;
     if (existing) {
       const otherName = existing.user1_uid === user.id ? existing.user2_name : existing.user1_name;
-      return c.json({ conversation_id: existing.id, other_name: otherName });
+      return c.json({ conversation_id: existing.id, other_name: otherName, status: existing.status });
     }
     const id = crypto.randomUUID();
     const otherName = recipient.display_name || recipient.username;
     const myName = user.display_name || user.username;
+    const now = new Date().toISOString();
     await c.env.sorc_db.prepare(
-      `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, user.id, recipient_uid, myName, otherName, new Date().toISOString(), new Date().toISOString()).run();
-    return c.json({ conversation_id: id, other_name: otherName });
+      `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`
+    ).bind(id, user.id, recipient_uid, myName, otherName, now, now).run();
+    return c.json({ conversation_id: id, other_name: otherName, status: 'pending' });
   } catch (error: any) {
     return c.json({ error: 'Failed to create conversation', details: error.message }, 500);
   }
 });
 
+app.post('/api/conversations/:id/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const convId = c.req.param('id');
+  try {
+    const conv = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE id = ? AND user2_uid = ? AND status = 'pending'`
+    ).bind(convId, user.id).first();
+    if (!conv) return c.json({ error: 'Request not found' }, 404);
+    await c.env.sorc_db.prepare(`UPDATE conversations SET status = 'accepted' WHERE id = ?`).bind(convId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to accept', details: error.message }, 500);
+  }
+});
+
+app.post('/api/conversations/:id/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const convId = c.req.param('id');
+  try {
+    const conv = await c.env.sorc_db.prepare(
+      `SELECT * FROM conversations WHERE id = ? AND user2_uid = ? AND status = 'pending'`
+    ).bind(convId, user.id).first();
+    if (!conv) return c.json({ error: 'Request not found' }, 404);
+    await c.env.sorc_db.prepare(`DELETE FROM conversations WHERE id = ?`).bind(convId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to decline', details: error.message }, 500);
+  }
+});
+
+// Only accepted conversations can be read or messaged
 app.get('/api/conversations/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const convId = c.req.param('id');
   try {
     const conv = await c.env.sorc_db.prepare(
-      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?)`
+      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?) AND status = 'accepted'`
     ).bind(convId, user.id, user.id).first();
     if (!conv) return c.json({ error: 'Conversation not found' }, 404);
     const messages = await c.env.sorc_db.prepare(
@@ -863,9 +910,9 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
   if (body.length > 2000) return c.json({ error: 'Message too long (max 2000 chars)' }, 400);
   try {
     const conv = await c.env.sorc_db.prepare(
-      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?)`
+      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?) AND status = 'accepted'`
     ).bind(convId, user.id, user.id).first();
-    if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+    if (!conv) return c.json({ error: 'Conversation not found or not yet accepted' }, 404);
     const msgId = crypto.randomUUID();
     const now = new Date().toISOString();
     const senderName = user.display_name || user.username;
