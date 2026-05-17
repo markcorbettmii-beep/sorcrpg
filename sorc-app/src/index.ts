@@ -381,6 +381,55 @@ app.get('/api/fellowships', authMiddleware, async (c) => {
   }
 });
 
+app.get('/api/notifications', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const [incoming, accepted] = await Promise.all([
+      c.env.sorc_db.prepare(
+        `SELECT COUNT(*) as count FROM fellowships WHERE receiver_uid = ? AND status = 'pending'`
+      ).bind(user.id).first(),
+      c.env.sorc_db.prepare(
+        `SELECT id, receiver_name, accepted_at FROM fellowships WHERE sender_uid = ? AND status = 'accepted' ORDER BY accepted_at DESC LIMIT 50`
+      ).bind(user.id).all()
+    ]);
+    return c.json({
+      fellowship_incoming_count: (incoming as any)?.count || 0,
+      fellowship_recently_accepted: (accepted as any)?.results || [],
+      admin_invite: user.admin_invited === 1 || user.admin_invited === true,
+      community_points: user.community_points || 0,
+      inbox_unread: 0
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Failed', details: error.message }, 500);
+  }
+});
+
+app.get('/api/admin/invitations/pending', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  return c.json({ invitation: user.admin_invited === 1 || user.admin_invited === true });
+});
+
+app.post('/api/admin/invitations/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { accept } = await c.req.json();
+  try {
+    if (accept) {
+      const newCp = (user.community_points || 0) + 10000;
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET role = 'ADMIN', community_points = ?, admin_invited = 0, updated_at = ? WHERE id = ?`
+      ).bind(newCp, new Date().toISOString(), user.id).run();
+      return c.json({ success: true, role: 'ADMIN', community_points: newCp });
+    } else {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET admin_invited = 0, updated_at = ? WHERE id = ?`
+      ).bind(new Date().toISOString(), user.id).run();
+      return c.json({ success: true });
+    }
+  } catch (error: any) {
+    return c.json({ error: 'Failed to respond', details: error.message }, 500);
+  }
+});
+
 app.get('/api/fellowships/notifications', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
