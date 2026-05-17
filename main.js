@@ -431,7 +431,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (user && user.authKey) {
         showRoleBadge(user);
         checkNotifications(user);
-        setInterval(function() { checkNotifications(user); }, 30000);
+        // Second check after 3s to catch D1 replica lag on fresh requests
+        setTimeout(function() { checkNotifications(user); }, 3000);
+        setInterval(function() { checkNotifications(user); }, 15000);
         if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(user.avatar || null);
       } else {
         if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
