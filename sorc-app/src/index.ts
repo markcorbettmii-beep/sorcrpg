@@ -1011,13 +1011,14 @@ app.delete('/api/conversations/:id', authMiddleware, async (c) => {
   const convId = c.req.param('id');
   try {
     const conv = await c.env.sorc_db.prepare(
-      `SELECT * FROM conversations WHERE id = ? AND user1_uid = ? AND status = 'pending'`
-    ).bind(convId, user.id).first();
-    if (!conv) return c.json({ error: 'Not found or cannot cancel' }, 404);
+      `SELECT * FROM conversations WHERE id = ? AND (user1_uid = ? OR user2_uid = ?)`
+    ).bind(convId, user.id, user.id).first();
+    if (!conv) return c.json({ error: 'Not found' }, 404);
+    await c.env.sorc_db.prepare(`DELETE FROM messages WHERE conversation_id = ?`).bind(convId).run();
     await c.env.sorc_db.prepare(`DELETE FROM conversations WHERE id = ?`).bind(convId).run();
     return c.json({ success: true });
   } catch (error: any) {
-    return c.json({ error: 'Failed to cancel', details: error.message }, 500);
+    return c.json({ error: 'Failed to delete', details: error.message }, 500);
   }
 });
 
