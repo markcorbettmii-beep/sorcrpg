@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   auth_key TEXT UNIQUE NOT NULL,
   auth_key_expires_at TIMESTAMP,
+  reset_token TEXT,
+  reset_token_expires_at TIMESTAMP,
   username TEXT UNIQUE NOT NULL,
   display_name TEXT,
   first_name TEXT,

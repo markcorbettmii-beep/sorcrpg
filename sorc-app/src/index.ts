@@ -118,11 +118,56 @@ app.post('/api/auth/register', async (c) => {
 
 app.get('/api/auth/verify-email', async (c) => {
   const token = c.req.query('token');
-  if (!token) return c.json({ error: 'Missing token' }, 400);
+  if (!token) return c.redirect('https://sorcrpg.com/signin?verify_error=true');
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE verification_token = ?').bind(token).first() as any;
-  if (!user) return c.json({ error: 'Invalid or expired token' }, 400);
+  if (!user) return c.redirect('https://sorcrpg.com/signin?verify_error=true');
   await c.env.sorc_db.prepare('UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?').bind(user.id).run();
   return c.redirect('https://sorcrpg.com/signin?verified=true');
+});
+
+app.post('/api/auth/forgot-password', async (c) => {
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const allowed = await checkRateLimit(c.env.sorc_db, `forgot:${ip}`, 5, 3600);
+  if (!allowed) return c.json({ error: 'Too many attempts. Please try again later.' }, 429);
+  const { email } = await c.req.json();
+  if (!email) return c.json({ error: 'Email required' }, 400);
+  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ?').bind(email).first() as any;
+  if (!user) return c.json({ success: true });
+  const resetToken = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  await c.env.sorc_db.prepare('UPDATE users SET reset_token = ?, reset_token_expires_at = ? WHERE id = ?').bind(resetToken, expiresAt, user.id).run();
+  const resetUrl = `https://sorcrpg.com/reset-password.html?token=${resetToken}`;
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${c.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'SORC RPG <noreply@sorcrpg.com>',
+      to: email,
+      subject: 'Reset your SORC RPG password',
+      html: `
+        <h2>Password Reset</h2>
+        <p>We received a request to reset the password for your SORC RPG account.</p>
+        <p>Click the button below to choose a new password. This link expires in 1 hour.</p>
+        <a href="${resetUrl}" style="background:#d0021b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;">Reset Password</a>
+        <p>If you did not request this, you can safely ignore this email.</p>
+      `
+    })
+  });
+  return c.json({ success: true });
+});
+
+app.post('/api/auth/reset-password', async (c) => {
+  const { token, password } = await c.req.json();
+  if (!token || !password) return c.json({ error: 'Token and password required' }, 400);
+  if (password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400);
+  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE reset_token = ?').bind(token).first() as any;
+  if (!user) return c.json({ error: 'Invalid or expired reset link' }, 400);
+  if (new Date(user.reset_token_expires_at) < new Date()) return c.json({ error: 'Reset link has expired. Please request a new one.' }, 400);
+  const passwordHash = await hashPassword(password);
+  const authKey = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires_at = NULL, auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(passwordHash, authKey, expiresAt, user.id).run();
+  return c.json({ success: true });
 });
 
 app.post('/api/auth/resend-verification', async (c) => {
