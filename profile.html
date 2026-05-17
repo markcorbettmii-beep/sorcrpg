@@ -90,6 +90,8 @@
         'aba62c03-4bae-49e8-a8bb-88b00459b241.png','b4d464f7-1923-409f-883a-1648018b9483.png'
     ];
 
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
     function getRoleColor(role) {
         if (role === 'OWNER') return 'background:#d4af37;color:#222;';
         if (role === 'ADMIN') return 'background:#8B0000;color:#fff;';
@@ -378,7 +380,7 @@
                     '<div class="profile-info-row">' +
                         '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
                         '<div class="profile-name-block">' +
-                            '<div class="profile-username">' + displayName + '</div>' +
+                            '<div class="profile-username">' + esc(displayName) + '</div>' +
                             '<span class="profile-role-tag" style="' + getRoleColor(role) + '">' + role + ' ' + getRoleAbbr(role) + '</span>' +
                             (user.id ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + user.user_id + '</div>' : '') +
                         '</div>' +
@@ -415,7 +417,7 @@
 
                         '<div class="profile-field">' +
                             '<label>BIO</label>' +
-                            '<textarea id="bioInput" class="profile-input" rows="3" maxlength="300" placeholder="Tell Essentia about yourself...">' + (user.bio || '') + '</textarea>' +
+                            '<textarea id="bioInput" class="profile-input" rows="3" maxlength="300" placeholder="Tell Essentia about yourself...">' + esc(user.bio) + '</textarea>' +
                             '<button class="btn btn-gold btn-sm" onclick="saveBio()" style="margin-top:6px;">Save Bio</button>' +
                             '<div id="bioMsg" class="msg"></div>' +
                         '</div>' +
@@ -450,7 +452,7 @@
                             '</div>' +
                             (!locked
                                 ? '<div class="profile-field" style="margin-top:0.5rem;">' +
-                                    '<input type="text" id="sigInput" class="profile-input" value="' + (user.signature || '').replace(/"/g,'&quot;') + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
+                                    '<input type="text" id="sigInput" class="profile-input" value="' + esc(user.signature) + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
                                     '<button class="btn btn-gold btn-sm" onclick="saveSignature()" style="margin-top:6px;">Save Signature</button>' +
                                     '<div id="sigMsg" class="msg"></div>' +
                                 '</div>'
@@ -472,9 +474,9 @@
                             '</div>' +
                             (!locked
                                 ? '<div class="profile-field" style="margin-top:0.5rem;">' +
-                                    '<input type="text" id="socialWebsite" class="profile-input" value="' + (user.website || '').replace(/"/g,'&quot;') + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
-                                    '<input type="text" id="socialTwitter" class="profile-input" value="' + (user.social_twitter || '').replace(/"/g,'&quot;') + '" placeholder="Twitter / X handle" style="margin-bottom:4px;" />' +
-                                    '<input type="text" id="socialTwitch" class="profile-input" value="' + (user.social_twitch || '').replace(/"/g,'&quot;') + '" placeholder="Twitch handle" />' +
+                                    '<input type="text" id="socialWebsite" class="profile-input" value="' + esc(user.website) + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
+                                    '<input type="text" id="socialTwitter" class="profile-input" value="' + esc(user.social_twitter) + '" placeholder="Twitter / X handle" style="margin-bottom:4px;" />' +
+                                    '<input type="text" id="socialTwitch" class="profile-input" value="' + esc(user.social_twitch) + '" placeholder="Twitch handle" />' +
                                     '<button class="btn btn-gold btn-sm" onclick="saveSocials()" style="margin-top:6px;">Save Socials</button>' +
                                     '<div id="socialsMsg" class="msg"></div>' +
                                 '</div>'
