@@ -17,6 +17,9 @@
         .inbox-tab.active { background: #d0021b; color: #fff; border-color: #d0021b; }
         .inbox-tab:hover { border-color: #d0021b; }
         .inbox-tab .badge { display: inline-block; background: #d4af37; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; }
+        .conversation-item.unread { border-left: 3px solid #d0021b; background: #1e1515; }
+        .conv-preview.unread-preview { color: #c0b090; font-weight: bold; }
+        .unread-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #d0021b; margin-left: 5px; vertical-align: middle; }
         .inbox-panel { display: none; }
         .inbox-panel.active { display: block; }
         .conversation-item { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 1rem; }
@@ -94,6 +97,15 @@
         var activeConvId = null;
         var activeOtherUid = null;
         var activeOtherName = null;
+        var activeTab = 'ongoing';
+
+        function markRead(convId) {
+            localStorage.setItem('sorc_conv_read_' + convId, String(Date.now()));
+        }
+        function isUnread(conv) {
+            var lastRead = parseInt(localStorage.getItem('sorc_conv_read_' + conv.id) || '0');
+            return new Date(conv.last_message_at).getTime() > lastRead;
+        }
 
         (function() {
             var saved = localStorage.getItem('sorc_user');
@@ -136,11 +148,13 @@
         function renderEmptyInbox() {
             document.getElementById('inboxApp').innerHTML =
                 '<div class="inbox-tabs">'
-                    + '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
-                    + '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">Fellowship Requests</button>'
+                    + '<button class="inbox-tab active" id="tab_ongoing" onclick="switchTab(\'ongoing\')">Ongoing</button>'
+                    + '<button class="inbox-tab" id="tab_sent" onclick="switchTab(\'sent\')">Sent</button>'
+                    + '<button class="inbox-tab" id="tab_pending" onclick="switchTab(\'pending\')">Pending</button>'
                 + '</div>'
-                + '<div class="inbox-panel active" id="panel_messages"><div class="empty-state">No messages yet.<br/>Visit a member\'s profile to start a conversation.</div></div>'
-                + '<div class="inbox-panel" id="panel_requests"><div class="empty-state">No pending Fellowship requests.</div></div>'
+                + '<div class="inbox-panel active" id="panel_ongoing"><div class="empty-state">No active conversations yet.<br/>Visit a member\'s profile and tap Message.</div></div>'
+                + '<div class="inbox-panel" id="panel_sent"><div class="empty-state">No outgoing requests.</div></div>'
+                + '<div class="inbox-panel" id="panel_pending"><div class="empty-state">No pending requests.</div></div>'
                 + '<div class="conversation-view" id="convView"></div>';
         }
 
@@ -163,50 +177,87 @@
         }
 
         async function renderInbox() {
-            var [convsData, fellowReqData, msgReqData] = await Promise.all([
+            var [convsData, sentData, msgReqData, fellowReqData] = await Promise.all([
                 apiFetch('/api/conversations'),
-                apiFetch('/api/fellowships/requests/incoming'),
-                apiFetch('/api/conversations/requests')
+                apiFetch('/api/conversations/sent'),
+                apiFetch('/api/conversations/requests'),
+                apiFetch('/api/fellowships/requests/incoming')
             ]);
-            var conversations = convsData.conversations || [];
-            var fellowRequests = fellowReqData.requests || [];
+            var ongoing = convsData.conversations || [];
+            var sent = sentData.conversations || [];
             var msgRequests = msgReqData.requests || [];
-            var reqCount = fellowRequests.length + msgRequests.length;
-            var startTab = reqCount > 0 ? 'requests' : 'messages';
+            var fellowRequests = fellowReqData.requests || [];
+
+            var pendingCount = msgRequests.length + fellowRequests.length;
+            var unreadCount = ongoing.filter(isUnread).length;
+            var startTab = pendingCount > 0 ? 'pending' : 'ongoing';
+            activeTab = startTab;
+
+            var ongoingLabel = 'Ongoing' + (unreadCount > 0 ? ' <span class="badge" style="background:#d0021b;color:#fff;">' + unreadCount + '</span>' : '');
+            var sentLabel = 'Sent' + (sent.length > 0 ? ' <span class="badge" style="background:#555;color:#e0cfc0;">' + sent.length + '</span>' : '');
+            var pendingLabel = 'Pending' + (pendingCount > 0 ? ' <span class="badge">' + pendingCount + '</span>' : '');
 
             document.getElementById('inboxApp').innerHTML =
                 '<div class="inbox-tabs">'
-                    + '<button class="inbox-tab' + (startTab === 'messages' ? ' active' : '') + '" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
-                    + '<button class="inbox-tab' + (startTab === 'requests' ? ' active' : '') + '" id="tab_requests" onclick="switchTab(\'requests\')">Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') + '</button>'
+                    + '<button class="inbox-tab' + (startTab === 'ongoing' ? ' active' : '') + '" id="tab_ongoing" onclick="switchTab(\'ongoing\')">' + ongoingLabel + '</button>'
+                    + '<button class="inbox-tab' + (startTab === 'sent' ? ' active' : '') + '" id="tab_sent" onclick="switchTab(\'sent\')">' + sentLabel + '</button>'
+                    + '<button class="inbox-tab' + (startTab === 'pending' ? ' active' : '') + '" id="tab_pending" onclick="switchTab(\'pending\')">' + pendingLabel + '</button>'
                 + '</div>'
-                + '<div class="inbox-panel' + (startTab === 'messages' ? ' active' : '') + '" id="panel_messages"></div>'
-                + '<div class="inbox-panel' + (startTab === 'requests' ? ' active' : '') + '" id="panel_requests"></div>'
+                + '<div class="inbox-panel' + (startTab === 'ongoing' ? ' active' : '') + '" id="panel_ongoing"></div>'
+                + '<div class="inbox-panel' + (startTab === 'sent' ? ' active' : '') + '" id="panel_sent"></div>'
+                + '<div class="inbox-panel' + (startTab === 'pending' ? ' active' : '') + '" id="panel_pending"></div>'
                 + '<div class="conversation-view" id="convView"></div>';
 
-            var msgPanel = document.getElementById('panel_messages');
-            if (conversations.length === 0) {
-                msgPanel.innerHTML = '<div class="empty-state">No messages yet.<br/>Visit a member\'s profile and tap Message to start a conversation.</div>';
+            // Ongoing panel
+            var ongoingPanel = document.getElementById('panel_ongoing');
+            if (ongoing.length === 0) {
+                ongoingPanel.innerHTML = '<div class="empty-state">No active conversations yet.<br/>Visit a member\'s profile and tap Message.</div>';
             } else {
-                msgPanel.innerHTML = conversations.map(function(conv) {
+                ongoingPanel.innerHTML = ongoing.map(function(conv) {
                     var otherUid = conv.user1_uid === myUid ? conv.user2_uid : conv.user1_uid;
                     var otherName = conv.user1_uid === myUid ? conv.user2_name : conv.user1_name;
-                    return '<div class="conversation-item" onclick="openConversation(\'' + escapeHtml(conv.id) + '\', \'' + escapeHtml(otherUid) + '\', \'' + escapeHtml(otherName).replace(/'/g,"\\'") + '\')">' +
-                        '<div class="conv-avatar">' + escapeHtml((otherName || '?').charAt(0).toUpperCase()) + '</div>' +
-                        '<div class="conv-info">' +
-                            '<div class="conv-name">' + escapeHtml(otherName || 'Unknown') + '</div>' +
-                            '<div class="conv-preview">' + escapeHtml(conv.last_message_text || '...') + '</div>' +
-                        '</div>' +
-                        '<div class="conv-time">' + timeAgo(conv.last_message_at) + '</div>' +
-                    '</div>';
+                    var unread = isUnread(conv);
+                    return '<div class="conversation-item' + (unread ? ' unread' : '') + '" onclick="openConversation(\'' + escapeHtml(conv.id) + '\', \'' + escapeHtml(otherUid) + '\', \'' + escapeHtml(otherName).replace(/'/g,"\\'") + '\')">'
+                        + '<div class="conv-avatar">' + escapeHtml((otherName || '?').charAt(0).toUpperCase()) + '</div>'
+                        + '<div class="conv-info">'
+                            + '<div class="conv-name">' + escapeHtml(otherName || 'Unknown') + (unread ? '<span class="unread-dot"></span>' : '') + '</div>'
+                            + '<div class="conv-preview' + (unread ? ' unread-preview' : '') + '">' + escapeHtml(conv.last_message_text || '...') + '</div>'
+                        + '</div>'
+                        + '<div class="conv-time">' + timeAgo(conv.last_message_at) + '</div>'
+                    + '</div>';
                 }).join('');
             }
 
-            var reqPanel = document.getElementById('panel_requests');
-            var reqHtml = '';
+            // Sent panel
+            var sentPanel = document.getElementById('panel_sent');
+            if (sent.length === 0) {
+                sentPanel.innerHTML = '<div class="empty-state">No pending outgoing requests.<br/>Sent requests awaiting approval appear here.</div>';
+            } else {
+                sentPanel.innerHTML = sent.map(function(conv) {
+                    return '<div class="request-card">'
+                        + '<div class="req-header">'
+                            + '<div class="req-avatar">✉️</div>'
+                            + '<div>'
+                                + '<div class="req-name">To: ' + escapeHtml(conv.user2_name) + '</div>'
+                                + '<div class="req-text" style="color:#777;">' + escapeHtml(conv.last_message_text || '...') + '</div>'
+                                + '<div style="font-size:0.72rem;color:#444;margin-top:3px;">Sent ' + timeAgo(conv.created_at) + ' · Awaiting approval</div>'
+                            + '</div>'
+                        + '</div>'
+                        + '<div class="req-actions">'
+                            + '<a href="public-profile.html?uid=' + escapeHtml(conv.user2_uid) + '" class="btn btn-view">👤 Profile</a>'
+                            + '<button class="btn btn-decline" onclick="cancelRequest(\'' + escapeHtml(conv.id) + '\')">Cancel</button>'
+                        + '</div>'
+                    + '</div>';
+                }).join('');
+            }
+
+            // Pending panel (message requests + fellowship requests sent TO me)
+            var pendingPanel = document.getElementById('panel_pending');
+            var pendingHtml = '';
 
             if (msgRequests.length > 0) {
-                reqHtml += '<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin:0.5rem 0 0.5rem 0.1rem;font-weight:bold;">Message Requests</div>';
-                reqHtml += msgRequests.map(function(req) {
+                pendingHtml += '<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin:0.5rem 0 0.5rem 0.1rem;font-weight:bold;">Message Requests</div>';
+                pendingHtml += msgRequests.map(function(req) {
                     var senderName = req.user1_name;
                     return '<div class="request-card" id="mr_' + escapeHtml(req.id) + '">'
                         + '<div class="req-header">'
@@ -226,8 +277,8 @@
             }
 
             if (fellowRequests.length > 0) {
-                reqHtml += '<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin:0.75rem 0 0.5rem 0.1rem;font-weight:bold;">Fellowship Requests</div>';
-                reqHtml += fellowRequests.map(function(req) {
+                pendingHtml += '<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#555;margin:0.75rem 0 0.5rem 0.1rem;font-weight:bold;">Fellowship Requests</div>';
+                pendingHtml += fellowRequests.map(function(req) {
                     return '<div class="request-card" id="fr_' + escapeHtml(req.id) + '">'
                         + '<div class="req-header">'
                             + '<div class="req-avatar">⚔️</div>'
@@ -245,10 +296,11 @@
                 }).join('');
             }
 
-            reqPanel.innerHTML = reqHtml || '<div class="empty-state">No pending requests.</div>';
+            pendingPanel.innerHTML = pendingHtml || '<div class="empty-state">No pending requests.</div>';
         }
 
         window.switchTab = function(tab) {
+            activeTab = tab;
             document.querySelectorAll('.inbox-tab').forEach(function(b) { b.classList.remove('active'); });
             document.querySelectorAll('.inbox-panel').forEach(function(p) { p.classList.remove('active'); });
             document.getElementById('tab_' + tab).classList.add('active');
@@ -277,6 +329,7 @@
             activeConvId = convId;
             activeOtherUid = otherUid;
             activeOtherName = otherName;
+            markRead(convId);
 
             document.querySelector('.inbox-tabs').style.display = 'none';
             document.querySelectorAll('.inbox-panel').forEach(function(p) { p.style.display = 'none'; });
@@ -320,8 +373,13 @@
             document.querySelector('.inbox-tabs').style.display = '';
             document.querySelectorAll('.inbox-panel').forEach(function(p) { p.style.display = ''; });
             document.getElementById('convView').classList.remove('open');
-            document.getElementById('panel_messages').classList.add('active');
-            document.getElementById('tab_messages').classList.add('active');
+            var tab = activeTab || 'ongoing';
+            document.querySelectorAll('.inbox-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.inbox-tab').forEach(function(b) { b.classList.remove('active'); });
+            var panel = document.getElementById('panel_' + tab);
+            var tabBtn = document.getElementById('tab_' + tab);
+            if (panel) panel.classList.add('active');
+            if (tabBtn) tabBtn.classList.add('active');
         };
 
         window.sendMessage = async function() {
@@ -337,7 +395,8 @@
         };
 
         function showComposeRequest(toUid) {
-            var msgPanel = document.getElementById('panel_messages');
+            switchTab('ongoing');
+            var msgPanel = document.getElementById('panel_ongoing');
             if (!msgPanel) return;
             msgPanel.innerHTML =
                 '<div style="background:#161616;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem;">' +
@@ -365,14 +424,24 @@
                         await renderInbox();
                         await openConversation(res.conversation_id, toUid, res.other_name || 'Member');
                     } else {
-                        var msgPanel = document.getElementById('panel_messages');
-                        if (msgPanel) msgPanel.innerHTML = '<div class="empty-state" style="color:#d4af37;">✉️ Message request sent to <strong>' + escapeHtml(res.other_name || 'Member') + '</strong>.<br/><span style="color:#555;font-size:0.82rem;">They\'ll need to accept before you can chat.</span></div>';
+                        await renderInbox();
+                        switchTab('sent');
                     }
                 } else {
                     msgEl.style.color = '#d0021b';
                     msgEl.textContent = res.error || 'Could not send request. Please try again.';
                 }
             } catch(e) { document.getElementById('composeMsg').style.color='#d0021b'; document.getElementById('composeMsg').textContent='Connection error. Please try again.'; }
+        };
+
+        window.cancelRequest = async function(id) {
+            if (!confirm('Cancel this message request?')) return;
+            try {
+                await apiFetch('/api/conversations/' + id, { method: 'DELETE' });
+                await renderInbox();
+            } catch(e) {
+                alert('Could not cancel. Please try again.');
+            }
         };
 
         window.acceptMessage = async function(id, otherUid, otherName) {
