@@ -123,7 +123,7 @@ app.post('/api/auth/signin', async (c) => {
   if (!password) return c.json({ error: 'Invalid credentials' }, 401);
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
-  if (!user.password_hash) return c.json({ error: 'Invalid credentials' }, 401);
+  if (!user.password_hash) return c.json({ error: 'No password set for this account. Please use "Forgot password" to set one.' }, 401);
   const passwordValid = await verifyPassword(password, user.password_hash);
   if (!passwordValid) return c.json({ error: 'Invalid credentials' }, 401);
   if (!user.email_verified) {
