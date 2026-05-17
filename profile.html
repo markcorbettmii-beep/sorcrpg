@@ -158,7 +158,7 @@
             var data = await res.json();
             msgEl.className = data.success ? 'msg success' : 'msg error';
             msgEl.textContent = data.success ? '✅ Signature saved!' : (data.error || 'Failed.');
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not reach server: ' + (e.message || 'unknown error'); }
     };
 
     window.saveSocials = async function() {
@@ -173,12 +173,12 @@
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ socials: { website: website, twitter: twitter, twitch: twitch } })
+                body: JSON.stringify({ website: website, social_twitter: twitter, social_twitch: twitch })
             });
             var data = await res.json();
             msgEl.className = data.success ? 'msg success' : 'msg error';
             msgEl.textContent = data.success ? '✅ Socials saved!' : (data.error || 'Failed.');
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not reach server: ' + (e.message || 'unknown error'); }
     };
 
     window.saveBio = async function() {
@@ -196,7 +196,7 @@
             var data = await res.json();
             msgEl.className = data.success ? 'msg success' : 'msg error';
             msgEl.textContent = data.success ? '✅ Bio saved!' : (data.error || 'Failed.');
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not reach server: ' + (e.message || 'unknown error'); }
     };
 
     window.saveDisplayName = async function() {
@@ -220,7 +220,7 @@
                 var btn = document.getElementById('saveNameBtn');
                 if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; btn.title = 'Already saved'; }
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not reach server: ' + (e.message || 'unknown error'); }
     };
 
     window.toggleInfo = function(id) {
