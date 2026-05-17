@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
   verification_token TEXT,
   password_hash TEXT,
   unlocked_features TEXT DEFAULT '[]',
+  admin_invited BOOLEAN DEFAULT FALSE,
   banned BOOLEAN DEFAULT FALSE,
   ban_reason TEXT DEFAULT '',
   suspended_until TIMESTAMP,

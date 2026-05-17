@@ -336,27 +336,68 @@ window.generateGMCode = function() {
   document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
 };
 
+// ========== TOAST NOTIFICATIONS ==========
+var _toastQueue = [];
+var _toastShowing = false;
+function sorcToast(msg, color) {
+  _toastQueue.push({ msg: msg, color: color || '#d4af37' });
+  if (!_toastShowing) _showNextToast();
+}
+function _showNextToast() {
+  if (!_toastQueue.length) { _toastShowing = false; return; }
+  _toastShowing = true;
+  var t = _toastQueue.shift();
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(80px);background:' + t.color + ';color:' + (t.color === '#d4af37' ? '#222' : '#fff') + ';padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:bold;z-index:99999;box-shadow:0 4px 18px rgba(0,0,0,0.5);transition:transform 0.3s ease;max-width:90vw;text-align:center;';
+  document.body.appendChild(el);
+  el.textContent = msg;
+  setTimeout(function() { el.style.transform = 'translateX(-50%) translateY(0)'; }, 30);
+  setTimeout(function() {
+    el.style.transform = 'translateX(-50%) translateY(80px)';
+    setTimeout(function() { el.remove(); _showNextToast(); }, 320);
+  }, 3500);
+}
+
 // ========== NOTIFICATION BADGE ==========
+var _lastNotifCp = null;
 async function checkNotifications(user) {
   if (!user || !user.authKey) return;
   try {
-    var headers = { 'X-Auth-Key': user.authKey };
-    var [convRes, fellowNotifRes] = await Promise.all([
-      fetch(SORC_API + '/api/conversations', { headers: headers }),
-      fetch(SORC_API + '/api/fellowships/notifications', { headers: headers }).catch(function() { return null; })
-    ]);
-    var convData = await convRes.json();
-    var fellowNotif = fellowNotifRes ? await fellowNotifRes.json().catch(function() { return {}; }) : {};
+    var res = await fetch(SORC_API + '/api/notifications', { headers: { 'X-Auth-Key': user.authKey } });
+    if (!res.ok) return;
+    var data = await res.json();
 
-    var unread = convData.unread_count || 0;
+    // ---- Inbox badge ----
+    var unread = data.inbox_unread || 0;
 
-    var incomingCount = fellowNotif.incoming_count || 0;
+    // ---- Fellowship badge ----
     var lastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
-    var acceptedCount = (fellowNotif.recent_accepted || []).filter(function(f) {
+    var incomingCount = data.fellowship_incoming_count || 0;
+    var acceptedCount = (data.fellowship_recently_accepted || []).filter(function(f) {
       return f.accepted_at && new Date(f.accepted_at).getTime() > lastSeen;
     }).length;
     var fellowBadge = incomingCount + acceptedCount;
 
+    // ---- CP change toast ----
+    var newCp = data.community_points || 0;
+    if (_lastNotifCp !== null && newCp > _lastNotifCp) {
+      sorcToast('⚡ You earned ' + (newCp - _lastNotifCp) + ' Community Points!', '#d4af37');
+      // Update localStorage so profile page reflects new value
+      try {
+        var cached = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+        cached.community_points = newCp;
+        localStorage.setItem('sorc_user', JSON.stringify(cached));
+      } catch(e) {}
+    }
+    _lastNotifCp = newCp;
+
+    // ---- Admin invite toast (once per session) ----
+    if (data.admin_invite && !sessionStorage.getItem('sorc_invite_toasted')) {
+      sessionStorage.setItem('sorc_invite_toasted', '1');
+      sorcToast('📜 You have an Admin invitation! Visit your Profile to respond.', '#8B0000');
+    }
+
+    // ---- Update nav badges ----
     var badgeEl = document.getElementById('navRoleBadge');
     if (badgeEl) {
       var inboxLink = badgeEl.querySelector('#badgeInboxLink');
@@ -370,6 +411,12 @@ async function checkNotifications(user) {
         fellowLink.innerHTML = fellowBadge > 0
           ? 'Fellowships <span style="background:#d4af37;color:#222;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
           : 'Fellowships';
+      }
+      var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
+      if (profileLink) {
+        profileLink.innerHTML = data.admin_invite
+          ? 'Profile <span style="background:#8B0000;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
+          : 'Profile';
       }
     }
   } catch(e) {}
