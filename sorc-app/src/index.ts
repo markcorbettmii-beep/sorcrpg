@@ -166,7 +166,7 @@ app.post('/api/auth/reset-password', async (c) => {
   const passwordHash = await hashPassword(password);
   const authKey = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires_at = NULL, auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(passwordHash, authKey, expiresAt, user.id).run();
+  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires_at = NULL, auth_key = ?, auth_key_expires_at = ?, email_verified = TRUE WHERE id = ?').bind(passwordHash, authKey, expiresAt, user.id).run();
   return c.json({ success: true });
 });
 
