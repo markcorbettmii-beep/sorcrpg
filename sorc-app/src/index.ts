@@ -828,9 +828,11 @@ app.get('/api/conversations/requests', authMiddleware, async (c) => {
 // Create or get a conversation — always starts as pending unless one already exists
 app.post('/api/conversations', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  const { recipient_uid } = await c.req.json();
+  const { recipient_uid, initial_message } = await c.req.json();
   if (!recipient_uid) return c.json({ error: 'recipient_uid required' }, 400);
   if (recipient_uid === user.id) return c.json({ error: 'Cannot message yourself' }, 400);
+  if (!initial_message || !initial_message.trim()) return c.json({ error: 'A message is required to start a conversation' }, 400);
+  if (initial_message.length > 2000) return c.json({ error: 'Message too long (max 2000 chars)' }, 400);
   try {
     const recipient = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ?').bind(recipient_uid).first() as any;
     if (!recipient) return c.json({ error: 'User not found' }, 404);
@@ -845,9 +847,14 @@ app.post('/api/conversations', authMiddleware, async (c) => {
     const otherName = recipient.display_name || recipient.username;
     const myName = user.display_name || user.username;
     const now = new Date().toISOString();
+    const msgBody = initial_message.trim();
     await c.env.sorc_db.prepare(
-      `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`
-    ).bind(id, user.id, recipient_uid, myName, otherName, now, now).run();
+      `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, last_message_text, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
+    ).bind(id, user.id, recipient_uid, myName, otherName, msgBody.substring(0, 100), now, now).run();
+    // Store initial message — visible after acceptance
+    await c.env.sorc_db.prepare(
+      `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), id, user.id, myName, msgBody, now).run();
     return c.json({ conversation_id: id, other_name: otherName, status: 'pending' });
   } catch (error: any) {
     return c.json({ error: 'Failed to create conversation', details: error.message }, 500);

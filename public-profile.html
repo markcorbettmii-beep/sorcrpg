@@ -298,19 +298,11 @@
                 modMsg(invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed.'), invData.success);
                 if (invData.success) {
                     try {
-                        var convRes = await fetch(API_URL + '/api/conversations', {
+                        fetch(API_URL + '/api/conversations', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
-                            body: JSON.stringify({ recipient_uid: targetUid })
+                            body: JSON.stringify({ recipient_uid: targetUid, initial_message: "You've been invited to become a SORC Admin [AD] by the Owner. Upon accepting you will receive 10,000 Community Points. To accept or decline, visit your Profile page." })
                         });
-                        var convData = await convRes.json();
-                        if (convData.conversation_id) {
-                            fetch(API_URL + '/api/conversations/' + convData.conversation_id + '/messages', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
-                                body: JSON.stringify({ body: "You've been invited to become a SORC Admin [AD] by the Owner.\n\nAs an Admin, you'll help moderate the platform, manage members, and support the SORC community. Upon accepting, you will receive 10,000 Community Points.\n\nTo accept or decline, visit your Profile page - an invitation notice will be waiting for you there." })
-                            });
-                        }
                     } catch(e) {}
                 }
             } catch(e) { modMsg('Connection error.', false); }
@@ -328,19 +320,11 @@
             modMsg(data.success ? '✅ Role updated to ' + role + '.' : (data.error || 'Failed (' + res.status + ')'), data.success);
             if (data.success) {
                 try {
-                    var convRes2 = await fetch(API_URL + '/api/conversations', {
+                    fetch(API_URL + '/api/conversations', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
-                        body: JSON.stringify({ recipient_uid: targetUid })
+                        body: JSON.stringify({ recipient_uid: targetUid, initial_message: 'Your SORC role has been updated to ' + role + '. If you have questions about this change, please contact an admin.' })
                     });
-                    var convData2 = await convRes2.json();
-                    if (convData2.conversation_id) {
-                        fetch(API_URL + '/api/conversations/' + convData2.conversation_id + '/messages', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': u ? u.authKey : '' },
-                            body: JSON.stringify({ body: 'Your SORC role has been updated to ' + role + '. If you have questions about this change, please contact an admin.' })
-                        });
-                    }
                 } catch(e) {}
             }
         } catch(e) { modMsg('Network error: ' + (e.message || 'check connection'), false); }
