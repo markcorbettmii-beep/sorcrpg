@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
   website TEXT DEFAULT '',
   social_twitter TEXT DEFAULT '',
   social_instagram TEXT DEFAULT '',
+  social_twitch TEXT DEFAULT '',
+  signature TEXT DEFAULT '',
   birthday TEXT,
   role TEXT DEFAULT 'CIVILIAN',
   community_points INTEGER DEFAULT 0,
