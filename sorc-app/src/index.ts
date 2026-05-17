@@ -307,8 +307,12 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
 app.get('/api/profile/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
-    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, website, social_twitter, social_twitch, signature, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified, unlocked_features FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first();
+    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, website, social_twitter, social_twitch, signature, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified, unlocked_features, email, privacy_email FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first() as any;
     if (!user) return c.json({ error: 'User not found' }, 404);
+    // Strip email if the user has set it to private
+    if (user.privacy_email === 1 || user.privacy_email === true) {
+      delete user.email;
+    }
     return c.json({ user });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
@@ -341,7 +345,7 @@ app.put('/api/profile', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const OWNER_EMAILS = ['corbett@sorcrpg.com'];
   const isPrivileged = OWNER_EMAILS.includes(user.email) || user.role === 'OWNER' || user.role === 'ADMIN';
-  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'website', 'social_twitter', 'social_twitch', 'signature',
+  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'website', 'social_twitter', 'social_twitch', 'signature', 'privacy_email',
     ...(isPrivileged ? ['community_points'] : [])
   ];
   const setParts: string[] = [];
