@@ -304,13 +304,26 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
 
 // ========== PROFILE ENDPOINTS ==========
 
+app.get('/api/me', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const fullUser = await c.env.sorc_db.prepare(`SELECT * FROM users WHERE id = ?`).bind(user.id).first() as any;
+    if (!fullUser) return c.json({ error: 'User not found' }, 404);
+    delete fullUser.password_hash;
+    delete fullUser.auth_key;
+    return c.json({ user: fullUser });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load profile', details: error.message }, 500);
+  }
+});
+
 app.get('/api/profile/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
     const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, website, social_twitter, social_twitch, signature, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified, unlocked_features, email, privacy_email FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first() as any;
     if (!user) return c.json({ error: 'User not found' }, 404);
-    // Strip email if the user has set it to private
-    if (user.privacy_email === 1 || user.privacy_email === true) {
+    // Only show email when explicitly set to public (0); default (null/1) is private
+    if (user.privacy_email !== 0 && user.privacy_email !== false) {
       delete user.email;
     }
     return c.json({ user });

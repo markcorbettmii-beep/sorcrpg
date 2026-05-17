@@ -199,15 +199,24 @@
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
     };
 
-    window.saveEmailPrivacy = async function() {
-        var toggle = document.getElementById('emailPrivacyToggle');
+    function applyPrivacyToggleVisual(isPublic) {
         var slider = document.getElementById('emailPrivacySlider');
         var label = document.getElementById('emailPrivacyLabel');
+        if (slider) {
+            slider.style.background = isPublic ? '#1a6b1a' : '#333';
+            slider.children[0].style.left = isPublic ? '23px' : '3px';
+        }
+        if (label) label.textContent = isPublic ? 'Email visible on your profile' : 'Email hidden from others';
+    }
+
+    window.saveEmailPrivacy = async function() {
+        var toggle = document.getElementById('emailPrivacyToggle');
         var msgEl = document.getElementById('emailPrivacyMsg');
         var isPublic = toggle ? toggle.checked : false;
         var saved = null;
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!saved || !saved.authKey) return;
+        applyPrivacyToggleVisual(isPublic);
         try {
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
@@ -218,19 +227,20 @@
             if (data.success) {
                 saved.privacy_email = isPublic ? 0 : 1;
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
-                if (slider) {
-                    slider.style.background = isPublic ? '#1a6b1a' : '#333';
-                    slider.children[0].style.left = isPublic ? '23px' : '3px';
-                }
-                if (label) label.textContent = isPublic ? 'Email visible on your profile' : 'Email hidden from others';
                 msgEl.className = 'msg success';
                 msgEl.textContent = isPublic ? '✅ Email is now public.' : '✅ Email is now hidden.';
             } else {
                 msgEl.className = 'msg error';
                 msgEl.textContent = data.error || 'Failed to save.';
                 if (toggle) toggle.checked = !isPublic;
+                applyPrivacyToggleVisual(!isPublic);
             }
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; if (toggle) toggle.checked = !isPublic; }
+        } catch(e) {
+            msgEl.className = 'msg error';
+            msgEl.textContent = 'Could not save. Please try again.';
+            if (toggle) toggle.checked = !isPublic;
+            applyPrivacyToggleVisual(!isPublic);
+        }
     };
 
     window.saveDisplayName = async function() {
@@ -305,7 +315,7 @@
 
         // Always fetch fresh data from server so role/points stay current
         try {
-            var freshRes = await fetch(API_URL + '/api/profile/' + saved.id, {
+            var freshRes = await fetch(API_URL + '/api/me', {
                 headers: { 'X-Auth-Key': saved.authKey }
             });
             var freshData = await freshRes.json();
@@ -486,20 +496,23 @@
                             '</div>';
                         })() +
 
-                        '<div class="profile-field">' +
-                            '<label>EMAIL</label>' +
-                            '<div style="font-size:0.85rem;color:#888;margin-bottom:8px;">' + (user.email || '') + '</div>' +
-                            '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                '<label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">' +
-                                    '<input type="checkbox" id="emailPrivacyToggle" ' + (user.privacy_email ? '' : 'checked') + ' onchange="saveEmailPrivacy()" style="opacity:0;width:0;height:0;position:absolute;" />' +
-                                    '<span id="emailPrivacySlider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:24px;transition:0.2s;background:' + (user.privacy_email ? '#333' : '#1a6b1a') + ';">' +
-                                        '<span style="position:absolute;height:18px;width:18px;left:' + (user.privacy_email ? '3px' : '23px') + ';bottom:3px;border-radius:50%;background:#e0cfc0;transition:0.2s;"></span>' +
-                                    '</span>' +
-                                '</label>' +
-                                '<span id="emailPrivacyLabel" style="font-size:0.82rem;color:#888;">' + (user.privacy_email ? 'Email hidden from others' : 'Email visible on your profile') + '</span>' +
-                            '</div>' +
-                            '<div id="emailPrivacyMsg" class="msg" style="margin-top:4px;"></div>' +
-                        '</div>' +
+                        (function() {
+                            var emailIsPublic = user.privacy_email === 0 || user.privacy_email === false;
+                            return '<div class="profile-field">' +
+                                '<label>EMAIL</label>' +
+                                '<div style="font-size:0.85rem;color:#888;margin-bottom:8px;">' + (user.email || '') + '</div>' +
+                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
+                                    '<label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">' +
+                                        '<input type="checkbox" id="emailPrivacyToggle" ' + (emailIsPublic ? 'checked' : '') + ' onchange="saveEmailPrivacy()" style="opacity:0;width:0;height:0;position:absolute;" />' +
+                                        '<span id="emailPrivacySlider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:24px;transition:0.2s;background:' + (emailIsPublic ? '#1a6b1a' : '#333') + ';">' +
+                                            '<span style="position:absolute;height:18px;width:18px;left:' + (emailIsPublic ? '23px' : '3px') + ';bottom:3px;border-radius:50%;background:#e0cfc0;transition:0.2s;"></span>' +
+                                        '</span>' +
+                                    '</label>' +
+                                    '<span id="emailPrivacyLabel" style="font-size:0.82rem;color:#888;">' + (emailIsPublic ? 'Email visible on your profile' : 'Email hidden from others') + '</span>' +
+                                '</div>' +
+                                '<div id="emailPrivacyMsg" class="msg" style="margin-top:4px;"></div>' +
+                            '</div>';
+                        })() +
                     '</div>' +
                 '</div>' +
 
