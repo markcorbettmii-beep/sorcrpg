@@ -139,6 +139,12 @@
             if (params.get('expired') === 'true') {
                 showStatus('Your session expired. Please sign in again.', 'error');
             }
+            if (params.get('verify_error') === 'true') {
+                showStatus('That verification link is invalid or already used. Try signing in, or request a new verification email.', 'error');
+            }
+            if (params.get('reset') === 'true') {
+                showStatus('✅ Password updated! You can now sign in with your new password.', 'success');
+            }
         })();
 
         var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
@@ -279,7 +285,19 @@
         };
 
         window.showForgotPassword = function() {
-            showStatus('Password reset coming soon. Email corbett@sorcrpg.com for help.', 'success');
+            var email = document.getElementById('emailInput').value.trim();
+            var msg = email ? '' : 'Enter your email above, then click Forgot password.';
+            if (!email) { showStatus(msg, 'error'); return; }
+            showStatus('Sending reset email...', 'success');
+            fetch(window.SORC_API + '/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            }).then(function() {
+                showStatus('If that email is registered, a password reset link has been sent. Check your inbox.', 'success');
+            }).catch(function() {
+                showStatus('Connection error. Please try again.', 'error');
+            });
         };
     </script>
   <script src="main.js"></script>
