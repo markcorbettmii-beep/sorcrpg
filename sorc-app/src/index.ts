@@ -492,9 +492,12 @@ app.post('/api/fellowships/request', authMiddleware, async (c) => {
     if (!receiver_uid) return c.json({ error: 'receiver_uid required' }, 400);
     const receiver = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ? OR username = ?').bind(receiver_uid, receiver_uid).first() as any;
     if (!receiver) return c.json({ error: 'User not found' }, 404);
+    let fellowBlock = null;
+    try { fellowBlock = await c.env.sorc_db.prepare(`SELECT id FROM blocks WHERE (blocker_uid = ? AND blocked_uid = ?) OR (blocker_uid = ? AND blocked_uid = ?)`).bind(user.id, receiver.id, receiver.id, user.id).first(); } catch(e) {}
+    if (fellowBlock) return c.json({ error: 'Unable to send request' }, 403);
     const existing = await c.env.sorc_db.prepare(
       `SELECT id FROM fellowships WHERE ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)) AND status IN ('pending','accepted')`
-    ).bind(user.id, receiver_uid, receiver_uid, user.id).first();
+    ).bind(user.id, receiver.id, receiver.id, user.id).first();
     if (existing) return c.json({ error: 'Request already exists or already fellows' }, 409);
     const id = crypto.randomUUID();
     const senderName = user.display_name || user.username;
@@ -531,6 +534,62 @@ app.post('/api/fellowships/:id/decline', authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Failed to decline', details: error.message }, 500);
+  }
+});
+
+app.get('/api/fellowships/status/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const uid = c.req.param('uid');
+  try {
+    const row = await c.env.sorc_db.prepare(
+      `SELECT id, status, sender_uid FROM fellowships WHERE ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)) AND status IN ('pending','accepted')`
+    ).bind(user.id, uid, uid, user.id).first() as any;
+    if (!row) return c.json({ status: 'none' });
+    if (row.status === 'accepted') return c.json({ status: 'accepted' });
+    return c.json({ status: row.sender_uid === user.id ? 'pending_sent' : 'pending_received' });
+  } catch (error: any) {
+    return c.json({ status: 'none' });
+  }
+});
+
+// ===== BLOCKS =====
+
+app.get('/api/blocks/check/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const uid = c.req.param('uid');
+  try {
+    const [iBlocked, theyBlocked] = await Promise.all([
+      c.env.sorc_db.prepare(`SELECT id FROM blocks WHERE blocker_uid = ? AND blocked_uid = ?`).bind(user.id, uid).first(),
+      c.env.sorc_db.prepare(`SELECT id FROM blocks WHERE blocker_uid = ? AND blocked_uid = ?`).bind(uid, user.id).first()
+    ]);
+    return c.json({ i_blocked: !!iBlocked, they_blocked: !!theyBlocked });
+  } catch (error: any) {
+    return c.json({ i_blocked: false, they_blocked: false });
+  }
+});
+
+app.post('/api/blocks/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const uid = c.req.param('uid');
+  if (uid === user.id) return c.json({ error: 'Cannot block yourself' }, 400);
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT OR IGNORE INTO blocks (id, blocker_uid, blocked_uid, created_at) VALUES (?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), user.id, uid, new Date().toISOString()).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to block', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/blocks/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const uid = c.req.param('uid');
+  try {
+    await c.env.sorc_db.prepare(`DELETE FROM blocks WHERE blocker_uid = ? AND blocked_uid = ?`).bind(user.id, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to unblock', details: error.message }, 500);
   }
 });
 
@@ -839,6 +898,9 @@ app.post('/api/conversations', authMiddleware, async (c) => {
   try {
     const recipient = await c.env.sorc_db.prepare('SELECT id, username, display_name FROM users WHERE id = ?').bind(recipient_uid).first() as any;
     if (!recipient) return c.json({ error: 'User not found' }, 404);
+    let msgBlock = null;
+    try { msgBlock = await c.env.sorc_db.prepare(`SELECT id FROM blocks WHERE (blocker_uid = ? AND blocked_uid = ?) OR (blocker_uid = ? AND blocked_uid = ?)`).bind(user.id, recipient_uid, recipient_uid, user.id).first(); } catch(e) {}
+    if (msgBlock) return c.json({ error: 'Unable to send message' }, 403);
     const existing = await c.env.sorc_db.prepare(
       `SELECT * FROM conversations WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
     ).bind(user.id, recipient_uid, recipient_uid, user.id).first() as any;
@@ -873,7 +935,11 @@ app.post('/api/conversations/:id/accept', authMiddleware, async (c) => {
     ).bind(convId, user.id).first();
     if (!conv) return c.json({ error: 'Request not found' }, 404);
     await c.env.sorc_db.prepare(`UPDATE conversations SET status = 'accepted' WHERE id = ?`).bind(convId).run();
-    return c.json({ success: true });
+    // Return messages in the same response to avoid D1 replica read-after-write inconsistency
+    const messages = await c.env.sorc_db.prepare(
+      `SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 200`
+    ).bind(convId).all();
+    return c.json({ success: true, messages: messages.results || [] });
   } catch (error: any) {
     return c.json({ error: 'Failed to accept', details: error.message }, 500);
   }

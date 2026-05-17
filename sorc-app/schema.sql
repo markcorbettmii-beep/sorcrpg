@@ -162,6 +162,18 @@ CREATE TABLE IF NOT EXISTS reports (
 CREATE INDEX idx_reports_target ON reports(target_id);
 CREATE INDEX idx_reports_dismissed ON reports(dismissed);
 
+CREATE TABLE IF NOT EXISTS blocks (
+  id TEXT PRIMARY KEY,
+  blocker_uid TEXT NOT NULL,
+  blocked_uid TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (blocker_uid) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (blocked_uid) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(blocker_uid, blocked_uid)
+);
+CREATE INDEX idx_blocks_blocker ON blocks(blocker_uid);
+CREATE INDEX idx_blocks_blocked ON blocks(blocked_uid);
+
 CREATE TABLE IF NOT EXISTS rate_limits (
   key TEXT NOT NULL,
   created_at INTEGER NOT NULL

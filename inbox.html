@@ -172,14 +172,15 @@
             var fellowRequests = fellowReqData.requests || [];
             var msgRequests = msgReqData.requests || [];
             var reqCount = fellowRequests.length + msgRequests.length;
+            var startTab = reqCount > 0 ? 'requests' : 'messages';
 
             document.getElementById('inboxApp').innerHTML =
                 '<div class="inbox-tabs">'
-                    + '<button class="inbox-tab active" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
-                    + '<button class="inbox-tab" id="tab_requests" onclick="switchTab(\'requests\')">Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') + '</button>'
+                    + '<button class="inbox-tab' + (startTab === 'messages' ? ' active' : '') + '" id="tab_messages" onclick="switchTab(\'messages\')">Messages</button>'
+                    + '<button class="inbox-tab' + (startTab === 'requests' ? ' active' : '') + '" id="tab_requests" onclick="switchTab(\'requests\')">Requests' + (reqCount > 0 ? ' <span class="badge">' + reqCount + '</span>' : '') + '</button>'
                 + '</div>'
-                + '<div class="inbox-panel active" id="panel_messages"></div>'
-                + '<div class="inbox-panel" id="panel_requests"></div>'
+                + '<div class="inbox-panel' + (startTab === 'messages' ? ' active' : '') + '" id="panel_messages"></div>'
+                + '<div class="inbox-panel' + (startTab === 'requests' ? ' active' : '') + '" id="panel_requests"></div>'
                 + '<div class="conversation-view" id="convView"></div>';
 
             var msgPanel = document.getElementById('panel_messages');
@@ -255,7 +256,24 @@
             document.getElementById('convView').classList.remove('open');
         };
 
-        window.openConversation = async function(convId, otherUid, otherName) {
+        function renderMessages(messages) {
+            var listEl = document.getElementById('messagesList');
+            if (!listEl) return;
+            if (!messages || messages.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:1rem;">No messages yet.</div>';
+            } else {
+                listEl.innerHTML = messages.map(function(msg) {
+                    var isMine = msg.sender_uid === myUid;
+                    return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">'
+                        + (!isMine ? '<div class="bubble-sender">' + escapeHtml(msg.sender_name) + '</div>' : '')
+                        + '<div class="bubble-inner">' + escapeHtml(msg.body) + '</div>'
+                    + '</div>';
+                }).join('');
+                listEl.scrollTop = listEl.scrollHeight;
+            }
+        }
+
+        window.openConversation = async function(convId, otherUid, otherName, preloadedMessages) {
             activeConvId = convId;
             activeOtherUid = otherUid;
             activeOtherName = otherName;
@@ -280,27 +298,22 @@
                 if (e.key === 'Enter') sendMessage();
             });
 
-            await loadMessages();
+            if (Array.isArray(preloadedMessages)) {
+                renderMessages(preloadedMessages);
+            } else {
+                await loadMessages();
+            }
         };
 
-        async function loadMessages() {
-            var data = await apiFetch('/api/conversations/' + activeConvId);
-            var messages = data.messages || [];
+        window.loadMessages = async function() {
             var listEl = document.getElementById('messagesList');
-            if (!listEl) return;
-            if (messages.length === 0) {
-                listEl.innerHTML = '<div style="text-align:center;color:#444;font-size:0.85rem;padding:1rem;">No messages yet.</div>';
-            } else {
-                listEl.innerHTML = messages.map(function(msg) {
-                    var isMine = msg.sender_uid === myUid;
-                    return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">'
-                        + (!isMine ? '<div class="bubble-sender">' + escapeHtml(msg.sender_name) + '</div>' : '')
-                        + '<div class="bubble-inner">' + escapeHtml(msg.body) + '</div>'
-                    + '</div>';
-                }).join('');
-                listEl.scrollTop = listEl.scrollHeight;
+            try {
+                var data = await apiFetch('/api/conversations/' + activeConvId);
+                renderMessages(data.messages || []);
+            } catch(e) {
+                if (listEl) listEl.innerHTML = '<div style="text-align:center;color:#d0021b;font-size:0.85rem;padding:1rem;">Could not load messages. <button onclick="loadMessages()" style="background:none;border:none;color:#d4af37;cursor:pointer;text-decoration:underline;font-size:0.85rem;">Tap to retry</button></div>';
             }
-        }
+        };
 
         window.closeConversation = function() {
             activeConvId = null;
@@ -363,9 +376,13 @@
         };
 
         window.acceptMessage = async function(id, otherUid, otherName) {
-            await apiFetch('/api/conversations/' + id + '/accept', { method: 'POST', body: '{}' });
-            await renderInbox();
-            await openConversation(id, otherUid, otherName);
+            try {
+                var data = await apiFetch('/api/conversations/' + id + '/accept', { method: 'POST', body: '{}' });
+                await renderInbox();
+                await openConversation(id, otherUid, otherName, data.messages || []);
+            } catch(e) {
+                alert('Could not accept message request. Please try again.');
+            }
         };
 
         window.declineMessage = async function(id) {
