@@ -307,12 +307,31 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
 app.get('/api/profile/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
-    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, website, social_twitter, social_twitch, signature, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first();
+    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, website, social_twitter, social_twitch, signature, role, community_points, post_count, titles, join_date, last_seen, created_at, email_verified, unlocked_features FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first();
     if (!user) return c.json({ error: 'User not found' }, 404);
     return c.json({ user });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
   }
+});
+
+app.post('/api/unlock', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { feature } = await c.req.json();
+  const costs: Record<string, number> = { fellowships: 50, signature: 100, socials: 250, banner: 500 };
+  if (!feature || !(feature in costs)) return c.json({ error: 'Invalid feature' }, 400);
+  const cost = costs[feature];
+  const cp = user.community_points || 0;
+  if (cp < cost) return c.json({ error: 'Not enough Community Points' }, 400);
+  let unlocked: string[] = [];
+  try { unlocked = JSON.parse(user.unlocked_features || '[]'); } catch { unlocked = []; }
+  if (unlocked.includes(feature)) return c.json({ error: 'Already unlocked' }, 400);
+  unlocked.push(feature);
+  const newCp = cp - cost;
+  await c.env.sorc_db.prepare(
+    'UPDATE users SET community_points = ?, unlocked_features = ?, updated_at = ? WHERE id = ?'
+  ).bind(newCp, JSON.stringify(unlocked), new Date().toISOString(), user.id).run();
+  return c.json({ success: true, community_points: newCp, unlocked_features: unlocked });
 });
 
 app.put('/api/profile', authMiddleware, async (c) => {

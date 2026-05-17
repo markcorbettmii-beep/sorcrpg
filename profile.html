@@ -236,25 +236,22 @@
         var cp = saved.community_points || 0;
         if (cp < cost) { alert('Not enough Community Points. Need ' + cost + ' CP.'); return; }
 
-        var unlocked = saved.unlocked_features || [];
-        if (typeof unlocked === 'string') { try { unlocked = JSON.parse(unlocked); } catch(e) { unlocked = []; } }
-        if (unlocked.includes(feature)) return;
-
-        var newCp = cp - cost;
-        unlocked = unlocked.concat([feature]);
-        saved.community_points = newCp;
-        saved.unlocked_features = unlocked;
-        localStorage.setItem('sorc_user', JSON.stringify(saved));
-
         try {
-            await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
+            var res = await fetch(API_URL + '/api/unlock', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ community_points: newCp, unlocked_features: unlocked })
+                body: JSON.stringify({ feature: feature })
             });
-        } catch(e) {}
-
-        location.reload();
+            var data = await res.json();
+            if (data.success) {
+                saved.community_points = data.community_points;
+                saved.unlocked_features = data.unlocked_features;
+                localStorage.setItem('sorc_user', JSON.stringify(saved));
+                location.reload();
+            } else {
+                alert(data.error || 'Could not unlock. Please try again.');
+            }
+        } catch(e) { alert('Could not connect. Please try again.'); }
     };
 
     window.doSignOut = function() {
