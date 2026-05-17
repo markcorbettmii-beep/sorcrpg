@@ -206,10 +206,13 @@
                 var data = await res.json();
 
                 if (!res.ok || !data.success) {
-                    showStatus(data.error || 'Sign in failed.', 'error');
                     if (data.unverified) {
                         lastUnverifiedEmail = email;
-                        document.getElementById('resendBtn').style.display = 'block';
+                        showStatus(data.error + ' <a href="javascript:void(0)" onclick="handleResendVerification()" style="color:#d4af37;text-decoration:underline;">Resend verification email</a>', 'error');
+                    } else if (res.status === 401 && data.error && data.error.includes('No password')) {
+                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendResetFromSignin(\'' + email.replace(/'/g, '') + '\')" style="color:#d4af37;text-decoration:underline;">Send me a reset link</a>', 'error');
+                    } else {
+                        showStatus(data.error || 'Sign in failed.', 'error');
                     }
                     return;
                 }
