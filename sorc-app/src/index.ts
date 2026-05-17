@@ -21,8 +21,11 @@ const authMiddleware = async (c: any, next: any) => {
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
   const user = await c.env.sorc_db.prepare(
     'SELECT * FROM users WHERE auth_key = ? AND (banned IS NULL OR banned = 0) AND (suspended_until IS NULL OR suspended_until < datetime(\'now\'))'
-  ).bind(authKey).first();
+  ).bind(authKey).first() as any;
   if (!user) return c.json({ error: 'Invalid auth key' }, 401);
+  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at) < new Date()) {
+    return c.json({ error: 'Session expired', expired: true }, 401);
+  }
   c.set('user', user);
   await next();
 };
@@ -150,7 +153,8 @@ app.post('/api/auth/signin', async (c) => {
     return c.json({ error: 'Please verify your email before signing in. Check your spam folder if you did not receive it.', unverified: true }, 403);
   }
   const authKey = crypto.randomUUID();
-  await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  await c.env.sorc_db.prepare('UPDATE users SET auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(authKey, expiresAt, user.id).run();
   return c.json({
     success: true,
     user: {

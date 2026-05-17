@@ -173,6 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// ========== EXPIRED SESSION HANDLER ==========
+window.sorcHandleExpiredSession = function() {
+  localStorage.removeItem('sorc_user');
+  window.location.href = '/signin.html?expired=true';
+};
+
 // ========== ONLINE PRESENCE HEARTBEAT ==========
 (function() {
   var _heartbeatInterval = null;
@@ -184,6 +190,8 @@ document.addEventListener('DOMContentLoaded', function() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
       body: JSON.stringify({ status: 'online' })
+    }).then(function(r) {
+      if (r.status === 401) r.json().then(function(d) { if (d.expired) window.sorcHandleExpiredSession(); });
     }).catch(function(){});
   }
   document.addEventListener('DOMContentLoaded', function() {
