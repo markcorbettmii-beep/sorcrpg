@@ -320,7 +320,8 @@ app.post('/api/unlock', authMiddleware, async (c) => {
   const { feature } = await c.req.json();
   const costs: Record<string, number> = { fellowships: 50, signature: 100, socials: 250, banner: 500 };
   if (!feature || !(feature in costs)) return c.json({ error: 'Invalid feature' }, 400);
-  const isPrivileged = user.role === 'OWNER' || user.role === 'ADMIN';
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  const isPrivileged = OWNER_EMAILS.includes(user.email) || user.role === 'OWNER' || user.role === 'ADMIN';
   const cost = isPrivileged ? 0 : costs[feature];
   const cp = user.community_points || 0;
   if (!isPrivileged && cp < cost) return c.json({ error: 'Not enough Community Points' }, 400);
@@ -338,7 +339,8 @@ app.post('/api/unlock', authMiddleware, async (c) => {
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
-  const isPrivileged = user.role === 'OWNER' || user.role === 'ADMIN';
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  const isPrivileged = OWNER_EMAILS.includes(user.email) || user.role === 'OWNER' || user.role === 'ADMIN';
   const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'website', 'social_twitter', 'social_twitch', 'signature',
     ...(isPrivileged ? ['community_points'] : [])
   ];
