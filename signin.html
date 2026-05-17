@@ -162,7 +162,7 @@
 
         function showStatus(msg, type) {
             var el = document.getElementById('statusMsg');
-            el.textContent = msg;
+            el.innerHTML = msg;
             el.className = 'status-msg ' + type;
             el.style.display = 'block';
         }
@@ -282,6 +282,20 @@
                 } else {
                     showStatus(data.error || 'Could not resend email.', 'error');
                 }
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.sendResetFromSignin = async function(email) {
+            showStatus('Sending reset link...', 'success');
+            try {
+                await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showStatus('Reset link sent to ' + email + '. Check your inbox.', 'success');
             } catch(e) {
                 showStatus('Connection error. Please try again.', 'error');
             }
