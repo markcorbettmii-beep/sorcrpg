@@ -421,7 +421,11 @@
 
     // ===== HELPERS =====
     function isPrivileged() {
-      return currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER');
+      if (!currentUser) return false;
+      if (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER') return true;
+      var OWNER_EMAILS = ['corbett@sorcrpg.com'];
+      var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+      return OWNER_EMAILS.includes(currentUser.email) || ADMIN_EMAILS.includes(currentUser.email);
     }
 
     var MODULES = [
