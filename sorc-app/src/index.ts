@@ -1067,5 +1067,485 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
   }
 });
 
+// ─── ASSESSMENT SYSTEM ────────────────────────────────────────────────────────
+
+const ASSESSMENT_QUESTIONS = [
+  {
+    q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?",
+    options: ["37", "73", "3", "7"],
+    answer: 1
+  },
+  {
+    q: "Which die combination is used for Rare and Divine item drops in SORC?",
+    options: ["1D6", "1D4", "D100 + D100", "2D6"],
+    answer: 2
+  },
+  {
+    q: "What does rolling 00 on the d100 equal?",
+    options: ["0", "10", "50", "100"],
+    answer: 3
+  },
+  {
+    q: "The D4 is primarily used for which type of roll?",
+    options: ["Damage", "Luck", "Initiative", "Loot"],
+    answer: 1
+  },
+  {
+    q: "Which color token represents Lifeblood (HP)?",
+    options: ["Blue", "Red", "Yellow", "Green"],
+    answer: 1
+  },
+  {
+    q: "What is the maximum number of abilities a character can learn?",
+    options: ["40", "50", "59", "75"],
+    answer: 2
+  },
+  {
+    q: "What is the correct rank order from lowest to highest for ranks 1, 2, and 3?",
+    options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Master, Pauper", "Commoner, Peasant, Pauper"],
+    answer: 1
+  },
+  {
+    q: "How much time does each player have per turn before it is forfeited?",
+    options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"],
+    answer: 2
+  },
+  {
+    q: "In SORC's armor system, when does an attack successfully hit?",
+    options: ["When the roll is lower than the Armor Score (AS)", "When the roll equals zero", "When the roll equals or exceeds the Armor Score (AS)", "When the roll is a natural 1"],
+    answer: 2
+  },
+  {
+    q: "When using the D100+D100 system, what is the minimum possible total result?",
+    options: ["1", "2", "10", "0"],
+    answer: 1
+  }
+];
+
+function calcSorcRole(score: number, gmTrack: boolean): string {
+  if (score < 6) return 'FAIL';
+  if (gmTrack && score >= 9) return 'GM-ADV';
+  if (score >= 9) return 'PC-ADV';
+  if (score === 8) return 'PC-INT';
+  return 'PC-BEG';
+}
+
+app.get('/api/assess', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const result = await c.env.sorc_db.prepare(
+    `SELECT * FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first() as any;
+  return c.json({ assessment: result || null });
+});
+
+app.get('/api/assess/questions', authMiddleware, async (c) => {
+  const questions = ASSESSMENT_QUESTIONS.map((q, i) => ({
+    id: i,
+    q: q.q,
+    options: q.options
+  }));
+  return c.json({ questions });
+});
+
+app.post('/api/assess/submit', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const allowed = await checkRateLimit(c.env.sorc_db, `assess:${user.id}:${ip}`, 5, 3600);
+  if (!allowed) return c.json({ error: 'Too many assessment attempts. Please try again later.' }, 429);
+
+  const existing = await c.env.sorc_db.prepare(
+    `SELECT id FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first();
+  if (existing) return c.json({ error: 'Already assessed. Use reassess to retake.' }, 400);
+
+  const { answers, gm_track } = await c.req.json() as any;
+  if (!Array.isArray(answers) || answers.length !== 10) {
+    return c.json({ error: 'Must answer all 10 questions.' }, 400);
+  }
+
+  let score = 0;
+  for (let i = 0; i < 10; i++) {
+    if (answers[i] === ASSESSMENT_QUESTIONS[i].answer) score++;
+  }
+
+  const role = calcSorcRole(score, !!gm_track);
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+
+  if (role === 'FAIL') {
+    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low. Study the rules and reassess.' });
+  }
+
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(id, user.id, score, role, gm_track ? 1 : 0, now).run();
+
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET sorc_role = ?, updated_at = ? WHERE id = ?`
+    ).bind(role, now, user.id).run();
+
+    return c.json({ score, role, passed: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/assess', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
+  await c.env.sorc_db.prepare(`UPDATE users SET sorc_role = NULL, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
+  return c.json({ success: true });
+});
+
+// ─── BOX SET CODE VALIDATION ───────────────────────────────────────────────────
+
+async function validateBoxSetCode(db: D1Database, code: string, userId: string): Promise<{ valid: boolean; error?: string }> {
+  const row = await db.prepare(`SELECT * FROM box_set_codes WHERE code = ?`).bind(code.toUpperCase().trim()).first() as any;
+  if (!row) return { valid: false, error: 'Invalid box set code.' };
+  if (row.owner_uid && row.owner_uid !== userId) return { valid: false, error: 'This box set code is already registered to another account.' };
+  return { valid: true };
+}
+
+async function claimBoxSetCode(db: D1Database, code: string, userId: string) {
+  const now = new Date().toISOString();
+  await db.prepare(`UPDATE box_set_codes SET owner_uid = ?, claimed_at = ? WHERE code = ? AND (owner_uid IS NULL OR owner_uid = ?)`)
+    .bind(userId, now, code.toUpperCase().trim(), userId).run();
+}
+
+// ─── LOBBIES ───────────────────────────────────────────────────────────────────
+
+function genLobbyCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  const arr = crypto.getRandomValues(new Uint8Array(6));
+  for (let i = 0; i < 6; i++) code += chars[arr[i] % chars.length];
+  return code;
+}
+
+app.get('/api/lobbies', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const assessment = await c.env.sorc_db.prepare(
+    `SELECT * FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first() as any;
+
+  const lobbies = await c.env.sorc_db.prepare(
+    `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+     FROM lobbies l JOIN users u ON l.creator_uid = u.id
+     WHERE l.is_private = 0 AND l.status != 'closed'
+     ORDER BY l.created_at DESC LIMIT 50`
+  ).all();
+
+  return c.json({
+    lobbies: lobbies.results || [],
+    assessed: !!assessment,
+    sorc_role: user.sorc_role || assessment?.role_granted || null
+  });
+});
+
+app.post('/api/lobbies', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const assessment = await c.env.sorc_db.prepare(
+    `SELECT * FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first() as any;
+  if (!assessment) return c.json({ error: 'You must complete the assessment before creating a lobby.' }, 403);
+
+  const { name, box_set_code, is_private } = await c.req.json() as any;
+  if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
+  if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);
+
+  const codeCheck = await validateBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+  if (!codeCheck.valid) return c.json({ error: codeCheck.error || 'Invalid box set code.' }, 400);
+
+  const lobbyId = crypto.randomUUID();
+  const lobbyCode = genLobbyCode();
+  const now = new Date().toISOString();
+  const memberId = crypto.randomUUID();
+
+  try {
+    await claimBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?)`
+    ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, now, now).run();
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_members (id, lobby_id, user_id, sorc_role, username, display_name, joined_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(memberId, lobbyId, user.id, assessment.role_granted, user.username, user.display_name || user.username, now).run();
+
+    return c.json({ success: true, lobby_id: lobbyId, lobby_code: lobbyCode });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to create lobby.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/lobbies/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+
+  const lobby = await c.env.sorc_db.prepare(
+    `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+     FROM lobbies l JOIN users u ON l.creator_uid = u.id WHERE l.id = ?`
+  ).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+
+  if (lobby.is_private && lobby.creator_uid !== user.id) {
+    const isMember = await c.env.sorc_db.prepare(
+      `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobbyId, user.id).first();
+    if (!isMember) return c.json({ error: 'This lobby is private.' }, 403);
+  }
+
+  const members = await c.env.sorc_db.prepare(
+    `SELECT lm.*, u.avatar FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? ORDER BY lm.joined_at ASC`
+  ).bind(lobbyId).all();
+
+  const isMember = (members.results || []).some((m: any) => m.user_id === user.id);
+  const isCreator = lobby.creator_uid === user.id;
+
+  return c.json({ lobby, members: members.results || [], is_member: isMember, is_creator: isCreator });
+});
+
+app.post('/api/lobbies/join', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
+  if (!assessment) return c.json({ error: 'You must complete the assessment before joining a lobby.' }, 403);
+
+  const { lobby_id, lobby_code } = await c.req.json() as any;
+
+  let lobby: any;
+  if (lobby_code) {
+    lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE lobby_code = ?`).bind(lobby_code.toUpperCase().trim()).first();
+  } else if (lobby_id) {
+    lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobby_id).first();
+  }
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
+  if (lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
+
+  const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
+  if (existing) return c.json({ error: 'You are already in this lobby.' }, 400);
+
+  const memberId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_members (id, lobby_id, user_id, sorc_role, username, display_name, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(memberId, lobby.id, user.id, assessment.role_granted, user.username, user.display_name || user.username, now).run();
+    const newCount = (lobby.member_count || 1) + 1;
+    const newStatus = newCount >= lobby.max_members ? 'full' : 'open';
+    await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = ?, updated_at = ? WHERE id = ?`).bind(newCount, newStatus, now, lobby.id).run();
+    return c.json({ success: true, lobby_name: lobby.name, lobby_id: lobby.id });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to join lobby.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+  if (lobby.creator_uid === user.id) return c.json({ error: 'Creator cannot leave their own lobby. Close it instead.' }, 400);
+  await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
+  const newCount = Math.max(1, (lobby.member_count || 1) - 1);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = 'open', updated_at = ? WHERE id = ?`).bind(newCount, new Date().toISOString(), lobbyId).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+  if (lobby.creator_uid !== user.id) return c.json({ error: 'Only the creator can close this lobby.' }, 403);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), lobbyId).run();
+  return c.json({ success: true });
+});
+
+app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member of this lobby.' }, 403);
+  const since = c.req.query('since');
+  let msgs: any;
+  if (since) {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM lobby_messages WHERE lobby_id = ? AND created_at > ? ORDER BY created_at ASC LIMIT 100`).bind(lobbyId, since).all();
+  } else {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM lobby_messages WHERE lobby_id = ? ORDER BY created_at DESC LIMIT 80`).bind(lobbyId).all();
+    msgs.results = (msgs.results || []).reverse();
+  }
+  return c.json({ messages: msgs.results || [] });
+});
+
+app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const member = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first() as any;
+  if (!member) return c.json({ error: 'Not a member of this lobby.' }, 403);
+  if (member.is_muted) return c.json({ error: 'You are muted in this lobby.' }, 403);
+  const { body } = await c.req.json() as any;
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
+  const msgId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO lobby_messages (id, lobby_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(msgId, lobbyId, user.id, user.display_name || user.username, body.trim(), now).run();
+  return c.json({ success: true, message_id: msgId });
+});
+
+app.patch('/api/lobbies/:id/members/:uid/mute', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby || lobby.creator_uid !== user.id) return c.json({ error: 'Not authorized.' }, 403);
+  const member = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).first() as any;
+  if (!member) return c.json({ error: 'Member not found.' }, 404);
+  const newMuted = member.is_muted ? 0 : 1;
+  await c.env.sorc_db.prepare(`UPDATE lobby_members SET is_muted = ? WHERE lobby_id = ? AND user_id = ?`).bind(newMuted, lobbyId, targetUid).run();
+  return c.json({ success: true, muted: !!newMuted });
+});
+
+app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby || lobby.creator_uid !== user.id) return c.json({ error: 'Not authorized.' }, 403);
+  if (targetUid === user.id) return c.json({ error: 'Cannot kick yourself.' }, 400);
+  await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).run();
+  const newCount = Math.max(1, (lobby.member_count || 1) - 1);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, new Date().toISOString(), lobbyId).run();
+  return c.json({ success: true });
+});
+
+// ─── PRIVATE ROOMS ─────────────────────────────────────────────────────────────
+
+app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+
+  const members = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ?`).bind(lobbyId).all();
+  const memberList = members.results as any[] || [];
+
+  const { selected_members, gm_uid } = await c.req.json() as any;
+  if (!gm_uid) return c.json({ error: 'A GM is required to launch a room.' }, 400);
+  if (!selected_members || selected_members.length < 2) return c.json({ error: 'At least 2 PCs required.' }, 400);
+  if (selected_members.length > 5) return c.json({ error: 'Maximum 5 PCs per room.' }, 400);
+
+  const gmMember = memberList.find((m: any) => m.user_id === gm_uid);
+  if (!gmMember) return c.json({ error: 'GM must be a lobby member.' }, 400);
+  if (!gmMember.sorc_role.startsWith('GM')) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
+
+  const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid;
+  if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
+
+  const roomId = crypto.randomUUID();
+  const jitsiRoom = 'sorc-' + roomId.replace(/-/g, '').substring(0, 12);
+  const now = new Date().toISOString();
+
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO private_rooms (id, lobby_id, room_name, gm_uid, status, jitsi_room, created_at) VALUES (?, ?, ?, ?, 'active', ?, ?)`
+    ).bind(roomId, lobbyId, lobby.name, gm_uid, jitsiRoom, now).run();
+
+    const allParticipants = [gm_uid, ...selected_members.filter((id: string) => id !== gm_uid)];
+    for (const uid of allParticipants) {
+      const m = memberList.find((x: any) => x.user_id === uid);
+      if (!m) continue;
+      const roomRole = uid === gm_uid ? 'gm' : 'pc';
+      await c.env.sorc_db.prepare(
+        `INSERT INTO room_members (id, room_id, user_id, room_role, username, joined_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), roomId, uid, roomRole, m.username, now).run();
+    }
+
+    await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'in_progress', updated_at = ? WHERE id = ?`).bind(now, lobbyId).run();
+
+    return c.json({ success: true, room_id: roomId, jitsi_room: jitsiRoom });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to launch room.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/rooms/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+
+  const membership = await c.env.sorc_db.prepare(`SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first() as any;
+  if (!membership) return c.json({ error: 'You are not a member of this room.' }, 403);
+
+  const members = await c.env.sorc_db.prepare(`SELECT * FROM room_members WHERE room_id = ? ORDER BY joined_at ASC`).bind(roomId).all();
+  const rolls = await c.env.sorc_db.prepare(`SELECT * FROM roll_log WHERE room_id = ? ORDER BY rolled_at DESC LIMIT 50`).bind(roomId).all();
+
+  return c.json({
+    room,
+    members: members.results || [],
+    rolls: rolls.results || [],
+    my_role: membership.room_role,
+    is_gm: membership.room_role === 'gm'
+  });
+});
+
+app.post('/api/rooms/:id/roll', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+
+  const { roll_purpose, die_type, result1, result2, total, locked_by_gm } = await c.req.json() as any;
+  if (!roll_purpose || !die_type || result1 === undefined || total === undefined || !locked_by_gm) {
+    return c.json({ error: 'Missing roll data.' }, 400);
+  }
+
+  const validDice = ['d4', 'd6', 'd100', 'd100+d100'];
+  if (!validDice.includes(die_type)) return c.json({ error: 'Invalid die type.' }, 400);
+
+  const gmMembership = await c.env.sorc_db.prepare(
+    `SELECT * FROM room_members WHERE room_id = ? AND user_id = ? AND room_role = 'gm'`
+  ).bind(roomId, locked_by_gm).first();
+  if (!gmMembership) return c.json({ error: 'Roll purpose must be locked by the GM.' }, 403);
+
+  const playerMembership = await c.env.sorc_db.prepare(
+    `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+  ).bind(roomId, user.id).first();
+  if (!playerMembership) return c.json({ error: 'Not a room member.' }, 403);
+
+  const rollId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO roll_log (id, room_id, player_uid, roll_purpose, die_type, result1, result2, total, locked_by_gm, rolled_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(rollId, roomId, user.id, roll_purpose, die_type, result1, result2 || null, total, locked_by_gm, now).run();
+
+  return c.json({ success: true, roll_id: rollId, total });
+});
+
+app.get('/api/rooms/:id/rolls', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a room member.' }, 403);
+  const since = c.req.query('since');
+  let rolls: any;
+  if (since) {
+    rolls = await c.env.sorc_db.prepare(`SELECT * FROM roll_log WHERE room_id = ? AND rolled_at > ? ORDER BY rolled_at ASC LIMIT 50`).bind(roomId, since).all();
+  } else {
+    rolls = await c.env.sorc_db.prepare(`SELECT * FROM roll_log WHERE room_id = ? ORDER BY rolled_at DESC LIMIT 50`).bind(roomId).all();
+  }
+  return c.json({ rolls: rolls.results || [] });
+});
+
 export default app;
 
