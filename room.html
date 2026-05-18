@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campaign Room | Slayers of Rings &sect; Crowns</title>
+  <link rel="icon" href="IMG_3419.jpeg" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ===== BASE ===== */
+    .room-wrap { max-width: 1100px; margin: 0 auto; padding: 1rem 1rem 5rem; }
+
+    /* ===== THEME SELECTOR ===== */
+    .theme-bar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .theme-bar-label { color: #444; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; }
+    .theme-pill { padding: 0.35rem 0.85rem; border-radius: 20px; border: 1.5px solid #2a2a2a; background: #111; color: #555; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .theme-pill:hover:not(.locked) { border-color: #555; color: #e0cfc0; }
+    .theme-pill.active { border-color: #d4af37; color: #d4af37; background: #1a1505; }
+    .theme-pill.locked { cursor: default; opacity: 0.45; }
+    .theme-pill .pts { font-size: 0.68rem; color: #444; margin-left: 0.25rem; }
+
+    /* ===== ROOM HEADER ===== */
+    .room-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .room-header-left h1 { font-size: 1.25rem; color: #e0cfc0; margin: 0; }
+    .room-header-left .room-meta { color: #555; font-size: 0.78rem; margin-top: 0.2rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+    .badge.active { background: #1a3a1a; color: #4caf50; }
+    .badge.hidden { background: #2a1a1a; color: #d0021b; }
+    .badge.spectate-on { background: #1a1a3a; color: #64b5f6; }
+    .badge.spectate-off { background: #2a2a2a; color: #555; }
+    .room-header-right { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .hdr-btn { padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; border: 1px solid #333; background: none; color: #888; transition: all 0.15s; }
+    .hdr-btn:hover { border-color: #888; color: #e0cfc0; }
+    .hdr-btn.danger { border-color: #5a1a1a; color: #d0021b; }
+    .hdr-btn.danger:hover { background: #1a0505; }
+
+    /* ===== MAIN GRID ===== */
+    .room-grid { display: grid; grid-template-columns: 200px 1fr 280px; gap: 1rem; }
+    @media (max-width: 900px) { .room-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .room-grid { grid-template-columns: 1fr; } }
+
+    /* ===== PANEL BASE ===== */
+    .panel { background: #111; border: 1px solid #222; border-radius: 12px; overflow: hidden; }
+    .panel-head { padding: 0.6rem 0.9rem; border-bottom: 1px solid #222; color: #d4af37; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .panel-body { padding: 0.75rem; }
+
+    /* ===== MEMBERS ===== */
+    .members-list { display: flex; flex-direction: column; }
+    .member-row { padding: 0.5rem 0.75rem; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 0.5rem; }
+    .member-row:last-child { border-bottom: none; }
+    .member-av { width: 26px; height: 26px; border-radius: 50%; background: #1e1e1e; border: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #555; flex-shrink: 0; }
+    .member-av.gm { border-color: #d4af37; color: #d4af37; }
+    .member-av.spectator { border-color: #444; }
+    .member-info { flex: 1; min-width: 0; }
+    .member-name { color: #e0cfc0; font-size: 0.8rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-decoration: none; }
+    .member-name:hover { color: #d4af37; }
+    .member-tag { font-size: 0.68rem; color: #555; }
+    .member-tag.gm { color: #d4af37; }
+    .member-tag.spectator { color: #444; }
+
+    /* ===== GM CONTROLS ===== */
+    .gm-controls { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .ctrl-btn { width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid #2a2a2a; background: #1a1a1a; color: #888; font-size: 0.78rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+    .ctrl-btn:hover { border-color: #555; color: #e0cfc0; }
+    .ctrl-btn.gold { border-color: #5a4a10; color: #d4af37; }
+    .ctrl-btn.gold:hover { border-color: #d4af37; background: #1a1505; }
+    .ctrl-btn.blue { border-color: #1a2a4a; color: #64b5f6; }
+    .ctrl-btn.blue:hover { border-color: #64b5f6; background: #0a1525; }
+    .ctrl-section-label { color: #333; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; margin: 0.5rem 0 0.25rem; padding-left: 0.25rem; }
+
+    /* ===== CENTER: VOICE + DICE ===== */
+    .center-col { display: flex; flex-direction: column; gap: 1rem; }
+    @media (max-width: 900px) { .center-col { grid-column: span 2; } }
+    @media (max-width: 600px) { .center-col { grid-column: span 1; } }
+
+    .voice-panel { background: #111; border: 1px solid #222; border-radius: 12px; overflow: hidden; }
+    .voice-head { padding: 0.6rem 0.9rem; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; }
+    .voice-head span { color: #d4af37; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .voice-toggle { padding: 4px 12px; border-radius: 6px; border: 1px solid #2a2a2a; background: none; color: #666; font-size: 0.75rem; cursor: pointer; }
+    .voice-toggle.on { border-color: #4caf50; color: #4caf50; }
+    #jitsiContainer { width: 100%; height: 320px; background: #050505; }
+    #jitsiContainer iframe { width: 100%; height: 100%; border: none; }
+    .voice-placeholder { display: flex; align-items: center; justify-content: center; height: 320px; color: #333; font-size: 0.85rem; flex-direction: column; gap: 0.5rem; }
+    .voice-placeholder button { padding: 8px 20px; background: #d4af37; color: #111; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+
+    /* ===== DICE PANEL ===== */
+    .dice-panel { background: #111; border: 1px solid #222; border-radius: 12px; padding: 1rem; }
+    .dice-head { color: #d4af37; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; }
+    .dice-purpose { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .dice-purpose input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.84rem; }
+    .dice-purpose input:focus { outline: none; border-color: #555; }
+    .dice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem; }
+    .die-btn { padding: 0.75rem 0.5rem; border-radius: 8px; border: 2px solid #2a2a2a; background: #1a1a1a; color: #888; font-size: 0.82rem; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.15s; }
+    .die-btn:hover { border-color: #d4af37; color: #d4af37; background: #1a1505; }
+    .die-btn.rolling { border-color: #d0021b; color: #d0021b; animation: pulse 0.4s ease; }
+    .die-btn .die-label { font-size: 1rem; display: block; }
+    .die-btn .die-name { font-size: 0.65rem; color: #555; display: block; margin-top: 0.1rem; }
+    .die-btn:hover .die-name { color: #888; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    .dice-result { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 8px; padding: 0.75rem 1rem; text-align: center; min-height: 52px; }
+    .result-total { font-size: 2rem; font-weight: bold; color: #d4af37; line-height: 1; }
+    .result-detail { color: #555; font-size: 0.75rem; margin-top: 0.2rem; }
+
+    /* ===== CHAT/ROLLS RIGHT COL ===== */
+    .right-col { display: flex; flex-direction: column; gap: 0; }
+    .tab-row { display: flex; border-bottom: 1px solid #222; background: #111; border-radius: 12px 12px 0 0; overflow: hidden; }
+    .tab-btn { flex: 1; padding: 0.55rem; background: none; border: none; color: #555; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; }
+    .tab-btn.active { color: #d4af37; border-bottom: 2px solid #d4af37; }
+    .tab-btn:hover:not(.active) { color: #888; }
+    .tab-content { background: #111; border: 1px solid #222; border-top: none; border-radius: 0 0 12px 12px; display: flex; flex-direction: column; height: 420px; }
+    .tab-pane { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .tab-pane.active { display: flex; }
+
+    /* chat */
+    .chat-messages { flex: 1; overflow-y: auto; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
+    .chat-msg { font-size: 0.82rem; line-height: 1.4; }
+    .chat-msg .msg-name { font-weight: bold; color: #d4af37; font-size: 0.76rem; margin-right: 0.35rem; }
+    .chat-msg .msg-name.gm { color: #d0021b; }
+    .chat-msg .msg-name.spectator { color: #555; }
+    .chat-msg .msg-body { color: #b0a090; }
+    .chat-msg .msg-time { color: #2a2a2a; font-size: 0.7rem; margin-left: 0.3rem; }
+    .chat-input-row { display: flex; gap: 0.4rem; padding: 0.5rem 0.6rem; border-top: 1px solid #1e1e1e; flex-shrink: 0; }
+    .chat-input { flex: 1; padding: 6px 9px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.82rem; }
+    .chat-input:focus { outline: none; border-color: #444; }
+    .chat-send { padding: 6px 12px; background: #d0021b; color: #fff; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
+    .chat-send:hover { background: #a50013; }
+
+    /* rolls log */
+    .rolls-list { flex: 1; overflow-y: auto; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .roll-entry { background: #1a1a1a; border: 1px solid #222; border-radius: 6px; padding: 0.5rem 0.75rem; }
+    .roll-entry-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .roll-player { color: #888; font-size: 0.75rem; font-weight: bold; }
+    .roll-total { font-size: 1.1rem; font-weight: bold; color: #d4af37; }
+    .roll-detail { color: #444; font-size: 0.7rem; margin-top: 0.15rem; }
+
+    /* ===== MODALS ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 14px; padding: 1.5rem; max-width: 420px; width: 100%; max-height: 80vh; overflow-y: auto; }
+    .modal-box h3 { color: #d4af37; margin-bottom: 1rem; font-size: 1rem; }
+    .modal-input { width: 100%; padding: 8px 10px; background: #111; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.88rem; box-sizing: border-box; margin-bottom: 0.75rem; }
+    .modal-input:focus { outline: none; border-color: #555; }
+    .modal-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .modal-actions button { flex: 1; padding: 0.65rem; border-radius: 8px; font-size: 0.88rem; font-weight: bold; cursor: pointer; border: none; }
+    .modal-submit { background: #d4af37; color: #111; }
+    .modal-submit:hover { background: #c19b2b; }
+    .modal-cancel { background: none; border: 1px solid #333 !important; color: #888; }
+    .modal-cancel:hover { border-color: #888 !important; color: #e0cfc0; }
+    .modal-msg { font-size: 0.82rem; min-height: 1.2em; margin-bottom: 0.5rem; }
+    .modal-msg.ok { color: #4caf50; }
+    .modal-msg.err { color: #d0021b; }
+    .req-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #222; flex-wrap: wrap; }
+    .req-row:last-child { border-bottom: none; }
+    .req-info { font-size: 0.82rem; color: #e0cfc0; }
+    .req-type { font-size: 0.72rem; color: #555; }
+    .req-btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .req-accept { padding: 4px 10px; background: #1a4a1a; border: 1px solid #2a6a2a; color: #4caf50; border-radius: 5px; font-size: 0.76rem; cursor: pointer; }
+    .req-accept:hover { background: #2a6a2a; }
+    .req-decline { padding: 4px 10px; background: #2a1a1a; border: 1px solid #5a2a2a; color: #d0021b; border-radius: 5px; font-size: 0.76rem; cursor: pointer; }
+    .req-decline:hover { background: #4a1a1a; }
+
+    /* ===== NOT MEMBER / REQUEST VIEW ===== */
+    .request-view { max-width: 480px; margin: 3rem auto; text-align: center; }
+    .request-view h2 { color: #e0cfc0; margin-bottom: 0.5rem; }
+    .request-view p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+    .req-action-btns { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .req-action-btns button { padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: pointer; border: none; }
+
+    /* ================================================
+       ORBITAL TERMINAL THEME
+    ================================================ */
+    .lt-terminal { background: #030d1a; }
+    .lt-terminal .room-header-left h1 { color: #00e5ff; font-family: monospace; text-shadow: 0 0 12px #00e5ff66; letter-spacing: 0.04em; }
+    .lt-terminal .room-header-left .room-meta { color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .panel, .lt-terminal .voice-panel, .lt-terminal .dice-panel,
+    .lt-terminal .tab-row, .lt-terminal .tab-content { background: #010a14; border-color: #00e5ff22; }
+    .lt-terminal .panel-head, .lt-terminal .voice-head span, .lt-terminal .dice-head { color: #00e5ff; border-bottom-color: #00e5ff22; font-family: monospace; }
+    .lt-terminal .tab-btn.active { color: #00e5ff; border-bottom-color: #00e5ff; }
+    .lt-terminal .tab-btn:not(.active) { color: #1a5a6a; }
+    .lt-terminal .member-name { color: #a0e8ff; font-family: monospace; }
+    .lt-terminal .member-tag { color: #1a4a5a; font-family: monospace; }
+    .lt-terminal .member-tag.gm { color: #ff8800; }
+    .lt-terminal .member-av.gm { border-color: #ff8800; color: #ff8800; }
+    .lt-terminal .ctrl-btn { background: #010a14; border-color: #00e5ff22; color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .ctrl-btn:hover { border-color: #00e5ff66; color: #00e5ff; }
+    .lt-terminal .ctrl-btn.gold { border-color: #ff880033; color: #ff8800; }
+    .lt-terminal .ctrl-btn.gold:hover { border-color: #ff8800; }
+    .lt-terminal .ctrl-btn.blue { border-color: #00e5ff22; color: #00e5ff; }
+    .lt-terminal .die-btn { background: #010a14; border-color: #00e5ff22; color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .die-btn:hover { border-color: #00e5ff; color: #00e5ff; background: #020f1e; }
+    .lt-terminal .die-btn .die-name { color: #0a3a4a; }
+    .lt-terminal .dice-result { background: #000d18; border-color: #00e5ff11; }
+    .lt-terminal .result-total { color: #00e5ff; text-shadow: 0 0 10px #00e5ff88; }
+    .lt-terminal .result-detail { color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .dice-purpose input { background: #000d18; border-color: #00e5ff22; color: #a0e8ff; font-family: monospace; }
+    .lt-terminal .chat-messages, .lt-terminal .rolls-list { background: #000d18; }
+    .lt-terminal .chat-msg .msg-name { color: #00e5ff; font-family: monospace; }
+    .lt-terminal .chat-msg .msg-name.gm { color: #ff8800; }
+    .lt-terminal .chat-msg .msg-body { color: #1a6070; font-family: monospace; }
+    .lt-terminal .chat-input { background: #010a14; border-color: #00e5ff22; color: #a0e8ff; font-family: monospace; }
+    .lt-terminal .chat-send { background: #00e5ff; color: #030d1a; font-family: monospace; }
+    .lt-terminal .roll-entry { background: #020f1e; border-color: #00e5ff11; }
+    .lt-terminal .roll-total { color: #00e5ff; text-shadow: 0 0 6px #00e5ff66; }
+    .lt-terminal .roll-player { color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .theme-pill.active { border-color: #00e5ff; color: #00e5ff; background: #010a14; }
+    .lt-terminal .hdr-btn { border-color: #00e5ff22; color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .hdr-btn:hover { border-color: #00e5ff66; color: #00e5ff; }
+
+    /* ================================================
+       THE VEILWOOD THEME
+    ================================================ */
+    .lt-veilwood { background: #030810; }
+    .lt-veilwood .room-header-left h1 { color: #b57bff; text-shadow: 0 0 14px #7b2fff77; }
+    .lt-veilwood .room-header-left .room-meta { color: #3a2a5a; }
+    .lt-veilwood .panel, .lt-veilwood .voice-panel, .lt-veilwood .dice-panel,
+    .lt-veilwood .tab-row, .lt-veilwood .tab-content { background: #020509; border-color: #7b2fff22; }
+    .lt-veilwood .panel-head, .lt-veilwood .voice-head span, .lt-veilwood .dice-head { color: #00cc77; border-bottom-color: #7b2fff22; }
+    .lt-veilwood .tab-btn.active { color: #00cc77; border-bottom-color: #00cc77; }
+    .lt-veilwood .tab-btn:not(.active) { color: #3a2a5a; }
+    .lt-veilwood .member-name { color: #d4c5f0; }
+    .lt-veilwood .member-tag { color: #3a2a5a; }
+    .lt-veilwood .member-tag.gm { color: #b57bff; }
+    .lt-veilwood .member-av.gm { border-color: #b57bff; color: #b57bff; }
+    .lt-veilwood .ctrl-btn { background: #020509; border-color: #7b2fff22; color: #3a2a5a; }
+    .lt-veilwood .ctrl-btn:hover { border-color: #7b2fff66; color: #b57bff; }
+    .lt-veilwood .ctrl-btn.gold { border-color: #00cc7733; color: #00cc77; }
+    .lt-veilwood .ctrl-btn.gold:hover { border-color: #00cc77; }
+    .lt-veilwood .ctrl-btn.blue { border-color: #7b2fff22; color: #b57bff; }
+    .lt-veilwood .die-btn { background: #020509; border-color: #7b2fff22; color: #3a2a5a; }
+    .lt-veilwood .die-btn:hover { border-color: #7b2fff; color: #b57bff; background: #060b12; }
+    .lt-veilwood .dice-result { background: #010307; border-color: #7b2fff11; }
+    .lt-veilwood .result-total { color: #00cc77; text-shadow: 0 0 10px #00cc7766; }
+    .lt-veilwood .result-detail { color: #3a2a5a; }
+    .lt-veilwood .dice-purpose input { background: #010307; border-color: #7b2fff22; color: #d4c5f0; }
+    .lt-veilwood .chat-msg .msg-name { color: #00cc77; }
+    .lt-veilwood .chat-msg .msg-name.gm { color: #b57bff; }
+    .lt-veilwood .chat-msg .msg-body { color: #3a3060; }
+    .lt-veilwood .chat-input { background: #020509; border-color: #7b2fff22; color: #d4c5f0; }
+    .lt-veilwood .chat-send { background: #7b2fff; color: #fff; }
+    .lt-veilwood .roll-entry { background: #060b12; border-color: #7b2fff11; }
+    .lt-veilwood .roll-total { color: #00cc77; text-shadow: 0 0 6px #00cc7766; }
+    .lt-veilwood .roll-player { color: #3a2a5a; }
+    .lt-veilwood .theme-pill.active { border-color: #7b2fff; color: #b57bff; background: #060b12; }
+    .lt-veilwood .hdr-btn { border-color: #7b2fff22; color: #3a2a5a; }
+    .lt-veilwood .hdr-btn:hover { border-color: #7b2fff66; color: #b57bff; }
+
+    /* ===== LAWFUL OVERRIDES ===== */
+    body.lawful-mode .panel, body.lawful-mode .voice-panel, body.lawful-mode .dice-panel,
+    body.lawful-mode .tab-row, body.lawful-mode .tab-content, body.lawful-mode .modal-box { background: #fff; border-color: #e0e0e0; }
+    body.lawful-mode .member-name { color: #2c2c2c; }
+    body.lawful-mode .dice-purpose input, body.lawful-mode .chat-input, body.lawful-mode .modal-input { background: #f5f5f5; border-color: #ccc; color: #2c2c2c; }
+    body.lawful-mode .chat-msg .msg-body { color: #555; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper" id="pageRoot">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="sorc-letters-evil.jpg" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="sorc-letters-lawful.jpg" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav><div id="navRoleBadge"></div></nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a href="lobbies.html">Lobbies</a></li>
+      <li><a class="current-section" href="#">Room</a></li>
+    </ul>
+
+    <div class="room-wrap">
+
+      <!-- THEME BAR -->
+      <div class="theme-bar">
+        <span class="theme-bar-label">Theme</span>
+        <button class="theme-pill active" id="tpill-default" onclick="setRoomTheme('default')">Default</button>
+        <button class="theme-pill" id="tpill-terminal" onclick="setRoomTheme('terminal')">Orbital Terminal</button>
+        <button class="theme-pill" id="tpill-veilwood" onclick="setRoomTheme('veilwood')">The Veilwood</button>
+        <button class="theme-pill locked" title="500 community points">&#128274; Void Citadel<span class="pts">500 pts</span></button>
+        <button class="theme-pill locked" title="750 community points">&#128274; Iron Bastion<span class="pts">750 pts</span></button>
+        <button class="theme-pill locked" title="1,000 community points">&#128274; Celestial Court<span class="pts">1,000 pts</span></button>
+        <button class="theme-pill locked" title="1,500 community points">&#128274; Sunken Shrine<span class="pts">1,500 pts</span></button>
+        <button class="theme-pill locked" title="2,000 community points">&#128274; Dragon Throne<span class="pts">2,000 pts</span></button>
+      </div>
+
+      <div id="roomApp"><p style="color:#555;text-align:center;padding:3rem;">Loading room...</p></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <!-- INVITE MODAL -->
+  <div class="modal-overlay hidden" id="inviteModal">
+    <div class="modal-box">
+      <h3>&#128100; Invite Fellow</h3>
+      <p style="color:#666;font-size:0.82rem;margin-bottom:0.75rem;">Enter the username of a fellow you are connected with.</p>
+      <input type="text" class="modal-input" id="inviteUsername" placeholder="Username..." maxlength="40" />
+      <div id="inviteMsg" class="modal-msg"></div>
+      <div class="modal-actions">
+        <button class="modal-submit" onclick="submitInvite()">Send Invite</button>
+        <button class="modal-cancel" onclick="closeModal('inviteModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REQUESTS MODAL -->
+  <div class="modal-overlay hidden" id="requestsModal">
+    <div class="modal-box">
+      <h3>&#128104; Pending Requests</h3>
+      <div id="requestsList" style="min-height:60px;"><p style="color:#555;font-size:0.82rem;">Loading...</p></div>
+      <div style="margin-top:1rem;">
+        <button class="modal-cancel" style="width:100%;padding:0.6rem;" onclick="closeModal('requestsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://meet.jit.si/external_api.js" async></script>
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'evil';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    // ===== ROOM THEME =====
+    var roomTheme = localStorage.getItem('roomTheme') || 'default';
+    var themeClassMap = { terminal: 'lt-terminal', veilwood: 'lt-veilwood' };
+
+    function setRoomTheme(t) {
+      var root = document.getElementById('pageRoot');
+      Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
+      if (themeClassMap[t]) root.classList.add(themeClassMap[t]);
+      roomTheme = t;
+      localStorage.setItem('roomTheme', t);
+      document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
+      var active = document.getElementById('tpill-' + t);
+      if (active) active.classList.add('active');
+    }
+    setRoomTheme(roomTheme);
+
+    // ===== HELPERS =====
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+    function timeAgo(iso) {
+      var diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (diff < 60) return 'now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm';
+      return Math.floor(diff/3600) + 'h';
+    }
+    function dieEmoji(t) {
+      switch(t) { case 'd4': return 'D4'; case 'd6': return 'D6'; case 'd100': return 'D100'; case 'd100+d100': return 'D100+D100'; default: return t; }
+    }
+
+    // ===== STATE =====
+    var roomId = new URLSearchParams(window.location.search).get('id');
+    var roomData = null;
+    var isGM = false;
+    var gmUid = null;
+    var chatPoll = null;
+    var rollsPoll = null;
+    var jitsiApi = null;
+    var voiceOn = false;
+
+    // ===== INIT =====
+    async function init() {
+      var app = document.getElementById('roomApp');
+      if (!currentUser || !currentUser.authKey) {
+        app.innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">Please <a href="signin.html" style="color:#d4af37;">sign in</a> to enter a room.</div>';
+        return;
+      }
+      if (!roomId) {
+        app.innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">No room specified. <a href="lobbies.html" style="color:#d4af37;">Back to Lobbies</a></div>';
+        return;
+      }
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId, { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (res.status === 403) {
+          renderRequestView(data.error);
+          return;
+        }
+        if (!data.room) { app.innerHTML = '<div style="text-align:center;padding:3rem;color:#d0021b;">Room not found. <a href="lobbies.html" style="color:#d4af37;">Back to Lobbies</a></div>'; return; }
+        roomData = data;
+        isGM = data.is_gm;
+        gmUid = data.room.gm_uid;
+        renderRoom(data);
+        startPolling();
+      } catch(e) {
+        app.innerHTML = '<div style="text-align:center;padding:3rem;color:#d0021b;">Connection error. <a href="lobbies.html" style="color:#d4af37;">Back to Lobbies</a></div>';
+      }
+    }
+
+    // ===== REQUEST VIEW (not a member yet) =====
+    function renderRequestView(errMsg) {
+      var app = document.getElementById('roomApp');
+      app.innerHTML =
+        '<div class="request-view">' +
+          '<h2>&#128274; Private Room</h2>' +
+          '<p>You are not currently a member of this room. You can request to join as a player, or request spectator access if the GM has enabled it.</p>' +
+          '<div class="req-action-btns">' +
+            '<button style="background:#d0021b;color:#fff;" onclick="requestJoin(\'join\')">Request to Join</button>' +
+            '<button style="background:#1a1a1a;border:1px solid #333;color:#888;" onclick="requestJoin(\'spectate\')">Request to Spectate</button>' +
+            '<a href="lobbies.html" style="padding:0.75rem 1.5rem;border-radius:8px;border:1px solid #333;color:#888;text-decoration:none;font-size:0.9rem;">Back to Lobbies</a>' +
+          '</div>' +
+          '<p id="reqMsg" style="margin-top:1rem;font-size:0.85rem;"></p>' +
+        '</div>';
+    }
+
+    window.requestJoin = async function(type) {
+      var msgEl = document.getElementById('reqMsg');
+      if (msgEl) { msgEl.style.color = '#888'; msgEl.textContent = 'Sending request...'; }
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ request_type: type })
+        });
+        var data = await res.json();
+        if (msgEl) {
+          if (data.success) { msgEl.style.color = '#4caf50'; msgEl.textContent = 'Request sent. Waiting for GM approval.'; }
+          else { msgEl.style.color = '#d0021b'; msgEl.textContent = data.error || 'Could not send request.'; }
+        }
+      } catch(e) { if (msgEl) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Connection error.'; } }
+    };
+
+    // ===== RENDER ROOM =====
+    function renderRoom(data) {
+      var room = data.room;
+      var members = data.members || [];
+      var app = document.getElementById('roomApp');
+
+      document.title = esc(room.room_name) + ' | SORC RPG';
+
+      var membersHtml = members.map(function(m) {
+        var isGmRow = m.room_role === 'gm';
+        var isSpec = m.room_role === 'spectator';
+        var label = isGmRow ? 'Game Master' : isSpec ? 'Spectator' : 'Player';
+        return '<div class="member-row">' +
+          '<div class="member-av' + (isGmRow ? ' gm' : '') + '">' + esc((m.username||'?').charAt(0).toUpperCase()) + '</div>' +
+          '<div class="member-info">' +
+            '<a href="/profile.html?uid=' + esc(m.user_id) + '" class="member-name">' + esc(m.username) + '</a>' +
+            '<span class="member-tag' + (isGmRow ? ' gm' : isSpec ? ' spectator' : '') + '">' + label + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      var gmControls = '';
+      if (isGM) {
+        gmControls =
+          '<div class="gm-controls">' +
+            '<div class="ctrl-section-label">GM Controls</div>' +
+            '<button class="ctrl-btn gold" onclick="toggleSpectate()">' +
+              (room.spectate_enabled ? '&#128065; Disable Spectate' : '&#128065; Enable Spectate') +
+            '</button>' +
+            '<button class="ctrl-btn blue" onclick="toggleVisibility()">' +
+              (room.is_hidden ? '&#128065; Show Room' : '&#128274; Hide Room') +
+            '</button>' +
+            '<button class="ctrl-btn" onclick="openModal(\'inviteModal\')">&#128100; Invite Fellow</button>' +
+            '<button class="ctrl-btn" onclick="openRequestsModal()">&#128104; View Requests</button>' +
+          '</div>';
+      }
+
+      app.innerHTML =
+        '<div class="room-header">' +
+          '<div class="room-header-left">' +
+            '<h1>' + esc(room.room_name) + '</h1>' +
+            '<div class="room-meta">' +
+              '<span class="badge active">&#9679; Active</span>' +
+              '<span class="badge ' + (room.is_hidden ? 'hidden' : 'active') + '" id="visibilityBadge">' + (room.is_hidden ? '&#128274; Hidden' : '&#128065; Visible') + '</span>' +
+              '<span class="badge ' + (room.spectate_enabled ? 'spectate-on' : 'spectate-off') + '" id="spectateBadge">' + (room.spectate_enabled ? '&#128065; Spectate On' : 'Spectate Off') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="room-header-right">' +
+            (room.lobby_id ? '<button class="hdr-btn" onclick="window.location.href=\'lobbies.html\'">&#8592; Lobby</button>' : '') +
+          '</div>' +
+        '</div>' +
+
+        '<div class="room-grid">' +
+
+          // LEFT: members
+          '<div>' +
+            '<div class="panel">' +
+              '<div class="panel-head"><span>Members</span><span>' + members.length + '</span></div>' +
+              '<div class="members-list" id="membersList">' + (membersHtml || '<div style="padding:0.75rem;color:#444;font-size:0.82rem;">No members.</div>') + '</div>' +
+            '</div>' +
+            gmControls +
+          '</div>' +
+
+          // CENTER: voice + dice
+          '<div class="center-col">' +
+
+            '<div class="voice-panel">' +
+              '<div class="voice-head"><span>&#127911; Voice</span><button class="voice-toggle" id="voiceToggle" onclick="toggleVoice()">Join Voice</button></div>' +
+              '<div id="jitsiContainer"><div class="voice-placeholder"><p style="color:#444;">Voice is off. Click Join Voice to connect.</p></div></div>' +
+            '</div>' +
+
+            '<div class="dice-panel">' +
+              '<div class="dice-head">&#127922; Dice</div>' +
+              '<div class="dice-purpose">' +
+                '<input type="text" id="rollPurpose" placeholder="Roll purpose (e.g. Attack, Luck, Loot)..." maxlength="80" />' +
+              '</div>' +
+              '<div class="dice-grid">' +
+                '<button class="die-btn" onclick="rollDie(\'d4\')">' +
+                  '<span class="die-label">D4</span>' +
+                  '<span class="die-name">Luck</span>' +
+                '</button>' +
+                '<button class="die-btn" onclick="rollDie(\'d6\')">' +
+                  '<span class="die-label">D6</span>' +
+                  '<span class="die-name">Modifier</span>' +
+                '</button>' +
+                '<button class="die-btn" onclick="rollDie(\'d100\')">' +
+                  '<span class="die-label">D100</span>' +
+                  '<span class="die-name">Standard</span>' +
+                '</button>' +
+                '<button class="die-btn" onclick="rollDie(\'d100+d100\')">' +
+                  '<span class="die-label">D100</span>' +
+                  '<span class="die-name">+D100</span>' +
+                '</button>' +
+              '</div>' +
+              '<div class="dice-result" id="diceResult">' +
+                '<div style="color:#333;font-size:0.82rem;">Select a die to roll</div>' +
+              '</div>' +
+            '</div>' +
+
+          '</div>' +
+
+          // RIGHT: chat + rolls
+          '<div class="right-col">' +
+            '<div class="tab-row">' +
+              '<button class="tab-btn active" id="tab-chat" onclick="switchTab(\'chat\')">Chat</button>' +
+              '<button class="tab-btn" id="tab-rolls" onclick="switchTab(\'rolls\')">Rolls</button>' +
+            '</div>' +
+            '<div class="tab-content">' +
+              '<div class="tab-pane active" id="pane-chat">' +
+                '<div class="chat-messages" id="chatMessages"></div>' +
+                '<div class="chat-input-row">' +
+                  '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="500" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
+                  '<button class="chat-send" onclick="sendChat()">Send</button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="tab-pane" id="pane-rolls">' +
+                '<div class="rolls-list" id="rollsList"></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+        '</div>';
+
+      loadChat();
+      loadRolls();
+    }
+
+    // ===== TABS =====
+    window.switchTab = function(tab) {
+      ['chat','rolls'].forEach(function(t) {
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+        document.getElementById('pane-' + t).classList.toggle('active', t === tab);
+      });
+    };
+
+    // ===== VOICE (JITSI) =====
+    window.toggleVoice = function() {
+      var btn = document.getElementById('voiceToggle');
+      var container = document.getElementById('jitsiContainer');
+      if (voiceOn) {
+        if (jitsiApi) { jitsiApi.dispose(); jitsiApi = null; }
+        container.innerHTML = '<div class="voice-placeholder"><p style="color:#444;">Voice is off. Click Join Voice to connect.</p></div>';
+        btn.textContent = 'Join Voice';
+        btn.classList.remove('on');
+        voiceOn = false;
+      } else {
+        if (!roomData || !roomData.room) return;
+        var jitsiRoom = roomData.room.jitsi_room;
+        container.innerHTML = '';
+        btn.textContent = 'Leave Voice';
+        btn.classList.add('on');
+        voiceOn = true;
+        if (typeof JitsiMeetExternalAPI !== 'undefined') {
+          jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
+            roomName: jitsiRoom,
+            parentNode: container,
+            width: '100%',
+            height: 320,
+            userInfo: { displayName: currentUser.username || currentUser.email || 'Player' },
+            configOverwrite: { startWithAudioMuted: false, startWithVideoMuted: true },
+            interfaceConfigOverwrite: { SHOW_JITSI_WATERMARK: false, SHOW_WATERMARK_FOR_GUESTS: false, TOOLBAR_BUTTONS: ['microphone','hangup','tileview'] }
+          });
+        } else {
+          container.innerHTML = '<iframe src="https://meet.jit.si/' + encodeURIComponent(jitsiRoom) + '" style="width:100%;height:320px;border:none;" allow="camera; microphone; fullscreen"></iframe>';
+        }
+      }
+    };
+
+    // ===== DICE =====
+    window.rollDie = async function(dieType) {
+      if (!roomData) return;
+      var purpose = (document.getElementById('rollPurpose')?.value || '').trim() || 'General roll';
+      var result1, result2, total;
+      if (dieType === 'd4') { result1 = Math.floor(Math.random() * 4) + 1; total = result1; }
+      else if (dieType === 'd6') { result1 = Math.floor(Math.random() * 6) + 1; total = result1; }
+      else if (dieType === 'd100') { result1 = Math.floor(Math.random() * 100) + 1; total = result1; }
+      else if (dieType === 'd100+d100') { result1 = Math.floor(Math.random() * 100) + 1; result2 = Math.floor(Math.random() * 100) + 1; total = result1 + result2; }
+
+      var resEl = document.getElementById('diceResult');
+      if (resEl) {
+        resEl.innerHTML = '<div class="result-total">' + total + '</div>' +
+          '<div class="result-detail">' + dieType + (result2 !== undefined ? ' (' + result1 + ' + ' + result2 + ')' : '') + ' &middot; ' + esc(purpose) + '</div>';
+      }
+
+      try {
+        await fetch(API_URL + '/api/rooms/' + roomId + '/roll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ roll_purpose: purpose, die_type: dieType, result1: result1, result2: result2 || null, total: total, locked_by_gm: gmUid })
+        });
+        loadRolls();
+      } catch(e) {}
+    };
+
+    // ===== CHAT =====
+    async function loadChat() {
+      var el = document.getElementById('chatMessages');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var msgs = data.messages || [];
+        var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+        if (msgs.length === 0) { el.innerHTML = '<div style="color:#333;font-size:0.8rem;text-align:center;padding:1rem;">No messages yet.</div>'; return; }
+        el.innerHTML = msgs.map(function(m) {
+          var isGmMsg = m.sorc_role && m.sorc_role.startsWith('GM');
+          return '<div class="chat-msg">' +
+            '<span class="msg-name' + (isGmMsg ? ' gm' : '') + '">' + esc(m.username) + ':</span>' +
+            '<span class="msg-body">' + esc(m.body) + '</span>' +
+            '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+          '</div>';
+        }).join('');
+        if (atBottom) el.scrollTop = el.scrollHeight;
+      } catch(e) {}
+    }
+
+    window.sendChat = async function() {
+      var input = document.getElementById('chatInput');
+      if (!input) return;
+      var body = input.value.trim();
+      if (!body) return;
+      input.value = '';
+      try {
+        await fetch(API_URL + '/api/rooms/' + roomId + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        loadChat();
+      } catch(e) {}
+    };
+
+    // ===== ROLLS =====
+    async function loadRolls() {
+      var el = document.getElementById('rollsList');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/rolls', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var rolls = data.rolls || [];
+        if (rolls.length === 0) { el.innerHTML = '<div style="color:#333;font-size:0.8rem;text-align:center;padding:1rem;">No rolls yet.</div>'; return; }
+        el.innerHTML = rolls.map(function(r) {
+          var detail = dieEmoji(r.die_type) + (r.result2 ? ' (' + r.result1 + '+' + r.result2 + ')' : ' (' + r.result1 + ')');
+          return '<div class="roll-entry">' +
+            '<div class="roll-entry-top">' +
+              '<span class="roll-player">' + esc(r.player_uid === currentUser?.id ? 'You' : r.player_uid) + '</span>' +
+              '<span class="roll-total">' + r.total + '</span>' +
+            '</div>' +
+            '<div class="roll-detail">' + esc(r.roll_purpose) + ' &nbsp;&middot;&nbsp; ' + detail + ' &nbsp;&middot;&nbsp; ' + timeAgo(r.rolled_at) + '</div>' +
+          '</div>';
+        }).join('');
+      } catch(e) {}
+    }
+
+    // ===== GM: TOGGLE SPECTATE =====
+    window.toggleSpectate = async function() {
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/spectate', { method: 'PATCH', headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (data.success) {
+          roomData.room.spectate_enabled = data.spectate_enabled ? 1 : 0;
+          var badge = document.getElementById('spectateBadge');
+          if (badge) {
+            badge.className = 'badge ' + (data.spectate_enabled ? 'spectate-on' : 'spectate-off');
+            badge.innerHTML = data.spectate_enabled ? '&#128065; Spectate On' : 'Spectate Off';
+          }
+          renderRoom(roomData);
+        } else { alert(data.error || 'Could not toggle spectate.'); }
+      } catch(e) { alert('Connection error.'); }
+    };
+
+    // ===== GM: TOGGLE VISIBILITY =====
+    window.toggleVisibility = async function() {
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/visibility', { method: 'PATCH', headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (data.success) {
+          roomData.room.is_hidden = data.is_hidden ? 1 : 0;
+          renderRoom(roomData);
+        } else { alert(data.error || 'Could not toggle visibility.'); }
+      } catch(e) { alert('Connection error.'); }
+    };
+
+    // ===== GM: INVITE MODAL =====
+    window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); };
+    window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
+
+    window.submitInvite = async function() {
+      var username = document.getElementById('inviteUsername').value.trim();
+      var msgEl = document.getElementById('inviteMsg');
+      if (!username) { msgEl.className = 'modal-msg err'; msgEl.textContent = 'Enter a username.'; return; }
+      msgEl.className = 'modal-msg'; msgEl.textContent = 'Looking up user...';
+      try {
+        // Look up uid by username first
+        var lookupRes = await fetch(API_URL + '/api/users/lookup?username=' + encodeURIComponent(username), { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var lookupData = await lookupRes.json();
+        if (!lookupData.user) { msgEl.className = 'modal-msg err'; msgEl.textContent = 'User not found.'; return; }
+        var inviteRes = await fetch(API_URL + '/api/rooms/' + roomId + '/invite/' + lookupData.user.id, { method: 'POST', headers: { 'X-Auth-Key': currentUser.authKey } });
+        var inviteData = await inviteRes.json();
+        if (inviteData.success) { msgEl.className = 'modal-msg ok'; msgEl.textContent = 'Invite sent to ' + esc(username) + '!'; document.getElementById('inviteUsername').value = ''; }
+        else { msgEl.className = 'modal-msg err'; msgEl.textContent = inviteData.error || 'Could not send invite.'; }
+      } catch(e) { msgEl.className = 'modal-msg err'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    // ===== GM: REQUESTS MODAL =====
+    window.openRequestsModal = async function() {
+      document.getElementById('requestsModal').classList.remove('hidden');
+      var el = document.getElementById('requestsList');
+      el.innerHTML = '<p style="color:#555;font-size:0.82rem;">Loading...</p>';
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/requests', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var reqs = data.requests || [];
+        if (reqs.length === 0) { el.innerHTML = '<p style="color:#555;font-size:0.82rem;">No pending requests.</p>'; return; }
+        el.innerHTML = reqs.map(function(r) {
+          return '<div class="req-row">' +
+            '<div>' +
+              '<div class="req-info">' + esc(r.display_name || r.username) + '</div>' +
+              '<div class="req-type">' + (r.request_type === 'spectate' ? 'Spectate request' : 'Join request') + '</div>' +
+            '</div>' +
+            '<div class="req-btns">' +
+              '<button class="req-accept" onclick="respondRequest(\'' + esc(r.id) + '\',\'accept\')">Accept</button>' +
+              '<button class="req-decline" onclick="respondRequest(\'' + esc(r.id) + '\',\'decline\')">Decline</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } catch(e) { el.innerHTML = '<p style="color:#d0021b;font-size:0.82rem;">Could not load requests.</p>'; }
+    };
+
+    window.respondRequest = async function(reqId, action) {
+      try {
+        var res = await fetch(API_URL + '/api/rooms/' + roomId + '/requests/' + reqId + '/' + action, { method: 'POST', headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (data.success) { openRequestsModal(); init(); }
+        else { alert(data.error || 'Could not respond to request.'); }
+      } catch(e) { alert('Connection error.'); }
+    };
+
+    // ===== POLLING =====
+    function startPolling() {
+      chatPoll = setInterval(loadChat, 5000);
+      rollsPoll = setInterval(loadRolls, 8000);
+    }
+
+    function stopPolling() {
+      if (chatPoll) clearInterval(chatPoll);
+      if (rollsPoll) clearInterval(rollsPoll);
+    }
+
+    window.addEventListener('beforeunload', function() { stopPolling(); if (jitsiApi) jitsiApi.dispose(); });
+
+    init();
+  </script>
+  <script src="nav.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

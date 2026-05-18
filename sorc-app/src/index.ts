@@ -1650,6 +1650,34 @@ app.get('/api/rooms/:id/rolls', authMiddleware, async (c) => {
   return c.json({ rolls: rolls.results || [] });
 });
 
+// ─── ROOM CHAT ────────────────────────────────────────────────────────────────
+
+app.get('/api/rooms/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a room member.' }, 403);
+  const messages = await c.env.sorc_db.prepare(
+    `SELECT rm.*, u.sorc_role FROM room_messages rm JOIN users u ON rm.user_id = u.id WHERE rm.room_id = ? ORDER BY rm.created_at ASC LIMIT 100`
+  ).bind(roomId).all();
+  return c.json({ messages: messages.results || [] });
+});
+
+app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a room member.' }, 403);
+  const { body } = await c.req.json() as any;
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (body.length > 500) return c.json({ error: 'Message too long.' }, 400);
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO room_messages (id, room_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), roomId, user.id, user.username, body.trim(), now).run();
+  return c.json({ success: true });
+});
+
 // ─── ROOM VISIBILITY & SPECTATE ───────────────────────────────────────────────
 
 // List all visible (not hidden) active rooms — for the lobbies page rooms section
@@ -1729,7 +1757,7 @@ app.post('/api/rooms/:id/invite/:uid', authMiddleware, async (c) => {
   const now = new Date().toISOString();
   try {
     await c.env.sorc_db.prepare(
-      `INSERT OR IGNORE INTO room_invites (id, room_id, inviter_uid, invited_uid, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`
+      `INSERT OR IGNORE INTO room_invites (id, room_id, invited_by, invited_uid, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`
     ).bind(crypto.randomUUID(), roomId, user.id, invitedUid, now).run();
     return c.json({ success: true });
   } catch (error: any) {
@@ -1744,7 +1772,7 @@ app.get('/api/rooms/invites/mine', authMiddleware, async (c) => {
     `SELECT ri.*, r.room_name, u.username as inviter_name, r.spectate_enabled
      FROM room_invites ri
      JOIN private_rooms r ON ri.room_id = r.id
-     JOIN users u ON ri.inviter_uid = u.id
+     JOIN users u ON ri.invited_by = u.id
      WHERE ri.invited_uid = ? AND ri.status = 'pending' AND r.status = 'active'
      ORDER BY ri.created_at DESC`
   ).bind(user.id).all();
