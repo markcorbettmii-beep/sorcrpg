@@ -1578,6 +1578,34 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   }
 });
 
+// ─── USER LOOKUP (safe - no sensitive fields) ─────────────────────────────────
+
+app.get('/api/users/lookup', authMiddleware, async (c) => {
+  const requester = c.get('user') as any;
+  const username = c.req.query('username');
+  if (!username || username.trim().length < 1) return c.json({ error: 'Username required.' }, 400);
+  if (username.length > 40) return c.json({ error: 'Invalid username.' }, 400);
+
+  // Rate limit: 20 lookups per minute per user
+  const allowed = await checkRateLimit(c.env.sorc_db, `lookup:${requester.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Too many lookups. Please wait.' }, 429);
+
+  const found = await c.env.sorc_db.prepare(
+    `SELECT id, username, display_name, sorc_role, avatar
+     FROM users
+     WHERE username = ? AND (banned IS NULL OR banned = 0) AND (suspended_until IS NULL OR suspended_until < datetime('now'))`
+  ).bind(username.trim()).first() as any;
+
+  if (!found) return c.json({ error: 'User not found.' }, 404);
+
+  // Don't allow looking up yourself
+  if (found.id === requester.id) return c.json({ error: 'Cannot invite yourself.' }, 400);
+
+  return c.json({ user: { id: found.id, username: found.username, display_name: found.display_name, sorc_role: found.sorc_role, avatar: found.avatar } });
+});
+
+// ─── ROOMS ────────────────────────────────────────────────────────────────────
+
 app.get('/api/rooms/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const roomId = c.req.param('id');
