@@ -1298,6 +1298,11 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   const { name, box_set_code, is_private } = await c.req.json() as any;
   if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
 
+  const existingLobby = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed'`
+  ).bind(user.id).first();
+  if (existingLobby) return c.json({ error: 'You already have an active lobby. Close it before creating a new one.' }, 400);
+
   if (!isPrivileged(user)) {
     if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);
     const codeCheck = await validateBoxSetCode(c.env.sorc_db, box_set_code, user.id);
@@ -1432,10 +1437,25 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
-  if (lobby.creator_uid === user.id) return c.json({ error: 'Creator cannot leave their own lobby. Close it instead.' }, 400);
+
+  const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
-  const newCount = Math.max(1, (lobby.member_count || 1) - 1);
-  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = 'open', updated_at = ? WHERE id = ?`).bind(newCount, new Date().toISOString(), lobbyId).run();
+
+  if (lobby.creator_uid === user.id) {
+    const next = await c.env.sorc_db.prepare(
+      `SELECT user_id FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC LIMIT 1`
+    ).bind(lobbyId).first() as any;
+    if (next) {
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
+        .bind(next.user_id, now, lobbyId).run();
+    } else {
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
+        .bind(now, lobbyId).run();
+    }
+  }
+
+  const newCount = Math.max(0, (lobby.member_count || 1) - 1);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
   return c.json({ success: true });
 });
 
@@ -1444,7 +1464,7 @@ app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
-  if (lobby.creator_uid !== user.id) return c.json({ error: 'Only the creator can close this lobby.' }, 403);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the creator can close this lobby.' }, 403);
   await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), lobbyId).run();
   return c.json({ success: true });
 });

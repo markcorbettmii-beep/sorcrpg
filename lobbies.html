@@ -785,7 +785,7 @@
       }
 
       var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
-      var leaveBtn = !isCreator ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' : '';
+      var leaveBtn = '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>';
       var deleteBtn = hasGMRights ? '<button class="leave-btn" style="border-color:#5a1a1a;" onclick="deleteLobby()">Close Lobby</button>' : '';
 
       app.innerHTML =
@@ -900,7 +900,10 @@
 
     // ===== LEAVE / DELETE =====
     window.leaveLobby = async function() {
-      if (!confirm('Leave this lobby?')) return;
+      var msg = isCreator
+        ? 'Leave this lobby? Leadership will transfer to the next member.'
+        : 'Leave this lobby?';
+      if (!confirm(msg)) return;
       if (!currentLobby) return;
       sessionStorage.removeItem('activeLobbyId');
       try {
