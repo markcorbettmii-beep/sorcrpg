@@ -1171,6 +1171,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   const role = calcSorcRole(score, !!gm_track);
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
+  const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
 
   if (role === 'FAIL') {
     return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low. Study the rules and reassess.' });
@@ -1181,11 +1182,18 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
       `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
     ).bind(id, user.id, score, role, gm_track ? 1 : 0, now).run();
 
-    await c.env.sorc_db.prepare(
-      `UPDATE users SET sorc_role = ?, updated_at = ? WHERE id = ?`
-    ).bind(role, now, user.id).run();
+    // Update both the site role (PLAYER/MASTER) and the sorc_role (PC-BEG/INT/ADV/GM-ADV)
+    // Award community points only on first-ever assessment (assessment_rewarded = 0)
+    const fullUser = await c.env.sorc_db.prepare(`SELECT assessment_rewarded, needs_reassess FROM users WHERE id = ?`).bind(user.id).first() as any;
+    const firstTime = !fullUser?.assessment_rewarded;
+    const pointsAwarded = firstTime ? (siteRole === 'MASTER' ? 200 : 100) : 0;
 
-    return c.json({ score, role, passed: true });
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET role = ?, sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
+       community_points = community_points + ?, updated_at = ? WHERE id = ?`
+    ).bind(siteRole, role, pointsAwarded, now, user.id).run();
+
+    return c.json({ score, role, site_role: siteRole, passed: true, points_awarded: pointsAwarded });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }
@@ -1193,8 +1201,12 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
 
 app.delete('/api/assess', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
-  await c.env.sorc_db.prepare(`UPDATE users SET sorc_role = NULL, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
+  // Revert to CIVILIAN until they complete a new assessment
+  await c.env.sorc_db.prepare(
+    `UPDATE users SET sorc_role = NULL, role = 'CIVILIAN', needs_reassess = 0, updated_at = ? WHERE id = ?`
+  ).bind(now, user.id).run();
   return c.json({ success: true });
 });
 
@@ -1223,6 +1235,10 @@ function genLobbyCode(): string {
   return code;
 }
 
+function isPrivileged(user: any): boolean {
+  return user.role === 'ADMIN' || user.role === 'OWNER';
+}
+
 app.get('/api/lobbies', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const assessment = await c.env.sorc_db.prepare(
@@ -1238,8 +1254,10 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
 
   return c.json({
     lobbies: lobbies.results || [],
-    assessed: !!assessment,
-    sorc_role: user.sorc_role || assessment?.role_granted || null
+    assessed: !!assessment || isPrivileged(user),
+    sorc_role: user.sorc_role || assessment?.role_granted || null,
+    is_privileged: isPrivileged(user),
+    needs_reassess: !!(user.needs_reassess)
   });
 });
 
@@ -1248,7 +1266,7 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   const assessment = await c.env.sorc_db.prepare(
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
-  if (!assessment) return c.json({ error: 'You must complete the assessment before creating a lobby.' }, 403);
+  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must complete the assessment before creating a lobby.' }, 403);
 
   const { name, box_set_code, is_private } = await c.req.json() as any;
   if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
@@ -1270,10 +1288,11 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
        VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?)`
     ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, now, now).run();
 
+    const creatorRole = assessment?.role_granted || user.sorc_role || user.role;
     await c.env.sorc_db.prepare(
       `INSERT INTO lobby_members (id, lobby_id, user_id, sorc_role, username, display_name, joined_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind(memberId, lobbyId, user.id, assessment.role_granted, user.username, user.display_name || user.username, now).run();
+    ).bind(memberId, lobbyId, user.id, creatorRole, user.username, user.display_name || user.username, now).run();
 
     return c.json({ success: true, lobby_id: lobbyId, lobby_code: lobbyCode });
   } catch (error: any) {
@@ -1291,27 +1310,55 @@ app.get('/api/lobbies/:id', authMiddleware, async (c) => {
   ).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
 
-  if (lobby.is_private && lobby.creator_uid !== user.id) {
+  const privileged = isPrivileged(user);
+
+  if (lobby.is_private && lobby.creator_uid !== user.id && !privileged) {
     const isMember = await c.env.sorc_db.prepare(
       `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
     ).bind(lobbyId, user.id).first();
     if (!isMember) return c.json({ error: 'This lobby is private.' }, 403);
   }
 
+  // Include username for profile links; privileged users also see user_id for admin tools
   const members = await c.env.sorc_db.prepare(
-    `SELECT lm.*, u.avatar FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? ORDER BY lm.joined_at ASC`
+    `SELECT lm.*, u.avatar, u.user_id as public_uid FROM lobby_members lm
+     LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? ORDER BY lm.joined_at ASC`
   ).bind(lobbyId).all();
 
-  const isMember = (members.results || []).some((m: any) => m.user_id === user.id);
+  const memberList = (members.results || []).map((m: any) => {
+    const out: any = {
+      id: m.id, lobby_id: m.lobby_id, user_id: m.user_id,
+      sorc_role: m.sorc_role, username: m.username, display_name: m.display_name,
+      joined_at: m.joined_at, is_muted: m.is_muted, avatar: m.avatar,
+      profile_url: 'public-profile.html?u=' + encodeURIComponent(m.username)
+    };
+    if (privileged) out.public_uid = m.public_uid;
+    return out;
+  });
+
+  const isMember = memberList.some((m: any) => m.user_id === user.id);
   const isCreator = lobby.creator_uid === user.id;
 
-  return c.json({ lobby, members: members.results || [], is_member: isMember, is_creator: isCreator });
+  return c.json({
+    lobby, members: memberList, is_member: isMember || privileged,
+    is_creator: isCreator, is_privileged: privileged
+  });
 });
 
 app.post('/api/lobbies/join', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const privileged = isPrivileged(user);
+
   const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
-  if (!assessment) return c.json({ error: 'You must complete the assessment before joining a lobby.' }, 403);
+  if (!assessment && !privileged) return c.json({ error: 'You must complete the assessment before joining a lobby.' }, 403);
+
+  // Warn about reassess requirement but don't hard-block
+  if (user.needs_reassess && !privileged) {
+    return c.json({
+      error: 'You have been flagged for reassessment due to an incompetence report. Please reassess before joining lobbies.',
+      needs_reassess: true
+    }, 403);
+  }
 
   const { lobby_id, lobby_code } = await c.req.json() as any;
 
@@ -1323,20 +1370,26 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   }
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
   if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
-  if (lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
+  if (!privileged && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
 
   const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
   if (existing) return c.json({ error: 'You are already in this lobby.' }, 400);
 
   const memberId = crypto.randomUUID();
   const now = new Date().toISOString();
+  const memberRole = privileged ? user.role : (assessment?.role_granted || user.sorc_role);
+
   try {
     await c.env.sorc_db.prepare(
       `INSERT INTO lobby_members (id, lobby_id, user_id, sorc_role, username, display_name, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind(memberId, lobby.id, user.id, assessment.role_granted, user.username, user.display_name || user.username, now).run();
-    const newCount = (lobby.member_count || 1) + 1;
-    const newStatus = newCount >= lobby.max_members ? 'full' : 'open';
-    await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = ?, updated_at = ? WHERE id = ?`).bind(newCount, newStatus, now, lobby.id).run();
+    ).bind(memberId, lobby.id, user.id, memberRole, user.username, user.display_name || user.username, now).run();
+
+    if (!privileged) {
+      const newCount = (lobby.member_count || 1) + 1;
+      const newStatus = newCount >= lobby.max_members ? 'full' : 'open';
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = ?, updated_at = ? WHERE id = ?`).bind(newCount, newStatus, now, lobby.id).run();
+    }
+
     return c.json({ success: true, lobby_name: lobby.name, lobby_id: lobby.id });
   } catch (error: any) {
     return c.json({ error: 'Failed to join lobby.', details: error.message }, 500);
@@ -1416,12 +1469,62 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const targetUid = c.req.param('uid');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  if (!lobby || lobby.creator_uid !== user.id) return c.json({ error: 'Not authorized.' }, 403);
+  if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
   if (targetUid === user.id) return c.json({ error: 'Cannot kick yourself.' }, 400);
   await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).run();
   const newCount = Math.max(1, (lobby.member_count || 1) - 1);
   await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, new Date().toISOString(), lobbyId).run();
   return c.json({ success: true });
+});
+
+// ─── LOBBY REPORTS ─────────────────────────────────────────────────────────────
+
+const VALID_LOBBY_REPORT_REASONS = ['Incompetence', 'Language', 'Threats', 'Harassment', 'Spam', 'Other'];
+
+app.post('/api/lobbies/:id/report/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+
+  if (targetUid === user.id) return c.json({ error: 'Cannot report yourself.' }, 400);
+
+  const isMember = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'You must be in the lobby to file a report.' }, 403);
+
+  const target = await c.env.sorc_db.prepare(
+    `SELECT id, username FROM users WHERE id = ?`
+  ).bind(targetUid).first() as any;
+  if (!target) return c.json({ error: 'User not found.' }, 404);
+
+  const { reason, details } = await c.req.json() as any;
+  if (!reason || !VALID_LOBBY_REPORT_REASONS.includes(reason)) {
+    return c.json({ error: 'Invalid report reason.' }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const reportId = crypto.randomUUID();
+
+  // Store the lobby report
+  await c.env.sorc_db.prepare(
+    `INSERT INTO lobby_reports (id, lobby_id, reporter_uid, reported_uid, reason, details, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).bind(reportId, lobbyId, user.id, targetUid, reason, details ? details.substring(0, 500) : null, now).run();
+
+  // Reporter blocks the reported user (one-way, reporter → reported)
+  await c.env.sorc_db.prepare(
+    `INSERT OR IGNORE INTO blocks (id, blocker_uid, blocked_uid, created_at) VALUES (?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), user.id, targetUid, now).run();
+
+  // If incompetence, flag the reported user for reassessment
+  if (reason === 'Incompetence') {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`
+    ).bind(now, targetUid).run();
+  }
+
+  return c.json({ success: true, blocked: true, needs_reassess_flagged: reason === 'Incompetence' });
 });
 
 // ─── PRIVATE ROOMS ─────────────────────────────────────────────────────────────
