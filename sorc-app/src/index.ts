@@ -1259,7 +1259,11 @@ function genLobbyCode(): string {
 }
 
 function isPrivileged(user: any): boolean {
-  return user.role === 'ADMIN' || user.role === 'OWNER';
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+  return user.role === 'ADMIN' || user.role === 'OWNER'
+    || OWNER_EMAILS.includes(user.email)
+    || ADMIN_EMAILS.includes(user.email);
 }
 
 app.get('/api/lobbies', authMiddleware, async (c) => {
