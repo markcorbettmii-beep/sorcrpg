@@ -1225,6 +1225,29 @@ async function claimBoxSetCode(db: D1Database, code: string, userId: string) {
     .bind(userId, now, code.toUpperCase().trim(), userId).run();
 }
 
+// ─── BOX CODE GENERATION (admin/owner only) ────────────────────────────────────
+
+app.post('/api/box-codes/generate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+
+  const { note } = await c.req.json().catch(() => ({} as any)) as any;
+  const now = new Date().toISOString();
+
+  // Generate a unique 10-char alphanumeric code
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'SORC-';
+  const arr = crypto.getRandomValues(new Uint8Array(6));
+  for (let i = 0; i < 6; i++) code += chars[arr[i] % chars.length];
+
+  await c.env.sorc_db.prepare(
+    `INSERT INTO box_set_codes (id, code, created_by, note, created_at)
+     VALUES (?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), code, user.id, note ? note.substring(0, 100) : null, now).run();
+
+  return c.json({ success: true, code });
+});
+
 // ─── LOBBIES ───────────────────────────────────────────────────────────────────
 
 function genLobbyCode(): string {
@@ -1270,10 +1293,12 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
 
   const { name, box_set_code, is_private } = await c.req.json() as any;
   if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
-  if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);
 
-  const codeCheck = await validateBoxSetCode(c.env.sorc_db, box_set_code, user.id);
-  if (!codeCheck.valid) return c.json({ error: codeCheck.error || 'Invalid box set code.' }, 400);
+  if (!isPrivileged(user)) {
+    if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);
+    const codeCheck = await validateBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+    if (!codeCheck.valid) return c.json({ error: codeCheck.error || 'Invalid box set code.' }, 400);
+  }
 
   const lobbyId = crypto.randomUUID();
   const lobbyCode = genLobbyCode();
@@ -1281,7 +1306,9 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   const memberId = crypto.randomUUID();
 
   try {
-    await claimBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+    if (!isPrivileged(user) && box_set_code) {
+      await claimBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+    }
 
     await c.env.sorc_db.prepare(
       `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, created_at, updated_at)

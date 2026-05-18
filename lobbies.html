@@ -406,12 +406,46 @@
       renderListView();
     }
 
+    // ===== HELPERS =====
+    function isPrivileged() {
+      return currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER');
+    }
+
+    var MODULES = [
+      { value: 'Module .001 | Valley of Darkness',       label: 'Module .001 | Valley of Darkness' },
+      { value: 'Module .002 | Aseya\'s Crypt (LVLs 1 - 5)', label: "Module .002 | Aseya's Crypt (LVLs 1 - 5)" }
+    ];
+
     // ===== LIST VIEW =====
     function renderListView() {
       var app = document.getElementById('lobbiesApp');
+      var priv = isPrivileged();
+      var hostName = esc(currentUser.display_name || currentUser.username || 'Unknown');
+
+      var moduleOptions = MODULES.map(function(m) {
+        return '<option value="' + esc(m.value) + '">' + esc(m.label) + '</option>';
+      }).join('');
+
+      var codeField = priv ? '' :
+        '<input type="text" id="boxSetCode" class="l-input" placeholder="Box set code..." maxlength="40" />';
+
+      var codeNote = priv
+        ? '<p style="color:#4caf50;font-size:0.78rem;margin:0;">&#10003; Admin — no box code required</p>'
+        : '<p>Host a live Campaign session. A valid box set code is required.</p>';
+
+      var adminCodeGen = priv
+        ? '<div class="action-card" style="margin-top:1.25rem;">' +
+            '<h2 class="gold" style="font-size:0.92rem;">&#128273; Generate Box Code</h2>' +
+            '<p>Create a single-use box code for a friend so they can host lobbies.</p>' +
+            '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. friend\'s name)..." maxlength="100" />' +
+            '<button class="l-btn gold" onclick="generateBoxCode()">Generate Code</button>' +
+            '<div id="genCodeResult" class="l-msg"></div>' +
+          '</div>'
+        : '';
+
       app.innerHTML =
         '<div class="info-grid">' +
-          '<div class="info-card"><h3>&#128101; Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. GMs and PCs with a box set code can host up to 20 members.</p></div>' +
+          '<div class="info-card"><h3>&#128101; Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
           '<div class="info-card"><h3>&#9876; Who Can Join</h3><p>Any assessed player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#d4af37;">Role Assessment</a> first.</p></div>' +
           '<div class="info-card"><h3>&#128172; Lobbies vs. Rooms</h3><p><strong style="color:#d4af37;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#d4af37;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
           '<div class="info-card"><h3>&#128295; Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
@@ -419,19 +453,23 @@
         '<div class="lobby-actions">' +
           '<div class="action-card create">' +
             '<h2 class="gold">&#128101; Create Lobby</h2>' +
-            '<p>Host a live Campaign session. A valid box set code is required.</p>' +
-            '<input type="text" id="lobbyName" class="l-input" placeholder="Lobby name..." maxlength="60" />' +
-            '<input type="text" id="boxSetCode" class="l-input" placeholder="Box set code..." maxlength="40" />' +
+            codeNote +
+            '<div style="color:#888;font-size:0.78rem;margin-bottom:-0.2rem;">Host: <strong style="color:#e0cfc0;">' + hostName + '</strong></div>' +
+            '<select id="lobbyModule" class="l-input" style="cursor:pointer;">' + moduleOptions + '</select>' +
+            codeField +
             '<label style="color:#555;font-size:0.78rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="isPrivate" /> Private lobby (invite code only)</label>' +
             '<button class="l-btn gold" onclick="createLobby()">Create Lobby</button>' +
             '<div id="createMsg" class="l-msg"></div>' +
           '</div>' +
-          '<div class="action-card">' +
-            '<h2 class="red">&#9876; Join by Code</h2>' +
-            '<p>Join with a lobby code from your GM, or browse open lobbies below.</p>' +
-            '<input type="text" id="joinCode" class="l-input" placeholder="Enter lobby code..." maxlength="20" />' +
-            '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
-            '<div id="joinMsg" class="l-msg"></div>' +
+          '<div style="display:flex;flex-direction:column;gap:1.25rem;">' +
+            '<div class="action-card">' +
+              '<h2 class="red">&#9876; Join by Code</h2>' +
+              '<p>Join with a lobby code from your GM, or browse open lobbies below.</p>' +
+              '<input type="text" id="joinCode" class="l-input" placeholder="Enter lobby code..." maxlength="20" />' +
+              '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
+              '<div id="joinMsg" class="l-msg"></div>' +
+            '</div>' +
+            adminCodeGen +
           '</div>' +
         '</div>' +
         '<div class="section-head">Open Lobbies</div>' +
@@ -477,25 +515,48 @@
 
     // ===== CREATE =====
     window.createLobby = async function() {
-      var name = document.getElementById('lobbyName').value.trim();
-      var code = document.getElementById('boxSetCode').value.trim();
+      var moduleEl = document.getElementById('lobbyModule');
+      var name = moduleEl ? moduleEl.value : '';
+      var codeEl = document.getElementById('boxSetCode');
+      var code = codeEl ? codeEl.value.trim() : '';
       var isPrivate = document.getElementById('isPrivate').checked;
       var msgEl = document.getElementById('createMsg');
-      if (!name) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Enter a lobby name.'; return; }
-      if (!code) { msgEl.className = 'l-msg err'; msgEl.textContent = 'A box set code is required.'; return; }
+      if (!name) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Select a module.'; return; }
+      if (!isPrivileged() && !code) { msgEl.className = 'l-msg err'; msgEl.textContent = 'A box set code is required.'; return; }
       msgEl.className = 'l-msg'; msgEl.textContent = 'Creating...';
       try {
+        var body = { name: name, is_private: isPrivate };
+        if (code) body.box_set_code = code;
         var res = await fetch(API_URL + '/api/lobbies', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ name: name, box_set_code: code, is_private: isPrivate })
+          body: JSON.stringify(body)
         });
         var data = await res.json();
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Lobby created! Code: ' + (data.lobby_code || '');
-          setTimeout(function() { openLobby(data.lobby.id); }, 600);
+          setTimeout(function() { openLobby(data.lobby_id); }, 600);
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    // ===== GENERATE BOX CODE (admin/owner) =====
+    window.generateBoxCode = async function() {
+      var note = (document.getElementById('codeNote') || {}).value || '';
+      var resultEl = document.getElementById('genCodeResult');
+      resultEl.className = 'l-msg'; resultEl.textContent = 'Generating...';
+      try {
+        var res = await fetch(API_URL + '/api/box-codes/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ note: note.trim() })
+        });
+        var data = await res.json();
+        if (data.success) {
+          resultEl.className = 'l-msg ok';
+          resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
+        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
+      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
     };
 
     // ===== JOIN =====
