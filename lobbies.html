@@ -702,9 +702,17 @@
     };
 
     // ===== OPEN LOBBY DETAIL =====
+    // Block browser back button while inside a lobby
+    window.addEventListener('popstate', function() {
+      if (currentLobby) {
+        history.pushState({ lobby: currentLobby.id }, '');
+      }
+    });
+
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
       sessionStorage.setItem('activeLobbyId', lobbyId);
+      history.pushState({ lobby: lobbyId }, '');
       var app = document.getElementById('lobbiesApp');
       app.innerHTML = '<p style="color:#555;text-align:center;padding:2rem;">Loading lobby...</p>';
       try {
@@ -788,7 +796,6 @@
           '</div>' +
           '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
             launchBtn + leaveBtn + deleteBtn +
-            '<button class="back-btn" onclick="backToList()">&#8592; All Lobbies</button>' +
           '</div>' +
         '</div>' +
         '<div class="detail-grid">' +
