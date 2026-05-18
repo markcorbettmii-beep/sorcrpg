@@ -320,8 +320,11 @@
 
   /* ── RENDER LOOP ── */
   let currentT = 0;
+  let solarRafId = null;
+  let solarRunning = false;
 
   function render() {
+    if (!solarRunning) return;
     currentT += 0.0032;
     const t = currentT;
 
@@ -354,8 +357,25 @@
     ctx.fillStyle = 'rgba(1,2,10,0.58)';
     ctx.fillRect(0, 0, W, H);
 
-    requestAnimationFrame(render);
+    solarRafId = requestAnimationFrame(render);
   }
 
-  render();
+  /* ── PUBLIC API ── */
+  window.solarBg = {
+    start: function () {
+      if (solarRunning) return;
+      solarRunning = true;
+      canvas.style.display = 'block';
+      solarRafId = requestAnimationFrame(render);
+    },
+    stop: function () {
+      solarRunning = false;
+      if (solarRafId) { cancelAnimationFrame(solarRafId); solarRafId = null; }
+      canvas.style.display = 'none';
+    }
+  };
+
+  /* Auto-start on load */
+  solarRunning = true;
+  solarRafId = requestAnimationFrame(render);
 })();

@@ -1,0 +1,802 @@
+/* ============================================================
+   VEILWOOD THEME — theme-veilwood.js
+   Mythical forest day/night cycle canvas background for sorcrpg.com
+   Exposes: window.veilwoodTheme = { start, stop }
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ── STATE ── */
+  var canvas = null;
+  var ctx = null;
+  var W = 0, H = 0;
+  var rafId = null;
+  var running = false;
+  var startTime = 0;
+  var lastRafTime = 0;
+
+  /* ── AUDIO STATE ── */
+  var audioCtx = null;
+  var windGain = null;
+  var windNode = null;
+  var windLfoNode = null;
+  var cricketGain = null;
+  var cricketOsc1 = null;
+  var cricketOsc2 = null;
+  var cricketAmplifier = null;
+  var birdTimer = null;
+  var shimmerTimer = null;
+  var audioStarted = false;
+  var pendingAudioStart = false;
+  var lastNightPhase = -1;   /* -1 = unknown, 0 = day, 1 = night */
+
+  /* ── SCENE OBJECTS (generated once) ── */
+  var STARS = [];
+  var FIREFLIES = [];
+  var PARTICLES = [];
+  var TREES_BACK = [];
+  var TREES_MID = [];
+  var TREES_FRONT = [];
+  var SCENE_INIT = false;
+
+  /* ── DAY/NIGHT CYCLE ── */
+  var CYCLE_DURATION = 120; /* seconds for a full cycle */
+
+  /* Returns a value 0..1 representing progress through the cycle.
+     0=dawn, 0.25=midday, 0.5=dusk, 0.75=midnight */
+  function getCyclePhase(t) {
+    return (t % CYCLE_DURATION) / CYCLE_DURATION;
+  }
+
+  /* Returns nightness 0..1 (0=full day, 1=full night) */
+  function getNightness(phase) {
+    /* Use a smooth wave: night peaks at 0.75, day at 0.25 */
+    return 0.5 - 0.5 * Math.cos((phase - 0.25) * Math.PI * 2);
+  }
+
+  /* ── INIT SCENE OBJECTS ── */
+  function initScene() {
+    if (SCENE_INIT) return;
+    SCENE_INIT = true;
+
+    /* Stars */
+    for (var i = 0; i < 120; i++) {
+      STARS.push({
+        x: Math.random(),
+        y: Math.random() * 0.65,
+        r: Math.random() * 1.3 + 0.2,
+        a: Math.random() * 0.7 + 0.3,
+        tw: Math.random() * Math.PI * 2
+      });
+    }
+
+    /* Fireflies */
+    for (var j = 0; j < 25; j++) {
+      FIREFLIES.push({
+        x: Math.random(),
+        y: 0.5 + Math.random() * 0.4,
+        vx: (Math.random() - 0.5) * 0.0003,
+        vy: (Math.random() - 0.5) * 0.00015,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.8 + Math.random() * 0.8,
+        bright: Math.random()
+      });
+    }
+
+    /* Magical particles */
+    for (var k = 0; k < 18; k++) {
+      PARTICLES.push({
+        x: Math.random(),
+        y: 0.3 + Math.random() * 0.65,
+        vy: -0.00008 - Math.random() * 0.00006,
+        vx: (Math.random() - 0.5) * 0.00004,
+        phase: Math.random() * Math.PI * 2,
+        col: Math.random() > 0.5 ? 'purple' : 'gold',
+        size: 1.5 + Math.random() * 2
+      });
+    }
+
+    /* Tree layers — each tree: x (fraction), height, width, tilt, swayAmp */
+    generateTrees(TREES_BACK, 14, 0.55);
+    generateTrees(TREES_MID, 12, 0.68);
+    generateTrees(TREES_FRONT, 10, 0.82);
+  }
+
+  function generateTrees(arr, count, groundY) {
+    for (var i = 0; i < count; i++) {
+      arr.push({
+        x: (i + 0.3 + Math.random() * 0.4) / count,
+        groundY: groundY,
+        height: 0.18 + Math.random() * 0.12,
+        width: 0.04 + Math.random() * 0.03,
+        swayAmp: 0.004 + Math.random() * 0.003,
+        swaySpeed: 0.3 + Math.random() * 0.4,
+        swayPhase: Math.random() * Math.PI * 2,
+        branchSeed: Math.random()
+      });
+    }
+  }
+
+  /* ── SKY COLOR ── */
+  function getSkyColors(phase) {
+    /* phase 0=dawn 0.25=day 0.5=dusk 0.75=night */
+    /* Interpolate between key sky states */
+    var states = [
+      /* phase  top-color                       horizon-color */
+      { p: 0.00, top: [15, 10, 35],   hor: [200, 90, 50]  },  /* dawn */
+      { p: 0.12, top: [20, 40, 100],  hor: [220, 150, 80] },  /* mid-dawn */
+      { p: 0.25, top: [10, 30, 90],   hor: [80, 130, 200] },  /* day */
+      { p: 0.38, top: [15, 20, 70],   hor: [200, 100, 60] },  /* pre-dusk */
+      { p: 0.50, top: [60, 20, 80],   hor: [220, 80, 40]  },  /* dusk */
+      { p: 0.62, top: [10, 5, 30],    hor: [80, 30, 60]   },  /* twilight */
+      { p: 0.75, top: [2, 4, 10],     hor: [5, 8, 20]     },  /* night */
+      { p: 0.88, top: [5, 3, 20],     hor: [10, 5, 30]    },  /* late night */
+      { p: 1.00, top: [15, 10, 35],   hor: [200, 90, 50]  },  /* back to dawn */
+    ];
+
+    /* Find surrounding states */
+    var a = states[0], b = states[states.length - 1];
+    for (var i = 0; i < states.length - 1; i++) {
+      if (phase >= states[i].p && phase <= states[i + 1].p) {
+        a = states[i]; b = states[i + 1]; break;
+      }
+    }
+    var t = a.p === b.p ? 0 : (phase - a.p) / (b.p - a.p);
+    t = smoothstep(t);
+
+    return {
+      top: lerp3(a.top, b.top, t),
+      hor: lerp3(a.hor, b.hor, t)
+    };
+  }
+
+  function lerp3(a, b, t) {
+    return [
+      Math.round(a[0] + (b[0] - a[0]) * t),
+      Math.round(a[1] + (b[1] - a[1]) * t),
+      Math.round(a[2] + (b[2] - a[2]) * t)
+    ];
+  }
+
+  function smoothstep(t) {
+    return t * t * (3 - 2 * t);
+  }
+
+  /* ── DRAW SKY ── */
+  function drawSky(phase) {
+    var colors = getSkyColors(phase);
+    var grd = ctx.createLinearGradient(0, 0, 0, H * 0.82);
+    grd.addColorStop(0, 'rgb(' + colors.top[0] + ',' + colors.top[1] + ',' + colors.top[2] + ')');
+    grd.addColorStop(1, 'rgb(' + colors.hor[0] + ',' + colors.hor[1] + ',' + colors.hor[2] + ')');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  /* ── DRAW STARS ── */
+  function drawStars(nightness, t) {
+    if (nightness < 0.05) return;
+    for (var i = 0; i < STARS.length; i++) {
+      var s = STARS[i];
+      var twinkle = 0.7 + 0.3 * Math.sin(t * 1.2 + s.tw);
+      var alpha = nightness * s.a * twinkle;
+      ctx.beginPath();
+      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+      ctx.fill();
+    }
+  }
+
+  /* ── SUN / MOON ARC ── */
+  /* Both arc across the sky: y = sin(arcFrac * PI) for height */
+  function getCelestialPos(phase, offset) {
+    /* arcFrac 0=rising, 0.5=zenith, 1=setting */
+    var arcFrac = ((phase + offset) % 1.0);
+    var x = arcFrac;
+    var y = 0.75 - 0.65 * Math.max(0, Math.sin(arcFrac * Math.PI));
+    return { x: x, y: y };
+  }
+
+  function drawSun(phase, nightness, t) {
+    if (nightness > 0.85) return;
+    var pos = getCelestialPos(phase, 0);
+    if (pos.y > 0.75) return; /* below horizon */
+
+    var alpha = 1 - nightness;
+    var sx = pos.x * W;
+    var sy = pos.y * H;
+    var r = Math.min(W, H) * 0.055;
+
+    /* Corona */
+    var pulse = 1 + 0.06 * Math.sin(t * 1.5);
+    var corona = ctx.createRadialGradient(sx, sy, r * 0.5, sx, sy, r * 3.5 * pulse);
+    corona.addColorStop(0, 'rgba(255,235,100,' + (alpha * 0.55) + ')');
+    corona.addColorStop(0.3, 'rgba(255,180,40,' + (alpha * 0.25) + ')');
+    corona.addColorStop(1, 'transparent');
+    ctx.fillStyle = corona;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r * 3.5 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Body */
+    var body = ctx.createRadialGradient(sx - r * 0.2, sy - r * 0.2, 0, sx, sy, r);
+    body.addColorStop(0, 'rgba(255,255,220,' + alpha + ')');
+    body.addColorStop(0.5, 'rgba(255,220,60,' + alpha + ')');
+    body.addColorStop(1, 'rgba(240,160,20,' + alpha + ')');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawMoons(phase, nightness, t) {
+    if (nightness < 0.1) return;
+
+    /* Large silver moon */
+    var pos1 = getCelestialPos(phase, 0.5);
+    if (pos1.y <= 0.75) {
+      var mx = pos1.x * W;
+      var my = pos1.y * H;
+      var mr = Math.min(W, H) * 0.04;
+      var alpha1 = nightness;
+
+      /* Moon glow */
+      var mglow = ctx.createRadialGradient(mx, my, 0, mx, my, mr * 3);
+      mglow.addColorStop(0, 'rgba(220,230,255,' + (alpha1 * 0.3) + ')');
+      mglow.addColorStop(1, 'transparent');
+      ctx.fillStyle = mglow;
+      ctx.beginPath();
+      ctx.arc(mx, my, mr * 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      /* Moon body */
+      var mbody = ctx.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, 0, mx, my, mr);
+      mbody.addColorStop(0, 'rgba(240,245,255,' + alpha1 + ')');
+      mbody.addColorStop(0.6, 'rgba(200,215,240,' + alpha1 + ')');
+      mbody.addColorStop(1, 'rgba(160,175,210,' + alpha1 + ')');
+      ctx.fillStyle = mbody;
+      ctx.beginPath();
+      ctx.arc(mx, my, mr, 0, Math.PI * 2);
+      ctx.fill();
+
+      /* Mare shadows */
+      ctx.save();
+      ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = 'rgba(100,110,140,' + (alpha1 * 0.25) + ')';
+      ctx.beginPath(); ctx.arc(mx + mr * 0.25, my - mr * 0.2, mr * 0.35, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(mx - mr * 0.3, my + mr * 0.3, mr * 0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+
+    /* Smaller purple moon */
+    var pos2 = getCelestialPos(phase, 0.58);
+    if (pos2.y <= 0.75) {
+      var mx2 = pos2.x * W;
+      var my2 = pos2.y * H;
+      var mr2 = Math.min(W, H) * 0.022;
+      var alpha2 = nightness * 0.9;
+
+      var mglow2 = ctx.createRadialGradient(mx2, my2, 0, mx2, my2, mr2 * 2.5);
+      mglow2.addColorStop(0, 'rgba(180,100,255,' + (alpha2 * 0.35) + ')');
+      mglow2.addColorStop(1, 'transparent');
+      ctx.fillStyle = mglow2;
+      ctx.beginPath();
+      ctx.arc(mx2, my2, mr2 * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      var mbody2 = ctx.createRadialGradient(mx2 - mr2 * 0.3, my2 - mr2 * 0.3, 0, mx2, my2, mr2);
+      mbody2.addColorStop(0, 'rgba(220,170,255,' + alpha2 + ')');
+      mbody2.addColorStop(0.7, 'rgba(160,80,220,' + alpha2 + ')');
+      mbody2.addColorStop(1, 'rgba(100,40,180,' + alpha2 + ')');
+      ctx.fillStyle = mbody2;
+      ctx.beginPath();
+      ctx.arc(mx2, my2, mr2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* ── DRAW TREES ── */
+  function drawTreeLayer(trees, colR, colG, colB, t, swayMult) {
+    for (var i = 0; i < trees.length; i++) {
+      var tree = trees[i];
+      var sway = Math.sin(t * tree.swaySpeed + tree.swayPhase) * tree.swayAmp * swayMult;
+      var tx = tree.x * W;
+      var ty = tree.groundY * H;
+      var th = tree.height * H;
+      var tw = tree.width * W;
+
+      ctx.save();
+      ctx.translate(tx, ty);
+
+      /* Trunk */
+      var trunkW = tw * 0.12;
+      ctx.beginPath();
+      ctx.moveTo(-trunkW * 0.5, 0);
+      ctx.lineTo(-trunkW * 0.5 + sway * th * 0.15, -th * 0.35);
+      ctx.lineTo(trunkW * 0.5 + sway * th * 0.15, -th * 0.35);
+      ctx.lineTo(trunkW * 0.5, 0);
+      ctx.closePath();
+      ctx.fillStyle = 'rgb(' + colR + ',' + colG + ',' + colB + ')';
+      ctx.fill();
+
+      /* Crown — layered ovals for a stylized silhouette */
+      var trunkTopX = sway * th * 0.15;
+      var trunkTopY = -th * 0.35;
+
+      /* Bottom crown layer */
+      ctx.save();
+      ctx.translate(trunkTopX, trunkTopY);
+      ctx.rotate(sway * 0.08);
+      ctx.beginPath();
+      ctx.ellipse(0, -th * 0.18, tw * 0.5, th * 0.22, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgb(' + colR + ',' + colG + ',' + colB + ')';
+      ctx.fill();
+
+      /* Middle crown layer */
+      ctx.beginPath();
+      ctx.ellipse(tw * 0.1 * tree.branchSeed, -th * 0.32, tw * 0.38, th * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      /* Top tuft */
+      ctx.beginPath();
+      ctx.ellipse(-tw * 0.05 * tree.branchSeed, -th * 0.44, tw * 0.22, th * 0.13, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+      ctx.restore();
+    }
+  }
+
+  function drawTrees(t) {
+    /* Back layer — darkest, barely visible */
+    drawTreeLayer(TREES_BACK, 4, 6, 10, t, 0.6);
+    /* Mid layer */
+    drawTreeLayer(TREES_MID, 3, 5, 8, t, 0.8);
+    /* Front layer — most contrast, most sway */
+    drawTreeLayer(TREES_FRONT, 2, 3, 5, t, 1.2);
+  }
+
+  /* ── GROUND MIST ── */
+  function drawMist(phase, t) {
+    var nightness = getNightness(phase);
+    var mistAlpha = 0.06 + nightness * 0.06 + 0.03 * Math.sin(t * 0.4);
+    var mistY = H * 0.78;
+    var mistH = H * 0.18;
+
+    var grd = ctx.createLinearGradient(0, mistY, 0, mistY + mistH);
+    grd.addColorStop(0, 'rgba(200,220,255,' + mistAlpha + ')');
+    grd.addColorStop(0.4, 'rgba(160,190,230,' + (mistAlpha * 0.6) + ')');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, mistY, W, mistH);
+  }
+
+  /* ── FIREFLIES ── */
+  function updateFireflies(dt) {
+    for (var i = 0; i < FIREFLIES.length; i++) {
+      var f = FIREFLIES[i];
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+      /* Drift back in bounds */
+      if (f.x < 0) f.x += 1;
+      if (f.x > 1) f.x -= 1;
+      if (f.y < 0.45) f.vy += 0.000002;
+      if (f.y > 0.95) f.vy -= 0.000002;
+      f.phase += f.speed * dt * 0.003;
+    }
+  }
+
+  function drawFireflies(nightness, t) {
+    if (nightness < 0.3) return;
+    var globalAlpha = Math.max(0, (nightness - 0.3) / 0.7);
+    for (var i = 0; i < FIREFLIES.length; i++) {
+      var f = FIREFLIES[i];
+      var blink = 0.5 + 0.5 * Math.sin(f.phase);
+      var alpha = globalAlpha * blink;
+      if (alpha < 0.05) continue;
+      var fx = f.x * W;
+      var fy = f.y * H;
+
+      /* Glow */
+      var grd = ctx.createRadialGradient(fx, fy, 0, fx, fy, 8);
+      grd.addColorStop(0, 'rgba(180,255,80,' + alpha + ')');
+      grd.addColorStop(0.4, 'rgba(120,220,40,' + (alpha * 0.5) + ')');
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      /* Core dot */
+      ctx.beginPath();
+      ctx.arc(fx, fy, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(220,255,120,' + alpha + ')';
+      ctx.fill();
+    }
+  }
+
+  /* ── MAGICAL PARTICLES ── */
+  function updateParticles(dt) {
+    for (var i = 0; i < PARTICLES.length; i++) {
+      var p = PARTICLES[i];
+      p.y += p.vy * dt;
+      p.x += p.vx * dt;
+      p.phase += 0.002 * dt;
+      /* Reset when off screen */
+      if (p.y < 0.1) {
+        p.y = 0.7 + Math.random() * 0.25;
+        p.x = Math.random();
+      }
+      if (p.x < 0) p.x += 1;
+      if (p.x > 1) p.x -= 1;
+    }
+  }
+
+  function drawParticles(t) {
+    for (var i = 0; i < PARTICLES.length; i++) {
+      var p = PARTICLES[i];
+      var alpha = 0.35 + 0.35 * Math.sin(p.phase);
+      var px = p.x * W;
+      var py = p.y * H;
+      var col = p.col === 'purple' ? '160,80,255' : '255,200,60';
+
+      var grd = ctx.createRadialGradient(px, py, 0, px, py, p.size * 2.5);
+      grd.addColorStop(0, 'rgba(' + col + ',' + alpha + ')');
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(px, py, p.size * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* ── DARK OVERLAY ── */
+  function drawOverlay(nightness) {
+    var nightA = 0.45, dayA = 0.35;
+    var alpha = dayA + (nightA - dayA) * nightness;
+    var r = Math.round(2 + nightness * 0);
+    var g = Math.round(4 + nightness * 0);
+    var b = Math.round(10 + nightness * 0);
+    ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  /* ──────────────────────────────────────────
+     MAIN RENDER LOOP
+  ────────────────────────────────────────── */
+  function render(now) {
+    if (!running) return;
+    var dt = now - (lastRafTime || now);
+    lastRafTime = now;
+
+    var t = (now - startTime) / 1000;
+    var phase = getCyclePhase(t);
+    var nightness = getNightness(phase);
+
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+
+    /* Sky */
+    drawSky(phase);
+
+    /* Stars */
+    drawStars(nightness, t);
+
+    /* Celestial bodies */
+    drawSun(phase, nightness, t);
+    drawMoons(phase, nightness, t);
+
+    /* Trees */
+    drawTrees(t);
+
+    /* Mist */
+    drawMist(phase, t);
+
+    /* Fireflies */
+    updateFireflies(dt);
+    drawFireflies(nightness, t);
+
+    /* Magical particles */
+    updateParticles(dt);
+    drawParticles(t);
+
+    /* Dark overlay */
+    drawOverlay(nightness);
+
+    /* Update audio based on day/night phase */
+    var isNight = nightness > 0.5;
+    if (audioStarted && isNight !== (lastNightPhase === 1)) {
+      lastNightPhase = isNight ? 1 : 0;
+      crossfadeDayNight(nightness);
+    }
+
+    rafId = requestAnimationFrame(render);
+  }
+
+  /* ──────────────────────────────────────────
+     AUDIO
+  ────────────────────────────────────────── */
+  function ensureAudioCtx() {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) { audioCtx = null; }
+    }
+    return audioCtx;
+  }
+
+  function startAudio() {
+    if (audioStarted) return;
+    var ac = ensureAudioCtx();
+    if (!ac) return;
+    if (ac.state === 'suspended') {
+      ac.resume().then(startAudio);
+      return;
+    }
+    audioStarted = true;
+    lastNightPhase = -1;
+
+    /* Wind: bandpass-filtered noise with slow LFO on gain */
+    startWind(ac);
+
+    /* Crickets (night) */
+    startCrickets(ac);
+
+    /* Schedule bird chirps (day) and shimmer */
+    scheduleBird();
+    scheduleShimmer();
+  }
+
+  function startWind(ac) {
+    try {
+      var bufSize = 4096;
+      var noiseProc = ac.createScriptProcessor(bufSize, 0, 1);
+      noiseProc.onaudioprocess = function (e) {
+        var out = e.outputBuffer.getChannelData(0);
+        for (var i = 0; i < out.length; i++) {
+          out[i] = Math.random() * 2 - 1;
+        }
+      };
+      var filter = ac.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 300;
+      filter.Q.value = 0.8;
+
+      windGain = ac.createGain();
+      windGain.gain.setValueAtTime(0, ac.currentTime);
+      windGain.gain.linearRampToValueAtTime(0.025, ac.currentTime + 3);
+
+      noiseProc.connect(filter);
+      filter.connect(windGain);
+      windGain.connect(ac.destination);
+      windNode = noiseProc;
+
+      /* LFO for wind swell — modulate via setInterval since AudioParam automation 
+         doesn't easily do slow periodic sweeps without AudioWorklet */
+      var lfoPhase = 0;
+      windLfoNode = setInterval(function () {
+        if (!audioStarted || !windGain || !ac) return;
+        lfoPhase += 0.1;
+        var lfoVal = 0.025 + 0.015 * (0.5 + 0.5 * Math.sin(lfoPhase));
+        try {
+          windGain.gain.setTargetAtTime(lfoVal, ac.currentTime, 0.5);
+        } catch (e) {}
+      }, 200);
+    } catch (e) {}
+  }
+
+  function startCrickets(ac) {
+    try {
+      cricketAmplifier = ac.createGain();
+      cricketAmplifier.gain.setValueAtTime(0, ac.currentTime);
+      cricketAmplifier.connect(ac.destination);
+
+      /* Cricket AM oscillator pair */
+      var amOsc = ac.createOscillator();
+      amOsc.type = 'sine';
+      amOsc.frequency.value = 12; /* AM freq */
+      var amGain = ac.createGain();
+      amGain.gain.value = 0.5;
+      amOsc.connect(amGain);
+      amGain.connect(cricketAmplifier.gain);
+      amOsc.start();
+
+      cricketOsc1 = ac.createOscillator();
+      cricketOsc1.type = 'sine';
+      cricketOsc1.frequency.value = 4200;
+      var g1 = ac.createGain();
+      g1.gain.value = 0.015;
+      cricketOsc1.connect(g1);
+      g1.connect(cricketAmplifier);
+      cricketOsc1.start();
+
+      cricketOsc2 = ac.createOscillator();
+      cricketOsc2.type = 'sine';
+      cricketOsc2.frequency.value = 4400;
+      var g2 = ac.createGain();
+      g2.gain.value = 0.015;
+      cricketOsc2.connect(g2);
+      g2.connect(cricketAmplifier);
+      cricketOsc2.start();
+    } catch (e) {}
+  }
+
+  function crossfadeDayNight(nightness) {
+    if (!audioCtx || !audioStarted) return;
+    var ac = audioCtx;
+    var now = ac.currentTime;
+    var fadeDur = 8; /* seconds crossfade */
+
+    /* Crickets fade in at night */
+    if (cricketAmplifier) {
+      var cricketTarget = nightness > 0.5 ? 1.0 : 0.0;
+      try {
+        cricketAmplifier.gain.cancelScheduledValues(now);
+        cricketAmplifier.gain.setValueAtTime(cricketAmplifier.gain.value, now);
+        cricketAmplifier.gain.linearRampToValueAtTime(cricketTarget, now + fadeDur);
+      } catch (e) {}
+    }
+  }
+
+  function scheduleBird() {
+    if (!running) return;
+    var delay = 3000 + Math.random() * 5000;
+    birdTimer = setTimeout(function () {
+      if (running && audioCtx && audioCtx.state === 'running') {
+        /* Only chirp during day */
+        var t = (performance.now() - startTime) / 1000;
+        var phase = getCyclePhase(t);
+        var nightness = getNightness(phase);
+        if (nightness < 0.5 && audioStarted) {
+          playBirdChirp();
+        }
+      }
+      scheduleBird();
+    }, delay);
+  }
+
+  function playBirdChirp() {
+    var ac = audioCtx;
+    if (!ac) return;
+    var now = ac.currentTime;
+    var g = ac.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.05, now + 0.02);
+    g.gain.setValueAtTime(0.05, now + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    g.connect(ac.destination);
+
+    var osc = ac.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.linearRampToValueAtTime(2400, now + 0.12);
+    osc.frequency.linearRampToValueAtTime(1800, now + 0.25);
+    osc.connect(g);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }
+
+  function scheduleShimmer() {
+    if (!running) return;
+    var delay = 10000 + Math.random() * 10000;
+    shimmerTimer = setTimeout(function () {
+      if (running && audioCtx && audioCtx.state === 'running' && audioStarted) {
+        playShimmer();
+      }
+      scheduleShimmer();
+    }, delay);
+  }
+
+  function playShimmer() {
+    var ac = audioCtx;
+    if (!ac) return;
+    var now = ac.currentTime;
+    var g = ac.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.04, now + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+    g.connect(ac.destination);
+    var osc = ac.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 1800;
+    osc.connect(g);
+    osc.start(now);
+    osc.stop(now + 0.45);
+  }
+
+  function stopAudio() {
+    audioStarted = false;
+    lastNightPhase = -1;
+
+    if (birdTimer) { clearTimeout(birdTimer); birdTimer = null; }
+    if (shimmerTimer) { clearTimeout(shimmerTimer); shimmerTimer = null; }
+    if (windLfoNode) { clearInterval(windLfoNode); windLfoNode = null; }
+
+    if (audioCtx) {
+      try {
+        if (windGain) {
+          windGain.gain.cancelScheduledValues(audioCtx.currentTime);
+          windGain.gain.setValueAtTime(windGain.gain.value, audioCtx.currentTime);
+          windGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+        }
+        if (cricketAmplifier) {
+          cricketAmplifier.gain.cancelScheduledValues(audioCtx.currentTime);
+          cricketAmplifier.gain.setValueAtTime(cricketAmplifier.gain.value, audioCtx.currentTime);
+          cricketAmplifier.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+        }
+      } catch (e) {}
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     USER INTERACTION → resume AudioContext
+  ────────────────────────────────────────── */
+  function onUserInteraction() {
+    if (pendingAudioStart) {
+      pendingAudioStart = false;
+      startAudio();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     PUBLIC API
+  ────────────────────────────────────────── */
+  window.veilwoodTheme = {
+    start: function () {
+      if (running) return;
+      running = true;
+
+      canvas = document.createElement('canvas');
+      canvas.id = 'veilwoodBg';
+      Object.assign(canvas.style, {
+        position: 'fixed', top: '0', left: '0',
+        width: '100%', height: '100%',
+        zIndex: '-1', pointerEvents: 'none', display: 'block'
+      });
+      document.body.insertBefore(canvas, document.body.firstChild);
+      ctx = canvas.getContext('2d');
+
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+
+      initScene();
+
+      startTime = performance.now();
+      lastRafTime = 0;
+      rafId = requestAnimationFrame(render);
+
+      /* Audio: start if context running, else wait for user gesture */
+      if (audioCtx && audioCtx.state === 'running') {
+        startAudio();
+      } else {
+        pendingAudioStart = true;
+        document.addEventListener('click', onUserInteraction, { once: true });
+        document.addEventListener('touchstart', onUserInteraction, { once: true });
+        document.addEventListener('keydown', onUserInteraction, { once: true });
+      }
+    },
+
+    stop: function () {
+      if (!running) return;
+      running = false;
+      pendingAudioStart = false;
+
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+
+      stopAudio();
+
+      if (canvas && canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
+      }
+      canvas = null;
+      ctx = null;
+
+      document.removeEventListener('click', onUserInteraction);
+      document.removeEventListener('touchstart', onUserInteraction);
+      document.removeEventListener('keydown', onUserInteraction);
+    }
+  };
+
+})();

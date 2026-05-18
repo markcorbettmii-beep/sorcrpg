@@ -365,8 +365,37 @@
       document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
       var active = document.getElementById('tpill-' + t);
       if (active) active.classList.add('active');
+
+      /* ── Theme canvas routing ── */
+      /* Stop all theme canvases first */
+      if (window.terminalTheme) window.terminalTheme.stop();
+      if (window.veilwoodTheme) window.veilwoodTheme.stop();
+      if (window.solarBg) window.solarBg.stop();
+
+      if (t === 'terminal') {
+        if (window.terminalTheme) window.terminalTheme.start();
+      } else if (t === 'veilwood') {
+        if (window.veilwoodTheme) window.veilwoodTheme.start();
+      } else {
+        /* default — solar system */
+        if (window.solarBg) window.solarBg.start();
+      }
     }
-    setLobbyTheme(lobbyTheme);
+    /* Initial theme apply: CSS classes apply immediately; canvas routing deferred
+       until all scripts (theme-terminal.js, theme-veilwood.js) have loaded */
+    (function () {
+      var root = document.getElementById('pageRoot');
+      Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
+      if (themeClassMap[lobbyTheme]) root.classList.add(themeClassMap[lobbyTheme]);
+      document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
+      var active = document.getElementById('tpill-' + lobbyTheme);
+      if (active) active.classList.add('active');
+    })();
+
+    /* Canvas routing: runs after all scripts are parsed */
+    window.addEventListener('load', function () {
+      setLobbyTheme(lobbyTheme);
+    });
 
     // ===== HELPERS =====
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -890,5 +919,7 @@
   </script>
   <script src="nav.js"></script>
   <script src="main.js"></script>
+  <script src="theme-terminal.js"></script>
+  <script src="theme-veilwood.js"></script>
 </body>
 </html>
