@@ -132,6 +132,11 @@
         var res = await fetch(API_URL + '/api/assess', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
         if (data.assessment) {
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = data.assessment.role_granted;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
           showResult(data.assessment, true);
         } else {
           loadQuiz();
@@ -244,6 +249,11 @@
         });
         var data = await res.json();
         if (data.passed) {
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = data.role;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
           showResult({ score: data.score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false);
         } else if (data.role === 'FAIL') {
           msgEl.textContent = 'Score: ' + data.score + '/10 - Too low to pass. Study the rules and try again.';
