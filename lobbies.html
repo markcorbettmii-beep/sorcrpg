@@ -428,6 +428,7 @@
     var reportTargetName = '';
     var selectedReportReason = null;
     var isCreator = false;
+    var hasGMRights = false;
 
     // ===== MAIN RENDER =====
     function render() {
@@ -446,6 +447,8 @@
         badge.style.display = isPrivileged() ? 'none' : 'block';
       }
       renderListView();
+      var savedLobbyId = sessionStorage.getItem('activeLobbyId');
+      if (savedLobbyId) openLobby(savedLobbyId);
     }
 
     // ===== HELPERS =====
@@ -641,17 +644,25 @@
     // ===== OPEN LOBBY DETAIL =====
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
+      sessionStorage.setItem('activeLobbyId', lobbyId);
       var app = document.getElementById('lobbiesApp');
       app.innerHTML = '<p style="color:#555;text-align:center;padding:2rem;">Loading lobby...</p>';
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId, { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
-        if (!data.lobby) { alert(data.error || 'Could not load lobby.'); renderListView(); return; }
+        if (!data.lobby) {
+          sessionStorage.removeItem('activeLobbyId');
+          alert(data.error || 'Could not load lobby.'); renderListView(); return;
+        }
         currentLobby = data.lobby;
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
+        hasGMRights = isCreator || isPrivileged();
         renderLobbyDetail(data);
         startChatPoll(lobbyId);
-      } catch(e) { alert('Connection error.'); renderListView(); }
+      } catch(e) {
+        sessionStorage.removeItem('activeLobbyId');
+        alert('Connection error.'); renderListView();
+      }
     };
 
     function renderLobbyDetail(data) {
@@ -664,17 +675,23 @@
         var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
         var isSelf = currentUser && m.user_id === currentUser.id;
         var actBtns = '';
-        if (!isSelf && isCreator) {
+        if (!isSelf && hasGMRights) {
           actBtns += '<button class="member-act-btn" onclick="muteMember(\'' + esc(m.user_id) + '\',\'' + esc(m.id) + '\')" title="Mute">' + (m.is_muted ? 'Unmute' : 'Mute') + '</button>';
           actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')" title="Kick">Kick</button>';
         }
         if (!isSelf) {
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report">&#9888;</button>';
         }
+        var sheetIcon = m.sheet_url
+          ? '<a href="' + esc(m.sheet_url) + '" target="_blank" title="Character Sheet" style="color:#888;font-size:0.8rem;margin-left:0.35rem;text-decoration:none;vertical-align:middle;">&#128196;</a>'
+          : '<span title="Awaiting character sheet" style="color:#333;font-size:0.8rem;margin-left:0.35rem;cursor:default;vertical-align:middle;">&#128196;</span>';
         return '<div class="member-row">' +
           '<div class="member-avatar">' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '</div>' +
           '<div class="member-info">' +
-            '<a href="' + esc(m.profile_url || '/profile.html?uid=' + m.user_id) + '" class="member-name" ' + (isGM ? '' : '') + '>' + esc(m.display_name || m.username) + '</a>' +
+            '<span style="display:flex;align-items:center;gap:0;">' +
+              '<a href="' + esc(m.profile_url || '/profile.html?uid=' + m.user_id) + '" class="member-name">' + esc(m.display_name || m.username) + '</a>' +
+              sheetIcon +
+            '</span>' +
             '<div class="member-role' + (isGM ? ' gm' : '') + '">' + roleLabel(m.sorc_role) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
           '</div>' +
           '<div class="member-actions">' + actBtns + '</div>' +
@@ -699,9 +716,9 @@
         roomsHtml = '<div class="empty-state" style="padding:1rem;">No active rooms. The GM can launch one from inside the lobby.</div>';
       }
 
-      var launchBtn = isCreator ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
+      var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
       var leaveBtn = !isCreator ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' : '';
-      var deleteBtn = isCreator ? '<button class="leave-btn" style="border-color:#5a1a1a;" onclick="deleteLobby()">Close Lobby</button>' : '';
+      var deleteBtn = hasGMRights ? '<button class="leave-btn" style="border-color:#5a1a1a;" onclick="deleteLobby()">Close Lobby</button>' : '';
 
       app.innerHTML =
         '<div class="detail-header">' +
@@ -818,6 +835,7 @@
     window.leaveLobby = async function() {
       if (!confirm('Leave this lobby?')) return;
       if (!currentLobby) return;
+      sessionStorage.removeItem('activeLobbyId');
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/leave', {
           method: 'POST',
@@ -831,6 +849,7 @@
     window.deleteLobby = async function() {
       if (!confirm('Close and delete this lobby? This cannot be undone.')) return;
       if (!currentLobby) return;
+      sessionStorage.removeItem('activeLobbyId');
       try {
         await fetch(API_URL + '/api/lobbies/' + currentLobby.id, {
           method: 'DELETE',
@@ -910,8 +929,11 @@
     // ===== BACK =====
     window.backToList = function() {
       stopChatPoll();
+      sessionStorage.removeItem('activeLobbyId');
       currentLobby = null;
       lastMsgId = null;
+      hasGMRights = false;
+      isCreator = false;
       renderListView();
     };
 
