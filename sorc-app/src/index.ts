@@ -1650,5 +1650,224 @@ app.get('/api/rooms/:id/rolls', authMiddleware, async (c) => {
   return c.json({ rolls: rolls.results || [] });
 });
 
+// ─── ROOM VISIBILITY & SPECTATE ───────────────────────────────────────────────
+
+// List all visible (not hidden) active rooms — for the lobbies page rooms section
+app.get('/api/rooms', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const privileged = isPrivileged(user);
+  let rooms: any;
+  if (privileged) {
+    rooms = await c.env.sorc_db.prepare(
+      `SELECT r.*, u.username as gm_name, u.display_name as gm_display,
+       (SELECT COUNT(*) FROM room_members rm WHERE rm.room_id = r.id) as member_count
+       FROM private_rooms r LEFT JOIN users u ON r.gm_uid = u.id
+       WHERE r.status = 'active' ORDER BY r.created_at DESC LIMIT 50`
+    ).all();
+  } else {
+    rooms = await c.env.sorc_db.prepare(
+      `SELECT r.*, u.username as gm_name, u.display_name as gm_display,
+       (SELECT COUNT(*) FROM room_members rm WHERE rm.room_id = r.id) as member_count
+       FROM private_rooms r LEFT JOIN users u ON r.gm_uid = u.id
+       WHERE r.status = 'active' AND r.is_hidden = 0 ORDER BY r.created_at DESC LIMIT 50`
+    ).all();
+  }
+  return c.json({ rooms: rooms.results || [] });
+});
+
+// Toggle spectate mode (GM only)
+app.patch('/api/rooms/:id/spectate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the GM can toggle spectate mode.' }, 403);
+  const newVal = room.spectate_enabled ? 0 : 1;
+  await c.env.sorc_db.prepare(`UPDATE private_rooms SET spectate_enabled = ? WHERE id = ?`).bind(newVal, roomId).run();
+  return c.json({ success: true, spectate_enabled: !!newVal });
+});
+
+// Toggle room visibility (GM only)
+app.patch('/api/rooms/:id/visibility', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the GM can toggle room visibility.' }, 403);
+  const newHidden = room.is_hidden ? 0 : 1;
+  await c.env.sorc_db.prepare(`UPDATE private_rooms SET is_hidden = ? WHERE id = ?`).bind(newHidden, roomId).run();
+  return c.json({ success: true, is_hidden: !!newHidden });
+});
+
+// ─── ROOM INVITES (GM invites fellows) ────────────────────────────────────────
+
+app.post('/api/rooms/:id/invite/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const invitedUid = c.req.param('uid');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id) return c.json({ error: 'Only the GM can send invites.' }, 403);
+  if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
+
+  // Must be a fellowship connection
+  const fellowship = await c.env.sorc_db.prepare(
+    `SELECT id FROM fellowship_requests WHERE status = 'accepted'
+     AND ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?))`
+  ).bind(user.id, invitedUid, invitedUid, user.id).first();
+  if (!fellowship) return c.json({ error: 'You can only invite fellows.' }, 403);
+
+  const already = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, invitedUid).first();
+  if (already) return c.json({ error: 'User is already in the room.' }, 400);
+
+  const memberCount = await c.env.sorc_db.prepare(
+    `SELECT COUNT(*) as cnt FROM room_members WHERE room_id = ? AND room_role = 'pc'`
+  ).bind(roomId).first() as any;
+  if ((memberCount?.cnt || 0) >= 5) return c.json({ error: 'Room is full (max 5 PCs).' }, 400);
+
+  const now = new Date().toISOString();
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT OR IGNORE INTO room_invites (id, room_id, inviter_uid, invited_uid, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`
+    ).bind(crypto.randomUUID(), roomId, user.id, invitedUid, now).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send invite.', details: error.message }, 500);
+  }
+});
+
+// Get invites for the current user
+app.get('/api/rooms/invites/mine', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const invites = await c.env.sorc_db.prepare(
+    `SELECT ri.*, r.room_name, u.username as inviter_name, r.spectate_enabled
+     FROM room_invites ri
+     JOIN private_rooms r ON ri.room_id = r.id
+     JOIN users u ON ri.inviter_uid = u.id
+     WHERE ri.invited_uid = ? AND ri.status = 'pending' AND r.status = 'active'
+     ORDER BY ri.created_at DESC`
+  ).bind(user.id).all();
+  return c.json({ invites: invites.results || [] });
+});
+
+app.post('/api/rooms/invites/:inviteId/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const inviteId = c.req.param('inviteId');
+  const invite = await c.env.sorc_db.prepare(`SELECT * FROM room_invites WHERE id = ?`).bind(inviteId).first() as any;
+  if (!invite || invite.invited_uid !== user.id) return c.json({ error: 'Invite not found.' }, 404);
+  if (invite.status !== 'pending') return c.json({ error: 'Invite already responded to.' }, 400);
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ? AND status = 'active'`).bind(invite.room_id).first() as any;
+  if (!room) return c.json({ error: 'Room is no longer active.' }, 400);
+
+  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
+  const now = new Date().toISOString();
+
+  await c.env.sorc_db.prepare(`UPDATE room_invites SET status = 'accepted' WHERE id = ?`).bind(inviteId).run();
+  await c.env.sorc_db.prepare(
+    `INSERT OR IGNORE INTO room_members (id, room_id, user_id, room_role, username, joined_at) VALUES (?, ?, ?, 'pc', ?, ?)`
+  ).bind(crypto.randomUUID(), invite.room_id, user.id, user.username, now).run();
+
+  return c.json({ success: true, room_id: invite.room_id });
+});
+
+app.post('/api/rooms/invites/:inviteId/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const inviteId = c.req.param('inviteId');
+  const invite = await c.env.sorc_db.prepare(`SELECT * FROM room_invites WHERE id = ? AND invited_uid = ?`).bind(inviteId, user.id).first();
+  if (!invite) return c.json({ error: 'Invite not found.' }, 404);
+  await c.env.sorc_db.prepare(`UPDATE room_invites SET status = 'declined' WHERE id = ?`).bind(inviteId).run();
+  return c.json({ success: true });
+});
+
+// ─── ROOM JOIN REQUESTS (lobby members request to join visible rooms) ──────────
+
+app.post('/api/rooms/:id/request', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const { request_type } = await c.req.json() as any;  // 'join' or 'spectate'
+  const reqType = request_type === 'spectate' ? 'spectate' : 'join';
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.is_hidden) return c.json({ error: 'This room is not accepting requests.' }, 403);
+  if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
+  if (reqType === 'spectate' && !room.spectate_enabled) return c.json({ error: 'Spectate mode is off for this room.' }, 403);
+
+  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first();
+  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must be assessed to request entry.' }, 403);
+
+  const already = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (already) return c.json({ error: 'You are already in this room.' }, 400);
+
+  const now = new Date().toISOString();
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT OR IGNORE INTO room_requests (id, room_id, requester_uid, request_type, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`
+    ).bind(crypto.randomUUID(), roomId, user.id, reqType, now).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send request.', details: error.message }, 500);
+  }
+});
+
+// GM views pending requests for their room
+app.get('/api/rooms/:id/requests', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+
+  const requests = await c.env.sorc_db.prepare(
+    `SELECT rr.*, u.username, u.display_name, u.sorc_role, u.avatar
+     FROM room_requests rr JOIN users u ON rr.requester_uid = u.id
+     WHERE rr.room_id = ? AND rr.status = 'pending' ORDER BY rr.created_at ASC`
+  ).bind(roomId).all();
+  return c.json({ requests: requests.results || [] });
+});
+
+app.post('/api/rooms/:id/requests/:reqId/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const reqId = c.req.param('reqId');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+
+  const req = await c.env.sorc_db.prepare(`SELECT * FROM room_requests WHERE id = ? AND room_id = ?`).bind(reqId, roomId).first() as any;
+  if (!req || req.status !== 'pending') return c.json({ error: 'Request not found.' }, 404);
+
+  if (req.request_type === 'join') {
+    const pcCount = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as cnt FROM room_members WHERE room_id = ? AND room_role = 'pc'`
+    ).bind(roomId).first() as any;
+    if ((pcCount?.cnt || 0) >= 5) return c.json({ error: 'Room is full (max 5 PCs).' }, 400);
+  }
+
+  const requester = await c.env.sorc_db.prepare(`SELECT username FROM users WHERE id = ?`).bind(req.requester_uid).first() as any;
+  const roomRole = req.request_type === 'spectate' ? 'spectator' : 'pc';
+  const now = new Date().toISOString();
+
+  await c.env.sorc_db.prepare(`UPDATE room_requests SET status = 'accepted' WHERE id = ?`).bind(reqId).run();
+  await c.env.sorc_db.prepare(
+    `INSERT OR IGNORE INTO room_members (id, room_id, user_id, room_role, username, joined_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), roomId, req.requester_uid, roomRole, requester?.username || 'Unknown', now).run();
+
+  return c.json({ success: true });
+});
+
+app.post('/api/rooms/:id/requests/:reqId/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const reqId = c.req.param('reqId');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room || (room.gm_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  await c.env.sorc_db.prepare(`UPDATE room_requests SET status = 'declined' WHERE id = ?`).bind(reqId).run();
+  return c.json({ success: true });
+});
+
 export default app;
 
