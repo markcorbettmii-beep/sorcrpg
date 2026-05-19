@@ -1482,7 +1482,8 @@ app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
     msgs = await c.env.sorc_db.prepare(`SELECT * FROM lobby_messages WHERE lobby_id = ? ORDER BY created_at DESC LIMIT 80`).bind(lobbyId).all();
     msgs.results = (msgs.results || []).reverse();
   }
-  return c.json({ messages: msgs.results || [] });
+  const lobbyStatus = await c.env.sorc_db.prepare(`SELECT status FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open' });
 });
 
 app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {

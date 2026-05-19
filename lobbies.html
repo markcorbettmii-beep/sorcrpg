@@ -283,7 +283,7 @@
     .lobby-ticker::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
     .lobby-ticker::before { left: 0; background: linear-gradient(to right, #0d0d14, transparent); }
     .lobby-ticker::after { right: 0; background: linear-gradient(to left, #0d0d14, transparent); }
-    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 90s linear infinite; }
+    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 90s linear infinite; width: max-content; }
     .ticker-track:hover { animation-play-state: paused; }
     @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .ticker-item { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 2.5rem; font-size: 0.78rem; color: #888; letter-spacing: 0.04em; }
@@ -324,11 +324,6 @@
 
       <div id="assessClearedBadge" style="display:none;text-align:center;margin-bottom:1rem;">
         <span style="display:inline-block;background:rgba(30,90,40,0.35);border:1px solid rgba(80,200,100,0.35);color:#6ecf7f;font-size:0.92rem;letter-spacing:0.1em;padding:0.4rem 1.2rem;border-radius:20px;">&#10003; Assessment Cleared</span>
-      </div>
-
-      <!-- TICKER -->
-      <div class="lobby-ticker">
-        <div class="ticker-track" id="tickerTrack"></div>
       </div>
 
       <!-- THEME SELECTOR -->
@@ -378,33 +373,6 @@
   </div>
 
   <script>
-    // ===== TICKER =====
-    (function() {
-      var msgs = [
-        '&#128196; Click the character sheet icon next to a member\'s name to view their armaments, companions, achievements, and more',
-        '&#127514; GMs can launch a private Campaign Room from inside any lobby — voice, dice, and full session tools included',
-        '&#9876; Any assessed player can join open lobbies — no box set required to participate as a party member',
-        '&#128172; Lobby chat is visible to all members — use the Campaign Room for private GM notes and session planning',
-        '&#128101; Box set codes are single-use — each physical SORC box set includes one code for hosting lobbies',
-        '&#127922; Campaign Rooms give GMs live D4, D6, and D100 dice rolls, loot table generation, and compendium access',
-        '&#128218; New to SORC? Complete the <a href="/assess.html" style="color:#d4af37;text-decoration:none;">Role Assessment</a> to unlock your rank and join active campaigns',
-        '&#9733; Prestige your character after clearing a full module — prestige unlocks new class branches and lore paths',
-        '&#128274; Private lobbies are invite-only — share your lobby code directly with your party to keep sessions exclusive',
-        '&#127760; All campaigns share the same Essentia world coordinates — your party\'s actions carry consequence across sessions',
-        '&#128295; Armament enhancements can be applied between sessions — visit the <a href="/content/basic_rules/basic_rules_4.html" style="color:#d4af37;text-decoration:none;">Basic Rules</a> for crafting details',
-        '&#127775; Goliath, Standard, and Small races each carry innate Traits that affect encumbrance, initiative, and passive abilities',
-        '&#128300; The Panic Engine activates under extreme duress — keep your Vitality balanced to avoid involuntary actions in combat',
-        '&#128101; Party composition matters — mix GM-class and PC-class builds for the strongest campaign synergy',
-      ];
-      var track = document.getElementById('tickerTrack');
-      if (!track) return;
-      var html = msgs.map(function(m) {
-        return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
-      }).join('');
-      // Duplicate for seamless infinite loop
-      track.innerHTML = html + html;
-    })();
-
     var API_URL = 'https://api.sorcrpg.com';
     var currentUser = null;
     try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
@@ -491,6 +459,7 @@
     var selectedReportReason = null;
     var isCreator = false;
     var hasGMRights = false;
+    var currentRooms = [];
 
     // ===== MAIN RENDER =====
     function render() {
@@ -518,6 +487,31 @@
       var OWNER_EMAILS = ['corbett@sorcrpg.com'];
       var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
       return OWNER_EMAILS.includes(currentUser.email) || ADMIN_EMAILS.includes(currentUser.email);
+    }
+
+    function buildTicker() {
+      var msgs = [
+        '&#128101; Many SORC sessions already have a full table — PUG lobbies often only need 1 or 2 more players to fill out a party',
+        '&#128101; Joining a PUG is a great way to play, but there\'s always a risk the session ends early if the GM or lead steps away — add your party to a Fellowship to keep your group together',
+        '&#129309; Fellowships let you build a standing party — find players through lobbies, then lock them in so your next session is already waiting for you',
+        '&#128196; Click the character sheet icon next to a member\'s name to view their armaments, companions, achievements, and more',
+        '&#127514; GMs can launch a private Campaign Room from inside any lobby — voice, dice, and full session tools included',
+        '&#9876; Any assessed player can join open lobbies — no box set required to participate as a party member',
+        '&#128172; Lobby chat is visible to all members — use the Campaign Room for private GM notes and session planning',
+        '&#128101; Box set codes are single-use — each physical SORC box set includes one code for hosting lobbies',
+        '&#127922; Campaign Rooms give GMs live D4, D6, and D100 dice rolls, loot table generation, and compendium access',
+        '&#128218; New to SORC? Complete the <a href="/assess.html" style="color:#d4af37;text-decoration:none;">Role Assessment</a> to unlock your rank and join active campaigns',
+        '&#9733; Prestige your character after clearing a full module — prestige unlocks new class branches and lore paths',
+        '&#128274; Private lobbies are invite-only — share your lobby code directly with your party to keep sessions exclusive',
+        '&#127760; All campaigns share the same Essentia world coordinates — your party\'s actions carry consequence across sessions',
+        '&#128295; Armament enhancements can be applied between sessions — visit the <a href="/content/basic_rules/basic_rules_4.html" style="color:#d4af37;text-decoration:none;">Basic Rules</a> for crafting details',
+        '&#128300; The Panic Engine activates under extreme duress — keep your Vitality balanced to avoid involuntary actions in combat',
+        '&#129309; Fellowship members can be invited directly to private lobbies — no need to PUG if your Fellowship is active',
+      ];
+      var html = msgs.map(function(m) {
+        return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
+      }).join('');
+      return '<div class="lobby-ticker"><div class="ticker-track">' + html + html + '</div></div>';
     }
 
     var MODULES = [
@@ -582,7 +576,8 @@
           '</div>' +
         '</div>' +
         '<div class="section-head">Open Lobbies</div>' +
-        '<div id="lobbyList"><div class="empty-state">Loading...</div></div>';
+        '<div id="lobbyList"><div class="empty-state">Loading...</div></div>' +
+        buildTicker();
 
       loadLobbies();
     }
@@ -737,6 +732,7 @@
       var lobby = data.lobby;
       var members = data.members || [];
       var rooms = data.rooms || [];
+      currentRooms = rooms;
       var app = document.getElementById('lobbiesApp');
 
       var membersHtml = members.map(function(m) {
@@ -817,7 +813,8 @@
               '<div id="roomsList">' + roomsHtml + '</div>' +
             '</div>' +
           '</div>' +
-        '</div>';
+        '</div>' +
+        buildTicker();
 
       loadChatMessages(lobby.id);
     }
@@ -829,6 +826,7 @@
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
+        if (data.lobby_status === 'closed') { handleLobbyClosed(); return; }
         var msgs = data.messages || [];
         if (msgs.length === 0) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
@@ -843,6 +841,24 @@
         if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
         if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id;
       } catch(e) {}
+    }
+
+    function handleLobbyClosed() {
+      stopChatPoll();
+      sessionStorage.removeItem('activeLobbyId');
+      var app = document.getElementById('lobbiesApp');
+      if (!app) return;
+      var roomLinks = currentRooms.filter(function(r) { return !r.is_hidden; }).map(function(r) {
+        return '<a href="room.html?id=' + esc(r.id) + '" style="display:inline-block;margin-top:0.75rem;padding:8px 20px;background:#d4af37;color:#111;border-radius:8px;font-weight:bold;text-decoration:none;font-size:0.88rem;">&#127514; Rejoin Campaign Room</a>';
+      }).join('');
+      app.innerHTML =
+        '<div style="text-align:center;padding:3rem 1rem;">' +
+          '<div style="font-size:2rem;margin-bottom:0.75rem;">&#128274;</div>' +
+          '<h3 style="color:#e0cfc0;margin-bottom:0.5rem;">Lobby Closed</h3>' +
+          '<p style="color:#666;font-size:0.88rem;margin-bottom:1.5rem;">The GM has closed this lobby.' + (roomLinks ? ' Your Campaign Room is still active.' : '') + '</p>' +
+          roomLinks +
+          '<br/><button class="back-btn" style="margin-top:1.25rem;" onclick="backToList()">&#8592; Browse Lobbies</button>' +
+        '</div>';
     }
 
     window.sendChat = async function() {
