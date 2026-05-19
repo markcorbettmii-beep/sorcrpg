@@ -854,7 +854,7 @@
         '<div class="detail-header">' +
           '<div>' +
             '<h2>' + esc(lobby.name) + (lobby.is_private ? ' &#128274;' : '') + '</h2>' +
-            '<div class="detail-meta">Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
+            '<div class="detail-meta">' + (hasGMRights ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
             launchBtn + inviteBtn + leaveBtn + deleteBtn +
@@ -1261,7 +1261,7 @@
     };
 
     window.deleteLobby = async function() {
-      if (!confirm('Close this lobby? Closing this lobby will generate a new lobby code. This cannot be undone.')) return;
+      if (!confirm('Close this lobby? A new lobby code will be generated and is only visible to the new host. This cannot be undone.')) return;
       if (!currentLobby) return;
       sessionStorage.removeItem('activeLobbyId');
       try {
