@@ -82,7 +82,7 @@
     .detail-header .detail-meta { color: #555; font-size: 0.8rem; margin-top: 0.3rem; }
     .back-btn { padding: 6px 14px; background: none; border: 1px solid #333; color: #888; border-radius: 8px; cursor: pointer; font-size: 0.82rem; }
     .back-btn:hover { border-color: #888; color: #e0cfc0; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; }
+    .detail-grid { display: grid; grid-template-columns: minmax(240px, 440px) 255px; gap: 1.25rem; }
     @media (max-width: 700px) { .detail-grid { grid-template-columns: 1fr; } }
 
     /* ===== CHAT ===== */
@@ -164,6 +164,26 @@
     .lt-veilwood { background: #030810; }
     .lt-veilwood .theme-pill.active { border-color: #7b2fff; color: #b57bff; background: #060b12; }
 
+    /* ===== ORBITAL TERMINAL — chat & member panel accents ===== */
+    .lt-terminal .chat-panel { background: #040f1e; border-color: #0a2535; }
+    .lt-terminal .chat-panel-head { color: #00b8d4; border-bottom-color: #0a2535; }
+    .lt-terminal .chat-messages { scrollbar-color: #0a2535 transparent; }
+    .lt-terminal .chat-input { background: #020a14; border-color: #0a1e2c; color: #7ecde0; }
+    .lt-terminal .chat-input:focus { border-color: #00b8d4; }
+    .lt-terminal .chat-msg .msg-body { color: #7a9eaf; }
+    .lt-terminal .members-panel { background: #040f1e; border-color: #0a2535; }
+    .lt-terminal .members-head { border-bottom-color: #0a2535; color: #00b8d4; }
+
+    /* ===== THE VEILWOOD — chat & member panel accents ===== */
+    .lt-veilwood .chat-panel { background: #06040f; border-color: #160a28; }
+    .lt-veilwood .chat-panel-head { color: #a070e0; border-bottom-color: #160a28; }
+    .lt-veilwood .chat-messages { scrollbar-color: #160a28 transparent; }
+    .lt-veilwood .chat-input { background: #030210; border-color: #0f0820; color: #c0a0e0; }
+    .lt-veilwood .chat-input:focus { border-color: #7b2fff; }
+    .lt-veilwood .chat-msg .msg-body { color: #9080b8; }
+    .lt-veilwood .members-panel { background: #06040f; border-color: #160a28; }
+    .lt-veilwood .members-head { border-bottom-color: #160a28; color: #a070e0; }
+
     /* ===== LAWFUL MODE OVERRIDES ===== */
     body.lawful-mode .info-card,
     body.lawful-mode .action-card,
@@ -193,7 +213,7 @@
     .lobby-ticker::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
     .lobby-ticker::before { left: 0; background: linear-gradient(to right, #0d0d14, transparent); }
     .lobby-ticker::after { right: 0; background: linear-gradient(to left, #0d0d14, transparent); }
-    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 52s linear infinite; width: max-content; }
+    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 88s linear infinite; width: max-content; }
     .ticker-track:hover { animation-play-state: paused; }
     @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .ticker-item { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 2.5rem; font-size: 0.78rem; color: #888; letter-spacing: 0.04em; }
@@ -383,22 +403,12 @@
 
     function buildTicker() {
       var msgs = [
-        '&#128101; SORC sessions from the table are often only looking for 1 or 2 players to fill in for absentees - Adding Fellowships along with playing from home typically avoids PUG issues',
-        '&#129309; Click the character sheet icon next to any member\'s name to view their armaments, companions, achievements, and more',
-        '&#127514; GMs and Admins can launch a private Campaign Room directly from the lobby - voice, dice, and full session tools are inside',
-        '&#128172; Use Lobby Chat to assemble your party - once the GM launches a Campaign Room, move there for private session notes and dice rolls',
-        '&#128273; Hosting a lobby requires a SORC box set code - joining as a player is free for any assessed member',
-        '&#127922; Campaign Rooms include live D4, D6, and D100 rolls, loot table generation, and compendium access for the whole party',
-        '&#128274; Set your lobby to Private so only players with your invite code can join - ideal for pre-arranged Fellowship sessions',
-        '&#129309; Build your Fellowship now - find great players through PUG lobbies, then invite them to your private session next time',
-        '&#128101; Lobbies show live member count - check the numbers before joining, many open lobbies only need 1 or 2 more players to fill out',
-        '&#127760; When a GM closes a lobby, a Lobby Closed screen appears - the group would need to recruit a new GM to continue, and no box code is needed to resume a closed session',
-        '&#127775; If an active Campaign Room still exists after a lobby closes, a Rejoin Campaign Room button appears so nobody loses their session',
-        '&#9733; Change the Lobby Theme above to set the mood - Orbital Terminal and The Veilwood each have their own ambient soundtrack',
-        '&#127925; GMs can load and play audio files inside the Campaign Room that pair directly with each module - atmospheric music, ambient sounds, and audio cues built into the session',
-        '&#127925; When the module calls for it, the GM triggers the audio - every player in the room hears it at the same time, keeping everyone immersed without external tools',
-        '&#128421; GMs running sessions from home can use all Campaign Room tools to fully immerse remote players - dice, audio, voice, and compendium access in one place',
-        '&#128421; Campaign Rooms are designed to work just as well at a physical table as they do fully online - GMs set audio, players roll live dice, everyone follows the same session',
+        '&#129309; Table sessions often only need 1 or 2 more players - Adding Fellowships helps you avoid PUG placement and find your preferred group',
+        '&#128101; Click the character sheet icon next to any member\'s name to view their armaments, companions, and achievements',
+        '&#127514; GMs can launch a private Campaign Room directly from the lobby - voice, dice, compendium, and audio tools inside',
+        '&#127775; When a lobby closes, any active Campaign Room stays accessible - a Rejoin button appears so nobody loses their session',
+        '&#127925; GMs play module-paired audio in the Campaign Room - every player hears it live, whether gathered at the table or joining remotely',
+        '&#9733; Switch the Lobby Theme above to set the mood - Orbital Terminal and The Veilwood each have their own ambient soundscape',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';

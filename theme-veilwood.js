@@ -1,35 +1,21 @@
 /* ============================================================
-   VEILWOOD THEME — theme-veilwood.js
-   Living forest audio-only soundscape for sorcrpg.com
+   THE VEILWOOD THEME — theme-veilwood.js
+   Enchanted fae forest soundscape for sorcrpg.com
    Exposes: window.veilwoodTheme = { start, stop }
-   NO canvas, NO drawing, NO requestAnimationFrame.
-   Pure Web Audio API engine.
    ============================================================ */
 (function () {
   'use strict';
 
-  /* ── AUDIO STATE ── */
   var audioCtx = null;
   var audioStarted = false;
   var masterGain = null;
-
-  /* Track all timeout IDs so we can cancel on stop */
   var timeouts = [];
-
-  /* Track all GainNodes for fade-out on stop */
   var allGains = [];
-
-  /* Track all oscillators and noise sources for disconnect on stop */
   var allSources = [];
 
-  /* ── HELPERS ── */
-  function rnd(min, max) {
-    return min + Math.random() * (max - min);
-  }
-
-  function rndInt(min, max) {
-    return Math.floor(rnd(min, max + 1));
-  }
+  function rnd(min, max) { return min + Math.random() * (max - min); }
+  function rndInt(min, max) { return Math.floor(rnd(min, max + 1)); }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   function sched(fn, minS, maxS) {
     var id = setTimeout(fn, rnd(minS, maxS) * 1000);
@@ -37,35 +23,26 @@
     return id;
   }
 
-  /* Create white noise buffer (2 seconds, looped) */
-  function makeNoiseBuffer() {
-    if (!audioCtx) return null;
+  function makeOneShotNoise(dur) {
+    var frames = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function makeLoopingNoise() {
     var frames = audioCtx.sampleRate * 2;
     var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
     var data = buf.getChannelData(0);
     for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-    return buf;
-  }
-
-  /* Make a one-shot noise buffer of given seconds */
-  function makeOneShotNoise(durationS) {
-    var frames = Math.max(1, Math.floor(audioCtx.sampleRate * durationS));
-    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
-    var data = buf.getChannelData(0);
-    for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-    return buf;
-  }
-
-  /* Start a looping noise source */
-  function makeLoopingNoise(buffer) {
     var src = audioCtx.createBufferSource();
-    src.buffer = buffer;
+    src.buffer = buf;
     src.loop = true;
     allSources.push(src);
     return src;
   }
 
-  /* Convenience: create + register an oscillator */
   function makeOsc(type, freq) {
     var osc = audioCtx.createOscillator();
     osc.type = type || 'sine';
@@ -74,7 +51,6 @@
     return osc;
   }
 
-  /* Convenience: create + register a gain node */
   function makeGain(value) {
     var g = audioCtx.createGain();
     g.gain.value = (value !== undefined) ? value : 1;
@@ -82,7 +58,6 @@
     return g;
   }
 
-  /* Convenience: create a biquad filter */
   function makeFilter(type, freq, q) {
     var f = audioCtx.createBiquadFilter();
     f.type = type || 'lowpass';
@@ -91,605 +66,380 @@
     return f;
   }
 
-  /* ── AMBIENT BED 1: Wind through canopy (three independent noise layers) ── */
-  function startWindCanopy() {
-    var noiseBuf = makeNoiseBuffer();
-
-    /* Layer 1: low-mid, 200Hz cutoff */
-    (function () {
-      var src = makeLoopingNoise(noiseBuf);
-      var lpf = makeFilter('lowpass', 200);
-      var g = makeGain(0.025);
-      var lfo = makeOsc('sine', 0.04);
-      var lfoDepth = makeGain(0.012);
-
-      src.connect(lpf);
-      lpf.connect(g);
-      g.connect(masterGain);
-      lfo.connect(lfoDepth);
-      lfoDepth.connect(g.gain);
-      src.start();
-      lfo.start();
-    })();
-
-    /* Layer 2: mid, 600Hz cutoff, Q 0.6, phase-offset LFO */
-    (function () {
-      /* Use a fresh noise buffer so layers are independent */
-      var frames = audioCtx.sampleRate * 2;
-      var buf2 = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
-      var d = buf2.getChannelData(0);
-      for (var i = 0; i < frames; i++) d[i] = Math.random() * 2 - 1;
-
-      var src = audioCtx.createBufferSource();
-      src.buffer = buf2;
-      src.loop = true;
-      allSources.push(src);
-
-      var lpf = makeFilter('lowpass', 600, 0.6);
-      var g = makeGain(0.012);
-      var lfo = makeOsc('sine', 0.07);
-      var lfoDepth = makeGain(0.006);
-
-      /* Phase offset: delay LFO start slightly */
-      src.connect(lpf);
-      lpf.connect(g);
-      g.connect(masterGain);
-      lfo.connect(lfoDepth);
-      lfoDepth.connect(g.gain);
-      src.start();
-      lfo.start(audioCtx.currentTime + 2.3); /* phase offset */
-    })();
-
-    /* Layer 3: deep rumble, 80Hz cutoff */
-    (function () {
-      var frames = audioCtx.sampleRate * 2;
-      var buf3 = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
-      var d = buf3.getChannelData(0);
-      for (var i = 0; i < frames; i++) d[i] = Math.random() * 2 - 1;
-
-      var src = audioCtx.createBufferSource();
-      src.buffer = buf3;
-      src.loop = true;
-      allSources.push(src);
-
-      var lpf = makeFilter('lowpass', 80);
-      var g = makeGain(0.035);
-      var lfo = makeOsc('sine', rnd(0.025, 0.05));
-      var lfoDepth = makeGain(0.018);
-
-      src.connect(lpf);
-      lpf.connect(g);
-      g.connect(masterGain);
-      lfo.connect(lfoDepth);
-      lfoDepth.connect(g.gain);
-      src.start();
-      lfo.start(audioCtx.currentTime + 5.1); /* phase offset */
-    })();
-  }
-
-  /* ── AMBIENT BED 2: Forest floor insects (cricket/cicada texture) ── */
-  function startInsects() {
-    var noiseBuf = makeNoiseBuffer();
-    var src = makeLoopingNoise(noiseBuf);
-    var bpf = makeFilter('bandpass', 4800, 15);
-    var g = makeGain(0.014);
-
-    /* AM at 22Hz for chirp texture */
-    var amOsc = makeOsc('sine', 22);
-    var amDepth = makeGain(0.007);
-
-    src.connect(bpf);
-    bpf.connect(g);
-    g.connect(masterGain);
-
-    /* AM modulation: add modulator to gain */
-    amOsc.connect(amDepth);
-    amDepth.connect(g.gain);
+  /* ── AMBIENT BED: Night cricket texture — constant, no pitch drift ── */
+  function startCrickets() {
+    /* Narrow bandpass noise for cricket chirp texture. No gain LFO — no pitch-change feel. */
+    var src = makeLoopingNoise();
+    var bpf = makeFilter('bandpass', 4600, 18);
+    var g = makeGain(0.009);
+    src.connect(bpf); bpf.connect(g); g.connect(masterGain);
     src.start();
-    amOsc.start();
   }
 
-  /* ── AMBIENT BED 3: Distant stream (six sine oscillators) ── */
-  function startStream() {
-    for (var i = 0; i < 6; i++) {
-      (function () {
-        var freq = rnd(300, 900);
-        var osc = makeOsc('sine', freq);
-        var g = makeGain(0.006);
-        var lfoRate = rnd(8, 14);
-        var lfo = makeOsc('sine', lfoRate);
-        var lfoDepth = makeGain(0.006 * 0.7); /* depth 0.7 of base */
+  /* ── AMBIENT BED: Distant faint flute — haunting single sustained tones ── */
+  function startDistantFlute() {
+    /* Pentatonic: C4 D4 E4 G4 A4 C5 */
+    var scale = [261, 293, 329, 392, 440, 523];
+    var noteIdx = rndInt(0, scale.length - 1);
 
-        osc.connect(g);
-        g.connect(masterGain);
-        lfo.connect(lfoDepth);
-        lfoDepth.connect(g.gain);
-        osc.start();
-        /* Stagger LFO starts for non-synchronized babbling */
-        lfo.start(audioCtx.currentTime + i * 0.7);
-      })();
-    }
-  }
-
-  /* ── EVENT 4: Robin-like bird ── */
-  function scheduleRobin() {
-    sched(function () {
+    function playNote() {
       if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var gain = 0.065 * rnd(0.85, 1.15);
-
-      /* First phrase: descending 2400→1600 over 0.35s */
-      (function () {
-        var osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(rnd(2200, 2600), now);
-        osc.frequency.exponentialRampToValueAtTime(rnd(1500, 1700), now + 0.35);
-
-        /* Slight vibrato */
-        var vibOsc = audioCtx.createOscillator();
-        vibOsc.type = 'sine';
-        vibOsc.frequency.value = rnd(5, 8);
-        var vibDepth = audioCtx.createGain();
-        vibDepth.gain.value = rnd(15, 35);
-        vibOsc.connect(vibDepth);
-        vibDepth.connect(osc.frequency);
-
-        var g = audioCtx.createGain();
-        g.gain.setValueAtTime(0, now);
-        g.gain.linearRampToValueAtTime(gain, now + 0.04);
-        g.gain.setValueAtTime(gain, now + 0.3);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
-
-        osc.connect(g);
-        g.connect(masterGain);
-        vibOsc.start(now);
-        osc.start(now);
-        osc.stop(now + 0.4);
-        vibOsc.stop(now + 0.4);
-      })();
-
-      /* Second phrase: 1800→1200 over 0.25s, starts after brief gap */
-      var gap = rnd(0.08, 0.18);
-      (function () {
-        var start2 = now + 0.35 + gap;
-        var osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(rnd(1700, 1900), start2);
-        osc.frequency.exponentialRampToValueAtTime(rnd(1100, 1300), start2 + 0.25);
-
-        var vibOsc = audioCtx.createOscillator();
-        vibOsc.type = 'sine';
-        vibOsc.frequency.value = rnd(5, 8);
-        var vibDepth = audioCtx.createGain();
-        vibDepth.gain.value = rnd(10, 25);
-        vibOsc.connect(vibDepth);
-        vibDepth.connect(osc.frequency);
-
-        var g = audioCtx.createGain();
-        g.gain.setValueAtTime(0, start2);
-        g.gain.linearRampToValueAtTime(gain * 0.85, start2 + 0.03);
-        g.gain.setValueAtTime(gain * 0.85, start2 + 0.2);
-        g.gain.exponentialRampToValueAtTime(0.0001, start2 + 0.28);
-
-        osc.connect(g);
-        g.connect(masterGain);
-        vibOsc.start(start2);
-        osc.start(start2);
-        osc.stop(start2 + 0.3);
-        vibOsc.stop(start2 + 0.3);
-      })();
-
-      scheduleRobin();
-    }, 12, 30);
-  }
-
-  /* ── EVENT 5: Warbler ── */
-  function scheduleWarbler() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var baseFreq = rnd(3000, 3400);
-      var dur = rnd(0.4, 0.7);
-      var lfoRate = rnd(18, 24);
-      var gain = 0.055 * rnd(0.85, 1.15);
+      var freq = scale[noteIdx];
+      var dur  = rnd(3.5, 6.0);
 
       var osc = audioCtx.createOscillator();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(baseFreq, now);
+      osc.frequency.value = freq;
+      allSources.push(osc);
 
-      var lfo = audioCtx.createOscillator();
-      lfo.type = 'sine';
-      lfo.frequency.value = lfoRate;
-      var lfoDepth = audioCtx.createGain();
-      lfoDepth.gain.value = 400;
+      /* Very gentle vibrato */
+      var vib = audioCtx.createOscillator();
+      vib.type = 'sine';
+      vib.frequency.value = rnd(4.5, 6.5);
+      allSources.push(vib);
+      var vibDepth = makeGain(rnd(3, 6));
+      vib.connect(vibDepth); vibDepth.connect(osc.frequency);
 
-      lfo.connect(lfoDepth);
-      lfoDepth.connect(osc.frequency);
+      var g = makeGain(0);
+      osc.connect(g); g.connect(masterGain);
 
-      var g = audioCtx.createGain();
+      var now = audioCtx.currentTime;
       g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(gain, now + 0.04);
-      g.gain.setValueAtTime(gain, now + dur - 0.05);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.02);
+      g.gain.linearRampToValueAtTime(0.0065, now + 0.8);
+      g.gain.setValueAtTime(0.0065, now + dur - 0.6);
+      g.gain.linearRampToValueAtTime(0, now + dur);
 
-      osc.connect(g);
-      g.connect(masterGain);
-      lfo.start(now);
-      osc.start(now);
-      osc.stop(now + dur + 0.04);
-      lfo.stop(now + dur + 0.04);
+      vib.start(now); osc.start(now);
+      osc.stop(now + dur + 0.05); vib.stop(now + dur + 0.05);
 
-      scheduleWarbler();
-    }, 20, 50);
+      /* Advance scale step (skip or hold occasionally) */
+      if (Math.random() < 0.7) noteIdx = (noteIdx + pick([1, 2])) % scale.length;
+
+      var id = setTimeout(playNote, (dur + rnd(1.5, 4.0)) * 1000);
+      timeouts.push(id);
+    }
+
+    var id = setTimeout(playNote, rnd(2, 5) * 1000);
+    timeouts.push(id);
   }
 
-  /* ── EVENT 6: Owl hoot (50% chance) ── */
+  /* ── EVENT: Owl hoot ── */
   function scheduleOwl() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var freq = 215 + rnd(-20, 20);
+      var gain = 0.065 * rnd(0.85, 1.15);
 
-      if (Math.random() < 0.5) {
-        var now = audioCtx.currentTime;
-        var freq = 220 + rnd(-15, 15);
-        var gain = 0.07 * rnd(0.85, 1.15);
+      function hoot(startAt) {
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        allSources.push(osc);
 
-        function hoot(startAt) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = freq;
+        var amOsc = audioCtx.createOscillator();
+        amOsc.type = 'sine';
+        amOsc.frequency.value = 2.4;
+        allSources.push(amOsc);
+        var amDepth = makeGain(gain * 0.28);
+        amOsc.connect(amDepth);
 
-          /* AM at 2.5 Hz */
-          var amOsc = audioCtx.createOscillator();
-          amOsc.type = 'sine';
-          amOsc.frequency.value = 2.5;
-          var amDepth = audioCtx.createGain();
-          amDepth.gain.value = gain * 0.3;
-          amOsc.connect(amDepth);
+        var g = makeGain(0);
+        amDepth.connect(g.gain);
+        osc.connect(g); g.connect(masterGain);
 
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(gain, startAt + 0.06);
-          g.gain.setValueAtTime(gain, startAt + 0.44);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.52);
+        g.gain.setValueAtTime(0, startAt);
+        g.gain.linearRampToValueAtTime(gain, startAt + 0.07);
+        g.gain.setValueAtTime(gain, startAt + 0.42);
+        g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.52);
 
-          amDepth.connect(g.gain);
-          osc.connect(g);
-          g.connect(masterGain);
-          amOsc.start(startAt);
-          osc.start(startAt);
-          osc.stop(startAt + 0.55);
-          amOsc.stop(startAt + 0.55);
-        }
-
-        hoot(now);
-        hoot(now + 0.8); /* second hoot after pause */
+        amOsc.start(startAt); osc.start(startAt);
+        osc.stop(startAt + 0.56); amOsc.stop(startAt + 0.56);
       }
 
+      hoot(now);
+      if (Math.random() < 0.7) hoot(now + rnd(0.7, 1.1));
+
       scheduleOwl();
-    }, 60, 140);
+    }, 55, 140);
   }
 
-  /* ── EVENT 7: Jay/crow call ── */
-  function scheduleJayCrow() {
+  /* ── EVENT: Fae giggle / cackle ── */
+  function scheduleFaeGiggle() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
-      var freq = 600 + rnd(-80, 80);
-      var gain = 0.06 * rnd(0.85, 1.15);
 
-      for (var i = 0; i < 3; i++) {
-        (function (startAt) {
+      var count = rndInt(4, 8);
+      var ascending = Math.random() < 0.5;
+      var baseFreq = rnd(380, 560);
+      var cursor = now;
+
+      for (var i = 0; i < count; i++) {
+        (function (startAt, idx) {
+          var freqMult = ascending ? 1 + idx * rnd(0.06, 0.12) : 1 - idx * rnd(0.04, 0.09);
+          var freq = baseFreq * freqMult * rnd(0.96, 1.04);
+          var dur  = rnd(0.04, 0.09);
+          var gain = rnd(0.055, 0.085) * (1 - idx * 0.05);
+
           var osc = audioCtx.createOscillator();
-          osc.type = 'sawtooth';
-          osc.frequency.value = freq * rnd(0.97, 1.03);
+          osc.type = Math.random() < 0.5 ? 'triangle' : 'sawtooth';
+          osc.frequency.value = freq;
+          allSources.push(osc);
 
-          var bpf = makeFilter('bandpass', 800, 3);
+          var bpf = audioCtx.createBiquadFilter();
+          bpf.type = 'bandpass'; bpf.frequency.value = freq * 1.5; bpf.Q.value = 2;
 
           var g = audioCtx.createGain();
           g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(gain, startAt + 0.02);
-          g.gain.setValueAtTime(gain, startAt + 0.13);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
+          g.gain.linearRampToValueAtTime(gain, startAt + 0.012);
+          g.gain.setValueAtTime(gain, startAt + dur - 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.015);
+          allGains.push(g);
 
-          osc.connect(bpf);
-          bpf.connect(g);
-          g.connect(masterGain);
-          osc.start(startAt);
-          osc.stop(startAt + 0.18);
-        })(now + i * 0.27);
+          /* Slight delay for cave-giggle reverb feel */
+          var delay = audioCtx.createDelay(0.2);
+          delay.delayTime.value = 0.06;
+          var delayG = audioCtx.createGain(); delayG.gain.value = 0.18;
+          allGains.push(delayG);
+
+          osc.connect(bpf); bpf.connect(g); g.connect(masterGain);
+          g.connect(delay); delay.connect(delayG); delayG.connect(masterGain);
+          osc.start(startAt); osc.stop(startAt + dur + 0.05);
+        })(cursor, i);
+
+        cursor += rnd(0.05, 0.13);
       }
 
-      scheduleJayCrow();
-    }, 45, 100);
+      scheduleFaeGiggle();
+    }, 50, 130);
   }
 
-  /* ── EVENT 8: Woodpecker (60% chance) ── */
-  function scheduleWoodpecker() {
+  /* ── EVENT: Gnome bard — pentatonic flute phrase ── */
+  function scheduleGnomeFlute() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
 
-      if (Math.random() < 0.6) {
-        var now = audioCtx.currentTime;
-        var count = rndInt(6, 10);
-        var cursor = now;
+      /* Pentatonic — bard plays 4–6 notes as a phrase */
+      var scale = [261, 293, 329, 392, 440, 523, 587];
+      var count = rndInt(4, 6);
+      var cursor = now;
+      var startNote = rndInt(0, scale.length - count);
 
-        for (var i = 0; i < count; i++) {
-          (function (startAt) {
-            var buf = makeOneShotNoise(0.02);
-            var src = audioCtx.createBufferSource();
-            src.buffer = buf;
-            var hpf = makeFilter('highpass', rnd(1300, 1700));
-            var g = audioCtx.createGain();
-            g.gain.setValueAtTime(0.07 * rnd(0.85, 1.15), startAt);
-            g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.02);
-            src.connect(hpf);
-            hpf.connect(g);
-            g.connect(masterGain);
-            src.start(startAt);
-          })(cursor);
-          cursor += rnd(0.06, 0.09);
-        }
+      /* Optional second voice (humming harmony at a fifth above) */
+      var addHumming = Math.random() < 0.45;
+
+      for (var i = 0; i < count; i++) {
+        (function (startAt, noteFreq) {
+          var dur  = rnd(0.22, 0.45);
+          var gain = rnd(0.025, 0.042);
+
+          /* Flute: triangle wave, slight vibrato */
+          var osc = audioCtx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.value = noteFreq;
+          allSources.push(osc);
+
+          var vib = audioCtx.createOscillator();
+          vib.type = 'sine'; vib.frequency.value = rnd(5, 7);
+          allSources.push(vib);
+          var vibDepth = audioCtx.createGain(); vibDepth.gain.value = rnd(6, 14);
+          vib.connect(vibDepth); vibDepth.connect(osc.frequency);
+
+          var g = makeGain(0);
+          osc.connect(g); g.connect(masterGain);
+          g.gain.setValueAtTime(0, startAt);
+          g.gain.linearRampToValueAtTime(gain, startAt + 0.04);
+          g.gain.setValueAtTime(gain, startAt + dur - 0.04);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.02);
+
+          vib.start(startAt); osc.start(startAt);
+          osc.stop(startAt + dur + 0.05); vib.stop(startAt + dur + 0.05);
+
+          /* Humming harmony */
+          if (addHumming) {
+            var harmFreq = noteFreq * 1.498; /* perfect fifth */
+            var harmOsc = audioCtx.createOscillator();
+            harmOsc.type = 'sine'; harmOsc.frequency.value = harmFreq;
+            allSources.push(harmOsc);
+            var harmG = makeGain(0);
+            harmOsc.connect(harmG); harmG.connect(masterGain);
+            harmG.gain.setValueAtTime(0, startAt);
+            harmG.gain.linearRampToValueAtTime(gain * 0.55, startAt + 0.06);
+            harmG.gain.setValueAtTime(gain * 0.55, startAt + dur - 0.04);
+            harmG.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.02);
+            harmOsc.start(startAt); harmOsc.stop(startAt + dur + 0.05);
+          }
+        })(cursor, scale[startNote + i] || scale[scale.length - 1]);
+
+        cursor += rnd(0.28, 0.55);
       }
 
-      scheduleWoodpecker();
-    }, 50, 120);
+      scheduleGnomeFlute();
+    }, 35, 100);
   }
 
-  /* ── EVENT 9: Leaf rustle gust ── */
+  /* ── EVENT: Hooved animal gallop — slow approach, fast past, fading ── */
+  function scheduleGallop() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+
+      var totalBeats = rndInt(10, 16);
+      var cursor = now;
+
+      /* Build timing: slow start, accelerate through middle, fade end */
+      for (var i = 0; i < totalBeats; i++) {
+        var progress = i / totalBeats; /* 0 → 1 */
+        /* Interval: starts ~0.55s, dips to 0.18s at peak, eases back to 0.45s */
+        var interval;
+        if (progress < 0.35)      interval = 0.55 - progress * 1.0;
+        else if (progress < 0.65) interval = 0.18 + (progress - 0.35) * 0.2;
+        else                       interval = 0.24 + (progress - 0.65) * 0.9;
+
+        /* Two hooves per beat (front pair, back pair) */
+        var beatGain = progress < 0.5
+          ? 0.04 + progress * 0.14         /* approaching: gets louder */
+          : 0.11 - (progress - 0.5) * 0.18; /* receding: fades out */
+        beatGain = Math.max(0.005, beatGain);
+
+        (function (startAt, gain) {
+          /* Front hoof */
+          (function () {
+            var src = audioCtx.createBufferSource();
+            src.buffer = makeOneShotNoise(0.035);
+            var lpf = audioCtx.createBiquadFilter();
+            lpf.type = 'lowpass'; lpf.frequency.value = rnd(350, 500);
+            var g = audioCtx.createGain();
+            g.gain.setValueAtTime(gain, startAt);
+            g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.03);
+            src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+            src.start(startAt);
+          })();
+          /* Back hoof (slight delay) */
+          (function () {
+            var offset = rnd(0.05, 0.10);
+            var src = audioCtx.createBufferSource();
+            src.buffer = makeOneShotNoise(0.032);
+            var lpf = audioCtx.createBiquadFilter();
+            lpf.type = 'lowpass'; lpf.frequency.value = rnd(300, 450);
+            var g = audioCtx.createGain();
+            g.gain.setValueAtTime(gain * 0.85, startAt + offset);
+            g.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.028);
+            src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+            src.start(startAt + offset);
+          })();
+        })(cursor, beatGain);
+
+        cursor += Math.max(0.12, interval);
+      }
+
+      scheduleGallop();
+    }, 70, 200);
+  }
+
+  /* ── EVENT: Bear roar (rare) ── */
+  function scheduleBearRoar() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      if (Math.random() < 0.5) {
+        var now = audioCtx.currentTime;
+        var fundamental = rnd(85, 120);
+        var dur = rnd(1.4, 2.2);
+        var gain = rnd(0.11, 0.16);
+
+        /* Fundamental */
+        (function () {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(fundamental, now);
+          osc.frequency.linearRampToValueAtTime(fundamental * 0.7, now + dur);
+          allSources.push(osc);
+
+          var lpf = audioCtx.createBiquadFilter();
+          lpf.type = 'lowpass'; lpf.frequency.value = 800;
+
+          var g = makeGain(0);
+          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(gain, now + 0.35);
+          g.gain.setValueAtTime(gain, now + dur * 0.55);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
+          osc.start(now); osc.stop(now + dur + 0.2);
+        })();
+
+        /* Growl noise layer */
+        (function () {
+          var src = audioCtx.createBufferSource();
+          src.buffer = makeOneShotNoise(dur + 0.3);
+          var bpf = audioCtx.createBiquadFilter();
+          bpf.type = 'bandpass'; bpf.frequency.value = 280; bpf.Q.value = 1.5;
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(gain * 0.55, now + 0.3);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
+          allGains.push(g);
+          src.connect(bpf); bpf.connect(g); g.connect(masterGain);
+          src.start(now);
+        })();
+      }
+
+      scheduleBearRoar();
+    }, 120, 300);
+  }
+
+  /* ── EVENT: Leaf rustle gust ── */
   function scheduleLeafRustle() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
-      var dur = rnd(0.3, 0.8);
-      var gainVal = rnd(0.03, 0.06);
+      var dur = rnd(0.35, 0.9);
 
-      var buf = makeOneShotNoise(dur + 0.1);
       var src = audioCtx.createBufferSource();
-      src.buffer = buf;
-      var bpf = makeFilter('bandpass', rnd(1000, 1400), rnd(1.2, 1.8));
-      var g = audioCtx.createGain();
+      src.buffer = makeOneShotNoise(dur + 0.1);
+      var bpf = makeFilter('bandpass', rnd(1000, 1500), rnd(1.1, 1.7));
+      var g = makeGain(0);
       g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(gainVal, now + dur * 0.15);
-      g.gain.setValueAtTime(gainVal, now + dur * 0.6);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.05);
-      src.connect(bpf);
-      bpf.connect(g);
-      g.connect(masterGain);
+      g.gain.linearRampToValueAtTime(rnd(0.025, 0.045), now + dur * 0.2);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.04);
+      src.connect(bpf); bpf.connect(g); g.connect(masterGain);
       src.start(now);
 
       scheduleLeafRustle();
-    }, 8, 20);
+    }, 10, 25);
   }
 
-  /* ── EVENT 10: Frog croak (55% chance) ── */
-  function scheduleFrogCroak() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-
-      if (Math.random() < 0.55) {
-        var now = audioCtx.currentTime;
-        var freq = 180 + rnd(-20, 20);
-        var gain = 0.06 * rnd(0.85, 1.15);
-
-        function croak(startAt) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = freq * rnd(0.97, 1.03);
-
-          /* AM at 6 Hz */
-          var amOsc = audioCtx.createOscillator();
-          amOsc.type = 'sine';
-          amOsc.frequency.value = 6;
-          var amDepth = audioCtx.createGain();
-          amDepth.gain.value = gain * 0.4;
-          amOsc.connect(amDepth);
-
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(gain, startAt + 0.03);
-          g.gain.setValueAtTime(gain, startAt + 0.22);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.27);
-
-          amDepth.connect(g.gain);
-          osc.connect(g);
-          g.connect(masterGain);
-          amOsc.start(startAt);
-          osc.start(startAt);
-          osc.stop(startAt + 0.3);
-          amOsc.stop(startAt + 0.3);
-        }
-
-        croak(now);
-        croak(now + 0.45);
-      }
-
-      scheduleFrogCroak();
-    }, 40, 90);
-  }
-
-  /* ── EVENT 11: Branch snap (45% chance) ── */
-  function scheduleBranchSnap() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-
-      if (Math.random() < 0.45) {
-        var now = audioCtx.currentTime;
-        var buf = makeOneShotNoise(0.05);
-        var src = audioCtx.createBufferSource();
-        src.buffer = buf;
-        var lpf = makeFilter('lowpass', rnd(350, 450));
-        var g = audioCtx.createGain();
-        g.gain.setValueAtTime(0.09 * rnd(0.8, 1.2), now);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-        src.connect(lpf);
-        lpf.connect(g);
-        g.connect(masterGain);
-        src.start(now);
-      }
-
-      scheduleBranchSnap();
-    }, 60, 150);
-  }
-
-  /* ── EVENT 12: Distant thunder (35% chance) ── */
-  function scheduleDistantThunder() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-
-      if (Math.random() < 0.35) {
-        var now = audioCtx.currentTime;
-
-        /* Deep sine sweep 40→15 Hz over 2s */
-        var osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(40, now);
-        osc.frequency.linearRampToValueAtTime(15, now + 2);
-        var g = audioCtx.createGain();
-        g.gain.setValueAtTime(0.022, now);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + 2.1);
-        osc.connect(g);
-        g.connect(masterGain);
-        osc.start(now);
-        osc.stop(now + 2.2);
-
-        /* White noise lowpass 100Hz, fades over 2.5s */
-        var buf = makeOneShotNoise(2.6);
-        var src = audioCtx.createBufferSource();
-        src.buffer = buf;
-        var lpf = makeFilter('lowpass', 100);
-        var ng = audioCtx.createGain();
-        ng.gain.setValueAtTime(0.018, now);
-        ng.gain.exponentialRampToValueAtTime(0.0001, now + 2.5);
-        src.connect(lpf);
-        lpf.connect(ng);
-        ng.connect(masterGain);
-        src.start(now);
-      }
-
-      scheduleDistantThunder();
-    }, 120, 300);
-  }
-
-  /* ── EVENT 13: Multiple bird chorus ── */
-  function scheduleBirdChorus() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var count = rndInt(3, 5);
-
-      var birdTypes = [
-        /* Robin-like */
-        function (startAt) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          var f1 = rnd(2000, 2800);
-          var f2 = rnd(1400, 1800);
-          osc.frequency.setValueAtTime(f1, startAt);
-          osc.frequency.exponentialRampToValueAtTime(f2, startAt + rnd(0.2, 0.4));
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(rnd(0.04, 0.07), startAt + 0.03);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + rnd(0.25, 0.45));
-          osc.connect(g);
-          g.connect(masterGain);
-          osc.start(startAt);
-          osc.stop(startAt + 0.5);
-        },
-        /* Warbler-like */
-        function (startAt) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = rnd(2800, 3600);
-          var lfo = audioCtx.createOscillator();
-          lfo.type = 'sine';
-          lfo.frequency.value = rnd(15, 25);
-          var ld = audioCtx.createGain();
-          ld.gain.value = rnd(200, 500);
-          lfo.connect(ld);
-          ld.connect(osc.frequency);
-          var dur = rnd(0.3, 0.6);
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(rnd(0.03, 0.055), startAt + 0.03);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
-          osc.connect(g);
-          g.connect(masterGain);
-          lfo.start(startAt);
-          osc.start(startAt);
-          osc.stop(startAt + dur + 0.02);
-          lfo.stop(startAt + dur + 0.02);
-        },
-        /* High chirp */
-        function (startAt) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(rnd(4000, 5500), startAt);
-          osc.frequency.exponentialRampToValueAtTime(rnd(3000, 4000), startAt + 0.15);
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(rnd(0.025, 0.05), startAt + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.18);
-          osc.connect(g);
-          g.connect(masterGain);
-          osc.start(startAt);
-          osc.stop(startAt + 0.22);
-        }
-      ];
-
-      for (var i = 0; i < count; i++) {
-        var offset = rnd(0, 0.4);
-        var birdFn = birdTypes[Math.floor(Math.random() * birdTypes.length)];
-        birdFn(now + offset);
-      }
-
-      scheduleBirdChorus();
-    }, 80, 200);
-  }
-
-  /* ── START AUDIO ── */
+  /* ── START ── */
   function startAudio() {
     if (audioStarted) return;
-
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) {
-      return;
-    }
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch (e) { return; }
 
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 1.0;
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
-    /* Start all ambient beds */
-    startWindCanopy();
-    startInsects();
-    startStream();
+    startCrickets();
+    startDistantFlute();
 
-    /* Schedule all random events */
-    scheduleRobin();
-    scheduleWarbler();
     scheduleOwl();
-    scheduleJayCrow();
-    scheduleWoodpecker();
+    scheduleFaeGiggle();
+    scheduleGnomeFlute();
+    scheduleGallop();
+    scheduleBearRoar();
     scheduleLeafRustle();
-    scheduleFrogCroak();
-    scheduleBranchSnap();
-    scheduleDistantThunder();
-    scheduleBirdChorus();
 
     audioStarted = true;
   }
 
-  /* ── STOP AUDIO ── */
+  /* ── STOP ── */
   function stopAudio() {
     if (!audioStarted) return;
-
-    /* Cancel all pending timeouts */
     timeouts.forEach(function (id) { clearTimeout(id); });
     timeouts = [];
 
-    /* Fade out master gain then close context */
     if (masterGain && audioCtx) {
       var now = audioCtx.currentTime;
       masterGain.gain.cancelScheduledValues(now);
@@ -697,61 +447,43 @@
       masterGain.gain.linearRampToValueAtTime(0, now + 0.3);
     }
 
-    /* Disconnect everything after fade */
     var ctx = audioCtx;
     setTimeout(function () {
-      allSources.forEach(function (src) {
-        try { src.stop(); } catch (e) {}
-        try { src.disconnect(); } catch (e) {}
-      });
-      allGains.forEach(function (g) {
-        try { g.disconnect(); } catch (e) {}
-      });
-      if (ctx) {
-        try { ctx.close(); } catch (e) {}
-      }
+      allSources.forEach(function (s) { try { s.stop(); } catch(e){} try { s.disconnect(); } catch(e){} });
+      allGains.forEach(function (g) { try { g.disconnect(); } catch(e){} });
+      if (ctx) { try { ctx.close(); } catch(e){} }
     }, 350);
 
-    audioCtx = null;
-    masterGain = null;
-    audioStarted = false;
-    allSources = [];
-    allGains = [];
+    audioCtx = null; masterGain = null; audioStarted = false;
+    allSources = []; allGains = [];
   }
 
-  /* ── LAZY INIT ON FIRST USER INTERACTION ── */
   var interactionHandlerAdded = false;
   var themeActive = false;
 
   function onUserInteraction() {
-    if (themeActive && !audioStarted) {
-      startAudio();
-    }
+    if (themeActive && !audioStarted) startAudio();
   }
 
   function addInteractionListeners() {
     if (interactionHandlerAdded) return;
     interactionHandlerAdded = true;
-    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (evt) {
-      document.addEventListener(evt, onUserInteraction, { once: false, passive: true });
+    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (e) {
+      document.addEventListener(e, onUserInteraction, { once: false, passive: true });
     });
   }
 
   function removeInteractionListeners() {
-    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (evt) {
-      document.removeEventListener(evt, onUserInteraction);
+    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (e) {
+      document.removeEventListener(e, onUserInteraction);
     });
     interactionHandlerAdded = false;
   }
 
-  /* ── PUBLIC API ── */
   function start() {
     themeActive = true;
     addInteractionListeners();
-    /* Attempt immediate start in case context already unlocked */
-    if (!audioStarted) {
-      startAudio();
-    }
+    if (!audioStarted) startAudio();
   }
 
   function stop() {
@@ -761,5 +493,4 @@
   }
 
   window.veilwoodTheme = { start: start, stop: stop };
-
 })();
