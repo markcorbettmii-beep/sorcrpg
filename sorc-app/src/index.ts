@@ -1465,7 +1465,11 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
 
   if (lobby.creator_uid === user.id) {
     const next = await c.env.sorc_db.prepare(
-      `SELECT user_id FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC LIMIT 1`
+      `SELECT lm.user_id FROM lobby_members lm
+       LEFT JOIN box_set_codes bsc ON bsc.owner_uid = lm.user_id
+       WHERE lm.lobby_id = ?
+       ORDER BY CASE WHEN bsc.owner_uid IS NOT NULL THEN 0 ELSE 1 END ASC, lm.joined_at ASC
+       LIMIT 1`
     ).bind(lobbyId).first() as any;
     if (next) {
       await c.env.sorc_db.prepare(
