@@ -68,20 +68,20 @@
     src.buffer = makeNoiseBuffer(sec); return src;
   }
 
-  /* ─── Shared hall reverb for flute ───────────────────────── */
+  /* ─── Deep forest reverb for flute (4.5s tail) ───────────── */
   var fluteReverb = null;
   function getFluteReverb() {
     if (fluteReverb) return fluteReverb;
-    var len = Math.floor(audioCtx.sampleRate * 2.8);
+    var len = Math.floor(audioCtx.sampleRate * 4.5);
     var buf = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
     for (var ch = 0; ch < 2; ch++) {
       var d = buf.getChannelData(ch);
       for (var i = 0; i < len; i++)
-        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.0);
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.0);
     }
     var conv = audioCtx.createConvolver();
     conv.buffer = buf;
-    var wet = makeGain(0.30);
+    var wet = makeGain(0.52);
     conv.connect(wet); wet.connect(masterGain);
     fluteReverb = conv;
     return fluteReverb;
@@ -94,15 +94,18 @@
   /* Dm pentatonic for harp */
   var HARP_NOTES = [D3, F3, G3, A3, C4, D4, F4, G4, A4, C5, D5];
 
-  /* ─── Flute phrases — D Dorian ─────────────────────────────
-     Notes are longer and spaced so the reverb tail breathes     */
-  var PHRASES = [
-    [{f:A4,d:0.55},{f:G4,d:0.40},{f:E4,d:0.40},{f:D4,d:1.10},{f:F4,d:0.45},{f:G4,d:0.45},{f:A4,d:1.20}],
-    [{f:D4,d:0.40},{f:F4,d:0.40},{f:G4,d:0.45},{f:A4,d:0.85},{f:G4,d:0.38},{f:F4,d:0.38},{f:E4,d:0.45},{f:D4,d:1.30}],
-    [{f:G4,d:0.50},{f:A4,d:0.50},{f:B4,d:0.50},{f:A4,d:0.50},{f:G4,d:0.40},{f:F4,d:0.38},{f:D4,d:1.40}],
-    [{f:A3,d:0.60},{f:C4,d:0.50},{f:D4,d:0.50},{f:E4,d:0.50},{f:F4,d:0.65},{f:E4,d:0.42},{f:D4,d:1.20}],
-    [{f:F4,d:0.50},{f:G4,d:0.45},{f:A4,d:0.85},{f:G4,d:0.40},{f:E4,d:0.40},{f:F4,d:0.40},{f:D4,d:1.40}],
-    [{f:D4,d:0.45},{f:E4,d:0.38},{f:F4,d:0.38},{f:G4,d:0.38},{f:A4,d:0.72},{f:G4,d:0.38},{f:F4,d:0.38},{f:E4,d:0.38},{f:D4,d:1.40}],
+  /* ─── Shakuhachi / ocarina phrases — 2-3 long notes only ───
+     Zelda BOTW/TOTK style: each note breathes for 2.5-4.5s,
+     long rests between notes, very sparse appearances.         */
+  var FLUTE_PHRASES = [
+    [{f:A4, d:3.2}, {f:G4, d:2.8}, {f:D4, d:4.5}],
+    [{f:D4, d:2.8}, {f:F4, d:4.0}],
+    [{f:G4, d:3.0}, {f:A4, d:2.5}, {f:F4, d:4.2}],
+    [{f:E4, d:3.5}, {f:D4, d:4.8}],
+    [{f:A4, d:3.2}, {f:D5, d:2.5}, {f:A4, d:4.0}],
+    [{f:F4, d:3.5}, {f:G4, d:4.2}],
+    [{f:D4, d:4.0}, {f:A4, d:3.0}, {f:G4, d:4.5}],
+    [{f:G4, d:2.8}, {f:F4, d:4.0}],
   ];
 
   /* ─── Slow Fable-style string melody phrases ────────────────
@@ -278,91 +281,97 @@
     }, 8, 22);
   }
 
-  /* ─── CELTIC FLUTE ──────────────────────────────────────────
-     Sine oscillator — no triangle, no 2200Hz highpass noise.
-     Reverb tail gives distance. Breath = soft bandpass hiss.   */
+  /* ─── SHAKUHACHI FLUTE ──────────────────────────────────────
+     Zelda BOTW/TOTK style: 2-3 long notes, each 2.5-4.8s,
+     long breath rests between notes, deep forest reverb.
+     Very sparse — appears once every 65-110s.               */
   function playFlute(phrase) {
     var rev = getFluteReverb();
-    var cursor = audioCtx.currentTime + rnd(0.3, 0.8);
+    var cursor = audioCtx.currentTime + rnd(0.8, 2.0);
     phrase.forEach(function (note) {
-      if (!note.f) { cursor += note.d; return; }
       (function (startAt, freq, dur) {
-        /* Primary sine — clean, flute-like fundamental */
+        /* Shakuhachi: sine fundamental */
         var osc = audioCtx.createOscillator();
         osc.type = 'sine';
         osc.frequency.value = freq;
         allSources.push(osc);
 
-        /* Very gentle 2nd harmonic for warmth — sine only, 6% of main */
+        /* 2nd harmonic — 12% of main, gives body */
         var harm2 = audioCtx.createOscillator();
         harm2.type = 'sine';
         harm2.frequency.value = freq * 2;
         allSources.push(harm2);
 
-        /* Vibrato: delayed, subtle — 2.5–4 Hz depth, never wobbles wildly */
+        /* 3rd harmonic — 4%, adds subtle edge */
+        var harm3 = audioCtx.createOscillator();
+        harm3.type = 'sine';
+        harm3.frequency.value = freq * 3;
+        allSources.push(harm3);
+
+        /* Slow, gentle vibrato — enters after 45% of note */
         var vib = audioCtx.createOscillator();
         vib.type = 'sine';
-        vib.frequency.value = rnd(5.2, 6.6);
+        vib.frequency.value = rnd(4.0, 5.2);
         allSources.push(vib);
         var vibDepth = makeGain(0);
         vibDepth.gain.setValueAtTime(0, startAt);
-        vibDepth.gain.linearRampToValueAtTime(rnd(2.5, 4.0), startAt + dur * 0.40);
+        vibDepth.gain.linearRampToValueAtTime(rnd(1.6, 2.8), startAt + dur * 0.45);
         vib.connect(vibDepth); vibDepth.connect(osc.frequency);
 
-        /* Breath noise: bandpass centered near fundamental — soft hiss,
-           NOT a harsh highpass scrape. This is the key fix.          */
-        var breathSrc = oneshotNoise(dur + 0.15);
+        /* Barely-audible breath — just organic texture */
+        var breathSrc = oneshotNoise(dur + 0.4);
         var breathBpf = audioCtx.createBiquadFilter();
         breathBpf.type = 'bandpass';
-        breathBpf.frequency.value = freq * 1.5;
-        breathBpf.Q.value = 1.0;
-        var breathG = audioCtx.createGain();
-        breathG.gain.setValueAtTime(0.0010, startAt);
-        breathG.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.12);
-        allGains.push(breathG);
+        breathBpf.frequency.value = freq * 1.3;
+        breathBpf.Q.value = 1.8;
+        var breathG = makeGain(0.0005);
         breathSrc.connect(breathBpf); breathBpf.connect(breathG); breathG.connect(masterGain);
         breathSrc.start(startAt);
 
-        /* Main gain — peak 0.007–0.013, soft attack, clean tail */
+        /* Main gain — very slow attack like a real shakuhachi breath */
+        var peak = rnd(0.006, 0.010);
         var g = makeGain(0);
-        var peak = rnd(0.007, 0.013);
         g.gain.setValueAtTime(0, startAt);
-        g.gain.linearRampToValueAtTime(peak * 0.45, startAt + 0.04);
-        g.gain.linearRampToValueAtTime(peak, startAt + 0.12);
-        g.gain.setValueAtTime(peak, startAt + Math.max(dur - 0.14, dur * 0.65));
-        g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.06);
+        g.gain.linearRampToValueAtTime(peak * 0.25, startAt + 0.12);
+        g.gain.linearRampToValueAtTime(peak, startAt + 0.55);
+        g.gain.setValueAtTime(peak, startAt + dur - 0.6);
+        g.gain.linearRampToValueAtTime(0, startAt + dur + 0.6);
 
-        /* 2nd harmonic gain — barely there */
         var g2 = makeGain(0);
         g2.gain.setValueAtTime(0, startAt);
-        g2.gain.linearRampToValueAtTime(peak * 0.055, startAt + 0.10);
-        g2.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.02);
+        g2.gain.linearRampToValueAtTime(peak * 0.12, startAt + 0.4);
+        g2.gain.linearRampToValueAtTime(0, startAt + dur + 0.3);
 
-        /* Warm lowpass to round off any digital edge */
+        var g3 = makeGain(0);
+        g3.gain.setValueAtTime(0, startAt);
+        g3.gain.linearRampToValueAtTime(peak * 0.04, startAt + 0.4);
+        g3.gain.linearRampToValueAtTime(0, startAt + dur + 0.2);
+
         var lpf = audioCtx.createBiquadFilter();
-        lpf.type = 'lowpass'; lpf.frequency.value = rnd(4000, 5500);
+        lpf.type = 'lowpass'; lpf.frequency.value = rnd(3600, 4800);
 
         osc.connect(lpf); lpf.connect(g);
-        g.connect(masterGain);  /* dry signal */
-        g.connect(rev);          /* wet reverb — creates distance */
-        harm2.connect(g2); g2.connect(masterGain);
+        g.connect(masterGain);
+        g.connect(rev);
+        harm2.connect(g2); g2.connect(masterGain); g2.connect(rev);
+        harm3.connect(g3); g3.connect(masterGain);
 
         vib.start(startAt);
-        osc.start(startAt); harm2.start(startAt);
-        osc.stop(startAt + dur + 0.10);
-        harm2.stop(startAt + dur + 0.10);
-        vib.stop(startAt + dur + 0.10);
+        osc.start(startAt); harm2.start(startAt); harm3.start(startAt);
+        var stopAt = startAt + dur + 0.8;
+        osc.stop(stopAt); harm2.stop(stopAt); harm3.stop(stopAt); vib.stop(stopAt);
       })(cursor, note.f, note.d);
-      cursor += note.d + rnd(0.01, 0.06);
+      /* Long breath rest between notes */
+      cursor += note.d + rnd(1.2, 2.5);
     });
   }
 
   function scheduleFlute() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
-      playFlute(pick(PHRASES));
+      playFlute(pick(FLUTE_PHRASES));
       scheduleFlute();
-    }, 30, 65);
+    }, 65, 110);
   }
 
   /* ─── CHOIR SWELL ───────────────────────────────────────────  */
@@ -637,8 +646,8 @@
     });
     scheduleOwl(); /* also start the loop so second owl isn't too far */
 
-    /* Flute: first phrase at 14-25s, then normal spacing */
-    at(rnd(14, 25), function () { playFlute(pick(PHRASES)); scheduleFlute(); });
+    /* Flute: first breath at 35-55s — distant, sparse, then ongoing */
+    at(rnd(35, 55), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
 
     /* Choir swell: first occurrence at 40-58s */
     at(rnd(40, 58), function () { playChoirSwell(); scheduleChoirSwell(); });
