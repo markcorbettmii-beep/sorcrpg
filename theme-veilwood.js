@@ -618,9 +618,10 @@
   }
 
   /* ─── START ──────────────────────────────────────────────────
-     All sound types guaranteed within first 60 seconds,
-     then the recursive schedulers keep them going at natural
-     spacing. First minute is dense; thereafter it breathes.    */
+     Two-minute intro: every sound appears at least once in the
+     first 120 seconds — like a scene-setting song. After each
+     guaranteed hit the recursive scheduler takes over for random
+     ongoing spacing. Beds (wind, pad) run continuously.        */
   function startAudio() {
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
@@ -635,37 +636,52 @@
     startStringPad();
     startWind();
 
-    /* ── First-minute burst: everything heard within 60 seconds ── */
+    /* ── 0-30s: Open the scene ───────────────────────────────── */
 
-    /* Birds fire almost immediately — short interval schedulers handle it */
-    scheduleBirdD();               /* ~4-13s first fire */
-    scheduleBirdC();               /* ~12-32s first fire */
-    scheduleLeafRustle();          /* ~8-20s first fire */
+    /* Birds + rustles: short schedulers naturally cover the window */
+    scheduleBirdD();                /* chirps: ~4-13s          */
+    scheduleBirdC();                /* song:   ~12-32s         */
+    scheduleLeafRustle();           /* rustle: ~8-20s          */
 
-    /* Harp: two early hits then ongoing */
-    at(rnd(3, 7), function () { playHarp(); });
-    at(rnd(18, 28), function () { playHarp(); scheduleHarp(); });
+    /* Harp — first pluck very early, like the scene fading in */
+    at(rnd(4, 8), function () { playHarp(); });
 
-    /* Gallop: first hit at 12-20s then ongoing */
-    at(rnd(12, 20), function () { playGallopVariant(pick(GALLOP_VARIANTS)); scheduleGallop(); });
+    /* FLUTE — early, present right away so it's not withheld */
+    at(rnd(10, 16), function () { playFlute(pick(FLUTE_PHRASES)); });
 
-    /* String melody: first phrase at 8-16s — this IS the music */
-    at(rnd(8, 16), function () { playStringMelody(pick(STRING_PHRASES)); scheduleStringMelody(); });
+    /* String melody — first full phrase around 18-28s */
+    at(rnd(18, 28), function () { playStringMelody(pick(STRING_PHRASES)); });
 
-    /* Owl: first hoot at 22-35s */
-    at(rnd(22, 35), function () {
-      scheduleOwl(); /* let the scheduler fire it with its own randomness */
-    });
-    scheduleOwl(); /* also start the loop so second owl isn't too far */
+    /* ── 30-70s: Build the world ────────────────────────────── */
 
-    /* Flute: first breath at 12-22s — sparse but present early */
-    at(rnd(12, 22), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
+    /* Gallop — first pass mid-intro */
+    at(rnd(30, 45), function () { playGallopVariant(pick(GALLOP_VARIANTS)); });
 
-    /* Choir swell: first occurrence at 40-58s */
-    at(rnd(40, 58), function () { playChoirSwell(); scheduleChoirSwell(); });
+    /* Harp second hit */
+    at(rnd(35, 50), function () { playHarp(); });
 
-    /* Second string melody at ~38-55s so the first minute has two passes */
-    at(rnd(38, 55), function () { playStringMelody(pick(STRING_PHRASES)); });
+    /* Owl — first hoot comes in around 40-55s */
+    at(rnd(40, 55), function () { scheduleOwl(); });
+
+    /* Choir swell — appears once, atmospheric layer */
+    at(rnd(48, 68), function () { playChoirSwell(); scheduleChoirSwell(); });
+
+    /* Flute second phrase — mid-intro breath */
+    at(rnd(55, 78), function () { playFlute(pick(FLUTE_PHRASES)); });
+
+    /* ── 70-120s: Fill out, then hand off to schedulers ──────  */
+
+    /* Second string melody */
+    at(rnd(70, 92), function () { playStringMelody(pick(STRING_PHRASES)); scheduleStringMelody(); });
+
+    /* Second gallop pass — then ongoing */
+    at(rnd(78, 100), function () { playGallopVariant(pick(GALLOP_VARIANTS)); scheduleGallop(); });
+
+    /* Harp third hit — then ongoing */
+    at(rnd(88, 108), function () { playHarp(); scheduleHarp(); });
+
+    /* Flute third phrase — then ongoing random */
+    at(rnd(100, 118), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
 
     audioStarted = true;
   }
