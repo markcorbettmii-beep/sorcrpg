@@ -52,6 +52,23 @@
     return audioCtx;
   }
 
+  /* Build a ConvolverNode with a programmatically generated impulse response
+     (exponential-decay white noise, ~2.5 seconds) */
+  function makeReverb(ac, duration) {
+    var sampleRate = ac.sampleRate;
+    var length = Math.floor(sampleRate * duration);
+    var impulse = ac.createBuffer(2, length, sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var data = impulse.getChannelData(ch);
+      for (var i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
+      }
+    }
+    var conv = ac.createConvolver();
+    conv.buffer = impulse;
+    return conv;
+  }
+
   function startAudio() {
     if (audioStarted) return;
     var ac = ensureAudioCtx();
@@ -61,99 +78,218 @@
       return;
     }
     audioStarted = true;
+    allNodes = [];
+    allOscillators = [];
 
-    /* Low drone ~60 Hz */
-    droneGain = ac.createGain();
-    droneGain.gain.setValueAtTime(0, ac.currentTime);
-    droneGain.gain.linearRampToValueAtTime(0.04, ac.currentTime + 2.5);
-    droneGain.connect(ac.destination);
+    var now = ac.currentTime;
 
-    droneNode = ac.createOscillator();
-    droneNode.type = 'sine';
-    droneNode.frequency.value = 60;
-    droneNode.connect(droneGain);
-    droneNode.start();
+    /* ── Shared reverb send ── */
+    var reverb = makeReverb(ac, 2.5);
+    var reverbGain = ac.createGain();
+    reverbGain.gain.value = 0.35;
+    reverb.connect(reverbGain);
+    reverbGain.connect(ac.destination);
+    allNodes.push(reverb, reverbGain);
 
-    /* White-noise hiss via script processor polyfill with AudioWorklet fallback */
-    startNoise(ac);
+    /* Helper: make a sine oscillator with optional detune, connect to both
+       dry destination and reverb send */
+    function makePad(freq, detuneCents, gainVal) {
+      var osc = ac.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.detune.value = detuneCents;
+      var g = ac.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(gainVal, now + 3.5);
+      osc.connect(g);
+      g.connect(ac.destination);
+      g.connect(reverb);
+      osc.start(now);
+      allNodes.push(osc, g);
+      allOscillators.push(osc);
+    }
 
-    /* Schedule first ping */
-    schedulePing();
+    /* ── Slow pad chord: A1 root + 5th + octave + maj3rd ── */
+    makePad(55,    +2,  0.025);   /* A1 root */
+    makePad(55,    -2,  0.025);   /* A1 root, detuned twin */
+    makePad(82.5,  +1,  0.025);   /* E2 perfect 5th */
+    makePad(82.5,  -1,  0.025);
+    makePad(110,   +2,  0.025);   /* A2 octave */
+    makePad(110,   -2,  0.025);
+    makePad(138.6, +1,  0.025);   /* C#2/Db maj3rd ≈138Hz */
+    makePad(138.6, -1,  0.025);
+
+    /* ── Bass pulse: 27.5 Hz with slow amplitude LFO (breathing) ── */
+    var bassOsc = ac.createOscillator();
+    bassOsc.type = 'sine';
+    bassOsc.frequency.value = 27.5;
+
+    var bassGain = ac.createGain();
+    bassGain.gain.setValueAtTime(0, now);
+    bassGain.gain.linearRampToValueAtTime(0.04, now + 4);
+
+    var bassLfo = ac.createOscillator();
+    bassLfo.type = 'sine';
+    bassLfo.frequency.value = 0.08;
+    var bassLfoGain = ac.createGain();
+    bassLfoGain.gain.value = 0.04 * 0.6;   /* depth: 60% of base gain */
+    bassLfo.connect(bassLfoGain);
+    bassLfoGain.connect(bassGain.gain);
+
+    bassOsc.connect(bassGain);
+    bassGain.connect(ac.destination);
+    bassOsc.start(now);
+    bassLfo.start(now);
+    allNodes.push(bassOsc, bassGain, bassLfo, bassLfoGain);
+    allOscillators.push(bassOsc, bassLfo);
+
+    /* ── High shimmer: triangle waves at 880 Hz and 1108 Hz with tremolo ── */
+    var shimmerLfo = ac.createOscillator();
+    shimmerLfo.type = 'sine';
+    shimmerLfo.frequency.value = 0.12;
+    var shimmerLfoGain = ac.createGain();
+    shimmerLfoGain.gain.value = 0.004;   /* tremolo depth */
+    shimmerLfo.connect(shimmerLfoGain);
+    shimmerLfo.start(now);
+    allNodes.push(shimmerLfo, shimmerLfoGain);
+    allOscillators.push(shimmerLfo);
+
+    function makeShimmer(freq, detuneCents) {
+      var osc = ac.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      osc.detune.value = detuneCents;
+      var g = ac.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.008, now + 4);
+      shimmerLfoGain.connect(g.gain);
+      osc.connect(g);
+      g.connect(ac.destination);
+      g.connect(reverb);
+      osc.start(now);
+      allNodes.push(osc, g);
+      allOscillators.push(osc);
+    }
+
+    makeShimmer(880,  +5);
+    makeShimmer(880,  -5);
+    makeShimmer(1108, +5);
+    makeShimmer(1108, -5);
+
+    /* Schedule first spacecraft whoosh */
+    scheduleWhoosh();
   }
 
-  function startNoise(ac) {
-    try {
-      var bufferSize = 4096;
-      /* Use ScriptProcessorNode (deprecated but universally supported) */
-      var noiseProc = ac.createScriptProcessor(bufferSize, 0, 1);
-      noiseProc.onaudioprocess = function (e) {
-        var out = e.outputBuffer.getChannelData(0);
-        for (var i = 0; i < out.length; i++) {
-          out[i] = Math.random() * 2 - 1;
-        }
-      };
-
-      var filter = ac.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 800;
-      filter.Q.value = 0.7;
-
-      noiseGain = ac.createGain();
-      noiseGain.gain.setValueAtTime(0, ac.currentTime);
-      noiseGain.gain.linearRampToValueAtTime(0.015, ac.currentTime + 3);
-
-      noiseProc.connect(filter);
-      filter.connect(noiseGain);
-      noiseGain.connect(ac.destination);
-
-      noiseNode = noiseProc;
-    } catch (e) { /* silently skip noise if not supported */ }
-  }
-
-  function schedulePing() {
+  function scheduleWhoosh() {
     if (!running) return;
-    var delay = 8000 + Math.random() * 7000;
-    pingTimer = setTimeout(function () {
+    var delay = 8000 + Math.random() * 12000;   /* 8–20 seconds */
+    whooshTimer = setTimeout(function () {
       if (running && audioCtx && audioCtx.state === 'running') {
-        playPing();
+        playWhoosh();
       }
-      schedulePing();
+      scheduleWhoosh();
     }, delay);
   }
 
-  function playPing() {
+  function playWhoosh() {
     var ac = audioCtx;
     if (!ac) return;
+
+    /* Alternate large / small craft randomly */
+    var isLarge = Math.random() < 0.4;
+    var duration = isLarge ? 2.5 : 1.5;
+    var freqStart, freqEnd;
+    /* Random direction: left-to-right or right-to-left fly-by */
+    var leftToRight = Math.random() < 0.5;
+
+    if (isLarge) {
+      freqStart = leftToRight ? 600 : 300;
+      freqEnd   = leftToRight ? 200 : 500;
+    } else {
+      freqStart = leftToRight ? 800 : 300;
+      freqEnd   = leftToRight ? 200 : 800;
+    }
+    var panStart = leftToRight ? -0.8 : 0.8;
+    var panEnd   = leftToRight ?  0.8 : -0.8;
+
     var now = ac.currentTime;
-    var g = ac.createGain();
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.06, now + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
-    g.connect(ac.destination);
-    var osc = ac.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    osc.connect(g);
-    osc.start(now);
-    osc.stop(now + 0.5);
+    var attack  = 0.15;
+    var sustain = isLarge ? 1.6 : 0.8;
+    var release = isLarge ? 0.75 : 0.55;
+    var peakGain = isLarge ? 0.10 : 0.12;
+
+    /* White noise buffer (0.5s, looped via source.loop) */
+    var bufLen = Math.ceil(ac.sampleRate * 0.5);
+    var noiseBuf = ac.createBuffer(1, bufLen, ac.sampleRate);
+    var nd = noiseBuf.getChannelData(0);
+    for (var i = 0; i < bufLen; i++) { nd[i] = Math.random() * 2 - 1; }
+
+    var src = ac.createBufferSource();
+    src.buffer = noiseBuf;
+    src.loop = true;
+
+    /* Bandpass filter — frequency sweeps */
+    var bpf = ac.createBiquadFilter();
+    bpf.type = 'bandpass';
+    bpf.frequency.setValueAtTime(freqStart, now);
+    bpf.frequency.linearRampToValueAtTime(freqEnd, now + duration);
+    bpf.Q.value = isLarge ? 1.5 : 2.5;
+
+    /* Gain envelope */
+    var env = ac.createGain();
+    env.gain.setValueAtTime(0, now);
+    env.gain.linearRampToValueAtTime(peakGain, now + attack);
+    env.gain.setValueAtTime(peakGain, now + attack + sustain);
+    env.gain.linearRampToValueAtTime(0, now + attack + sustain + release);
+
+    /* Stereo pan sweep */
+    var panner = ac.createStereoPanner
+      ? ac.createStereoPanner()
+      : null;
+
+    src.connect(bpf);
+    bpf.connect(env);
+    if (panner) {
+      panner.pan.setValueAtTime(panStart, now);
+      panner.pan.linearRampToValueAtTime(panEnd, now + duration);
+      env.connect(panner);
+      panner.connect(ac.destination);
+    } else {
+      env.connect(ac.destination);
+    }
+
+    src.start(now);
+    src.stop(now + duration + 0.05);
   }
 
   function stopAudio() {
-    if (pingTimer) { clearTimeout(pingTimer); pingTimer = null; }
+    if (whooshTimer) { clearTimeout(whooshTimer); whooshTimer = null; }
+
     if (audioCtx) {
-      try {
-        if (droneGain) {
-          droneGain.gain.cancelScheduledValues(audioCtx.currentTime);
-          droneGain.gain.setValueAtTime(droneGain.gain.value, audioCtx.currentTime);
-          droneGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
+      var now = audioCtx.currentTime;
+      /* Ramp down all gain nodes quickly */
+      for (var i = 0; i < allNodes.length; i++) {
+        var n = allNodes[i];
+        if (n && n.gain) {
+          try {
+            n.gain.cancelScheduledValues(now);
+            n.gain.setValueAtTime(n.gain.value, now);
+            n.gain.linearRampToValueAtTime(0, now + 1.5);
+          } catch (e) {}
         }
-        if (noiseGain) {
-          noiseGain.gain.cancelScheduledValues(audioCtx.currentTime);
-          noiseGain.gain.setValueAtTime(noiseGain.gain.value, audioCtx.currentTime);
-          noiseGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.2);
-        }
-      } catch (e) {}
+      }
+      /* Stop oscillators after fade */
+      (function (oscs) {
+        setTimeout(function () {
+          for (var j = 0; j < oscs.length; j++) {
+            try { oscs[j].stop(); } catch (e) {}
+          }
+        }, 1600);
+      })(allOscillators.slice());
     }
+
+    allNodes = [];
+    allOscillators = [];
     audioStarted = false;
   }
 

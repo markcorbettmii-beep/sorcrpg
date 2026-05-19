@@ -17,18 +17,12 @@
 
   /* ── AUDIO STATE ── */
   var audioCtx = null;
-  var windGain = null;
-  var windNode = null;
-  var windLfoNode = null;
-  var cricketGain = null;
-  var cricketOsc1 = null;
-  var cricketOsc2 = null;
-  var cricketAmplifier = null;
-  var birdTimer = null;
-  var shimmerTimer = null;
   var audioStarted = false;
   var pendingAudioStart = false;
-  var lastNightPhase = -1;   /* -1 = unknown, 0 = day, 1 = night */
+  var birdTimer = null;
+  var allNodes = [];        /* every node created, for cleanup */
+  var allOscillators = []; /* started oscillators to stop on cleanup */
+  var allIntervals = [];   /* setInterval ids for LFOs */
 
   /* ── SCENE OBJECTS (generated once) ── */
   var STARS = [];
@@ -502,13 +496,6 @@
     /* Dark overlay */
     drawOverlay(nightness);
 
-    /* Update audio based on day/night phase */
-    var isNight = nightness > 0.5;
-    if (audioStarted && isNight !== (lastNightPhase === 1)) {
-      lastNightPhase = isNight ? 1 : 0;
-      crossfadeDayNight(nightness);
-    }
-
     rafId = requestAnimationFrame(render);
   }
 
@@ -524,6 +511,34 @@
     return audioCtx;
   }
 
+  /* Build a ConvolverNode with exponential-decay white-noise impulse (~2s) */
+  function makeReverb(ac, duration) {
+    var sampleRate = ac.sampleRate;
+    var length = Math.floor(sampleRate * duration);
+    var impulse = ac.createBuffer(2, length, sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var data = impulse.getChannelData(ch);
+      for (var i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
+      }
+    }
+    var conv = ac.createConvolver();
+    conv.buffer = impulse;
+    return conv;
+  }
+
+  /* Create a looping white-noise BufferSource */
+  function makeNoiseSource(ac) {
+    var bufLen = Math.ceil(ac.sampleRate * 0.5);
+    var buf = ac.createBuffer(1, bufLen, ac.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < bufLen; i++) { d[i] = Math.random() * 2 - 1; }
+    var src = ac.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    return src;
+  }
+
   function startAudio() {
     if (audioStarted) return;
     var ac = ensureAudioCtx();
@@ -533,198 +548,309 @@
       return;
     }
     audioStarted = true;
-    lastNightPhase = -1;
+    allNodes = [];
+    allOscillators = [];
+    allIntervals = [];
 
-    /* Wind: bandpass-filtered noise with slow LFO on gain */
-    startWind(ac);
-
-    /* Crickets (night) */
-    startCrickets(ac);
-
-    /* Schedule bird chirps (day) and shimmer */
-    scheduleBird();
-    scheduleShimmer();
-  }
-
-  function startWind(ac) {
-    try {
-      var bufSize = 4096;
-      var noiseProc = ac.createScriptProcessor(bufSize, 0, 1);
-      noiseProc.onaudioprocess = function (e) {
-        var out = e.outputBuffer.getChannelData(0);
-        for (var i = 0; i < out.length; i++) {
-          out[i] = Math.random() * 2 - 1;
-        }
-      };
-      var filter = ac.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 300;
-      filter.Q.value = 0.8;
-
-      windGain = ac.createGain();
-      windGain.gain.setValueAtTime(0, ac.currentTime);
-      windGain.gain.linearRampToValueAtTime(0.025, ac.currentTime + 3);
-
-      noiseProc.connect(filter);
-      filter.connect(windGain);
-      windGain.connect(ac.destination);
-      windNode = noiseProc;
-
-      /* LFO for wind swell — modulate via setInterval since AudioParam automation 
-         doesn't easily do slow periodic sweeps without AudioWorklet */
-      var lfoPhase = 0;
-      windLfoNode = setInterval(function () {
-        if (!audioStarted || !windGain || !ac) return;
-        lfoPhase += 0.1;
-        var lfoVal = 0.025 + 0.015 * (0.5 + 0.5 * Math.sin(lfoPhase));
-        try {
-          windGain.gain.setTargetAtTime(lfoVal, ac.currentTime, 0.5);
-        } catch (e) {}
-      }, 200);
-    } catch (e) {}
-  }
-
-  function startCrickets(ac) {
-    try {
-      cricketAmplifier = ac.createGain();
-      cricketAmplifier.gain.setValueAtTime(0, ac.currentTime);
-      cricketAmplifier.connect(ac.destination);
-
-      /* Cricket AM oscillator pair */
-      var amOsc = ac.createOscillator();
-      amOsc.type = 'sine';
-      amOsc.frequency.value = 12; /* AM freq */
-      var amGain = ac.createGain();
-      amGain.gain.value = 0.5;
-      amOsc.connect(amGain);
-      amGain.connect(cricketAmplifier.gain);
-      amOsc.start();
-
-      cricketOsc1 = ac.createOscillator();
-      cricketOsc1.type = 'sine';
-      cricketOsc1.frequency.value = 4200;
-      var g1 = ac.createGain();
-      g1.gain.value = 0.015;
-      cricketOsc1.connect(g1);
-      g1.connect(cricketAmplifier);
-      cricketOsc1.start();
-
-      cricketOsc2 = ac.createOscillator();
-      cricketOsc2.type = 'sine';
-      cricketOsc2.frequency.value = 4400;
-      var g2 = ac.createGain();
-      g2.gain.value = 0.015;
-      cricketOsc2.connect(g2);
-      g2.connect(cricketAmplifier);
-      cricketOsc2.start();
-    } catch (e) {}
-  }
-
-  function crossfadeDayNight(nightness) {
-    if (!audioCtx || !audioStarted) return;
-    var ac = audioCtx;
     var now = ac.currentTime;
-    var fadeDur = 8; /* seconds crossfade */
 
-    /* Crickets fade in at night */
-    if (cricketAmplifier) {
-      var cricketTarget = nightness > 0.5 ? 1.0 : 0.0;
-      try {
-        cricketAmplifier.gain.cancelScheduledValues(now);
-        cricketAmplifier.gain.setValueAtTime(cricketAmplifier.gain.value, now);
-        cricketAmplifier.gain.linearRampToValueAtTime(cricketTarget, now + fadeDur);
-      } catch (e) {}
+    /* ── Shared reverb ── */
+    var reverb = makeReverb(ac, 2.0);
+    var reverbGain = ac.createGain();
+    reverbGain.gain.value = 0.28;
+    reverb.connect(reverbGain);
+    reverbGain.connect(ac.destination);
+    allNodes.push(reverb, reverbGain);
+
+    /* ──────────────────────────────────────
+       FLUTE MELODY (bard)
+    ────────────────────────────────────── */
+    /* Breath noise: highpass-filtered white noise, gain 0.006 */
+    var breathNoise = makeNoiseSource(ac);
+    var breathHp = ac.createBiquadFilter();
+    breathHp.type = 'highpass';
+    breathHp.frequency.value = 2000;
+    var breathGain = ac.createGain();
+    breathGain.gain.value = 0.006;
+    breathNoise.connect(breathHp);
+    breathHp.connect(breathGain);
+    breathGain.connect(ac.destination);
+    breathNoise.start(now);
+    allNodes.push(breathNoise, breathHp, breathGain);
+    allOscillators.push(breathNoise);
+
+    /* Flute oscillator with vibrato */
+    var fluteOsc = ac.createOscillator();
+    fluteOsc.type = 'sine';
+    fluteOsc.frequency.value = 293; /* D4 starting note */
+
+    var fluteVibratoLfo = ac.createOscillator();
+    fluteVibratoLfo.type = 'sine';
+    fluteVibratoLfo.frequency.value = 5.5;
+    var fluteVibratoGain = ac.createGain();
+    fluteVibratoGain.gain.value = 4; /* ±4 cents depth */
+    fluteVibratoLfo.connect(fluteVibratoGain);
+    fluteVibratoGain.connect(fluteOsc.detune);
+
+    var fluteGain = ac.createGain();
+    fluteGain.gain.setValueAtTime(0, now);
+
+    fluteOsc.connect(fluteGain);
+    fluteGain.connect(ac.destination);
+    fluteGain.connect(reverb);
+
+    fluteOsc.start(now);
+    fluteVibratoLfo.start(now);
+    allNodes.push(fluteOsc, fluteVibratoLfo, fluteVibratoGain, fluteGain);
+    allOscillators.push(fluteOsc, fluteVibratoLfo);
+
+    /* D minor pentatonic: D4 F4 G4 A4 C5 D5 F5 G5 */
+    var pentatonic = [293, 349, 392, 440, 523, 587, 698, 784];
+    var noteIdx = 0;
+    var noteDur = 0.6;
+    var noteGap = 0.1;
+
+    function scheduleNextNote() {
+      if (!audioStarted) return;
+      var freq = pentatonic[noteIdx % pentatonic.length];
+      noteIdx++;
+      var t = ac.currentTime;
+      fluteOsc.frequency.setValueAtTime(freq, t);
+      fluteGain.gain.cancelScheduledValues(t);
+      fluteGain.gain.setValueAtTime(0, t);
+      fluteGain.gain.linearRampToValueAtTime(0.045, t + 0.04);
+      fluteGain.gain.setValueAtTime(0.045, t + noteDur - 0.08);
+      fluteGain.gain.linearRampToValueAtTime(0, t + noteDur);
+      var interval = (noteDur + noteGap) * 1000;
+      var tid = setTimeout(scheduleNextNote, interval);
+      allIntervals.push(tid);
     }
+    scheduleNextNote();
+
+    /* ──────────────────────────────────────
+       CHOIR / ELF CHANT — D3 cluster (146Hz)
+    ────────────────────────────────────── */
+    /* Slow amplitude swell LFO at 0.05Hz */
+    var choirSwellLfo = ac.createOscillator();
+    choirSwellLfo.type = 'sine';
+    choirSwellLfo.frequency.value = 0.05;
+    var choirSwellGain = ac.createGain();
+    choirSwellGain.gain.value = 0.007;   /* swell depth around base 0.018 */
+    choirSwellLfo.connect(choirSwellGain);
+    choirSwellLfo.start(now);
+    allNodes.push(choirSwellLfo, choirSwellGain);
+    allOscillators.push(choirSwellLfo);
+
+    /* Slow vibrato LFO at 0.3Hz for all choir voices */
+    var choirVibratoLfo = ac.createOscillator();
+    choirVibratoLfo.type = 'sine';
+    choirVibratoLfo.frequency.value = 0.3;
+    var choirVibratoGain = ac.createGain();
+    choirVibratoGain.gain.value = 6;   /* ±6 cents */
+    choirVibratoLfo.connect(choirVibratoGain);
+    choirVibratoLfo.start(now);
+    allNodes.push(choirVibratoLfo, choirVibratoGain);
+    allOscillators.push(choirVibratoLfo);
+
+    /* D3 cluster: 5 voices, offsets [0, +7, -5, +12, -9] cents */
+    var d3Offsets = [0, 7, -5, 12, -9];
+    for (var ci = 0; ci < d3Offsets.length; ci++) {
+      var cOsc = ac.createOscillator();
+      cOsc.type = 'sine';
+      cOsc.frequency.value = 146;
+      cOsc.detune.value = d3Offsets[ci];
+      choirVibratoGain.connect(cOsc.detune);
+
+      var cGain = ac.createGain();
+      cGain.gain.setValueAtTime(0, now);
+      cGain.gain.linearRampToValueAtTime(0.018, now + 5);
+      choirSwellGain.connect(cGain.gain);
+
+      cOsc.connect(cGain);
+      cGain.connect(ac.destination);
+      cGain.connect(reverb);
+      cOsc.start(now);
+      allNodes.push(cOsc, cGain);
+      allOscillators.push(cOsc);
+    }
+
+    /* A3 cluster (220Hz): same treatment, gain 0.012 */
+    var a3Offsets = [0, 7, -5, 12, -9];
+    var a3SwellGain = ac.createGain();
+    a3SwellGain.gain.value = 0.005;
+    choirSwellLfo.connect(a3SwellGain);
+    allNodes.push(a3SwellGain);
+
+    for (var ai = 0; ai < a3Offsets.length; ai++) {
+      var aOsc = ac.createOscillator();
+      aOsc.type = 'sine';
+      aOsc.frequency.value = 220;
+      aOsc.detune.value = a3Offsets[ai];
+      choirVibratoGain.connect(aOsc.detune);
+
+      var aGain = ac.createGain();
+      aGain.gain.setValueAtTime(0, now);
+      aGain.gain.linearRampToValueAtTime(0.012, now + 5);
+      a3SwellGain.connect(aGain.gain);
+
+      aOsc.connect(aGain);
+      aGain.connect(ac.destination);
+      aGain.connect(reverb);
+      aOsc.start(now);
+      allNodes.push(aOsc, aGain);
+      allOscillators.push(aOsc);
+    }
+
+    /* ──────────────────────────────────────
+       FOREST AMBIENCE
+    ────────────────────────────────────── */
+
+    /* Wind: white noise → lowpass 400Hz → gain with slow LFO (0.07Hz) */
+    var windNoise = makeNoiseSource(ac);
+    var windLp = ac.createBiquadFilter();
+    windLp.type = 'lowpass';
+    windLp.frequency.value = 400;
+    windLp.Q.value = 1.5;
+
+    var windGainNode = ac.createGain();
+    windGainNode.gain.setValueAtTime(0, now);
+    windGainNode.gain.linearRampToValueAtTime(0.022, now + 4);
+
+    /* Wind LFO — use setInterval to avoid AudioWorklet dependency */
+    var windLfoPhase = 0;
+    var windIntervalId = setInterval(function () {
+      if (!audioStarted || !windGainNode) return;
+      windLfoPhase += 0.07 * 0.2 * Math.PI * 2;   /* 0.07Hz * 200ms step */
+      var val = 0.022 + 0.011 * Math.sin(windLfoPhase);   /* base 0.022, depth 0.5 */
+      try { windGainNode.gain.setTargetAtTime(val, ac.currentTime, 0.3); } catch (e) {}
+    }, 200);
+    allIntervals.push(windIntervalId);
+
+    windNoise.connect(windLp);
+    windLp.connect(windGainNode);
+    windGainNode.connect(ac.destination);
+    windNoise.start(now);
+    allNodes.push(windNoise, windLp, windGainNode);
+    allOscillators.push(windNoise);
+
+    /* Crickets: white noise → bandpass 4200Hz Q12 → AM at 18Hz → gain 0.018 */
+    var cricketNoise = makeNoiseSource(ac);
+    var cricketBp = ac.createBiquadFilter();
+    cricketBp.type = 'bandpass';
+    cricketBp.frequency.value = 4200;
+    cricketBp.Q.value = 12;
+
+    /* AM envelope via gain node modulated by oscillator */
+    var cricketAmNode = ac.createGain();
+    cricketAmNode.gain.value = 0;   /* controlled by AM osc */
+
+    var cricketAmOsc = ac.createOscillator();
+    cricketAmOsc.type = 'sine';
+    cricketAmOsc.frequency.value = 18;
+    var cricketAmGain = ac.createGain();
+    cricketAmGain.gain.value = 0.009;   /* half of 0.018 so peak = 0.018 */
+    cricketAmOsc.connect(cricketAmGain);
+    cricketAmGain.connect(cricketAmNode.gain);
+    /* DC offset so gain doesn't go negative: base 0.009, oscillates ±0.009 */
+    var cricketDcGain = ac.createConstantSource
+      ? ac.createConstantSource()
+      : null;
+    if (cricketDcGain) {
+      cricketDcGain.offset.value = 0.009;
+      cricketDcGain.connect(cricketAmNode.gain);
+      cricketDcGain.start(now);
+      allNodes.push(cricketDcGain);
+      allOscillators.push(cricketDcGain);
+    } else {
+      /* Fallback: fixed gain */
+      cricketAmNode.gain.setValueAtTime(0.018, now);
+    }
+
+    cricketNoise.connect(cricketBp);
+    cricketBp.connect(cricketAmNode);
+    cricketAmNode.connect(ac.destination);
+    cricketNoise.start(now);
+    cricketAmOsc.start(now);
+    allNodes.push(cricketNoise, cricketBp, cricketAmNode, cricketAmOsc, cricketAmGain);
+    allOscillators.push(cricketNoise, cricketAmOsc);
+
+    /* Schedule bird calls */
+    scheduleBird();
   }
 
   function scheduleBird() {
     if (!running) return;
-    var delay = 3000 + Math.random() * 5000;
+    var delay = 15000 + Math.random() * 20000;   /* 15–35 seconds */
     birdTimer = setTimeout(function () {
-      if (running && audioCtx && audioCtx.state === 'running') {
-        /* Only chirp during day */
-        var t = (performance.now() - startTime) / 1000;
-        var phase = getCyclePhase(t);
-        var nightness = getNightness(phase);
-        if (nightness < 0.5 && audioStarted) {
-          playBirdChirp();
-        }
+      if (running && audioCtx && audioCtx.state === 'running' && audioStarted) {
+        playBirdCall();
       }
       scheduleBird();
     }, delay);
   }
 
-  function playBirdChirp() {
+  function playBirdCall() {
     var ac = audioCtx;
     if (!ac) return;
     var now = ac.currentTime;
-    var g = ac.createGain();
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.05, now + 0.02);
-    g.gain.setValueAtTime(0.05, now + 0.1);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
-    g.connect(ac.destination);
 
+    /* Sine sweep: 1400Hz → 2200Hz → 1600Hz over 0.8s */
     var osc = ac.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(1200, now);
-    osc.frequency.linearRampToValueAtTime(2400, now + 0.12);
-    osc.frequency.linearRampToValueAtTime(1800, now + 0.25);
-    osc.connect(g);
-    osc.start(now);
-    osc.stop(now + 0.3);
-  }
+    osc.frequency.setValueAtTime(1400, now);
+    osc.frequency.linearRampToValueAtTime(2200, now + 0.35);
+    osc.frequency.linearRampToValueAtTime(1600, now + 0.8);
 
-  function scheduleShimmer() {
-    if (!running) return;
-    var delay = 10000 + Math.random() * 10000;
-    shimmerTimer = setTimeout(function () {
-      if (running && audioCtx && audioCtx.state === 'running' && audioStarted) {
-        playShimmer();
-      }
-      scheduleShimmer();
-    }, delay);
-  }
-
-  function playShimmer() {
-    var ac = audioCtx;
-    if (!ac) return;
-    var now = ac.currentTime;
+    /* Gain envelope: attack 0.05 / sustain 0.5 / release 0.25 */
     var g = ac.createGain();
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.04, now + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-    g.connect(ac.destination);
-    var osc = ac.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.value = 1800;
+    g.gain.linearRampToValueAtTime(0.055, now + 0.05);
+    g.gain.setValueAtTime(0.055, now + 0.05 + 0.5);
+    g.gain.linearRampToValueAtTime(0, now + 0.05 + 0.5 + 0.25);
+
     osc.connect(g);
+    g.connect(ac.destination);
     osc.start(now);
-    osc.stop(now + 0.45);
+    osc.stop(now + 0.85);
   }
 
   function stopAudio() {
     audioStarted = false;
-    lastNightPhase = -1;
 
     if (birdTimer) { clearTimeout(birdTimer); birdTimer = null; }
-    if (shimmerTimer) { clearTimeout(shimmerTimer); shimmerTimer = null; }
-    if (windLfoNode) { clearInterval(windLfoNode); windLfoNode = null; }
+
+    /* Clear all intervals (LFOs, note schedulers) */
+    for (var ii = 0; ii < allIntervals.length; ii++) {
+      try { clearTimeout(allIntervals[ii]); } catch (e) {}
+      try { clearInterval(allIntervals[ii]); } catch (e) {}
+    }
+    allIntervals = [];
 
     if (audioCtx) {
-      try {
-        if (windGain) {
-          windGain.gain.cancelScheduledValues(audioCtx.currentTime);
-          windGain.gain.setValueAtTime(windGain.gain.value, audioCtx.currentTime);
-          windGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+      var now = audioCtx.currentTime;
+      /* Ramp down all gain nodes */
+      for (var i = 0; i < allNodes.length; i++) {
+        var n = allNodes[i];
+        if (n && n.gain) {
+          try {
+            n.gain.cancelScheduledValues(now);
+            n.gain.setValueAtTime(n.gain.value, now);
+            n.gain.linearRampToValueAtTime(0, now + 1.5);
+          } catch (e) {}
         }
-        if (cricketAmplifier) {
-          cricketAmplifier.gain.cancelScheduledValues(audioCtx.currentTime);
-          cricketAmplifier.gain.setValueAtTime(cricketAmplifier.gain.value, audioCtx.currentTime);
-          cricketAmplifier.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
-        }
-      } catch (e) {}
+      }
+      /* Stop all oscillators/sources after fade */
+      (function (oscs) {
+        setTimeout(function () {
+          for (var j = 0; j < oscs.length; j++) {
+            try { oscs[j].stop(); } catch (e) {}
+          }
+        }, 1600);
+      })(allOscillators.slice());
     }
+
+    allNodes = [];
+    allOscillators = [];
   }
 
   /* ──────────────────────────────────────────
