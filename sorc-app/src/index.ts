@@ -1459,6 +1459,15 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   return c.json({ success: true });
 });
 
+app.post('/api/lobbies/close-all-mine', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const now = new Date().toISOString();
+  const result = await c.env.sorc_db.prepare(
+    `UPDATE lobbies SET status = 'closed', updated_at = ? WHERE creator_uid = ? AND status != 'closed'`
+  ).bind(now, user.id).run();
+  return c.json({ success: true, closed: result.meta?.changes ?? 0 });
+});
+
 app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
