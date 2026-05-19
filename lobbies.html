@@ -453,6 +453,34 @@
     var hasGMRights = false;
     var currentRooms = [];
 
+    // ===== JOINED LOBBY TRACKING =====
+    function trackJoinedLobby(lobbyId) {
+      try {
+        var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
+        joined[lobbyId] = true;
+        localStorage.setItem('sorc_joined_lobbies', JSON.stringify(joined));
+      } catch(e) {}
+    }
+    function hasJoinedLobby(lobbyId) {
+      try {
+        var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
+        return !!joined[lobbyId];
+      } catch(e) { return false; }
+    }
+    function markLobbyBanned(lobbyId) {
+      try {
+        var banned = JSON.parse(localStorage.getItem('sorc_banned_lobbies') || '{}');
+        banned[lobbyId] = true;
+        localStorage.setItem('sorc_banned_lobbies', JSON.stringify(banned));
+      } catch(e) {}
+    }
+    function isLobbyBanned(lobbyId) {
+      try {
+        var banned = JSON.parse(localStorage.getItem('sorc_banned_lobbies') || '{}');
+        return !!banned[lobbyId];
+      } catch(e) { return false; }
+    }
+
     // ===== MAIN RENDER =====
     function render() {
       var app = document.getElementById('lobbiesApp');
@@ -655,14 +683,23 @@
           var commandeeredNote = l.commandeered_from
             ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; was hosted by ' + esc(l.commandeered_from) + '</span>'
             : '';
+          var isCreatorOfLobby = currentUser && (l.creator_uid === currentUser.id);
+          var codeSnip = (isCreatorOfLobby || isPrivileged())
+            ? ' &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong>'
+            : '';
+          var isBanned = isLobbyBanned(l.id);
+          var isJoined = hasJoinedLobby(l.id) || isCreatorOfLobby;
+          var joinBtn = isBanned ? '' : isJoined
+            ? '<button class="row-join-btn" style="background:#1a5a1a;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Open</button>'
+            : '<button class="row-join-btn" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')" ' + (isFull ? 'disabled' : '') + '>Join</button>';
           return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
             '<div class="lobby-row-info">' +
               '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
-              '<p>Host: ' + esc(l.creator_name || 'Unknown') + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + (l.max_members||20) + ' members &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong></p>' +
+              '<p>Host: ' + esc(l.creator_name || 'Unknown') + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + (l.max_members||20) + ' members' + codeSnip + '</p>' +
             '</div>' +
             '<div class="lobby-row-right">' +
               '<span class="status-pip ' + statusClass + '">' + statusLabel + '</span>' +
-              '<button class="row-join-btn" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')" ' + (isFull ? 'disabled' : '') + '>Join</button>' +
+              joinBtn +
             '</div>' +
           '</div>';
         }).join('');
@@ -748,8 +785,16 @@
         });
         var data = await res.json();
         if (data.success || (data.error && data.error.toLowerCase().indexOf('already') !== -1)) {
+          trackJoinedLobby(lobbyId);
           setTimeout(function() { openLobby(lobbyId); }, 900);
-        } else { showToast(data.error || 'Could not join lobby.', true); }
+        } else {
+          var errLow = (data.error || '').toLowerCase();
+          if (errLow.indexOf('kick') !== -1 || errLow.indexOf('ban') !== -1 || errLow.indexOf('remov') !== -1) {
+            markLobbyBanned(lobbyId);
+            loadLobbies();
+          }
+          showToast(data.error || 'Could not join lobby.', true);
+        }
       } catch(e) { showToast('Could not reach server. Check your connection.', true); }
     };
 
@@ -775,6 +820,23 @@
           sessionStorage.removeItem('activeLobbyId');
           showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
         }
+        /* Auto-join if backend says we are not a member yet (D1 replication lag or first open) */
+        if (data.is_member === false) {
+          await fetch(API_URL + '/api/lobbies/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ lobby_id: lobbyId })
+          }).catch(function(){});
+          /* Wait for D1 replica to catch up */
+          await new Promise(function(r) { setTimeout(r, 1400); });
+          res = await fetch(API_URL + '/api/lobbies/' + lobbyId, { headers: { 'X-Auth-Key': currentUser.authKey } });
+          data = await res.json();
+          if (!data.lobby) {
+            sessionStorage.removeItem('activeLobbyId');
+            showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
+          }
+        }
+        trackJoinedLobby(lobbyId);
         currentLobby = data.lobby;
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
         hasGMRights = isCreator || isPrivileged();
@@ -937,10 +999,11 @@
                   '</button>' +
                   '<div id="invitePoolPanel" style="display:none;background:#0d0d0d;">' +
                     '<div class="invite-tab-bar">' +
-                      '<button class="invite-tab active" id="tabFellows" onclick="switchInviteTab(\'fellows\')">Fellowships</button>' +
-                      '<button class="invite-tab" id="tabLobbies" onclick="switchInviteTab(\'lobbies\')">In Other Lobbies</button>' +
+                      '<button class="invite-tab active" id="tabFriends" onclick="switchInviteTab(\'friends\')">Friends</button>' +
+                      '<button class="invite-tab" id="tabWorld" onclick="switchInviteTab(\'world\')">World</button>' +
                     '</div>' +
                     '<div class="invite-pool-list" id="invitePoolList"><div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">Loading...</div></div>' +
+                    '<div id="invitePoolPager" style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.85rem;border-top:1px solid #1a1a1a;"></div>' +
                   '</div>' +
                 '</div>'
               : '') +
@@ -1116,8 +1179,10 @@
     // ===== LEAVE / DELETE =====
     /* ── INVITE POOL ── */
     var invitePoolOpen = false;
-    var currentInviteTab = 'fellows';
+    var currentInviteTab = 'friends';
     var invitePoolData = null;
+    var invitePage = { friends: 0, world: 0 };
+    var INVITE_PAGE_SIZE = 10;
 
     window.toggleInvitePool = async function() {
       var panel = document.getElementById('invitePoolPanel');
@@ -1131,9 +1196,9 @@
 
     window.switchInviteTab = function(tab) {
       currentInviteTab = tab;
-      ['fellows','lobbies'].forEach(function(t) {
-        var el = document.getElementById('tab' + (t === 'fellows' ? 'Fellows' : 'Lobbies'));
-        if (el) { el.classList.toggle('active', t === tab); }
+      ['friends','world'].forEach(function(t) {
+        var el = document.getElementById('tab' + (t === 'friends' ? 'Friends' : 'World'));
+        if (el) el.classList.toggle('active', t === tab);
       });
       renderInvitePool();
     };
@@ -1145,6 +1210,7 @@
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite-pool', { headers: { 'X-Auth-Key': currentUser.authKey } });
         invitePoolData = await res.json();
+        invitePage = { friends: 0, world: 0 };
         renderInvitePool();
       } catch(e) {
         if (listEl) listEl.innerHTML = '<div style="padding:0.75rem;color:#555;font-size:0.8rem;text-align:center;">Could not load.</div>';
@@ -1153,17 +1219,21 @@
 
     function renderInvitePool() {
       var listEl = document.getElementById('invitePoolList');
+      var pagerEl = document.getElementById('invitePoolPager');
       if (!listEl || !invitePoolData) return;
-      var items = currentInviteTab === 'fellows' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
-      if (items.length === 0) {
-        listEl.innerHTML = '<div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">' +
-          (currentInviteTab === 'fellows' ? 'No fellowships available to invite.' : 'No players found in other lobbies.') + '</div>';
+      var allItems = currentInviteTab === 'friends' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
+      var page = invitePage[currentInviteTab] || 0;
+      var items = allItems.slice(page * INVITE_PAGE_SIZE, (page + 1) * INVITE_PAGE_SIZE);
+      var emptyMsg = currentInviteTab === 'friends' ? 'No fellowship members to invite.' : 'No players found in the world area.';
+      if (allItems.length === 0) {
+        listEl.innerHTML = '<div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">' + emptyMsg + '</div>';
+        if (pagerEl) pagerEl.style.display = 'none';
         return;
       }
       listEl.innerHTML = items.map(function(p) {
-        var sub = currentInviteTab === 'fellows'
+        var sub = currentInviteTab === 'friends'
           ? esc(p.sorc_role || 'Unassessed')
-          : esc((p.sorc_role || 'PC') + ' · ' + (p.lobby_name || 'Another Lobby'));
+          : esc((p.sorc_role || 'PC') + (p.lobby_name ? ' - ' + p.lobby_name : ''));
         return '<div class="invite-row">' +
           '<div class="invite-row-info">' +
             '<div class="invite-row-name">' + esc(p.display_name || p.username) + '</div>' +
@@ -1172,7 +1242,28 @@
           '<button class="invite-row-btn" onclick="inviteFromPool(\'' + esc(p.username) + '\')">Invite</button>' +
         '</div>';
       }).join('');
+      var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
+      if (pagerEl) {
+        if (totalPages <= 1) {
+          pagerEl.style.display = 'none';
+        } else {
+          pagerEl.style.display = 'flex';
+          pagerEl.innerHTML =
+            '<button onclick="invitePageNav(-1)" style="padding:2px 10px;background:none;border:1px solid #2a2a2a;color:#888;border-radius:4px;font-size:0.74rem;cursor:pointer;"' + (page === 0 ? ' disabled' : '') + '>← Prev</button>' +
+            '<span style="color:#555;font-size:0.74rem;">' + (page+1) + ' / ' + totalPages + '</span>' +
+            '<button onclick="invitePageNav(1)" style="padding:2px 10px;background:none;border:1px solid #2a2a2a;color:#888;border-radius:4px;font-size:0.74rem;cursor:pointer;"' + (page >= totalPages-1 ? ' disabled' : '') + '>Next →</button>';
+        }
+      }
     }
+
+    window.invitePageNav = function(dir) {
+      var allItems = currentInviteTab === 'friends' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
+      var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
+      var p = (invitePage[currentInviteTab] || 0) + dir;
+      if (p < 0 || p >= totalPages) return;
+      invitePage[currentInviteTab] = p;
+      renderInvitePool();
+    };
 
     window.inviteFromPool = async function(username) {
       if (!currentLobby) return;
