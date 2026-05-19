@@ -16,13 +16,11 @@
 
   /* ── AUDIO ── */
   var audioCtx = null;
-  var droneNode = null;
-  var droneGain = null;
-  var noiseNode = null;
-  var noiseGain = null;
-  var pingTimer = null;
   var audioStarted = false;
   var pendingAudioStart = false;
+  var whooshTimer = null;
+  var allNodes = [];   /* every node created, for cleanup */
+  var allOscillators = []; /* started oscillators to stop on cleanup */
 
   /* ── STARS (generated once, reused) ── */
   var STARS = [];
