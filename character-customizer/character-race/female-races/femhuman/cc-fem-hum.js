@@ -6,7 +6,7 @@
  */
 
 const BASE = "../../../assets/";
-const PORTRAIT_EXAMPLE = `${BASE}portrait-examp-bow-hr.png`;
+const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
 
 // Image paths for special layers
 const IMG_BG = `${BASE}highres-canvas-bg.png`;
