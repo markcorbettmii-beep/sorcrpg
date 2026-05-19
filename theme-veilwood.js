@@ -919,9 +919,11 @@
 
     fluteReverb = null;
     var ctx = audioCtx;
+    var srcSnap = allSources.slice();
+    var gainSnap = allGains.slice();
     setTimeout(function () {
-      allSources.forEach(function (s) { try { s.stop(); } catch(e){} try { s.disconnect(); } catch(e){} });
-      allGains.forEach(function (g) { try { g.disconnect(); } catch(e){} });
+      srcSnap.forEach(function (s) { try { s.stop(); } catch(e){} try { s.disconnect(); } catch(e){} });
+      gainSnap.forEach(function (g) { try { g.disconnect(); } catch(e){} });
       if (ctx) { try { ctx.close(); } catch(e){} }
     }, 600);
 
