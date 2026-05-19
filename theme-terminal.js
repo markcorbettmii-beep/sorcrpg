@@ -1,808 +1,565 @@
 /* ============================================================
    ORBITAL TERMINAL THEME — theme-terminal.js
-   Space station interior canvas background for sorcrpg.com
+   Space station audio-only soundscape for sorcrpg.com
    Exposes: window.terminalTheme = { start, stop }
+   NO canvas, NO drawing, NO requestAnimationFrame.
+   Pure Web Audio API engine.
    ============================================================ */
 (function () {
   'use strict';
 
-  /* ── STATE ── */
-  var canvas = null;
-  var ctx = null;
-  var W = 0, H = 0;
-  var rafId = null;
-  var running = false;
-  var startTime = 0;
-
-  /* ── AUDIO ── */
+  /* ── AUDIO STATE ── */
   var audioCtx = null;
   var audioStarted = false;
-  var pendingAudioStart = false;
-  var whooshTimer = null;
-  var allNodes = [];   /* every node created, for cleanup */
-  var allOscillators = []; /* started oscillators to stop on cleanup */
+  var masterGain = null;
 
-  /* ── STARS (generated once, reused) ── */
-  var STARS = [];
-  var STARS_INIT = false;
+  /* Track all timeout IDs so we can cancel on stop */
+  var timeouts = [];
 
-  /* ── DOCKING SHIP STATE ── */
-  var ship = {
-    active: false,
-    phase: 'idle',   // idle | approaching | docked | departing
-    x: 0, y: 0,
-    tx: 0, ty: 0,    // target
-    angle: 0,
-    timer: 0,
-    nextSpawn: 0
-  };
+  /* Track all GainNodes for fade-out on stop */
+  var allGains = [];
 
-  /* ── SCANLINE CANVAS (static, drawn once) ── */
-  var scanCanvas = null;
+  /* Track all oscillators and noise sources for disconnect on stop */
+  var allSources = [];
 
-  /* ──────────────────────────────────────────
-     AUDIO HELPERS
-  ────────────────────────────────────────── */
-  function ensureAudioCtx() {
-    if (!audioCtx) {
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (e) { audioCtx = null; }
-    }
-    return audioCtx;
+  /* ── HELPERS ── */
+  function rnd(min, max) {
+    return min + Math.random() * (max - min);
   }
 
-  /* Build a ConvolverNode with a programmatically generated impulse response
-     (exponential-decay white noise, ~2.5 seconds) */
-  function makeReverb(ac, duration) {
-    var sampleRate = ac.sampleRate;
-    var length = Math.floor(sampleRate * duration);
-    var impulse = ac.createBuffer(2, length, sampleRate);
-    for (var ch = 0; ch < 2; ch++) {
-      var data = impulse.getChannelData(ch);
-      for (var i = 0; i < length; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
-      }
-    }
-    var conv = ac.createConvolver();
-    conv.buffer = impulse;
-    return conv;
+  function rndInt(min, max) {
+    return Math.floor(rnd(min, max + 1));
   }
 
-  function startAudio() {
-    if (audioStarted) return;
-    var ac = ensureAudioCtx();
-    if (!ac) return;
-    if (ac.state === 'suspended') {
-      ac.resume().then(startAudio);
-      return;
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function sched(fn, minS, maxS) {
+    var id = setTimeout(fn, rnd(minS, maxS) * 1000);
+    timeouts.push(id);
+    return id;
+  }
+
+  /* Create white noise buffer (2 seconds, looped) */
+  function makeNoiseBuffer() {
+    if (!audioCtx) return null;
+    var frames = audioCtx.sampleRate * 2;
+    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  /* Start a looping noise source */
+  function makeLoopingNoise(buffer) {
+    var src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    allSources.push(src);
+    return src;
+  }
+
+  /* Make a one-shot noise buffer of given seconds */
+  function makeOneShotNoise(durationS) {
+    var frames = Math.floor(audioCtx.sampleRate * durationS);
+    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  /* Convenience: create + register an oscillator */
+  function makeOsc(type, freq) {
+    var osc = audioCtx.createOscillator();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq || 440;
+    allSources.push(osc);
+    return osc;
+  }
+
+  /* Convenience: create + register a gain node */
+  function makeGain(value) {
+    var g = audioCtx.createGain();
+    g.gain.value = (value !== undefined) ? value : 1;
+    allGains.push(g);
+    return g;
+  }
+
+  /* Convenience: create a biquad filter */
+  function makeFilter(type, freq, q) {
+    var f = audioCtx.createBiquadFilter();
+    f.type = type || 'lowpass';
+    f.frequency.value = freq || 1000;
+    if (q !== undefined) f.Q.value = q;
+    return f;
+  }
+
+  /* ── AMBIENT BED 1: Machinery hum ── */
+  function startMachineryHum() {
+    var noiseBuffer = makeNoiseBuffer(); // unused here but consistent
+    var baseFreqs = [57, 60, 63];
+    var harmGain = makeGain(0.015);
+    harmGain.connect(masterGain);
+    var harmOsc = makeOsc('sine', 120);
+    harmOsc.connect(harmGain);
+    harmOsc.start();
+
+    baseFreqs.forEach(function (baseF, idx) {
+      var osc = makeOsc('sine', baseF);
+      var gainNode = makeGain(0.05);
+      osc.connect(gainNode);
+      gainNode.connect(masterGain);
+      osc.start();
+
+      /* Pitch LFO: 0.03–0.07 Hz, ±2 Hz deviation */
+      var pitchLfoRate = rnd(0.03, 0.07);
+      var pitchLfo = makeOsc('sine', pitchLfoRate);
+      var pitchDepth = makeGain(2); // ±2 Hz
+      pitchLfo.connect(pitchDepth);
+      pitchDepth.connect(osc.frequency);
+      pitchLfo.start();
+
+      /* Amplitude LFO: independent rate, ±15% of base gain 0.05 */
+      var ampLfoRate = rnd(0.03, 0.07);
+      var ampLfo = makeOsc('sine', ampLfoRate);
+      /* offset ampLfo phase by staggering start slightly */
+      var ampDepth = makeGain(0.0075); // 15% of 0.05
+      ampLfo.connect(ampDepth);
+      ampDepth.connect(gainNode.gain);
+      ampLfo.start();
+    });
+  }
+
+  /* ── AMBIENT BED 2: Air recycling system ── */
+  function startAirRecycling() {
+    var noiseBuf = makeNoiseBuffer();
+    var noiseSrc = makeLoopingNoise(noiseBuf);
+    var lpf = makeFilter('lowpass', 280, 0.8);
+    var gainNode = makeGain(0.018);
+
+    noiseSrc.connect(lpf);
+    lpf.connect(gainNode);
+    gainNode.connect(masterGain);
+    noiseSrc.start();
+
+    /* Very slow amplitude swell: 0.025 Hz LFO, depth 0.6 of base */
+    var lfo = makeOsc('sine', 0.025);
+    var lfoDepth = makeGain(0.018 * 0.6); // depth = 60% of base gain
+    lfo.connect(lfoDepth);
+    lfoDepth.connect(gainNode.gain);
+    lfo.start();
+  }
+
+  /* ── AMBIENT BED 3: Electrical hum + occasional spikes ── */
+  function startElectricalHum() {
+    [50, 100].forEach(function (freq) {
+      var osc = makeOsc('sine', freq);
+      var g = makeGain(0.008);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start();
+    });
+
+    /* Occasional brief amplitude spike */
+    function scheduleSpike() {
+      sched(function () {
+        if (!audioCtx || !masterGain) return;
+        var now = audioCtx.currentTime;
+        /* Create a tiny sine burst at 50Hz with spike gain */
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = 50;
+        var g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.038, now);
+        g.gain.linearRampToValueAtTime(0, now + 0.1);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.1);
+        scheduleSpike();
+      }, 30, 80);
     }
-    audioStarted = true;
-    allNodes = [];
-    allOscillators = [];
+    scheduleSpike();
+  }
 
-    var now = ac.currentTime;
+  /* ── EVENT 4: Pressure door ── */
+  function schedulePressureDoor() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var freq = rnd(80, 110);
 
-    /* ── Shared reverb send ── */
-    var reverb = makeReverb(ac, 2.5);
-    var reverbGain = ac.createGain();
-    reverbGain.gain.value = 0.35;
-    reverb.connect(reverbGain);
-    reverbGain.connect(ac.destination);
-    allNodes.push(reverb, reverbGain);
-
-    /* Helper: make a sine oscillator with optional detune, connect to both
-       dry destination and reverb send */
-    function makePad(freq, detuneCents, gainVal) {
-      var osc = ac.createOscillator();
+      /* Low thump */
+      var osc = audioCtx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq;
-      osc.detune.value = detuneCents;
-      var g = ac.createGain();
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(gainVal, now + 3.5);
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.18, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
       osc.connect(g);
-      g.connect(ac.destination);
-      g.connect(reverb);
+      g.connect(masterGain);
       osc.start(now);
-      allNodes.push(osc, g);
-      allOscillators.push(osc);
-    }
+      osc.stop(now + 0.42);
 
-    /* ── Slow pad chord: A1 root + 5th + octave + maj3rd ── */
-    makePad(55,    +2,  0.025);   /* A1 root */
-    makePad(55,    -2,  0.025);   /* A1 root, detuned twin */
-    makePad(82.5,  +1,  0.025);   /* E2 perfect 5th */
-    makePad(82.5,  -1,  0.025);
-    makePad(110,   +2,  0.025);   /* A2 octave */
-    makePad(110,   -2,  0.025);
-    makePad(138.6, +1,  0.025);   /* C#2/Db maj3rd ≈138Hz */
-    makePad(138.6, -1,  0.025);
+      /* Metallic hiss immediately after */
+      var noiseBuf = makeOneShotNoise(0.3);
+      var noiseSrc = audioCtx.createBufferSource();
+      noiseSrc.buffer = noiseBuf;
+      var bpf = makeFilter('bandpass', 1200, 4);
+      var hissGain = audioCtx.createGain();
+      hissGain.gain.setValueAtTime(0.06, now + 0.05);
+      hissGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      noiseSrc.connect(bpf);
+      bpf.connect(hissGain);
+      hissGain.connect(masterGain);
+      noiseSrc.start(now + 0.05);
 
-    /* ── Bass pulse: 27.5 Hz with slow amplitude LFO (breathing) ── */
-    var bassOsc = ac.createOscillator();
-    bassOsc.type = 'sine';
-    bassOsc.frequency.value = 27.5;
-
-    var bassGain = ac.createGain();
-    bassGain.gain.setValueAtTime(0, now);
-    bassGain.gain.linearRampToValueAtTime(0.04, now + 4);
-
-    var bassLfo = ac.createOscillator();
-    bassLfo.type = 'sine';
-    bassLfo.frequency.value = 0.08;
-    var bassLfoGain = ac.createGain();
-    bassLfoGain.gain.value = 0.04 * 0.6;   /* depth: 60% of base gain */
-    bassLfo.connect(bassLfoGain);
-    bassLfoGain.connect(bassGain.gain);
-
-    bassOsc.connect(bassGain);
-    bassGain.connect(ac.destination);
-    bassOsc.start(now);
-    bassLfo.start(now);
-    allNodes.push(bassOsc, bassGain, bassLfo, bassLfoGain);
-    allOscillators.push(bassOsc, bassLfo);
-
-    /* ── High shimmer: triangle waves at 880 Hz and 1108 Hz with tremolo ── */
-    var shimmerLfo = ac.createOscillator();
-    shimmerLfo.type = 'sine';
-    shimmerLfo.frequency.value = 0.12;
-    var shimmerLfoGain = ac.createGain();
-    shimmerLfoGain.gain.value = 0.004;   /* tremolo depth */
-    shimmerLfo.connect(shimmerLfoGain);
-    shimmerLfo.start(now);
-    allNodes.push(shimmerLfo, shimmerLfoGain);
-    allOscillators.push(shimmerLfo);
-
-    function makeShimmer(freq, detuneCents) {
-      var osc = ac.createOscillator();
-      osc.type = 'triangle';
-      osc.frequency.value = freq;
-      osc.detune.value = detuneCents;
-      var g = ac.createGain();
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.008, now + 4);
-      shimmerLfoGain.connect(g.gain);
-      osc.connect(g);
-      g.connect(ac.destination);
-      g.connect(reverb);
-      osc.start(now);
-      allNodes.push(osc, g);
-      allOscillators.push(osc);
-    }
-
-    makeShimmer(880,  +5);
-    makeShimmer(880,  -5);
-    makeShimmer(1108, +5);
-    makeShimmer(1108, -5);
-
-    /* Schedule first spacecraft whoosh */
-    scheduleWhoosh();
+      schedulePressureDoor();
+    }, 18, 45);
   }
 
-  function scheduleWhoosh() {
-    if (!running) return;
-    var delay = 8000 + Math.random() * 12000;   /* 8–20 seconds */
-    whooshTimer = setTimeout(function () {
-      if (running && audioCtx && audioCtx.state === 'running') {
-        playWhoosh();
-      }
-      scheduleWhoosh();
-    }, delay);
-  }
-
-  function playWhoosh() {
-    var ac = audioCtx;
-    if (!ac) return;
-
-    /* Alternate large / small craft randomly */
-    var isLarge = Math.random() < 0.4;
-    var duration = isLarge ? 2.5 : 1.5;
-    var freqStart, freqEnd;
-    /* Random direction: left-to-right or right-to-left fly-by */
-    var leftToRight = Math.random() < 0.5;
-
-    if (isLarge) {
-      freqStart = leftToRight ? 600 : 300;
-      freqEnd   = leftToRight ? 200 : 500;
-    } else {
-      freqStart = leftToRight ? 800 : 300;
-      freqEnd   = leftToRight ? 200 : 800;
-    }
-    var panStart = leftToRight ? -0.8 : 0.8;
-    var panEnd   = leftToRight ?  0.8 : -0.8;
-
-    var now = ac.currentTime;
-    var attack  = 0.15;
-    var sustain = isLarge ? 1.6 : 0.8;
-    var release = isLarge ? 0.75 : 0.55;
-    var peakGain = isLarge ? 0.10 : 0.12;
-
-    /* White noise buffer (0.5s, looped via source.loop) */
-    var bufLen = Math.ceil(ac.sampleRate * 0.5);
-    var noiseBuf = ac.createBuffer(1, bufLen, ac.sampleRate);
-    var nd = noiseBuf.getChannelData(0);
-    for (var i = 0; i < bufLen; i++) { nd[i] = Math.random() * 2 - 1; }
-
-    var src = ac.createBufferSource();
-    src.buffer = noiseBuf;
-    src.loop = true;
-
-    /* Bandpass filter — frequency sweeps */
-    var bpf = ac.createBiquadFilter();
-    bpf.type = 'bandpass';
-    bpf.frequency.setValueAtTime(freqStart, now);
-    bpf.frequency.linearRampToValueAtTime(freqEnd, now + duration);
-    bpf.Q.value = isLarge ? 1.5 : 2.5;
-
-    /* Gain envelope */
-    var env = ac.createGain();
-    env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(peakGain, now + attack);
-    env.gain.setValueAtTime(peakGain, now + attack + sustain);
-    env.gain.linearRampToValueAtTime(0, now + attack + sustain + release);
-
-    /* Stereo pan sweep */
-    var panner = ac.createStereoPanner
-      ? ac.createStereoPanner()
-      : null;
-
-    src.connect(bpf);
-    bpf.connect(env);
-    if (panner) {
-      panner.pan.setValueAtTime(panStart, now);
-      panner.pan.linearRampToValueAtTime(panEnd, now + duration);
-      env.connect(panner);
-      panner.connect(ac.destination);
-    } else {
-      env.connect(ac.destination);
-    }
-
-    src.start(now);
-    src.stop(now + duration + 0.05);
-  }
-
-  function stopAudio() {
-    if (whooshTimer) { clearTimeout(whooshTimer); whooshTimer = null; }
-
-    if (audioCtx) {
+  /* ── EVENT 5: Hydraulic clank ── */
+  function scheduleHydraulicClank() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
-      /* Ramp down all gain nodes quickly */
-      for (var i = 0; i < allNodes.length; i++) {
-        var n = allNodes[i];
-        if (n && n.gain) {
-          try {
-            n.gain.cancelScheduledValues(now);
-            n.gain.setValueAtTime(n.gain.value, now);
-            n.gain.linearRampToValueAtTime(0, now + 1.5);
-          } catch (e) {}
+      var gap = rnd(0.08, 0.15);
+
+      /* Short delay node for subtle reverb feel */
+      function clank(startAt) {
+        var freq = rnd(200, 400);
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        var g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, startAt);
+        g.gain.linearRampToValueAtTime(0.12, startAt + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.17);
+
+        /* Simple delay for reverb */
+        var delay = audioCtx.createDelay(0.3);
+        delay.delayTime.value = 0.045;
+        var delayGain = audioCtx.createGain();
+        delayGain.gain.value = 0.25;
+
+        osc.connect(g);
+        g.connect(masterGain);
+        g.connect(delay);
+        delay.connect(delayGain);
+        delayGain.connect(masterGain);
+
+        osc.start(startAt);
+        osc.stop(startAt + 0.2);
+      }
+
+      clank(now);
+      clank(now + gap);
+
+      scheduleHydraulicClank();
+    }, 25, 60);
+  }
+
+  /* ── EVENT 6: Computer terminal beep sequence ── */
+  function scheduleBeepSequence() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var freqs = [880, 1047, 1175, 1319, 1397, 1568];
+      var count = rndInt(3, 6);
+      var cursor = now;
+
+      for (var i = 0; i < count; i++) {
+        var freq = pick(freqs) * rnd(0.97, 1.03); // slight pitch variation
+        var dur = rnd(0.06, 0.12);
+        var gap = rnd(0.05, 0.18);
+
+        (function (f, start, d) {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = f;
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(0.055 * rnd(0.8, 1.2), start);
+          g.gain.setValueAtTime(0.055 * rnd(0.8, 1.2), start + d - 0.005);
+          g.gain.linearRampToValueAtTime(0, start + d);
+          osc.connect(g);
+          g.connect(masterGain);
+          osc.start(start);
+          osc.stop(start + d + 0.01);
+        })(freq, cursor, dur);
+
+        cursor += dur + gap;
+      }
+
+      scheduleBeepSequence();
+    }, 35, 90);
+  }
+
+  /* ── EVENT 7: Intercom crackle ── */
+  function scheduleIntercomCrackle() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+
+      function crackleBurst(startAt, durationS) {
+        var buf = makeOneShotNoise(durationS);
+        var src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        var bpf = makeFilter('bandpass', rnd(700, 900), rnd(1.5, 2.5));
+        var g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.04 * rnd(0.8, 1.2), startAt);
+        g.gain.exponentialRampToValueAtTime(0.0001, startAt + durationS);
+        src.connect(bpf);
+        bpf.connect(g);
+        g.connect(masterGain);
+        src.start(startAt);
+      }
+
+      crackleBurst(now, 0.08);
+      crackleBurst(now + 0.18, 0.05);
+
+      scheduleIntercomCrackle();
+    }, 50, 120);
+  }
+
+  /* ── EVENT 8: Distant explosion/impact ── */
+  function scheduleDistantImpact() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+
+      /* Deep sine sweep 40→20 Hz */
+      var osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(40, now);
+      osc.frequency.linearRampToValueAtTime(20, now + 0.8);
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.025, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.9);
+
+      /* High-frequency rattle simultaneously */
+      var rattleBuf = makeOneShotNoise(0.3);
+      var rattleSrc = audioCtx.createBufferSource();
+      rattleSrc.buffer = rattleBuf;
+      var bpf = makeFilter('bandpass', 2000, 3);
+      var rattleGain = audioCtx.createGain();
+      rattleGain.gain.setValueAtTime(0.015, now);
+      rattleGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      rattleSrc.connect(bpf);
+      bpf.connect(rattleGain);
+      rattleGain.connect(masterGain);
+      rattleSrc.start(now);
+
+      scheduleDistantImpact();
+    }, 90, 180);
+  }
+
+  /* ── EVENT 9: Hull stress creak ── */
+  function scheduleHullCreak() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+
+      var startFreq = rnd(180, 240);
+      var endFreq = rnd(60, 100);
+      var dur = rnd(0.5, 0.7);
+
+      var osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.035 * rnd(0.85, 1.15), now);
+      g.gain.linearRampToValueAtTime(0.025, now + dur * 0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.05);
+
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + dur + 0.08);
+
+      scheduleHullCreak();
+    }, 60, 150);
+  }
+
+  /* ── EVENT 10: Alert ping (40% chance) ── */
+  function scheduleAlertPing() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+
+      if (Math.random() < 0.4) {
+        var now = audioCtx.currentTime;
+        var gain = 0.04 * rnd(0.85, 1.15);
+
+        function pingTone(freq, startAt, dur) {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.value = freq * rnd(0.98, 1.02);
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(gain, startAt);
+          g.gain.setValueAtTime(gain, startAt + dur - 0.01);
+          g.gain.linearRampToValueAtTime(0, startAt + dur);
+          osc.connect(g);
+          g.connect(masterGain);
+          osc.start(startAt);
+          osc.stop(startAt + dur + 0.01);
         }
+
+        pingTone(1760, now, 0.15);
+        pingTone(1318, now + 0.17, 0.15);
       }
-      /* Stop oscillators after fade */
-      (function (oscs) {
-        setTimeout(function () {
-          for (var j = 0; j < oscs.length; j++) {
-            try { oscs[j].stop(); } catch (e) {}
-          }
-        }, 1600);
-      })(allOscillators.slice());
-    }
 
-    allNodes = [];
-    allOscillators = [];
-    audioStarted = false;
+      scheduleAlertPing();
+    }, 70, 160);
   }
 
-  /* ──────────────────────────────────────────
-     CANVAS SETUP
-  ────────────────────────────────────────── */
-  function initCanvas() {
-    canvas = document.createElement('canvas');
-    canvas.id = 'terminalBg';
-    Object.assign(canvas.style, {
-      position: 'fixed', top: '0', left: '0',
-      width: '100%', height: '100%',
-      zIndex: '-1', pointerEvents: 'none', display: 'block'
-    });
-    document.body.insertBefore(canvas, document.body.firstChild);
-    ctx = canvas.getContext('2d');
-    resize();
-    window.addEventListener('resize', resize);
-  }
+  /* ── EVENT 11: Footsteps on grating ── */
+  function scheduleFootsteps() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var count = rndInt(4, 7);
+      var cursor = now;
 
-  function resize() {
-    if (!canvas) return;
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    buildScanlines();
-  }
-
-  /* ──────────────────────────────────────────
-     SCANLINE OVERLAY (built once per resize)
-  ────────────────────────────────────────── */
-  function buildScanlines() {
-    scanCanvas = document.createElement('canvas');
-    scanCanvas.width = 4;
-    scanCanvas.height = 4;
-    var sc = scanCanvas.getContext('2d');
-    sc.fillStyle = 'rgba(0,200,255,0.03)';
-    sc.fillRect(0, 0, 4, 1);
-  }
-
-  /* ──────────────────────────────────────────
-     STARS
-  ────────────────────────────────────────── */
-  function initStars() {
-    if (STARS_INIT) return;
-    STARS_INIT = true;
-    for (var i = 0; i < 180; i++) {
-      STARS.push({
-        x: Math.random(),
-        y: Math.random(),
-        r: Math.random() * 1.2 + 0.2,
-        a: Math.random() * 0.6 + 0.2,
-        hue: Math.random() < 0.3 ? 200 : 0   /* 30% blue tint */
-      });
-    }
-  }
-
-  function drawStars() {
-    for (var i = 0; i < STARS.length; i++) {
-      var s = STARS[i];
-      ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = s.hue ? 'rgba(160,220,255,' + s.a + ')' : 'rgba(255,255,255,' + s.a + ')';
-      ctx.fill();
-    }
-  }
-
-  /* ──────────────────────────────────────────
-     NEBULA / GAS CLOUD BACKGROUND
-  ────────────────────────────────────────── */
-  function drawNebula() {
-    /* Cyan-green soft cloud, off to the upper-right */
-    var cx = W * 0.72, cy = H * 0.28;
-    var r = Math.min(W, H) * 0.38;
-    var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    grd.addColorStop(0,   'rgba(0,180,140,0.07)');
-    grd.addColorStop(0.4, 'rgba(0,120,100,0.04)');
-    grd.addColorStop(1,   'transparent');
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* second smaller blob */
-    var cx2 = W * 0.18, cy2 = H * 0.68;
-    var r2 = Math.min(W, H) * 0.22;
-    var grd2 = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, r2);
-    grd2.addColorStop(0,   'rgba(0,100,180,0.06)');
-    grd2.addColorStop(1,   'transparent');
-    ctx.fillStyle = grd2;
-    ctx.beginPath();
-    ctx.arc(cx2, cy2, r2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  /* ──────────────────────────────────────────
-     SPACE STATION — toroidal ring structure
-  ────────────────────────────────────────── */
-  function drawStation(t) {
-    var cx = W * 0.5;
-    var cy = H * 0.5;
-    var baseR = Math.min(W, H) * 0.30;     /* outer ring radius */
-    var tiltY = 0.38;                       /* y-compression for 3D tilt */
-
-    /* Full 30-second orbit rotation */
-    var orbitAngle = (t / 30) * Math.PI * 2;
-
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    /* ── Outer structural ring ── */
-    var ringCount = 3;
-    var ringRadii = [baseR, baseR * 0.72, baseR * 0.45];
-    var ringAlphas = [1, 0.8, 0.65];
-
-    for (var ri = 0; ri < ringCount; ri++) {
-      var rr = ringRadii[ri];
-      var alpha = ringAlphas[ri];
-
-      /* Back half of ellipse (behind center) */
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rr, rr * tiltY, orbitAngle, Math.PI, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(26,58,90,' + alpha + ')';
-      ctx.lineWidth = ri === 0 ? 8 : 5;
-      ctx.stroke();
-
-      /* Back half inner glow */
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rr, rr * tiltY, orbitAngle, Math.PI, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0,229,255,' + (alpha * 0.25) + ')';
-      ctx.lineWidth = ri === 0 ? 2 : 1.5;
-      ctx.stroke();
-    }
-
-    /* ── Spokes (8 structural spokes) ── */
-    var spokeCount = 8;
-    for (var si = 0; si < spokeCount; si++) {
-      var spokeA = orbitAngle + (si / spokeCount) * Math.PI * 2;
-      var outerX = Math.cos(spokeA) * ringRadii[0];
-      var outerY = Math.sin(spokeA) * ringRadii[0] * tiltY;
-      var innerX = Math.cos(spokeA) * ringRadii[2];
-      var innerY = Math.sin(spokeA) * ringRadii[2] * tiltY;
-
-      /* depth-based alpha: spokes on far side are dimmer */
-      var depth = Math.sin(spokeA - orbitAngle);
-      var spokeAlpha = 0.3 + (depth < 0 ? 0 : depth) * 0.4;
-
-      ctx.beginPath();
-      ctx.moveTo(outerX, outerY);
-      ctx.lineTo(innerX, innerY);
-      ctx.strokeStyle = 'rgba(10,32,64,' + spokeAlpha + ')';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(outerX, outerY);
-      ctx.lineTo(innerX, innerY);
-      ctx.strokeStyle = 'rgba(0,180,220,' + (spokeAlpha * 0.35) + ')';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    /* ── Central hub ── */
-    var hubR = baseR * 0.12;
-    var hubGrd = ctx.createRadialGradient(-hubR * 0.2, -hubR * 0.2, 0, 0, 0, hubR);
-    hubGrd.addColorStop(0, '#2a6a8a');
-    hubGrd.addColorStop(0.6, '#0a2040');
-    hubGrd.addColorStop(1, '#030d1a');
-    ctx.beginPath();
-    ctx.arc(0, 0, hubR, 0, Math.PI * 2);
-    ctx.fillStyle = hubGrd;
-    ctx.fill();
-    /* hub glow */
-    ctx.beginPath();
-    ctx.arc(0, 0, hubR, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,229,255,0.5)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    /* ── Grid lines on outer ring (cross-hatch texture) ── */
-    drawRingGrid(ringRadii[0], tiltY, orbitAngle);
-
-    /* ── Front half of rings (drawn over spokes for depth) ── */
-    for (var ri2 = 0; ri2 < ringCount; ri2++) {
-      var rr2 = ringRadii[ri2];
-      var alpha2 = ringAlphas[ri2];
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rr2, rr2 * tiltY, orbitAngle, 0, Math.PI);
-      ctx.strokeStyle = 'rgba(26,58,90,' + alpha2 + ')';
-      ctx.lineWidth = ri2 === 0 ? 8 : 5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, rr2, rr2 * tiltY, orbitAngle, 0, Math.PI);
-      ctx.strokeStyle = 'rgba(0,229,255,' + (alpha2 * 0.35) + ')';
-      ctx.lineWidth = ri2 === 0 ? 2.5 : 1.5;
-      ctx.stroke();
-    }
-
-    /* ── Viewport windows on the outer ring ── */
-    drawViewports(ringRadii[0], tiltY, orbitAngle, t);
-
-    /* ── Antenna arrays ── */
-    drawAntennas(ringRadii[0], tiltY, orbitAngle, t);
-
-    ctx.restore();
-  }
-
-  function drawRingGrid(outerR, tiltY, orbitAngle) {
-    /* draw subtle grid lines around the ring circumference */
-    var segments = 24;
-    for (var i = 0; i < segments; i++) {
-      var a1 = orbitAngle + (i / segments) * Math.PI * 2;
-      var a2 = orbitAngle + ((i + 0.5) / segments) * Math.PI * 2;
-      var depth = Math.sin(a1);
-      if (depth > -0.15) continue; /* only draw on the back side for performance */
-      var x1 = Math.cos(a1) * outerR;
-      var y1 = Math.sin(a1) * outerR * tiltY;
-      var x2 = Math.cos(a2) * outerR;
-      var y2 = Math.sin(a2) * outerR * tiltY;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.strokeStyle = 'rgba(0,120,160,0.18)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-  }
-
-  function drawViewports(outerR, tiltY, orbitAngle, t) {
-    var windowCount = 16;
-    for (var i = 0; i < windowCount; i++) {
-      var a = orbitAngle + (i / windowCount) * Math.PI * 2;
-      var wx = Math.cos(a) * outerR;
-      var wy = Math.sin(a) * outerR * tiltY;
-      var depth = Math.sin(a);
-
-      /* Only draw windows on near-facing side */
-      if (depth < -0.3) continue;
-
-      /* Perspective scale: windows appear smaller on far side */
-      var perspScale = 0.5 + (depth + 1) * 0.35;
-      var ww = 7 * perspScale;
-      var wh = 4 * perspScale;
-
-      /* Pulsing glow on some windows */
-      var pulse = 0.6 + 0.4 * Math.sin(t * 0.8 + i * 1.3);
-      var alpha = 0.4 + depth * 0.4;
-
-      ctx.save();
-      ctx.translate(wx, wy);
-      ctx.rotate(a + Math.PI * 0.5);
-
-      /* window frame */
-      ctx.fillStyle = 'rgba(10,32,64,' + alpha + ')';
-      ctx.fillRect(-ww * 0.5, -wh * 0.5, ww, wh);
-
-      /* window glow */
-      ctx.fillStyle = 'rgba(0,229,255,' + (alpha * pulse * 0.85) + ')';
-      ctx.fillRect(-ww * 0.5 + 1, -wh * 0.5 + 1, ww - 2, wh - 2);
-
-      ctx.restore();
-    }
-  }
-
-  function drawAntennas(outerR, tiltY, orbitAngle, t) {
-    /* 4 antenna arrays at 90-degree intervals */
-    for (var i = 0; i < 4; i++) {
-      var a = orbitAngle + (i / 4) * Math.PI * 2;
-      var depth = Math.sin(a);
-      if (depth < 0) continue; /* only front-facing */
-
-      var bx = Math.cos(a) * outerR;
-      var by = Math.sin(a) * outerR * tiltY;
-      var len = 22 * (0.5 + (depth + 1) * 0.35);
-
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(a);
-
-      /* main mast */
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(len, 0);
-      ctx.strokeStyle = 'rgba(0,150,200,0.7)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      /* cross-bar */
-      ctx.beginPath();
-      ctx.moveTo(len * 0.6, -len * 0.25);
-      ctx.lineTo(len * 0.6, len * 0.25);
-      ctx.stroke();
-
-      /* blink light at tip */
-      var blinkAlpha = 0.5 + 0.5 * Math.sin(t * 2.5 + i * 1.7);
-      ctx.beginPath();
-      ctx.arc(len, 0, 2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,255,200,' + blinkAlpha + ')';
-      ctx.fill();
-
-      ctx.restore();
-    }
-  }
-
-  /* ──────────────────────────────────────────
-     DOCKING SHIP
-  ────────────────────────────────────────── */
-  function updateShip(t, dt) {
-    var cx = W * 0.5, cy = H * 0.5;
-    var stationR = Math.min(W, H) * 0.30;
-
-    if (!ship.active) {
-      ship.nextSpawn -= dt;
-      if (ship.nextSpawn <= 0) {
-        /* spawn from a random edge */
-        var side = Math.floor(Math.random() * 4);
-        if (side === 0) { ship.x = -40; ship.y = Math.random() * H; }
-        else if (side === 1) { ship.x = W + 40; ship.y = Math.random() * H; }
-        else if (side === 2) { ship.x = Math.random() * W; ship.y = -40; }
-        else { ship.x = Math.random() * W; ship.y = H + 40; }
-
-        /* target: dock at a point on the outer ring */
-        var dockA = Math.random() * Math.PI * 2;
-        ship.tx = cx + Math.cos(dockA) * stationR;
-        ship.ty = cy + Math.sin(dockA) * stationR * 0.38;
-        ship.angle = Math.atan2(ship.ty - ship.y, ship.tx - ship.x);
-        ship.phase = 'approaching';
-        ship.timer = 0;
-        ship.active = true;
+      for (var i = 0; i < count; i++) {
+        var spacing = rnd(0.12, 0.22);
+        (function (startAt) {
+          var buf = makeOneShotNoise(0.02);
+          var src = audioCtx.createBufferSource();
+          src.buffer = buf;
+          var hpf = makeFilter('highpass', rnd(2800, 3200));
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(rnd(0.04, 0.08), startAt);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.018);
+          src.connect(hpf);
+          hpf.connect(g);
+          g.connect(masterGain);
+          src.start(startAt);
+        })(cursor);
+        cursor += spacing;
       }
+
+      scheduleFootsteps();
+    }, 30, 70);
+  }
+
+  /* ── START AUDIO ── */
+  function startAudio() {
+    if (audioStarted) return;
+
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
       return;
     }
 
-    ship.timer += dt;
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1.0;
+    masterGain.connect(audioCtx.destination);
+    allGains.push(masterGain);
 
-    if (ship.phase === 'approaching') {
-      var dx = ship.tx - ship.x;
-      var dy = ship.ty - ship.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 2) {
-        ship.phase = 'docked';
-        ship.timer = 0;
-      } else {
-        var speed = Math.min(dist * 0.04, 2.5);
-        ship.x += (dx / dist) * speed;
-        ship.y += (dy / dist) * speed;
-      }
-    } else if (ship.phase === 'docked') {
-      if (ship.timer > 4000) {
-        /* depart back out */
-        var side2 = Math.floor(Math.random() * 4);
-        if (side2 === 0) { ship.tx = -60; ship.ty = Math.random() * H; }
-        else if (side2 === 1) { ship.tx = W + 60; ship.ty = Math.random() * H; }
-        else if (side2 === 2) { ship.tx = Math.random() * W; ship.ty = -60; }
-        else { ship.tx = Math.random() * W; ship.ty = H + 60; }
-        ship.angle = Math.atan2(ship.ty - ship.y, ship.tx - ship.x);
-        ship.phase = 'departing';
-        ship.timer = 0;
-      }
-    } else if (ship.phase === 'departing') {
-      var dx2 = ship.tx - ship.x;
-      var dy2 = ship.ty - ship.y;
-      var dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-      if (dist2 < 5 || ship.timer > 8000) {
-        ship.active = false;
-        ship.phase = 'idle';
-        ship.nextSpawn = 6000 + Math.random() * 8000;
-      } else {
-        var spd2 = Math.min(dist2 * 0.035, 2.2);
-        ship.x += (dx2 / dist2) * spd2;
-        ship.y += (dy2 / dist2) * spd2;
-      }
+    /* Start all ambient beds */
+    startMachineryHum();
+    startAirRecycling();
+    startElectricalHum();
+
+    /* Schedule all random events */
+    schedulePressureDoor();
+    scheduleHydraulicClank();
+    scheduleBeepSequence();
+    scheduleIntercomCrackle();
+    scheduleDistantImpact();
+    scheduleHullCreak();
+    scheduleAlertPing();
+    scheduleFootsteps();
+
+    audioStarted = true;
+  }
+
+  /* ── STOP AUDIO ── */
+  function stopAudio() {
+    if (!audioStarted) return;
+
+    /* Cancel all pending timeouts */
+    timeouts.forEach(function (id) { clearTimeout(id); });
+    timeouts = [];
+
+    /* Fade out master gain then close context */
+    if (masterGain && audioCtx) {
+      var now = audioCtx.currentTime;
+      masterGain.gain.cancelScheduledValues(now);
+      masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+      masterGain.gain.linearRampToValueAtTime(0, now + 0.3);
     }
+
+    /* Disconnect everything after fade */
+    var ctx = audioCtx;
+    setTimeout(function () {
+      allSources.forEach(function (src) {
+        try { src.stop(); } catch (e) {}
+        try { src.disconnect(); } catch (e) {}
+      });
+      allGains.forEach(function (g) {
+        try { g.disconnect(); } catch (e) {}
+      });
+      if (ctx) {
+        try { ctx.close(); } catch (e) {}
+      }
+    }, 350);
+
+    audioCtx = null;
+    masterGain = null;
+    audioStarted = false;
+    allSources = [];
+    allGains = [];
   }
 
-  function drawShip() {
-    if (!ship.active) return;
-    ctx.save();
-    ctx.translate(ship.x, ship.y);
-    ctx.rotate(ship.angle);
+  /* ── LAZY INIT ON FIRST USER INTERACTION ── */
+  var interactionHandlerAdded = false;
+  var themeActive = false;
 
-    var size = 12;
-    /* engine glow */
-    var grd = ctx.createRadialGradient(-size, 0, 0, -size, 0, size * 1.4);
-    grd.addColorStop(0, 'rgba(0,200,255,0.45)');
-    grd.addColorStop(1, 'transparent');
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(-size, 0, size * 1.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* hull triangle */
-    ctx.beginPath();
-    ctx.moveTo(size, 0);
-    ctx.lineTo(-size * 0.6, -size * 0.45);
-    ctx.lineTo(-size * 0.6, size * 0.45);
-    ctx.closePath();
-    ctx.fillStyle = '#1a3a5a';
-    ctx.fill();
-    ctx.strokeStyle = '#00e5ff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    /* cockpit window */
-    ctx.beginPath();
-    ctx.arc(size * 0.3, 0, size * 0.22, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,229,255,0.8)';
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  /* ──────────────────────────────────────────
-     SCANLINE OVERLAY
-  ────────────────────────────────────────── */
-  function drawScanlines() {
-    if (!scanCanvas) return;
-    var pat = ctx.createPattern(scanCanvas, 'repeat');
-    if (!pat) return;
-    ctx.fillStyle = pat;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  /* ──────────────────────────────────────────
-     MAIN RENDER LOOP
-  ────────────────────────────────────────── */
-  var lastRafTime = 0;
-
-  function render(now) {
-    if (!running) return;
-    var dt = now - (lastRafTime || now);
-    lastRafTime = now;
-
-    var t = (now - startTime) / 1000;   /* seconds since start */
-
-    /* Background */
-    ctx.fillStyle = '#030d1a';
-    ctx.fillRect(0, 0, W, H);
-
-    drawNebula();
-    drawStars();
-
-    updateShip(t, dt);
-    drawStation(t);
-    drawShip();
-    drawScanlines();
-
-    /* Dark overlay for UI legibility */
-    ctx.fillStyle = 'rgba(3,13,26,0.55)';
-    ctx.fillRect(0, 0, W, H);
-
-    rafId = requestAnimationFrame(render);
-  }
-
-  /* ──────────────────────────────────────────
-     USER INTERACTION → resume AudioContext
-  ────────────────────────────────────────── */
   function onUserInteraction() {
-    if (pendingAudioStart) {
-      pendingAudioStart = false;
+    if (themeActive && !audioStarted) {
       startAudio();
     }
   }
 
-  /* ──────────────────────────────────────────
-     PUBLIC API
-  ────────────────────────────────────────── */
-  window.terminalTheme = {
-    start: function () {
-      if (running) return;
-      running = true;
+  function addInteractionListeners() {
+    if (interactionHandlerAdded) return;
+    interactionHandlerAdded = true;
+    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (evt) {
+      document.addEventListener(evt, onUserInteraction, { once: false, passive: true });
+    });
+  }
 
-      initCanvas();
-      initStars();
-      ship.active = false;
-      ship.phase = 'idle';
-      ship.nextSpawn = 3000 + Math.random() * 5000;
+  function removeInteractionListeners() {
+    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (evt) {
+      document.removeEventListener(evt, onUserInteraction);
+    });
+    interactionHandlerAdded = false;
+  }
 
-      startTime = performance.now();
-      lastRafTime = 0;
-      rafId = requestAnimationFrame(render);
-
-      /* Audio: start immediately if context already running, otherwise wait for interaction */
-      if (audioCtx && audioCtx.state === 'running') {
-        startAudio();
-      } else {
-        pendingAudioStart = true;
-        document.addEventListener('click', onUserInteraction, { once: true });
-        document.addEventListener('touchstart', onUserInteraction, { once: true });
-        document.addEventListener('keydown', onUserInteraction, { once: true });
-      }
-    },
-
-    stop: function () {
-      if (!running) return;
-      running = false;
-      pendingAudioStart = false;
-
-      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-
-      stopAudio();
-
-      if (canvas && canvas.parentNode) {
-        canvas.parentNode.removeChild(canvas);
-      }
-      canvas = null;
-      ctx = null;
-
-      window.removeEventListener('resize', resize);
-      document.removeEventListener('click', onUserInteraction);
-      document.removeEventListener('touchstart', onUserInteraction);
-      document.removeEventListener('keydown', onUserInteraction);
+  /* ── PUBLIC API ── */
+  function start() {
+    themeActive = true;
+    addInteractionListeners();
+    /* Attempt immediate start in case context already unlocked */
+    if (!audioStarted) {
+      startAudio();
     }
-  };
+  }
+
+  function stop() {
+    themeActive = false;
+    removeInteractionListeners();
+    stopAudio();
+  }
+
+  window.terminalTheme = { start: start, stop: stop };
 
 })();
