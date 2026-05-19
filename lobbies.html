@@ -393,11 +393,16 @@
     }
 
     function setLobbyTheme(t) {
-      /* Non-hosts can't change the theme - silently ignore the click */
       if (!isCreator && !isPrivileged()) return;
       applyTheme(t);
-      /* Push to backend so all lobby members hear it via chat poll */
       if (currentLobby && currentUser) {
+        /* Broadcast via chat message so all members pick it up on next poll */
+        fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: '__sorc_theme__:' + t })
+        }).catch(function(){});
+        /* Also try the dedicated endpoint for when backend is deployed */
         fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/theme', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
@@ -959,9 +964,18 @@
           applyTheme(data.lobby_theme);
         }
         var msgs = data.messages || [];
-        if (msgs.length === 0) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; return; }
+        /* Apply theme from hidden system messages — works without backend deploy */
+        msgs.forEach(function(m) {
+          if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
+            var t = m.body.replace('__sorc_theme__:', '').trim();
+            if (t && t !== lobbyTheme) applyTheme(t);
+          }
+        });
+        var visibleMsgs = msgs.filter(function(m) { return !m.body || m.body.indexOf('__sorc_theme__:') !== 0; });
+        if (visibleMsgs.length === 0 && !lastMsgId) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; }
+        if (visibleMsgs.length === 0) { if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id; return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
-        msgEl.innerHTML = msgs.map(function(m) {
+        msgEl.innerHTML = visibleMsgs.map(function(m) {
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
           return '<div class="chat-msg">' +
             '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
