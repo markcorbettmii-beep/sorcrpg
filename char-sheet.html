@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Character Sheet | SORC</title>
+  <link rel="icon" href="IMG_3419.jpeg" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .sheet-wrap { max-width: 520px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .sheet-back { display: inline-block; color: #d4af37; text-decoration: none; font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .sheet-back:hover { text-decoration: underline; }
+    .sheet-name { color: #e0cfc0; font-size: 1.1rem; font-weight: bold; margin-bottom: 0.25rem; }
+    .sheet-role { font-size: 0.78rem; color: #888; margin-bottom: 1.25rem; }
+    .sheet-img-wrap { border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; background: #111; margin-bottom: 1.25rem; }
+    .sheet-img-wrap img { width: 100%; display: block; }
+    .sheet-pending { text-align: center; padding: 2rem; color: #444; font-size: 0.85rem; }
+    .invite-btn { display: block; width: 100%; padding: 11px; background: #1a3a6b; color: #9ecde8; border: 1px solid #1a5a8a; border-radius: 8px; font-size: 0.88rem; font-weight: bold; text-align: center; cursor: pointer; box-sizing: border-box; }
+    .invite-btn:hover { background: #1e4a8a; }
+    .invite-msg { font-size: 0.8rem; margin-top: 0.5rem; text-align: center; min-height: 1.2em; }
+    .invite-msg.ok { color: #4caf50; }
+    .invite-msg.err { color: #d0021b; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="sorc-letters-evil.jpg" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="sorc-letters-lawful.jpg" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
+    <div class="sheet-wrap">
+      <a href="javascript:void(0)" onclick="if(history.length>1){history.back();}else{window.location='lobbies.html';}" class="sheet-back">← Back</a>
+      <div id="sheetApp"><div style="color:#555;text-align:center;padding:3rem;">Loading...</div></div>
+    </div>
+  </div>
+  <div id="footer"></div>
+  <script type="module" src="main.js"></script>
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function roleLabel(r) {
+      if (!r) return 'Civilian';
+      if (r === 'MASTER') return 'Game Master';
+      if (r === 'PLAYER') return 'Player Character';
+      if (r === 'ADMIN') return 'Admin';
+      if (r === 'OWNER') return 'Owner';
+      var map = { 'PC-BEG':'PC - Beginner','PC-INT':'PC - Intermediate','PC-ADV':'PC - Advanced','GM-ADV':'GM - Advanced' };
+      return map[r] || r;
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      var params = new URLSearchParams(window.location.search);
+      var username = params.get('username') || params.get('uid');
+      var lobbyId  = params.get('lobby');
+
+      if (!username) {
+        document.getElementById('sheetApp').innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">No character specified.</div>';
+        return;
+      }
+
+      var user = null;
+      try {
+        var res = await fetch(API_URL + '/api/profile/' + username);
+        var data = await res.json();
+        user = data.user || null;
+      } catch(e) {}
+
+      if (!user) {
+        document.getElementById('sheetApp').innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">Character not found.</div>';
+        return;
+      }
+
+      var displayName = user.display_name || user.username || username;
+      var sorcRole    = user.sorc_role || user.role || '';
+      var isSelf      = currentUser && (currentUser.id === user.id || currentUser.username === user.username);
+
+      /* Character sheet image — use saved sheet if available, else blank */
+      var sheetSrc = user.character_sheet_url || 'character-customizer/assets/sorc-blank-profile-page_20260519_113341_0000.png';
+      var sheetImg = '<div class="sheet-img-wrap"><img src="' + esc(sheetSrc) + '" alt="Character Sheet" /></div>';
+
+      /* Customize button for self */
+      var customizeBtn = isSelf
+        ? '<a href="character-customizer/cc-default.html" style="display:block;width:100%;padding:11px;background:#d4af37;color:#111;border:none;border-radius:8px;font-size:0.88rem;font-weight:bold;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:0.75rem;">✎ Customize Character</a>'
+        : '';
+
+      /* Invite to lobby button — shown to hosts only, not to self */
+      var inviteSection = '';
+      if (!isSelf && currentUser && lobbyId) {
+        inviteSection =
+          '<button class="invite-btn" onclick="sendInvite()">&#128100; Invite to Lobby</button>' +
+          '<div class="invite-msg" id="inviteMsg"></div>';
+      }
+
+      document.getElementById('sheetApp').innerHTML =
+        '<div class="sheet-name">' + esc(displayName) + '</div>' +
+        '<div class="sheet-role">' + esc(roleLabel(sorcRole)) + '</div>' +
+        sheetImg +
+        customizeBtn +
+        inviteSection;
+    });
+
+    window.sendInvite = async function() {
+      if (!currentUser) return;
+      var params = new URLSearchParams(window.location.search);
+      var username = params.get('username') || params.get('uid');
+      var lobbyId  = params.get('lobby');
+      var msgEl = document.getElementById('inviteMsg');
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ username: username })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.className = 'invite-msg ok'; msgEl.textContent = 'Invite sent!';
+        } else {
+          msgEl.className = 'invite-msg err'; msgEl.textContent = data.error || 'Could not send invite.';
+        }
+      } catch(e) {
+        msgEl.className = 'invite-msg err'; msgEl.textContent = 'Connection error.';
+      }
+    };
+  </script>
+</body>
+</html>
