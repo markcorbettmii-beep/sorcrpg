@@ -27,7 +27,8 @@
     .theme-more-wrap { position: relative; display: inline-block; }
     .theme-more-btn { background: #111; color: #555; border-color: #2a2a2a; }
     .theme-more-btn:hover { color: #e0cfc0; border-color: #555; }
-    .theme-more-dropdown { position: absolute; top: calc(100% + 6px); left: 0; background: #111; border: 1.5px solid #2a2a2a; border-radius: 10px; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; z-index: 50; min-width: 220px; box-shadow: 0 4px 18px rgba(0,0,0,0.6); }
+    .theme-more-dropdown { position: absolute; top: calc(100% + 6px); left: 0; background: #111; border: 1.5px solid #2a2a2a; border-radius: 10px; padding: 0.5rem; flex-direction: column; gap: 0.4rem; z-index: 50; min-width: 220px; box-shadow: 0 4px 18px rgba(0,0,0,0.6); display: none; }
+    .theme-more-dropdown.open { display: flex; }
     .theme-more-dropdown .theme-pill { border-radius: 8px; text-align: left; width: 100%; }
 
     /* ===== INFO GRID ===== */
@@ -318,27 +319,6 @@
         <span style="display:inline-block;background:rgba(30,90,40,0.35);border:1px solid rgba(80,200,100,0.35);color:#6ecf7f;font-size:0.92rem;letter-spacing:0.1em;padding:0.4rem 1.2rem;border-radius:20px;">&#10003; Assessment Cleared</span>
       </div>
 
-      <!-- THEME SELECTOR -->
-      <div class="theme-selector">
-        <div class="theme-selector-label">Lobby Theme</div>
-        <div class="theme-grid">
-          <button class="theme-pill active" id="tpill-default" onclick="setLobbyTheme('default')" title="Only the lobby host can change the theme">Default</button>
-          <button class="theme-pill" id="tpill-terminal" onclick="setLobbyTheme('terminal')" title="Only the lobby host can change the theme">Orbital Terminal</button>
-          <button class="theme-pill" id="tpill-veilwood" onclick="setLobbyTheme('veilwood')" title="Only the lobby host can change the theme">The Veilwood</button>
-          <div class="theme-more-wrap">
-            <button class="theme-pill theme-more-btn" onclick="toggleThemeMore(this)" title="More themes">More &#9660;</button>
-            <div class="theme-more-dropdown" style="display:none;">
-              <button class="theme-pill locked" title="500 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Void Citadel<span class="pts">500 pts or Achievement</span></button>
-              <button class="theme-pill locked" title="750 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Iron Bastion<span class="pts">750 pts or Achievement</span></button>
-              <button class="theme-pill locked" title="1,000 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Celestial Court<span class="pts">1,000 pts or Achievement</span></button>
-              <button class="theme-pill locked" title="1,500 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Sunken Shrine<span class="pts">1,500 pts or Achievement</span></button>
-              <button class="theme-pill locked" title="2,000 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Dragon Throne<span class="pts">2,000 pts or Achievement</span></button>
-              <button class="theme-pill locked" title="Achievement only - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Heights of Tranquility<span class="pts">Achievement</span></button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <h1>Campaign Lobbies</h1>
       <p class="lobbies-sub">Join or host live SORC sessions online. Creating a lobby requires a valid box set code. Joining is open to all assessed members.</p>
 
@@ -489,13 +469,13 @@
     window.toggleThemeMore = function(btn) {
       var dd = btn.nextElementSibling;
       if (!dd) return;
-      var open = dd.style.display !== 'none';
-      dd.style.display = open ? 'none' : 'flex';
-      btn.innerHTML = open ? 'More &#9660;' : 'Less &#9650;';
-      if (!open) {
+      var isOpen = dd.classList.contains('open');
+      dd.classList.toggle('open', !isOpen);
+      btn.innerHTML = isOpen ? 'More &#9660;' : 'Less &#9650;';
+      if (!isOpen) {
         function closeOnOutside(e) {
           if (!btn.parentElement.contains(e.target)) {
-            dd.style.display = 'none';
+            dd.classList.remove('open');
             btn.innerHTML = 'More &#9660;';
             document.removeEventListener('click', closeOnOutside);
           }
@@ -876,6 +856,25 @@
           '</div>' +
         '</div>' +
         invitePanel +
+        '<div class="theme-selector" style="margin-bottom:1rem;">' +
+          '<div class="theme-selector-label">Lobby Theme</div>' +
+          '<div class="theme-grid">' +
+            '<button class="theme-pill' + (lobbyTheme==='default'?' active':'') + '" id="tpill-default" onclick="setLobbyTheme(\'default\')" title="Only the lobby host can change the theme">Default</button>' +
+            '<button class="theme-pill' + (lobbyTheme==='terminal'?' active':'') + '" id="tpill-terminal" onclick="setLobbyTheme(\'terminal\')" title="Only the lobby host can change the theme">Orbital Terminal</button>' +
+            '<button class="theme-pill' + (lobbyTheme==='veilwood'?' active':'') + '" id="tpill-veilwood" onclick="setLobbyTheme(\'veilwood\')" title="Only the lobby host can change the theme">The Veilwood</button>' +
+            '<div class="theme-more-wrap">' +
+              '<button class="theme-pill theme-more-btn" onclick="toggleThemeMore(this)" title="More themes">More &#9660;</button>' +
+              '<div class="theme-more-dropdown">' +
+                '<button class="theme-pill locked" title="500 pts or Achievement"><span class="lock-icon">&#128274;</span> Void Citadel<span class="pts">500 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="750 pts or Achievement"><span class="lock-icon">&#128274;</span> Iron Bastion<span class="pts">750 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="1,000 pts or Achievement"><span class="lock-icon">&#128274;</span> Celestial Court<span class="pts">1,000 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="1,500 pts or Achievement"><span class="lock-icon">&#128274;</span> Sunken Shrine<span class="pts">1,500 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="2,000 pts or Achievement"><span class="lock-icon">&#128274;</span> Dragon Throne<span class="pts">2,000 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="Achievement only"><span class="lock-icon">&#128274;</span> Heights of Tranquility<span class="pts">Achievement</span></button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
         '<div class="detail-grid">' +
           '<div style="display:flex;flex-direction:column;">' +
             '<div class="chat-panel" id="chatPanel">' +
