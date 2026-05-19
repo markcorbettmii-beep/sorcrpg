@@ -356,7 +356,8 @@
     })();
 
     // ===== LOBBY THEME =====
-    var lobbyTheme = localStorage.getItem('lobbyTheme') || 'default';
+    /* Theme is per-lobby — never persisted; always default until inside a lobby */
+    var lobbyTheme = 'default';
     var themeClassMap = { terminal: 'lt-terminal', veilwood: 'lt-veilwood' };
 
     /* Apply theme visually + audio — no permission check, used for member sync */
@@ -365,7 +366,6 @@
       Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
       if (themeClassMap[t]) root.classList.add(themeClassMap[t]);
       lobbyTheme = t;
-      localStorage.setItem('lobbyTheme', t);
       document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
       var active = document.getElementById('tpill-' + t);
       if (active) active.classList.add('active');
@@ -390,19 +390,10 @@
     }
     /* Initial theme apply: CSS classes apply immediately; canvas routing deferred
        until all scripts (theme-terminal.js, theme-veilwood.js) have loaded */
-    (function () {
-      var root = document.getElementById('pageRoot');
-      Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
-      if (themeClassMap[lobbyTheme]) root.classList.add(themeClassMap[lobbyTheme]);
-      document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
-      var active = document.getElementById('tpill-' + lobbyTheme);
-      if (active) active.classList.add('active');
-    })();
-
-    /* Solar system always runs; theme audio routed on load */
+    /* Solar system always runs; lobby starts at default theme */
     window.addEventListener('load', function () {
       if (window.solarBg) window.solarBg.start();
-      setLobbyTheme(lobbyTheme);
+      applyTheme('default');
     });
 
     // ===== HELPERS =====
@@ -456,6 +447,28 @@
       renderListView();
       var savedLobbyId = sessionStorage.getItem('activeLobbyId');
       if (savedLobbyId) openLobby(savedLobbyId);
+    }
+
+    // ===== TOAST (non-blocking error/info banner) =====
+    var toastTimer = null;
+    function showToast(msg, isErr) {
+      var t = document.getElementById('sorcToast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'sorcToast';
+        t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(120%);' +
+          'background:#1a1a1a;border:1px solid #444;color:#e0cfc0;padding:0.65rem 1.2rem;border-radius:8px;' +
+          'font-size:0.85rem;z-index:9999;transition:transform 0.22s ease;white-space:nowrap;max-width:90vw;text-align:center;';
+        document.body.appendChild(t);
+      }
+      if (isErr) t.style.borderColor = '#d0021b';
+      else t.style.borderColor = '#444';
+      t.textContent = msg;
+      t.style.transform = 'translateX(-50%) translateY(0)';
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() {
+        t.style.transform = 'translateX(-50%) translateY(120%)';
+      }, 3200);
     }
 
     // ===== HELPERS =====
@@ -685,6 +698,7 @@
     };
 
     window.joinLobby = async function(lobbyId) {
+      if (!currentUser || !currentUser.authKey) { showToast('Sign in to join a lobby.', true); return; }
       try {
         var res = await fetch(API_URL + '/api/lobbies/join', {
           method: 'POST',
@@ -693,8 +707,8 @@
         });
         var data = await res.json();
         if (data.success) { openLobby(lobbyId); }
-        else { alert(data.error || 'Could not join lobby.'); }
-      } catch(e) { alert('Connection error.'); }
+        else { showToast(data.error || 'Could not join lobby.', true); }
+      } catch(e) { showToast('Could not reach server. Check your connection.', true); }
     };
 
     // ===== OPEN LOBBY DETAIL =====
@@ -717,7 +731,7 @@
         var data = await res.json();
         if (!data.lobby) {
           sessionStorage.removeItem('activeLobbyId');
-          alert(data.error || 'Could not load lobby.'); renderListView(); return;
+          showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
         }
         currentLobby = data.lobby;
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
@@ -726,7 +740,8 @@
         startChatPoll(lobbyId);
       } catch(e) {
         sessionStorage.removeItem('activeLobbyId');
-        alert('Connection error.'); renderListView();
+        showToast('Could not load lobby. Check your connection.', true);
+        renderListView();
       }
     };
 
@@ -938,7 +953,7 @@
         var data = await res.json();
         if (data.success) openLobby(currentLobby.id);
         else alert(data.error || 'Could not mute member.');
-      } catch(e) { alert('Connection error.'); }
+      } catch(e) { showToast('Could not reach server.', true); }
     };
 
     window.kickMember = async function(uid) {
@@ -952,7 +967,7 @@
         var data = await res.json();
         if (data.success) openLobby(currentLobby.id);
         else alert(data.error || 'Could not remove member.');
-      } catch(e) { alert('Connection error.'); }
+      } catch(e) { showToast('Could not reach server.', true); }
     };
 
     // ===== LEAVE / DELETE =====
@@ -1038,7 +1053,7 @@
         } else {
           alert(data.error || 'Could not send invite.');
         }
-      } catch(e) { alert('Connection error.'); }
+      } catch(e) { showToast('Could not reach server.', true); }
     };
 
     /* ── RECRUIT MENU ── */
@@ -1153,7 +1168,7 @@
         if (data.success && data.room_id) {
           window.location.href = 'room.html?id=' + data.room_id;
         } else { alert(data.error || 'Could not launch room.'); }
-      } catch(e) { alert('Connection error.'); }
+      } catch(e) { showToast('Could not reach server.', true); }
     };
 
     window.enterRoom = function(roomId) {
@@ -1278,7 +1293,7 @@
         if (data.success) {
           loadWorldChat();
         } else { alert(data.error || 'Could not respond.'); }
-      } catch(e) { alert('Connection error.'); }
+      } catch(e) { showToast('Could not reach server.', true); }
     };
 
     function startWorldChatPoll() {
@@ -1298,6 +1313,7 @@
       lastMsgId = null;
       hasGMRights = false;
       isCreator = false;
+      applyTheme('default');
       renderListView();
       loadWorldChat();
       startWorldChatPoll();
