@@ -255,6 +255,21 @@
     body { background: transparent !important; }
     .page-wrapper { background: rgba(10,10,16,0.72) !important; }
     body.lawful-mode .page-wrapper { background: rgba(240,237,230,0.88) !important; }
+
+    /* ===== ROOM TICKER ===== */
+    .room-ticker { overflow: hidden; border-top: 1px solid #2a2a2a; border-bottom: 1px solid #2a2a2a; background: #0d0d14; padding: 0.45rem 0; position: relative; margin-top: 0.5rem; }
+    .room-ticker::before, .room-ticker::after { content: ''; position: absolute; top: 0; bottom: 0; width: 50px; z-index: 2; pointer-events: none; }
+    .room-ticker::before { left: 0; background: linear-gradient(to right, #0d0d14, transparent); }
+    .room-ticker::after { right: 0; background: linear-gradient(to left, #0d0d14, transparent); }
+    .room-ticker-track { display: flex; white-space: nowrap; animation: room-ticker-scroll 52s linear infinite; width: max-content; }
+    .room-ticker-track:hover { animation-play-state: paused; }
+    @keyframes room-ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .room-ticker-item { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0 2rem; font-size: 0.75rem; color: #666; letter-spacing: 0.04em; }
+    .room-ticker-item .rt-bullet { color: #d4af37; font-size: 0.6rem; }
+    body.lawful-mode .room-ticker { background: #e8e2d8; border-color: #bbb; }
+    body.lawful-mode .room-ticker::before { background: linear-gradient(to right, #e8e2d8, transparent); }
+    body.lawful-mode .room-ticker::after { background: linear-gradient(to left, #e8e2d8, transparent); }
+    body.lawful-mode .room-ticker-item { color: #777; }
   </style>
 </head>
 <body>
@@ -544,6 +559,7 @@
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="500" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
                   '<button class="chat-send" onclick="sendChat()">Send</button>' +
                 '</div>' +
+                buildRoomTicker() +
               '</div>' +
               '<div class="tab-pane" id="pane-rolls">' +
                 '<div class="rolls-list" id="rollsList"></div>' +
@@ -780,6 +796,25 @@
     }
 
     window.addEventListener('beforeunload', function() { stopPolling(); if (jitsiApi) jitsiApi.dispose(); });
+
+    function buildRoomTicker() {
+      var msgs = [
+        '&#127925; GMs can load and play audio files directly in this room - atmospheric music and ambient sounds that pair with each module cue',
+        '&#128421; When the module calls for it, the GM triggers the audio - every player in the room hears it at the same time for full immersion',
+        '&#128421; Campaign Rooms work at a physical table or fully online - GMs set audio, players roll live dice, everyone follows the same session',
+        '&#127922; Roll D4, D6, or D100 using the dice tab - all rolls are visible to everyone in the room and logged in the session',
+        '&#128196; Click the character sheet icon next to any member\'s name to view their armaments, companions, achievements, and more',
+        '&#128101; If the GM steps away, leadership passes to the next party member - the room stays active and the session continues',
+        '&#128172; Use room chat to coordinate during combat or send private notes - voice is available through the voice tab',
+        '&#127775; GMs playing from home can use audio cues, dice, and compendium tools to run a fully immersive session for remote or in-person players',
+        '&#9876; All dice rolls are synced across the room - no need for physical dice when playing online',
+        '&#127514; The GM launched this room from the lobby - players still in the lobby can join the room from the Active Rooms section',
+      ];
+      var html = msgs.map(function(m) {
+        return '<span class="room-ticker-item"><span class="rt-bullet">&#9670;</span>' + m + '</span>';
+      }).join('');
+      return '<div class="room-ticker"><div class="room-ticker-track">' + html + html + '</div></div>';
+    }
 
     init();
   </script>
