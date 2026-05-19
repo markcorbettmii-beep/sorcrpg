@@ -1233,6 +1233,7 @@ async function validateBoxSetCode(db: D1Database, code: string, userId: string):
   const row = await db.prepare(`SELECT * FROM box_set_codes WHERE code = ?`).bind(code.toUpperCase().trim()).first() as any;
   if (!row) return { valid: false, error: 'Invalid box set code.' };
   if (row.owner_uid && row.owner_uid !== userId) return { valid: false, error: 'This box set code is already registered to another account.' };
+  if (row.expires_at && new Date(row.expires_at) < new Date()) return { valid: false, error: 'This code has expired.' };
   return { valid: true };
 }
 
@@ -1248,21 +1249,27 @@ app.post('/api/box-codes/generate', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
 
-  const { note } = await c.req.json().catch(() => ({} as any)) as any;
+  const { note, days } = await c.req.json().catch(() => ({} as any)) as any;
   const now = new Date().toISOString();
 
-  // Format: GEN + 6 random digits + BSC
+  // Format: GEN + 6 random digits + BSC - temporary codes only
   const rng = crypto.getRandomValues(new Uint8Array(6));
   let code = 'GEN';
   for (let i = 0; i < 6; i++) code += rng[i] % 10;
   code += 'BSC';
 
-  await c.env.sorc_db.prepare(
-    `INSERT INTO box_set_codes (id, code, created_by, note, created_at)
-     VALUES (?, ?, ?, ?, ?)`
-  ).bind(crypto.randomUUID(), code, user.id, note ? note.substring(0, 100) : null, now).run();
+  const expireDays = (typeof days === 'number' && days > 0) ? days : 30;
+  const expiresAt = new Date(Date.now() + expireDays * 86400000).toISOString();
 
-  return c.json({ success: true, code });
+  // Add expires_at column if it doesn't exist yet (one-time migration)
+  await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN expires_at TEXT`).run().catch(() => {});
+
+  await c.env.sorc_db.prepare(
+    `INSERT INTO box_set_codes (id, code, created_by, note, created_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), code, user.id, note ? note.substring(0, 100) : null, now, expiresAt).run();
+
+  return c.json({ success: true, code, expires_at: expiresAt });
 });
 
 // ─── LOBBIES ───────────────────────────────────────────────────────────────────
