@@ -954,7 +954,7 @@
     interactionHandlerAdded = false;
   }
 
-  function start() { themeActive = true; addInteractionListeners(); if (!audioStarted) startAudio(); }
+  function start() { themeActive = true; addInteractionListeners(); }
   function stop()  { themeActive = false; removeInteractionListeners(); stopAudio(); }
 
   window.veilwoodTheme = { start: start, stop: stop, get _ctx() { return audioCtx; } };

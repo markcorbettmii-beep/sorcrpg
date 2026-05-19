@@ -381,19 +381,9 @@
       if (window.veilwoodTheme) window.veilwoodTheme.stop();
       if (t === 'terminal' && window.terminalTheme) window.terminalTheme.start();
       else if (t === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
-      /* AudioContext requires a user gesture to start (autoplay policy).
-         iOS Safari requires the AudioContext to be created *within* the gesture
-         handler — resume() alone is not enough. Stop+start synchronously here
-         so the new AudioContext is born inside the gesture and plays immediately. */
-      function resumeOnGesture() {
-        document.removeEventListener('click', resumeOnGesture);
-        document.removeEventListener('touchstart', resumeOnGesture);
-        if (lobbyTheme !== t) return;
-        if (t === 'terminal' && window.terminalTheme) { window.terminalTheme.stop(); window.terminalTheme.start(); }
-        if (t === 'veilwood' && window.veilwoodTheme) { window.veilwoodTheme.stop(); window.veilwoodTheme.start(); }
-      }
-      document.addEventListener('click', resumeOnGesture, { passive: true });
-      document.addEventListener('touchstart', resumeOnGesture, { passive: true });
+      /* Audio starts on first gesture — theme files handle this internally via
+         onUserInteraction (click/keydown/touchstart/pointerdown on document).
+         AudioContext is created inside that handler so iOS allows it. */
     }
 
     function setLobbyTheme(t) {

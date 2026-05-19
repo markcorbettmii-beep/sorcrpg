@@ -639,7 +639,6 @@
   function start() {
     themeActive = true;
     addInteractionListeners();
-    if (!audioStarted) startAudio();
   }
 
   function stop() {
