@@ -1036,13 +1036,15 @@
           applyTheme(data.lobby_theme);
         }
         var msgs = data.messages || [];
-        /* Apply theme from hidden system messages — works without backend deploy */
+        /* Apply theme from hidden system messages — use only the most recent one */
+        var lastThemeMsg = null;
         msgs.forEach(function(m) {
-          if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
-            var t = m.body.replace('__sorc_theme__:', '').trim();
-            if (t && t !== lobbyTheme) applyTheme(t);
-          }
+          if (m.body && m.body.indexOf('__sorc_theme__:') === 0) lastThemeMsg = m;
         });
+        if (lastThemeMsg) {
+          var t = lastThemeMsg.body.replace('__sorc_theme__:', '').trim();
+          if (t && t !== lobbyTheme) applyTheme(t);
+        }
         var visibleMsgs = msgs.filter(function(m) { return !m.body || m.body.indexOf('__sorc_theme__:') !== 0; });
         if (visibleMsgs.length === 0 && !lastMsgId) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; }
         if (visibleMsgs.length === 0) { if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id; return; }
