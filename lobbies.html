@@ -262,7 +262,7 @@
     .lobby-ticker::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
     .lobby-ticker::before { left: 0; background: linear-gradient(to right, #0d0d14, transparent); }
     .lobby-ticker::after { right: 0; background: linear-gradient(to left, #0d0d14, transparent); }
-    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 126s linear infinite; width: max-content; }
+    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 135s linear infinite; width: max-content; }
     .ticker-track:hover { animation-play-state: paused; }
     @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
     .ticker-item { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 2.5rem; font-size: 0.78rem; color: #888; letter-spacing: 0.04em; }
@@ -302,11 +302,11 @@
           <button class="theme-pill active" id="tpill-default" onclick="setLobbyTheme('default')">Default</button>
           <button class="theme-pill" id="tpill-terminal" onclick="setLobbyTheme('terminal')">Orbital Terminal</button>
           <button class="theme-pill" id="tpill-veilwood" onclick="setLobbyTheme('veilwood')">The Veilwood</button>
-          <button class="theme-pill locked" title="Unlocks for 500 community points"><span class="lock-icon">&#128274;</span> Void Citadel<span class="pts">500 pts</span></button>
-          <button class="theme-pill locked" title="Unlocks for 750 community points"><span class="lock-icon">&#128274;</span> Iron Bastion<span class="pts">750 pts</span></button>
-          <button class="theme-pill locked" title="Unlocks for 1,000 community points"><span class="lock-icon">&#128274;</span> Celestial Court<span class="pts">1,000 pts</span></button>
-          <button class="theme-pill locked" title="Unlocks for 1,500 community points"><span class="lock-icon">&#128274;</span> Sunken Shrine<span class="pts">1,500 pts</span></button>
-          <button class="theme-pill locked" title="Unlocks for 2,000 community points"><span class="lock-icon">&#128274;</span> Dragon Throne<span class="pts">2,000 pts</span></button>
+          <button class="theme-pill locked" title="Unlocks for 500 community points or Achievement"><span class="lock-icon">&#128274;</span> Void Citadel<span class="pts">500 pts or Achievement</span></button>
+          <button class="theme-pill locked" title="Unlocks for 750 community points or Achievement"><span class="lock-icon">&#128274;</span> Iron Bastion<span class="pts">750 pts or Achievement</span></button>
+          <button class="theme-pill locked" title="Unlocks for 1,000 community points or Achievement"><span class="lock-icon">&#128274;</span> Celestial Court<span class="pts">1,000 pts or Achievement</span></button>
+          <button class="theme-pill locked" title="Unlocks for 1,500 community points or Achievement"><span class="lock-icon">&#128274;</span> Sunken Shrine<span class="pts">1,500 pts or Achievement</span></button>
+          <button class="theme-pill locked" title="Unlocks for 2,000 community points or Achievement"><span class="lock-icon">&#128274;</span> Dragon Throne<span class="pts">2,000 pts or Achievement</span></button>
         </div>
       </div>
 
@@ -359,6 +359,11 @@
     var themeClassMap = { terminal: 'lt-terminal', veilwood: 'lt-veilwood' };
 
     function setLobbyTheme(t) {
+      /* Only active lobby hosts (or admin/owner) may change the theme */
+      if (!isCreator && !isPrivileged()) {
+        alert('Only the lobby host can change the theme.');
+        return;
+      }
       var root = document.getElementById('pageRoot');
       Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
       if (themeClassMap[t]) root.classList.add(themeClassMap[t]);
@@ -469,6 +474,7 @@
         '&#127760; If a host leaves their lobby, the next member in line becomes the new leader - the lobby stays open and keeps recruiting',
         '&#128203; Click LFM: in World Chat to display your name with character sheet - let the host know you fit their request',
         '&#127760; Only lobby hosts can post in World Chat, but LFM: and LFG: links are open to everyone - click to show your interest',
+        '&#127914; Only lobby hosts can choose lobby themes',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
