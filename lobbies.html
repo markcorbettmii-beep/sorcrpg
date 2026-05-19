@@ -732,7 +732,7 @@
         var data = await res.json();
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Joined!';
-          setTimeout(function() { openLobby(data.lobby_id || data.lobby?.id); }, 400);
+          setTimeout(function() { openLobby(data.lobby_id); }, 400);
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
     };
@@ -746,8 +746,9 @@
           body: JSON.stringify({ lobby_id: lobbyId })
         });
         var data = await res.json();
-        if (data.success) { openLobby(lobbyId); }
-        else { showToast(data.error || 'Could not join lobby.', true); }
+        if (data.success || (data.error && data.error.toLowerCase().indexOf('already') !== -1)) {
+          openLobby(lobbyId);
+        } else { showToast(data.error || 'Could not join lobby.', true); }
       } catch(e) { showToast('Could not reach server. Check your connection.', true); }
     };
 
@@ -1024,13 +1025,56 @@
       } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
     };
 
+    var memberPollCount = 0;
     function startChatPoll(lobbyId) {
       stopChatPoll();
-      chatPollTimer = setInterval(function() { loadChatMessages(lobbyId); }, 5000);
+      memberPollCount = 0;
+      chatPollTimer = setInterval(function() {
+        loadChatMessages(lobbyId);
+        memberPollCount++;
+        if (memberPollCount % 3 === 0) refreshMembers();
+      }, 5000);
     }
 
     function stopChatPoll() {
       if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+    }
+
+    async function refreshMembers() {
+      if (!currentLobby || !currentUser) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id, { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (!data.members) return;
+        var membersEl = document.getElementById('membersList');
+        if (!membersEl) return;
+        var html = data.members.map(function(m) {
+          var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+          var isSelf = currentUser && m.user_id === currentUser.id;
+          var actBtns = '';
+          if (!isSelf && hasGMRights) {
+            actBtns += '<button class="member-act-btn" onclick="muteMember(\'' + esc(m.user_id) + '\',\'' + esc(m.id) + '\')">' + (m.is_muted ? 'Unmute' : 'Mute') + '</button>';
+            actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')">Kick</button>';
+          }
+          if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
+          var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+          var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
+          var sheetIcon = '<a href="' + esc(sheetHref) + '" title="View Character Sheet" style="color:#aaa;font-size:0.8rem;margin-left:0.3rem;text-decoration:none;vertical-align:middle;">&#128196;</a>';
+          return '<div class="member-row">' +
+            '<div class="member-avatar">' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '</div>' +
+            '<div class="member-info">' +
+              '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:0;">' +
+                '<a href="' + profileHref + '" class="member-name">' + esc(m.display_name || m.username) + '</a>' + sheetIcon +
+              '</span>' +
+              '<div class="member-role' + (isGM ? ' gm' : '') + '">' + roleLabel(m.sorc_role) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
+            '</div>' +
+            '<div class="member-actions">' + actBtns + '</div>' +
+          '</div>';
+        }).join('');
+        membersEl.innerHTML = html || '<div style="padding:1rem;color:#444;font-size:0.82rem;">No members.</div>';
+        var countEl = document.querySelector('.members-head span');
+        if (countEl) countEl.textContent = 'Members (' + data.members.length + ')';
+      } catch(e) {}
     }
 
     // ===== MEMBER ACTIONS =====
