@@ -404,11 +404,17 @@
     function buildTicker() {
       var msgs = [
         '&#129309; Table sessions often only need 1 or 2 more players - Adding Fellowships helps you avoid PUG placement and find your preferred group',
-        '&#128101; Click the character sheet icon next to any member\'s name to view their armaments, companions, and achievements',
-        '&#127514; GMs can launch a private Campaign Room directly from the lobby - voice, dice, compendium, and audio tools inside',
-        '&#127775; When a lobby closes, any active Campaign Room stays accessible - a Rejoin button appears so nobody loses their session',
-        '&#127925; GMs play module-paired audio in the Campaign Room - every player hears it live, whether gathered at the table or joining remotely',
+        '&#128101; Click the character sheet icon next to any member\'s name to view their armaments, companions, achievements, and more',
+        '&#127514; GMs and Admins can launch a private Campaign Room directly from the lobby - voice, dice, compendium, and full session tools inside',
+        '&#128172; Use Lobby Chat to assemble your party before the GM launches the Campaign Room - keep recruiting until the table is full',
+        '&#127775; When a lobby closes, any active Campaign Room stays accessible - a Rejoin Campaign Room button appears so nobody loses their session',
+        '&#127925; GMs play module-paired audio inside the Campaign Room - every player hears it live, whether at the table or joining remotely',
+        '&#128421; Campaign Rooms work just as well fully online as they do at a physical table - GMs set the audio, players roll live dice, everyone follows the same session',
+        '&#128273; Set your lobby to Private so only players with your invite code can join - ideal for pre-arranged Fellowship sessions',
+        '&#127922; Campaign Rooms include live D4, D6, and D100 rolls, loot table generation, and compendium access for the whole party',
+        '&#129309; Find great players through PUG lobbies - once you do, invite them directly to your next private session to skip the pickup queue',
         '&#9733; Switch the Lobby Theme above to set the mood - Orbital Terminal and The Veilwood each have their own ambient soundscape',
+        '&#127760; If a host leaves their lobby, the next member in line becomes the new leader - the lobby stays open and keeps recruiting',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -452,12 +458,7 @@
             '<button class="l-btn red" onclick="closeAllMyLobbies()">Close All My Lobbies</button>' +
             '<div id="closeAllResult" class="l-msg"></div>' +
           '</div>' +
-          '<div class="action-card" style="margin-top:1.25rem;border-color:#3a1a5a;">' +
-            '<h2 style="color:#a060d0;font-size:0.92rem;">&#9878; Deduplicate All Lobbies</h2>' +
-            '<p>For every player who has more than one active lobby, closes all but their most recent one. Affects all users site-wide.</p>' +
-            '<button class="l-btn" style="background:#5a2a8a;color:#fff;" onclick="deduplicateLobbies()">Deduplicate All Lobbies</button>' +
-            '<div id="dedupeResult" class="l-msg"></div>' +
-          '</div>'
+          ''
         : '';
 
       app.innerHTML =
@@ -515,10 +516,13 @@
           var isFull = l.member_count >= l.max_members;
           var statusClass = isFull ? 'full' : 'open';
           var statusLabel = isFull ? 'Full' : 'Open';
+          var commandeeredNote = l.commandeered_from
+            ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; commandeered from ' + esc(l.commandeered_from) + '</span>'
+            : '';
           return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
             '<div class="lobby-row-info">' +
               '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
-              '<p>Host: ' + esc(l.creator_name || 'Unknown') + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + (l.max_members||20) + ' members &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong></p>' +
+              '<p>Host: ' + esc(l.creator_name || 'Unknown') + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + (l.max_members||20) + ' members &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong></p>' +
             '</div>' +
             '<div class="lobby-row-right">' +
               '<span class="status-pip ' + statusClass + '">' + statusLabel + '</span>' +
@@ -591,24 +595,6 @@
           resultEl.className = 'l-msg ok';
           resultEl.textContent = 'Closed ' + data.closed + ' lobby' + (data.closed === 1 ? '' : 's') + '.';
           setTimeout(renderListView, 1000);
-        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
-      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
-    };
-
-    // ===== DEDUPLICATE (owner/admin) =====
-    window.deduplicateLobbies = async function() {
-      if (!confirm('Close all duplicate active lobbies site-wide, keeping only the newest per host? This cannot be undone.')) return;
-      var resultEl = document.getElementById('dedupeResult');
-      resultEl.className = 'l-msg'; resultEl.textContent = 'Deduplicating...';
-      try {
-        var res = await fetch(API_URL + '/api/lobbies/admin/deduplicate', {
-          method: 'POST', headers: { 'X-Auth-Key': currentUser.authKey }
-        });
-        var data = await res.json();
-        if (data.success) {
-          resultEl.className = 'l-msg ok';
-          resultEl.textContent = 'Closed ' + data.closed + ' duplicate lobby' + (data.closed === 1 ? '' : 'ies') + '. Refreshing list...';
-          setTimeout(renderListView, 1500);
         } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
       } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
     };

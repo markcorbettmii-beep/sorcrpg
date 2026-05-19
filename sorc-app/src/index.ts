@@ -1438,6 +1438,11 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
 
+  // One-time migration: add commandeered_from column if not yet present
+  try {
+    await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
+  } catch (_) {}
+
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
 
@@ -1446,8 +1451,9 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       `SELECT user_id FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC LIMIT 1`
     ).bind(lobbyId).first() as any;
     if (next) {
-      await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
-        .bind(next.user_id, now, lobbyId).run();
+      await c.env.sorc_db.prepare(
+        `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
+      ).bind(next.user_id, user.username, now, lobbyId).run();
     } else {
       await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
         .bind(now, lobbyId).run();
@@ -1468,34 +1474,6 @@ app.post('/api/lobbies/close-all-mine', authMiddleware, async (c) => {
   return c.json({ success: true, closed: result.meta?.changes ?? 0 });
 });
 
-app.post('/api/lobbies/admin/deduplicate', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  if (!isPrivileged(user)) return c.json({ error: 'Admin only' }, 403);
-  const now = new Date().toISOString();
-  // For each creator_uid with multiple active lobbies, keep the newest (max updated_at), close the rest
-  const dupes = await c.env.sorc_db.prepare(
-    `SELECT id FROM lobbies
-     WHERE status != 'closed'
-       AND id NOT IN (
-         SELECT id FROM lobbies
-         WHERE status != 'closed'
-         GROUP BY creator_uid
-         HAVING id = MAX(id)
-       )`
-  ).all();
-  if (!dupes.results || dupes.results.length === 0) {
-    return c.json({ success: true, closed: 0 });
-  }
-  const ids = dupes.results.map((r: any) => r.id);
-  let closed = 0;
-  for (const id of ids) {
-    await c.env.sorc_db.prepare(
-      `UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`
-    ).bind(now, id).run();
-    closed++;
-  }
-  return c.json({ success: true, closed });
-});
 
 app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
