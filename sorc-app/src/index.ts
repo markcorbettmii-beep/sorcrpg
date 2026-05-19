@@ -1251,15 +1251,11 @@ app.post('/api/box-codes/generate', authMiddleware, async (c) => {
   const { note } = await c.req.json().catch(() => ({} as any)) as any;
   const now = new Date().toISOString();
 
-  // Format: 3 random letters + 4 digits + 3 random letters
-  // Makes generated codes visually distinct from physical box set codes
-  const alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const digits = '0123456789';
-  const rng = crypto.getRandomValues(new Uint8Array(10));
-  let code = '';
-  for (let i = 0; i < 3; i++) code += alpha[rng[i] % alpha.length];
-  for (let i = 3; i < 7; i++) code += digits[rng[i] % digits.length];
-  for (let i = 7; i < 10; i++) code += alpha[rng[i] % alpha.length];
+  // Format: GEN + 6 random digits + BSC
+  const rng = crypto.getRandomValues(new Uint8Array(6));
+  let code = 'GEN';
+  for (let i = 0; i < 6; i++) code += rng[i] % 10;
+  code += 'BSC';
 
   await c.env.sorc_db.prepare(
     `INSERT INTO box_set_codes (id, code, created_by, note, created_at)
