@@ -1468,6 +1468,35 @@ app.post('/api/lobbies/close-all-mine', authMiddleware, async (c) => {
   return c.json({ success: true, closed: result.meta?.changes ?? 0 });
 });
 
+app.post('/api/lobbies/admin/deduplicate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Admin only' }, 403);
+  const now = new Date().toISOString();
+  // For each creator_uid with multiple active lobbies, keep the newest (max updated_at), close the rest
+  const dupes = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobbies
+     WHERE status != 'closed'
+       AND id NOT IN (
+         SELECT id FROM lobbies
+         WHERE status != 'closed'
+         GROUP BY creator_uid
+         HAVING id = MAX(id)
+       )`
+  ).all();
+  if (!dupes.results || dupes.results.length === 0) {
+    return c.json({ success: true, closed: 0 });
+  }
+  const ids = dupes.results.map((r: any) => r.id);
+  let closed = 0;
+  for (const id of ids) {
+    await c.env.sorc_db.prepare(
+      `UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`
+    ).bind(now, id).run();
+    closed++;
+  }
+  return c.json({ success: true, closed });
+});
+
 app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');

@@ -441,6 +441,12 @@
             '<p>Instantly close every active lobby you currently own. Use this to clean up duplicates.</p>' +
             '<button class="l-btn red" onclick="closeAllMyLobbies()">Close All My Lobbies</button>' +
             '<div id="closeAllResult" class="l-msg"></div>' +
+          '</div>' +
+          '<div class="action-card" style="margin-top:1.25rem;border-color:#3a1a5a;">' +
+            '<h2 style="color:#a060d0;font-size:0.92rem;">&#9878; Deduplicate All Lobbies</h2>' +
+            '<p>For every player who has more than one active lobby, closes all but their most recent one. Affects all users site-wide.</p>' +
+            '<button class="l-btn" style="background:#5a2a8a;color:#fff;" onclick="deduplicateLobbies()">Deduplicate All Lobbies</button>' +
+            '<div id="dedupeResult" class="l-msg"></div>' +
           '</div>'
         : '';
 
@@ -575,6 +581,24 @@
           resultEl.className = 'l-msg ok';
           resultEl.textContent = 'Closed ' + data.closed + ' lobby' + (data.closed === 1 ? '' : 's') + '.';
           setTimeout(renderListView, 1000);
+        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
+      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
+    };
+
+    // ===== DEDUPLICATE (owner/admin) =====
+    window.deduplicateLobbies = async function() {
+      if (!confirm('Close all duplicate active lobbies site-wide, keeping only the newest per host? This cannot be undone.')) return;
+      var resultEl = document.getElementById('dedupeResult');
+      resultEl.className = 'l-msg'; resultEl.textContent = 'Deduplicating...';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/admin/deduplicate', {
+          method: 'POST', headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await res.json();
+        if (data.success) {
+          resultEl.className = 'l-msg ok';
+          resultEl.textContent = 'Closed ' + data.closed + ' duplicate lobby' + (data.closed === 1 ? '' : 'ies') + '. Refreshing list...';
+          setTimeout(renderListView, 1500);
         } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
       } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
     };
