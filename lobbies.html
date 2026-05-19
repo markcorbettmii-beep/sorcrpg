@@ -391,6 +391,15 @@
       if (window.veilwoodTheme) window.veilwoodTheme.stop();
       if (t === 'terminal' && window.terminalTheme) window.terminalTheme.start();
       else if (t === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
+      /* AudioContext may be suspended (autoplay policy). Resume on next gesture. */
+      function resumeOnGesture() {
+        if (window.terminalTheme && window.terminalTheme._ctx && window.terminalTheme._ctx.state === 'suspended') window.terminalTheme._ctx.resume();
+        if (window.veilwoodTheme && window.veilwoodTheme._ctx && window.veilwoodTheme._ctx.state === 'suspended') window.veilwoodTheme._ctx.resume();
+        document.removeEventListener('click', resumeOnGesture);
+        document.removeEventListener('touchstart', resumeOnGesture);
+      }
+      document.addEventListener('click', resumeOnGesture, { passive: true });
+      document.addEventListener('touchstart', resumeOnGesture, { passive: true });
     }
 
     function setLobbyTheme(t) {

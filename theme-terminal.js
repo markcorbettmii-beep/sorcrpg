@@ -544,6 +544,7 @@
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.88;
@@ -606,6 +607,7 @@
   var themeActive = false;
 
   function onUserInteraction() {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     if (themeActive && !audioStarted) startAudio();
   }
 
@@ -636,5 +638,5 @@
     stopAudio();
   }
 
-  window.terminalTheme = { start: start, stop: stop };
+  window.terminalTheme = { start: start, stop: stop, get _ctx() { return audioCtx; } };
 })();

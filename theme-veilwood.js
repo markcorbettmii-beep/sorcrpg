@@ -626,6 +626,7 @@
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.88;
@@ -714,7 +715,10 @@
   var interactionHandlerAdded = false;
   var themeActive = false;
 
-  function onUserInteraction() { if (themeActive && !audioStarted) startAudio(); }
+  function onUserInteraction() {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if (themeActive && !audioStarted) startAudio();
+  }
 
   function addInteractionListeners() {
     if (interactionHandlerAdded) return;
@@ -734,5 +738,5 @@
   function start() { themeActive = true; addInteractionListeners(); if (!audioStarted) startAudio(); }
   function stop()  { themeActive = false; removeInteractionListeners(); stopAudio(); }
 
-  window.veilwoodTheme = { start: start, stop: stop };
+  window.veilwoodTheme = { start: start, stop: stop, get _ctx() { return audioCtx; } };
 })();
