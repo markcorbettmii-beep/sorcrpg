@@ -1570,6 +1570,92 @@ app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
   return c.json({ fellowships: fellowsRaw.results || [], others: othersRaw.results || [] });
 });
 
+const SUMMON_DDL = `CREATE TABLE IF NOT EXISTS lobby_summons (
+  id TEXT PRIMARY KEY,
+  lobby_id TEXT NOT NULL,
+  lobby_name TEXT NOT NULL,
+  from_uid TEXT NOT NULL,
+  from_name TEXT NOT NULL,
+  to_uid TEXT NOT NULL,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL
+)`;
+
+app.post('/api/lobbies/:id/summon', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(SUMMON_DDL).run();
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+    if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can send summons.' }, 403);
+    if (lobby.status === 'closed') return c.json({ error: 'Lobby is closed.' }, 400);
+
+    const { to_uid, note } = await c.req.json() as any;
+    if (!to_uid) return c.json({ error: 'Target player required.' }, 400);
+    if (to_uid === user.id) return c.json({ error: 'Cannot summon yourself.' }, 400);
+
+    const target = await c.env.sorc_db.prepare(
+      `SELECT id FROM users WHERE id = ? AND (banned IS NULL OR banned = 0)`
+    ).bind(to_uid).first() as any;
+    if (!target) return c.json({ error: 'Player not found.' }, 404);
+
+    const isMember = await c.env.sorc_db.prepare(
+      `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobbyId, to_uid).first() as any;
+    if (isMember) return c.json({ error: 'Player is already in this lobby.' }, 400);
+
+    await c.env.sorc_db.prepare(
+      `UPDATE lobby_summons SET status = 'superseded' WHERE lobby_id = ? AND from_uid = ? AND to_uid = ? AND status = 'pending'`
+    ).bind(lobbyId, user.id, to_uid).run();
+
+    const summonId = crypto.randomUUID();
+    const fromName = user.display_name || user.username;
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_summons (id, lobby_id, lobby_name, from_uid, from_name, to_uid, note, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+    ).bind(summonId, lobbyId, lobby.name, user.id, fromName, to_uid, note || null, now).run();
+
+    return c.json({ success: true, summon_id: summonId });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send summon.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/summons/pending', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await c.env.sorc_db.prepare(SUMMON_DDL).run();
+    const summons = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobby_summons WHERE to_uid = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 5`
+    ).bind(user.id).all();
+    return c.json({ summons: summons.results || [] });
+  } catch (e: any) {
+    return c.json({ summons: [] });
+  }
+});
+
+app.post('/api/summons/:id/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const summonId = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(SUMMON_DDL).run();
+    const summon = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobby_summons WHERE id = ? AND to_uid = ? AND status = 'pending'`
+    ).bind(summonId, user.id).first() as any;
+    if (!summon) return c.json({ error: 'Summon not found or already handled.' }, 404);
+
+    const { accept } = await c.req.json() as any;
+    const newStatus = accept ? 'accepted' : 'denied';
+    await c.env.sorc_db.prepare(`UPDATE lobby_summons SET status = ? WHERE id = ?`).bind(newStatus, summonId).run();
+
+    return c.json({ success: true, status: newStatus, lobby_id: accept ? summon.lobby_id : null });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to respond to summon.', details: error.message }, 500);
+  }
+});
+
 // ─── WORLD CHAT ──────────────────────────────────────────────────────────────
 
 app.get('/api/world-chat', authMiddleware, async (c) => {

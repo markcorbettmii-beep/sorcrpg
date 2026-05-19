@@ -302,6 +302,27 @@
     body.lawful-mode .lobby-ticker::after { background: linear-gradient(to left, #e8e2d8, transparent); }
     body.lawful-mode .ticker-item { color: #666; }
     body.lawful-mode .ticker-item .ticker-bullet { color: #b8860b; }
+
+    /* ===== SUMMON FEATURE ===== */
+    .summon-name-btn { background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; }
+    .summon-name-btn:hover { color: #d4b8ff; }
+    .summon-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .summon-modal { background: #111; border: 1.5px solid #5030a0; border-radius: 14px; padding: 1.5rem; max-width: 400px; width: 100%; }
+    .summon-modal h3 { color: #d4b8ff; margin: 0 0 0.75rem; font-size: 1rem; }
+    .summon-modal p { color: #888; font-size: 0.84rem; margin: 0 0 0.75rem; line-height: 1.55; }
+    .summon-modal .summon-note { width: 100%; padding: 8px 10px; background: #0a0818; border: 1px solid #2a1a4a; border-radius: 6px; color: #c0a8e8; font-size: 0.83rem; box-sizing: border-box; resize: vertical; min-height: 60px; }
+    .summon-modal .summon-note:focus { outline: none; border-color: #6030b0; }
+    .summon-btn-row { display: flex; gap: 0.6rem; margin-top: 0.75rem; }
+    .summon-confirm-btn { flex: 1; padding: 9px; background: #5030a0; color: #e0d0ff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .summon-confirm-btn:hover { background: #6040c0; }
+    .summon-cancel-btn { padding: 9px 16px; background: none; border: 1px solid #333; color: #888; border-radius: 8px; cursor: pointer; font-size: 0.88rem; }
+    .summon-cancel-btn:hover { border-color: #888; color: #e0cfc0; }
+    .incoming-summon-modal { border-color: #d4af37; }
+    .incoming-summon-modal h3 { color: #d4af37; }
+    .summon-accept-btn { flex: 1; padding: 9px; background: #1a5a1a; color: #90ee90; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .summon-accept-btn:hover { background: #236b23; }
+    .summon-deny-btn { flex: 1; padding: 9px; background: #3a0d0d; color: #e08080; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .summon-deny-btn:hover { background: #4a1010; }
   </style>
 </head>
 <body>
@@ -356,6 +377,29 @@
     </div>
   </div>
 
+  <div id="summonOutModal" style="display:none;" class="summon-modal-overlay">
+    <div class="summon-modal">
+      <h3>&#9889; Summon Player</h3>
+      <p id="summonOutDesc"></p>
+      <textarea class="summon-note" id="summonNoteInput" placeholder="Role requirements or a note for the player... (optional)" maxlength="200"></textarea>
+      <div class="summon-btn-row">
+        <button class="summon-confirm-btn" onclick="confirmSummon()">Send Summon</button>
+        <button class="summon-cancel-btn" onclick="closeSummonModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="summonInModal" style="display:none;" class="summon-modal-overlay">
+    <div class="summon-modal incoming-summon-modal">
+      <h3>&#9889; You have been summoned!</h3>
+      <p id="summonInDesc"></p>
+      <div class="summon-btn-row">
+        <button class="summon-accept-btn" onclick="respondSummon(true)">Accept</button>
+        <button class="summon-deny-btn" onclick="respondSummon(false)">Deny</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     var API_URL = 'https://api.sorcrpg.com';
     var currentUser = null;
@@ -363,6 +407,12 @@
 
     // ===== WORLD CHAT STATE =====
     var worldChatPollTimer = null;
+
+    // ===== SUMMON STATE =====
+    var summonPollTimer = null;
+    var pendingSummonTarget = null; // { uid, name } for outgoing summon
+    var activeSummonId = null;      // id of incoming summon being shown
+    var activeSummonLobbyId = null; // lobby to join on accept
 
     (function() {
       var theme = localStorage.getItem('themeSelected') || 'evil';
@@ -567,6 +617,7 @@
         '&#127760; Only lobby hosts can post in World Chat, but LFM: and LFG: links are open to everyone - click to show your interest',
         '&#127914; Only lobby hosts can choose lobby themes - if any member has a theme unlocked, the host can activate it for the whole lobby',
         '&#127914; If the member who unlocked a theme leaves and no one else has it, the lobby theme reverts to the previous one',
+        '&#9889; New: Summon feature - hosts can summon players directly from World Chat, sending them lobby details before they accept or deny',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -852,6 +903,7 @@
         document.documentElement.classList.add('lobby-locked');
         renderLobbyDetail(data);
         startChatPoll(lobbyId);
+        startSummonPoll();
       } catch(e) {
         sessionStorage.removeItem('activeLobbyId');
         showToast('Could not load lobby. Check your connection.', true);
@@ -1534,8 +1586,13 @@
             var rawBody = m.body || '';
             if (respondMatch) rawBody = rawBody.replace(/^📋\s*/, '').replace(/\s*[—\-]+\s*https?:\/\/\S+$/, '');
             var bodyHtml = parseWorldBody(rawBody, m.id);
+            var isSelf = currentUser && m.sender_uid === currentUser.id;
+            var canSummon = currentLobby && isCreator && !isSelf && m.sender_uid;
+            var nameEl = canSummon
+              ? '<button class="summon-name-btn ' + nameClass + '" onclick="summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\')" title="Summon to your lobby">' + esc(m.sender_name) + ' &#9889;</button>'
+              : '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" class="' + nameClass + '">' + esc(m.sender_name) + '</a>';
             return '<div class="world-msg">' +
-              '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" class="' + nameClass + '">' + esc(m.sender_name) + '</a>' +
+              nameEl +
               sheetIcon +
               lobbyTag + ': ' +
               '<span class="wmsg-body">' + bodyHtml + '</span>' +
@@ -1595,9 +1652,94 @@
       if (worldChatPollTimer) { clearInterval(worldChatPollTimer); worldChatPollTimer = null; }
     }
 
+    // ===== SUMMON FEATURE =====
+    window.summonPlayer = function(uid, name) {
+      if (!currentLobby || !isCreator) return;
+      pendingSummonTarget = { uid: uid, name: name };
+      document.getElementById('summonOutDesc').textContent =
+        'Send a summon to ' + name + ' for "' + (currentLobby.name || 'this lobby') + '". They will see your lobby details and can accept or deny.';
+      document.getElementById('summonNoteInput').value = '';
+      document.getElementById('summonOutModal').style.display = 'flex';
+    };
+
+    window.closeSummonModal = function() {
+      document.getElementById('summonOutModal').style.display = 'none';
+      pendingSummonTarget = null;
+    };
+
+    window.confirmSummon = async function() {
+      if (!pendingSummonTarget || !currentLobby || !currentUser) return;
+      var note = document.getElementById('summonNoteInput').value.trim();
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/summon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ to_uid: pendingSummonTarget.uid, note: note || null })
+        });
+        var data = await res.json();
+        closeSummonModal();
+        if (data.success) { showToast('Summon sent to ' + pendingSummonTarget.name + '!'); }
+        else { showToast(data.error || 'Could not send summon.', true); }
+      } catch(e) { closeSummonModal(); showToast('Could not reach server.', true); }
+    };
+
+    async function checkPendingSummons() {
+      if (!currentUser || !currentUser.authKey) return;
+      if (document.getElementById('summonInModal').style.display !== 'none') return;
+      try {
+        var res = await fetch(API_URL + '/api/summons/pending', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var summons = data.summons || [];
+        if (summons.length === 0) return;
+        var s = summons[0];
+        activeSummonId = s.id;
+        activeSummonLobbyId = s.lobby_id;
+        var noteText = s.note ? ' Note from host: "' + s.note + '"' : '';
+        document.getElementById('summonInDesc').textContent =
+          s.from_name + ' is summoning you to "' + s.lobby_name + '".' + noteText + ' Do you accept?';
+        document.getElementById('summonInModal').style.display = 'flex';
+      } catch(e) {}
+    }
+
+    window.respondSummon = async function(accept) {
+      if (!activeSummonId || !currentUser) return;
+      var summonId = activeSummonId;
+      var lobbyId = activeSummonLobbyId;
+      activeSummonId = null;
+      activeSummonLobbyId = null;
+      document.getElementById('summonInModal').style.display = 'none';
+      try {
+        var res = await fetch(API_URL + '/api/summons/' + summonId + '/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ accept: accept })
+        });
+        var data = await res.json();
+        if (accept && data.lobby_id) {
+          showToast('Joining lobby...');
+          setTimeout(function() { openLobby(data.lobby_id); }, 500);
+        } else if (!accept) {
+          showToast('Summon denied.');
+        } else {
+          showToast(data.error || 'Could not respond.', true);
+        }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    function startSummonPoll() {
+      stopSummonPoll();
+      summonPollTimer = setInterval(checkPendingSummons, 10000);
+      checkPendingSummons();
+    }
+
+    function stopSummonPoll() {
+      if (summonPollTimer) { clearInterval(summonPollTimer); summonPollTimer = null; }
+    }
+
     // ===== BACK =====
     window.backToList = function() {
       stopChatPoll();
+      stopSummonPoll();
       sessionStorage.removeItem('activeLobbyId');
       currentLobby = null;
       lastMsgId = null;
