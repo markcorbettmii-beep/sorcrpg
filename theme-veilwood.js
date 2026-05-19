@@ -292,21 +292,6 @@
     });
   }
 
-  /* Robin-style: descending two-note whistle */
-  function scheduleBirdA() {
-    sched(function() {
-      if (!audioCtx || !masterGain) return;
-      var base = rnd(2200, 2800);
-      chirpBird(base, [
-        {m:1,    d:rnd(0.08,0.14)},
-        {m:0.82, d:rnd(0.10,0.16)},
-        {m:0.92, d:rnd(0.07,0.12)},
-        {m:0.75, d:rnd(0.12,0.18)},
-      ], rnd(0.040, 0.060));
-      scheduleBirdA();
-    }, 6, 18);
-  }
-
   /* Wren-style: rapid high trilling */
   function scheduleBirdB() {
     sched(function() {
@@ -344,35 +329,6 @@
       chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.018, 0.032));
       scheduleBirdD();
     }, 5, 14);
-  }
-
-  /* ─── MAGICAL SHIMMER ───────────────────────────────────── */
-  function scheduleMagicShimmer() {
-    sched(function() {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var count = rndInt(4, 8);
-      var cursor = now;
-
-      for (var i = 0; i < count; i++) {
-        (function(startAt) {
-          var freq = pick([D5*2, F4*3, A4*2, C5*2, G4*3]) * rnd(0.98, 1.02);
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = freq;
-          var dur = rnd(0.4, 0.9);
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(rnd(0.012, 0.022), startAt + 0.02);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
-          osc.connect(g); g.connect(masterGain);
-          osc.start(startAt); osc.stop(startAt + dur + 0.05);
-        })(cursor);
-        cursor += rnd(0.12, 0.30);
-      }
-
-      scheduleMagicShimmer();
-    }, 40, 100);
   }
 
   /* ─── OWL ───────────────────────────────────────────────── */
@@ -415,11 +371,11 @@
     PANIC:  frantic burst, 8-10 very tight beats then gone, ~0.08s
   */
   var GALLOP_VARIANTS = [
-    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[180,280], gain:[0.07,0.12], crack:0.6, heavy:true  },
-    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[260,380], gain:[0.05,0.09], crack:0.3, heavy:false },
-    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[300,440], gain:[0.05,0.10], crack:0.2, heavy:false },
-    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[320,500], gain:[0.04,0.09], crack:0.15,heavy:false },
-    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,540], gain:[0.06,0.11], crack:0.1, heavy:false },
+    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[180,280], gain:[0.14,0.22], crack:0.6, heavy:true  },
+    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[260,380], gain:[0.12,0.18], crack:0.3, heavy:false },
+    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[300,440], gain:[0.12,0.18], crack:0.2, heavy:false },
+    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[320,500], gain:[0.11,0.17], crack:0.15,heavy:false },
+    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,540], gain:[0.13,0.20], crack:0.1, heavy:false },
   ];
 
   function playGallopVariant(variant) {
@@ -434,12 +390,13 @@
       var gainVal;
       if (variant.name === 'panic') {
         /* Panic: loud immediately, fades fast */
-        gainVal = p < 0.2 ? rnd(variant.gain[0], variant.gain[1]) * (0.4 + p * 3)
-                           : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.05, 1 - (p - 0.2) * 1.3);
+        gainVal = p < 0.2 ? rnd(variant.gain[0], variant.gain[1]) * (0.7 + p * 1.5)
+                           : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.1, 1 - (p - 0.2) * 1.3);
       } else {
+        /* Approach from distance → peak → recede; starts at ~60% so it's audible from first beat */
         gainVal = p < 0.45
-          ? rnd(variant.gain[0], variant.gain[1]) * (0.3 + p * 1.5)
-          : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.04, 1.1 - (p - 0.45) * 1.8);
+          ? rnd(variant.gain[0], variant.gain[1]) * (0.6 + p * 0.9)
+          : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.1, 1.1 - (p - 0.45) * 1.8);
       }
 
       /* Number of hoof-hits per beat (walk/trot=2, canter/gallop=2, panic=1 fast) */
@@ -532,10 +489,8 @@
     scheduleHarp();
     scheduleFlute();
     scheduleChoirSwell();
-    scheduleMagicShimmer();
 
     /* Nature sounds */
-    scheduleBirdA();
     scheduleBirdB();
     scheduleBirdC();
     scheduleBirdD();
