@@ -290,10 +290,17 @@
     var cursor = audioCtx.currentTime + rnd(0.8, 2.0);
     phrase.forEach(function (note) {
       (function (startAt, freq, dur) {
-        /* Shakuhachi: sine fundamental */
+        /* Shakuhachi: sine fundamental with embouchure pitch slide */
         var osc = audioCtx.createOscillator();
         osc.type = 'sine';
-        osc.frequency.value = freq;
+        /* Real shakuhachi dips ~15 cents flat on attack then settles */
+        var flatStart = freq * Math.pow(2, -15/1200);
+        osc.frequency.setValueAtTime(flatStart, startAt);
+        osc.frequency.linearRampToValueAtTime(freq, startAt + 0.35);
+        /* Slight pitch sway mid-note — player naturally drifts ±3 cents */
+        var midDrift = freq * Math.pow(2, rnd(-3, 3) / 1200);
+        osc.frequency.linearRampToValueAtTime(midDrift, startAt + dur * 0.5);
+        osc.frequency.linearRampToValueAtTime(freq, startAt + dur * 0.8);
         allSources.push(osc);
 
         /* 2nd harmonic — 12% of main, gives body */
@@ -302,20 +309,21 @@
         harm2.frequency.value = freq * 2;
         allSources.push(harm2);
 
-        /* 3rd harmonic — 4%, adds subtle edge */
+        /* 3rd harmonic — 4%, adds subtle warmth */
         var harm3 = audioCtx.createOscillator();
         harm3.type = 'sine';
         harm3.frequency.value = freq * 3;
         allSources.push(harm3);
 
-        /* Slow, gentle vibrato — enters after 45% of note */
+        /* Vibrato — enters after 40% of note, accelerates gently */
         var vib = audioCtx.createOscillator();
         vib.type = 'sine';
         vib.frequency.value = rnd(4.0, 5.2);
         allSources.push(vib);
         var vibDepth = makeGain(0);
         vibDepth.gain.setValueAtTime(0, startAt);
-        vibDepth.gain.linearRampToValueAtTime(rnd(1.6, 2.8), startAt + dur * 0.45);
+        vibDepth.gain.linearRampToValueAtTime(0, startAt + dur * 0.40);
+        vibDepth.gain.linearRampToValueAtTime(rnd(2.0, 3.5), startAt + dur * 0.72);
         vib.connect(vibDepth); vibDepth.connect(osc.frequency);
 
         /* Barely-audible breath — just organic texture */
@@ -328,14 +336,18 @@
         breathSrc.connect(breathBpf); breathBpf.connect(breathG); breathG.connect(masterGain);
         breathSrc.start(startAt);
 
-        /* Main gain — very slow attack like a real shakuhachi breath */
-        var peak = rnd(0.006, 0.010);
+        /* Main gain — slow attack, then a dynamic swell at 55% of note
+           so it feels like the player drawing a deeper breath mid-phrase */
+        var peak = rnd(0.007, 0.011);
+        var swell = peak * rnd(1.12, 1.28);
         var g = makeGain(0);
         g.gain.setValueAtTime(0, startAt);
-        g.gain.linearRampToValueAtTime(peak * 0.25, startAt + 0.12);
-        g.gain.linearRampToValueAtTime(peak, startAt + 0.55);
-        g.gain.setValueAtTime(peak, startAt + dur - 0.6);
-        g.gain.linearRampToValueAtTime(0, startAt + dur + 0.6);
+        g.gain.linearRampToValueAtTime(peak * 0.22, startAt + 0.10);
+        g.gain.linearRampToValueAtTime(peak, startAt + 0.50);
+        g.gain.linearRampToValueAtTime(peak * 0.80, startAt + dur * 0.42);
+        g.gain.linearRampToValueAtTime(swell, startAt + dur * 0.62);
+        g.gain.linearRampToValueAtTime(peak * 0.55, startAt + dur - 0.4);
+        g.gain.linearRampToValueAtTime(0, startAt + dur + 0.7);
 
         var g2 = makeGain(0);
         g2.gain.setValueAtTime(0, startAt);
@@ -646,8 +658,8 @@
     });
     scheduleOwl(); /* also start the loop so second owl isn't too far */
 
-    /* Flute: first breath at 35-55s — distant, sparse, then ongoing */
-    at(rnd(35, 55), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
+    /* Flute: first breath at 12-22s — sparse but present early */
+    at(rnd(12, 22), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
 
     /* Choir swell: first occurrence at 40-58s */
     at(rnd(40, 58), function () { playChoirSwell(); scheduleChoirSwell(); });
