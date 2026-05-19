@@ -268,14 +268,14 @@ function showRoleBadge(user) {
     ? ' <a href="/admin.html" style="color:inherit;text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
     : '';
 
-  var hasAssessed = !!(user.sorc_role) || isAdminUser;
-  var lobbiesHref = hasAssessed ? '/lobbies.html' : '/assess.html';
-  var lobbiesLabel = hasAssessed ? 'Lobbies' : 'Assessment';
+  var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
+  var assessLink = hasAssessed ? '' : ' <a href="/assess.html" style="color:inherit;text-decoration:underline;">Assessment</a>';
 
   existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
     ' <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' <a href="' + lobbiesHref + '" style="color:inherit;text-decoration:underline;">' + lobbiesLabel + '</a>' +
+    ' <a href="/lobbies.html" style="color:inherit;text-decoration:underline;">Lobbies</a>' +
+    assessLink +
     ' <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
     ' <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
     ' <a href="/forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
