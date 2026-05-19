@@ -299,9 +299,9 @@
       <div class="theme-selector">
         <div class="theme-selector-label">Lobby Theme</div>
         <div class="theme-grid">
-          <button class="theme-pill active" id="tpill-default" onclick="setLobbyTheme('default')">Default</button>
-          <button class="theme-pill" id="tpill-terminal" onclick="setLobbyTheme('terminal')">Orbital Terminal</button>
-          <button class="theme-pill" id="tpill-veilwood" onclick="setLobbyTheme('veilwood')">The Veilwood</button>
+          <button class="theme-pill active" id="tpill-default" onclick="setLobbyTheme('default')" title="Only the lobby host can change the theme">Default</button>
+          <button class="theme-pill" id="tpill-terminal" onclick="setLobbyTheme('terminal')" title="Only the lobby host can change the theme">Orbital Terminal</button>
+          <button class="theme-pill" id="tpill-veilwood" onclick="setLobbyTheme('veilwood')" title="Only the lobby host can change the theme">The Veilwood</button>
           <button class="theme-pill locked" title="500 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Void Citadel<span class="pts">500 pts or Achievement</span></button>
           <button class="theme-pill locked" title="750 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Iron Bastion<span class="pts">750 pts or Achievement</span></button>
           <button class="theme-pill locked" title="1,000 pts or Achievement - hosts can activate if any member has it"><span class="lock-icon">&#128274;</span> Celestial Court<span class="pts">1,000 pts or Achievement</span></button>
@@ -359,12 +359,8 @@
     var lobbyTheme = localStorage.getItem('lobbyTheme') || 'default';
     var themeClassMap = { terminal: 'lt-terminal', veilwood: 'lt-veilwood' };
 
-    function setLobbyTheme(t) {
-      /* Only active lobby hosts (or admin/owner) may change the theme */
-      if (!isCreator && !isPrivileged()) {
-        alert('Only the lobby host can change the theme.');
-        return;
-      }
+    /* Apply theme visually + audio — no permission check, used for member sync */
+    function applyTheme(t) {
       var root = document.getElementById('pageRoot');
       Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
       if (themeClassMap[t]) root.classList.add(themeClassMap[t]);
@@ -373,12 +369,24 @@
       document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
       var active = document.getElementById('tpill-' + t);
       if (active) active.classList.add('active');
-
-      /* ── Theme audio routing — solar system canvas always stays running ── */
       if (window.terminalTheme) window.terminalTheme.stop();
       if (window.veilwoodTheme) window.veilwoodTheme.stop();
       if (t === 'terminal' && window.terminalTheme) window.terminalTheme.start();
       else if (t === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
+    }
+
+    function setLobbyTheme(t) {
+      /* Non-hosts can't change the theme - silently ignore the click */
+      if (!isCreator && !isPrivileged()) return;
+      applyTheme(t);
+      /* Push to backend so all lobby members hear it via chat poll */
+      if (currentLobby && currentUser) {
+        fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/theme', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ theme: t })
+        }).catch(function(){});
+      }
     }
     /* Initial theme apply: CSS classes apply immediately; canvas routing deferred
        until all scripts (theme-terminal.js, theme-veilwood.js) have loaded */
@@ -716,6 +724,8 @@
         hasGMRights = isCreator || isPrivileged();
         renderLobbyDetail(data);
         startChatPoll(lobbyId);
+        /* Immediately apply whatever theme the host has set */
+        loadChatMessages(lobbyId);
       } catch(e) {
         sessionStorage.removeItem('activeLobbyId');
         alert('Connection error.'); renderListView();
@@ -857,6 +867,10 @@
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
         if (data.lobby_status === 'closed') { handleLobbyClosed(); return; }
+        /* Sync lobby theme for all members — host change propagates via poll */
+        if (data.lobby_theme && data.lobby_theme !== lobbyTheme) {
+          applyTheme(data.lobby_theme);
+        }
         var msgs = data.messages || [];
         if (msgs.length === 0) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;

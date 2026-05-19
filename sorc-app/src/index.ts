@@ -1677,7 +1677,25 @@ app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
     msgs.results = (msgs.results || []).reverse();
   }
   const lobbyStatus = await c.env.sorc_db.prepare(`SELECT status FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open' });
+  let lobbyTheme = 'default';
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_themes (lobby_id TEXT PRIMARY KEY, theme TEXT NOT NULL)`).run();
+    const themeRow = await c.env.sorc_db.prepare(`SELECT theme FROM lobby_themes WHERE lobby_id = ?`).bind(lobbyId).first() as any;
+    if (themeRow?.theme) lobbyTheme = themeRow.theme;
+  } catch {}
+  return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open', lobby_theme: lobbyTheme });
+});
+
+app.patch('/api/lobbies/:id/theme', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  const { theme } = await c.req.json() as any;
+  if (!theme) return c.json({ error: 'Theme required.' }, 400);
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_themes (lobby_id TEXT PRIMARY KEY, theme TEXT NOT NULL)`).run();
+  await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO lobby_themes (lobby_id, theme) VALUES (?, ?)`).bind(lobbyId, theme).run();
+  return c.json({ success: true });
 });
 
 app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
