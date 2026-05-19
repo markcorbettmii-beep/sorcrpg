@@ -541,6 +541,23 @@ app.post('/api/fellowships/:id/accept', authMiddleware, async (c) => {
   }
 });
 
+app.post('/api/fellowships/accept-by-uid/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const senderUid = c.req.param('uid');
+  try {
+    const row = await c.env.sorc_db.prepare(
+      `SELECT id FROM fellowships WHERE sender_uid = ? AND receiver_uid = ? AND status = 'pending'`
+    ).bind(senderUid, user.id).first() as any;
+    if (!row) return c.json({ error: 'No pending request found.' }, 404);
+    await c.env.sorc_db.prepare(
+      `UPDATE fellowships SET status = 'accepted', accepted_at = ? WHERE id = ?`
+    ).bind(new Date().toISOString(), row.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to accept', details: error.message }, 500);
+  }
+});
+
 app.post('/api/fellowships/:id/decline', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const id = c.req.param('id');
@@ -562,8 +579,8 @@ app.get('/api/fellowships/status/:uid', authMiddleware, async (c) => {
       `SELECT id, status, sender_uid FROM fellowships WHERE ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)) AND status IN ('pending','accepted')`
     ).bind(user.id, uid, uid, user.id).first() as any;
     if (!row) return c.json({ status: 'none' });
-    if (row.status === 'accepted') return c.json({ status: 'accepted' });
-    return c.json({ status: row.sender_uid === user.id ? 'pending_sent' : 'pending_received' });
+    if (row.status === 'accepted') return c.json({ status: 'accepted', id: row.id });
+    return c.json({ status: row.sender_uid === user.id ? 'pending_sent' : 'pending_received', id: row.id });
   } catch (error: any) {
     return c.json({ status: 'none' });
   }
@@ -1465,14 +1482,6 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   return c.json({ success: true });
 });
 
-app.post('/api/lobbies/close-all-mine', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const now = new Date().toISOString();
-  const result = await c.env.sorc_db.prepare(
-    `UPDATE lobbies SET status = 'closed', updated_at = ? WHERE creator_uid = ? AND status != 'closed'`
-  ).bind(now, user.id).run();
-  return c.json({ success: true, closed: result.meta?.changes ?? 0 });
-});
 
 
 app.delete('/api/lobbies/:id', authMiddleware, async (c) => {

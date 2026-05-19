@@ -396,6 +396,7 @@
                 } else if (fellowStatus.status === 'pending_received') {
                     fellowBtn.textContent = '⚔ Accept Fellowship';
                     fellowBtn.style.background = '#1a6b1a';
+                    fellowBtn.setAttribute('onclick', 'acceptIncomingFellowship(\'' + (fellowStatus.id || '') + '\')');
                 }
             }
 
@@ -430,6 +431,37 @@
             }
         } catch(e) {
             if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not complete action. Please try again.'; }
+        }
+    };
+
+    window.acceptIncomingFellowship = async function(fellowshipId) {
+        if (!confirm('Accept fellowship request from this player?')) return;
+        var currentUser = null;
+        try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!currentUser || !currentUser.authKey) { window.location.href = 'signin.html'; return; }
+        var msgEl = document.getElementById('actionMsg');
+        try {
+            var url = fellowshipId
+                ? API_URL + '/api/fellowships/' + fellowshipId + '/accept'
+                : API_URL + '/api/fellowships/accept-by-uid/' + (_profileTargetUid || new URLSearchParams(window.location.search).get('uid'));
+            var res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: '{}'
+            });
+            var data = await res.json();
+            if (data.success) {
+                msgEl.className = 'msg success';
+                msgEl.textContent = '✅ Fellowship accepted!';
+                var btn = document.getElementById('fellowshipBtn');
+                if (btn) { btn.textContent = '✓ Fellows'; btn.disabled = true; btn.style.opacity = '0.55'; btn.style.cursor = 'default'; }
+            } else {
+                msgEl.className = 'msg error';
+                msgEl.textContent = data.error || 'Could not accept fellowship.';
+            }
+        } catch(e) {
+            msgEl.className = 'msg error';
+            msgEl.textContent = 'Connection error.';
         }
     };
 

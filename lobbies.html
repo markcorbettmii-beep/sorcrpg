@@ -453,14 +453,7 @@
             '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. friend\'s name)..." maxlength="100" />' +
             '<button class="l-btn gold" onclick="generateBoxCode()">Generate Code</button>' +
             '<div id="genCodeResult" class="l-msg"></div>' +
-          '</div>' +
-          '<div class="action-card" style="margin-top:1.25rem;border-color:#5a1a1a;">' +
-            '<h2 style="color:#d0021b;font-size:0.92rem;">&#128683; Close All My Lobbies</h2>' +
-            '<p>Instantly close every active lobby you currently own. Use this to clean up duplicates.</p>' +
-            '<button class="l-btn red" onclick="closeAllMyLobbies()">Close All My Lobbies</button>' +
-            '<div id="closeAllResult" class="l-msg"></div>' +
-          '</div>' +
-          ''
+          '</div>'
         : '';
 
       app.innerHTML =
@@ -519,7 +512,7 @@
           var statusClass = isFull ? 'full' : 'open';
           var statusLabel = isFull ? 'Full' : 'Open';
           var commandeeredNote = l.commandeered_from
-            ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; commandeered from ' + esc(l.commandeered_from) + '</span>'
+            ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; was hosted by ' + esc(l.commandeered_from) + '</span>'
             : '';
           return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
             '<div class="lobby-row-info">' +
@@ -584,23 +577,6 @@
     };
 
     // ===== CLOSE ALL (admin) =====
-    window.closeAllMyLobbies = async function() {
-      if (!confirm('Close ALL of your active lobbies? This cannot be undone.')) return;
-      var resultEl = document.getElementById('closeAllResult');
-      resultEl.className = 'l-msg'; resultEl.textContent = 'Closing...';
-      try {
-        var res = await fetch(API_URL + '/api/lobbies/close-all-mine', {
-          method: 'POST', headers: { 'X-Auth-Key': currentUser.authKey }
-        });
-        var data = await res.json();
-        if (data.success) {
-          resultEl.className = 'l-msg ok';
-          resultEl.textContent = 'Closed ' + data.closed + ' lobby' + (data.closed === 1 ? '' : 's') + '.';
-          setTimeout(renderListView, 1000);
-        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
-      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
-    };
-
     // ===== JOIN =====
     window.joinByCode = async function() {
       var code = document.getElementById('joinCode').value.trim();
