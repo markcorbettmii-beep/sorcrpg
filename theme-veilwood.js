@@ -292,21 +292,6 @@
     });
   }
 
-  /* Wren-style: rapid high trilling */
-  function scheduleBirdB() {
-    sched(function() {
-      if (!audioCtx || !masterGain) return;
-      var base = rnd(3400, 4200);
-      var count = rndInt(4, 8);
-      var pattern = [];
-      for (var i = 0; i < count; i++) {
-        pattern.push({m: rnd(0.92, 1.08), d: rnd(0.04, 0.07)});
-      }
-      chirpBird(base, pattern, rnd(0.030, 0.048));
-      scheduleBirdB();
-    }, 9, 22);
-  }
-
   /* Blackbird-style: fluting melodic phrase */
   function scheduleBirdC() {
     sched(function() {
@@ -371,11 +356,11 @@
     PANIC:  frantic burst, 8-10 very tight beats then gone, ~0.08s
   */
   var GALLOP_VARIANTS = [
-    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[180,280], gain:[0.14,0.22], crack:0.6, heavy:true  },
-    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[260,380], gain:[0.12,0.18], crack:0.3, heavy:false },
-    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[300,440], gain:[0.12,0.18], crack:0.2, heavy:false },
-    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[320,500], gain:[0.11,0.17], crack:0.15,heavy:false },
-    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,540], gain:[0.13,0.20], crack:0.1, heavy:false },
+    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[200,320], gain:[0.32,0.46], clickGain:0.28, clickHz:[600,900]  },
+    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[280,420], gain:[0.26,0.38], clickGain:0.22, clickHz:[700,1100] },
+    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[320,480], gain:[0.24,0.36], clickGain:0.20, clickHz:[800,1200] },
+    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[340,520], gain:[0.22,0.34], clickGain:0.18, clickHz:[900,1400] },
+    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,560], gain:[0.28,0.40], clickGain:0.24, clickHz:[1000,1600]},
   ];
 
   function playGallopVariant(variant) {
@@ -386,53 +371,59 @@
 
     for (var i = 0; i < beats; i++) {
       var p = i / beats;
-      /* Approach → peak → recede amplitude envelope */
-      var gainVal;
-      if (variant.name === 'panic') {
-        /* Panic: loud immediately, fades fast */
-        gainVal = p < 0.2 ? rnd(variant.gain[0], variant.gain[1]) * (0.7 + p * 1.5)
-                           : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.1, 1 - (p - 0.2) * 1.3);
-      } else {
-        /* Approach from distance → peak → recede; starts at ~60% so it's audible from first beat */
-        gainVal = p < 0.45
-          ? rnd(variant.gain[0], variant.gain[1]) * (0.6 + p * 0.9)
-          : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.1, 1.1 - (p - 0.45) * 1.8);
-      }
+      /* Gentle approach/recede — starts loud, never drops below 70% */
+      var env = variant.name === 'panic'
+        ? Math.max(0.7, 1.0 - Math.max(0, p - 0.25) * 1.2)
+        : (p < 0.5 ? (0.8 + p * 0.4) : Math.max(0.7, 1.2 - (p - 0.5) * 1.2));
 
-      /* Number of hoof-hits per beat (walk/trot=2, canter/gallop=2, panic=1 fast) */
-      var offsets = variant.name === 'walk' ? [0, rnd(0.08,0.18)] : [0, rnd(0.04, 0.10)];
-      if (variant.name === 'panic') offsets = [0];
+      var offsets = variant.name === 'walk' ? [0, rnd(0.10,0.20)] :
+                    variant.name === 'panic' ? [0] : [0, rnd(0.04, 0.10)];
 
-      (function(startAt, gVal) {
+      (function(startAt, envMul) {
         offsets.forEach(function(offset) {
+          /* Thud layer — lowpass noise */
           var src = audioCtx.createBufferSource();
-          src.buffer = makeNoiseBuffer(0.05);
+          src.buffer = makeNoiseBuffer(0.12);
           var lpf = audioCtx.createBiquadFilter();
           lpf.type = 'lowpass';
           lpf.frequency.value = rnd(variant.lpf[0], variant.lpf[1]);
           var g = audioCtx.createGain();
-          var peakGain = gVal * (offset > 0 ? 0.8 : 1);
-          g.gain.setValueAtTime(peakGain, startAt + offset);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.042);
+          var thudk = rnd(variant.gain[0], variant.gain[1]) * envMul * (offset > 0 ? 0.75 : 1);
+          g.gain.setValueAtTime(thudk, startAt + offset);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.10);
           src.connect(lpf); lpf.connect(g); g.connect(masterGain);
           src.start(startAt + offset);
+
+          /* Click/snap layer — bandpass gives hoof-on-earth definition */
+          var click = audioCtx.createBufferSource();
+          click.buffer = makeNoiseBuffer(0.045);
+          var bpf = audioCtx.createBiquadFilter();
+          bpf.type = 'bandpass';
+          bpf.frequency.value = rnd(variant.clickHz[0], variant.clickHz[1]);
+          bpf.Q.value = rnd(2.5, 4.5);
+          var cg = audioCtx.createGain();
+          var clickk = variant.clickGain * envMul * (offset > 0 ? 0.7 : 1);
+          cg.gain.setValueAtTime(clickk, startAt + offset);
+          cg.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.038);
+          click.connect(bpf); bpf.connect(cg); cg.connect(masterGain);
+          click.start(startAt + offset);
         });
 
-        /* Undergrowth crack for heavy/slow variants */
-        if (variant.heavy && Math.random() < variant.crack) {
-          var src2 = audioCtx.createBufferSource();
-          src2.buffer = makeNoiseBuffer(0.035);
-          var bpf = audioCtx.createBiquadFilter();
-          bpf.type = 'bandpass'; bpf.frequency.value = rnd(550, 850); bpf.Q.value = 3;
-          var g2 = audioCtx.createGain();
-          g2.gain.setValueAtTime(gVal * 0.4, startAt + 0.025);
-          g2.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.055);
-          src2.connect(bpf); bpf.connect(g2); g2.connect(masterGain);
-          src2.start(startAt + 0.025);
+        /* Extra undergrowth thump for walk — low sub-snap */
+        if (variant.name === 'walk' && Math.random() < 0.65) {
+          var sub = audioCtx.createBufferSource();
+          sub.buffer = makeNoiseBuffer(0.06);
+          var subLpf = audioCtx.createBiquadFilter();
+          subLpf.type = 'lowpass'; subLpf.frequency.value = rnd(100, 160);
+          var sg = audioCtx.createGain();
+          sg.gain.setValueAtTime(envMul * 0.35, startAt + 0.018);
+          sg.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.065);
+          sub.connect(subLpf); subLpf.connect(sg); sg.connect(masterGain);
+          sub.start(startAt + 0.018);
         }
-      })(cursor, gainVal);
+      })(cursor, env);
 
-      cursor += baseInterval + rnd(-0.01, 0.01); /* tiny shuffle for naturalness */
+      cursor += baseInterval + rnd(-0.012, 0.012);
     }
   }
 
@@ -491,7 +482,6 @@
     scheduleChoirSwell();
 
     /* Nature sounds */
-    scheduleBirdB();
     scheduleBirdC();
     scheduleBirdD();
     scheduleOwl();
