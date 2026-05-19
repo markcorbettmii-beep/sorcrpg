@@ -638,7 +638,7 @@ showJpegBtn.addEventListener("click", function() {
     profileCanvas.height = 3045;
     
     const profileSheet = new Image();
-    profileSheet.src = `${BASE}sorc-blank-profile-page.png`;
+    profileSheet.src = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
     
     profileSheet.onload = function() {
       profileCtx.fillStyle = 'white';
@@ -657,7 +657,7 @@ showJpegBtn.addEventListener("click", function() {
     
     profileSheet.onerror = function() {
       console.error('Failed to load profile sheet template');
-      win.document.write('<p>Error: Could not load profile sheet. Make sure sorc-blank-profile-page.png is in the assets folder.</p>');
+      win.document.write('<p>Error: Could not load profile sheet. Make sure sorc-blank-profile-page_20260519_113341_0000.png is in the assets folder.</p>');
     };
   }, 100);
 });
@@ -667,7 +667,7 @@ showBlankJpegBtn.addEventListener("click", function() {
   const win = window.open('', '_blank');
   
   const blankImg = new Image();
-  blankImg.src = `${BASE}sorc-blank-profile-page.png`;
+  blankImg.src = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
   
   blankImg.onload = function() {
     const dataUrl = blankImg.src;
@@ -676,7 +676,7 @@ showBlankJpegBtn.addEventListener("click", function() {
   
   blankImg.onerror = function() {
     console.error('Failed to load blank profile page');
-    win.document.write('<p>Error: Could not load sorc-blank-profile-page.png. Make sure it is in the assets folder.</p>');
+    win.document.write('<p>Error: Could not load sorc-blank-profile-page_20260519_113341_0000.png. Make sure it is in the assets folder.</p>');
   };
 });
 

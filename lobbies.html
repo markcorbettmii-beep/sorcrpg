@@ -696,8 +696,18 @@
       }
 
       var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
+      var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
       var leaveBtn = '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>';
       var deleteBtn = hasGMRights ? '<button class="leave-btn" style="border-color:#5a1a1a;" onclick="deleteLobby()">Close Lobby</button>' : '';
+      var invitePanel = hasGMRights
+        ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
+          + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
+          + '<button onclick="copyLobbyCode()" style="padding:4px 12px;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;border-radius:6px;font-size:0.78rem;cursor:pointer;">Copy Code</button>'
+          + '<input id="inviteUsername" class="chat-input" placeholder="Player username..." style="max-width:180px;padding:5px 10px;font-size:0.82rem;" />'
+          + '<button onclick="sendInvite()" style="padding:5px 14px;background:#d4af37;color:#111;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">Send Invite</button>'
+          + '<span id="inviteMsg" style="font-size:0.78rem;"></span>'
+          + '</div>'
+        : '';
 
       app.innerHTML =
         '<div class="detail-header">' +
@@ -706,9 +716,10 @@
             '<div class="detail-meta">Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
-            launchBtn + leaveBtn + deleteBtn +
+            launchBtn + inviteBtn + leaveBtn + deleteBtn +
           '</div>' +
         '</div>' +
+        invitePanel +
         '<div class="detail-grid">' +
           '<div style="display:flex;flex-direction:column;">' +
             '<div class="chat-panel" id="chatPanel">' +
@@ -750,7 +761,7 @@
         msgEl.innerHTML = msgs.map(function(m) {
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
           return '<div class="chat-msg">' +
-            '<span class="msg-name' + (isGM ? ' gm' : '') + '">' + esc(m.username) + ':</span>' +
+            '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
           '</div>';
@@ -832,6 +843,42 @@
     };
 
     // ===== LEAVE / DELETE =====
+    window.toggleInvitePanel = function() {
+      var p = document.getElementById('invitePanel');
+      if (!p) return;
+      p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+    };
+
+    window.copyLobbyCode = function() {
+      if (!currentLobby) return;
+      var code = currentLobby.lobby_code;
+      var msgEl = document.getElementById('inviteMsg');
+      navigator.clipboard.writeText(code).then(function() {
+        if (msgEl) { msgEl.style.color = '#4caf50'; msgEl.textContent = 'Code copied!'; setTimeout(function() { msgEl.textContent = ''; }, 2000); }
+      }).catch(function() { prompt('Copy this lobby code:', code); });
+    };
+
+    window.sendInvite = async function() {
+      var input = document.getElementById('inviteUsername');
+      var msgEl = document.getElementById('inviteMsg');
+      if (!input || !currentLobby) return;
+      var username = input.value.trim();
+      if (!username) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ username: username })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.style.color = '#4caf50'; msgEl.textContent = 'Invite sent to ' + username + '!';
+          input.value = '';
+          setTimeout(function() { msgEl.textContent = ''; }, 3000);
+        } else { msgEl.style.color = '#d0021b'; msgEl.textContent = data.error || 'Failed to send invite.'; }
+      } catch(e) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Connection error.'; }
+    };
+
     window.leaveLobby = async function() {
       var msg = isCreator
         ? 'Leave this lobby? Leadership will transfer to the next member.'

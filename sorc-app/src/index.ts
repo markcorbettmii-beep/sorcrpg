@@ -1494,6 +1494,47 @@ app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
   return c.json({ success: true });
 });
 
+app.post('/api/lobbies/:id/invite', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  try {
+    const { username } = await c.req.json() as any;
+    if (!username) return c.json({ error: 'Username required.' }, 400);
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+    if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can send invites.' }, 403);
+    const target = await c.env.sorc_db.prepare(`SELECT id, username, display_name FROM users WHERE username = ?`).bind(username.trim()).first() as any;
+    if (!target) return c.json({ error: 'Player not found.' }, 404);
+    if (target.id === user.id) return c.json({ error: 'Cannot invite yourself.' }, 400);
+    const now = new Date().toISOString();
+    const myName = user.display_name || user.username;
+    const targetName = target.display_name || target.username;
+    const msgBody = `You've been invited to join "${lobby.name}"! Use code ${lobby.lobby_code} on the Lobbies page.`;
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT id FROM conversations WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
+    ).bind(user.id, target.id, target.id, user.id).first() as any;
+    if (existing) {
+      await c.env.sorc_db.prepare(
+        `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), existing.id, user.id, myName, msgBody, now).run();
+      await c.env.sorc_db.prepare(
+        `UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?`
+      ).bind(msgBody.substring(0, 100), now, existing.id).run();
+    } else {
+      const convId = crypto.randomUUID();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, last_message_text, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?)`
+      ).bind(convId, user.id, target.id, myName, targetName, msgBody.substring(0, 100), now, now).run();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), convId, user.id, myName, msgBody, now).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send invite.', details: error.message }, 500);
+  }
+});
+
 app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
