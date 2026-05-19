@@ -445,6 +445,7 @@
     var currentLobby = null;
     var chatPollTimer = null;
     var lastMsgId = null;
+    var chatMemberRetried = false;
     var reportTargetUid = null;
     var reportTargetName = '';
     var selectedReportReason = null;
@@ -747,7 +748,7 @@
         });
         var data = await res.json();
         if (data.success || (data.error && data.error.toLowerCase().indexOf('already') !== -1)) {
-          openLobby(lobbyId);
+          setTimeout(function() { openLobby(lobbyId); }, 900);
         } else { showToast(data.error || 'Could not join lobby.', true); }
       } catch(e) { showToast('Could not reach server. Check your connection.', true); }
     };
@@ -762,6 +763,7 @@
 
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
+      chatMemberRetried = false;
       sessionStorage.setItem('activeLobbyId', lobbyId);
       history.pushState({ lobby: lobbyId }, '');
       var app = document.getElementById('lobbiesApp');
@@ -959,6 +961,12 @@
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
+        if (res.status === 403 && !chatMemberRetried) {
+          chatMemberRetried = true;
+          setTimeout(function() { loadChatMessages(lobbyId); }, 2000);
+          return;
+        }
+        chatMemberRetried = false;
         if (data.lobby_status === 'closed') { handleLobbyClosed(); return; }
         /* Sync lobby theme for all members — host change propagates via poll */
         if (data.lobby_theme && data.lobby_theme !== lobbyTheme) {
