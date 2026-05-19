@@ -88,7 +88,6 @@
 
   /* ─── AMBIENT BED 1: Orchestral string pad (Dm chord) ─── */
   function startStringPad() {
-    /* Three-voice chord: D3, A3, F4 — warm, melancholic */
     var voices = [
       {freq: D3, gain: 0.022},
       {freq: A3, gain: 0.018},
@@ -96,17 +95,53 @@
       {freq: D4, gain: 0.011},
     ];
     voices.forEach(function(v) {
-      /* 3 detuned saws per voice for richness */
       [-4, 0, 4].forEach(function(cents) {
         var osc = makeOsc('sawtooth', v.freq * Math.pow(2, cents / 1200));
         var lpf = makeFilter('lowpass', 700, 0.5);
         var g = makeGain(0);
         var now = audioCtx.currentTime;
-        g.gain.linearRampToValueAtTime(v.gain / 3, now + 4.0); /* slow swell in */
+        g.gain.linearRampToValueAtTime(v.gain / 3, now + 4.0);
+
+        /* Slow evolving swell — pad breathes on a ~40s cycle so it never sounds flat */
+        var swellLfo = makeOsc('sine', 1 / rnd(35, 50));
+        var swellDepth = makeGain(v.gain / 3 * 0.30);
+        swellLfo.connect(swellDepth); swellDepth.connect(g.gain);
+        swellLfo.start();
+
         osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
         osc.start();
       });
     });
+
+    /* Secondary slow chord shift — every 25-45s, cross-fade to a neighbour chord */
+    function schedulePadShift() {
+      sched(function() {
+        if (!audioCtx || !masterGain) return;
+        var now = audioCtx.currentTime;
+        var shiftVoices = [
+          {freq: pick([F3, G3, A3, C4]), gain: rnd(0.006, 0.010)},
+          {freq: pick([A3, C4, D4, F4]), gain: rnd(0.005, 0.008)},
+        ];
+        shiftVoices.forEach(function(v) {
+          [-3, 0, 3].forEach(function(cents) {
+            var osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.value = v.freq * Math.pow(2, cents / 1200);
+            var lpf = audioCtx.createBiquadFilter();
+            lpf.type = 'lowpass'; lpf.frequency.value = 600;
+            var g = audioCtx.createGain();
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(v.gain / 3, now + 8);
+            g.gain.setValueAtTime(v.gain / 3, now + 14);
+            g.gain.linearRampToValueAtTime(0, now + 22);
+            osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+            osc.start(now); osc.stop(now + 24);
+          });
+        });
+        schedulePadShift();
+      }, 25, 45);
+    }
+    schedulePadShift();
   }
 
   /* ─── AMBIENT BED 2: Gentle wind through canopy ────────── */
@@ -175,7 +210,7 @@
       }
 
       scheduleHarp();
-    }, 14, 38);
+    }, 7, 20);
   }
 
   /* ─── CELTIC FLUTE MELODY ───────────────────────────────── */
@@ -208,13 +243,17 @@
         breathSrc.connect(breathHpf); breathHpf.connect(breathG); breathG.connect(masterGain);
         breathSrc.start(startAt);
 
+        /* Distant flute — quieter, rolled off high end */
+        var distLpf = audioCtx.createBiquadFilter();
+        distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(1400, 2200);
+
         var g = audioCtx.createGain();
         g.gain.setValueAtTime(0, startAt);
-        g.gain.linearRampToValueAtTime(rnd(0.038, 0.055), startAt + 0.04);
-        g.gain.setValueAtTime(rnd(0.038, 0.055), startAt + dur - 0.05);
+        g.gain.linearRampToValueAtTime(rnd(0.014, 0.022), startAt + 0.04);
+        g.gain.setValueAtTime(rnd(0.014, 0.022), startAt + dur - 0.05);
         g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.03);
 
-        osc.connect(g); g.connect(masterGain);
+        osc.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
         vib.start(startAt); osc.start(startAt);
         osc.stop(startAt + dur + 0.06); vib.stop(startAt + dur + 0.06);
       })(cursor, note.f, note.d);
@@ -317,34 +356,66 @@
   }
 
   /* ─── OWL ───────────────────────────────────────────────── */
+  function hootOwl(startAt, freq, peakGain, dur) {
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    allSources.push(osc);
+    osc.frequency.setValueAtTime(freq * 1.04, startAt);
+    osc.frequency.linearRampToValueAtTime(freq * 0.96, startAt + dur * 0.7);
+    /* Tremolo — owls modulate naturally */
+    var trem = audioCtx.createOscillator();
+    trem.frequency.value = rnd(5.5, 7.0);
+    var tremDepth = audioCtx.createGain();
+    tremDepth.gain.value = peakGain * 0.08;
+    trem.connect(tremDepth);
+    var g = makeGain(0);
+    g.gain.setValueAtTime(0, startAt);
+    g.gain.linearRampToValueAtTime(peakGain, startAt + dur * 0.12);
+    g.gain.setValueAtTime(peakGain, startAt + dur * 0.75);
+    g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+    tremDepth.connect(g.gain);
+    trem.start(startAt); trem.stop(startAt + dur + 0.1);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(startAt); osc.stop(startAt + dur + 0.05);
+  }
+
   function scheduleOwl() {
     sched(function() {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
-      var freq = rnd(195, 245);
-      var hoots = rndInt(1, 3);
+      var isClose = Math.random() < 0.45;
+      var freq    = isClose ? rnd(200, 250) : rnd(160, 210); /* distant = slightly lower/duller */
+      var gain    = isClose ? rnd(0.07, 0.10) : rnd(0.025, 0.042);
+      var hoots   = rndInt(1, isClose ? 3 : 2);
+      var hootDur = isClose ? 0.60 : 0.50;
 
-      for (var h = 0; h < hoots; h++) {
-        (function(startAt) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = freq * rnd(0.97, 1.03);
-          allSources.push(osc);
-          /* Slight pitch drop on each hoot for realism */
-          osc.frequency.setValueAtTime(freq * 1.04, startAt);
-          osc.frequency.linearRampToValueAtTime(freq * 0.97, startAt + 0.5);
-          var g = makeGain(0);
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(rnd(0.06, 0.08), startAt + 0.07);
-          g.gain.setValueAtTime(rnd(0.06, 0.08), startAt + 0.42);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.56);
-          osc.connect(g); g.connect(masterGain);
-          osc.start(startAt); osc.stop(startAt + 0.65);
-        })(now + h * rnd(0.85, 1.3));
+      /* Distant owl: add a gentle lowpass to muffle it */
+      if (!isClose) {
+        var lpf = audioCtx.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = rnd(600, 900);
+        for (var h = 0; h < hoots; h++) {
+          (function(startAt) {
+            var osc = audioCtx.createOscillator();
+            osc.type = 'sine'; allSources.push(osc);
+            osc.frequency.setValueAtTime(freq * 1.03, startAt);
+            osc.frequency.linearRampToValueAtTime(freq * 0.96, startAt + hootDur * 0.7);
+            var g = makeGain(0);
+            g.gain.setValueAtTime(0, startAt);
+            g.gain.linearRampToValueAtTime(gain, startAt + 0.10);
+            g.gain.setValueAtTime(gain, startAt + hootDur * 0.72);
+            g.gain.exponentialRampToValueAtTime(0.0001, startAt + hootDur);
+            osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+            osc.start(startAt); osc.stop(startAt + hootDur + 0.05);
+          })(now + h * rnd(1.0, 1.6));
+        }
+      } else {
+        for (var h = 0; h < hoots; h++) {
+          hootOwl(now + h * rnd(0.85, 1.3), freq, gain, hootDur);
+        }
       }
 
       scheduleOwl();
-    }, 18, 45); /* every 18–45s — you WILL hear it */
+    }, 15, 38);
   }
 
   /* ─── HOOVED GALLOP — 5 distinct variants ───────────────── */
@@ -356,11 +427,11 @@
     PANIC:  frantic burst, 8-10 very tight beats then gone, ~0.08s
   */
   var GALLOP_VARIANTS = [
-    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[200,320], gain:[0.32,0.46], clickGain:0.28, clickHz:[600,900]  },
-    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[280,420], gain:[0.26,0.38], clickGain:0.22, clickHz:[700,1100] },
-    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[320,480], gain:[0.24,0.36], clickGain:0.20, clickHz:[800,1200] },
-    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[340,520], gain:[0.22,0.34], clickGain:0.18, clickHz:[900,1400] },
-    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,560], gain:[0.28,0.40], clickGain:0.24, clickHz:[1000,1600]},
+    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[200,320], gain:[0.44,0.60], clickGain:0.38, clickHz:[600,900]  },
+    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[280,420], gain:[0.36,0.50], clickGain:0.30, clickHz:[700,1100] },
+    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[320,480], gain:[0.34,0.48], clickGain:0.28, clickHz:[800,1200] },
+    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[340,520], gain:[0.32,0.46], clickGain:0.26, clickHz:[900,1400] },
+    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,560], gain:[0.38,0.54], clickGain:0.32, clickHz:[1000,1600]},
   ];
 
   function playGallopVariant(variant) {
@@ -439,7 +510,7 @@
       }
       playGallopVariant(chosen);
       scheduleGallop();
-    }, 12, 40);
+    }, 6, 22);
   }
 
   /* ─── LEAF RUSTLE ───────────────────────────────────────── */
