@@ -19,6 +19,8 @@
   function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
   resize();
   window.addEventListener('resize', resize);
+  /* Force re-measure after orientation change — iOS/Android report stale dimensions otherwise */
+  window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
 
   /* ── STARS ── */
   const STARS = Array.from({ length: 240 }, () => ({

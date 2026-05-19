@@ -66,16 +66,6 @@
     return f;
   }
 
-  /* ── AMBIENT BED: Night cricket texture — constant, no pitch drift ── */
-  function startCrickets() {
-    /* Narrow bandpass noise for cricket chirp texture. No gain LFO — no pitch-change feel. */
-    var src = makeLoopingNoise();
-    var bpf = makeFilter('bandpass', 4600, 18);
-    var g = makeGain(0.009);
-    src.connect(bpf); bpf.connect(g); g.connect(masterGain);
-    src.start();
-  }
-
   /* ── AMBIENT BED: Distant faint flute — haunting single sustained tones ── */
   function startDistantFlute() {
     /* Pentatonic: C4 D4 E4 G4 A4 C5 */
@@ -421,7 +411,6 @@
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
-    startCrickets();
     startDistantFlute();
 
     scheduleOwl();
