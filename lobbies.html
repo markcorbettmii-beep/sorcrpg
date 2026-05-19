@@ -820,8 +820,9 @@
           sessionStorage.removeItem('activeLobbyId');
           showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
         }
-        /* Auto-join if backend says we are not a member yet (D1 replication lag or first open) */
-        if (data.is_member === false) {
+        /* Auto-join if not confirmed as a member — handles D1 lag and missing field */
+        var selfIsCreator = currentUser && data.lobby.creator_uid === currentUser.id;
+        if (!selfIsCreator && data.is_member !== true) {
           await fetch(API_URL + '/api/lobbies/join', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
@@ -1026,7 +1027,13 @@
         var data = await res.json();
         if (res.status === 403 && !chatMemberRetried) {
           chatMemberRetried = true;
-          setTimeout(function() { loadChatMessages(lobbyId); }, 2000);
+          /* Re-join then retry — catches cases where is_member wasn't confirmed in openLobby */
+          fetch(API_URL + '/api/lobbies/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ lobby_id: lobbyId })
+          }).catch(function(){});
+          setTimeout(function() { loadChatMessages(lobbyId); }, 1500);
           return;
         }
         chatMemberRetried = false;
