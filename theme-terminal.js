@@ -13,6 +13,7 @@
   var timeouts      = [];
   var allGains      = [];
   var allSources    = [];
+  var keepAliveId   = null;
 
   /* ── Utilities ─────────────────────────────────────────── */
   function rnd(a, b)    { return a + Math.random() * (b - a); }
@@ -546,6 +547,12 @@
     catch (e) { return; }
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
+    /* Keep the context alive — mobile browsers re-suspend after ~1s without this */
+    keepAliveId = setInterval(function() {
+      if (!audioCtx) { clearInterval(keepAliveId); keepAliveId = null; return; }
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(function(){});
+    }, 1000);
+
     masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.88;
     masterGain.connect(audioCtx.destination);
@@ -580,6 +587,7 @@
     if (!audioStarted) return;
     timeouts.forEach(function (id) { clearTimeout(id); });
     timeouts = [];
+    if (keepAliveId) { clearInterval(keepAliveId); keepAliveId = null; }
 
     if (masterGain && audioCtx) {
       var now = audioCtx.currentTime;
