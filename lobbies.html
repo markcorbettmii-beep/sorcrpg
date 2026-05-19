@@ -256,6 +256,9 @@
     .page-wrapper { background: rgba(10,10,16,0.45) !important; }
     body.lawful-mode .page-wrapper { background: rgba(240,237,230,0.88) !important; }
 
+    /* Prevent iOS swipe-back/forward navigation while in a lobby */
+    html.lobby-locked { overscroll-behavior-x: none; touch-action: pan-y; }
+
     /* ===== WORLD CHAT ===== */
     .world-chat-wrap { background: #0d0a18; border: 1.5px solid #2a1a4a; border-radius: 12px; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 2px 14px rgba(80,30,180,0.10); }
     .world-chat-head { padding: 0.65rem 1.1rem; background: #110d22; border-bottom: 1px solid #2a1a4a; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
@@ -793,12 +796,20 @@
     };
 
     // ===== OPEN LOBBY DETAIL =====
-    // Block browser back button while inside a lobby
+    // Block swipe-back/forward navigation while inside a lobby
     window.addEventListener('popstate', function() {
       if (currentLobby) {
         history.pushState({ lobby: currentLobby.id }, '');
+        history.pushState({ lobby: currentLobby.id }, '');
       }
     });
+
+    // Block iOS edge-swipe gestures while in a lobby
+    document.addEventListener('touchstart', function(e) {
+      if (!currentLobby) return;
+      var x = e.touches[0].clientX;
+      if (x < 25 || x > window.innerWidth - 25) e.preventDefault();
+    }, { passive: false });
 
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
@@ -835,6 +846,7 @@
         currentLobby = data.lobby;
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
         hasGMRights = isCreator || isPrivileged();
+        document.documentElement.classList.add('lobby-locked');
         renderLobbyDetail(data);
         startChatPoll(lobbyId);
       } catch(e) {
@@ -1588,6 +1600,7 @@
       lastMsgId = null;
       hasGMRights = false;
       isCreator = false;
+      document.documentElement.classList.remove('lobby-locked');
       applyTheme('default');
       renderListView();
       loadWorldChat();
