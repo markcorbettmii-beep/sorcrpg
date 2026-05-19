@@ -1,6 +1,8 @@
 /* ============================================================
-   THE VEILWOOD THEME — theme-veilwood.js
-   Enchanted fae forest soundscape for sorcrpg.com
+   THE VEILWOOD — theme-veilwood.js
+   Fable-inspired enchanted forest soundscape.
+   Orchestral string pad + harp arpeggios + Celtic flute melodies
+   + choir swells + layered birds + wind + nature ambience.
    Exposes: window.veilwoodTheme = { start, stop }
    ============================================================ */
 (function () {
@@ -23,407 +25,528 @@
     return id;
   }
 
-  function makeOneShotNoise(dur) {
-    var frames = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
-    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
-    var data = buf.getChannelData(0);
-    for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-    return buf;
-  }
-
-  function makeLoopingNoise() {
-    var frames = audioCtx.sampleRate * 2;
-    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
-    var data = buf.getChannelData(0);
-    for (var i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
-    var src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    allSources.push(src);
-    return src;
-  }
-
   function makeOsc(type, freq) {
-    var osc = audioCtx.createOscillator();
-    osc.type = type || 'sine';
-    osc.frequency.value = freq || 440;
-    allSources.push(osc);
-    return osc;
+    var o = audioCtx.createOscillator();
+    o.type = type; o.frequency.value = freq;
+    allSources.push(o);
+    return o;
   }
 
-  function makeGain(value) {
+  function makeGain(v) {
     var g = audioCtx.createGain();
-    g.gain.value = (value !== undefined) ? value : 1;
+    g.gain.value = (v !== undefined) ? v : 1;
     allGains.push(g);
     return g;
   }
 
   function makeFilter(type, freq, q) {
     var f = audioCtx.createBiquadFilter();
-    f.type = type || 'lowpass';
-    f.frequency.value = freq || 1000;
+    f.type = type; f.frequency.value = freq;
     if (q !== undefined) f.Q.value = q;
     return f;
   }
 
-  /* ── AMBIENT BED: Distant faint flute — haunting single sustained tones ── */
-  function startDistantFlute() {
-    /* Pentatonic: C4 D4 E4 G4 A4 C5 */
-    var scale = [261, 293, 329, 392, 440, 523];
-    var noteIdx = rndInt(0, scale.length - 1);
+  function makeNoiseBuffer(sec) {
+    var frames = Math.floor(audioCtx.sampleRate * (sec || 2));
+    var buf = audioCtx.createBuffer(1, frames, audioCtx.sampleRate);
+    var d = buf.getChannelData(0);
+    for (var i = 0; i < frames; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
 
-    function playNote() {
-      if (!audioCtx || !masterGain) return;
-      var freq = scale[noteIdx];
-      var dur  = rnd(3.5, 6.0);
+  function loopNoise(sec) {
+    var src = audioCtx.createBufferSource();
+    src.buffer = makeNoiseBuffer(sec || 2);
+    src.loop = true;
+    allSources.push(src);
+    return src;
+  }
 
+  function oneshotNoise(sec) {
+    var src = audioCtx.createBufferSource();
+    src.buffer = makeNoiseBuffer(sec);
+    return src;
+  }
+
+  /* ─── D DORIAN SCALE (Hz) ─────────────────────────────── */
+  /* D3  E3  F3  G3  A3  B3  C4  D4  E4  F4  G4  A4  B4  C5 D5 */
+  var D3=147, E3=165, F3=175, G3=196, A3=220, B3=247, C4=261,
+      D4=293, E4=329, F4=349, G4=392, A4=440, B4=494, C5=523, D5=587;
+
+  /* Dm pentatonic for harp: D F G A C (across octaves) */
+  var HARP_NOTES = [D3, F3, G3, A3, C4, D4, F4, G4, A4, C5, D5];
+
+  /* Fable-style flute phrases in D Dorian */
+  var PHRASES = [
+    [{f:A4,d:0.45},{f:G4,d:0.3},{f:E4,d:0.3},{f:D4,d:0.8},{f:F4,d:0.35},{f:G4,d:0.35},{f:A4,d:0.9}],
+    [{f:D4,d:0.3},{f:F4,d:0.3},{f:G4,d:0.35},{f:A4,d:0.65},{f:G4,d:0.28},{f:F4,d:0.28},{f:E4,d:0.35},{f:D4,d:0.9}],
+    [{f:G4,d:0.38},{f:A4,d:0.38},{f:B4,d:0.38},{f:A4,d:0.38},{f:G4,d:0.3},{f:F4,d:0.3},{f:D4,d:1.0}],
+    [{f:D4,d:0.28},{f:E4,d:0.28},{f:F4,d:0.28},{f:G4,d:0.28},{f:A4,d:0.55},{f:G4,d:0.28},{f:F4,d:0.28},{f:E4,d:0.28},{f:D4,d:1.0}],
+    [{f:A3,d:0.5},{f:C4,d:0.4},{f:D4,d:0.4},{f:E4,d:0.4},{f:F4,d:0.5},{f:E4,d:0.35},{f:D4,d:0.85}],
+    [{f:F4,d:0.4},{f:G4,d:0.35},{f:A4,d:0.65},{f:G4,d:0.3},{f:E4,d:0.3},{f:F4,d:0.3},{f:D4,d:1.0}],
+  ];
+
+  /* ─── AMBIENT BED 1: Orchestral string pad (Dm chord) ─── */
+  function startStringPad() {
+    /* Three-voice chord: D3, A3, F4 — warm, melancholic */
+    var voices = [
+      {freq: D3, gain: 0.022},
+      {freq: A3, gain: 0.018},
+      {freq: F4, gain: 0.013},
+      {freq: D4, gain: 0.011},
+    ];
+    voices.forEach(function(v) {
+      /* 3 detuned saws per voice for richness */
+      [-4, 0, 4].forEach(function(cents) {
+        var osc = makeOsc('sawtooth', v.freq * Math.pow(2, cents / 1200));
+        var lpf = makeFilter('lowpass', 700, 0.5);
+        var g = makeGain(0);
+        var now = audioCtx.currentTime;
+        g.gain.linearRampToValueAtTime(v.gain / 3, now + 4.0); /* slow swell in */
+        osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+        osc.start();
+      });
+    });
+  }
+
+  /* ─── AMBIENT BED 2: Gentle wind through canopy ────────── */
+  function startWind() {
+    var src = loopNoise(3);
+    var lpf = makeFilter('lowpass', 320, 0.6);
+    var g = makeGain(0.012);
+    /* Very slow breath LFO — barely perceptible, 0.008 Hz */
+    var lfo = makeOsc('sine', 0.008);
+    var lfoDepth = makeGain(0.004);
+    lfo.connect(lfoDepth); lfoDepth.connect(g.gain);
+    src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+    src.start(); lfo.start();
+  }
+
+  /* ─── HARP ARPEGGIO ─────────────────────────────────────── */
+  function pluck(freq, startAt, gainVal) {
+    /* Plucked string: sine fundamental + 2nd harmonic, exponential decay */
+    var now = startAt;
+    [1, 2, 3].forEach(function(harmonic) {
       var osc = audioCtx.createOscillator();
       osc.type = 'sine';
-      osc.frequency.value = freq;
-      allSources.push(osc);
-
-      /* Very gentle vibrato */
-      var vib = audioCtx.createOscillator();
-      vib.type = 'sine';
-      vib.frequency.value = rnd(4.5, 6.5);
-      allSources.push(vib);
-      var vibDepth = makeGain(rnd(3, 6));
-      vib.connect(vibDepth); vibDepth.connect(osc.frequency);
-
-      var g = makeGain(0);
+      osc.frequency.value = freq * harmonic;
+      var g = audioCtx.createGain();
+      var hGain = gainVal / (harmonic * harmonic); /* harmonics fall off quickly */
+      g.gain.setValueAtTime(hGain, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + (2.2 / harmonic));
       osc.connect(g); g.connect(masterGain);
-
-      var now = audioCtx.currentTime;
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.0065, now + 0.8);
-      g.gain.setValueAtTime(0.0065, now + dur - 0.6);
-      g.gain.linearRampToValueAtTime(0, now + dur);
-
-      vib.start(now); osc.start(now);
-      osc.stop(now + dur + 0.05); vib.stop(now + dur + 0.05);
-
-      /* Advance scale step (skip or hold occasionally) */
-      if (Math.random() < 0.7) noteIdx = (noteIdx + pick([1, 2])) % scale.length;
-
-      var id = setTimeout(playNote, (dur + rnd(1.5, 4.0)) * 1000);
-      timeouts.push(id);
-    }
-
-    var id = setTimeout(playNote, rnd(2, 5) * 1000);
-    timeouts.push(id);
+      osc.start(now); osc.stop(now + (2.4 / harmonic));
+    });
   }
 
-  /* ── EVENT: Owl hoot ── */
-  function scheduleOwl() {
-    sched(function () {
+  function scheduleHarp() {
+    sched(function() {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
-      var freq = 215 + rnd(-20, 20);
-      var gain = 0.065 * rnd(0.85, 1.15);
 
-      function hoot(startAt) {
+      /* Pick a chord shape and arpeggiate upward */
+      var chords = [
+        [D3, F3, A3, D4, F4],      /* Dm */
+        [A3, C4, E4, A4],           /* Am */
+        [G3, B3, D4, G4],           /* G */
+        [F3, A3, C4, F4],           /* F */
+        [D3, A3, D4, F4, A4],       /* Dm spread */
+      ];
+      var chord = pick(chords);
+      var noteCount = chord.length + rndInt(0, 2);
+      var cursor = now;
+
+      for (var i = 0; i < noteCount; i++) {
+        var note = chord[Math.min(i, chord.length - 1)];
+        /* Occasionally add an octave up for sparkle */
+        if (i === noteCount - 1 && Math.random() < 0.5) note *= 2;
+        pluck(note, cursor, rnd(0.028, 0.042));
+        cursor += rnd(0.18, 0.32);
+      }
+
+      /* Occasionally a second cascading arpeggio follows */
+      if (Math.random() < 0.45) {
+        var chord2 = pick(chords);
+        cursor += rnd(0.4, 1.0);
+        for (var j = 0; j < chord2.length; j++) {
+          pluck(chord2[j], cursor, rnd(0.018, 0.030));
+          cursor += rnd(0.14, 0.26);
+        }
+      }
+
+      scheduleHarp();
+    }, 14, 38);
+  }
+
+  /* ─── CELTIC FLUTE MELODY ───────────────────────────────── */
+  function playFlute(phrase) {
+    var cursor = audioCtx.currentTime + rnd(0.2, 0.6);
+    phrase.forEach(function(note) {
+      if (!note.f) { cursor += note.d; return; } /* rest */
+      (function(startAt, freq, dur) {
+        /* Triangle wave — brighter than sine, flute-like */
         var osc = audioCtx.createOscillator();
-        osc.type = 'sine';
+        osc.type = 'triangle';
         osc.frequency.value = freq;
-        allSources.push(osc);
 
-        var amOsc = audioCtx.createOscillator();
-        amOsc.type = 'sine';
-        amOsc.frequency.value = 2.4;
-        allSources.push(amOsc);
-        var amDepth = makeGain(gain * 0.28);
-        amOsc.connect(amDepth);
+        /* Vibrato — starts after 30% of note, adds expression */
+        var vib = audioCtx.createOscillator();
+        vib.type = 'sine';
+        vib.frequency.value = rnd(5.2, 6.8);
+        var vibDepth = audioCtx.createGain();
+        vibDepth.gain.setValueAtTime(0, startAt);
+        vibDepth.gain.linearRampToValueAtTime(rnd(5, 12), startAt + dur * 0.3);
+        vib.connect(vibDepth); vibDepth.connect(osc.frequency);
 
-        var g = makeGain(0);
-        amDepth.connect(g.gain);
-        osc.connect(g); g.connect(masterGain);
+        /* Breath noise layer — makes it feel like a real instrument */
+        var breathSrc = oneshotNoise(dur + 0.15);
+        var breathHpf = audioCtx.createBiquadFilter();
+        breathHpf.type = 'highpass'; breathHpf.frequency.value = 2200;
+        var breathG = audioCtx.createGain();
+        breathG.gain.setValueAtTime(0.006, startAt);
+        breathG.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.1);
+        breathSrc.connect(breathHpf); breathHpf.connect(breathG); breathG.connect(masterGain);
+        breathSrc.start(startAt);
 
+        var g = audioCtx.createGain();
         g.gain.setValueAtTime(0, startAt);
-        g.gain.linearRampToValueAtTime(gain, startAt + 0.07);
-        g.gain.setValueAtTime(gain, startAt + 0.42);
-        g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.52);
+        g.gain.linearRampToValueAtTime(rnd(0.038, 0.055), startAt + 0.04);
+        g.gain.setValueAtTime(rnd(0.038, 0.055), startAt + dur - 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.03);
 
-        amOsc.start(startAt); osc.start(startAt);
-        osc.stop(startAt + 0.56); amOsc.stop(startAt + 0.56);
-      }
+        osc.connect(g); g.connect(masterGain);
+        vib.start(startAt); osc.start(startAt);
+        osc.stop(startAt + dur + 0.06); vib.stop(startAt + dur + 0.06);
+      })(cursor, note.f, note.d);
 
-      hoot(now);
-      if (Math.random() < 0.7) hoot(now + rnd(0.7, 1.1));
-
-      scheduleOwl();
-    }, 55, 140);
+      cursor += note.d + rnd(0.01, 0.04); /* tiny gap between notes */
+    });
   }
 
-  /* ── EVENT: Fae giggle / cackle ── */
-  function scheduleFaeGiggle() {
-    sched(function () {
+  function scheduleFlute() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      playFlute(pick(PHRASES));
+      scheduleFlute();
+    }, 28, 75);
+  }
+
+  /* ─── CHOIR SWELL ───────────────────────────────────────── */
+  function scheduleChoirSwell() {
+    sched(function() {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
+      var chordNotes = [D3 * 2, F3 * 2, A3 * 2]; /* Dm voiced higher for choir */
+      var dur = rnd(6, 10);
 
-      var count = rndInt(4, 8);
-      var ascending = Math.random() < 0.5;
-      var baseFreq = rnd(380, 560);
-      var cursor = now;
-
-      for (var i = 0; i < count; i++) {
-        (function (startAt, idx) {
-          var freqMult = ascending ? 1 + idx * rnd(0.06, 0.12) : 1 - idx * rnd(0.04, 0.09);
-          var freq = baseFreq * freqMult * rnd(0.96, 1.04);
-          var dur  = rnd(0.04, 0.09);
-          var gain = rnd(0.055, 0.085) * (1 - idx * 0.05);
-
+      chordNotes.forEach(function(baseFreq) {
+        /* 5 detuned oscillators per voice = choir shimmer */
+        [-8, -3, 0, 3, 8].forEach(function(cents) {
           var osc = audioCtx.createOscillator();
-          osc.type = Math.random() < 0.5 ? 'triangle' : 'sawtooth';
-          osc.frequency.value = freq;
-          allSources.push(osc);
-
-          var bpf = audioCtx.createBiquadFilter();
-          bpf.type = 'bandpass'; bpf.frequency.value = freq * 1.5; bpf.Q.value = 2;
-
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(gain, startAt + 0.012);
-          g.gain.setValueAtTime(gain, startAt + dur - 0.01);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.015);
-          allGains.push(g);
-
-          /* Slight delay for cave-giggle reverb feel */
-          var delay = audioCtx.createDelay(0.2);
-          delay.delayTime.value = 0.06;
-          var delayG = audioCtx.createGain(); delayG.gain.value = 0.18;
-          allGains.push(delayG);
-
-          osc.connect(bpf); bpf.connect(g); g.connect(masterGain);
-          g.connect(delay); delay.connect(delayG); delayG.connect(masterGain);
-          osc.start(startAt); osc.stop(startAt + dur + 0.05);
-        })(cursor, i);
-
-        cursor += rnd(0.05, 0.13);
-      }
-
-      scheduleFaeGiggle();
-    }, 50, 130);
-  }
-
-  /* ── EVENT: Gnome bard — pentatonic flute phrase ── */
-  function scheduleGnomeFlute() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-
-      /* Pentatonic — bard plays 4–6 notes as a phrase */
-      var scale = [261, 293, 329, 392, 440, 523, 587];
-      var count = rndInt(4, 6);
-      var cursor = now;
-      var startNote = rndInt(0, scale.length - count);
-
-      /* Optional second voice (humming harmony at a fifth above) */
-      var addHumming = Math.random() < 0.45;
-
-      for (var i = 0; i < count; i++) {
-        (function (startAt, noteFreq) {
-          var dur  = rnd(0.22, 0.45);
-          var gain = rnd(0.025, 0.042);
-
-          /* Flute: triangle wave, slight vibrato */
-          var osc = audioCtx.createOscillator();
-          osc.type = 'triangle';
-          osc.frequency.value = noteFreq;
-          allSources.push(osc);
-
-          var vib = audioCtx.createOscillator();
-          vib.type = 'sine'; vib.frequency.value = rnd(5, 7);
-          allSources.push(vib);
-          var vibDepth = audioCtx.createGain(); vibDepth.gain.value = rnd(6, 14);
-          vib.connect(vibDepth); vibDepth.connect(osc.frequency);
-
-          var g = makeGain(0);
-          osc.connect(g); g.connect(masterGain);
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(gain, startAt + 0.04);
-          g.gain.setValueAtTime(gain, startAt + dur - 0.04);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.02);
-
-          vib.start(startAt); osc.start(startAt);
-          osc.stop(startAt + dur + 0.05); vib.stop(startAt + dur + 0.05);
-
-          /* Humming harmony */
-          if (addHumming) {
-            var harmFreq = noteFreq * 1.498; /* perfect fifth */
-            var harmOsc = audioCtx.createOscillator();
-            harmOsc.type = 'sine'; harmOsc.frequency.value = harmFreq;
-            allSources.push(harmOsc);
-            var harmG = makeGain(0);
-            harmOsc.connect(harmG); harmG.connect(masterGain);
-            harmG.gain.setValueAtTime(0, startAt);
-            harmG.gain.linearRampToValueAtTime(gain * 0.55, startAt + 0.06);
-            harmG.gain.setValueAtTime(gain * 0.55, startAt + dur - 0.04);
-            harmG.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.02);
-            harmOsc.start(startAt); harmOsc.stop(startAt + dur + 0.05);
-          }
-        })(cursor, scale[startNote + i] || scale[scale.length - 1]);
-
-        cursor += rnd(0.28, 0.55);
-      }
-
-      scheduleGnomeFlute();
-    }, 35, 100);
-  }
-
-  /* ── EVENT: Hooved animal gallop — slow approach, fast past, fading ── */
-  function scheduleGallop() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-
-      var totalBeats = rndInt(10, 16);
-      var cursor = now;
-
-      /* Build timing: slow start, accelerate through middle, fade end */
-      for (var i = 0; i < totalBeats; i++) {
-        var progress = i / totalBeats; /* 0 → 1 */
-        /* Interval: starts ~0.55s, dips to 0.18s at peak, eases back to 0.45s */
-        var interval;
-        if (progress < 0.35)      interval = 0.55 - progress * 1.0;
-        else if (progress < 0.65) interval = 0.18 + (progress - 0.35) * 0.2;
-        else                       interval = 0.24 + (progress - 0.65) * 0.9;
-
-        /* Two hooves per beat (front pair, back pair) */
-        var beatGain = progress < 0.5
-          ? 0.04 + progress * 0.14         /* approaching: gets louder */
-          : 0.11 - (progress - 0.5) * 0.18; /* receding: fades out */
-        beatGain = Math.max(0.005, beatGain);
-
-        (function (startAt, gain) {
-          /* Front hoof */
-          (function () {
-            var src = audioCtx.createBufferSource();
-            src.buffer = makeOneShotNoise(0.035);
-            var lpf = audioCtx.createBiquadFilter();
-            lpf.type = 'lowpass'; lpf.frequency.value = rnd(350, 500);
-            var g = audioCtx.createGain();
-            g.gain.setValueAtTime(gain, startAt);
-            g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.03);
-            src.connect(lpf); lpf.connect(g); g.connect(masterGain);
-            src.start(startAt);
-          })();
-          /* Back hoof (slight delay) */
-          (function () {
-            var offset = rnd(0.05, 0.10);
-            var src = audioCtx.createBufferSource();
-            src.buffer = makeOneShotNoise(0.032);
-            var lpf = audioCtx.createBiquadFilter();
-            lpf.type = 'lowpass'; lpf.frequency.value = rnd(300, 450);
-            var g = audioCtx.createGain();
-            g.gain.setValueAtTime(gain * 0.85, startAt + offset);
-            g.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.028);
-            src.connect(lpf); lpf.connect(g); g.connect(masterGain);
-            src.start(startAt + offset);
-          })();
-        })(cursor, beatGain);
-
-        cursor += Math.max(0.12, interval);
-      }
-
-      scheduleGallop();
-    }, 70, 200);
-  }
-
-  /* ── EVENT: Bear roar (rare) ── */
-  function scheduleBearRoar() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      if (Math.random() < 0.5) {
-        var now = audioCtx.currentTime;
-        var fundamental = rnd(85, 120);
-        var dur = rnd(1.4, 2.2);
-        var gain = rnd(0.11, 0.16);
-
-        /* Fundamental */
-        (function () {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(fundamental, now);
-          osc.frequency.linearRampToValueAtTime(fundamental * 0.7, now + dur);
+          osc.type = 'sine';
+          osc.frequency.value = baseFreq * Math.pow(2, cents / 1200);
           allSources.push(osc);
 
           var lpf = audioCtx.createBiquadFilter();
-          lpf.type = 'lowpass'; lpf.frequency.value = 800;
+          lpf.type = 'lowpass'; lpf.frequency.value = 1800;
 
-          var g = makeGain(0);
-          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-          g.gain.setValueAtTime(0, now);
-          g.gain.linearRampToValueAtTime(gain, now + 0.35);
-          g.gain.setValueAtTime(gain, now + dur * 0.55);
-          g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
-          osc.start(now); osc.stop(now + dur + 0.2);
-        })();
-
-        /* Growl noise layer */
-        (function () {
-          var src = audioCtx.createBufferSource();
-          src.buffer = makeOneShotNoise(dur + 0.3);
-          var bpf = audioCtx.createBiquadFilter();
-          bpf.type = 'bandpass'; bpf.frequency.value = 280; bpf.Q.value = 1.5;
           var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0, now);
-          g.gain.linearRampToValueAtTime(gain * 0.55, now + 0.3);
-          g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
           allGains.push(g);
-          src.connect(bpf); bpf.connect(g); g.connect(masterGain);
-          src.start(now);
-        })();
-      }
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(rnd(0.007, 0.012), now + dur * 0.35);
+          g.gain.setValueAtTime(rnd(0.007, 0.012), now + dur * 0.6);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
 
-      scheduleBearRoar();
-    }, 120, 300);
+          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+          osc.start(now); osc.stop(now + dur + 0.1);
+        });
+      });
+
+      scheduleChoirSwell();
+    }, 55, 130);
   }
 
-  /* ── EVENT: Leaf rustle gust ── */
-  function scheduleLeafRustle() {
-    sched(function () {
+  /* ─── BIRDS ─────────────────────────────────────────────── */
+  /* Four independent bird voices, each with its own timing */
+
+  function chirpBird(baseFreq, pattern, gain) {
+    /* pattern: array of {freqMult, dur} — a phrase */
+    var now = audioCtx.currentTime;
+    var cursor = now;
+    pattern.forEach(function(n) {
+      (function(startAt, freq, dur) {
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startAt);
+        /* Slight upward or downward sweep for natural feel */
+        osc.frequency.linearRampToValueAtTime(freq * rnd(0.97, 1.05), startAt + dur);
+        var g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, startAt);
+        g.gain.linearRampToValueAtTime(gain, startAt + 0.012);
+        g.gain.setValueAtTime(gain, startAt + dur - 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.015);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(startAt); osc.stop(startAt + dur + 0.02);
+      })(cursor, baseFreq * n.m, n.d);
+      cursor += n.d + rnd(0.02, 0.06);
+    });
+  }
+
+  /* Robin-style: descending two-note whistle */
+  function scheduleBirdA() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      var base = rnd(2200, 2800);
+      chirpBird(base, [
+        {m:1,    d:rnd(0.08,0.14)},
+        {m:0.82, d:rnd(0.10,0.16)},
+        {m:0.92, d:rnd(0.07,0.12)},
+        {m:0.75, d:rnd(0.12,0.18)},
+      ], rnd(0.040, 0.060));
+      scheduleBirdA();
+    }, 6, 18);
+  }
+
+  /* Wren-style: rapid high trilling */
+  function scheduleBirdB() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      var base = rnd(3400, 4200);
+      var count = rndInt(4, 8);
+      var pattern = [];
+      for (var i = 0; i < count; i++) {
+        pattern.push({m: rnd(0.92, 1.08), d: rnd(0.04, 0.07)});
+      }
+      chirpBird(base, pattern, rnd(0.030, 0.048));
+      scheduleBirdB();
+    }, 9, 22);
+  }
+
+  /* Blackbird-style: fluting melodic phrase */
+  function scheduleBirdC() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      var base = rnd(1600, 2200);
+      var mults = [1, 1.12, 1.25, 1.18, 1.05, 0.94, 1.0];
+      var phrase = mults.slice(0, rndInt(4, 7)).map(function(m) {
+        return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
+      });
+      chirpBird(base, phrase, rnd(0.045, 0.065));
+      scheduleBirdC();
+    }, 15, 35);
+  }
+
+  /* Distant background chirp — short, high, one note */
+  function scheduleBirdD() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      var base = rnd(3000, 5000);
+      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.018, 0.032));
+      scheduleBirdD();
+    }, 5, 14);
+  }
+
+  /* ─── MAGICAL SHIMMER ───────────────────────────────────── */
+  function scheduleMagicShimmer() {
+    sched(function() {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
-      var dur = rnd(0.35, 0.9);
+      var count = rndInt(4, 8);
+      var cursor = now;
 
-      var src = audioCtx.createBufferSource();
-      src.buffer = makeOneShotNoise(dur + 0.1);
-      var bpf = makeFilter('bandpass', rnd(1000, 1500), rnd(1.1, 1.7));
-      var g = makeGain(0);
+      for (var i = 0; i < count; i++) {
+        (function(startAt) {
+          var freq = pick([D5*2, F4*3, A4*2, C5*2, G4*3]) * rnd(0.98, 1.02);
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          var dur = rnd(0.4, 0.9);
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(0, startAt);
+          g.gain.linearRampToValueAtTime(rnd(0.012, 0.022), startAt + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(startAt); osc.stop(startAt + dur + 0.05);
+        })(cursor);
+        cursor += rnd(0.12, 0.30);
+      }
+
+      scheduleMagicShimmer();
+    }, 40, 100);
+  }
+
+  /* ─── OWL ───────────────────────────────────────────────── */
+  function scheduleOwl() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var freq = rnd(195, 245);
+      var hoots = rndInt(1, 3);
+
+      for (var h = 0; h < hoots; h++) {
+        (function(startAt) {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq * rnd(0.97, 1.03);
+          allSources.push(osc);
+          /* Slight pitch drop on each hoot for realism */
+          osc.frequency.setValueAtTime(freq * 1.04, startAt);
+          osc.frequency.linearRampToValueAtTime(freq * 0.97, startAt + 0.5);
+          var g = makeGain(0);
+          g.gain.setValueAtTime(0, startAt);
+          g.gain.linearRampToValueAtTime(rnd(0.06, 0.08), startAt + 0.07);
+          g.gain.setValueAtTime(rnd(0.06, 0.08), startAt + 0.42);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.56);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(startAt); osc.stop(startAt + 0.65);
+        })(now + h * rnd(0.85, 1.3));
+      }
+
+      scheduleOwl();
+    }, 18, 45); /* every 18–45s — you WILL hear it */
+  }
+
+  /* ─── HOOVED GALLOP — 5 distinct variants ───────────────── */
+  /*
+    WALK:   slow measured plods, 4-6 beats, heavy, ~0.6s apart
+    TROT:   steady pace, 8-12 beats, ~0.32s apart
+    CANTER: building speed, 12-16 beats, ~0.20s apart
+    GALLOP: full sprint, 14-20 beats, ~0.13s apart
+    PANIC:  frantic burst, 8-10 very tight beats then gone, ~0.08s
+  */
+  var GALLOP_VARIANTS = [
+    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[180,280], gain:[0.07,0.12], crack:0.6, heavy:true  },
+    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[260,380], gain:[0.05,0.09], crack:0.3, heavy:false },
+    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[300,440], gain:[0.05,0.10], crack:0.2, heavy:false },
+    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[320,500], gain:[0.04,0.09], crack:0.15,heavy:false },
+    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,540], gain:[0.06,0.11], crack:0.1, heavy:false },
+  ];
+
+  function playGallopVariant(variant) {
+    var now = audioCtx.currentTime;
+    var beats = rndInt(variant.beats[0], variant.beats[1]);
+    var baseInterval = rnd(variant.interval[0], variant.interval[1]);
+    var cursor = now;
+
+    for (var i = 0; i < beats; i++) {
+      var p = i / beats;
+      /* Approach → peak → recede amplitude envelope */
+      var gainVal;
+      if (variant.name === 'panic') {
+        /* Panic: loud immediately, fades fast */
+        gainVal = p < 0.2 ? rnd(variant.gain[0], variant.gain[1]) * (0.4 + p * 3)
+                           : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.05, 1 - (p - 0.2) * 1.3);
+      } else {
+        gainVal = p < 0.45
+          ? rnd(variant.gain[0], variant.gain[1]) * (0.3 + p * 1.5)
+          : rnd(variant.gain[0], variant.gain[1]) * Math.max(0.04, 1.1 - (p - 0.45) * 1.8);
+      }
+
+      /* Number of hoof-hits per beat (walk/trot=2, canter/gallop=2, panic=1 fast) */
+      var offsets = variant.name === 'walk' ? [0, rnd(0.08,0.18)] : [0, rnd(0.04, 0.10)];
+      if (variant.name === 'panic') offsets = [0];
+
+      (function(startAt, gVal) {
+        offsets.forEach(function(offset) {
+          var src = audioCtx.createBufferSource();
+          src.buffer = makeNoiseBuffer(0.05);
+          var lpf = audioCtx.createBiquadFilter();
+          lpf.type = 'lowpass';
+          lpf.frequency.value = rnd(variant.lpf[0], variant.lpf[1]);
+          var g = audioCtx.createGain();
+          var peakGain = gVal * (offset > 0 ? 0.8 : 1);
+          g.gain.setValueAtTime(peakGain, startAt + offset);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.042);
+          src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+          src.start(startAt + offset);
+        });
+
+        /* Undergrowth crack for heavy/slow variants */
+        if (variant.heavy && Math.random() < variant.crack) {
+          var src2 = audioCtx.createBufferSource();
+          src2.buffer = makeNoiseBuffer(0.035);
+          var bpf = audioCtx.createBiquadFilter();
+          bpf.type = 'bandpass'; bpf.frequency.value = rnd(550, 850); bpf.Q.value = 3;
+          var g2 = audioCtx.createGain();
+          g2.gain.setValueAtTime(gVal * 0.4, startAt + 0.025);
+          g2.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.055);
+          src2.connect(bpf); bpf.connect(g2); g2.connect(masterGain);
+          src2.start(startAt + 0.025);
+        }
+      })(cursor, gainVal);
+
+      cursor += baseInterval + rnd(-0.01, 0.01); /* tiny shuffle for naturalness */
+    }
+  }
+
+  function scheduleGallop() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      /* Weight toward middle variants — walk and panic are rarer */
+      var weights = [0.10, 0.25, 0.35, 0.22, 0.08];
+      var r = Math.random(), cumulative = 0, chosen = GALLOP_VARIANTS[2];
+      for (var i = 0; i < weights.length; i++) {
+        cumulative += weights[i];
+        if (r < cumulative) { chosen = GALLOP_VARIANTS[i]; break; }
+      }
+      playGallopVariant(chosen);
+      scheduleGallop();
+    }, 12, 40);
+  }
+
+  /* ─── LEAF RUSTLE ───────────────────────────────────────── */
+  function scheduleLeafRustle() {
+    sched(function() {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var dur = rnd(0.3, 0.8);
+      var src = oneshotNoise(dur + 0.1);
+      var bpf = audioCtx.createBiquadFilter();
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(900, 1400); bpf.Q.value = rnd(0.8, 1.4);
+      var g = audioCtx.createGain();
       g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(rnd(0.025, 0.045), now + dur * 0.2);
+      g.gain.linearRampToValueAtTime(rnd(0.018, 0.034), now + dur * 0.2);
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.04);
       src.connect(bpf); bpf.connect(g); g.connect(masterGain);
       src.start(now);
-
       scheduleLeafRustle();
-    }, 10, 25);
+    }, 8, 20);
   }
 
-  /* ── START ── */
+  /* ─── START ─────────────────────────────────────────────── */
   function startAudio() {
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 1.0;
+    masterGain.gain.value = 0.9;
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
-    startDistantFlute();
+    /* Ambient beds — always on */
+    startStringPad();
+    startWind();
 
+    /* Scheduled musical elements */
+    scheduleHarp();
+    scheduleFlute();
+    scheduleChoirSwell();
+    scheduleMagicShimmer();
+
+    /* Nature sounds */
+    scheduleBirdA();
+    scheduleBirdB();
+    scheduleBirdC();
+    scheduleBirdD();
     scheduleOwl();
-    scheduleFaeGiggle();
-    scheduleGnomeFlute();
     scheduleGallop();
-    scheduleBearRoar();
     scheduleLeafRustle();
 
     audioStarted = true;
   }
 
-  /* ── STOP ── */
+  /* ─── STOP ──────────────────────────────────────────────── */
   function stopAudio() {
     if (!audioStarted) return;
     timeouts.forEach(function (id) { clearTimeout(id); });
@@ -433,7 +556,7 @@
       var now = audioCtx.currentTime;
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-      masterGain.gain.linearRampToValueAtTime(0, now + 0.3);
+      masterGain.gain.linearRampToValueAtTime(0, now + 0.5);
     }
 
     var ctx = audioCtx;
@@ -441,7 +564,7 @@
       allSources.forEach(function (s) { try { s.stop(); } catch(e){} try { s.disconnect(); } catch(e){} });
       allGains.forEach(function (g) { try { g.disconnect(); } catch(e){} });
       if (ctx) { try { ctx.close(); } catch(e){} }
-    }, 350);
+    }, 600);
 
     audioCtx = null; masterGain = null; audioStarted = false;
     allSources = []; allGains = [];
@@ -450,36 +573,25 @@
   var interactionHandlerAdded = false;
   var themeActive = false;
 
-  function onUserInteraction() {
-    if (themeActive && !audioStarted) startAudio();
-  }
+  function onUserInteraction() { if (themeActive && !audioStarted) startAudio(); }
 
   function addInteractionListeners() {
     if (interactionHandlerAdded) return;
     interactionHandlerAdded = true;
-    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (e) {
+    ['click','keydown','touchstart','pointerdown'].forEach(function(e) {
       document.addEventListener(e, onUserInteraction, { once: false, passive: true });
     });
   }
 
   function removeInteractionListeners() {
-    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(function (e) {
+    ['click','keydown','touchstart','pointerdown'].forEach(function(e) {
       document.removeEventListener(e, onUserInteraction);
     });
     interactionHandlerAdded = false;
   }
 
-  function start() {
-    themeActive = true;
-    addInteractionListeners();
-    if (!audioStarted) startAudio();
-  }
-
-  function stop() {
-    themeActive = false;
-    removeInteractionListeners();
-    stopAudio();
-  }
+  function start() { themeActive = true; addInteractionListeners(); if (!audioStarted) startAudio(); }
+  function stop()  { themeActive = false; removeInteractionListeners(); stopAudio(); }
 
   window.veilwoodTheme = { start: start, stop: stop };
 })();
