@@ -1535,6 +1535,134 @@ app.post('/api/lobbies/:id/invite', authMiddleware, async (c) => {
   }
 });
 
+app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+
+  // Fellowships: accepted fellows not already in this lobby
+  const fellowsRaw = await c.env.sorc_db.prepare(
+    `SELECT u.id, u.username, u.display_name, u.sorc_role
+     FROM fellowships f
+     JOIN users u ON u.id = CASE WHEN f.sender_uid = ? THEN f.receiver_uid ELSE f.sender_uid END
+     WHERE (f.sender_uid = ? OR f.receiver_uid = ?) AND f.status = 'accepted'
+       AND u.id NOT IN (SELECT user_id FROM lobby_members WHERE lobby_id = ?)
+     ORDER BY u.display_name ASC LIMIT 50`
+  ).bind(user.id, user.id, user.id, lobbyId).all();
+
+  // Players currently in other open lobbies not already in this one
+  const othersRaw = await c.env.sorc_db.prepare(
+    `SELECT u.id, u.username, u.display_name, u.sorc_role, l.name as lobby_name
+     FROM lobby_members lm
+     JOIN users u ON u.id = lm.user_id
+     JOIN lobbies l ON l.id = lm.lobby_id
+     WHERE l.id != ? AND l.status != 'closed' AND l.is_private = 0
+       AND lm.user_id NOT IN (SELECT user_id FROM lobby_members WHERE lobby_id = ?)
+     ORDER BY lm.joined_at DESC LIMIT 50`
+  ).bind(lobbyId, lobbyId).all();
+
+  return c.json({ fellowships: fellowsRaw.results || [], others: othersRaw.results || [] });
+});
+
+// ─── WORLD CHAT ──────────────────────────────────────────────────────────────
+
+app.get('/api/world-chat', authMiddleware, async (c) => {
+  try {
+    await c.env.sorc_db.prepare(
+      `CREATE TABLE IF NOT EXISTS world_messages (
+         id TEXT PRIMARY KEY,
+         sender_uid TEXT NOT NULL,
+         sender_name TEXT NOT NULL,
+         sender_lobby_id TEXT,
+         sender_lobby_name TEXT,
+         body TEXT NOT NULL,
+         created_at TEXT NOT NULL
+       )`
+    ).run();
+    const msgs = await c.env.sorc_db.prepare(
+      `SELECT * FROM world_messages ORDER BY created_at DESC LIMIT 60`
+    ).all();
+    return c.json({ messages: (msgs.results || []).reverse() });
+  } catch (error: any) {
+    return c.json({ messages: [] });
+  }
+});
+
+app.post('/api/world-chat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const { body } = await c.req.json() as any;
+    if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+    if (body.length > 400) return c.json({ error: 'Message too long (max 400 chars).' }, 400);
+
+    // Must be the active creator of an open lobby
+    const lobby = await c.env.sorc_db.prepare(
+      `SELECT id, name FROM lobbies WHERE creator_uid = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`
+    ).bind(user.id).first() as any;
+    if (!lobby && !isPrivileged(user)) return c.json({ error: 'Only active lobby hosts can post in world chat.' }, 403);
+
+    await c.env.sorc_db.prepare(
+      `CREATE TABLE IF NOT EXISTS world_messages (
+         id TEXT PRIMARY KEY,
+         sender_uid TEXT NOT NULL,
+         sender_name TEXT NOT NULL,
+         sender_lobby_id TEXT,
+         sender_lobby_name TEXT,
+         body TEXT NOT NULL,
+         created_at TEXT NOT NULL
+       )`
+    ).run();
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO world_messages (id, sender_uid, sender_name, sender_lobby_id, sender_lobby_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      user.id,
+      user.display_name || user.username,
+      lobby?.id || null,
+      lobby?.name || null,
+      body.trim(),
+      now
+    ).run();
+
+    // Prune old messages (keep last 200)
+    await c.env.sorc_db.prepare(
+      `DELETE FROM world_messages WHERE id NOT IN (SELECT id FROM world_messages ORDER BY created_at DESC LIMIT 200)`
+    ).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to post.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const msgId = c.req.param('msgId');
+  try {
+    const original = await c.env.sorc_db.prepare(
+      `SELECT * FROM world_messages WHERE id = ?`
+    ).bind(msgId).first() as any;
+    if (!original) return c.json({ error: 'Message not found.' }, 404);
+
+    const myName = user.display_name || user.username;
+    const profileUrl = `https://sorcrpg.com/public-profile.html?username=${encodeURIComponent(user.username)}`;
+    const responseBody = `📋 ${myName} responds to ${original.sender_name}'s request — ${profileUrl}`;
+    const now = new Date().toISOString();
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO world_messages (id, sender_uid, sender_name, sender_lobby_id, sender_lobby_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), user.id, myName, null, null, responseBody, now).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed.', details: error.message }, 500);
+  }
+});
+
 app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
