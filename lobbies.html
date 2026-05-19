@@ -381,27 +381,16 @@
       if (window.veilwoodTheme) window.veilwoodTheme.stop();
       if (t === 'terminal' && window.terminalTheme) window.terminalTheme.start();
       else if (t === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
-      /* AudioContext may be suspended (autoplay policy). On first gesture, resume
-         and restart the theme so nodes scheduled while suspended don't just expire. */
+      /* AudioContext requires a user gesture to start (autoplay policy).
+         iOS Safari requires the AudioContext to be created *within* the gesture
+         handler — resume() alone is not enough. Stop+start synchronously here
+         so the new AudioContext is born inside the gesture and plays immediately. */
       function resumeOnGesture() {
         document.removeEventListener('click', resumeOnGesture);
         document.removeEventListener('touchstart', resumeOnGesture);
-        var wasSuspended = false;
-        if (t === 'terminal' && window.terminalTheme && window.terminalTheme._ctx && window.terminalTheme._ctx.state === 'suspended') {
-          window.terminalTheme._ctx.resume().catch(function(){});
-          wasSuspended = true;
-        }
-        if (t === 'veilwood' && window.veilwoodTheme && window.veilwoodTheme._ctx && window.veilwoodTheme._ctx.state === 'suspended') {
-          window.veilwoodTheme._ctx.resume().catch(function(){});
-          wasSuspended = true;
-        }
-        if (wasSuspended) {
-          setTimeout(function() {
-            if (lobbyTheme !== t) return;
-            if (t === 'terminal' && window.terminalTheme) { window.terminalTheme.stop(); window.terminalTheme.start(); }
-            if (t === 'veilwood' && window.veilwoodTheme) { window.veilwoodTheme.stop(); window.veilwoodTheme.start(); }
-          }, 80);
-        }
+        if (lobbyTheme !== t) return;
+        if (t === 'terminal' && window.terminalTheme) { window.terminalTheme.stop(); window.terminalTheme.start(); }
+        if (t === 'veilwood' && window.veilwoodTheme) { window.veilwoodTheme.stop(); window.veilwoodTheme.start(); }
       }
       document.addEventListener('click', resumeOnGesture, { passive: true });
       document.addEventListener('touchstart', resumeOnGesture, { passive: true });
