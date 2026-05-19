@@ -1,8 +1,8 @@
 /* ============================================================
    THE VEILWOOD — theme-veilwood.js
    Fable-inspired enchanted forest soundscape.
-   Orchestral string pad + harp arpeggios + Celtic flute melodies
-   + choir swells + layered birds + wind + nature ambience.
+   Warm string pad + slow orchestral melody + Celtic flute (sine, reverb)
+   + harp arpeggios + choir swells + birds + wind + gallop + owl.
    Exposes: window.veilwoodTheme = { start, stop }
    ============================================================ */
 (function () {
@@ -19,6 +19,11 @@
   function rndInt(min, max) { return Math.floor(rnd(min, max + 1)); }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+  function at(sec, fn) {
+    var id = setTimeout(function () { if (audioCtx && masterGain) fn(); }, sec * 1000);
+    timeouts.push(id);
+  }
+
   function sched(fn, minS, maxS) {
     var id = setTimeout(fn, rnd(minS, maxS) * 1000);
     timeouts.push(id);
@@ -28,15 +33,13 @@
   function makeOsc(type, freq) {
     var o = audioCtx.createOscillator();
     o.type = type; o.frequency.value = freq;
-    allSources.push(o);
-    return o;
+    allSources.push(o); return o;
   }
 
   function makeGain(v) {
     var g = audioCtx.createGain();
     g.gain.value = (v !== undefined) ? v : 1;
-    allGains.push(g);
-    return g;
+    allGains.push(g); return g;
   }
 
   function makeFilter(type, freq, q) {
@@ -57,54 +60,83 @@
   function loopNoise(sec) {
     var src = audioCtx.createBufferSource();
     src.buffer = makeNoiseBuffer(sec || 2);
-    src.loop = true;
-    allSources.push(src);
-    return src;
+    src.loop = true; allSources.push(src); return src;
   }
 
   function oneshotNoise(sec) {
     var src = audioCtx.createBufferSource();
-    src.buffer = makeNoiseBuffer(sec);
-    return src;
+    src.buffer = makeNoiseBuffer(sec); return src;
   }
 
-  /* ─── D DORIAN SCALE (Hz) ─────────────────────────────── */
-  /* D3  E3  F3  G3  A3  B3  C4  D4  E4  F4  G4  A4  B4  C5 D5 */
+  /* ─── Shared hall reverb for flute ───────────────────────── */
+  var fluteReverb = null;
+  function getFluteReverb() {
+    if (fluteReverb) return fluteReverb;
+    var len = Math.floor(audioCtx.sampleRate * 2.8);
+    var buf = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var d = buf.getChannelData(ch);
+      for (var i = 0; i < len; i++)
+        d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.0);
+    }
+    var conv = audioCtx.createConvolver();
+    conv.buffer = buf;
+    var wet = makeGain(0.30);
+    conv.connect(wet); wet.connect(masterGain);
+    fluteReverb = conv;
+    return fluteReverb;
+  }
+
+  /* ─── D DORIAN scale frequencies ─────────────────────────── */
   var D3=147, E3=165, F3=175, G3=196, A3=220, B3=247, C4=261,
       D4=293, E4=329, F4=349, G4=392, A4=440, B4=494, C5=523, D5=587;
 
-  /* Dm pentatonic for harp: D F G A C (across octaves) */
+  /* Dm pentatonic for harp */
   var HARP_NOTES = [D3, F3, G3, A3, C4, D4, F4, G4, A4, C5, D5];
 
-  /* Fable-style flute phrases in D Dorian */
+  /* ─── Flute phrases — D Dorian ─────────────────────────────
+     Notes are longer and spaced so the reverb tail breathes     */
   var PHRASES = [
-    [{f:A4,d:0.45},{f:G4,d:0.3},{f:E4,d:0.3},{f:D4,d:0.8},{f:F4,d:0.35},{f:G4,d:0.35},{f:A4,d:0.9}],
-    [{f:D4,d:0.3},{f:F4,d:0.3},{f:G4,d:0.35},{f:A4,d:0.65},{f:G4,d:0.28},{f:F4,d:0.28},{f:E4,d:0.35},{f:D4,d:0.9}],
-    [{f:G4,d:0.38},{f:A4,d:0.38},{f:B4,d:0.38},{f:A4,d:0.38},{f:G4,d:0.3},{f:F4,d:0.3},{f:D4,d:1.0}],
-    [{f:D4,d:0.28},{f:E4,d:0.28},{f:F4,d:0.28},{f:G4,d:0.28},{f:A4,d:0.55},{f:G4,d:0.28},{f:F4,d:0.28},{f:E4,d:0.28},{f:D4,d:1.0}],
-    [{f:A3,d:0.5},{f:C4,d:0.4},{f:D4,d:0.4},{f:E4,d:0.4},{f:F4,d:0.5},{f:E4,d:0.35},{f:D4,d:0.85}],
-    [{f:F4,d:0.4},{f:G4,d:0.35},{f:A4,d:0.65},{f:G4,d:0.3},{f:E4,d:0.3},{f:F4,d:0.3},{f:D4,d:1.0}],
+    [{f:A4,d:0.55},{f:G4,d:0.40},{f:E4,d:0.40},{f:D4,d:1.10},{f:F4,d:0.45},{f:G4,d:0.45},{f:A4,d:1.20}],
+    [{f:D4,d:0.40},{f:F4,d:0.40},{f:G4,d:0.45},{f:A4,d:0.85},{f:G4,d:0.38},{f:F4,d:0.38},{f:E4,d:0.45},{f:D4,d:1.30}],
+    [{f:G4,d:0.50},{f:A4,d:0.50},{f:B4,d:0.50},{f:A4,d:0.50},{f:G4,d:0.40},{f:F4,d:0.38},{f:D4,d:1.40}],
+    [{f:A3,d:0.60},{f:C4,d:0.50},{f:D4,d:0.50},{f:E4,d:0.50},{f:F4,d:0.65},{f:E4,d:0.42},{f:D4,d:1.20}],
+    [{f:F4,d:0.50},{f:G4,d:0.45},{f:A4,d:0.85},{f:G4,d:0.40},{f:E4,d:0.40},{f:F4,d:0.40},{f:D4,d:1.40}],
+    [{f:D4,d:0.45},{f:E4,d:0.38},{f:F4,d:0.38},{f:G4,d:0.38},{f:A4,d:0.72},{f:G4,d:0.38},{f:F4,d:0.38},{f:E4,d:0.38},{f:D4,d:1.40}],
   ];
 
-  /* ─── AMBIENT BED 1: Orchestral string pad (Dm chord) ─── */
+  /* ─── Slow Fable-style string melody phrases ────────────────
+     Long note durations, mournful D-minor motion               */
+  var STRING_PHRASES = [
+    [{f:A4,d:2.2},{f:G4,d:1.8},{f:F4,d:1.8},{f:E4,d:1.4},{f:D4,d:3.8}],
+    [{f:D4,d:2.0},{f:F4,d:1.8},{f:A4,d:2.4},{f:G4,d:1.6},{f:F4,d:1.8},{f:D4,d:3.2}],
+    [{f:F4,d:2.2},{f:G4,d:1.8},{f:A4,d:2.0},{f:G4,d:1.4},{f:F4,d:1.6},{f:E4,d:1.4},{f:D4,d:3.0}],
+    [{f:D4,d:2.8},{f:C4,d:2.2},{f:D4,d:2.0},{f:F4,d:4.5}],
+    [{f:A3,d:2.2},{f:C4,d:2.0},{f:E4,d:2.4},{f:D4,d:1.8},{f:C4,d:1.8},{f:A3,d:3.5}],
+    [{f:G4,d:2.0},{f:F4,d:1.6},{f:E4,d:1.6},{f:D4,d:2.0},{f:E4,d:1.4},{f:F4,d:1.8},{f:G4,d:3.0}],
+  ];
+
+  /* ─── AMBIENT BED: Warm string pad (very quiet, background only) */
   function startStringPad() {
+    /* Four quiet drone voices tuned to Dm — pad is barely audible
+       warmth underneath; the real melody comes from scheduleStringMelody */
     var voices = [
-      {freq: D3, gain: 0.022},
-      {freq: A3, gain: 0.018},
-      {freq: F4, gain: 0.013},
-      {freq: D4, gain: 0.011},
+      {freq: D3, gain: 0.010},
+      {freq: A3, gain: 0.008},
+      {freq: F3, gain: 0.007},
+      {freq: D4, gain: 0.006},
     ];
-    voices.forEach(function(v) {
-      [-4, 0, 4].forEach(function(cents) {
+    voices.forEach(function (v) {
+      [-5, 0, 5].forEach(function (cents) {
         var osc = makeOsc('sawtooth', v.freq * Math.pow(2, cents / 1200));
-        var lpf = makeFilter('lowpass', 700, 0.5);
+        var lpf = makeFilter('lowpass', 480, 0.4);
         var g = makeGain(0);
         var now = audioCtx.currentTime;
-        g.gain.linearRampToValueAtTime(v.gain / 3, now + 4.0);
+        g.gain.linearRampToValueAtTime(v.gain / 3, now + 6.0);
 
-        /* Slow evolving swell — pad breathes on a ~40s cycle so it never sounds flat */
-        var swellLfo = makeOsc('sine', 1 / rnd(35, 50));
-        var swellDepth = makeGain(v.gain / 3 * 0.30);
+        /* Slow swell LFO — pad breathes imperceptibly */
+        var swellLfo = makeOsc('sine', 1 / rnd(40, 60));
+        var swellDepth = makeGain(v.gain / 3 * 0.25);
         swellLfo.connect(swellDepth); swellDepth.connect(g.gain);
         swellLfo.start();
 
@@ -113,211 +145,267 @@
       });
     });
 
-    /* Secondary slow chord shift — every 25-45s, cross-fade to a neighbour chord */
+    /* Slow bass harmonic shift every 30-50s */
     function schedulePadShift() {
-      sched(function() {
+      sched(function () {
         if (!audioCtx || !masterGain) return;
         var now = audioCtx.currentTime;
-        var shiftVoices = [
-          {freq: pick([F3, G3, A3, C4]), gain: rnd(0.006, 0.010)},
-          {freq: pick([A3, C4, D4, F4]), gain: rnd(0.005, 0.008)},
-        ];
-        shiftVoices.forEach(function(v) {
-          [-3, 0, 3].forEach(function(cents) {
+        [{freq: pick([F3, G3, A3]), gain: rnd(0.004, 0.007)},
+         {freq: pick([A3, C4, D4]), gain: rnd(0.003, 0.006)}].forEach(function (v) {
+          [-4, 0, 4].forEach(function (cents) {
             var osc = audioCtx.createOscillator();
             osc.type = 'sawtooth';
             osc.frequency.value = v.freq * Math.pow(2, cents / 1200);
             var lpf = audioCtx.createBiquadFilter();
-            lpf.type = 'lowpass'; lpf.frequency.value = 600;
+            lpf.type = 'lowpass'; lpf.frequency.value = 460;
             var g = audioCtx.createGain();
             g.gain.setValueAtTime(0, now);
-            g.gain.linearRampToValueAtTime(v.gain / 3, now + 8);
-            g.gain.setValueAtTime(v.gain / 3, now + 14);
-            g.gain.linearRampToValueAtTime(0, now + 22);
+            g.gain.linearRampToValueAtTime(v.gain / 3, now + 10);
+            g.gain.setValueAtTime(v.gain / 3, now + 18);
+            g.gain.linearRampToValueAtTime(0, now + 28);
             osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-            osc.start(now); osc.stop(now + 24);
+            osc.start(now); osc.stop(now + 30);
           });
         });
         schedulePadShift();
-      }, 25, 45);
+      }, 30, 50);
     }
     schedulePadShift();
   }
 
-  /* ─── AMBIENT BED 2: Gentle wind through canopy ────────── */
+  /* ─── ORCHESTRAL STRING MELODY ──────────────────────────────
+     Slow Fable-style bowed string phrase — this IS the music,
+     not just a drone. Sounds like the Guild Hall theme.        */
+  function playStringMelody(phrase) {
+    var now = audioCtx.currentTime;
+    var cursor = now + rnd(0.8, 2.0);
+    phrase.forEach(function (n) {
+      (function (startAt, freq, dur) {
+        /* Ensemble: 5 detuned sawtooth voices like a string section */
+        [-7, -2, 0, 2, 7].forEach(function (cents) {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sawtooth';
+          osc.frequency.value = freq * Math.pow(2, cents / 1200);
+          allSources.push(osc);
+
+          var lpf = audioCtx.createBiquadFilter();
+          lpf.type = 'lowpass'; lpf.frequency.value = rnd(1100, 1600);
+
+          var g = makeGain(0);
+          var peak = rnd(0.011, 0.018) / 5;
+          g.gain.setValueAtTime(0, startAt);
+          /* Slow bow attack — the hallmark of real strings */
+          g.gain.linearRampToValueAtTime(peak, startAt + Math.min(dur * 0.38, 1.2));
+          g.gain.setValueAtTime(peak, startAt + dur * 0.72);
+          g.gain.linearRampToValueAtTime(0, startAt + dur + 0.35);
+
+          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+          osc.start(startAt); osc.stop(startAt + dur + 0.5);
+        });
+      })(cursor, n.f, n.d);
+      cursor += n.d;
+    });
+  }
+
+  function scheduleStringMelody() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playStringMelody(pick(STRING_PHRASES));
+      scheduleStringMelody();
+    }, 48, 95);
+  }
+
+  /* ─── WIND ──────────────────────────────────────────────────  */
   function startWind() {
     var src = loopNoise(3);
-    var lpf = makeFilter('lowpass', 320, 0.6);
-    var g = makeGain(0.012);
-    /* Very slow breath LFO — barely perceptible, 0.008 Hz */
-    var lfo = makeOsc('sine', 0.008);
-    var lfoDepth = makeGain(0.004);
+    var lpf = makeFilter('lowpass', 280, 0.5);
+    var g = makeGain(0.010);
+    var lfo = makeOsc('sine', 0.007);
+    var lfoDepth = makeGain(0.003);
     lfo.connect(lfoDepth); lfoDepth.connect(g.gain);
     src.connect(lpf); lpf.connect(g); g.connect(masterGain);
     src.start(); lfo.start();
   }
 
-  /* ─── HARP ARPEGGIO ─────────────────────────────────────── */
+  /* ─── HARP ──────────────────────────────────────────────────  */
   function pluck(freq, startAt, gainVal) {
-    /* Plucked string: sine fundamental + 2nd harmonic, exponential decay */
-    var now = startAt;
-    [1, 2, 3].forEach(function(harmonic) {
+    [1, 2, 3].forEach(function (harmonic) {
       var osc = audioCtx.createOscillator();
       osc.type = 'sine';
       osc.frequency.value = freq * harmonic;
       var g = audioCtx.createGain();
-      var hGain = gainVal / (harmonic * harmonic); /* harmonics fall off quickly */
-      g.gain.setValueAtTime(hGain, now);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + (2.2 / harmonic));
+      var hGain = gainVal / (harmonic * harmonic);
+      g.gain.setValueAtTime(hGain, startAt);
+      g.gain.exponentialRampToValueAtTime(0.0001, startAt + 2.2 / harmonic);
       osc.connect(g); g.connect(masterGain);
-      osc.start(now); osc.stop(now + (2.4 / harmonic));
+      osc.start(startAt); osc.stop(startAt + 2.5 / harmonic);
     });
   }
 
-  function scheduleHarp() {
-    sched(function() {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-
-      /* Pick a chord shape and arpeggiate upward */
-      var chords = [
-        [D3, F3, A3, D4, F4],      /* Dm */
-        [A3, C4, E4, A4],           /* Am */
-        [G3, B3, D4, G4],           /* G */
-        [F3, A3, C4, F4],           /* F */
-        [D3, A3, D4, F4, A4],       /* Dm spread */
-      ];
-      var chord = pick(chords);
-      var noteCount = chord.length + rndInt(0, 2);
-      var cursor = now;
-
-      for (var i = 0; i < noteCount; i++) {
-        var note = chord[Math.min(i, chord.length - 1)];
-        /* Occasionally add an octave up for sparkle */
-        if (i === noteCount - 1 && Math.random() < 0.5) note *= 2;
-        pluck(note, cursor, rnd(0.028, 0.042));
-        cursor += rnd(0.18, 0.32);
+  function playHarp() {
+    var now = audioCtx.currentTime;
+    var chords = [
+      [D3, F3, A3, D4, F4],
+      [A3, C4, E4, A4],
+      [G3, B3, D4, G4],
+      [F3, A3, C4, F4],
+      [D3, A3, D4, F4, A4],
+    ];
+    var chord = pick(chords);
+    var noteCount = chord.length + rndInt(0, 2);
+    var cursor = now;
+    for (var i = 0; i < noteCount; i++) {
+      var note = chord[Math.min(i, chord.length - 1)];
+      if (i === noteCount - 1 && Math.random() < 0.5) note *= 2;
+      pluck(note, cursor, rnd(0.026, 0.040));
+      cursor += rnd(0.18, 0.32);
+    }
+    if (Math.random() < 0.45) {
+      var chord2 = pick(chords);
+      cursor += rnd(0.4, 1.0);
+      for (var j = 0; j < chord2.length; j++) {
+        pluck(chord2[j], cursor, rnd(0.016, 0.028));
+        cursor += rnd(0.14, 0.26);
       }
-
-      /* Occasionally a second cascading arpeggio follows */
-      if (Math.random() < 0.45) {
-        var chord2 = pick(chords);
-        cursor += rnd(0.4, 1.0);
-        for (var j = 0; j < chord2.length; j++) {
-          pluck(chord2[j], cursor, rnd(0.018, 0.030));
-          cursor += rnd(0.14, 0.26);
-        }
-      }
-
-      scheduleHarp();
-    }, 7, 20);
+    }
   }
 
-  /* ─── CELTIC FLUTE MELODY ───────────────────────────────── */
-  function playFlute(phrase) {
-    var cursor = audioCtx.currentTime + rnd(0.2, 0.6);
-    phrase.forEach(function(note) {
-      if (!note.f) { cursor += note.d; return; } /* rest */
-      (function(startAt, freq, dur) {
-        /* Triangle wave — brighter than sine, flute-like */
-        var osc = audioCtx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
+  function scheduleHarp() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playHarp();
+      scheduleHarp();
+    }, 8, 22);
+  }
 
-        /* Vibrato — starts after 30% of note, adds expression */
+  /* ─── CELTIC FLUTE ──────────────────────────────────────────
+     Sine oscillator — no triangle, no 2200Hz highpass noise.
+     Reverb tail gives distance. Breath = soft bandpass hiss.   */
+  function playFlute(phrase) {
+    var rev = getFluteReverb();
+    var cursor = audioCtx.currentTime + rnd(0.3, 0.8);
+    phrase.forEach(function (note) {
+      if (!note.f) { cursor += note.d; return; }
+      (function (startAt, freq, dur) {
+        /* Primary sine — clean, flute-like fundamental */
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        allSources.push(osc);
+
+        /* Very gentle 2nd harmonic for warmth — sine only, 6% of main */
+        var harm2 = audioCtx.createOscillator();
+        harm2.type = 'sine';
+        harm2.frequency.value = freq * 2;
+        allSources.push(harm2);
+
+        /* Vibrato: delayed, subtle — 2.5–4 Hz depth, never wobbles wildly */
         var vib = audioCtx.createOscillator();
         vib.type = 'sine';
-        vib.frequency.value = rnd(5.2, 6.8);
-        var vibDepth = audioCtx.createGain();
+        vib.frequency.value = rnd(5.2, 6.6);
+        allSources.push(vib);
+        var vibDepth = makeGain(0);
         vibDepth.gain.setValueAtTime(0, startAt);
-        vibDepth.gain.linearRampToValueAtTime(rnd(5, 12), startAt + dur * 0.3);
+        vibDepth.gain.linearRampToValueAtTime(rnd(2.5, 4.0), startAt + dur * 0.40);
         vib.connect(vibDepth); vibDepth.connect(osc.frequency);
 
-        /* Breath noise layer — makes it feel like a real instrument */
+        /* Breath noise: bandpass centered near fundamental — soft hiss,
+           NOT a harsh highpass scrape. This is the key fix.          */
         var breathSrc = oneshotNoise(dur + 0.15);
-        var breathHpf = audioCtx.createBiquadFilter();
-        breathHpf.type = 'highpass'; breathHpf.frequency.value = 2200;
+        var breathBpf = audioCtx.createBiquadFilter();
+        breathBpf.type = 'bandpass';
+        breathBpf.frequency.value = freq * 1.5;
+        breathBpf.Q.value = 1.0;
         var breathG = audioCtx.createGain();
-        breathG.gain.setValueAtTime(0.006, startAt);
-        breathG.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.1);
-        breathSrc.connect(breathHpf); breathHpf.connect(breathG); breathG.connect(masterGain);
+        breathG.gain.setValueAtTime(0.0010, startAt);
+        breathG.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.12);
+        allGains.push(breathG);
+        breathSrc.connect(breathBpf); breathBpf.connect(breathG); breathG.connect(masterGain);
         breathSrc.start(startAt);
 
-        /* Distant flute — quieter, rolled off high end */
-        var distLpf = audioCtx.createBiquadFilter();
-        distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(1400, 2200);
-
-        var g = audioCtx.createGain();
+        /* Main gain — peak 0.007–0.013, soft attack, clean tail */
+        var g = makeGain(0);
+        var peak = rnd(0.007, 0.013);
         g.gain.setValueAtTime(0, startAt);
-        g.gain.linearRampToValueAtTime(rnd(0.014, 0.022), startAt + 0.04);
-        g.gain.setValueAtTime(rnd(0.014, 0.022), startAt + dur - 0.05);
-        g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.03);
+        g.gain.linearRampToValueAtTime(peak * 0.45, startAt + 0.04);
+        g.gain.linearRampToValueAtTime(peak, startAt + 0.12);
+        g.gain.setValueAtTime(peak, startAt + Math.max(dur - 0.14, dur * 0.65));
+        g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.06);
 
-        osc.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
-        vib.start(startAt); osc.start(startAt);
-        osc.stop(startAt + dur + 0.06); vib.stop(startAt + dur + 0.06);
+        /* 2nd harmonic gain — barely there */
+        var g2 = makeGain(0);
+        g2.gain.setValueAtTime(0, startAt);
+        g2.gain.linearRampToValueAtTime(peak * 0.055, startAt + 0.10);
+        g2.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.02);
+
+        /* Warm lowpass to round off any digital edge */
+        var lpf = audioCtx.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = rnd(4000, 5500);
+
+        osc.connect(lpf); lpf.connect(g);
+        g.connect(masterGain);  /* dry signal */
+        g.connect(rev);          /* wet reverb — creates distance */
+        harm2.connect(g2); g2.connect(masterGain);
+
+        vib.start(startAt);
+        osc.start(startAt); harm2.start(startAt);
+        osc.stop(startAt + dur + 0.10);
+        harm2.stop(startAt + dur + 0.10);
+        vib.stop(startAt + dur + 0.10);
       })(cursor, note.f, note.d);
-
-      cursor += note.d + rnd(0.01, 0.04); /* tiny gap between notes */
+      cursor += note.d + rnd(0.01, 0.06);
     });
   }
 
   function scheduleFlute() {
-    sched(function() {
+    sched(function () {
       if (!audioCtx || !masterGain) return;
       playFlute(pick(PHRASES));
       scheduleFlute();
-    }, 28, 75);
+    }, 30, 65);
   }
 
-  /* ─── CHOIR SWELL ───────────────────────────────────────── */
-  function scheduleChoirSwell() {
-    sched(function() {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var chordNotes = [D3 * 2, F3 * 2, A3 * 2]; /* Dm voiced higher for choir */
-      var dur = rnd(6, 10);
-
-      chordNotes.forEach(function(baseFreq) {
-        /* 5 detuned oscillators per voice = choir shimmer */
-        [-8, -3, 0, 3, 8].forEach(function(cents) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = baseFreq * Math.pow(2, cents / 1200);
-          allSources.push(osc);
-
-          var lpf = audioCtx.createBiquadFilter();
-          lpf.type = 'lowpass'; lpf.frequency.value = 1800;
-
-          var g = audioCtx.createGain();
-          allGains.push(g);
-          g.gain.setValueAtTime(0, now);
-          g.gain.linearRampToValueAtTime(rnd(0.007, 0.012), now + dur * 0.35);
-          g.gain.setValueAtTime(rnd(0.007, 0.012), now + dur * 0.6);
-          g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-
-          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-          osc.start(now); osc.stop(now + dur + 0.1);
-        });
+  /* ─── CHOIR SWELL ───────────────────────────────────────────  */
+  function playChoirSwell() {
+    var now = audioCtx.currentTime;
+    var chordNotes = [D3 * 2, F3 * 2, A3 * 2];
+    var dur = rnd(7, 11);
+    chordNotes.forEach(function (baseFreq) {
+      [-8, -3, 0, 3, 8].forEach(function (cents) {
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = baseFreq * Math.pow(2, cents / 1200);
+        allSources.push(osc);
+        var lpf = audioCtx.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = 1800;
+        var g = makeGain(0);
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(rnd(0.007, 0.011), now + dur * 0.35);
+        g.gain.setValueAtTime(rnd(0.007, 0.011), now + dur * 0.6);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+        osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+        osc.start(now); osc.stop(now + dur + 0.1);
       });
-
-      scheduleChoirSwell();
-    }, 55, 130);
+    });
   }
 
-  /* ─── BIRDS ─────────────────────────────────────────────── */
-  /* Four independent bird voices, each with its own timing */
+  function scheduleChoirSwell() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playChoirSwell();
+      scheduleChoirSwell();
+    }, 60, 130);
+  }
 
+  /* ─── BIRDS ─────────────────────────────────────────────────  */
   function chirpBird(baseFreq, pattern, gain) {
-    /* pattern: array of {freqMult, dur} — a phrase */
     var now = audioCtx.currentTime;
     var cursor = now;
-    pattern.forEach(function(n) {
-      (function(startAt, freq, dur) {
+    pattern.forEach(function (n) {
+      (function (startAt, freq, dur) {
         var osc = audioCtx.createOscillator();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, startAt);
-        /* Slight upward or downward sweep for natural feel */
         osc.frequency.linearRampToValueAtTime(freq * rnd(0.97, 1.05), startAt + dur);
         var g = audioCtx.createGain();
         g.gain.setValueAtTime(0, startAt);
@@ -331,42 +419,39 @@
     });
   }
 
-  /* Blackbird-style: fluting melodic phrase */
+  /* Blackbird-style melodic phrase */
   function scheduleBirdC() {
-    sched(function() {
+    sched(function () {
       if (!audioCtx || !masterGain) return;
       var base = rnd(1600, 2200);
       var mults = [1, 1.12, 1.25, 1.18, 1.05, 0.94, 1.0];
-      var phrase = mults.slice(0, rndInt(4, 7)).map(function(m) {
+      var phrase = mults.slice(0, rndInt(4, 7)).map(function (m) {
         return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
       });
-      chirpBird(base, phrase, rnd(0.045, 0.065));
+      chirpBird(base, phrase, rnd(0.044, 0.062));
       scheduleBirdC();
-    }, 15, 35);
+    }, 12, 32);
   }
 
-  /* Distant background chirp — short, high, one note */
+  /* Distant high chirps — the "whistles" the user likes */
   function scheduleBirdD() {
-    sched(function() {
+    sched(function () {
       if (!audioCtx || !masterGain) return;
       var base = rnd(3000, 5000);
       chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.018, 0.032));
       scheduleBirdD();
-    }, 5, 14);
+    }, 4, 13);
   }
 
-  /* ─── OWL ───────────────────────────────────────────────── */
+  /* ─── OWL ───────────────────────────────────────────────────  */
   function hootOwl(startAt, freq, peakGain, dur) {
     var osc = audioCtx.createOscillator();
-    osc.type = 'sine';
-    allSources.push(osc);
+    osc.type = 'sine'; allSources.push(osc);
     osc.frequency.setValueAtTime(freq * 1.04, startAt);
     osc.frequency.linearRampToValueAtTime(freq * 0.96, startAt + dur * 0.7);
-    /* Tremolo — owls modulate naturally */
     var trem = audioCtx.createOscillator();
     trem.frequency.value = rnd(5.5, 7.0);
-    var tremDepth = audioCtx.createGain();
-    tremDepth.gain.value = peakGain * 0.08;
+    var tremDepth = makeGain(peakGain * 0.08);
     trem.connect(tremDepth);
     var g = makeGain(0);
     g.gain.setValueAtTime(0, startAt);
@@ -380,21 +465,19 @@
   }
 
   function scheduleOwl() {
-    sched(function() {
+    sched(function () {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
       var isClose = Math.random() < 0.45;
-      var freq    = isClose ? rnd(200, 250) : rnd(160, 210); /* distant = slightly lower/duller */
-      var gain    = isClose ? rnd(0.07, 0.10) : rnd(0.025, 0.042);
-      var hoots   = rndInt(1, isClose ? 3 : 2);
+      var freq = isClose ? rnd(200, 250) : rnd(160, 210);
+      var gain = isClose ? rnd(0.07, 0.10) : rnd(0.025, 0.042);
+      var hoots = rndInt(1, isClose ? 3 : 2);
       var hootDur = isClose ? 0.60 : 0.50;
-
-      /* Distant owl: add a gentle lowpass to muffle it */
       if (!isClose) {
         var lpf = audioCtx.createBiquadFilter();
         lpf.type = 'lowpass'; lpf.frequency.value = rnd(600, 900);
         for (var h = 0; h < hoots; h++) {
-          (function(startAt) {
+          (function (startAt) {
             var osc = audioCtx.createOscillator();
             osc.type = 'sine'; allSources.push(osc);
             osc.frequency.setValueAtTime(freq * 1.03, startAt);
@@ -413,25 +496,17 @@
           hootOwl(now + h * rnd(0.85, 1.3), freq, gain, hootDur);
         }
       }
-
       scheduleOwl();
     }, 15, 38);
   }
 
-  /* ─── HOOVED GALLOP — 5 distinct variants ───────────────── */
-  /*
-    WALK:   slow measured plods, 4-6 beats, heavy, ~0.6s apart
-    TROT:   steady pace, 8-12 beats, ~0.32s apart
-    CANTER: building speed, 12-16 beats, ~0.20s apart
-    GALLOP: full sprint, 14-20 beats, ~0.13s apart
-    PANIC:  frantic burst, 8-10 very tight beats then gone, ~0.08s
-  */
+  /* ─── GALLOP ─────────────────────────────────────────────────  */
   var GALLOP_VARIANTS = [
-    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[200,320], gain:[0.44,0.60], clickGain:0.38, clickHz:[600,900]  },
-    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[280,420], gain:[0.36,0.50], clickGain:0.30, clickHz:[700,1100] },
-    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[320,480], gain:[0.34,0.48], clickGain:0.28, clickHz:[800,1200] },
-    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[340,520], gain:[0.32,0.46], clickGain:0.26, clickHz:[900,1400] },
-    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,560], gain:[0.38,0.54], clickGain:0.32, clickHz:[1000,1600]},
+    { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[200,320], gain:[0.44,0.60], clickGain:0.38, clickHz:[600,900]   },
+    { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[280,420], gain:[0.36,0.50], clickGain:0.30, clickHz:[700,1100]  },
+    { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[320,480], gain:[0.34,0.48], clickGain:0.28, clickHz:[800,1200]  },
+    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[340,520], gain:[0.32,0.46], clickGain:0.26, clickHz:[900,1400]  },
+    { name:'panic',  beats:[8,10],  interval:[0.07,0.10], lpf:[380,560], gain:[0.38,0.54], clickGain:0.32, clickHz:[1000,1600] },
   ];
 
   function playGallopVariant(variant) {
@@ -439,20 +514,15 @@
     var beats = rndInt(variant.beats[0], variant.beats[1]);
     var baseInterval = rnd(variant.interval[0], variant.interval[1]);
     var cursor = now;
-
     for (var i = 0; i < beats; i++) {
       var p = i / beats;
-      /* Gentle approach/recede — starts loud, never drops below 70% */
       var env = variant.name === 'panic'
         ? Math.max(0.7, 1.0 - Math.max(0, p - 0.25) * 1.2)
         : (p < 0.5 ? (0.8 + p * 0.4) : Math.max(0.7, 1.2 - (p - 0.5) * 1.2));
-
-      var offsets = variant.name === 'walk' ? [0, rnd(0.10,0.20)] :
+      var offsets = variant.name === 'walk' ? [0, rnd(0.10, 0.20)] :
                     variant.name === 'panic' ? [0] : [0, rnd(0.04, 0.10)];
-
-      (function(startAt, envMul) {
-        offsets.forEach(function(offset) {
-          /* Thud layer — lowpass noise */
+      (function (startAt, envMul) {
+        offsets.forEach(function (offset) {
           var src = audioCtx.createBufferSource();
           src.buffer = makeNoiseBuffer(0.12);
           var lpf = audioCtx.createBiquadFilter();
@@ -464,8 +534,6 @@
           g.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.10);
           src.connect(lpf); lpf.connect(g); g.connect(masterGain);
           src.start(startAt + offset);
-
-          /* Click/snap layer — bandpass gives hoof-on-earth definition */
           var click = audioCtx.createBufferSource();
           click.buffer = makeNoiseBuffer(0.045);
           var bpf = audioCtx.createBiquadFilter();
@@ -479,8 +547,6 @@
           click.connect(bpf); bpf.connect(cg); cg.connect(masterGain);
           click.start(startAt + offset);
         });
-
-        /* Extra undergrowth thump for walk — low sub-snap */
         if (variant.name === 'walk' && Math.random() < 0.65) {
           var sub = audioCtx.createBufferSource();
           sub.buffer = makeNoiseBuffer(0.06);
@@ -493,15 +559,13 @@
           sub.start(startAt + 0.018);
         }
       })(cursor, env);
-
       cursor += baseInterval + rnd(-0.012, 0.012);
     }
   }
 
   function scheduleGallop() {
-    sched(function() {
+    sched(function () {
       if (!audioCtx || !masterGain) return;
-      /* Weight toward middle variants — walk and panic are rarer */
       var weights = [0.10, 0.25, 0.35, 0.22, 0.08];
       var r = Math.random(), cumulative = 0, chosen = GALLOP_VARIANTS[2];
       for (var i = 0; i < weights.length; i++) {
@@ -510,12 +574,12 @@
       }
       playGallopVariant(chosen);
       scheduleGallop();
-    }, 6, 22);
+    }, 7, 22);
   }
 
-  /* ─── LEAF RUSTLE ───────────────────────────────────────── */
+  /* ─── LEAF RUSTLE ────────────────────────────────────────────  */
   function scheduleLeafRustle() {
-    sched(function() {
+    sched(function () {
       if (!audioCtx || !masterGain) return;
       var now = audioCtx.currentTime;
       var dur = rnd(0.3, 0.8);
@@ -524,7 +588,7 @@
       bpf.type = 'bandpass'; bpf.frequency.value = rnd(900, 1400); bpf.Q.value = rnd(0.8, 1.4);
       var g = audioCtx.createGain();
       g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(rnd(0.018, 0.034), now + dur * 0.2);
+      g.gain.linearRampToValueAtTime(rnd(0.016, 0.030), now + dur * 0.2);
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.04);
       src.connect(bpf); bpf.connect(g); g.connect(masterGain);
       src.start(now);
@@ -532,37 +596,60 @@
     }, 8, 20);
   }
 
-  /* ─── START ─────────────────────────────────────────────── */
+  /* ─── START ──────────────────────────────────────────────────
+     All sound types guaranteed within first 60 seconds,
+     then the recursive schedulers keep them going at natural
+     spacing. First minute is dense; thereafter it breathes.    */
   function startAudio() {
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.9;
+    masterGain.gain.value = 0.88;
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
-    /* Ambient beds — always on */
+    /* Always-on beds */
     startStringPad();
     startWind();
 
-    /* Scheduled musical elements */
-    scheduleHarp();
-    scheduleFlute();
-    scheduleChoirSwell();
+    /* ── First-minute burst: everything heard within 60 seconds ── */
 
-    /* Nature sounds */
-    scheduleBirdC();
-    scheduleBirdD();
-    scheduleOwl();
-    scheduleGallop();
-    scheduleLeafRustle();
+    /* Birds fire almost immediately — short interval schedulers handle it */
+    scheduleBirdD();               /* ~4-13s first fire */
+    scheduleBirdC();               /* ~12-32s first fire */
+    scheduleLeafRustle();          /* ~8-20s first fire */
+
+    /* Harp: two early hits then ongoing */
+    at(rnd(3, 7), function () { playHarp(); });
+    at(rnd(18, 28), function () { playHarp(); scheduleHarp(); });
+
+    /* Gallop: first hit at 12-20s then ongoing */
+    at(rnd(12, 20), function () { playGallopVariant(pick(GALLOP_VARIANTS)); scheduleGallop(); });
+
+    /* String melody: first phrase at 8-16s — this IS the music */
+    at(rnd(8, 16), function () { playStringMelody(pick(STRING_PHRASES)); scheduleStringMelody(); });
+
+    /* Owl: first hoot at 22-35s */
+    at(rnd(22, 35), function () {
+      scheduleOwl(); /* let the scheduler fire it with its own randomness */
+    });
+    scheduleOwl(); /* also start the loop so second owl isn't too far */
+
+    /* Flute: first phrase at 14-25s, then normal spacing */
+    at(rnd(14, 25), function () { playFlute(pick(PHRASES)); scheduleFlute(); });
+
+    /* Choir swell: first occurrence at 40-58s */
+    at(rnd(40, 58), function () { playChoirSwell(); scheduleChoirSwell(); });
+
+    /* Second string melody at ~38-55s so the first minute has two passes */
+    at(rnd(38, 55), function () { playStringMelody(pick(STRING_PHRASES)); });
 
     audioStarted = true;
   }
 
-  /* ─── STOP ──────────────────────────────────────────────── */
+  /* ─── STOP ───────────────────────────────────────────────────  */
   function stopAudio() {
     if (!audioStarted) return;
     timeouts.forEach(function (id) { clearTimeout(id); });
@@ -575,6 +662,7 @@
       masterGain.gain.linearRampToValueAtTime(0, now + 0.5);
     }
 
+    fluteReverb = null;
     var ctx = audioCtx;
     setTimeout(function () {
       allSources.forEach(function (s) { try { s.stop(); } catch(e){} try { s.disconnect(); } catch(e){} });
@@ -594,13 +682,13 @@
   function addInteractionListeners() {
     if (interactionHandlerAdded) return;
     interactionHandlerAdded = true;
-    ['click','keydown','touchstart','pointerdown'].forEach(function(e) {
+    ['click','keydown','touchstart','pointerdown'].forEach(function (e) {
       document.addEventListener(e, onUserInteraction, { once: false, passive: true });
     });
   }
 
   function removeInteractionListeners() {
-    ['click','keydown','touchstart','pointerdown'].forEach(function(e) {
+    ['click','keydown','touchstart','pointerdown'].forEach(function (e) {
       document.removeEventListener(e, onUserInteraction);
     });
     interactionHandlerAdded = false;
