@@ -659,6 +659,9 @@
         '&#127914; Only lobby hosts can choose lobby themes - if any member has a theme unlocked, the host can activate it for the whole lobby',
         '&#127914; If the member who unlocked a theme leaves and no one else has it, the lobby theme reverts to the previous one',
         '&#9889; New: Summon feature - hosts can summon players directly from World Chat, sending them lobby details before they accept or deny',
+        '&#9993; New: Hosts can message any lobby member directly from the member list - click their name to open options',
+        '&#128081; New: Make Host - transfer lobby control to a GM in your party. Click their name inside the lobby to promote them',
+        '&#128272; Admin &amp; Owner: Generate GM Codes from the lobby panel to authorise new hosts without a physical box set',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -706,10 +709,10 @@
 
       var adminCodeGen = priv
         ? '<div class="action-card" style="margin-top:1.25rem;">' +
-            '<h2 class="gold" style="font-size:0.92rem;">&#128273; Generate Box Code</h2>' +
-            '<p>Create a single-use box code for a fellow so they can host lobbies.</p>' +
+            '<h2 class="gold" style="font-size:0.92rem;">&#128273; Generate GM Code</h2>' +
+            '<p>Create a single-use GM code for a fellow so they can host lobbies and launch Campaign Rooms.</p>' +
             '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. fellow\'s name)..." maxlength="100" />' +
-            '<button class="l-btn gold" onclick="generateBoxCode()">Generate Code</button>' +
+            '<button class="l-btn gold" onclick="generateBoxCode()">Generate GM Code</button>' +
             '<div id="genCodeResult" class="l-msg"></div>' +
           '</div>'
         : '';
@@ -831,8 +834,8 @@
         /* Full lobby — Corby host */
         '<div class="lobby-row" style="opacity:0.55;pointer-events:none;">' +
           '<div class="lobby-row-info">' +
-            '<h3>The Siege of Veilmark &#128512;</h3>' +
-            '<p>Host: Corby &nbsp;&middot;&nbsp; 20/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Module .004</em></p>' +
+            '<h3>The Siege of Veilmark</h3>' +
+            '<p>Host: Corby &nbsp;&middot;&nbsp; 20/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Module .002 | Aseya\'s Crypt (LVLs 6 - 10)</em></p>' +
           '</div>' +
           '<div class="lobby-row-right">' +
             '<div class="lobby-btn-col">' +
@@ -1030,9 +1033,13 @@
         }
         var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
         var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
-        var menuItems = '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
-        if (!isSelf) menuItems += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
-        if (isCreator && !isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+        var menuItems = '';
+        if (isCreator && !isSelf) menuItems += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+        menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+        if (isCreator && !isSelf) {
+          menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+          if (isGM) menuItems += '<button class="summon-opt" style="color:#a0d8a0;border-color:transparent;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Make Host</button>';
+        }
         var nameWrap = '<span class="member-name-wrap">' +
           '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + esc(m.display_name || m.username) + ' &#8964;</button>' +
           '<div class="member-name-menu">' + menuItems + '</div>' +
@@ -1338,9 +1345,13 @@
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
-          var menuItems2 = '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
-          if (!isSelf) menuItems2 += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
-          if (isCreator && !isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+          var menuItems2 = '';
+          if (isCreator && !isSelf) menuItems2 += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+          menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+          if (isCreator && !isSelf) {
+            menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+            if (isGM) menuItems2 += '<button class="summon-opt" style="color:#a0d8a0;border-color:transparent;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Make Host</button>';
+          }
           var nameWrap2 = '<span class="member-name-wrap">' +
             '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + esc(m.display_name || m.username) + ' &#8964;</button>' +
             '<div class="member-name-menu">' + menuItems2 + '</div>' +
@@ -1809,6 +1820,26 @@
     function stopWorldChatPoll() {
       if (worldChatPollTimer) { clearInterval(worldChatPollTimer); worldChatPollTimer = null; }
     }
+
+    // ===== MAKE HOST =====
+    window.makeHost = async function(uid, name, lobbyId) {
+      if (!lobbyId || !currentUser) return;
+      if (!confirm('Transfer host status to ' + name + '? You will no longer be the host of this lobby.')) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/transfer-host', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ new_host_uid: uid })
+        });
+        var data = await res.json();
+        if (data.success) {
+          showToast(name + ' is now the host.');
+          openLobby(lobbyId);
+        } else {
+          showToast(data.error || 'Transfer failed.', true);
+        }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
 
     // ===== SUMMON FEATURE =====
     window.summonPlayer = function(uid, name, lobbyId) {
