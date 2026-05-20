@@ -724,13 +724,13 @@
       var now    = audioCtx.currentTime;
       var steps  = rndInt(5, 10);
       var pace   = rnd(0.48, 0.72);   /* deliberate, heavy pace */
-      var vol    = rnd(0.055, 0.085); /* heavier strike */
+      var vol    = rnd(0.038, 0.065);  /* heavy boot on metal grid */
       var cursor = now;
-      var rev    = makeReverb(0.22);  /* subtle large-room tail, not cave */
+      var rev    = makeReverb(0.22);  /* subtle large-room tail */
       rev.output.connect(masterGain);
       for (var i = 0; i < steps; i++) {
         (function (t) {
-          /* low-mid boot impact on metal plate */
+          /* low-mid boot impact — dry direct + reverb send */
           var nSrc = audioCtx.createBufferSource();
           nSrc.buffer = makeNoiseBuf(0.12);
           var bpf = audioCtx.createBiquadFilter();
@@ -739,9 +739,11 @@
           var ng = audioCtx.createGain();
           ng.gain.setValueAtTime(vol, t);
           ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
-          nSrc.connect(bpf); bpf.connect(ng); ng.connect(rev.input);
+          nSrc.connect(bpf); bpf.connect(ng);
+          ng.connect(masterGain);   /* dry */
+          ng.connect(rev.input);    /* wet send */
           nSrc.start(t);
-          /* sharp metallic grid ring — longer decay, like hollow steel */
+          /* metallic grid ring — hollow steel decay */
           var rOsc = audioCtx.createOscillator();
           rOsc.type = 'sine'; rOsc.frequency.value = rnd(380, 560);
           var rg = audioCtx.createGain();
@@ -749,13 +751,13 @@
           rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
           rOsc.connect(rg); rg.connect(rev.input);
           rOsc.start(t + 0.004); rOsc.stop(t + 0.42);
-          /* high click of heel on grating */
+          /* high-freq heel click on grating */
           var cSrc = audioCtx.createBufferSource();
           cSrc.buffer = makeNoiseBuf(0.03);
           var hpf = audioCtx.createBiquadFilter();
           hpf.type = 'highpass'; hpf.frequency.value = 3500;
           var cg = audioCtx.createGain();
-          cg.gain.setValueAtTime(vol * 0.35, t);
+          cg.gain.setValueAtTime(vol * 0.55, t);
           cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
           cSrc.connect(hpf); hpf.connect(cg); cg.connect(masterGain);
           cSrc.start(t);
@@ -763,7 +765,7 @@
         cursor += pace + rnd(-0.04, 0.06);
       }
       scheduleGridFootsteps();
-    }, 20, 55);
+    }, 4, 12);
   }
 
   /* ── FOOTSTEPS: Metal grid — group passing by (rare) ─── */
@@ -779,7 +781,7 @@
         (function (offset) {
           var steps  = rndInt(6, 12);
           var pace   = rnd(0.40, 0.60);
-          var vol    = rnd(0.030, 0.055);
+          var vol    = rnd(0.028, 0.048);
           var cursor = now + offset;
           for (var i = 0; i < steps; i++) {
             (function (t) {
@@ -791,7 +793,9 @@
               var ng = audioCtx.createGain();
               ng.gain.setValueAtTime(vol, t);
               ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
-              nSrc.connect(bpf); bpf.connect(ng); ng.connect(rev.input);
+              nSrc.connect(bpf); bpf.connect(ng);
+              ng.connect(masterGain);
+              ng.connect(rev.input);
               nSrc.start(t);
               var rOsc = audioCtx.createOscillator();
               rOsc.type = 'sine'; rOsc.frequency.value = rnd(360, 520);
@@ -806,7 +810,237 @@
         })(p * rnd(0.05, 0.18));
       }
       scheduleGroupFootsteps();
-    }, 70, 180);
+    }, 25, 60);
+  }
+
+  /* ── DROIDS: C-3PO style — wordy harmonic chatter ───── */
+  function scheduleDroidProtocol() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      if (Math.random() > 0.60) { scheduleDroidProtocol(); return; }
+      var now    = audioCtx.currentTime;
+      var cursor = now;
+      /* 3–7 "syllables" — pairs of harmonically related tones */
+      var syllables = rndInt(3, 7);
+      for (var s = 0; s < syllables; s++) {
+        (function (t, si) {
+          var root = rnd(1400, 2800);
+          var dur  = rnd(0.06, 0.18);
+          /* fundamental */
+          var o1 = audioCtx.createOscillator();
+          o1.type = 'sine';
+          o1.frequency.setValueAtTime(root, t);
+          o1.frequency.linearRampToValueAtTime(root * rnd(0.88, 1.14), t + dur);
+          var g1 = audioCtx.createGain();
+          g1.gain.setValueAtTime(0, t);
+          g1.gain.linearRampToValueAtTime(0.038, t + 0.012);
+          g1.gain.setValueAtTime(0.038, t + dur - 0.015);
+          g1.gain.linearRampToValueAtTime(0, t + dur + 0.018);
+          o1.connect(g1); g1.connect(masterGain);
+          o1.start(t); o1.stop(t + dur + 0.03);
+          /* 2nd harmonic — gives the "metallic throat" quality */
+          var o2 = audioCtx.createOscillator();
+          o2.type = 'triangle';
+          o2.frequency.setValueAtTime(root * 2.03, t);
+          o2.frequency.linearRampToValueAtTime(root * 2.03 * rnd(0.91, 1.09), t + dur);
+          var g2 = audioCtx.createGain();
+          g2.gain.setValueAtTime(0, t);
+          g2.gain.linearRampToValueAtTime(0.018, t + 0.012);
+          g2.gain.setValueAtTime(0.018, t + dur - 0.015);
+          g2.gain.linearRampToValueAtTime(0, t + dur + 0.018);
+          o2.connect(g2); g2.connect(masterGain);
+          o2.start(t); o2.stop(t + dur + 0.03);
+          /* occasional flustered high squeak between syllables */
+          if (Math.random() > 0.65) {
+            var sq = audioCtx.createOscillator();
+            sq.type = 'sine';
+            sq.frequency.setValueAtTime(root * 3.5, t + dur + 0.02);
+            sq.frequency.exponentialRampToValueAtTime(root * 2.1, t + dur + 0.07);
+            var sqg = audioCtx.createGain();
+            sqg.gain.setValueAtTime(0.024, t + dur + 0.02);
+            sqg.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.08);
+            sq.connect(sqg); sqg.connect(masterGain);
+            sq.start(t + dur + 0.02); sq.stop(t + dur + 0.1);
+          }
+        })(cursor, s);
+        cursor += rnd(0.10, 0.26);
+      }
+      scheduleDroidProtocol();
+    }, 18, 55);
+  }
+
+  /* ── DOORS: Halo-style sliding blast doors ───────────── */
+  function scheduleSciFiDoor() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now  = audioCtx.currentTime;
+      var type = Math.floor(Math.random() * 3); /* 0=small, 1=large blast, 2=energy */
+
+      if (type === 0) {
+        /* Small sliding panel — pneumatic hiss + light clunk */
+        var hSrc = audioCtx.createBufferSource();
+        hSrc.buffer = makeNoiseBuf(0.35);
+        var hBpf = audioCtx.createBiquadFilter();
+        hBpf.type = 'bandpass'; hBpf.frequency.value = 3800; hBpf.Q.value = 0.8;
+        var hg = audioCtx.createGain();
+        hg.gain.setValueAtTime(0, now);
+        hg.gain.linearRampToValueAtTime(0.055, now + 0.02);
+        hg.gain.setValueAtTime(0.055, now + 0.22);
+        hg.gain.linearRampToValueAtTime(0, now + 0.35);
+        hSrc.connect(hBpf); hBpf.connect(hg); hg.connect(masterGain);
+        hSrc.start(now);
+        /* clunk at end of travel */
+        var ck = audioCtx.createOscillator();
+        ck.type = 'sine'; ck.frequency.setValueAtTime(180, now + 0.30);
+        ck.frequency.exponentialRampToValueAtTime(55, now + 0.42);
+        var ckg = audioCtx.createGain();
+        ckg.gain.setValueAtTime(0.10, now + 0.30);
+        ckg.gain.exponentialRampToValueAtTime(0.0001, now + 0.44);
+        ck.connect(ckg); ckg.connect(masterGain);
+        ck.start(now + 0.30); ck.stop(now + 0.46);
+
+      } else if (type === 1) {
+        /* Large blast door — deep whoosh, heavy double-clank */
+        var rev = makeReverb(0.38); rev.output.connect(masterGain);
+        var wSrc = audioCtx.createBufferSource();
+        wSrc.buffer = makeNoiseBuf(1.1);
+        var wLpf = audioCtx.createBiquadFilter();
+        wLpf.type = 'lowpass'; wLpf.frequency.value = 900;
+        var wg = audioCtx.createGain();
+        wg.gain.setValueAtTime(0, now);
+        wg.gain.linearRampToValueAtTime(0.18, now + 0.08);
+        wg.gain.setValueAtTime(0.18, now + 0.65);
+        wg.gain.linearRampToValueAtTime(0, now + 1.1);
+        wSrc.connect(wLpf); wLpf.connect(wg); wg.connect(rev.input);
+        wSrc.start(now);
+        /* mechanical grind layer */
+        var mOsc = audioCtx.createOscillator();
+        mOsc.type = 'sawtooth'; mOsc.frequency.value = 62;
+        var mLpf = audioCtx.createBiquadFilter();
+        mLpf.type = 'lowpass'; mLpf.frequency.value = 320;
+        var mg = audioCtx.createGain();
+        mg.gain.setValueAtTime(0.09, now + 0.04);
+        mg.gain.setValueAtTime(0.09, now + 0.72);
+        mg.gain.linearRampToValueAtTime(0, now + 0.95);
+        mOsc.connect(mLpf); mLpf.connect(mg); mg.connect(rev.input);
+        mOsc.start(now + 0.04); mOsc.stop(now + 0.97);
+        /* double-clank impact */
+        [0.85, 0.96].forEach(function(dt) {
+          var imp = audioCtx.createOscillator();
+          imp.type = 'sine';
+          imp.frequency.setValueAtTime(95, now + dt);
+          imp.frequency.exponentialRampToValueAtTime(28, now + dt + 0.28);
+          var ig = audioCtx.createGain();
+          ig.gain.setValueAtTime(0.22, now + dt);
+          ig.gain.exponentialRampToValueAtTime(0.0001, now + dt + 0.32);
+          imp.connect(ig); ig.connect(rev.input);
+          imp.start(now + dt); imp.stop(now + dt + 0.35);
+        });
+
+      } else {
+        /* Energy field door — electric crackle + hum that cuts off */
+        var eHum = audioCtx.createOscillator();
+        eHum.type = 'sawtooth'; eHum.frequency.value = 120;
+        var eHpf = audioCtx.createBiquadFilter();
+        eHpf.type = 'highpass'; eHpf.frequency.value = 800;
+        var eg = audioCtx.createGain();
+        eg.gain.setValueAtTime(0, now);
+        eg.gain.linearRampToValueAtTime(0.028, now + 0.06);
+        eg.gain.setValueAtTime(0.028, now + 0.55);
+        eg.gain.linearRampToValueAtTime(0, now + 0.62);
+        eHum.connect(eHpf); eHpf.connect(eg); eg.connect(masterGain);
+        eHum.start(now); eHum.stop(now + 0.65);
+        /* crackle bursts */
+        for (var c = 0; c < 4; c++) {
+          (function(ct) {
+            var cr = audioCtx.createBufferSource();
+            cr.buffer = makeNoiseBuf(0.04);
+            var crHpf = audioCtx.createBiquadFilter();
+            crHpf.type = 'highpass'; crHpf.frequency.value = 5000;
+            var crg = audioCtx.createGain();
+            crg.gain.setValueAtTime(0.065, ct);
+            crg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.04);
+            cr.connect(crHpf); crHpf.connect(crg); crg.connect(masterGain);
+            cr.start(ct);
+          })(now + c * rnd(0.12, 0.18));
+        }
+        /* sharp off-click */
+        var offCk = audioCtx.createOscillator();
+        offCk.type = 'square'; offCk.frequency.value = 2200;
+        var oCkg = audioCtx.createGain();
+        oCkg.gain.setValueAtTime(0.035, now + 0.60);
+        oCkg.gain.exponentialRampToValueAtTime(0.0001, now + 0.66);
+        offCk.connect(oCkg); oCkg.connect(masterGain);
+        offCk.start(now + 0.60); offCk.stop(now + 0.68);
+      }
+
+      scheduleSciFiDoor();
+    }, 30, 90);
+  }
+
+  /* ── TRANSPORTER: Star Trek shimmer ─────────────────── */
+  function scheduleTransporter() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      if (Math.random() > 0.35) { scheduleTransporter(); return; }
+      var now  = audioCtx.currentTime;
+      var dur  = rnd(2.2, 3.8);
+      var rev  = makeReverb(0.45); rev.output.connect(masterGain);
+      /* rising carrier sweep */
+      var carrier = rnd(600, 900);
+      var sweepOsc = audioCtx.createOscillator();
+      sweepOsc.type = 'sine';
+      sweepOsc.frequency.setValueAtTime(carrier, now);
+      sweepOsc.frequency.exponentialRampToValueAtTime(carrier * 2.8, now + dur * 0.7);
+      sweepOsc.frequency.exponentialRampToValueAtTime(carrier * 0.9, now + dur);
+      var sweepG = audioCtx.createGain();
+      sweepG.gain.setValueAtTime(0, now);
+      sweepG.gain.linearRampToValueAtTime(0.018, now + 0.15);
+      sweepG.gain.setValueAtTime(0.018, now + dur - 0.3);
+      sweepG.gain.linearRampToValueAtTime(0, now + dur);
+      sweepOsc.connect(sweepG); sweepG.connect(rev.input);
+      sweepOsc.start(now); sweepOsc.stop(now + dur + 0.1);
+      /* shimmer — many fast LFO-modulated tones */
+      var shimmerCount = 8;
+      for (var i = 0; i < shimmerCount; i++) {
+        (function(idx) {
+          var baseFreq = carrier * (1 + idx * 0.18) * rnd(0.95, 1.05);
+          var sOsc = audioCtx.createOscillator();
+          sOsc.type = 'sine';
+          sOsc.frequency.value = baseFreq;
+          /* each shimmer tone gets its own LFO for that rippling quality */
+          var lfo = audioCtx.createOscillator();
+          lfo.frequency.value = rnd(6, 18);
+          var lfoG = audioCtx.createGain(); lfoG.gain.value = baseFreq * 0.012;
+          lfo.connect(lfoG); lfoG.connect(sOsc.frequency);
+          var sG = audioCtx.createGain();
+          var startAt = now + idx * 0.04;
+          sG.gain.setValueAtTime(0, startAt);
+          sG.gain.linearRampToValueAtTime(0.012, startAt + 0.20);
+          sG.gain.setValueAtTime(0.012, now + dur - 0.35);
+          sG.gain.linearRampToValueAtTime(0, now + dur + idx * 0.03);
+          sOsc.connect(sG); sG.connect(rev.input);
+          lfo.start(startAt); lfo.stop(now + dur + 0.2);
+          sOsc.start(startAt); sOsc.stop(now + dur + 0.2);
+        })(i);
+      }
+      /* sparkle — short high noise bursts scattered throughout */
+      var sparkCount = rndInt(10, 20);
+      for (var k = 0; k < sparkCount; k++) {
+        (function(kt) {
+          var spk = audioCtx.createBufferSource();
+          spk.buffer = makeNoiseBuf(0.025);
+          var spkHpf = audioCtx.createBiquadFilter();
+          spkHpf.type = 'highpass'; spkHpf.frequency.value = rnd(4000, 9000);
+          var spkG = audioCtx.createGain();
+          spkG.gain.setValueAtTime(rnd(0.04, 0.09), kt);
+          spkG.gain.exponentialRampToValueAtTime(0.0001, kt + 0.025);
+          spk.connect(spkHpf); spkHpf.connect(spkG); spkG.connect(rev.input);
+          spk.start(kt);
+        })(now + Math.random() * dur);
+      }
+      scheduleTransporter();
+    }, 60, 180);
   }
 
   /* ── START ────────────────────────────────────────────── */
@@ -852,12 +1086,20 @@
     scheduleDroidChirp();
     scheduleDroidServo();
     scheduleDroidWarble();
+    scheduleDroidProtocol();
     /* Droids — rare */
     scheduleDroidPowerUp();
     scheduleDroidHeavyWalk();
 
-    /* Footsteps on metal grid */
+    /* Doors & teleporter */
+    scheduleSciFiDoor();
+    scheduleTransporter();
+
+    /* Footsteps on metal grid — multiple independent walkers */
     scheduleGridFootsteps();
+    scheduleGridFootsteps();
+    scheduleGridFootsteps();
+    scheduleGroupFootsteps();
     scheduleGroupFootsteps();
 
     audioStarted = true;
