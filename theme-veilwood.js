@@ -526,7 +526,6 @@
     { name:'walk',   beats:[4,6],   interval:[0.55,0.70], lpf:[200,320], gain:[0.44,0.60], clickGain:0.20, clickHz:[600,900]  },
     { name:'trot',   beats:[8,12],  interval:[0.28,0.36], lpf:[280,420], gain:[0.36,0.50], clickGain:0.16, clickHz:[700,1100] },
     { name:'canter', beats:[12,16], interval:[0.17,0.24], lpf:[320,480], gain:[0.34,0.48], clickGain:0.14, clickHz:[800,1200] },
-    { name:'gallop', beats:[14,20], interval:[0.11,0.16], lpf:[340,520], gain:[0.32,0.46], clickGain:0.13, clickHz:[900,1400] },
   ];
 
   function playGallopVariant(variant) {
@@ -583,7 +582,7 @@
   function scheduleGallop() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
-      var weights = [0.12, 0.28, 0.38, 0.22];
+      var weights = [0.20, 0.42, 0.38];
       var r = Math.random(), cumulative = 0, chosen = GALLOP_VARIANTS[2];
       for (var i = 0; i < weights.length; i++) {
         cumulative += weights[i];
