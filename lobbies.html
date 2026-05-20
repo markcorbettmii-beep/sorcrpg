@@ -31,8 +31,20 @@
     .theme-more-dropdown.open { display: flex; }
     .theme-more-dropdown .theme-pill { border-radius: 8px; text-align: left; width: 100%; }
 
-    /* ===== INFO GRID ===== */
-    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    /* ===== HOW IT WORKS ===== */
+    .how-it-works-section { padding: 0.5rem 0 1.25rem; }
+    .how-it-works-section h2 { color: #d0021b; margin: 0 0 1rem 0; font-size: 1.1rem; }
+    .section-scroll-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+    .section-scroll-btn { background: none; border: none; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; width: 48px; height: 48px; min-width: 48px; }
+    .section-scroll-btn svg polygon { fill: rgba(208,2,27,0.5); }
+    .how-it-works-list { display: flex; flex-direction: row; gap: 1.25rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 0.75rem; flex: 1; scrollbar-width: thin; scrollbar-color: #d0021b #1a1a1a; }
+    .how-it-works-list::-webkit-scrollbar { height: 5px; }
+    .how-it-works-list::-webkit-scrollbar-thumb { background: #d0021b; border-radius: 4px; }
+    .how-it-works-list .feature-card { min-width: 240px; max-width: 300px; background: linear-gradient(140deg, #1a060c 55%, #0d1a36 100%); padding: 1.25rem; border-radius: 10px; border: 2px solid #d0021b; box-shadow: 0 2px 18px rgba(208,2,27,0.18); flex: 0 0 auto; scroll-snap-align: start; display: flex; flex-direction: column; }
+    .how-it-works-list .feature-card .feature-icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .how-it-works-list .feature-card h3 { color: #d4af37; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+    .how-it-works-list .feature-card p { color: #e0cfc0; font-size: 0.82rem; line-height: 1.6; margin: 0; flex: 1; }
+    /* ===== INFO GRID (legacy) ===== */
     .info-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.1rem 1.25rem; }
     .info-card h3 { color: #d4af37; font-size: 0.88rem; margin: 0 0 0.5rem 0; }
     .info-card p { color: #666; font-size: 0.82rem; line-height: 1.6; margin: 0; }
@@ -689,11 +701,18 @@
         : '';
 
       app.innerHTML =
-        '<div class="info-grid">' +
-          '<div class="info-card"><h3>&#128101; Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
-          '<div class="info-card"><h3>&#9876; Who Can Join</h3><p>Any assessed player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#d4af37;">Role Assessment</a> first.</p></div>' +
-          '<div class="info-card"><h3>&#128172; Lobbies vs. Rooms</h3><p><strong style="color:#d4af37;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#d4af37;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
-          '<div class="info-card"><h3>&#128295; Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
+        '<div class="how-it-works-section">' +
+          '<h2>How it Works</h2>' +
+          '<div class="section-scroll-wrapper">' +
+            '<button class="section-scroll-btn" aria-label="Previous" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:-280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="36,9 9,24 36,39"></polygon></svg></button>' +
+            '<div class="how-it-works-list" id="howItWorksScroll">' +
+              '<div class="feature-card"><div class="feature-icon">&#128101;</div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#9876;&#65039;</div><h3>Who Can Join</h3><p>Any assessed player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#d4af37;">Role Assessment</a> first.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128172;</div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#d4af37;">Lobbies</strong> are recruiting hubs — text chat and party assembly only.<br/><br/><strong style="color:#d4af37;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128295;</div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
+            '</div>' +
+            '<button class="section-scroll-btn" aria-label="Next" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="12,9 39,24 12,39"></polygon></svg></button>' +
+          '</div>' +
         '</div>' +
         '<div class="section-head">Open Lobbies</div>' +
         '<div id="lobbyList"><div class="empty-state">Loading...</div></div>' +
