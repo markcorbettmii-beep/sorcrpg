@@ -860,7 +860,7 @@
         cursor += rnd(0.10, 0.26);
       }
       scheduleDroidProtocol();
-    }, 18, 40);
+    }, 30, 65);
   }
 
   /* ── DOORS: Halo-style sliding blast doors ───────────── */
@@ -1047,28 +1047,38 @@
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var now    = audioCtx.currentTime;
-      var steps  = rndInt(10, 18);
-      var pace   = rnd(0.55, 0.78);
-      var vol    = rnd(0.038, 0.055);
-      var rev    = makeReverb(0.20);
+      var steps  = rndInt(8, 14);
+      var pace   = rnd(0.60, 0.82);
+      var vol    = rnd(0.045, 0.065);
+      var rev    = makeReverb(0.28);
       rev.output.connect(masterGain);
       var cursor = now;
       for (var i = 0; i < steps; i++) {
         (function (t) {
+          /* Mid-body thud — bandpass centred around footfall impact */
           var src = audioCtx.createBufferSource();
-          src.buffer = makeNoiseBuf(0.08);
+          src.buffer = makeNoiseBuf(0.10);
           var bpf = audioCtx.createBiquadFilter();
-          bpf.type = 'bandpass'; bpf.frequency.value = rnd(2400, 3200); bpf.Q.value = 1.2;
+          bpf.type = 'bandpass'; bpf.frequency.value = rnd(800, 1400); bpf.Q.value = 1.0;
           var g = audioCtx.createGain();
           g.gain.setValueAtTime(vol, t);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+          /* Sub-thump layer for weight */
+          var src2 = audioCtx.createBufferSource();
+          src2.buffer = makeNoiseBuf(0.07);
+          var lpf = audioCtx.createBiquadFilter();
+          lpf.type = 'lowpass'; lpf.frequency.value = 180;
+          var g2 = audioCtx.createGain();
+          g2.gain.setValueAtTime(vol * 0.7, t);
+          g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
           src.connect(bpf); bpf.connect(g); g.connect(rev.input);
-          src.start(t);
+          src2.connect(lpf); lpf.connect(g2); g2.connect(rev.input);
+          src.start(t); src2.start(t);
         })(cursor);
         cursor += pace + rnd(-0.04, 0.06);
       }
       scheduleGridFootsteps();
-    }, 8, 20);
+    }, 18, 35);
   }
 
   /* ── START ────────────────────────────────────────────── */
