@@ -455,6 +455,7 @@ app.get('/api/notifications', authMiddleware, async (c) => {
       fellowship_incoming_count: (incoming as any)?.count || 0,
       fellowship_recently_accepted: (accepted as any)?.results || [],
       admin_invite: user.admin_invited === 1 || user.admin_invited === true,
+      gm_invite: user.gm_invited === 1 || user.gm_invited === true,
       community_points: user.community_points || 0,
       inbox_unread: (pendingMsgs as any)?.count || 0
     });
@@ -911,6 +912,53 @@ app.post('/api/admin/invitations', adminMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Failed to send invitation', details: error.message }, 500);
+  }
+});
+
+// ─── GM INVITATIONS ────────────────────────────────────────────────────────────
+
+app.post('/api/gm/invitations', authMiddleware, async (c) => {
+  const admin = c.get('user') as any;
+  if (!isPrivileged(admin)) return c.json({ error: 'Forbidden.' }, 403);
+  const { uid } = await c.req.json().catch(() => ({} as any)) as any;
+  if (!uid) return c.json({ error: 'uid required.' }, 400);
+  try {
+    await c.env.sorc_db.prepare(
+      `ALTER TABLE users ADD COLUMN gm_invited INTEGER DEFAULT 0`
+    ).run().catch(() => {});
+    const target = await c.env.sorc_db.prepare(
+      `SELECT id, role FROM users WHERE id = ? OR username = ?`
+    ).bind(uid, uid).first() as any;
+    if (!target) return c.json({ error: 'Member not found.' }, 404);
+    if (target.role === 'MASTER') return c.json({ error: 'Already a GM.' }, 400);
+    if (target.role !== 'PLAYER') return c.json({ error: 'Member must be a PLAYER first.' }, 400);
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET gm_invited = 1 WHERE id = ?`
+    ).bind(target.id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/gm/invitations/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { accept } = await c.req.json().catch(() => ({} as any)) as any;
+  await c.env.sorc_db.prepare(
+    `ALTER TABLE users ADD COLUMN gm_invited INTEGER DEFAULT 0`
+  ).run().catch(() => {});
+  const now = new Date().toISOString();
+  if (accept) {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET role = 'MASTER', sorc_role = 'GM-ADV', gm_invited = 0,
+       community_points = community_points + 500, updated_at = ? WHERE id = ?`
+    ).bind(now, user.id).run();
+    return c.json({ success: true, role: 'MASTER' });
+  } else {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET gm_invited = 0, updated_at = ? WHERE id = ?`
+    ).bind(now, user.id).run();
+    return c.json({ success: true, role: user.role });
   }
 });
 
