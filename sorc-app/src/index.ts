@@ -1443,11 +1443,13 @@ app.post('/api/box-codes/generate', authMiddleware, async (c) => {
     for (let i = 0; i < 6; i++) code += rng[i] % 10;
     code += 'BSC';
     const expiresAt = new Date(Date.now() + 2 * 86400000).toISOString();
-    // Ensure columns exist
+    // Ensure optional columns exist (ignore if already present)
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN created_by TEXT`).run().catch(() => {});
     await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN note TEXT`).run().catch(() => {});
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN created_at TEXT`).run().catch(() => {});
     await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN expires_at TEXT`).run().catch(() => {});
     await c.env.sorc_db.prepare(
-      `INSERT INTO box_set_codes (id, code, created_by, note, created_at, expires_at) VALUES (?, ?, ?, NULL, ?, ?)`
+      `INSERT INTO box_set_codes (id, code, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?)`
     ).bind(crypto.randomUUID(), code, user.id, now, expiresAt).run();
     return c.json({ success: true, code, expires_at: expiresAt });
   } catch (error: any) {
