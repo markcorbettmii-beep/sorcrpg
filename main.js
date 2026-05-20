@@ -371,7 +371,20 @@ async function checkNotifications(user) {
     var data = await res.json();
 
     // ---- Inbox badge ----
+    // pending requests + unread messages in accepted conversations
     var unread = data.inbox_unread || 0;
+    try {
+      var convRes = await fetch(SORC_API + '/api/conversations', { headers: { 'X-Auth-Key': user.authKey } });
+      if (convRes.ok) {
+        var convData = await convRes.json();
+        var convs = convData.conversations || [];
+        convs.forEach(function(conv) {
+          if (!conv.last_message_at) return;
+          var lastRead = parseInt(localStorage.getItem('sorc_conv_read_' + conv.id) || '0');
+          if (new Date(conv.last_message_at).getTime() > lastRead) unread++;
+        });
+      }
+    } catch(e) {}
 
     // ---- Fellowship badge ----
     var lastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
