@@ -1103,9 +1103,9 @@ const ASSESSMENT_QUESTIONS = [
   { q: "When rolling d100, your tens die shows 3 and your ones die shows 6. What is your result?", options: ["36", "63", "3", "6"], answer: 0, page: 1 },
   // Dice types
   { q: "The D4 is primarily used for which type of roll?", options: ["Damage", "Luck", "Initiative", "Loot"], answer: 1, page: 1 },
-  // Tokens / Lifeblood
-  { q: "Which color token represents Lifeblood (HP)?", options: ["Blue", "Red", "Yellow", "Green"], answer: 1, page: 1 },
-  { q: "In SORC, 'Lifeblood' refers to which character statistic?", options: ["Mana Points", "Stamina", "Hit Points (HP)", "Experience"], answer: 2, page: 1 },
+  // Tokens / Life
+  { q: "Which color token represents Life (HP)?", options: ["Blue", "Red", "Yellow", "Green"], answer: 1, page: 1 },
+  { q: "In SORC, 'Life' refers to which character statistic?", options: ["Mana Points", "Stamina", "Hit Points (HP)", "Experience"], answer: 2, page: 1 },
   // Abilities
   { q: "What is the maximum number of abilities a character can learn?", options: ["40", "50", "59", "75"], answer: 2, page: 2 },
   // Ranks
