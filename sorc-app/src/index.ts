@@ -1319,23 +1319,67 @@ async function claimBoxSetCode(db: D1Database, code: string, userId: string) {
     .bind(userId, now, code.toUpperCase().trim(), userId).run();
 }
 
-// ─── BOX CODE ROLE UPGRADE (PLAYER → MASTER) ──────────────────────────────────
+// ─── GM CODES (role upgrade: PLAYER → MASTER) ─────────────────────────────────
 
-app.post('/api/box-codes/redeem-upgrade', authMiddleware, async (c) => {
+async function ensureGmCodesTable(db: D1Database) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS gm_codes (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    created_by TEXT NOT NULL,
+    note TEXT,
+    used_by TEXT,
+    used_at TEXT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT
+  )`).run();
+}
+
+app.post('/api/gm-codes/generate', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  if (user.role !== 'PLAYER') {
-    return c.json({ error: user.role === 'MASTER' ? 'Already a GM.' : 'You must complete the Player Assessment first.' }, 400);
-  }
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+  await ensureGmCodesTable(c.env.sorc_db);
+  const { note, days } = await c.req.json().catch(() => ({} as any)) as any;
+  const now = new Date().toISOString();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const rng = crypto.getRandomValues(new Uint8Array(8));
+  let suffix = '';
+  for (let i = 0; i < 8; i++) suffix += chars[rng[i] % chars.length];
+  const code = 'GM-' + suffix;
+  const expireDays = (typeof days === 'number' && days > 0) ? days : 7;
+  const expiresAt = new Date(Date.now() + expireDays * 86400000).toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO gm_codes (id, code, created_by, note, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), code, user.id, note ? note.substring(0, 100) : null, now, expiresAt).run();
+  return c.json({ success: true, code, expires_at: expiresAt });
+});
+
+app.post('/api/gm-codes/redeem', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (user.role === 'MASTER') return c.json({ error: 'Already a GM.' }, 400);
+  if (user.role !== 'PLAYER') return c.json({ error: 'Complete the Player Assessment before redeeming a GM code.' }, 400);
+  await ensureGmCodesTable(c.env.sorc_db);
   const { code } = await c.req.json().catch(() => ({} as any)) as any;
   if (!code) return c.json({ error: 'GM code required.' }, 400);
-  const check = await validateBoxSetCode(c.env.sorc_db, code, user.id);
-  if (!check.valid) return c.json({ error: check.error }, 400);
-  await claimBoxSetCode(c.env.sorc_db, code, user.id);
+  const row = await c.env.sorc_db.prepare(`SELECT * FROM gm_codes WHERE code = ?`).bind(code.toUpperCase().trim()).first() as any;
+  if (!row) return c.json({ error: 'Invalid GM code.' }, 400);
+  if (row.used_by) return c.json({ error: 'This GM code has already been used.' }, 400);
+  if (row.expires_at && new Date(row.expires_at) < new Date()) return c.json({ error: 'This GM code has expired.' }, 400);
   const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`UPDATE gm_codes SET used_by = ?, used_at = ? WHERE code = ?`).bind(user.id, now, code.toUpperCase().trim()).run();
   await c.env.sorc_db.prepare(
     `UPDATE users SET role = 'MASTER', sorc_role = 'GM-ADV', community_points = community_points + 500, updated_at = ? WHERE id = ?`
   ).bind(now, user.id).run();
   return c.json({ success: true, role: 'MASTER', sorc_role: 'GM-ADV', points_awarded: 500 });
+});
+
+app.get('/api/gm-codes/generated', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+  await ensureGmCodesTable(c.env.sorc_db);
+  const rows = await c.env.sorc_db.prepare(
+    `SELECT code, note, used_by, used_at, created_at, expires_at FROM gm_codes WHERE created_by = ? ORDER BY created_at DESC LIMIT 50`
+  ).bind(user.id).all();
+  return c.json({ codes: rows.results || [] });
 });
 
 // ─── BOX CODE GENERATION (admin/owner only) ────────────────────────────────────
