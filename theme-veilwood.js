@@ -450,7 +450,7 @@
       var phrase = mults.slice(0, rndInt(4, 7)).map(function (m) {
         return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
       });
-      chirpBird(base, phrase, rnd(0.044, 0.062));
+      chirpBird(base, phrase, rnd(0.022, 0.034));
       scheduleBirdC();
     }, 12, 32);
   }
@@ -460,7 +460,7 @@
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var base = rnd(3000, 5000);
-      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.018, 0.032));
+      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.009, 0.016));
       scheduleBirdD();
     }, 4, 13);
   }
@@ -789,10 +789,130 @@
       hg.gain.exponentialRampToValueAtTime(0.0001, now + 0.50);
       hum.connect(lpf2); lpf2.connect(hg); hg.connect(masterGain);
       hum.start(now + 0.01); hum.stop(now + 0.55);
+    } else if (type === 'fire') {
+      /* Fire — roaring whoosh with crackling texture */
+      var dur = rnd(1.0, 1.8);
+      var src = oneshotNoise(dur + 0.2);
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = rnd(320, 560);
+      var g = makeGain(0);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(rnd(0.055, 0.090), now + 0.08);
+      g.gain.setValueAtTime(rnd(0.040, 0.070), now + dur * 0.4);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
+      src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+      src.start(now);
+      /* Crackle layer - high bandpass burst */
+      var crk = oneshotNoise(dur * 0.6);
+      var bpf = audioCtx.createBiquadFilter();
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(1800, 2800); bpf.Q.value = 0.6;
+      var cg = makeGain(0);
+      cg.gain.setValueAtTime(0, now + 0.05);
+      cg.gain.linearRampToValueAtTime(rnd(0.018, 0.030), now + 0.18);
+      cg.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.7);
+      crk.connect(bpf); bpf.connect(cg); cg.connect(masterGain);
+      crk.start(now + 0.05);
+      /* Rising harmonic — hot air shimmer */
+      var hiss = audioCtx.createOscillator();
+      hiss.type = 'sawtooth';
+      hiss.frequency.setValueAtTime(rnd(140, 200), now);
+      hiss.frequency.linearRampToValueAtTime(rnd(320, 440), now + dur * 0.6);
+      allSources.push(hiss);
+      var hlpf = audioCtx.createBiquadFilter();
+      hlpf.type = 'lowpass'; hlpf.frequency.value = 320;
+      var hg = makeGain(0);
+      hg.gain.setValueAtTime(0, now);
+      hg.gain.linearRampToValueAtTime(rnd(0.008, 0.014), now + 0.12);
+      hg.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.75);
+      hiss.connect(hlpf); hlpf.connect(hg); hg.connect(masterGain);
+      hiss.start(now); hiss.stop(now + dur);
+    } else if (type === 'ice') {
+      /* Ice — high crystalline shimmer with cold resonance */
+      var dur = rnd(0.8, 1.4);
+      [rnd(2400, 3200), rnd(3200, 4200), rnd(4200, 5600)].forEach(function (freq, i) {
+        var o = audioCtx.createOscillator();
+        o.type = 'sine'; o.frequency.value = freq;
+        allSources.push(o);
+        var g = makeGain(0);
+        var peak = rnd(0.008, 0.014) / (i + 1);
+        g.gain.setValueAtTime(peak * 0.8, now + i * 0.04);
+        g.gain.linearRampToValueAtTime(peak, now + i * 0.04 + 0.06);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur + i * 0.06);
+        o.connect(g); g.connect(masterGain);
+        o.start(now + i * 0.04); o.stop(now + dur + i * 0.08 + 0.1);
+      });
+      /* Shatter noise burst */
+      var shard = oneshotNoise(0.18);
+      var hpf = audioCtx.createBiquadFilter();
+      hpf.type = 'highpass'; hpf.frequency.value = rnd(3500, 5000);
+      var sg = makeGain(0);
+      sg.gain.setValueAtTime(rnd(0.018, 0.030), now);
+      sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+      shard.connect(hpf); hpf.connect(sg); sg.connect(masterGain);
+      shard.start(now);
+    } else if (type === 'wind') {
+      /* Wind spell — rushing bandpass noise swells */
+      var dur = rnd(1.2, 2.0);
+      var src = oneshotNoise(dur + 0.3);
+      var bpf = audioCtx.createBiquadFilter();
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(600, 1200); bpf.Q.value = rnd(0.5, 1.0);
+      var g = makeGain(0);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(rnd(0.035, 0.060), now + dur * 0.25);
+      g.gain.setValueAtTime(rnd(0.030, 0.052), now + dur * 0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.2);
+      src.connect(bpf); bpf.connect(g); g.connect(masterGain);
+      src.start(now);
+      /* Whistling overtone */
+      var whistle = audioCtx.createOscillator();
+      whistle.type = 'sine';
+      var wBase = rnd(420, 680);
+      whistle.frequency.setValueAtTime(wBase, now);
+      whistle.frequency.linearRampToValueAtTime(wBase * rnd(1.12, 1.28), now + dur * 0.55);
+      whistle.frequency.linearRampToValueAtTime(wBase * rnd(0.88, 0.96), now + dur + 0.1);
+      allSources.push(whistle);
+      var wg = makeGain(0);
+      wg.gain.setValueAtTime(0, now);
+      wg.gain.linearRampToValueAtTime(rnd(0.007, 0.013), now + dur * 0.3);
+      wg.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
+      whistle.connect(wg); wg.connect(masterGain);
+      whistle.start(now); whistle.stop(now + dur + 0.2);
+    } else if (type === 'earth') {
+      /* Earth — deep rumble with stone crack */
+      var dur = rnd(0.8, 1.4);
+      var rumble = oneshotNoise(dur + 0.2);
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = rnd(120, 220);
+      var g = makeGain(0);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(rnd(0.065, 0.100), now + 0.06);
+      g.gain.setValueAtTime(rnd(0.050, 0.080), now + dur * 0.45);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
+      rumble.connect(lpf); lpf.connect(g); g.connect(masterGain);
+      rumble.start(now);
+      /* Low sub thud */
+      var sub = audioCtx.createOscillator();
+      sub.type = 'sine'; sub.frequency.value = rnd(48, 72);
+      allSources.push(sub);
+      var sg = makeGain(0);
+      sg.gain.setValueAtTime(0, now);
+      sg.gain.linearRampToValueAtTime(rnd(0.035, 0.055), now + 0.04);
+      sg.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.7);
+      sub.connect(sg); sg.connect(masterGain);
+      sub.start(now); sub.stop(now + dur);
+      /* Stone crack — mid bandpass snap */
+      var crack = oneshotNoise(0.14);
+      var bpf = audioCtx.createBiquadFilter();
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(380, 620); bpf.Q.value = 1.5;
+      var cg = makeGain(0);
+      cg.gain.setValueAtTime(rnd(0.025, 0.040), now + 0.02);
+      cg.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+      crack.connect(bpf); bpf.connect(cg); cg.connect(masterGain);
+      crack.start(now + 0.02);
     }
   }
 
-  var SPELL_TYPES = ['arcane', 'dark', 'heal', 'lightning'];
+  var SPELL_TYPES = ['arcane', 'dark', 'heal', 'lightning', 'fire', 'ice', 'wind', 'earth'];
   function scheduleSpell() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -818,6 +938,156 @@
       src.start(now);
       scheduleLeafRustle();
     }, 8, 20);
+  }
+
+  /* ─── WOODPECKER ─────────────────────────────────────────────
+     Rapid staccato drumming — real woodpeckers hit 18-25 taps/sec.
+     Bandpass noise at 2800-4200Hz, each tap ~18-22ms.            */
+  function playWoodpecker() {
+    var now = audioCtx.currentTime;
+    var tapRate = rnd(18, 25);
+    var tapCount = rndInt(12, 28);
+    var tapDur = 0.020;
+    var tapGain = rnd(0.028, 0.048);
+    var tapFreq = rnd(2800, 4200);
+    /* Two short bursts with a small pause — more realistic */
+    var burstSplit = Math.floor(tapCount * rnd(0.4, 0.6));
+    var pauseGap = rnd(0.18, 0.45);
+    for (var i = 0; i < tapCount; i++) {
+      (function (idx) {
+        var offset = idx < burstSplit
+          ? idx / tapRate
+          : burstSplit / tapRate + pauseGap + (idx - burstSplit) / tapRate;
+        var src = oneshotNoise(tapDur + 0.01);
+        var bpf = audioCtx.createBiquadFilter();
+        bpf.type = 'bandpass';
+        bpf.frequency.value = tapFreq * rnd(0.94, 1.06);
+        bpf.Q.value = rnd(4.0, 7.0);
+        var g = audioCtx.createGain();
+        var v = tapGain * rnd(0.82, 1.18);
+        g.gain.setValueAtTime(v, now + offset);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + offset + tapDur);
+        src.connect(bpf); bpf.connect(g); g.connect(masterGain);
+        src.start(now + offset);
+      })(i);
+    }
+  }
+
+  function scheduleWoodpecker() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playWoodpecker();
+      scheduleWoodpecker();
+    }, 18, 55);
+  }
+
+  /* ─── WOLF HOWL ──────────────────────────────────────────────
+     Rising frequency with vibrato, sustained then fall. Eerie.  */
+  function playWolfHowl() {
+    var now = audioCtx.currentTime;
+    var dur = rnd(2.5, 4.5);
+    var baseFreq = rnd(320, 420);
+    var peakFreq = baseFreq * rnd(2.2, 2.8);
+    /* Fundamental */
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.linearRampToValueAtTime(peakFreq, now + dur * 0.35);
+    osc.frequency.setValueAtTime(peakFreq, now + dur * 0.65);
+    osc.frequency.linearRampToValueAtTime(peakFreq * rnd(0.72, 0.82), now + dur);
+    allSources.push(osc);
+    /* Vibrato LFO */
+    var lfo = audioCtx.createOscillator();
+    lfo.frequency.value = rnd(4.5, 6.5);
+    var lfoDepth = makeGain(peakFreq * 0.018);
+    lfo.connect(lfoDepth); lfoDepth.connect(osc.frequency);
+    lfo.start(now + dur * 0.28); lfo.stop(now + dur + 0.1);
+    allSources.push(lfo);
+    /* Gain envelope */
+    var g = makeGain(0);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(rnd(0.032, 0.052), now + dur * 0.18);
+    g.gain.setValueAtTime(rnd(0.030, 0.048), now + dur * 0.72);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.3);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(now); osc.stop(now + dur + 0.4);
+    /* Harmonic 2 — adds body */
+    var osc2 = audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(baseFreq * 2, now);
+    osc2.frequency.linearRampToValueAtTime(peakFreq * 2, now + dur * 0.35);
+    osc2.frequency.setValueAtTime(peakFreq * 2, now + dur * 0.65);
+    osc2.frequency.linearRampToValueAtTime(peakFreq * 1.55, now + dur);
+    allSources.push(osc2);
+    var g2 = makeGain(0);
+    g2.gain.setValueAtTime(0, now);
+    g2.gain.linearRampToValueAtTime(rnd(0.010, 0.018), now + dur * 0.22);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
+    osc2.connect(g2); g2.connect(masterGain);
+    osc2.start(now); osc2.stop(now + dur + 0.2);
+    /* Breathiness — narrow bandpass noise */
+    var breath = oneshotNoise(dur * 0.7);
+    var bpf = audioCtx.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = peakFreq * 0.8; bpf.Q.value = 1.8;
+    var bg = makeGain(0);
+    bg.gain.setValueAtTime(0, now + dur * 0.15);
+    bg.gain.linearRampToValueAtTime(rnd(0.006, 0.010), now + dur * 0.4);
+    bg.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.85);
+    breath.connect(bpf); bpf.connect(bg); bg.connect(masterGain);
+    breath.start(now + dur * 0.15);
+  }
+
+  function scheduleWolfHowl() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playWolfHowl();
+      scheduleWolfHowl();
+    }, 45, 120);
+  }
+
+  /* ─── BEAR ROAR ──────────────────────────────────────────────
+     Deep sawtooth + noise, very low base freq, rough growl.     */
+  function playBearRoar() {
+    var now = audioCtx.currentTime;
+    var dur = rnd(1.2, 2.2);
+    var baseFreq = rnd(65, 100);
+    /* Sawtooth core — raw growl */
+    [1, 1.52, 2.1].forEach(function (mult, i) {
+      var osc = audioCtx.createOscillator();
+      osc.type = i === 0 ? 'sawtooth' : 'triangle';
+      osc.frequency.setValueAtTime(baseFreq * mult * rnd(0.97, 1.03), now);
+      osc.frequency.linearRampToValueAtTime(baseFreq * mult * rnd(0.82, 0.92), now + dur);
+      allSources.push(osc);
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = i === 0 ? 320 : 560;
+      var g = makeGain(0);
+      var peak = (rnd(0.045, 0.075) / (i + 1));
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(peak, now + 0.06);
+      g.gain.setValueAtTime(peak * rnd(0.85, 1.0), now + dur * 0.55);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
+      osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + dur + 0.2);
+    });
+    /* Noise texture — chest cavity roughness */
+    var src = oneshotNoise(dur + 0.2);
+    var bpf = audioCtx.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = rnd(180, 320); bpf.Q.value = rnd(0.6, 1.2);
+    var ng = makeGain(0);
+    ng.gain.setValueAtTime(0, now);
+    ng.gain.linearRampToValueAtTime(rnd(0.020, 0.036), now + 0.08);
+    ng.gain.setValueAtTime(rnd(0.016, 0.028), now + dur * 0.5);
+    ng.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
+    src.connect(bpf); bpf.connect(ng); ng.connect(masterGain);
+    src.start(now);
+  }
+
+  function scheduleBearRoar() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playBearRoar();
+      scheduleBearRoar();
+    }, 60, 150);
   }
 
   /* ─── START ──────────────────────────────────────────────────
@@ -853,6 +1123,7 @@
     scheduleBirdC();                /* song:   ~12-32s         */
     scheduleLeafRustle();           /* rustle: ~8-20s          */
     scheduleForestFootstep();       /* soft hoof: ~14-40s      */
+    scheduleWoodpecker();           /* tapping: ~18-55s        */
 
     /* Harp — first pluck very early, like the scene fading in */
     at(rnd(4, 8), function () { playHarp(); });
@@ -899,6 +1170,12 @@
 
     /* Flute third phrase — then ongoing random */
     at(rnd(100, 118), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
+
+    /* Wolf howl — distant, rare, first heard after a minute */
+    at(rnd(65, 110), function () { playWolfHowl(); scheduleWolfHowl(); });
+
+    /* Bear roar — very rare, deep in the forest */
+    at(rnd(80, 140), function () { playBearRoar(); scheduleBearRoar(); });
 
     audioStarted = true;
   }
