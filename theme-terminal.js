@@ -740,17 +740,9 @@
           ng.gain.setValueAtTime(vol, t);
           ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
           nSrc.connect(bpf); bpf.connect(ng);
-          ng.connect(masterGain);   /* dry */
-          ng.connect(rev.input);    /* wet send */
+          ng.connect(masterGain);
+          ng.connect(rev.input);
           nSrc.start(t);
-          /* metallic grid ring — hollow steel decay */
-          var rOsc = audioCtx.createOscillator();
-          rOsc.type = 'sine'; rOsc.frequency.value = rnd(1800, 3200);
-          var rg = audioCtx.createGain();
-          rg.gain.setValueAtTime(vol * 0.55, t + 0.004);
-          rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
-          rOsc.connect(rg); rg.connect(rev.input);
-          rOsc.start(t + 0.004); rOsc.stop(t + 0.42);
           /* high-freq heel click on grating */
           var cSrc = audioCtx.createBufferSource();
           cSrc.buffer = makeNoiseBuf(0.03);
@@ -813,57 +805,31 @@
     }, 25, 60);
   }
 
-  /* ── DROIDS: C-3PO style — wordy harmonic chatter ───── */
+  /* ── DROIDS: C-3PO style — short electronic beep chatter ── */
   function scheduleDroidProtocol() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
       if (Math.random() > 0.85) { scheduleDroidProtocol(); return; }
       var now    = audioCtx.currentTime;
       var cursor = now;
-      /* 3–7 "syllables" — pairs of harmonically related tones */
-      var syllables = rndInt(3, 7);
-      for (var s = 0; s < syllables; s++) {
-        (function (t, si) {
-          var root = rnd(1400, 2800);
-          var dur  = rnd(0.06, 0.18);
-          /* fundamental */
-          var o1 = audioCtx.createOscillator();
-          o1.type = 'sine';
-          o1.frequency.setValueAtTime(root, t);
-          o1.frequency.linearRampToValueAtTime(root * rnd(0.88, 1.14), t + dur);
-          var g1 = audioCtx.createGain();
-          g1.gain.setValueAtTime(0, t);
-          g1.gain.linearRampToValueAtTime(0.038, t + 0.012);
-          g1.gain.setValueAtTime(0.038, t + dur - 0.015);
-          g1.gain.linearRampToValueAtTime(0, t + dur + 0.018);
-          o1.connect(g1); g1.connect(masterGain);
-          o1.start(t); o1.stop(t + dur + 0.03);
-          /* 2nd harmonic — gives the "metallic throat" quality */
-          var o2 = audioCtx.createOscillator();
-          o2.type = 'triangle';
-          o2.frequency.setValueAtTime(root * 2.03, t);
-          o2.frequency.linearRampToValueAtTime(root * 2.03 * rnd(0.91, 1.09), t + dur);
-          var g2 = audioCtx.createGain();
-          g2.gain.setValueAtTime(0, t);
-          g2.gain.linearRampToValueAtTime(0.018, t + 0.012);
-          g2.gain.setValueAtTime(0.018, t + dur - 0.015);
-          g2.gain.linearRampToValueAtTime(0, t + dur + 0.018);
-          o2.connect(g2); g2.connect(masterGain);
-          o2.start(t); o2.stop(t + dur + 0.03);
-          /* occasional flustered high squeak between syllables */
-          if (Math.random() > 0.65) {
-            var sq = audioCtx.createOscillator();
-            sq.type = 'sine';
-            sq.frequency.setValueAtTime(root * 3.5, t + dur + 0.02);
-            sq.frequency.exponentialRampToValueAtTime(root * 2.1, t + dur + 0.07);
-            var sqg = audioCtx.createGain();
-            sqg.gain.setValueAtTime(0.024, t + dur + 0.02);
-            sqg.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.08);
-            sq.connect(sqg); sqg.connect(masterGain);
-            sq.start(t + dur + 0.02); sq.stop(t + dur + 0.1);
-          }
-        })(cursor, s);
-        cursor += rnd(0.10, 0.26);
+      var beeps  = rndInt(3, 8);
+      for (var s = 0; s < beeps; s++) {
+        (function (t) {
+          var freq = rnd(1800, 3600);
+          var dur  = rnd(0.03, 0.09);
+          var osc  = audioCtx.createOscillator();
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          var lpf = audioCtx.createBiquadFilter();
+          lpf.type = 'lowpass'; lpf.frequency.value = freq * 1.4;
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(0.042, t);
+          g.gain.setValueAtTime(0.042, t + dur - 0.006);
+          g.gain.linearRampToValueAtTime(0, t + dur + 0.008);
+          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+          osc.start(t); osc.stop(t + dur + 0.012);
+        })(cursor);
+        cursor += rnd(0.06, 0.18);
       }
       scheduleDroidProtocol();
     }, 6, 18);
