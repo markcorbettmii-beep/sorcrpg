@@ -188,6 +188,8 @@
     @keyframes ghost-fade { 0% { opacity: 0.45; } 75% { opacity: 0.2; } 100% { opacity: 0; } }
     .member-row-ghost { animation: ghost-fade 4s ease-out forwards; pointer-events: none; }
     .departure-notice { font-style: italic; color: #3a3a3a; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+    .activity-notice { font-style: italic; color: #2e2e2e; font-size: 0.74rem; padding: 0.1rem 0.5rem; opacity: 0.6; }
+    .world-msg.is-activity { opacity: 0.38; font-style: italic; font-size: 0.74rem; }
     .member-name-btn { background: none; border: none; padding: 0; color: #d4af37; font-size: 0.88rem; font-weight: bold; cursor: pointer; font-family: inherit; text-align: left; }
     .member-name-btn:hover { text-decoration: underline; }
     .member-name-wrap { position: relative; display: inline-flex; align-items: center; gap: 0.25rem; }
@@ -546,7 +548,8 @@
     var isCreator = false;
     var hasGMRights = false;
     var currentRooms = [];
-    var prevMemberMap = {};  // uid → member snapshot, for departure detection
+    var prevMemberMap = {};   // uid → member snapshot, for departure detection
+    var abandonedUids = new Set(); // uids that abandoned (show no ghost, different text)
 
     // ===== JOINED LOBBY TRACKING =====
     function trackJoinedLobby(lobbyId) {
@@ -561,6 +564,13 @@
         var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
         return !!joined[lobbyId];
       } catch(e) { return false; }
+    }
+    function removeJoinedLobby(lobbyId) {
+      try {
+        var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
+        delete joined[lobbyId];
+        localStorage.setItem('sorc_joined_lobbies', JSON.stringify(joined));
+      } catch(e) {}
     }
     function markLobbyBanned(lobbyId) {
       try {
@@ -1081,7 +1091,10 @@
 
       var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
       var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
-      var leaveBtn = '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>';
+      var leaveBtn = isCreator
+        ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>'
+        : '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="leaveLobby()" title="Step away — you can return at will.">Leave</button>' +
+          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="abandonLobby()" title="Remove yourself permanently — you will need to rejoin.">Abandon</button>';
       var deleteBtn = hasGMRights ? '<button class="leave-btn" style="border-color:#5a1a1a;" onclick="deleteLobby()">Close Lobby</button>' : '';
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
@@ -1331,15 +1344,15 @@
       if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
     }
 
-    function notifyDeparture(name) {
+    function notifyDeparture(text) {
       var msgEl = document.getElementById('worldChatMessages');
       if (!msgEl) return;
       var notice = document.createElement('div');
-      notice.className = 'world-msg departure-notice';
-      notice.innerHTML = '&#8617; ' + esc(name) + ' left the lobby';
+      notice.className = 'world-msg activity-notice';
+      notice.textContent = text.replace(/^⬡\s*/, '');
       msgEl.appendChild(notice);
       if (msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 60) msgEl.scrollTop = msgEl.scrollHeight;
-      setTimeout(function() { if (notice.parentNode) notice.parentNode.removeChild(notice); }, 8000);
+      setTimeout(function() { if (notice.parentNode) notice.parentNode.removeChild(notice); }, 10000);
     }
 
     async function refreshMembers() {
@@ -1400,21 +1413,37 @@
         var countEl = document.querySelector('.members-head span');
         if (countEl) countEl.textContent = 'Members (' + data.members.length + ')';
 
-        // Ghost rows + world chat notices for departed members
+        // Ghost rows + departure notices for departed members
         departed.forEach(function(m) {
           var name = m.display_name || m.username || 'Unknown';
-          var initials = name.charAt(0).toUpperCase();
-          var ghost = document.createElement('div');
-          ghost.className = 'member-row member-row-ghost';
-          ghost.innerHTML =
-            '<div class="member-avatar" style="opacity:0.4;">' + initials + '</div>' +
-            '<div class="member-info">' +
-              '<span style="text-decoration:line-through;color:#444;font-size:0.85rem;">' + esc(name) + '</span>' +
-              '<div style="font-size:0.68rem;color:#333;margin-top:1px;">left the lobby</div>' +
-            '</div>';
-          membersEl.appendChild(ghost);
-          setTimeout(function() { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 4000);
-          notifyDeparture(name);
+          var isAbandon = abandonedUids.has(m.user_id);
+          if (!isAbandon) {
+            var initials = name.charAt(0).toUpperCase();
+            var ghost = document.createElement('div');
+            ghost.className = 'member-row member-row-ghost';
+            ghost.innerHTML =
+              '<div class="member-avatar" style="opacity:0.4;">' + initials + '</div>' +
+              '<div class="member-info">' +
+                '<span style="text-decoration:line-through;color:#444;font-size:0.85rem;">' + esc(name) + '</span>' +
+                '<div style="font-size:0.68rem;color:#333;margin-top:1px;">left the lobby</div>' +
+              '</div>';
+            membersEl.appendChild(ghost);
+            setTimeout(function() { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 4000);
+          }
+          if (isAbandon) abandonedUids.delete(m.user_id);
+          var activityText = isAbandon
+            ? '⬡ ' + name + ' has abandoned the lobby.'
+            : '⬡ ' + name + ' has left the lobby and may return at will.';
+          if (isCreator && currentUser) {
+            // Host posts to world chat so all members see it persistently
+            fetch(API_URL + '/api/world-chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+              body: JSON.stringify({ body: activityText })
+            }).then(function() { loadWorldChat(); }).catch(function(){});
+          } else {
+            notifyDeparture(activityText);
+          }
         });
       } catch(e) {}
     }
@@ -1687,6 +1716,22 @@
       } catch(e) { backToList(); }
     };
 
+    window.abandonLobby = async function() {
+      if (!confirm('Abandon this lobby? You will be removed entirely and will need to rejoin to return.')) return;
+      if (!currentLobby || !currentUser) return;
+      var lobbyId = currentLobby.id;
+      abandonedUids.add(currentUser.id);
+      removeJoinedLobby(lobbyId);
+      sessionStorage.removeItem('activeLobbyId');
+      try {
+        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
+          method: 'POST',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+      } catch(e) {}
+      backToList();
+    };
+
     window.deleteLobby = async function() {
       if (!confirm('Close this lobby? A new lobby code will be generated, visible only to the new host. This cannot be undone.')) return;
       if (!currentLobby) return;
@@ -1798,7 +1843,9 @@
               ? '<a href="char-sheet.html?username=' + respondMatch[1] + '" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128196;</a>'
               : '';
             var rawBody = m.body || '';
+            var isActivity = rawBody.startsWith('⬡ ');
             if (respondMatch) rawBody = rawBody.replace(/^📋\s*/, '').replace(/\s*[—\-]+\s*https?:\/\/\S+$/, '');
+            if (isActivity) rawBody = rawBody.replace(/^⬡\s*/, '');
             var bodyHtml = parseWorldBody(rawBody, m.id);
             var isSelf = currentUser && m.sender_uid === currentUser.id;
             var hostLobbyId = (currentLobby && isCreator) ? currentLobby.id : myActiveLobbyId;
@@ -1813,6 +1860,9 @@
               '</span>';
             } else {
               nameEl = '<span class="' + nameClass + '">' + esc(m.sender_name || 'Unknown') + '</span>';
+            }
+            if (isActivity) {
+              return '<div class="world-msg is-activity">&#8894; ' + bodyHtml + '<span class="wmsg-time">' + timeAgo(m.created_at) + '</span></div>';
             }
             return '<div class="world-msg">' +
               nameEl +
