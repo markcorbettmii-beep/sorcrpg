@@ -1042,6 +1042,35 @@
     }, 30, 70);
   }
 
+  /* ── FOOTSTEPS: pressure-pop on metal deck ──────────── */
+  function scheduleGridFootsteps() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now    = audioCtx.currentTime;
+      var steps  = rndInt(10, 18);
+      var pace   = rnd(0.55, 0.78);
+      var vol    = rnd(0.038, 0.055);
+      var rev    = makeReverb(0.20);
+      rev.output.connect(masterGain);
+      var cursor = now;
+      for (var i = 0; i < steps; i++) {
+        (function (t) {
+          var src = audioCtx.createBufferSource();
+          src.buffer = makeNoiseBuf(0.08);
+          var bpf = audioCtx.createBiquadFilter();
+          bpf.type = 'bandpass'; bpf.frequency.value = rnd(2400, 3200); bpf.Q.value = 1.2;
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(vol, t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+          src.connect(bpf); bpf.connect(g); g.connect(rev.input);
+          src.start(t);
+        })(cursor);
+        cursor += pace + rnd(-0.04, 0.06);
+      }
+      scheduleGridFootsteps();
+    }, 8, 20);
+  }
+
   /* ── START ────────────────────────────────────────────── */
   function startAudio() {
     if (audioStarted) return;
@@ -1087,6 +1116,9 @@
     /* Droids — rare */
     scheduleDroidPowerUp();
     scheduleDroidHeavyWalk();
+
+    /* Footsteps */
+    scheduleGridFootsteps();
 
     /* Doors & teleporter */
     scheduleSciFiDoor();
