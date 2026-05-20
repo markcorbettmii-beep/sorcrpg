@@ -85,6 +85,10 @@
     .row-join-btn { padding: 5px 14px; background: #d0021b; color: #fff; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
     .row-join-btn:hover { background: #a50013; }
     .row-join-btn:disabled { background: #2a2a2a; color: #555; cursor: default; }
+    .row-msg-host-btn { padding: 4px 10px; background: none; border: 1px solid #555; color: #aaa; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+    .row-msg-host-btn:hover { border-color: #d4af37; color: #d4af37; }
+    .lobby-btn-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 120px; }
+    .lobby-hint { font-size: 0.68rem; color: #555; text-align: right; max-width: 160px; line-height: 1.3; }
     .empty-state { text-align: center; padding: 2.5rem; color: #444; font-size: 0.88rem; }
     .locked-row { opacity: 0.6; cursor: default; }
     .needs-assess-note { background: #1a0d00; border: 1px solid #5a3000; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; color: #c87d00; font-size: 0.88rem; }
@@ -777,26 +781,69 @@
             : '';
           var isBanned = isLobbyBanned(l.id);
           var isJoined = !!(l.is_member) || hasJoinedLobby(l.id) || isCreatorOfLobby;
-          var joinBtn = isBanned ? '' : isJoined
-            ? '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined</button>'
-            : isFull
-              ? '<button class="row-join-btn" disabled>Full</button>'
-              : l.is_private
-                ? '<button class="row-join-btn" style="background:#d0021b;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>'
-                : '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>';
+          var maxM = l.max_members || 20;
+          var hostUid = l.creator_uid || '';
+          var canSummon = isCreatorOfLobby && !isJoined;
+          var btnHtml, hintHtml;
+          if (isBanned) {
+            btnHtml = ''; hintHtml = '';
+          } else if (isJoined) {
+            btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined</button>';
+            hintHtml = '<span class="lobby-hint">You are a member of this lobby. Enter at will.</span>';
+          } else if (isFull) {
+            btnHtml = '<button class="row-join-btn" disabled>Full</button>';
+            hintHtml = '<span class="lobby-hint">Cannot join — lobby has ' + maxM + ' members.</span>';
+          } else if (l.is_private) {
+            btnHtml = '<button class="row-join-btn" style="background:#d0021b;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>'
+              + (hostUid ? ' <a class="row-msg-host-btn" href="inbox.html?to=' + esc(hostUid) + '" onclick="event.stopPropagation();">Message Host</a>' : '');
+            hintHtml = '<span class="lobby-hint">Message Host to join by code or summon.</span>';
+          } else {
+            btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>';
+            hintHtml = '<span class="lobby-hint">Join open lobby.</span>';
+          }
           return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
             '<div class="lobby-row-info">' +
               '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
-              '<p>Host: ' + esc(l.creator_name || 'Unknown') + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + (l.max_members||20) + ' members' + codeSnip + '</p>' +
+              '<p>Host: ' + esc(l.creator_name || 'Unknown') + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + maxM + ' members' + codeSnip + '</p>' +
             '</div>' +
             '<div class="lobby-row-right">' +
-              joinBtn +
+              '<div class="lobby-btn-col">' + btnHtml + hintHtml + '</div>' +
             '</div>' +
           '</div>';
-        }).join('');
+        }).join('') + buildPlaceholderLobbies();
       } catch(e) {
-        if (listEl) listEl.innerHTML = '<div class="empty-state">Could not load lobbies.</div>';
+        if (listEl) listEl.innerHTML = '<div class="empty-state">Could not load lobbies.</div>' + buildPlaceholderLobbies();
       }
+    }
+
+    function buildPlaceholderLobbies() {
+      return '<div style="font-size:0.68rem;color:#3a3a3a;text-transform:uppercase;letter-spacing:0.1em;margin:1.2rem 0 0.5rem 0.1rem;">Example Lobbies</div>' +
+        /* Full lobby — Corby host */
+        '<div class="lobby-row" style="opacity:0.55;pointer-events:none;">' +
+          '<div class="lobby-row-info">' +
+            '<h3>The Siege of Veilmark &#128512;</h3>' +
+            '<p>Host: Corby &nbsp;&middot;&nbsp; 20/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Module .004</em></p>' +
+          '</div>' +
+          '<div class="lobby-row-right">' +
+            '<div class="lobby-btn-col">' +
+              '<button class="row-join-btn" disabled>Full</button>' +
+              '<span class="lobby-hint">Cannot join — lobby has 20 members.</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        /* Private lobby — Clod host */
+        '<div class="lobby-row" style="opacity:0.55;pointer-events:none;">' +
+          '<div class="lobby-row-info">' +
+            '<h3>Crown of Zailister &#128274;</h3>' +
+            '<p>Host: Clod &nbsp;&middot;&nbsp; 4/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Private</em></p>' +
+          '</div>' +
+          '<div class="lobby-row-right">' +
+            '<div class="lobby-btn-col">' +
+              '<button class="row-join-btn" style="background:#d0021b;color:#fff;">Join</button>' +
+              '<span class="lobby-hint">Message Host to join by code or summon.</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
     }
 
     // ===== CREATE =====
@@ -1274,6 +1321,8 @@
             actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')">Kick</button>';
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
+          if (!isSelf) actBtns += '<a class="member-act-btn" href="inbox.html?to=' + esc(m.user_id) + '" title="Message this player">&#9993;</a>';
+          if (isCreator && !isSelf) actBtns += '<button class="member-act-btn" style="color:#d4b8ff;border-color:#5030a0;" onclick="summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby.id) + '\')" title="Summon">&#9889; Summon</button>';
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
           var sheetIcon = '<a href="' + esc(sheetHref) + '" title="View Character Sheet" style="color:#aaa;font-size:0.8rem;margin-left:0.3rem;text-decoration:none;vertical-align:middle;">&#128196;</a>';
