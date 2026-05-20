@@ -450,7 +450,7 @@
       var phrase = mults.slice(0, rndInt(4, 7)).map(function (m) {
         return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
       });
-      chirpBird(base, phrase, rnd(0.022, 0.034));
+      chirpBird(base, phrase, rnd(0.008, 0.014));
       scheduleBirdC();
     }, 12, 32);
   }
@@ -460,7 +460,7 @@
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var base = rnd(3000, 5000);
-      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.009, 0.016));
+      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.003, 0.007));
       scheduleBirdD();
     }, 4, 13);
   }
@@ -977,14 +977,17 @@
     }, 18, 55);
   }
 
-  /* ─── WOLF HOWL ──────────────────────────────────────────────
-     Rising frequency with vibrato, sustained then fall. Eerie.  */
-  function playWolfHowl() {
+  /* ─── HOWLER ─────────────────────────────────────────────────
+     Howler monkey — very distant, deep in the canopy.
+     Heavy LPF + low gain so it sounds far away through trees.   */
+  function playHowler() {
     var now = audioCtx.currentTime;
     var dur = rnd(2.5, 4.5);
     var baseFreq = rnd(320, 420);
     var peakFreq = baseFreq * rnd(2.2, 2.8);
-    /* Fundamental */
+    /* Distance LPF — cuts highs so it sounds far away */
+    var distLpf = audioCtx.createBiquadFilter();
+    distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(420, 600);
     var osc = audioCtx.createOscillator();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(baseFreq, now);
@@ -992,45 +995,88 @@
     osc.frequency.setValueAtTime(peakFreq, now + dur * 0.65);
     osc.frequency.linearRampToValueAtTime(peakFreq * rnd(0.72, 0.82), now + dur);
     allSources.push(osc);
-    /* Vibrato LFO */
     var lfo = audioCtx.createOscillator();
     lfo.frequency.value = rnd(4.5, 6.5);
-    var lfoDepth = makeGain(peakFreq * 0.018);
+    var lfoDepth = makeGain(peakFreq * 0.014);
     lfo.connect(lfoDepth); lfoDepth.connect(osc.frequency);
     lfo.start(now + dur * 0.28); lfo.stop(now + dur + 0.1);
     allSources.push(lfo);
-    /* Gain envelope */
+    var g = makeGain(0);
+    /* Very low gain — distant through jungle */
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(rnd(0.008, 0.014), now + dur * 0.18);
+    g.gain.setValueAtTime(rnd(0.007, 0.012), now + dur * 0.72);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.3);
+    osc.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
+    osc.start(now); osc.stop(now + dur + 0.4);
+  }
+
+  function scheduleHowler() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playHowler();
+      scheduleHowler();
+    }, 45, 120);
+  }
+
+  /* ─── WOLF HOWL ──────────────────────────────────────────────
+     Real wolf: low raw tone rising to mid, slight wobble only,
+     breathy sawtooth harmonics, no fast vibrato.               */
+  function playWolfHowl() {
+    var now = audioCtx.currentTime;
+    var dur = rnd(3.0, 5.5);
+    var startFreq = rnd(160, 240);
+    var peakFreq  = startFreq * rnd(2.4, 3.2);  /* ~420-700Hz peak */
+    var endFreq   = peakFreq * rnd(0.78, 0.90);
+    /* Sawtooth for harmonic richness — wolves aren't pure sine */
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.linearRampToValueAtTime(peakFreq, now + dur * 0.22);
+    osc.frequency.setValueAtTime(peakFreq, now + dur * 0.70);
+    osc.frequency.linearRampToValueAtTime(endFreq, now + dur);
+    allSources.push(osc);
+    /* Slow wobble LFO — very shallow, 0.8-1.6 Hz, not fast vibrato */
+    var lfo = audioCtx.createOscillator();
+    lfo.frequency.value = rnd(0.8, 1.6);
+    var lfoDepth = makeGain(peakFreq * 0.025);
+    lfo.connect(lfoDepth); lfoDepth.connect(osc.frequency);
+    lfo.start(now + dur * 0.20); lfo.stop(now + dur + 0.1);
+    allSources.push(lfo);
+    /* Warm LPF — wolfs aren't shrill */
+    var lpf = audioCtx.createBiquadFilter();
+    lpf.type = 'lowpass'; lpf.frequency.value = rnd(900, 1400);
     var g = makeGain(0);
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(rnd(0.032, 0.052), now + dur * 0.18);
-    g.gain.setValueAtTime(rnd(0.030, 0.048), now + dur * 0.72);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.3);
-    osc.connect(g); g.connect(masterGain);
-    osc.start(now); osc.stop(now + dur + 0.4);
-    /* Harmonic 2 — adds body */
-    var osc2 = audioCtx.createOscillator();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(baseFreq * 2, now);
-    osc2.frequency.linearRampToValueAtTime(peakFreq * 2, now + dur * 0.35);
-    osc2.frequency.setValueAtTime(peakFreq * 2, now + dur * 0.65);
-    osc2.frequency.linearRampToValueAtTime(peakFreq * 1.55, now + dur);
-    allSources.push(osc2);
-    var g2 = makeGain(0);
-    g2.gain.setValueAtTime(0, now);
-    g2.gain.linearRampToValueAtTime(rnd(0.010, 0.018), now + dur * 0.22);
-    g2.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
-    osc2.connect(g2); g2.connect(masterGain);
-    osc2.start(now); osc2.stop(now + dur + 0.2);
-    /* Breathiness — narrow bandpass noise */
-    var breath = oneshotNoise(dur * 0.7);
+    g.gain.linearRampToValueAtTime(rnd(0.028, 0.045), now + dur * 0.14);
+    g.gain.setValueAtTime(rnd(0.025, 0.040), now + dur * 0.75);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.5);
+    osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+    osc.start(now); osc.stop(now + dur + 0.6);
+    /* Sub tone — chest resonance */
+    var sub = audioCtx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(startFreq * 0.5, now);
+    sub.frequency.linearRampToValueAtTime(peakFreq * 0.5, now + dur * 0.25);
+    sub.frequency.setValueAtTime(peakFreq * 0.5, now + dur * 0.68);
+    sub.frequency.linearRampToValueAtTime(endFreq * 0.5, now + dur);
+    allSources.push(sub);
+    var sg = makeGain(0);
+    sg.gain.setValueAtTime(0, now);
+    sg.gain.linearRampToValueAtTime(rnd(0.012, 0.020), now + dur * 0.18);
+    sg.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.3);
+    sub.connect(sg); sg.connect(masterGain);
+    sub.start(now); sub.stop(now + dur + 0.4);
+    /* Breathy noise — air moving through throat */
+    var breath = oneshotNoise(dur * 0.8);
     var bpf = audioCtx.createBiquadFilter();
-    bpf.type = 'bandpass'; bpf.frequency.value = peakFreq * 0.8; bpf.Q.value = 1.8;
+    bpf.type = 'bandpass'; bpf.frequency.value = peakFreq * 0.6; bpf.Q.value = 0.9;
     var bg = makeGain(0);
-    bg.gain.setValueAtTime(0, now + dur * 0.15);
-    bg.gain.linearRampToValueAtTime(rnd(0.006, 0.010), now + dur * 0.4);
-    bg.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.85);
+    bg.gain.setValueAtTime(0, now + dur * 0.10);
+    bg.gain.linearRampToValueAtTime(rnd(0.008, 0.014), now + dur * 0.35);
+    bg.gain.exponentialRampToValueAtTime(0.0001, now + dur * 0.90);
     breath.connect(bpf); bpf.connect(bg); bg.connect(masterGain);
-    breath.start(now + dur * 0.15);
+    breath.start(now + dur * 0.10);
   }
 
   function scheduleWolfHowl() {
@@ -1038,52 +1084,96 @@
       if (!audioCtx || !masterGain) return;
       playWolfHowl();
       scheduleWolfHowl();
-    }, 45, 120);
+    }, 40, 110);
   }
 
-  /* ─── BEAR ROAR ──────────────────────────────────────────────
-     Deep sawtooth + noise, very low base freq, rough growl.     */
-  function playBearRoar() {
+  /* ─── BEAR STALKING ──────────────────────────────────────────
+     The bear is stalking the party: distant sniff, slow heavy
+     footsteps getting louder (approaching), then a full roar.  */
+  function playBearSequence() {
     var now = audioCtx.currentTime;
-    var dur = rnd(1.2, 2.2);
-    var baseFreq = rnd(65, 100);
-    /* Sawtooth core — raw growl */
-    [1, 1.52, 2.1].forEach(function (mult, i) {
-      var osc = audioCtx.createOscillator();
-      osc.type = i === 0 ? 'sawtooth' : 'triangle';
-      osc.frequency.setValueAtTime(baseFreq * mult * rnd(0.97, 1.03), now);
-      osc.frequency.linearRampToValueAtTime(baseFreq * mult * rnd(0.82, 0.92), now + dur);
-      allSources.push(osc);
-      var lpf = audioCtx.createBiquadFilter();
-      lpf.type = 'lowpass'; lpf.frequency.value = i === 0 ? 320 : 560;
+    /* Sniff/snort — short nasal burst, low bandpass */
+    function bearSniff(t, gain) {
+      var src = oneshotNoise(0.18);
+      var bpf = audioCtx.createBiquadFilter();
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(280, 420); bpf.Q.value = 1.4;
       var g = makeGain(0);
-      var peak = (rnd(0.045, 0.075) / (i + 1));
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(peak, now + 0.06);
-      g.gain.setValueAtTime(peak * rnd(0.85, 1.0), now + dur * 0.55);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.15);
-      osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-      osc.start(now); osc.stop(now + dur + 0.2);
-    });
-    /* Noise texture — chest cavity roughness */
-    var src = oneshotNoise(dur + 0.2);
-    var bpf = audioCtx.createBiquadFilter();
-    bpf.type = 'bandpass'; bpf.frequency.value = rnd(180, 320); bpf.Q.value = rnd(0.6, 1.2);
-    var ng = makeGain(0);
-    ng.gain.setValueAtTime(0, now);
-    ng.gain.linearRampToValueAtTime(rnd(0.020, 0.036), now + 0.08);
-    ng.gain.setValueAtTime(rnd(0.016, 0.028), now + dur * 0.5);
-    ng.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
-    src.connect(bpf); bpf.connect(ng); ng.connect(masterGain);
-    src.start(now);
+      g.gain.setValueAtTime(gain * 0.5, t);
+      g.gain.linearRampToValueAtTime(gain, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      src.connect(bpf); bpf.connect(g); g.connect(masterGain);
+      src.start(t);
+    }
+    /* Heavy bear footstep — deep lowpass thud */
+    function bearStep(t, gain) {
+      var src = oneshotNoise(0.22);
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = rnd(80, 140);
+      var g = makeGain(0);
+      g.gain.setValueAtTime(gain, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.20);
+      src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+      src.start(t);
+      /* Claw click */
+      var clk = oneshotNoise(0.05);
+      var bpf = audioCtx.createBiquadFilter();
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(600, 1000); bpf.Q.value = 3;
+      var cg = makeGain(0);
+      cg.gain.setValueAtTime(gain * 0.12, t + 0.01);
+      cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+      clk.connect(bpf); bpf.connect(cg); cg.connect(masterGain);
+      clk.start(t + 0.01);
+    }
+    /* Bear roar — sawtooth core + noise texture */
+    function bearRoar(t) {
+      var dur = rnd(1.4, 2.4);
+      var base = rnd(65, 95);
+      [1, 1.52, 2.1].forEach(function (mult, i) {
+        var osc = audioCtx.createOscillator();
+        osc.type = i === 0 ? 'sawtooth' : 'triangle';
+        osc.frequency.setValueAtTime(base * mult, t);
+        osc.frequency.linearRampToValueAtTime(base * mult * rnd(0.80, 0.90), t + dur);
+        allSources.push(osc);
+        var lpf = audioCtx.createBiquadFilter();
+        lpf.type = 'lowpass'; lpf.frequency.value = i === 0 ? 380 : 620;
+        var g = makeGain(0);
+        var peak = rnd(0.055, 0.085) / (i + 1);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(peak, t + 0.05);
+        g.gain.setValueAtTime(peak * 0.9, t + dur * 0.5);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.2);
+        osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+        osc.start(t); osc.stop(t + dur + 0.3);
+      });
+      var noise = oneshotNoise(dur + 0.3);
+      var nbpf = audioCtx.createBiquadFilter();
+      nbpf.type = 'bandpass'; nbpf.frequency.value = rnd(200, 360); nbpf.Q.value = 0.8;
+      var ng = makeGain(0);
+      ng.gain.setValueAtTime(0, t);
+      ng.gain.linearRampToValueAtTime(rnd(0.030, 0.048), t + 0.07);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.1);
+      noise.connect(nbpf); nbpf.connect(ng); ng.connect(masterGain);
+      noise.start(t);
+    }
+    /* Sequence: distant sniff → pause → slow footsteps growing louder → roar */
+    bearSniff(now,       0.008);
+    bearSniff(now + 0.9, 0.010);
+    /* Footsteps — 4 heavy paces, each louder = getting closer */
+    var stepInterval = rnd(0.80, 1.10);
+    for (var i = 0; i < 4; i++) {
+      var stepGain = 0.18 + i * 0.12;  /* 0.18, 0.30, 0.42, 0.54 */
+      bearStep(now + 2.2 + i * stepInterval, stepGain);
+    }
+    /* Roar after last footstep */
+    bearRoar(now + 2.2 + 4 * stepInterval + 0.3);
   }
 
-  function scheduleBearRoar() {
+  function scheduleBear() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
-      playBearRoar();
-      scheduleBearRoar();
-    }, 60, 150);
+      playBearSequence();
+      scheduleBear();
+    }, 55, 130);
   }
 
   /* ─── START ──────────────────────────────────────────────────
@@ -1119,7 +1209,8 @@
     scheduleBirdC();                /* song:   ~12-32s         */
     scheduleLeafRustle();           /* rustle: ~8-20s          */
     scheduleForestFootstep();       /* soft hoof: ~14-40s      */
-    scheduleWoodpecker();           /* tapping: ~18-55s        */
+    /* Woodpecker — guaranteed early hit, then ongoing */
+    at(rnd(6, 14), function () { playWoodpecker(); scheduleWoodpecker(); });
 
     /* Harp — first pluck very early, like the scene fading in */
     at(rnd(4, 8), function () { playHarp(); });
@@ -1167,11 +1258,14 @@
     /* Flute third phrase — then ongoing random */
     at(rnd(100, 118), function () { playFlute(pick(FLUTE_PHRASES)); scheduleFlute(); });
 
-    /* Wolf howl — distant, rare, first heard after a minute */
-    at(rnd(65, 110), function () { playWolfHowl(); scheduleWolfHowl(); });
+    /* Howler — distant canopy, first call mid-intro */
+    at(rnd(22, 38), function () { playHowler(); scheduleHowler(); });
 
-    /* Bear roar — very rare, deep in the forest */
-    at(rnd(80, 140), function () { playBearRoar(); scheduleBearRoar(); });
+    /* Wolf howl — first heard around 35-55s */
+    at(rnd(35, 55), function () { playWolfHowl(); scheduleWolfHowl(); });
+
+    /* Bear stalking — sniff/footsteps/roar sequence, first around 45-70s */
+    at(rnd(45, 70), function () { playBearSequence(); scheduleBear(); });
 
     audioStarted = true;
   }
