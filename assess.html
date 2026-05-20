@@ -172,7 +172,7 @@
             }).join('') +
           '</div>' +
           '<div style="margin-top:0.75rem;text-align:right;">' +
-            '<a href="/content/basic_rules/basic_rules_1.html" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#d4af37\'" onmouseout="this.style.color=\'#555\'">&#128218; Read Rules</a>' +
+            '<a href="/content/basic_rules/basic_rules_' + q.page + '.html" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#d4af37\'" onmouseout="this.style.color=\'#555\'">&#128218; Read Rules Pg. ' + q.page + '</a>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -243,7 +243,7 @@
       submitBtn.disabled = true;
       msgEl.textContent = 'Grading...';
 
-      var answers = questions.map(function(q) { return selectedAnswers[q.id]; });
+      var answers = questions.map(function(q) { return { id: q.id, answer: selectedAnswers[q.id] }; });
       try {
         var res = await fetch(API_URL + '/api/assess/submit', {
           method: 'POST',
