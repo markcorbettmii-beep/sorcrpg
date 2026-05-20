@@ -1319,6 +1319,25 @@ async function claimBoxSetCode(db: D1Database, code: string, userId: string) {
     .bind(userId, now, code.toUpperCase().trim(), userId).run();
 }
 
+// ─── BOX CODE ROLE UPGRADE (PLAYER → MASTER) ──────────────────────────────────
+
+app.post('/api/box-codes/redeem-upgrade', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (user.role !== 'PLAYER') {
+    return c.json({ error: user.role === 'MASTER' ? 'Already a GM.' : 'You must complete the Player Assessment first.' }, 400);
+  }
+  const { code } = await c.req.json().catch(() => ({} as any)) as any;
+  if (!code) return c.json({ error: 'GM code required.' }, 400);
+  const check = await validateBoxSetCode(c.env.sorc_db, code, user.id);
+  if (!check.valid) return c.json({ error: check.error }, 400);
+  await claimBoxSetCode(c.env.sorc_db, code, user.id);
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `UPDATE users SET role = 'MASTER', sorc_role = 'GM-ADV', community_points = community_points + 500, updated_at = ? WHERE id = ?`
+  ).bind(now, user.id).run();
+  return c.json({ success: true, role: 'MASTER', sorc_role: 'GM-ADV', points_awarded: 500 });
+});
+
 // ─── BOX CODE GENERATION (admin/owner only) ────────────────────────────────────
 
 app.post('/api/box-codes/generate', authMiddleware, async (c) => {
