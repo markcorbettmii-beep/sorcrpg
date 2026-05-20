@@ -450,7 +450,7 @@
       var phrase = mults.slice(0, rndInt(4, 7)).map(function (m) {
         return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
       });
-      chirpBird(base, phrase, rnd(0.003, 0.006));
+      chirpBird(base, phrase, rnd(0.001, 0.002));
       scheduleBirdC();
     }, 12, 32);
   }
@@ -1124,98 +1124,110 @@
   function playBearSequence() {
     var now = audioCtx.currentTime;
 
-    /* Wet nasal sniff — audible and animal */
-    function bearSniff(t, gain) {
-      /* Inhale rush */
-      var src = oneshotNoise(0.22);
+    /* Forceful wet SNORK — explosive nasal blast, not a dainty sniff */
+    function bearSnork(t) {
+      /* Main blast — wide bandpass nasal cavity */
+      var src = oneshotNoise(0.20);
       var bpf = audioCtx.createBiquadFilter();
-      bpf.type = 'bandpass'; bpf.frequency.value = rnd(350, 550); bpf.Q.value = 0.9;
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(400, 650); bpf.Q.value = 0.8;
       var g = makeGain(0);
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(gain, t + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.20);
+      g.gain.setValueAtTime(0.12, t);             /* instant on — explosive */
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
       src.connect(bpf); bpf.connect(g); g.connect(masterGain);
       src.start(t);
-      /* Low nasal tone — unmistakably animal */
+      /* Low chest resonance under the snork */
       var osc = audioCtx.createOscillator();
-      osc.type = 'sine'; osc.frequency.value = rnd(90, 130);
+      osc.type = 'sine'; osc.frequency.value = rnd(80, 110);
       allSources.push(osc);
       var og = makeGain(0);
-      og.gain.setValueAtTime(0, t);
-      og.gain.linearRampToValueAtTime(gain * 0.6, t + 0.06);
-      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      og.gain.setValueAtTime(0.08, t);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
       osc.connect(og); og.connect(masterGain);
-      osc.start(t); osc.stop(t + 0.25);
+      osc.start(t); osc.stop(t + 0.18);
+      /* Wet nasal flutter — the "snork" texture */
+      var flutter = oneshotNoise(0.08);
+      var fbpf = audioCtx.createBiquadFilter();
+      fbpf.type = 'bandpass'; fbpf.frequency.value = rnd(900, 1600); fbpf.Q.value = 3;
+      var fg = makeGain(0);
+      fg.gain.setValueAtTime(0.055, t + 0.01);
+      fg.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+      flutter.connect(fbpf); fbpf.connect(fg); fg.connect(masterGain);
+      flutter.start(t + 0.01);
     }
 
-    /* Low guttural grunt */
-    function bearGrunt(t) {
-      var dur = rnd(0.25, 0.45);
-      var osc = audioCtx.createOscillator();
-      osc.type = 'sawtooth'; osc.frequency.value = rnd(55, 80);
-      allSources.push(osc);
+    /* Heavy step on dead leaves — sustained loud crackle + weight thud */
+    function bearStep(t, gain) {
+      /* Dead leaves — many rapid crackles, highpass, sustained */
+      var leafDur = 0.38;
+      for (var i = 0; i < 10; i++) {
+        (function(offset) {
+          var s = oneshotNoise(0.055);
+          var hpf = audioCtx.createBiquadFilter();
+          hpf.type = 'highpass'; hpf.frequency.value = rnd(3000, 5500);
+          var lg = makeGain(0);
+          lg.gain.setValueAtTime(gain * rnd(0.25, 0.55), t + offset);
+          lg.gain.exponentialRampToValueAtTime(0.0001, t + offset + 0.05);
+          s.connect(hpf); hpf.connect(lg); lg.connect(masterGain);
+          s.start(t + offset);
+        })(i * rnd(0.025, 0.042) + rnd(0, 0.01));
+      }
+      /* Weight thud — mid-low so phone speakers carry it */
+      var thud = oneshotNoise(0.32);
       var lpf = audioCtx.createBiquadFilter();
-      lpf.type = 'lowpass'; lpf.frequency.value = 280;
-      var g = makeGain(0);
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(rnd(0.055, 0.080), t + 0.06);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-      osc.start(t); osc.stop(t + dur + 0.05);
+      lpf.type = 'lowpass'; lpf.frequency.value = rnd(260, 380);
+      var tg = makeGain(0);
+      tg.gain.setValueAtTime(gain * 1.1, t + 0.02);
+      tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
+      thud.connect(lpf); lpf.connect(tg); tg.connect(masterGain);
+      thud.start(t + 0.02);
     }
 
-    /* Branch crack underfoot — twig snap */
-    function branchSnap(t) {
-      var src = oneshotNoise(0.08);
+    /* Branch breaking — sharp loud crack + wood splinter */
+    function branchBreak(t) {
+      /* Main crack */
+      var src = oneshotNoise(0.06);
       var bpf = audioCtx.createBiquadFilter();
-      bpf.type = 'bandpass'; bpf.frequency.value = rnd(1200, 2200); bpf.Q.value = 4;
+      bpf.type = 'bandpass'; bpf.frequency.value = rnd(1800, 3200); bpf.Q.value = 2.5;
       var g = makeGain(0);
-      g.gain.setValueAtTime(rnd(0.045, 0.070), t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      g.gain.setValueAtTime(0.14, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
       src.connect(bpf); bpf.connect(g); g.connect(masterGain);
       src.start(t);
+      /* Wood splinter tail */
+      var tail = oneshotNoise(0.14);
+      var tbpf = audioCtx.createBiquadFilter();
+      tbpf.type = 'bandpass'; tbpf.frequency.value = rnd(900, 1600); tbpf.Q.value = 1.5;
+      var tg = makeGain(0);
+      tg.gain.setValueAtTime(0.065, t + 0.015);
+      tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+      tail.connect(tbpf); tbpf.connect(tg); tg.connect(masterGain);
+      tail.start(t + 0.015);
     }
 
-    /* Heavy footstep — dual layer: deep ground thud + mid crunch */
-    function bearStep(t, gain) {
-      /* Ground thud — low but use MID freq so it works on phone speakers */
-      var src = oneshotNoise(0.30);
-      var lpf = audioCtx.createBiquadFilter();
-      lpf.type = 'lowpass'; lpf.frequency.value = rnd(220, 340);
-      var g = makeGain(0);
-      g.gain.setValueAtTime(gain, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
-      src.connect(lpf); lpf.connect(g); g.connect(masterGain);
-      src.start(t);
-      /* Sub thud */
-      var sub = audioCtx.createOscillator();
-      sub.type = 'sine'; sub.frequency.value = rnd(55, 80);
-      allSources.push(sub);
-      var sg = makeGain(0);
-      sg.gain.setValueAtTime(gain * 0.8, t);
-      sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-      sub.connect(sg); sg.connect(masterGain);
-      sub.start(t); sub.stop(t + 0.25);
-      /* Crunch layer — forest floor debris */
-      var crunch = oneshotNoise(0.12);
-      var cbpf = audioCtx.createBiquadFilter();
-      cbpf.type = 'bandpass'; cbpf.frequency.value = rnd(800, 1400); cbpf.Q.value = 1.2;
-      var cg = makeGain(0);
-      cg.gain.setValueAtTime(gain * 0.35, t + 0.01);
-      cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
-      crunch.connect(cbpf); cbpf.connect(cg); cg.connect(masterGain);
-      crunch.start(t + 0.01);
+    /* Bush push-through — burst of leaves/twigs being shoved aside */
+    function bushPush(t) {
+      for (var i = 0; i < 7; i++) {
+        (function(offset) {
+          var s = oneshotNoise(0.09);
+          var hpf = audioCtx.createBiquadFilter();
+          hpf.type = 'highpass'; hpf.frequency.value = rnd(2200, 4000);
+          var g = makeGain(0);
+          g.gain.setValueAtTime(rnd(0.030, 0.055), t + offset);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + offset + 0.08);
+          s.connect(hpf); hpf.connect(g); g.connect(masterGain);
+          s.start(t + offset);
+        })(i * rnd(0.04, 0.09));
+      }
     }
 
-    /* The roar — terrifying, full volume */
+    /* The roar */
     function bearRoar(t) {
       var dur = rnd(1.8, 2.8);
       var base = rnd(62, 88);
-      /* Three oscillator layers — massive wall of sound */
       [1, 1.48, 2.05, 3.1].forEach(function (mult, i) {
         var osc = audioCtx.createOscillator();
-        osc.type = i === 0 ? 'sawtooth' : i === 1 ? 'sawtooth' : 'triangle';
-        osc.frequency.setValueAtTime(base * mult * rnd(0.98, 1.02), t);
+        osc.type = i < 2 ? 'sawtooth' : 'triangle';
+        osc.frequency.setValueAtTime(base * mult, t);
         osc.frequency.linearRampToValueAtTime(base * mult * rnd(0.78, 0.88), t + dur);
         allSources.push(osc);
         var lpf = audioCtx.createBiquadFilter();
@@ -1229,32 +1241,31 @@
         osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
         osc.start(t); osc.stop(t + dur + 0.35);
       });
-      /* Noise burst — the wet explosive chest sound */
       var noise = oneshotNoise(dur + 0.3);
       var nbpf = audioCtx.createBiquadFilter();
       nbpf.type = 'bandpass'; nbpf.frequency.value = rnd(280, 480); nbpf.Q.value = 0.7;
       var ng = makeGain(0);
-      ng.gain.setValueAtTime(0, t);
-      ng.gain.linearRampToValueAtTime(0.10, t + 0.06);
+      ng.gain.setValueAtTime(0.10, t + 0.02);
       ng.gain.setValueAtTime(0.08, t + dur * 0.45);
       ng.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.15);
       noise.connect(nbpf); nbpf.connect(ng); ng.connect(masterGain);
       noise.start(t);
     }
 
-    /* Full sequence: sniff... grunt... footsteps closing in... ROAR */
-    bearSniff(now,        0.045);
-    bearSniff(now + 1.1,  0.055);
-    bearGrunt(now + 2.0);
-    var si = rnd(0.85, 1.05);
-    bearStep(now + 3.2,            0.30);
-    branchSnap(now + 3.2 + 0.35);
-    bearStep(now + 3.2 + si,       0.50);
-    bearStep(now + 3.2 + si*2,     0.72);
-    branchSnap(now + 3.2 + si*2 + 0.2);
-    bearStep(now + 3.2 + si*3,     0.95);
-    bearGrunt(now + 3.2 + si*3 + 0.4);
-    bearRoar(now + 3.2 + si*3 + 0.9);
+    /* Sequence: SNORK SNORK — bush push — footsteps on dead leaves
+                 branch break — more steps — ROAR                  */
+    bearSnork(now);
+    bearSnork(now + 0.55);
+    bushPush(now + 1.4);
+    var si = rnd(0.88, 1.10);
+    bearStep(now + 2.2,        0.28);
+    bearStep(now + 2.2 + si,   0.46);
+    branchBreak(now + 2.2 + si + 0.18);
+    bushPush(now + 2.2 + si + 0.5);
+    bearStep(now + 2.2 + si*2, 0.68);
+    bearStep(now + 2.2 + si*3, 0.90);
+    branchBreak(now + 2.2 + si*3 + 0.12);
+    bearRoar(now + 2.2 + si*3 + 0.7);
   }
 
   function scheduleBear() {
