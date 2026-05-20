@@ -92,6 +92,51 @@
   /* Omnè survival structure — just below Tawdry, near the nebula */
   const OMNE = { hx:0.880, hy:0.225, r:9,  wR:7, wS:0.085, φ:2.8 };
 
+  /* ── SATELLITES ── */
+  function makeSat() {
+    const edge = Math.floor(Math.random() * 4);
+    let sx, sy, ex, ey;
+    if (edge === 0) { sx = Math.random(); sy = -0.02; ex = Math.random(); ey = 1.02; }
+    else if (edge === 1) { sx = 1.02; sy = Math.random(); ex = -0.02; ey = Math.random(); }
+    else if (edge === 2) { sx = Math.random(); sy = 1.02; ex = Math.random(); ey = -0.02; }
+    else { sx = -0.02; sy = Math.random(); ex = 1.02; ey = Math.random(); }
+    return {
+      sx, sy, ex, ey,
+      prog: Math.random(),                   /* start mid-path so not all appear at once */
+      speed: 0.00008 + Math.random() * 0.00014,
+      tw: Math.random() * Math.PI * 2,
+      twSpeed: 2.5 + Math.random() * 3.5,
+      size: 0.8 + Math.random() * 0.9,
+      col: Math.random() > 0.5 ? '210,230,255' : '255,240,200'
+    };
+  }
+  const SATELLITES = Array.from({ length: 6 }, makeSat);
+
+  function drawSatellites(t) {
+    for (const sat of SATELLITES) {
+      sat.prog += sat.speed;
+      if (sat.prog >= 1) { Object.assign(sat, makeSat()); sat.prog = 0; }
+      const p = sat.prog;
+      const x = (sat.sx + (sat.ex - sat.sx) * p) * W;
+      const y = (sat.sy + (sat.ey - sat.sy) * p) * H;
+      const shimmer = 0.55 + 0.45 * Math.sin(t * sat.twSpeed + sat.tw);
+      /* faint trail */
+      const prevP = Math.max(0, p - 0.018);
+      const px2 = (sat.sx + (sat.ex - sat.sx) * prevP) * W;
+      const py2 = (sat.sy + (sat.ey - sat.sy) * prevP) * H;
+      const trail = ctx.createLinearGradient(px2, py2, x, y);
+      trail.addColorStop(0, `rgba(${sat.col},0)`);
+      trail.addColorStop(1, `rgba(${sat.col},${0.18 * shimmer})`);
+      ctx.beginPath(); ctx.moveTo(px2, py2); ctx.lineTo(x, y);
+      ctx.strokeStyle = trail; ctx.lineWidth = sat.size * 0.7; ctx.stroke();
+      /* body */
+      ctx.beginPath();
+      ctx.arc(x, y, sat.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${sat.col},${shimmer})`;
+      ctx.fill();
+    }
+  }
+
   /* ── HELPERS ── */
   function sc() { return Math.min(H / 1080, 1); }   /* size scale for retina/small screens */
 
@@ -227,7 +272,7 @@
 
   function drawMoons(cols, px, py, pr, phase, side) {
     cols.forEach((col, i) => {
-      const ma = phase * (2.4 + i*0.7) + i * (Math.PI*2 / cols.length);
+      const ma = phase * (0.55 + i*0.18) + i * (Math.PI*2 / cols.length);
       const mz = Math.sin(ma);
       if ((side < 0 && mz < 0) || (side > 0 && mz >= 0)) {
         const md = pr * (1.9 + i * 0.65);
@@ -335,6 +380,7 @@
     ctx.fillRect(0, 0, W, H);
 
     drawStars(t);
+    drawSatellites(t);
     drawNebula();
     drawAdoria();
 
