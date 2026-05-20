@@ -429,41 +429,6 @@
     });
   }
 
-  /* Blackbird-style melodic whistle — sounds distant through trees */
-  function scheduleBirdC() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var base = rnd(1600, 2200);
-      var mults = [1, 1.12, 1.25, 1.18, 1.05, 0.94, 1.0];
-      var phrase = mults.slice(0, rndInt(4, 7)).map(function (m) {
-        return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
-      });
-      /* Distance LPF so it sounds far away in the canopy */
-      var distLpf = audioCtx.createBiquadFilter();
-      distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(1800, 2600);
-      var cursor = now;
-      phrase.forEach(function (n) {
-        (function (startAt, freq, dur) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, startAt);
-          osc.frequency.linearRampToValueAtTime(freq * rnd(0.97, 1.05), startAt + dur);
-          var g = audioCtx.createGain();
-          var peak = rnd(0.001, 0.002);
-          g.gain.setValueAtTime(0, startAt);
-          g.gain.linearRampToValueAtTime(peak, startAt + 0.012);
-          g.gain.setValueAtTime(peak, startAt + dur - 0.012);
-          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.015);
-          osc.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
-          osc.start(startAt); osc.stop(startAt + dur + 0.02);
-        })(cursor, base * n.m, n.d);
-        cursor += n.d + rnd(0.02, 0.06);
-      });
-      scheduleBirdC();
-    }, 12, 32);
-  }
-
   /* ─── OWL ───────────────────────────────────────────────────  */
   function hootOwl(startAt, freq, peakGain, dur) {
     var osc = audioCtx.createOscillator();
@@ -593,50 +558,6 @@
     }, 7, 22);
   }
 
-  /* ─── FOREST FOOTSTEPS ──────────────────────────────────────
-     Slow hooves on soft forest floor — earthy, muffled thuds
-     with subtle leaf/soil texture. Clearly slower and softer
-     than the gallop variants above.                            */
-  function playForestFootstep() {
-    var now = audioCtx.currentTime;
-    var stepCount = rndInt(2, 4);
-    var stepInterval = rnd(0.38, 0.72);
-    var cursor = now;
-    for (var i = 0; i < stepCount; i++) {
-      (function (startAt) {
-        /* Muffled hoof thud — very low LPF, soft forest floor */
-        var thud = oneshotNoise(0.18);
-        var lpf = audioCtx.createBiquadFilter();
-        lpf.type = 'lowpass'; lpf.frequency.value = rnd(110, 190);
-        var g = audioCtx.createGain();
-        g.gain.setValueAtTime(rnd(0.30, 0.44), startAt);
-        g.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
-        thud.connect(lpf); lpf.connect(g); g.connect(masterGain);
-        thud.start(startAt);
-        /* Earth/leaf crunch texture */
-        var crunch = oneshotNoise(0.22);
-        var bpf = audioCtx.createBiquadFilter();
-        bpf.type = 'bandpass'; bpf.frequency.value = rnd(320, 560); bpf.Q.value = 0.9;
-        var cg = audioCtx.createGain();
-        cg.gain.setValueAtTime(rnd(0.012, 0.022), startAt + 0.01);
-        cg.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.20);
-        crunch.connect(bpf); bpf.connect(cg); cg.connect(masterGain);
-        crunch.start(startAt + 0.01);
-      })(cursor);
-      cursor += stepInterval + rnd(-0.06, 0.06);
-    }
-  }
-
-  function scheduleForestFootstep() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      playForestFootstep();
-      scheduleForestFootstep();
-    }, 14, 40);
-  }
-
-  /* ─── SPELL SOUNDS (Lineage 2 inspired) ─────────────────────
-     Arcane whoosh, dark ritual, heal shimmer, lightning crack.
      All kept quiet — atmosphere only, not game sound effects.  */
   function playSpell(type) {
     var now = audioCtx.currentTime;
@@ -862,7 +783,7 @@
     }
   }
 
-  var SPELL_TYPES = ['arcane', 'dark', 'heal', 'lightning', 'fire', 'ice', 'wind', 'earth'];
+  var SPELL_TYPES = ['dark', 'heal', 'lightning', 'fire', 'wind', 'earth'];
   function scheduleSpell() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -871,46 +792,6 @@
     }, 8, 22);
   }
 
-
-  /* ─── WOODPECKER ─────────────────────────────────────────────
-     Hammering on a hollow tree — hard sharp knock + log resonance.
-     NOT a soft tap: think "TOK TOK TOK" on dry hardwood.        */
-  function playWoodpecker() {
-    var now = audioCtx.currentTime;
-    var tapRate = rnd(18, 25);
-    var tapCount = rndInt(14, 30);
-    var burstSplit = Math.floor(tapCount * rnd(0.4, 0.6));
-    var pauseGap = rnd(0.20, 0.50);
-    for (var i = 0; i < tapCount; i++) {
-      (function (idx) {
-        var offset = idx < burstSplit
-          ? idx / tapRate
-          : burstSplit / tapRate + pauseGap + (idx - burstSplit) / tapRate;
-        /* Hard impact — distant through trees, slightly muffled */
-        var src = oneshotNoise(0.012);
-        var bpf = audioCtx.createBiquadFilter();
-        bpf.type = 'bandpass';
-        bpf.frequency.value = rnd(4500, 7000);
-        bpf.Q.value = rnd(6.0, 10.0);
-        var distLpf = audioCtx.createBiquadFilter();
-        distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(3000, 4500);
-        var g = audioCtx.createGain();
-        var v = rnd(0.018, 0.030);   /* was 0.055-0.090, now distant */
-        g.gain.setValueAtTime(v, now + offset);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.010);
-        src.connect(bpf); bpf.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
-        src.start(now + offset);
-      })(i);
-    }
-  }
-
-  function scheduleWoodpecker() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      playWoodpecker();
-      scheduleWoodpecker();
-    }, 18, 55);
-  }
 
   /* ─── HOWLER ─────────────────────────────────────────────────
      Howler monkey — very distant, deep in the canopy.
@@ -1051,10 +932,6 @@
     /* ── 0-30s: Open the scene ───────────────────────────────── */
 
     /* Birds + rustles + footsteps: short schedulers naturally cover the window */
-    scheduleBirdC();                /* song:   ~12-32s         */
-    scheduleForestFootstep();       /* soft hoof: ~14-40s      */
-    /* Woodpecker — guaranteed early hit, then ongoing */
-    at(rnd(6, 14), function () { playWoodpecker(); scheduleWoodpecker(); });
 
     /* Harp — first pluck very early, like the scene fading in */
     at(rnd(4, 8), function () { playHarp(); });
