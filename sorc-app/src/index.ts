@@ -814,7 +814,7 @@ app.put('/api/admin/members/:uid/role', adminMiddleware, async (c) => {
   const OWNER_EMAILS = ['corbett@sorcrpg.com'];
   if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
   const { role } = await c.req.json();
-  const validRoles = ['CIVILIAN', 'PLAYER', 'MASTER', 'ADMIN'];
+  const validRoles = ['CIVILIAN', 'PLAYER', 'MASTER', 'ADMIN', 'OWNER'];
   if (!validRoles.includes(role)) return c.json({ error: 'Invalid role' }, 400);
   try {
     await c.env.sorc_db.prepare('UPDATE users SET role = ? WHERE id = ? OR username = ?').bind(role, uid, uid).run();
@@ -1229,12 +1229,20 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
     const firstTime = !fullUser?.assessment_rewarded;
     const pointsAwarded = firstTime ? (siteRole === 'MASTER' ? 200 : 100) : 0;
 
-    await c.env.sorc_db.prepare(
-      `UPDATE users SET role = ?, sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
-       community_points = community_points + ?, updated_at = ? WHERE id = ?`
-    ).bind(siteRole, role, pointsAwarded, now, user.id).run();
+    const preserveRole = isPrivileged(user);
+    if (preserveRole) {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
+         community_points = community_points + ?, updated_at = ? WHERE id = ?`
+      ).bind(role, pointsAwarded, now, user.id).run();
+    } else {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET role = ?, sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
+         community_points = community_points + ?, updated_at = ? WHERE id = ?`
+      ).bind(siteRole, role, pointsAwarded, now, user.id).run();
+    }
 
-    return c.json({ score, role, site_role: siteRole, passed: true, points_awarded: pointsAwarded });
+    return c.json({ score, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }
@@ -1244,10 +1252,15 @@ app.delete('/api/assess', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
-  // Revert to CIVILIAN until they complete a new assessment
-  await c.env.sorc_db.prepare(
-    `UPDATE users SET sorc_role = NULL, role = 'CIVILIAN', needs_reassess = 0, updated_at = ? WHERE id = ?`
-  ).bind(now, user.id).run();
+  if (isPrivileged(user)) {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET sorc_role = NULL, needs_reassess = 0, updated_at = ? WHERE id = ?`
+    ).bind(now, user.id).run();
+  } else {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET sorc_role = NULL, role = 'CIVILIAN', needs_reassess = 0, updated_at = ? WHERE id = ?`
+    ).bind(now, user.id).run();
+  }
   return c.json({ success: true });
 });
 
