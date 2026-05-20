@@ -669,21 +669,37 @@
     })();
     windSrc.start(); wlfo.start();
 
-    /* Raven calls - bandpass noise burst, not oscillator */
+    /* Raven calls - hard caw, fast attack, harsh and raspy */
     function doRaven() {
       if (!movementActive[idx]) return;
       var now = audioCtx.currentTime;
       var caws = rndInt(1, 3);
       for (var c = 0; c < caws; c++) {
         (function (t) {
-          var src = oneshotNoise(0.18);
-          var bpf = makeFilter('bandpass', rnd(1400, 2200), rnd(4, 8));
-          var lpf = makeFilter('lowpass', rnd(2800, 4000));
-          var g = makeGain(0);
-          g.gain.setValueAtTime(rnd(0.022, 0.038), t);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-          src.connect(bpf); bpf.connect(lpf); lpf.connect(g); g.connect(out);
-          src.start(t);
+          /* Layer 1: main body - high bandpass, punchy */
+          var s1 = oneshotNoise(0.22);
+          var b1 = makeFilter('bandpass', rnd(1800, 2600), rnd(8, 14));
+          var g1 = makeGain(0);
+          g1.gain.setValueAtTime(rnd(0.10, 0.16), t);
+          g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+          s1.connect(b1); b1.connect(g1); g1.connect(out);
+          s1.start(t);
+          /* Layer 2: rasp texture - slightly different freq */
+          var s2 = oneshotNoise(0.16);
+          var b2 = makeFilter('bandpass', rnd(3000, 4500), rnd(5, 10));
+          var g2 = makeGain(0);
+          g2.gain.setValueAtTime(rnd(0.055, 0.085), t + 0.01);
+          g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+          s2.connect(b2); b2.connect(g2); g2.connect(out);
+          s2.start(t + 0.01);
+          /* Layer 3: low chest thump under the caw */
+          var s3 = oneshotNoise(0.10);
+          var b3 = makeFilter('lowpass', rnd(300, 500));
+          var g3 = makeGain(0);
+          g3.gain.setValueAtTime(rnd(0.045, 0.070), t);
+          g3.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+          s3.connect(b3); b3.connect(g3); g3.connect(out);
+          s3.start(t);
         })(now + c * rnd(0.40, 0.80));
       }
       sched(doRaven, 18, 50);
