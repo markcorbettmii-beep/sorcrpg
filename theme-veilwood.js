@@ -908,7 +908,7 @@
     }
   }
 
-  var SPELL_TYPES = ['arcane', 'dark', 'heal', 'lightning', 'fire', 'ice', 'wind', 'earth'];
+  var SPELL_TYPES = ['arcane', 'dark', 'lightning', 'fire', 'wind', 'earth'];
   function scheduleSpell() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
