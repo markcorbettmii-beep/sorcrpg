@@ -219,18 +219,6 @@
     }, 48, 95);
   }
 
-  /* ─── WIND ──────────────────────────────────────────────────  */
-  function startWind() {
-    var src = loopNoise(3);
-    var lpf = makeFilter('lowpass', 280, 0.5);
-    var g = makeGain(0.010);
-    var lfo = makeOsc('sine', 0.007);
-    var lfoDepth = makeGain(0.003);
-    lfo.connect(lfoDepth); lfoDepth.connect(g.gain);
-    src.connect(lpf); lpf.connect(g); g.connect(masterGain);
-    src.start(); lfo.start();
-  }
-
   /* ─── HARP ──────────────────────────────────────────────────  */
   function pluck(freq, startAt, gainVal) {
     [1, 2, 3].forEach(function (harmonic) {
@@ -1060,7 +1048,6 @@
 
     /* Always-on beds */
     startStringPad();
-    startWind();
 
     /* ── 0-30s: Open the scene ───────────────────────────────── */
 
