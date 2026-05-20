@@ -1087,66 +1087,49 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
 // ─── ASSESSMENT SYSTEM ────────────────────────────────────────────────────────
 
 const ASSESSMENT_QUESTIONS = [
-  {
-    q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?",
-    options: ["37", "73", "3", "7"],
-    answer: 1,
-    page: 1
-  },
-  {
-    q: "Which die combination is used for Rare and Divine item drops in SORC?",
-    options: ["1D6", "1D4", "D100 + D100", "2D6"],
-    answer: 2,
-    page: 1
-  },
-  {
-    q: "What does rolling 00 on the d100 equal?",
-    options: ["0", "10", "50", "100"],
-    answer: 3,
-    page: 1
-  },
-  {
-    q: "The D4 is primarily used for which type of roll?",
-    options: ["Damage", "Luck", "Initiative", "Loot"],
-    answer: 1,
-    page: 5
-  },
-  {
-    q: "Which color token represents Lifeblood (HP)?",
-    options: ["Blue", "Red", "Yellow", "Green"],
-    answer: 1,
-    page: 5
-  },
-  {
-    q: "What is the maximum number of abilities a character can learn?",
-    options: ["40", "50", "59", "75"],
-    answer: 2,
-    page: 4
-  },
-  {
-    q: "What is the correct rank order from lowest to highest for ranks 1, 2, and 3?",
-    options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Master, Pauper", "Commoner, Peasant, Pauper"],
-    answer: 1,
-    page: 4
-  },
-  {
-    q: "How much time does each player have per turn before it is forfeited?",
-    options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"],
-    answer: 2,
-    page: 5
-  },
-  {
-    q: "In SORC's armor system, when does an attack successfully hit?",
-    options: ["When the roll is lower than the Armor Score (AS)", "When the roll equals zero", "When the roll equals or exceeds the Armor Score (AS)", "When the roll is a natural 1"],
-    answer: 2,
-    page: 5
-  },
-  {
-    q: "When using the D100+D100 system, what is the minimum possible total result?",
-    options: ["1", "2", "10", "0"],
-    answer: 1,
-    page: 1
-  }
+  // Dice / d100
+  { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, page: 1 },
+  { q: "Which die combination is used for Rare and Divine item drops in SORC?", options: ["1D6", "1D4", "D100 + D100", "2D6"], answer: 2, page: 1 },
+  { q: "What does rolling 00 on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, page: 1 },
+  { q: "When using the D100+D100 system, what is the minimum possible total result?", options: ["1", "2", "10", "0"], answer: 1, page: 1 },
+  { q: "When rolling d100, your tens die shows 4 and your ones die shows 0. What is your result?", options: ["4", "400", "40", "100"], answer: 2, page: 1 },
+  { q: "What is the maximum possible result on a single d100 roll?", options: ["99", "10", "50", "100"], answer: 3, page: 1 },
+  { q: "When rolling d100, the tens die shows 0 and the ones die shows 5. What is your result?", options: ["50", "0", "15", "5"], answer: 3, page: 1 },
+  { q: "What is the maximum possible result when using the D100+D100 system?", options: ["100", "150", "200", "198"], answer: 2, page: 1 },
+  { q: "Which two dice combine to form a d100 roll in SORC?", options: ["Two D6s", "Two D10s (tens and ones)", "D20 and D6", "D12 and D8"], answer: 1, page: 1 },
+  { q: "When rolling d100, the tens die shows 1 and the ones die shows 0. What is your result?", options: ["1", "100", "10", "01"], answer: 2, page: 1 },
+  { q: "What is the minimum possible result on a single d100 roll?", options: ["0", "1", "10", "5"], answer: 1, page: 1 },
+  { q: "When rolling d100, your tens die shows 9 and your ones die shows 9. What is your result?", options: ["9", "99", "98", "100"], answer: 1, page: 1 },
+  { q: "When rolling d100, your tens die shows 3 and your ones die shows 6. What is your result?", options: ["36", "63", "3", "6"], answer: 0, page: 1 },
+  // Dice types
+  { q: "The D4 is primarily used for which type of roll?", options: ["Damage", "Luck", "Initiative", "Loot"], answer: 1, page: 1 },
+  // Tokens / Lifeblood
+  { q: "Which color token represents Lifeblood (HP)?", options: ["Blue", "Red", "Yellow", "Green"], answer: 1, page: 1 },
+  { q: "In SORC, 'Lifeblood' refers to which character statistic?", options: ["Mana Points", "Stamina", "Hit Points (HP)", "Experience"], answer: 2, page: 1 },
+  // Abilities
+  { q: "What is the maximum number of abilities a character can learn?", options: ["40", "50", "59", "75"], answer: 2, page: 2 },
+  // Ranks
+  { q: "What is the correct rank order from lowest to highest for ranks 1, 2, and 3?", options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Master, Pauper", "Commoner, Peasant, Pauper"], answer: 1, page: 2 },
+  { q: "What rank comes directly after Commoner (rank 3) in SORC?", options: ["Hero", "Peasant", "Adventurer", "Elite"], answer: 2, page: 2 },
+  { q: "What is the highest rank a character can achieve in SORC?", options: ["Elite", "Hero", "Master", "Legend"], answer: 3, page: 2 },
+  { q: "How many total ranks exist in the SORC rank system?", options: ["5", "6", "7", "8"], answer: 3, page: 2 },
+  { q: "What rank comes directly after Hero (rank 5) in SORC?", options: ["Master", "Adventurer", "Legend", "Elite"], answer: 3, page: 2 },
+  { q: "Which rank falls directly between Elite and Legend in SORC?", options: ["Hero", "Adventurer", "Master", "Commoner"], answer: 2, page: 2 },
+  { q: "Which rank is directly below Commoner in SORC?", options: ["Adventurer", "Pauper", "Hero", "Peasant"], answer: 3, page: 2 },
+  { q: "What rank comes directly after Adventurer (rank 4) in SORC?", options: ["Commoner", "Legend", "Hero", "Elite"], answer: 2, page: 2 },
+  { q: "What is rank 6 from lowest to highest in SORC?", options: ["Hero", "Master", "Elite", "Legend"], answer: 2, page: 2 },
+  { q: "What is rank 7 from lowest to highest in SORC?", options: ["Elite", "Master", "Adventurer", "Legend"], answer: 1, page: 2 },
+  // Assessment scores
+  { q: "Which PC assessment score range earns the PC Beginner role?", options: ["4-5", "6-7", "8-9", "9-10"], answer: 1, page: 1 },
+  { q: "A PC assessment score of exactly 8 earns which role?", options: ["PC Beginner", "PC Advanced", "PC Intermediate", "GM Advanced"], answer: 2, page: 1 },
+  { q: "What is the minimum assessment score required to qualify for the GM track?", options: ["7", "8", "9", "10"], answer: 2, page: 1 },
+  { q: "Which score range earns the PC Advanced role on the assessment?", options: ["6-7", "7-8", "8-9", "9-10"], answer: 3, page: 1 },
+  // Combat / Armor Score
+  { q: "How much time does each player have per turn before it is forfeited?", options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"], answer: 2, page: 1 },
+  { q: "What occurs when a player fails to complete their turn within the 2-minute time limit?", options: ["They receive a warning", "Their turn is forfeited", "They lose 1 HP", "The GM rolls for them"], answer: 1, page: 1 },
+  { q: "In SORC's armor system, when does an attack successfully hit?", options: ["When the roll is lower than the Armor Score (AS)", "When the roll equals zero", "When the roll equals or exceeds the Armor Score (AS)", "When the roll is a natural 1"], answer: 2, page: 1 },
+  { q: "What does the abbreviation 'AS' stand for in SORC's combat system?", options: ["Attack Speed", "Armor Set", "Action Score", "Armor Score"], answer: 3, page: 1 },
+  { q: "When an attack roll is lower than the target's Armor Score, the result is:", options: ["A critical hit", "A miss", "A graze", "Reduced damage"], answer: 1, page: 1 },
 ];
 
 function calcSorcRole(score: number, gmTrack: boolean): string {
@@ -1166,8 +1149,13 @@ app.get('/api/assess', authMiddleware, async (c) => {
 });
 
 app.get('/api/assess/questions', authMiddleware, async (c) => {
-  const questions = ASSESSMENT_QUESTIONS.map((q, i) => ({
-    id: i,
+  const pool = ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i }));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const questions = pool.slice(0, 10).map(q => ({
+    id: q.id,
     q: q.q,
     options: q.options,
     page: q.page
@@ -1192,8 +1180,12 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   }
 
   let score = 0;
-  for (let i = 0; i < 10; i++) {
-    if (answers[i] === ASSESSMENT_QUESTIONS[i].answer) score++;
+  for (const entry of answers) {
+    const qId = typeof entry === 'object' ? entry.id : null;
+    const chosen = typeof entry === 'object' ? entry.answer : entry;
+    if (qId !== null && qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
+      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) score++;
+    }
   }
 
   const role = calcSorcRole(score, !!gm_track);
