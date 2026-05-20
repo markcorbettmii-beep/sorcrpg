@@ -860,7 +860,7 @@
         cursor += rnd(0.10, 0.26);
       }
       scheduleDroidProtocol();
-    }, 6, 18);
+    }, 18, 40);
   }
 
   /* ── DOORS: Halo-style sliding blast doors ───────────── */
@@ -871,101 +871,106 @@
       var type = Math.floor(Math.random() * 3); /* 0=small, 1=large blast, 2=energy */
 
       if (type === 0) {
-        /* Small sliding panel — pneumatic hiss + light clunk */
-        var hSrc = audioCtx.createBufferSource();
-        hSrc.buffer = makeNoiseBuf(0.35);
-        var hBpf = audioCtx.createBiquadFilter();
-        hBpf.type = 'bandpass'; hBpf.frequency.value = 3800; hBpf.Q.value = 0.8;
-        var hg = audioCtx.createGain();
-        hg.gain.setValueAtTime(0, now);
-        hg.gain.linearRampToValueAtTime(0.055, now + 0.02);
-        hg.gain.setValueAtTime(0.055, now + 0.22);
-        hg.gain.linearRampToValueAtTime(0, now + 0.35);
-        hSrc.connect(hBpf); hBpf.connect(hg); hg.connect(masterGain);
-        hSrc.start(now);
-        /* clunk at end of travel */
-        var ck = audioCtx.createOscillator();
-        ck.type = 'sine'; ck.frequency.setValueAtTime(180, now + 0.30);
-        ck.frequency.exponentialRampToValueAtTime(55, now + 0.42);
-        var ckg = audioCtx.createGain();
-        ckg.gain.setValueAtTime(0.10, now + 0.30);
-        ckg.gain.exponentialRampToValueAtTime(0.0001, now + 0.44);
-        ck.connect(ckg); ckg.connect(masterGain);
-        ck.start(now + 0.30); ck.stop(now + 0.46);
+        /* Small door — pressure seal pop + smooth slide + soft lock */
+        var rev0 = makeReverb(0.28); rev0.output.connect(masterGain);
+        /* pressure pop */
+        var popSrc = audioCtx.createBufferSource();
+        popSrc.buffer = makeNoiseBuf(0.08);
+        var popBpf = audioCtx.createBiquadFilter();
+        popBpf.type = 'bandpass'; popBpf.frequency.value = 2800; popBpf.Q.value = 1.2;
+        var popG = audioCtx.createGain();
+        popG.gain.setValueAtTime(0.045, now);
+        popG.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+        popSrc.connect(popBpf); popBpf.connect(popG); popG.connect(rev0.input);
+        popSrc.start(now);
+        /* panel slide — filtered noise sweep */
+        var slSrc = audioCtx.createBufferSource();
+        slSrc.buffer = makeNoiseBuf(0.5);
+        var slBpf = audioCtx.createBiquadFilter();
+        slBpf.type = 'bandpass'; slBpf.frequency.value = 600; slBpf.Q.value = 0.7;
+        var slG = audioCtx.createGain();
+        slG.gain.setValueAtTime(0, now + 0.05);
+        slG.gain.linearRampToValueAtTime(0.032, now + 0.12);
+        slG.gain.setValueAtTime(0.032, now + 0.38);
+        slG.gain.linearRampToValueAtTime(0, now + 0.52);
+        slSrc.connect(slBpf); slBpf.connect(slG); slG.connect(rev0.input);
+        slSrc.start(now + 0.05);
+        /* soft end-lock thud */
+        var lkOsc = audioCtx.createOscillator();
+        lkOsc.type = 'sine';
+        lkOsc.frequency.setValueAtTime(140, now + 0.50);
+        lkOsc.frequency.exponentialRampToValueAtTime(55, now + 0.62);
+        var lkG = audioCtx.createGain();
+        lkG.gain.setValueAtTime(0.055, now + 0.50);
+        lkG.gain.exponentialRampToValueAtTime(0.0001, now + 0.64);
+        lkOsc.connect(lkG); lkG.connect(rev0.input);
+        lkOsc.start(now + 0.50); lkOsc.stop(now + 0.66);
 
       } else if (type === 1) {
-        /* Large blast door — deep whoosh, heavy double-clank */
-        var rev = makeReverb(0.38); rev.output.connect(masterGain);
-        var wSrc = audioCtx.createBufferSource();
-        wSrc.buffer = makeNoiseBuf(1.1);
-        var wLpf = audioCtx.createBiquadFilter();
-        wLpf.type = 'lowpass'; wLpf.frequency.value = 900;
-        var wg = audioCtx.createGain();
-        wg.gain.setValueAtTime(0, now);
-        wg.gain.linearRampToValueAtTime(0.18, now + 0.08);
-        wg.gain.setValueAtTime(0.18, now + 0.65);
-        wg.gain.linearRampToValueAtTime(0, now + 1.1);
-        wSrc.connect(wLpf); wLpf.connect(wg); wg.connect(rev.input);
-        wSrc.start(now);
-        /* mechanical grind layer */
-        var mOsc = audioCtx.createOscillator();
-        mOsc.type = 'sawtooth'; mOsc.frequency.value = 62;
-        var mLpf = audioCtx.createBiquadFilter();
-        mLpf.type = 'lowpass'; mLpf.frequency.value = 320;
-        var mg = audioCtx.createGain();
-        mg.gain.setValueAtTime(0.09, now + 0.04);
-        mg.gain.setValueAtTime(0.09, now + 0.72);
-        mg.gain.linearRampToValueAtTime(0, now + 0.95);
-        mOsc.connect(mLpf); mLpf.connect(mg); mg.connect(rev.input);
-        mOsc.start(now + 0.04); mOsc.stop(now + 0.97);
-        /* double-clank impact */
-        [0.85, 0.96].forEach(function(dt) {
-          var imp = audioCtx.createOscillator();
-          imp.type = 'sine';
-          imp.frequency.setValueAtTime(95, now + dt);
-          imp.frequency.exponentialRampToValueAtTime(28, now + dt + 0.28);
-          var ig = audioCtx.createGain();
-          ig.gain.setValueAtTime(0.22, now + dt);
-          ig.gain.exponentialRampToValueAtTime(0.0001, now + dt + 0.32);
-          imp.connect(ig); ig.connect(rev.input);
-          imp.start(now + dt); imp.stop(now + dt + 0.35);
-        });
+        /* Large blast door — long pressure exhale + deep panel travel + firm seat */
+        var rev1 = makeReverb(0.42); rev1.output.connect(masterGain);
+        /* pressure exhale hiss */
+        var exSrc = audioCtx.createBufferSource();
+        exSrc.buffer = makeNoiseBuf(1.4);
+        var exHpf = audioCtx.createBiquadFilter();
+        exHpf.type = 'bandpass'; exHpf.frequency.value = 1800; exHpf.Q.value = 0.6;
+        var exG = audioCtx.createGain();
+        exG.gain.setValueAtTime(0, now);
+        exG.gain.linearRampToValueAtTime(0.048, now + 0.06);
+        exG.gain.setValueAtTime(0.048, now + 0.55);
+        exG.gain.linearRampToValueAtTime(0, now + 1.1);
+        exSrc.connect(exHpf); exHpf.connect(exG); exG.connect(rev1.input);
+        exSrc.start(now);
+        /* deep hydraulic panel travel */
+        var hvSrc = audioCtx.createBufferSource();
+        hvSrc.buffer = makeNoiseBuf(1.2);
+        var hvLpf = audioCtx.createBiquadFilter();
+        hvLpf.type = 'lowpass'; hvLpf.frequency.value = 280; hvLpf.Q.value = 0.5;
+        var hvG = audioCtx.createGain();
+        hvG.gain.setValueAtTime(0, now + 0.08);
+        hvG.gain.linearRampToValueAtTime(0.065, now + 0.22);
+        hvG.gain.setValueAtTime(0.065, now + 0.85);
+        hvG.gain.linearRampToValueAtTime(0, now + 1.15);
+        hvSrc.connect(hvLpf); hvLpf.connect(hvG); hvG.connect(rev1.input);
+        hvSrc.start(now + 0.08);
+        /* firm controlled seat — one thud, no crash */
+        var stOsc = audioCtx.createOscillator();
+        stOsc.type = 'sine';
+        stOsc.frequency.setValueAtTime(85, now + 1.1);
+        stOsc.frequency.exponentialRampToValueAtTime(32, now + 1.35);
+        var stG = audioCtx.createGain();
+        stG.gain.setValueAtTime(0.075, now + 1.1);
+        stG.gain.exponentialRampToValueAtTime(0.0001, now + 1.38);
+        stOsc.connect(stG); stG.connect(rev1.input);
+        stOsc.start(now + 1.1); stOsc.stop(now + 1.4);
 
       } else {
-        /* Energy field door — electric crackle + hum that cuts off */
+        /* Energy barrier — rising hum + pressure seal + clean cut */
+        var rev2 = makeReverb(0.32); rev2.output.connect(masterGain);
         var eHum = audioCtx.createOscillator();
-        eHum.type = 'sawtooth'; eHum.frequency.value = 120;
-        var eHpf = audioCtx.createBiquadFilter();
-        eHpf.type = 'highpass'; eHpf.frequency.value = 800;
+        eHum.type = 'sine'; eHum.frequency.value = 180;
+        var eMod = audioCtx.createOscillator();
+        eMod.frequency.value = 22;
+        var eModG = audioCtx.createGain(); eModG.gain.value = 18;
+        eMod.connect(eModG); eModG.connect(eHum.frequency);
         var eg = audioCtx.createGain();
         eg.gain.setValueAtTime(0, now);
-        eg.gain.linearRampToValueAtTime(0.028, now + 0.06);
-        eg.gain.setValueAtTime(0.028, now + 0.55);
-        eg.gain.linearRampToValueAtTime(0, now + 0.62);
-        eHum.connect(eHpf); eHpf.connect(eg); eg.connect(masterGain);
-        eHum.start(now); eHum.stop(now + 0.65);
-        /* crackle bursts */
-        for (var c = 0; c < 4; c++) {
-          (function(ct) {
-            var cr = audioCtx.createBufferSource();
-            cr.buffer = makeNoiseBuf(0.04);
-            var crHpf = audioCtx.createBiquadFilter();
-            crHpf.type = 'highpass'; crHpf.frequency.value = 5000;
-            var crg = audioCtx.createGain();
-            crg.gain.setValueAtTime(0.065, ct);
-            crg.gain.exponentialRampToValueAtTime(0.0001, ct + 0.04);
-            cr.connect(crHpf); crHpf.connect(crg); crg.connect(masterGain);
-            cr.start(ct);
-          })(now + c * rnd(0.12, 0.18));
-        }
-        /* sharp off-click */
-        var offCk = audioCtx.createOscillator();
-        offCk.type = 'square'; offCk.frequency.value = 2200;
-        var oCkg = audioCtx.createGain();
-        oCkg.gain.setValueAtTime(0.035, now + 0.60);
-        oCkg.gain.exponentialRampToValueAtTime(0.0001, now + 0.66);
-        offCk.connect(oCkg); oCkg.connect(masterGain);
-        offCk.start(now + 0.60); offCk.stop(now + 0.68);
+        eg.gain.linearRampToValueAtTime(0.030, now + 0.10);
+        eg.gain.setValueAtTime(0.030, now + 0.65);
+        eg.gain.linearRampToValueAtTime(0, now + 0.75);
+        eHum.connect(eg); eg.connect(rev2.input);
+        eMod.start(now); eMod.stop(now + 0.8);
+        eHum.start(now); eHum.stop(now + 0.8);
+        /* pressure seal hiss at open */
+        var sealSrc = audioCtx.createBufferSource();
+        sealSrc.buffer = makeNoiseBuf(0.18);
+        var sealBpf = audioCtx.createBiquadFilter();
+        sealBpf.type = 'bandpass'; sealBpf.frequency.value = 3200; sealBpf.Q.value = 0.9;
+        var sealG = audioCtx.createGain();
+        sealG.gain.setValueAtTime(0.038, now);
+        sealG.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+        sealSrc.connect(sealBpf); sealBpf.connect(sealG); sealG.connect(rev2.input);
+        sealSrc.start(now);
       }
 
       scheduleSciFiDoor();
