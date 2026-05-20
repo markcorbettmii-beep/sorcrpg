@@ -722,9 +722,9 @@
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var now    = audioCtx.currentTime;
-      var steps  = rndInt(5, 10);
-      var pace   = rnd(0.48, 0.72);   /* deliberate, heavy pace */
-      var vol    = rnd(0.038, 0.065);  /* heavy boot on metal grid */
+      var steps  = rndInt(14, 22);    /* full bridge crossing */
+      var pace   = rnd(0.52, 0.70);   /* deliberate, heavy pace */
+      var vol    = rnd(0.10, 0.16);   /* heavy boot on metal grid */
       var cursor = now;
       var rev    = makeReverb(0.22);  /* subtle large-room tail */
       rev.output.connect(masterGain);
@@ -735,7 +735,7 @@
           nSrc.buffer = makeNoiseBuf(0.12);
           var bpf = audioCtx.createBiquadFilter();
           bpf.type = 'bandpass';
-          bpf.frequency.value = rnd(280, 520); bpf.Q.value = 1.8;
+          bpf.frequency.value = rnd(2200, 4500); bpf.Q.value = 2.2;
           var ng = audioCtx.createGain();
           ng.gain.setValueAtTime(vol, t);
           ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
@@ -745,7 +745,7 @@
           nSrc.start(t);
           /* metallic grid ring — hollow steel decay */
           var rOsc = audioCtx.createOscillator();
-          rOsc.type = 'sine'; rOsc.frequency.value = rnd(380, 560);
+          rOsc.type = 'sine'; rOsc.frequency.value = rnd(1800, 3200);
           var rg = audioCtx.createGain();
           rg.gain.setValueAtTime(vol * 0.55, t + 0.004);
           rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
@@ -817,7 +817,7 @@
   function scheduleDroidProtocol() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
-      if (Math.random() > 0.60) { scheduleDroidProtocol(); return; }
+      if (Math.random() > 0.85) { scheduleDroidProtocol(); return; }
       var now    = audioCtx.currentTime;
       var cursor = now;
       /* 3–7 "syllables" — pairs of harmonically related tones */
@@ -866,7 +866,7 @@
         cursor += rnd(0.10, 0.26);
       }
       scheduleDroidProtocol();
-    }, 18, 55);
+    }, 6, 18);
   }
 
   /* ── DOORS: Halo-style sliding blast doors ───────────── */
@@ -975,14 +975,14 @@
       }
 
       scheduleSciFiDoor();
-    }, 30, 90);
+    }, 12, 35);
   }
 
   /* ── TRANSPORTER: Star Trek shimmer ─────────────────── */
   function scheduleTransporter() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
-      if (Math.random() > 0.35) { scheduleTransporter(); return; }
+      if (Math.random() > 0.70) { scheduleTransporter(); return; }
       var now  = audioCtx.currentTime;
       var dur  = rnd(2.2, 3.8);
       var rev  = makeReverb(0.45); rev.output.connect(masterGain);
@@ -1040,7 +1040,7 @@
         })(now + Math.random() * dur);
       }
       scheduleTransporter();
-    }, 60, 180);
+    }, 30, 70);
   }
 
   /* ── START ────────────────────────────────────────────── */
@@ -1093,6 +1093,8 @@
 
     /* Doors & teleporter */
     scheduleSciFiDoor();
+    scheduleSciFiDoor();
+    scheduleTransporter();
     scheduleTransporter();
 
     /* Footsteps on metal grid — multiple independent walkers */
