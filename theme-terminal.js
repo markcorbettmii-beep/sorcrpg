@@ -1095,8 +1095,11 @@
     scheduleSciFiDoor();
     scheduleTransporter();
 
-    /* Footsteps on metal grid */
+    /* Footsteps on metal grid — multiple independent walkers */
     scheduleGridFootsteps();
+    scheduleGridFootsteps();
+    scheduleGridFootsteps();
+    scheduleGroupFootsteps();
     scheduleGroupFootsteps();
 
     audioStarted = true;
