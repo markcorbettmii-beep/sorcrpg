@@ -1585,7 +1585,7 @@
     async function loadWorldChat() {
       var msgEl = document.getElementById('worldChatMessages');
       var inputRow = document.getElementById('worldChatInputRow');
-      if (!msgEl) return;
+      if (!msgEl || !currentUser) return;
       try {
         var res = await fetch(API_URL + '/api/world-chat', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
@@ -1667,7 +1667,7 @@
 
     function startWorldChatPoll() {
       stopWorldChatPoll();
-      worldChatPollTimer = setInterval(loadWorldChat, 9000);
+      worldChatPollTimer = setInterval(loadWorldChat, 5000);
     }
 
     function stopWorldChatPoll() {

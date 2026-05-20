@@ -1897,7 +1897,9 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
 
-  const members = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ?`).bind(lobbyId).all();
+  const members = await c.env.sorc_db.prepare(
+    `SELECT lm.*, u.role, u.email FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ?`
+  ).bind(lobbyId).all();
   const memberList = members.results as any[] || [];
 
   const { selected_members, gm_uid } = await c.req.json() as any;
@@ -1907,9 +1909,10 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
 
   const gmMember = memberList.find((m: any) => m.user_id === gm_uid);
   if (!gmMember) return c.json({ error: 'GM must be a lobby member.' }, 400);
-  if (!gmMember.sorc_role.startsWith('GM')) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
+  const gmIsPrivileged = isPrivileged({ id: gm_uid, role: gmMember.role, email: gmMember.email || '' });
+  if (!gmMember.sorc_role.startsWith('GM') && !gmIsPrivileged) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
 
-  const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid;
+  const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
 
   const roomId = crypto.randomUUID();
