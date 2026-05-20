@@ -1,6 +1,39 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
+// ─── CONTENT FILTER ────────────────────────────────────────────────────────────
+const SLUR_LIST = [
+  'nigger','nigga','faggot','fag','kike','spic','chink','gook','wetback',
+  'tranny','shemale','cunt','dyke','cracker','redskin','raghead','towelhead',
+  'beaner','zipperhead','jigaboo','porch monkey','coon','jungle bunny',
+  'sandnigger','camel jockey'
+];
+
+const PROFANITY_LIST = [
+  'fuck','shit','ass','bitch','bastard','damn','crap','piss','dick','cock',
+  'pussy','whore','slut','jackass','asshole','bullshit','motherfucker',
+  'motherfucking','fucker','fucking','shitty','dipshit','dumbass','dumbfuck',
+  'horseshit','clusterfuck','shithead','fuckhead','butthead','twat',
+  'wanker','tosser','bollocks','bloody hell','arse','arsehole','prick',
+  'tit','tits','boob','boobs','boner','dildo','jizz','cum','cumshot',
+  'blowjob','handjob','rimjob','buttfuck','butt fuck','titty','titties'
+];
+
+function filterContent(text: string): { blocked: boolean; filtered: string; reason: string } {
+  if (!text) return { blocked: false, filtered: text, reason: '' };
+  const lower = text.toLowerCase();
+  for (const slur of SLUR_LIST) {
+    const re = new RegExp('\\b' + slur.replace(/\s+/g, '\\s+') + '\\b', 'i');
+    if (re.test(lower)) return { blocked: true, filtered: text, reason: 'Your message contains a slur and cannot be sent.' };
+  }
+  let filtered = text;
+  for (const word of PROFANITY_LIST) {
+    const re = new RegExp('\\b' + word + '\\b', 'gi');
+    filtered = filtered.replace(re, (m: string) => '*'.repeat(m.length));
+  }
+  return { blocked: false, filtered, reason: '' };
+}
+
 interface Env {
   sorc_db: D1Database;
   AVATARS: R2Bucket;
@@ -275,10 +308,14 @@ app.post('/api/forum/thread', authMiddleware, async (c) => {
   const { categoryId, title, body } = await c.req.json();
   const user = c.get('user') as any;
   if (!title || !body) return c.json({ error: 'Title and body required' }, 400);
+  const titleCheck = filterContent(title);
+  if (titleCheck.blocked) return c.json({ error: titleCheck.reason }, 400);
+  const bodyCheck = filterContent(body);
+  if (bodyCheck.blocked) return c.json({ error: bodyCheck.reason }, 400);
   try {
     const threadId = crypto.randomUUID();
     const now = new Date().toISOString();
-    await c.env.sorc_db.prepare(`INSERT INTO threads (id, category_id, title, body, author_uid, author_name, author_role, created_at, last_reply_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(threadId, categoryId, title, body, user.id, user.display_name || user.username, user.role, now, now).run();
+    await c.env.sorc_db.prepare(`INSERT INTO threads (id, category_id, title, body, author_uid, author_name, author_role, created_at, last_reply_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(threadId, categoryId, titleCheck.filtered, bodyCheck.filtered, user.id, user.display_name || user.username, user.role, now, now).run();
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, threadId });
   } catch (error: any) {
@@ -290,10 +327,12 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   const { threadId, body, quoted_text, quoted_author } = await c.req.json();
   const user = c.get('user') as any;
   if (!body) return c.json({ error: 'Body required' }, 400);
+  const postCheck = filterContent(body);
+  if (postCheck.blocked) return c.json({ error: postCheck.reason }, 400);
   try {
     const postId = crypto.randomUUID();
     const now = new Date().toISOString();
-    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, quoted_text, quoted_author, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, quoted_text || null, quoted_author || null, now).run();
+    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, quoted_text, quoted_author, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, postCheck.filtered, user.id, user.display_name || user.username, user.role, quoted_text || null, quoted_author || null, now).run();
     await c.env.sorc_db.prepare(`UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ?, last_reply_by = ? WHERE id = ?`).bind(now, user.display_name || user.username, threadId).run();
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, postId });
@@ -1730,6 +1769,8 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
     const { body } = await c.req.json() as any;
     if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
     if (body.length > 400) return c.json({ error: 'Message too long (max 400 chars).' }, 400);
+    const worldMsgCheck = filterContent(body.trim());
+    if (worldMsgCheck.blocked) return c.json({ error: worldMsgCheck.reason }, 400);
 
     // Must be the active creator of an open lobby
     const lobby = await c.env.sorc_db.prepare(
@@ -1758,7 +1799,7 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
       user.display_name || user.username,
       lobby?.id || null,
       lobby?.name || null,
-      body.trim(),
+      worldMsgCheck.filtered,
       now
     ).run();
 
@@ -1841,11 +1882,13 @@ app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   const { body } = await c.req.json() as any;
   if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
   if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
+  const lobbyMsgCheck = filterContent(body.trim());
+  if (lobbyMsgCheck.blocked) return c.json({ error: lobbyMsgCheck.reason }, 400);
   const msgId = crypto.randomUUID();
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(
     `INSERT INTO lobby_messages (id, lobby_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(msgId, lobbyId, user.id, user.display_name || user.username, body.trim(), now).run();
+  ).bind(msgId, lobbyId, user.id, user.display_name || user.username, lobbyMsgCheck.filtered, now).run();
   return c.json({ success: true, message_id: msgId });
 });
 
@@ -2121,10 +2164,12 @@ app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
   const { body } = await c.req.json() as any;
   if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
   if (body.length > 500) return c.json({ error: 'Message too long.' }, 400);
+  const roomMsgCheck = filterContent(body.trim());
+  if (roomMsgCheck.blocked) return c.json({ error: roomMsgCheck.reason }, 400);
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(
     `INSERT INTO room_messages (id, room_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(crypto.randomUUID(), roomId, user.id, user.username, body.trim(), now).run();
+  ).bind(crypto.randomUUID(), roomId, user.id, user.username, roomMsgCheck.filtered, now).run();
   return c.json({ success: true });
 });
 
