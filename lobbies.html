@@ -1802,10 +1802,18 @@
             var bodyHtml = parseWorldBody(rawBody, m.id);
             var isSelf = currentUser && m.sender_uid === currentUser.id;
             var hostLobbyId = (currentLobby && isCreator) ? currentLobby.id : myActiveLobbyId;
-            var canSummon = hostLobbyId && !isSelf && m.sender_uid;
-            var nameEl = canSummon
-              ? '<button class="summon-name-btn ' + nameClass + '" onclick="summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\',\'' + esc(hostLobbyId) + '\')" title="Summon to your lobby">' + esc(m.sender_name) + ' &#9889;</button>'
-              : '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" class="' + nameClass + '">' + esc(m.sender_name) + '</a>';
+            var canSummon = !!(hostLobbyId && !isSelf && m.sender_uid);
+            var nameEl;
+            if (!isSelf && m.sender_uid) {
+              var wcItems = '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" onclick="event.stopPropagation()">Profile</a>';
+              if (canSummon) wcItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\',\'' + esc(hostLobbyId) + '\')">&#9889; Summon</button>';
+              nameEl = '<span class="member-name-wrap" style="display:inline-flex;vertical-align:middle;">' +
+                '<button class="member-name-btn ' + nameClass + '" style="font-size:0.77rem;" onclick="toggleMemberMenu(event,this)">' + esc(m.sender_name) + ' &#8964;</button>' +
+                '<div class="member-name-menu">' + wcItems + '</div>' +
+              '</span>';
+            } else {
+              nameEl = '<span class="' + nameClass + '">' + esc(m.sender_name || 'Unknown') + '</span>';
+            }
             return '<div class="world-msg">' +
               nameEl +
               sheetIcon +
