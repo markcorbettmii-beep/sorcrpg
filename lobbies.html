@@ -825,7 +825,7 @@
         var lobbies = data.lobbies || [];
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
-        if (myLobby) myActiveLobbyId = myLobby.id;
+        if (myLobby) { myActiveLobbyId = myLobby.id; loadWorldChat(); }
         allLobbies = lobbies.concat(PLACEHOLDER_LOBBIES);
         lobbyPage = 0;
         renderLobbyPage();
@@ -1260,8 +1260,8 @@
               /* Tab bar — Recruit only shown to hosts */
               '<div class="chat-tab-bar">' +
                 '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
-                '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
                 (hasGMRights ? '<button class="chat-tab" data-tab="recruit" onclick="switchChatTab(\'recruit\')">Recruit</button>' : '') +
               '</div>' +
               /* MAIN: lobby chat */
@@ -1287,7 +1287,7 @@
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
                 '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div></div>' +
                 '<div class="chat-input-row">' +
-                  '<input type="text" class="chat-input" id="lobbyMsgInput" placeholder="Message the host..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendLobbyMsg()" />' +
+                  '<input type="text" class="chat-input" id="lobbyMsgInput" placeholder="Type a message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendLobbyMsg()" />' +
                   '<button class="chat-send" onclick="sendLobbyMsg()">Send</button>' +
                 '</div>' +
               '</div>' +
@@ -1371,11 +1371,18 @@
           var t = lastThemeMsg.body.replace('__sorc_theme__:', '').trim();
           if (t && t !== lobbyTheme) applyTheme(t);
         }
-        var visibleMsgs = msgs.filter(function(m) { return !m.body || m.body.indexOf('__sorc_theme__:') !== 0; });
-        if (visibleMsgs.length === 0 && !lastMsgId) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; }
-        if (visibleMsgs.length === 0) { if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id; return; }
+        var nonThemeMsgs = msgs.filter(function(m) { return !m.body || m.body.indexOf('__sorc_theme__:') !== 0; });
+        if (msgs.length === 0 && !lastMsgId) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; }
+        if (msgs.length === 0) { return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
-        msgEl.innerHTML = visibleMsgs.map(function(m) {
+        msgEl.innerHTML = msgs.map(function(m) {
+          if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
+            var themeName = m.body.replace('__sorc_theme__:', '').trim();
+            return '<div class="chat-msg" id="lmsg-' + m.id + '" style="color:#6a4ca0;font-size:0.78rem;font-style:italic;">' +
+              '&#9670; <span class="msg-name" style="color:#8860c0;">' + esc(m.username) + '</span> changed the theme to <em>' + esc(themeName) + '</em>' +
+              '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+            '</div>';
+          }
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
           return '<div class="chat-msg" id="lmsg-' + m.id + '">' +
             '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
@@ -2111,6 +2118,13 @@
         } else {
           var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
           el.innerHTML = msgs.map(function(m) {
+            if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
+              var themeName = m.body.replace('__sorc_theme__:', '').trim();
+              return '<div class="chat-msg" style="color:#6a4ca0;font-size:0.78rem;font-style:italic;">' +
+                '&#9670; <span class="msg-name" style="color:#8860c0;">' + esc(m.username || m.sender_name || 'Unknown') + '</span> changed the theme to <em>' + esc(themeName) + '</em>' +
+                '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+              '</div>';
+            }
             return '<div class="chat-msg">' +
               '<span class="msg-name">' + esc(m.username || m.sender_name || 'Unknown') + '</span>' +
               '<span class="msg-body">' + esc(m.body || '') + '</span>' +
