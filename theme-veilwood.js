@@ -476,16 +476,6 @@
     }, 12, 32);
   }
 
-  /* Distant high chirps — the "whistles" the user likes */
-  function scheduleBirdD() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var base = rnd(3000, 5000);
-      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.014, 0.022));
-      scheduleBirdD();
-    }, 4, 13);
-  }
-
   /* ─── OWL ───────────────────────────────────────────────────  */
   function hootOwl(startAt, freq, peakGain, dur) {
     var osc = audioCtx.createOscillator();
@@ -656,87 +646,6 @@
       playForestFootstep();
       scheduleForestFootstep();
     }, 14, 40);
-  }
-
-  /* ─── BOW DRAW ───────────────────────────────────────────────
-     Lurtz style: massive war bow under extreme tension.
-     Deep wood groan, low string vibration, slow and ominous.
-     Never fires - just holds at full draw.
-     KEY: all filter frequencies are FIXED - no sweeping = no car sound. */
-  function playBowDraw() {
-    var now = audioCtx.currentTime;
-    var drawDur = rnd(2.2, 3.5);
-    var holdDur = rnd(1.0, 2.0);
-    var total = drawDur + holdDur;
-
-    /* Wood limb groan - deep, FIXED bandpass. No frequency sweep.
-       Like a thick timber bending under enormous load.           */
-    var groan = oneshotNoise(total + 0.4);
-    var glpf = audioCtx.createBiquadFilter();
-    glpf.type = 'bandpass';
-    glpf.frequency.value = rnd(100, 150);   /* FIXED - amplitude only changes */
-    glpf.Q.value = rnd(3, 6);
-    var gg = makeGain(0);
-    gg.gain.setValueAtTime(0, now);
-    gg.gain.linearRampToValueAtTime(rnd(0.055, 0.085), now + drawDur * 0.4);
-    gg.gain.linearRampToValueAtTime(rnd(0.070, 0.100), now + drawDur);
-    gg.gain.setValueAtTime(rnd(0.060, 0.090), now + total - 0.2);
-    gg.gain.linearRampToValueAtTime(0.0001, now + total + 0.4);
-    groan.connect(glpf); glpf.connect(gg); gg.connect(masterGain);
-    groan.start(now);
-
-    /* Wood fiber stress snap - short burst at fixed frequency, mid-draw */
-    var snap = oneshotNoise(0.09);
-    var sbpf = audioCtx.createBiquadFilter();
-    sbpf.type = 'bandpass';
-    sbpf.frequency.value = rnd(280, 440);   /* FIXED - no sweep */
-    sbpf.Q.value = rnd(4, 8);
-    var scg = makeGain(0);
-    var snapAt = now + drawDur * rnd(0.45, 0.58);
-    scg.gain.setValueAtTime(0, snapAt);
-    scg.gain.linearRampToValueAtTime(rnd(0.018, 0.032), snapAt + 0.018);
-    scg.gain.exponentialRampToValueAtTime(0.0001, snapAt + 0.09);
-    snap.connect(sbpf); sbpf.connect(scg); scg.connect(masterGain);
-    snap.start(snapAt);
-
-    /* Heavy string - low resonant hum under tension.
-       Pitch shift is a real string going tighter, not bandpass on noise. */
-    var str = audioCtx.createOscillator();
-    str.type = 'sawtooth';
-    str.frequency.setValueAtTime(rnd(55, 75), now + drawDur * 0.2);
-    str.frequency.linearRampToValueAtTime(rnd(70, 95), now + drawDur);
-    str.frequency.setValueAtTime(rnd(68, 90), now + total);
-    allSources.push(str);
-    var slpf = audioCtx.createBiquadFilter();
-    slpf.type = 'lowpass'; slpf.frequency.value = 380;
-    var stg = makeGain(0);
-    stg.gain.setValueAtTime(0, now + drawDur * 0.15);
-    stg.gain.linearRampToValueAtTime(rnd(0.030, 0.050), now + drawDur * 0.6);
-    stg.gain.linearRampToValueAtTime(rnd(0.040, 0.065), now + drawDur);
-    stg.gain.setValueAtTime(rnd(0.035, 0.058), now + total - 0.25);
-    stg.gain.linearRampToValueAtTime(0.0001, now + total + 0.3);
-    str.connect(slpf); slpf.connect(stg); stg.connect(masterGain);
-    str.start(now + drawDur * 0.12); str.stop(now + total + 0.4);
-
-    /* Sub - feel it in your chest */
-    var sub = audioCtx.createOscillator();
-    sub.type = 'sine'; sub.frequency.value = rnd(35, 50);
-    allSources.push(sub);
-    var subg = makeGain(0);
-    subg.gain.setValueAtTime(0, now + drawDur * 0.4);
-    subg.gain.linearRampToValueAtTime(rnd(0.035, 0.055), now + drawDur);
-    subg.gain.setValueAtTime(rnd(0.030, 0.050), now + total - 0.3);
-    subg.gain.linearRampToValueAtTime(0.0001, now + total + 0.2);
-    sub.connect(subg); subg.connect(masterGain);
-    sub.start(now + drawDur * 0.35); sub.stop(now + total + 0.3);
-  }
-
-  function scheduleBowDraw() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      playBowDraw();
-      scheduleBowDraw();
-    }, 28, 65);
   }
 
   /* ─── SPELL SOUNDS (Lineage 2 inspired) ─────────────────────
@@ -1126,254 +1035,6 @@
     }, 40, 110);
   }
 
-  /* ─── BEAR STALKING ──────────────────────────────────────────
-     The bear is stalking the party. Sequence:
-     wet sniff → low grunt → heavy footsteps building → ROAR.   */
-  function playBearSequence() {
-    var now = audioCtx.currentTime;
-
-    /* Forceful wet SNORK — explosive nasal blast, not a dainty sniff */
-    function bearSnork(t) {
-      /* Main blast — wide bandpass nasal cavity */
-      var src = oneshotNoise(0.20);
-      var bpf = audioCtx.createBiquadFilter();
-      bpf.type = 'bandpass'; bpf.frequency.value = rnd(400, 650); bpf.Q.value = 0.8;
-      var g = makeGain(0);
-      g.gain.setValueAtTime(0.12, t);             /* instant on — explosive */
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-      src.connect(bpf); bpf.connect(g); g.connect(masterGain);
-      src.start(t);
-      /* Low chest resonance under the snork */
-      var osc = audioCtx.createOscillator();
-      osc.type = 'sine'; osc.frequency.value = rnd(80, 110);
-      allSources.push(osc);
-      var og = makeGain(0);
-      og.gain.setValueAtTime(0.08, t);
-      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
-      osc.connect(og); og.connect(masterGain);
-      osc.start(t); osc.stop(t + 0.18);
-      /* Wet nasal flutter — the "snork" texture */
-      var flutter = oneshotNoise(0.08);
-      var fbpf = audioCtx.createBiquadFilter();
-      fbpf.type = 'bandpass'; fbpf.frequency.value = rnd(900, 1600); fbpf.Q.value = 3;
-      var fg = makeGain(0);
-      fg.gain.setValueAtTime(0.055, t + 0.01);
-      fg.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
-      flutter.connect(fbpf); fbpf.connect(fg); fg.connect(masterGain);
-      flutter.start(t + 0.01);
-    }
-
-    /* Heavy step on dead leaves — sustained loud crackle + weight thud */
-    function bearStep(t, gain) {
-      /* Dead leaves — many rapid crackles, highpass, sustained */
-      var leafDur = 0.38;
-      for (var i = 0; i < 10; i++) {
-        (function(offset) {
-          var s = oneshotNoise(0.055);
-          var hpf = audioCtx.createBiquadFilter();
-          hpf.type = 'highpass'; hpf.frequency.value = rnd(3000, 5500);
-          var lg = makeGain(0);
-          lg.gain.setValueAtTime(gain * rnd(0.25, 0.55), t + offset);
-          lg.gain.exponentialRampToValueAtTime(0.0001, t + offset + 0.05);
-          s.connect(hpf); hpf.connect(lg); lg.connect(masterGain);
-          s.start(t + offset);
-        })(i * rnd(0.025, 0.042) + rnd(0, 0.01));
-      }
-      /* Weight thud — mid-low so phone speakers carry it */
-      var thud = oneshotNoise(0.32);
-      var lpf = audioCtx.createBiquadFilter();
-      lpf.type = 'lowpass'; lpf.frequency.value = rnd(260, 380);
-      var tg = makeGain(0);
-      tg.gain.setValueAtTime(gain * 1.1, t + 0.02);
-      tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
-      thud.connect(lpf); lpf.connect(tg); tg.connect(masterGain);
-      thud.start(t + 0.02);
-    }
-
-    /* Branch breaking — sharp loud crack + wood splinter */
-    function branchBreak(t) {
-      /* Main crack */
-      var src = oneshotNoise(0.06);
-      var bpf = audioCtx.createBiquadFilter();
-      bpf.type = 'bandpass'; bpf.frequency.value = rnd(1800, 3200); bpf.Q.value = 2.5;
-      var g = makeGain(0);
-      g.gain.setValueAtTime(0.14, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.055);
-      src.connect(bpf); bpf.connect(g); g.connect(masterGain);
-      src.start(t);
-      /* Wood splinter tail */
-      var tail = oneshotNoise(0.14);
-      var tbpf = audioCtx.createBiquadFilter();
-      tbpf.type = 'bandpass'; tbpf.frequency.value = rnd(900, 1600); tbpf.Q.value = 1.5;
-      var tg = makeGain(0);
-      tg.gain.setValueAtTime(0.065, t + 0.015);
-      tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
-      tail.connect(tbpf); tbpf.connect(tg); tg.connect(masterGain);
-      tail.start(t + 0.015);
-    }
-
-    /* Bush push-through — burst of leaves/twigs being shoved aside */
-    function bushPush(t) {
-      for (var i = 0; i < 7; i++) {
-        (function(offset) {
-          var s = oneshotNoise(0.09);
-          var hpf = audioCtx.createBiquadFilter();
-          hpf.type = 'highpass'; hpf.frequency.value = rnd(2200, 4000);
-          var g = makeGain(0);
-          g.gain.setValueAtTime(rnd(0.030, 0.055), t + offset);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + offset + 0.08);
-          s.connect(hpf); hpf.connect(g); g.connect(masterGain);
-          s.start(t + offset);
-        })(i * rnd(0.04, 0.09));
-      }
-    }
-
-    /* The roar - formant-filtered noise, not oscillators.
-       Real bear roar = air turbulence through resonant vocal tract.  */
-    function bearRoar(t) {
-      var dur = rnd(1.8, 2.8);
-      /* First formant: deep chest resonance */
-      var s1 = oneshotNoise(dur + 0.4);
-      var f1 = audioCtx.createBiquadFilter();
-      f1.type = 'bandpass'; f1.frequency.value = rnd(220, 350); f1.Q.value = rnd(3, 6);
-      var g1 = makeGain(0);
-      g1.gain.setValueAtTime(0, t);
-      g1.gain.linearRampToValueAtTime(0.22, t + 0.06);
-      g1.gain.setValueAtTime(0.18, t + dur * 0.5);
-      g1.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.2);
-      s1.connect(f1); f1.connect(g1); g1.connect(masterGain); s1.start(t);
-      /* Second formant: vocal tract - throaty mid */
-      var s2 = oneshotNoise(dur + 0.3);
-      var f2 = audioCtx.createBiquadFilter();
-      f2.type = 'bandpass'; f2.frequency.value = rnd(500, 800); f2.Q.value = rnd(2, 4);
-      var g2 = makeGain(0);
-      g2.gain.setValueAtTime(0, t);
-      g2.gain.linearRampToValueAtTime(0.13, t + 0.08);
-      g2.gain.setValueAtTime(0.10, t + dur * 0.5);
-      g2.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.1);
-      s2.connect(f2); f2.connect(g2); g2.connect(masterGain); s2.start(t);
-      /* Sub rumble - give it physical weight */
-      var s3 = oneshotNoise(dur + 0.3);
-      var lp3 = audioCtx.createBiquadFilter();
-      lp3.type = 'lowpass'; lp3.frequency.value = rnd(130, 200);
-      var g3 = makeGain(0);
-      g3.gain.setValueAtTime(0, t);
-      g3.gain.linearRampToValueAtTime(0.18, t + 0.05);
-      g3.gain.setValueAtTime(0.14, t + dur * 0.6);
-      g3.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.3);
-      s3.connect(lp3); lp3.connect(g3); g3.connect(masterGain); s3.start(t);
-      /* Third formant: rasp/growl texture - quieter */
-      var s4 = oneshotNoise(dur * 0.7);
-      var f4 = audioCtx.createBiquadFilter();
-      f4.type = 'bandpass'; f4.frequency.value = rnd(1000, 1800); f4.Q.value = rnd(1.5, 3);
-      var g4 = makeGain(0);
-      g4.gain.setValueAtTime(0, t);
-      g4.gain.linearRampToValueAtTime(0.055, t + 0.10);
-      g4.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.75);
-      s4.connect(f4); f4.connect(g4); g4.connect(masterGain); s4.start(t);
-    }
-
-    /* Sequence: SNORK SNORK — bush push — footsteps on dead leaves
-                 branch break — more steps — ROAR                  */
-    bearSnork(now);
-    bearSnork(now + 0.55);
-    bushPush(now + 1.4);
-    var si = rnd(0.88, 1.10);
-    bearStep(now + 2.2,        0.28);
-    bearStep(now + 2.2 + si,   0.46);
-    branchBreak(now + 2.2 + si + 0.18);
-    bushPush(now + 2.2 + si + 0.5);
-    bearStep(now + 2.2 + si*2, 0.68);
-    bearStep(now + 2.2 + si*3, 0.90);
-    branchBreak(now + 2.2 + si*3 + 0.12);
-    bearRoar(now + 2.2 + si*3 + 0.7);
-  }
-
-  function scheduleBear() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      playBearSequence();
-      scheduleBear();
-    }, 55, 130);
-  }
-
-  /* ─── BEES ──────────────────────────────────────────────────
-     Honeybee wingbeat ~230-270Hz AM-modulated bandpass noise.
-     Multiple bees at offset rates create natural beating effect. */
-  function playBees() {
-    var now = audioCtx.currentTime;
-    var dur = rnd(5, 11);
-    var count = rndInt(2, 4);
-    for (var b = 0; b < count; b++) {
-      (function () {
-        var wingsHz = rnd(225, 275);
-        var noise = oneshotNoise(dur + 0.5);
-        var bpf = audioCtx.createBiquadFilter();
-        bpf.type = 'bandpass'; bpf.frequency.value = rnd(300, 650); bpf.Q.value = rnd(2, 4);
-        /* AM modulation at wingbeat rate: base 0.5 +- 0.5 = 0 to 1 */
-        var modBase = makeGain(0.5);
-        var am = audioCtx.createOscillator();
-        am.type = 'sine'; am.frequency.value = wingsHz;
-        allSources.push(am);
-        var amDepth = makeGain(0.5);
-        am.connect(amDepth); amDepth.connect(modBase.gain);
-        var env = makeGain(0);
-        env.gain.setValueAtTime(0, now);
-        env.gain.linearRampToValueAtTime(rnd(0.006, 0.011), now + 0.7);
-        env.gain.setValueAtTime(rnd(0.005, 0.010), now + dur - 0.7);
-        env.gain.linearRampToValueAtTime(0, now + dur);
-        noise.connect(bpf); bpf.connect(modBase); modBase.connect(env); env.connect(masterGain);
-        noise.start(now); noise.stop(now + dur + 0.6);
-        am.start(now); am.stop(now + dur + 0.6);
-      })();
-    }
-  }
-
-  function scheduleBees() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      playBees();
-      scheduleBees();
-    }, 18, 50);
-  }
-
-  /* ─── HUMMINGBIRD ────────────────────────────────────────────
-     Wingbeat ~50-80Hz AM on bandpass noise. Darts past quickly.
-     Optional brief chirp.                                        */
-  function playHummingbird() {
-    var now = audioCtx.currentTime;
-    var dur = rnd(1.5, 3.0);
-    var noise = oneshotNoise(dur + 0.3);
-    var bpf = audioCtx.createBiquadFilter();
-    bpf.type = 'bandpass'; bpf.frequency.value = rnd(400, 700); bpf.Q.value = rnd(2, 5);
-    var modBase = makeGain(0.5);
-    var am = audioCtx.createOscillator();
-    am.type = 'sine'; am.frequency.value = rnd(50, 80);
-    allSources.push(am);
-    var amDepth = makeGain(0.5);
-    am.connect(amDepth); amDepth.connect(modBase.gain);
-    /* Dart-past envelope: quick rise, brief presence, quick exit */
-    var env = makeGain(0);
-    env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(rnd(0.016, 0.028), now + dur * 0.2);
-    env.gain.setValueAtTime(rnd(0.014, 0.025), now + dur * 0.7);
-    env.gain.linearRampToValueAtTime(0, now + dur);
-    noise.connect(bpf); bpf.connect(modBase); modBase.connect(env); env.connect(masterGain);
-    noise.start(now); noise.stop(now + dur + 0.3);
-    am.start(now); am.stop(now + dur + 0.3);
-    /* 55% chance of a brief high chirp */
-    if (Math.random() < 0.55) {
-      chirpBird(rnd(4500, 6500), [{m:1, d:0.04}, {m:rnd(1.1,1.3), d:0.035}], rnd(0.011, 0.018));
-    }
-  }
-
-  function scheduleHummingbird() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      playHummingbird();
-      scheduleHummingbird();
-    }, 12, 40);
-  }
 
   /* ─── START ──────────────────────────────────────────────────
      Two-minute intro: every sound appears at least once in the
@@ -1404,11 +1065,8 @@
     /* ── 0-30s: Open the scene ───────────────────────────────── */
 
     /* Birds + rustles + footsteps: short schedulers naturally cover the window */
-    scheduleBirdD();                /* chirps: ~4-13s          */
     scheduleBirdC();                /* song:   ~12-32s         */
     scheduleForestFootstep();       /* soft hoof: ~14-40s      */
-    scheduleBees();                 /* bees:   ~18-50s         */
-    scheduleHummingbird();          /* dart:   ~12-40s         */
     /* Woodpecker — guaranteed early hit, then ongoing */
     at(rnd(6, 14), function () { playWoodpecker(); scheduleWoodpecker(); });
 
@@ -1425,9 +1083,6 @@
 
     /* Gallop — first pass mid-intro */
     at(rnd(30, 45), function () { playGallopVariant(pick(GALLOP_VARIANTS)); });
-
-    /* Bow draw — first hint of danger */
-    at(rnd(32, 48), function () { playBowDraw(); scheduleBowDraw(); });
 
     /* Harp second hit */
     at(rnd(35, 50), function () { playHarp(); });
@@ -1466,9 +1121,6 @@
 
     /* Wolf howl — first heard around 35-55s */
     at(rnd(35, 55), function () { playWolfHowl(); scheduleWolfHowl(); });
-
-    /* Bear stalking — sniff/footsteps/roar sequence, first around 45-70s */
-    at(rnd(45, 70), function () { playBearSequence(); scheduleBear(); });
 
     audioStarted = true;
   }
