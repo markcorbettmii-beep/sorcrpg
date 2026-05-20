@@ -287,7 +287,7 @@
     .world-chat-empty { color: #3a2a5a; font-size: 0.8rem; text-align: center; padding: 1.25rem; }
 
     /* ===== TICKER ===== */
-    .lobby-ticker { overflow: hidden; border-top: 1px solid #333; border-bottom: 1px solid #333; background: #0d0d14; padding: 0.5rem 0; margin-bottom: 1.5rem; position: relative; }
+    .lobby-ticker { overflow: hidden; width: 100%; max-width: 100%; box-sizing: border-box; border-top: 1px solid #333; border-bottom: 1px solid #333; background: #0d0d14; padding: 0.5rem 0; margin-bottom: 1.5rem; position: relative; }
     .lobby-ticker::before,
     .lobby-ticker::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
     .lobby-ticker::before { left: 0; background: linear-gradient(to right, #0d0d14, transparent); }
@@ -858,17 +858,19 @@
       }
     });
 
-    // Block iOS edge-swipe gestures while in a lobby
+    // Block edge-swipe back/forward gestures while in a lobby (iOS + Android)
     document.addEventListener('touchstart', function(e) {
       if (!currentLobby) return;
       var x = e.touches[0].clientX;
-      if (x < 25 || x > window.innerWidth - 25) e.preventDefault();
+      if (x < 50 || x > window.innerWidth - 50) e.preventDefault();
     }, { passive: false });
 
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
       chatMemberRetried = false;
       sessionStorage.setItem('activeLobbyId', lobbyId);
+      history.pushState({ lobby: lobbyId }, '');
+      history.pushState({ lobby: lobbyId }, '');
       history.pushState({ lobby: lobbyId }, '');
       var app = document.getElementById('lobbiesApp');
       app.innerHTML = '<p style="color:#555;text-align:center;padding:2rem;">Loading lobby...</p>';
