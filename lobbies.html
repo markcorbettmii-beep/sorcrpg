@@ -481,6 +481,15 @@
     var lobbyPage = 0;             // current page index (0-based)
     var LOBBIES_PER_PAGE = 5;
 
+    var PLACEHOLDER_LOBBIES = [
+      { id: 'ph-1', placeholder: true, name: 'The Siege of Veilmark',    _hostUid: 'ph-corby', _hostName: 'Corby', module: "Module .002 | Aseya's Crypt (LVLs 6 - 10)", member_count: 20, max_members: 20, is_private: false },
+      { id: 'ph-2', placeholder: true, name: 'Crown of Zailister',       _hostUid: 'ph-clod',  _hostName: 'Clod',  module: 'Private',                                     member_count: 4,  max_members: 20, is_private: true  },
+      { id: 'ph-3', placeholder: true, name: 'Dungeon of the Iron Mask', _hostUid: 'ph-mira',  _hostName: 'Mira',  module: 'Module .004 | Iron Mask (LVLs 1 - 5)',          member_count: 20, max_members: 20, is_private: false },
+      { id: 'ph-4', placeholder: true, name: 'The Sunken Vault',         _hostUid: 'ph-thorn', _hostName: 'Thorn', module: 'Module .005 | The Sunken Vault (LVLs 11 - 15)', member_count: 20, max_members: 20, is_private: false },
+      { id: 'ph-5', placeholder: true, name: 'Ashes of Redmark',         _hostUid: 'ph-vex',   _hostName: 'Vex',   module: "Module .003 | Ashes of Redmark (LVLs 6 - 10)", member_count: 15, max_members: 20, is_private: false },
+      { id: 'ph-6', placeholder: true, name: 'The Vault of Echoes',      _hostUid: 'ph-dren',  _hostName: 'Dren',  module: 'Module .001 | Valley of Darkness (LVLs 1 - 5)', member_count: 20, max_members: 20, is_private: false },
+    ];
+
     (function() {
       var theme = localStorage.getItem('themeSelected') || 'evil';
       if (theme === 'lawful') document.body.classList.add('lawful-mode');
@@ -739,8 +748,8 @@
         '<input type="text" id="boxSetCode" class="l-input" placeholder="Box set code..." maxlength="40" />';
 
       var codeNote = priv
-        ? '<p style="color:#4caf50;font-size:0.78rem;margin:0;">&#10003; Admin - no box code required</p>'
-        : '<p>Host a live Campaign session. A valid box set code is required.</p>';
+        ? '<p style="color:#4caf50;font-size:0.78rem;margin:0;">&#10003; Admin account — box code not required. (Regular PC accounts see a GM/box set code entry here.)</p>'
+        : '<p>Host a live Campaign session. Enter your GM / box set code below.</p>';
 
       var adminCodeGen = priv
         ? '<div class="action-card" style="margin-top:1.25rem;">' +
@@ -812,11 +821,7 @@
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
         if (myLobby) myActiveLobbyId = myLobby.id;
-        if (lobbies.length === 0) {
-          listEl.innerHTML = '<div class="empty-state">No open lobbies right now. Be the first to create one.</div>';
-          return;
-        }
-        allLobbies = lobbies;
+        allLobbies = lobbies.concat(PLACEHOLDER_LOBBIES);
         lobbyPage = 0;
         renderLobbyPage();
       } catch(e) {
@@ -825,6 +830,30 @@
     }
 
     function buildLobbyRowHtml(l) {
+      if (l.placeholder) {
+        var phDrop = buildHostNameDrop(l._hostUid, l._hostName, l._hostName, l.id);
+        var phFull = l.member_count >= l.max_members;
+        var phBtn, phHint;
+        if (phFull) {
+          phBtn  = '<button class="row-join-btn" disabled onclick="event.stopPropagation()">Full</button>';
+          phHint = '<span class="lobby-hint">Cannot join — lobby has ' + l.max_members + ' members.</span>';
+        } else if (l.is_private) {
+          phBtn  = '<button class="row-join-btn" style="background:#d0021b;color:#fff;" onclick="event.stopPropagation()">Join</button>';
+          phHint = '<span class="lobby-hint">Message Host to join by code or summon.</span>';
+        } else {
+          phBtn  = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation()">Join</button>';
+          phHint = '<span class="lobby-hint">Join open lobby.</span>';
+        }
+        return '<div class="lobby-row" style="cursor:default;">' +
+          '<div class="lobby-row-info">' +
+            '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
+            '<p>Host: ' + phDrop + ' &nbsp;&middot;&nbsp; ' + l.member_count + '/' + l.max_members + ' members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">' + esc(l.module) + '</em></p>' +
+          '</div>' +
+          '<div class="lobby-row-right">' +
+            '<div class="lobby-btn-col">' + phBtn + phHint + '</div>' +
+          '</div>' +
+        '</div>';
+      }
           var isFull = l.member_count >= l.max_members;
           var statusClass = isFull ? 'full' : 'open';
           var statusLabel = isFull ? 'Full' : 'Open';
@@ -873,10 +902,6 @@
       var listEl = document.getElementById('lobbyList');
       if (!listEl) return;
       var total = allLobbies.length;
-      if (total === 0) {
-        listEl.innerHTML = '<div class="empty-state">No open lobbies right now. Be the first to create one.</div>' + buildPlaceholderLobbies();
-        return;
-      }
       var totalPages = Math.ceil(total / LOBBIES_PER_PAGE);
       lobbyPage = Math.max(0, Math.min(lobbyPage, totalPages - 1));
       var start = lobbyPage * LOBBIES_PER_PAGE;
@@ -891,7 +916,7 @@
             '<button class="lobby-pager-btn" onclick="changeLobbyPage(1)" ' + (isLast ? 'disabled' : '') + '>&#8594;</button>' +
           '</div>'
         : '';
-      listEl.innerHTML = rowsHtml + (isLast ? buildPlaceholderLobbies() : '') + pager;
+      listEl.innerHTML = rowsHtml + pager;
     }
 
     window.changeLobbyPage = function(dir) {
@@ -905,7 +930,8 @@
       var profileHref = 'public-profile.html?username=' + encodeURIComponent(username || name || '');
       var items = '<a href="' + profileHref + '" onclick="event.stopPropagation()">Profile</a>';
       var isSelf = currentUser && currentUser.id === uid;
-      if (!isSelf) items += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(lobbyId) + '\',\'' + esc(name) + '\')">Message</button>';
+      var isPhUid = uid && uid.startsWith('ph-');
+      if (!isSelf && !isPhUid) items += '<a href="inbox.html?to=' + encodeURIComponent(uid) + '" class="summon-opt" onclick="event.stopPropagation()">Message</a>';
       return '<span class="member-name-wrap" style="display:inline-flex;vertical-align:middle;" onclick="event.stopPropagation()">' +
         '<button class="member-name-btn" style="font-size:inherit;color:inherit;font-weight:inherit;" onclick="toggleMemberMenu(event,this)">' + esc(name) + ' &#8964;</button>' +
         '<div class="member-name-menu">' + items + '</div>' +
@@ -1164,8 +1190,8 @@
       var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
       var leaveBtn = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>'
-        : '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="leaveLobby()" title="Step away — you can return at will.">Leave</button>' +
-          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="abandonLobby()" title="Remove yourself permanently — you will need to rejoin.">Abandon</button>';
+        : '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="confirmLeave(this)">Leave</button>' +
+          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
       var deleteBtn = hasGMRights ? '<button class="leave-btn" style="border-color:#5a1a1a;" onclick="deleteLobby()">Close Lobby</button>' : '';
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
@@ -1797,25 +1823,42 @@
       } catch(e) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Connection error.'; }
     };
 
+    window.confirmLeave = function(btn) {
+      btn.outerHTML =
+        '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
+          '<span style="font-size:0.75rem;color:#888;">Step away?</span>' +
+          '<button class="leave-btn" style="border-color:#3a3a5a;color:#aaa;padding:4px 10px;font-size:0.75rem;" onclick="leaveLobby()">Yes</button>' +
+          '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelLeave(this)">No</button>' +
+        '</span>';
+    };
+
+    window.cancelLeave = function(btn) {
+      var wrap = btn.closest('span');
+      if (wrap) wrap.outerHTML = '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="confirmLeave(this)">Leave</button>';
+    };
+
+    window.confirmAbandon = function(btn) {
+      btn.outerHTML =
+        '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
+          '<span style="font-size:0.75rem;color:#888;">Remove yourself?</span>' +
+          '<button class="leave-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="abandonLobby()">Yes</button>' +
+          '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelLeave(this)">No</button>' +
+        '</span>';
+    };
+
     window.leaveLobby = async function() {
-      var msg = isCreator
-        ? 'Leave this lobby? You can leave and re-enter your lobby at will.'
-        : 'Leave this lobby? You can leave and re-enter at will.';
-      if (!confirm(msg)) return;
       if (!currentLobby) return;
       sessionStorage.removeItem('activeLobbyId');
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/leave', {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/leave', {
           method: 'POST',
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
-        var data = await res.json();
-        backToList();
-      } catch(e) { backToList(); }
+      } catch(e) {}
+      backToList();
     };
 
     window.abandonLobby = async function() {
-      if (!confirm('Abandon this lobby? You will be removed entirely and will need to rejoin to return.')) return;
       if (!currentLobby || !currentUser) return;
       var lobbyId = currentLobby.id;
       abandonedUids.add(currentUser.id);
@@ -2037,7 +2080,7 @@
       var el = document.getElementById('lobbyMsgsList');
       if (!el) return;
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/host-messages', {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
         var data = await res.json();
@@ -2048,7 +2091,7 @@
           var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
           el.innerHTML = msgs.map(function(m) {
             return '<div class="chat-msg">' +
-              '<span class="msg-name">' + esc(m.sender_name || 'Unknown') + '</span>' +
+              '<span class="msg-name">' + esc(m.username || m.sender_name || 'Unknown') + '</span>' +
               '<span class="msg-body">' + esc(m.body || '') + '</span>' +
               '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
             '</div>';
@@ -2077,7 +2120,7 @@
       var targetId = lobbyId || window._lobbyMsgTargetId;
       if (!targetId) return;
       try {
-        await fetch(API_URL + '/api/lobbies/' + targetId + '/host-messages', {
+        await fetch(API_URL + '/api/lobbies/' + targetId + '/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ body: body })
@@ -2110,7 +2153,7 @@
       var body = input.value.trim();
       if (!body) return;
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + window._lobbyMsgTargetId + '/host-messages', {
+        var res = await fetch(API_URL + '/api/lobbies/' + window._lobbyMsgTargetId + '/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ body: body })
