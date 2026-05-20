@@ -1283,12 +1283,11 @@
                     '</div>'
                   : '<div style="padding:0.5rem 1rem;color:#3a2a5a;font-size:0.74rem;border-top:1px solid #1a1a2a;flex-shrink:0;">Read only - respond via LFM/LFG links above</div>') +
               '</div>' +
-              /* MESSAGES: lobby inbox — visible to all members, host replies here */
+              /* MESSAGES: mini inbox — conversations list */
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
-                '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div></div>' +
-                '<div class="chat-input-row">' +
-                  '<input type="text" class="chat-input" id="lobbyMsgInput" placeholder="Type a message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendLobbyMsg()" />' +
-                  '<button class="chat-send" onclick="sendLobbyMsg()">Send</button>' +
+                '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Loading inbox...</div></div>' +
+                '<div class="chat-input-row" style="justify-content:flex-end;padding:0.4rem 0.6rem;">' +
+                  '<a href="inbox.html" style="font-size:0.78rem;color:#d4af37;text-decoration:none;padding:5px 12px;border:1px solid #d4af37;border-radius:5px;">Open Full Inbox &#8594;</a>' +
                 '</div>' +
               '</div>' +
               /* RECRUIT: host-only quick-post templates */
@@ -1581,12 +1580,18 @@
             ? '⬡ ' + name + ' has abandoned the lobby.'
             : '⬡ ' + name + ' has left the lobby and may return at will.';
           if (isCreator && currentUser) {
-            // Host posts to world chat so all members see it persistently
+            // Post to world chat for public visibility
             fetch(API_URL + '/api/world-chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
               body: JSON.stringify({ body: activityText })
             }).then(function() { loadWorldChat(); }).catch(function(){});
+            // Also post to lobby main chat so all members see it in Main tab
+            fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+              body: JSON.stringify({ body: activityText })
+            }).catch(function(){});
           } else {
             notifyDeparture(activityText);
           }
@@ -2017,12 +2022,13 @@
             if (isActivity) rawBody = rawBody.replace(/^⬡\s*/, '');
             var bodyHtml = parseWorldBody(rawBody, m.id);
             var isSelf = currentUser && m.sender_uid === currentUser.id;
-            var hostLobbyId = (currentLobby && isCreator) ? currentLobby.id : myActiveLobbyId;
+            var hostLobbyId = (currentLobby && hasGMRights) ? currentLobby.id : myActiveLobbyId;
             var canSummon = !!(hostLobbyId && !isSelf && m.sender_uid);
             var nameEl;
             if (!isSelf && m.sender_uid) {
-              var wcItems = '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" onclick="event.stopPropagation()">Profile</a>';
+              var wcItems = '';
               if (canSummon) wcItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\',\'' + esc(hostLobbyId) + '\')">&#9889; Summon</button>';
+              wcItems += '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" onclick="event.stopPropagation()">Profile</a>';
               nameEl = '<span class="member-name-wrap" style="display:inline-flex;vertical-align:middle;">' +
                 '<button class="member-name-btn ' + nameClass + '" style="font-size:0.77rem;" onclick="toggleMemberMenu(event,this)">' + esc(m.sender_name) + ' &#8964;</button>' +
                 '<div class="member-name-menu">' + wcItems + '</div>' +
@@ -2104,42 +2110,40 @@
     var lobbyMsgPollTimer = null;
 
     async function loadLobbyMsgs() {
-      if (!currentLobby || !currentUser) return;
+      if (!currentUser) return;
       var el = document.getElementById('lobbyMsgsList');
       if (!el) return;
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+        var res = await fetch(API_URL + '/api/conversations', {
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
+        if (!res.ok) { el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Could not load inbox.</div>'; return; }
         var data = await res.json();
-        var msgs = data.messages || [];
-        if (msgs.length === 0) {
+        var convs = data.conversations || [];
+        if (convs.length === 0) {
           el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>';
-        } else {
-          var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
-          el.innerHTML = msgs.map(function(m) {
-            if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
-              var themeName = m.body.replace('__sorc_theme__:', '').trim();
-              return '<div class="chat-msg" style="color:#6a4ca0;font-size:0.78rem;font-style:italic;">' +
-                '&#9670; <span class="msg-name" style="color:#8860c0;">' + esc(m.username || m.sender_name || 'Unknown') + '</span> changed the theme to <em>' + esc(themeName) + '</em>' +
-                '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
-              '</div>';
-            }
-            return '<div class="chat-msg">' +
-              '<span class="msg-name">' + esc(m.username || m.sender_name || 'Unknown') + '</span>' +
-              '<span class="msg-body">' + esc(m.body || '') + '</span>' +
-              '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
-            '</div>';
-          }).join('');
-          if (msgs.length > lastLobbyMsgCount && lastLobbyMsgCount > 0) {
-            var activeTab = document.querySelector('.chat-tab.active');
-            if (!activeTab || activeTab.dataset.tab !== 'msgs') {
-              var badge = document.getElementById('badge-msgs');
-              if (badge) badge.style.display = '';
-            }
-          }
-          lastLobbyMsgCount = msgs.length;
-          if (atBottom) el.scrollTop = el.scrollHeight;
+          return;
+        }
+        var newUnread = 0;
+        el.innerHTML = convs.map(function(conv) {
+          var lastRead = parseInt(localStorage.getItem('sorc_conv_read_' + conv.id) || '0');
+          var rawTs = conv.last_message_at || '';
+          var msgTime = rawTs ? new Date(rawTs.includes('T') ? rawTs : rawTs.replace(' ', 'T') + 'Z').getTime() : 0;
+          var isUnread = msgTime > lastRead;
+          if (isUnread) newUnread++;
+          var otherName = esc(conv.other_username || conv.other_display_name || 'Unknown');
+          var preview = esc((conv.last_message_body || '').slice(0, 60)) + (conv.last_message_body && conv.last_message_body.length > 60 ? '…' : '');
+          var timeStr = rawTs ? timeAgo(rawTs) : '';
+          return '<div class="chat-msg" style="cursor:pointer;border-bottom:1px solid #1a1a1a;padding:0.45rem 0.5rem;" onclick="window.location.href=\'inbox.html?conv=' + esc(conv.id) + '\'">' +
+            '<span class="msg-name" style="' + (isUnread ? 'color:#d4af37;font-weight:bold;' : '') + '">' + otherName + (isUnread ? ' <span style="background:#d0021b;color:#fff;border-radius:8px;padding:1px 5px;font-size:0.65rem;font-weight:bold;">new</span>' : '') + '</span>' +
+            '<span class="msg-body" style="color:#666;font-size:0.76rem;display:block;margin-top:1px;">' + preview + '</span>' +
+            '<span class="msg-time">' + timeStr + '</span>' +
+          '</div>';
+        }).join('');
+        var activeTab = document.querySelector('.chat-tab.active');
+        if (newUnread > 0 && (!activeTab || activeTab.dataset.tab !== 'msgs')) {
+          var badge = document.getElementById('badge-msgs');
+          if (badge) badge.style.display = '';
         }
       } catch(e) {}
     }

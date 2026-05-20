@@ -1086,7 +1086,6 @@
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
 
     /* Keep the context alive — mobile browsers re-suspend after ~1s without this */
     keepAliveId = setInterval(function() {
@@ -1099,45 +1098,39 @@
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
-    /* Ambient beds */
-    startSpaceDrone();
-    scheduleMachineryHum();
-    scheduleAirRecycling();
-
-    /* Musical elements */
-    schedulePadSwell();
-    scheduleBrassAccent();
-
-    /* Ship traffic */
-    scheduleSmallShipFlyby();
-    scheduleLargeShipFlyby();
-    scheduleLanding();
-
-    /* Station events */
-    schedulePressureDoor();
-    scheduleHullCreak();
-    scheduleDistantImpact();
-
-    /* Droids — common */
-    scheduleDroidChirp();
-    scheduleDroidServo();
-    scheduleDroidWarble();
-    scheduleDroidProtocol();
-    /* Droids — rare */
-    scheduleDroidPowerUp();
-    scheduleDroidHeavyWalk();
-
-    /* Footsteps */
-    scheduleGridFootsteps();
-
-    /* Doors & teleporter */
-    scheduleSciFiDoor();
-    scheduleSciFiDoor();
-    scheduleTransporter();
-    scheduleTransporter();
-
-
     audioStarted = true;
+
+    /* Wait for context to be fully running before scheduling sounds */
+    var doSchedule = function() {
+      startSpaceDrone();
+      scheduleMachineryHum();
+      scheduleAirRecycling();
+      schedulePadSwell();
+      scheduleBrassAccent();
+      scheduleSmallShipFlyby();
+      scheduleLargeShipFlyby();
+      scheduleLanding();
+      schedulePressureDoor();
+      scheduleHullCreak();
+      scheduleDistantImpact();
+      scheduleDroidChirp();
+      scheduleDroidServo();
+      scheduleDroidWarble();
+      scheduleDroidProtocol();
+      scheduleDroidPowerUp();
+      scheduleDroidHeavyWalk();
+      scheduleGridFootsteps();
+      scheduleSciFiDoor();
+      scheduleSciFiDoor();
+      scheduleTransporter();
+      scheduleTransporter();
+    };
+
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(doSchedule).catch(doSchedule);
+    } else {
+      doSchedule();
+    }
   }
 
   /* ── STOP ─────────────────────────────────────────────── */

@@ -771,7 +771,6 @@
     if (audioStarted) return;
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
 
     keepAliveId = setInterval(function () {
       if (!audioCtx) { clearInterval(keepAliveId); keepAliveId = null; return; }
@@ -783,8 +782,14 @@
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
-    launchMovement(0);
     audioStarted = true;
+
+    var doSchedule = function() { launchMovement(0); };
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(doSchedule).catch(doSchedule);
+    } else {
+      doSchedule();
+    }
   }
 
   function stopAudio() {
