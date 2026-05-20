@@ -1258,7 +1258,7 @@ app.post('/api/box-codes/generate', authMiddleware, async (c) => {
   for (let i = 0; i < 6; i++) code += rng[i] % 10;
   code += 'BSC';
 
-  const expireDays = (typeof days === 'number' && days > 0) ? days : 30;
+  const expireDays = (typeof days === 'number' && days > 0) ? days : 2;
   const expiresAt = new Date(Date.now() + expireDays * 86400000).toISOString();
 
   // Add expires_at column if it doesn't exist yet (one-time migration)
@@ -2286,5 +2286,55 @@ app.post('/api/rooms/:id/requests/:reqId/decline', authMiddleware, async (c) => 
   return c.json({ success: true });
 });
 
-export default app;
+// ─── GENERATED CODE LISTING (admin only) ─────────────────────────────────────
+
+app.get('/api/box-codes/generated', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+  try {
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN expires_at TEXT`).run().catch(() => {});
+    const codes = await c.env.sorc_db.prepare(
+      `SELECT code, created_at, expires_at, owner_uid, claimed_at
+       FROM box_set_codes
+       WHERE code LIKE 'GEN%BSC'
+       ORDER BY created_at DESC LIMIT 100`
+    ).all();
+    return c.json({ codes: codes.results || [] });
+  } catch (e: any) {
+    return c.json({ error: 'Failed to fetch codes.', details: e.message }, 500);
+  }
+});
+
+// ─── SCHEDULED: rotate GEN codes every 2 days ────────────────────────────────
+
+async function rotateGeneratedCodes(db: D1Database) {
+  await db.prepare(`ALTER TABLE box_set_codes ADD COLUMN expires_at TEXT`).run().catch(() => {});
+
+  const now = new Date().toISOString();
+
+  // Expire all unclaimed GEN codes
+  await db.prepare(
+    `UPDATE box_set_codes SET expires_at = ? WHERE code LIKE 'GEN%BSC' AND (owner_uid IS NULL) AND (expires_at IS NULL OR expires_at > ?)`
+  ).bind(now, now).run();
+
+  // Generate a fresh batch of 10 codes valid for 48 hours
+  const alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const expiresAt = new Date(Date.now() + 2 * 86400000).toISOString();
+  for (let n = 0; n < 10; n++) {
+    const rng = crypto.getRandomValues(new Uint8Array(6));
+    let code = 'GEN';
+    for (let i = 0; i < 6; i++) code += rng[i] % 10;
+    code += 'BSC';
+    await db.prepare(
+      `INSERT OR IGNORE INTO box_set_codes (id, code, created_by, note, created_at, expires_at) VALUES (?, ?, 'system', 'auto-generated', ?, ?)`
+    ).bind(crypto.randomUUID(), code, now, expiresAt).run();
+  }
+}
+
+export default {
+  fetch: app.fetch,
+  async scheduled(_event: any, env: Env, _ctx: any) {
+    await rotateGeneratedCodes(env.sorc_db);
+  },
+};
 
