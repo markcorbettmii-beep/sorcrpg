@@ -462,7 +462,7 @@
           osc.frequency.setValueAtTime(freq, startAt);
           osc.frequency.linearRampToValueAtTime(freq * rnd(0.97, 1.05), startAt + dur);
           var g = audioCtx.createGain();
-          var peak = rnd(0.004, 0.007);
+          var peak = rnd(0.001, 0.002);
           g.gain.setValueAtTime(0, startAt);
           g.gain.linearRampToValueAtTime(peak, startAt + 0.012);
           g.gain.setValueAtTime(peak, startAt + dur - 0.012);
@@ -481,7 +481,7 @@
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var base = rnd(3000, 5000);
-      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.003, 0.007));
+      chirpBird(base, [{m:1, d:rnd(0.04,0.08)}, {m:rnd(0.9,1.1), d:rnd(0.04,0.07)}], rnd(0.014, 0.022));
       scheduleBirdD();
     }, 4, 13);
   }
@@ -659,25 +659,22 @@
   }
 
   /* ─── BOW DRAW ───────────────────────────────────────────────
-     Subtle creak of a bowstring drawing back — rising filtered
-     noise with a faint wood-flex tone at full draw.            */
-  /* Bow draw — Lurtz style: massive war bow under extreme tension.
+     Lurtz style: massive war bow under extreme tension.
      Deep wood groan, low string vibration, slow and ominous.
-     Never fires — just holds at full draw.                      */
+     Never fires - just holds at full draw.
+     KEY: all filter frequencies are FIXED - no sweeping = no car sound. */
   function playBowDraw() {
     var now = audioCtx.currentTime;
     var drawDur = rnd(2.2, 3.5);
     var holdDur = rnd(1.0, 2.0);
     var total = drawDur + holdDur;
 
-    /* Wood limb groan — the main sound. Deep, slow, structural stress.
-       Like a thick timber bending under enormous load.               */
+    /* Wood limb groan - deep, FIXED bandpass. No frequency sweep.
+       Like a thick timber bending under enormous load.           */
     var groan = oneshotNoise(total + 0.4);
     var glpf = audioCtx.createBiquadFilter();
     glpf.type = 'bandpass';
-    glpf.frequency.setValueAtTime(rnd(90, 130), now);
-    glpf.frequency.linearRampToValueAtTime(rnd(160, 220), now + drawDur * 0.7);
-    glpf.frequency.setValueAtTime(rnd(140, 190), now + total);
+    glpf.frequency.value = rnd(100, 150);   /* FIXED - amplitude only changes */
     glpf.Q.value = rnd(3, 6);
     var gg = makeGain(0);
     gg.gain.setValueAtTime(0, now);
@@ -688,22 +685,22 @@
     groan.connect(glpf); glpf.connect(gg); gg.connect(masterGain);
     groan.start(now);
 
-    /* Wood fiber creak — intermittent stress sounds during draw */
-    var creak = oneshotNoise(drawDur * 0.6);
-    var cbpf = audioCtx.createBiquadFilter();
-    cbpf.type = 'bandpass';
-    cbpf.frequency.setValueAtTime(rnd(200, 320), now + drawDur * 0.3);
-    cbpf.frequency.linearRampToValueAtTime(rnd(350, 500), now + drawDur * 0.9);
-    cbpf.Q.value = rnd(4, 8);
-    var cg = makeGain(0);
-    cg.gain.setValueAtTime(0, now + drawDur * 0.25);
-    cg.gain.linearRampToValueAtTime(rnd(0.022, 0.038), now + drawDur * 0.55);
-    cg.gain.linearRampToValueAtTime(rnd(0.030, 0.048), now + drawDur * 0.88);
-    cg.gain.exponentialRampToValueAtTime(0.0001, now + drawDur + 0.15);
-    creak.connect(cbpf); cbpf.connect(cg); cg.connect(masterGain);
-    creak.start(now + drawDur * 0.22);
+    /* Wood fiber stress snap - short burst at fixed frequency, mid-draw */
+    var snap = oneshotNoise(0.09);
+    var sbpf = audioCtx.createBiquadFilter();
+    sbpf.type = 'bandpass';
+    sbpf.frequency.value = rnd(280, 440);   /* FIXED - no sweep */
+    sbpf.Q.value = rnd(4, 8);
+    var scg = makeGain(0);
+    var snapAt = now + drawDur * rnd(0.45, 0.58);
+    scg.gain.setValueAtTime(0, snapAt);
+    scg.gain.linearRampToValueAtTime(rnd(0.018, 0.032), snapAt + 0.018);
+    scg.gain.exponentialRampToValueAtTime(0.0001, snapAt + 0.09);
+    snap.connect(sbpf); sbpf.connect(scg); scg.connect(masterGain);
+    snap.start(snapAt);
 
-    /* Heavy string — low resonant hum under tension, like a steel cable */
+    /* Heavy string - low resonant hum under tension.
+       Pitch shift is a real string going tighter, not bandpass on noise. */
     var str = audioCtx.createOscillator();
     str.type = 'sawtooth';
     str.frequency.setValueAtTime(rnd(55, 75), now + drawDur * 0.2);
@@ -712,16 +709,16 @@
     allSources.push(str);
     var slpf = audioCtx.createBiquadFilter();
     slpf.type = 'lowpass'; slpf.frequency.value = 380;
-    var sg = makeGain(0);
-    sg.gain.setValueAtTime(0, now + drawDur * 0.15);
-    sg.gain.linearRampToValueAtTime(rnd(0.030, 0.050), now + drawDur * 0.6);
-    sg.gain.linearRampToValueAtTime(rnd(0.040, 0.065), now + drawDur);
-    sg.gain.setValueAtTime(rnd(0.035, 0.058), now + total - 0.25);
-    sg.gain.linearRampToValueAtTime(0.0001, now + total + 0.3);
-    str.connect(slpf); slpf.connect(sg); sg.connect(masterGain);
+    var stg = makeGain(0);
+    stg.gain.setValueAtTime(0, now + drawDur * 0.15);
+    stg.gain.linearRampToValueAtTime(rnd(0.030, 0.050), now + drawDur * 0.6);
+    stg.gain.linearRampToValueAtTime(rnd(0.040, 0.065), now + drawDur);
+    stg.gain.setValueAtTime(rnd(0.035, 0.058), now + total - 0.25);
+    stg.gain.linearRampToValueAtTime(0.0001, now + total + 0.3);
+    str.connect(slpf); slpf.connect(stg); stg.connect(masterGain);
     str.start(now + drawDur * 0.12); str.stop(now + total + 0.4);
 
-    /* Sub-oscillator — feel it in your chest */
+    /* Sub - feel it in your chest */
     var sub = audioCtx.createOscillator();
     sub.type = 'sine'; sub.frequency.value = rnd(35, 50);
     allSources.push(sub);
@@ -748,13 +745,13 @@
   function playSpell(type) {
     var now = audioCtx.currentTime;
     if (type === 'arcane') {
-      /* Rising arcane whoosh with high shimmer at peak */
+      /* Rising arcane whoosh - sweeps from low to mid, not into siren range */
       var dur = rnd(1.1, 1.9);
       var src = oneshotNoise(dur);
       var bpf = audioCtx.createBiquadFilter();
       bpf.type = 'bandpass';
       bpf.frequency.setValueAtTime(rnd(350, 550), now);
-      bpf.frequency.exponentialRampToValueAtTime(rnd(2200, 3800), now + dur * 0.75);
+      bpf.frequency.exponentialRampToValueAtTime(rnd(800, 1400), now + dur * 0.75);
       bpf.Q.value = rnd(1.5, 3.0);
       var g = audioCtx.createGain();
       g.gain.setValueAtTime(0, now);
@@ -762,18 +759,16 @@
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
       src.connect(bpf); bpf.connect(g); g.connect(masterGain);
       src.start(now);
-      /* Shimmer tones at the peak */
-      [rnd(2900, 3600), rnd(3600, 4400)].forEach(function (freq) {
-        var osc = audioCtx.createOscillator();
-        osc.type = 'sine'; osc.frequency.value = freq;
-        allSources.push(osc);
-        var sg = makeGain(0);
-        sg.gain.setValueAtTime(0, now + dur * 0.38);
-        sg.gain.linearRampToValueAtTime(rnd(0.005, 0.009), now + dur * 0.62);
-        sg.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.25);
-        osc.connect(sg); sg.connect(masterGain);
-        osc.start(now + dur * 0.38); osc.stop(now + dur + 0.3);
-      });
+      /* Soft shimmer at peak - noise-based, not high-pitched sine tones */
+      var shim = oneshotNoise(dur * 0.55);
+      var shbpf = audioCtx.createBiquadFilter();
+      shbpf.type = 'bandpass'; shbpf.frequency.value = rnd(1100, 1800); shbpf.Q.value = 0.9;
+      var sg = makeGain(0);
+      sg.gain.setValueAtTime(0, now + dur * 0.38);
+      sg.gain.linearRampToValueAtTime(rnd(0.008, 0.014), now + dur * 0.55);
+      sg.gain.exponentialRampToValueAtTime(0.0001, now + dur + 0.1);
+      shim.connect(shbpf); shbpf.connect(sg); sg.connect(masterGain);
+      shim.start(now + dur * 0.35);
     } else if (type === 'dark') {
       /* Dark ritual — descending overtones, eerie fall */
       var dur = rnd(1.4, 2.2);
@@ -988,7 +983,6 @@
     var now = audioCtx.currentTime;
     var tapRate = rnd(18, 25);
     var tapCount = rndInt(14, 30);
-    var logFreq = rnd(1000, 1800);   /* hollow log resonance pitch */
     var burstSplit = Math.floor(tapCount * rnd(0.4, 0.6));
     var pauseGap = rnd(0.20, 0.50);
     for (var i = 0; i < tapCount; i++) {
@@ -1010,16 +1004,6 @@
         g.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.010);
         src.connect(bpf); bpf.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
         src.start(now + offset);
-        /* Hollow log ring — softer at distance */
-        var ring = audioCtx.createOscillator();
-        ring.type = 'sine';
-        ring.frequency.value = logFreq * rnd(0.96, 1.04);
-        allSources.push(ring);
-        var rg = makeGain(0);
-        rg.gain.setValueAtTime(rnd(0.006, 0.011), now + offset + 0.001);
-        rg.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.045);
-        ring.connect(rg); rg.connect(masterGain);
-        ring.start(now + offset); ring.stop(now + offset + 0.05);
       })(i);
     }
   }
@@ -1244,36 +1228,49 @@
       }
     }
 
-    /* The roar */
+    /* The roar - formant-filtered noise, not oscillators.
+       Real bear roar = air turbulence through resonant vocal tract.  */
     function bearRoar(t) {
       var dur = rnd(1.8, 2.8);
-      var base = rnd(62, 88);
-      [1, 1.48, 2.05, 3.1].forEach(function (mult, i) {
-        var osc = audioCtx.createOscillator();
-        osc.type = i < 2 ? 'sawtooth' : 'triangle';
-        osc.frequency.setValueAtTime(base * mult, t);
-        osc.frequency.linearRampToValueAtTime(base * mult * rnd(0.78, 0.88), t + dur);
-        allSources.push(osc);
-        var lpf = audioCtx.createBiquadFilter();
-        lpf.type = 'lowpass'; lpf.frequency.value = [480, 700, 900, 1200][i];
-        var g = makeGain(0);
-        var peak = [0.18, 0.12, 0.07, 0.035][i];
-        g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(peak, t + 0.04);
-        g.gain.setValueAtTime(peak * 0.85, t + dur * 0.55);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
-        osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-        osc.start(t); osc.stop(t + dur + 0.35);
-      });
-      var noise = oneshotNoise(dur + 0.3);
-      var nbpf = audioCtx.createBiquadFilter();
-      nbpf.type = 'bandpass'; nbpf.frequency.value = rnd(280, 480); nbpf.Q.value = 0.7;
-      var ng = makeGain(0);
-      ng.gain.setValueAtTime(0.10, t + 0.02);
-      ng.gain.setValueAtTime(0.08, t + dur * 0.45);
-      ng.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.15);
-      noise.connect(nbpf); nbpf.connect(ng); ng.connect(masterGain);
-      noise.start(t);
+      /* First formant: deep chest resonance */
+      var s1 = oneshotNoise(dur + 0.4);
+      var f1 = audioCtx.createBiquadFilter();
+      f1.type = 'bandpass'; f1.frequency.value = rnd(220, 350); f1.Q.value = rnd(3, 6);
+      var g1 = makeGain(0);
+      g1.gain.setValueAtTime(0, t);
+      g1.gain.linearRampToValueAtTime(0.22, t + 0.06);
+      g1.gain.setValueAtTime(0.18, t + dur * 0.5);
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.2);
+      s1.connect(f1); f1.connect(g1); g1.connect(masterGain); s1.start(t);
+      /* Second formant: vocal tract - throaty mid */
+      var s2 = oneshotNoise(dur + 0.3);
+      var f2 = audioCtx.createBiquadFilter();
+      f2.type = 'bandpass'; f2.frequency.value = rnd(500, 800); f2.Q.value = rnd(2, 4);
+      var g2 = makeGain(0);
+      g2.gain.setValueAtTime(0, t);
+      g2.gain.linearRampToValueAtTime(0.13, t + 0.08);
+      g2.gain.setValueAtTime(0.10, t + dur * 0.5);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.1);
+      s2.connect(f2); f2.connect(g2); g2.connect(masterGain); s2.start(t);
+      /* Sub rumble - give it physical weight */
+      var s3 = oneshotNoise(dur + 0.3);
+      var lp3 = audioCtx.createBiquadFilter();
+      lp3.type = 'lowpass'; lp3.frequency.value = rnd(130, 200);
+      var g3 = makeGain(0);
+      g3.gain.setValueAtTime(0, t);
+      g3.gain.linearRampToValueAtTime(0.18, t + 0.05);
+      g3.gain.setValueAtTime(0.14, t + dur * 0.6);
+      g3.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.3);
+      s3.connect(lp3); lp3.connect(g3); g3.connect(masterGain); s3.start(t);
+      /* Third formant: rasp/growl texture - quieter */
+      var s4 = oneshotNoise(dur * 0.7);
+      var f4 = audioCtx.createBiquadFilter();
+      f4.type = 'bandpass'; f4.frequency.value = rnd(1000, 1800); f4.Q.value = rnd(1.5, 3);
+      var g4 = makeGain(0);
+      g4.gain.setValueAtTime(0, t);
+      g4.gain.linearRampToValueAtTime(0.055, t + 0.10);
+      g4.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.75);
+      s4.connect(f4); f4.connect(g4); g4.connect(masterGain); s4.start(t);
     }
 
     /* Sequence: SNORK SNORK — bush push — footsteps on dead leaves
@@ -1298,6 +1295,84 @@
       playBearSequence();
       scheduleBear();
     }, 55, 130);
+  }
+
+  /* ─── BEES ──────────────────────────────────────────────────
+     Honeybee wingbeat ~230-270Hz AM-modulated bandpass noise.
+     Multiple bees at offset rates create natural beating effect. */
+  function playBees() {
+    var now = audioCtx.currentTime;
+    var dur = rnd(5, 11);
+    var count = rndInt(2, 4);
+    for (var b = 0; b < count; b++) {
+      (function () {
+        var wingsHz = rnd(225, 275);
+        var noise = oneshotNoise(dur + 0.5);
+        var bpf = audioCtx.createBiquadFilter();
+        bpf.type = 'bandpass'; bpf.frequency.value = rnd(300, 650); bpf.Q.value = rnd(2, 4);
+        /* AM modulation at wingbeat rate: base 0.5 +- 0.5 = 0 to 1 */
+        var modBase = makeGain(0.5);
+        var am = audioCtx.createOscillator();
+        am.type = 'sine'; am.frequency.value = wingsHz;
+        allSources.push(am);
+        var amDepth = makeGain(0.5);
+        am.connect(amDepth); amDepth.connect(modBase.gain);
+        var env = makeGain(0);
+        env.gain.setValueAtTime(0, now);
+        env.gain.linearRampToValueAtTime(rnd(0.006, 0.011), now + 0.7);
+        env.gain.setValueAtTime(rnd(0.005, 0.010), now + dur - 0.7);
+        env.gain.linearRampToValueAtTime(0, now + dur);
+        noise.connect(bpf); bpf.connect(modBase); modBase.connect(env); env.connect(masterGain);
+        noise.start(now); noise.stop(now + dur + 0.6);
+        am.start(now); am.stop(now + dur + 0.6);
+      })();
+    }
+  }
+
+  function scheduleBees() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playBees();
+      scheduleBees();
+    }, 18, 50);
+  }
+
+  /* ─── HUMMINGBIRD ────────────────────────────────────────────
+     Wingbeat ~50-80Hz AM on bandpass noise. Darts past quickly.
+     Optional brief chirp.                                        */
+  function playHummingbird() {
+    var now = audioCtx.currentTime;
+    var dur = rnd(1.5, 3.0);
+    var noise = oneshotNoise(dur + 0.3);
+    var bpf = audioCtx.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = rnd(400, 700); bpf.Q.value = rnd(2, 5);
+    var modBase = makeGain(0.5);
+    var am = audioCtx.createOscillator();
+    am.type = 'sine'; am.frequency.value = rnd(50, 80);
+    allSources.push(am);
+    var amDepth = makeGain(0.5);
+    am.connect(amDepth); amDepth.connect(modBase.gain);
+    /* Dart-past envelope: quick rise, brief presence, quick exit */
+    var env = makeGain(0);
+    env.gain.setValueAtTime(0, now);
+    env.gain.linearRampToValueAtTime(rnd(0.016, 0.028), now + dur * 0.2);
+    env.gain.setValueAtTime(rnd(0.014, 0.025), now + dur * 0.7);
+    env.gain.linearRampToValueAtTime(0, now + dur);
+    noise.connect(bpf); bpf.connect(modBase); modBase.connect(env); env.connect(masterGain);
+    noise.start(now); noise.stop(now + dur + 0.3);
+    am.start(now); am.stop(now + dur + 0.3);
+    /* 55% chance of a brief high chirp */
+    if (Math.random() < 0.55) {
+      chirpBird(rnd(4500, 6500), [{m:1, d:0.04}, {m:rnd(1.1,1.3), d:0.035}], rnd(0.011, 0.018));
+    }
+  }
+
+  function scheduleHummingbird() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      playHummingbird();
+      scheduleHummingbird();
+    }, 12, 40);
   }
 
   /* ─── START ──────────────────────────────────────────────────
@@ -1332,6 +1407,8 @@
     scheduleBirdD();                /* chirps: ~4-13s          */
     scheduleBirdC();                /* song:   ~12-32s         */
     scheduleForestFootstep();       /* soft hoof: ~14-40s      */
+    scheduleBees();                 /* bees:   ~18-50s         */
+    scheduleHummingbird();          /* dart:   ~12-40s         */
     /* Woodpecker — guaranteed early hit, then ongoing */
     at(rnd(6, 14), function () { playWoodpecker(); scheduleWoodpecker(); });
 
