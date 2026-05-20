@@ -735,7 +735,7 @@
           nSrc.buffer = makeNoiseBuf(0.12);
           var bpf = audioCtx.createBiquadFilter();
           bpf.type = 'bandpass';
-          bpf.frequency.value = rnd(280, 520); bpf.Q.value = 1.8;
+          bpf.frequency.value = rnd(2200, 4500); bpf.Q.value = 2.2;
           var ng = audioCtx.createGain();
           ng.gain.setValueAtTime(vol, t);
           ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
@@ -743,19 +743,9 @@
           ng.connect(masterGain);   /* dry */
           ng.connect(rev.input);    /* wet send */
           nSrc.start(t);
-          /* sub-bass body thud — the boot weight */
-          var subOsc = audioCtx.createOscillator();
-          subOsc.type = 'sine';
-          subOsc.frequency.setValueAtTime(rnd(48, 72), t);
-          subOsc.frequency.exponentialRampToValueAtTime(rnd(22, 32), t + 0.18);
-          var subG = audioCtx.createGain();
-          subG.gain.setValueAtTime(vol * 1.4, t);
-          subG.gain.exponentialRampToValueAtTime(0.0001, t + 0.20);
-          subOsc.connect(subG); subG.connect(masterGain);
-          subOsc.start(t); subOsc.stop(t + 0.22);
           /* metallic grid ring — hollow steel decay */
           var rOsc = audioCtx.createOscillator();
-          rOsc.type = 'sine'; rOsc.frequency.value = rnd(380, 560);
+          rOsc.type = 'sine'; rOsc.frequency.value = rnd(1800, 3200);
           var rg = audioCtx.createGain();
           rg.gain.setValueAtTime(vol * 0.55, t + 0.004);
           rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
