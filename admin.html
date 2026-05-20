@@ -201,15 +201,13 @@
           '<div class="admin-grid">' +
             '<div class="admin-card">' +
               '<h3>&#128081; Generate GM Code</h3>' +
-              '<p>Issue a one-time code that allows a PC-assessed member to upgrade their role to Game Master [GM].</p>' +
-              '<input type="text" id="gmCodeNote" class="admin-input" placeholder="Note (e.g. member name)..." maxlength="100" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+              '<p>One-time code that lets a PC member upgrade their role to Game Master [GM]. They enter it on their Profile page.</p>' +
               '<button class="btn btn-gold btn-block" onclick="adminGenGmCode()">Generate GM Code</button>' +
               '<div id="gmCodeOut" class="output-box" style="margin-top:0.5rem;font-size:0.82rem;"></div>' +
             '</div>' +
             '<div class="admin-card">' +
               '<h3>&#128274; Generate Box Set Code</h3>' +
-              '<p>Issue a temporary activation code for members who own a physical box set. Required to create lobbies.</p>' +
-              '<input type="text" id="bscNote" class="admin-input" placeholder="Note (e.g. member name)..." maxlength="100" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+              '<p>Temporary code (GEN...BSC) for members who own a physical box set. They enter it in the Create Lobby form to host games.</p>' +
               '<button class="btn btn-gold btn-block" onclick="adminGenBoxCode()">Generate Box Set Code</button>' +
               '<div id="bscCodeOut" class="output-box" style="margin-top:0.5rem;font-size:0.82rem;"></div>' +
             '</div>' +
@@ -287,14 +285,13 @@
     }
 
     window.adminGenGmCode = async function() {
-      var note = (document.getElementById('gmCodeNote') || {}).value || '';
       var outEl = document.getElementById('gmCodeOut');
       if (!outEl) return;
       outEl.style.color = '#888'; outEl.textContent = 'Generating...';
       try {
         var res = await apiFetch('/api/gm-codes/generate', {
           method: 'POST',
-          body: JSON.stringify({ note: note.trim() })
+          body: JSON.stringify({})
         });
         if (res.success) {
           outEl.style.color = '#4caf50';

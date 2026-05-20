@@ -754,15 +754,13 @@
       var adminCodeGen = priv
         ? '<div class="action-card" style="margin-top:1.25rem;">' +
             '<h2 class="gold" style="font-size:0.92rem;">&#128274; Generate Box Set Code</h2>' +
-            '<p>Issue a temporary box set code so a member can create lobbies (requires physical box set ownership).</p>' +
-            '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. member name)..." maxlength="100" />' +
+            '<p>Temporary GEN...BSC code for members with a physical box set. They enter it in Create Lobby to host games.</p>' +
             '<button class="l-btn gold" onclick="generateBoxCode()">Generate Box Set Code</button>' +
             '<div id="genCodeResult" class="l-msg"></div>' +
             '<div style="margin-top:0.75rem;border-top:1px solid #2a2a2a;padding-top:0.75rem;">' +
               '<h2 class="gold" style="font-size:0.92rem;">&#128081; Generate GM Code</h2>' +
-              '<p style="color:#666;font-size:0.82rem;margin:0 0 0.5rem 0;">Issue a one-time GM code that upgrades a PC member\'s role to Game Master.</p>' +
-              '<input type="text" id="gmCodeNote" class="l-input" placeholder="Note (e.g. member name)..." maxlength="100" />' +
-              '<button class="l-btn gold" style="margin-top:0.4rem;" onclick="generateGmCode()">Generate GM Code</button>' +
+              '<p style="color:#666;font-size:0.82rem;margin:0 0 0.5rem 0;">One-time GM-... code. Member enters it on their Profile page to upgrade from PC to GM.</p>' +
+              '<button class="l-btn gold" onclick="generateGmCode()">Generate GM Code</button>' +
               '<div id="genGmCodeResult" class="l-msg"></div>' +
             '</div>' +
           '</div>'
@@ -1006,14 +1004,13 @@
 
     // ===== GENERATE BOX CODE (admin/owner) =====
     window.generateBoxCode = async function() {
-      var note = (document.getElementById('codeNote') || {}).value || '';
       var resultEl = document.getElementById('genCodeResult');
       resultEl.className = 'l-msg'; resultEl.textContent = 'Generating...';
       try {
         var res = await fetch(API_URL + '/api/box-codes/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ note: note.trim() })
+          body: JSON.stringify({})
         });
         var data = await res.json();
         if (data.success) {
@@ -1024,14 +1021,13 @@
     };
 
     window.generateGmCode = async function() {
-      var note = (document.getElementById('gmCodeNote') || {}).value || '';
       var resultEl = document.getElementById('genGmCodeResult');
       resultEl.className = 'l-msg'; resultEl.textContent = 'Generating...';
       try {
         var res = await fetch(API_URL + '/api/gm-codes/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ note: note.trim() })
+          body: JSON.stringify({})
         });
         var data = await res.json();
         if (data.success) {
