@@ -441,16 +441,37 @@
     });
   }
 
-  /* Blackbird-style melodic phrase */
+  /* Blackbird-style melodic whistle — sounds distant through trees */
   function scheduleBirdC() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
       var base = rnd(1600, 2200);
       var mults = [1, 1.12, 1.25, 1.18, 1.05, 0.94, 1.0];
       var phrase = mults.slice(0, rndInt(4, 7)).map(function (m) {
         return {m: m * rnd(0.97, 1.03), d: rnd(0.12, 0.22)};
       });
-      chirpBird(base, phrase, rnd(0.001, 0.002));
+      /* Distance LPF so it sounds far away in the canopy */
+      var distLpf = audioCtx.createBiquadFilter();
+      distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(1800, 2600);
+      var cursor = now;
+      phrase.forEach(function (n) {
+        (function (startAt, freq, dur) {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startAt);
+          osc.frequency.linearRampToValueAtTime(freq * rnd(0.97, 1.05), startAt + dur);
+          var g = audioCtx.createGain();
+          var peak = rnd(0.004, 0.007);
+          g.gain.setValueAtTime(0, startAt);
+          g.gain.linearRampToValueAtTime(peak, startAt + 0.012);
+          g.gain.setValueAtTime(peak, startAt + dur - 0.012);
+          g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur + 0.015);
+          osc.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
+          osc.start(startAt); osc.stop(startAt + dur + 0.02);
+        })(cursor, base * n.m, n.d);
+        cursor += n.d + rnd(0.02, 0.06);
+      });
       scheduleBirdC();
     }, 12, 32);
   }
@@ -640,51 +661,77 @@
   /* ─── BOW DRAW ───────────────────────────────────────────────
      Subtle creak of a bowstring drawing back — rising filtered
      noise with a faint wood-flex tone at full draw.            */
+  /* Bow draw — Lurtz style: massive war bow under extreme tension.
+     Deep wood groan, low string vibration, slow and ominous.
+     Never fires — just holds at full draw.                      */
   function playBowDraw() {
     var now = audioCtx.currentTime;
-    var drawDur = rnd(1.4, 2.2);    /* slow deliberate pull */
-    var holdDur = rnd(0.8, 1.6);    /* archer holds at full draw */
+    var drawDur = rnd(2.2, 3.5);
+    var holdDur = rnd(1.0, 2.0);
     var total = drawDur + holdDur;
-    /* String tension — rising bandpass creak as bow is drawn */
-    var src = oneshotNoise(total + 0.3);
-    var bpf = audioCtx.createBiquadFilter();
-    bpf.type = 'bandpass';
-    bpf.frequency.setValueAtTime(rnd(500, 800), now);
-    bpf.frequency.linearRampToValueAtTime(rnd(1600, 2400), now + drawDur);
-    bpf.frequency.setValueAtTime(rnd(1600, 2400), now + total);  /* holds */
-    bpf.Q.value = rnd(6, 11);
-    var g = audioCtx.createGain();
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(rnd(0.009, 0.015), now + drawDur * 0.5);
-    g.gain.linearRampToValueAtTime(rnd(0.013, 0.020), now + drawDur);
-    /* Holds taut at full draw — slow fade, never fires */
-    g.gain.setValueAtTime(rnd(0.013, 0.020), now + drawDur + holdDur * 0.3);
-    g.gain.linearRampToValueAtTime(0.0001, now + total + 0.3);
-    src.connect(bpf); bpf.connect(g); g.connect(masterGain);
-    src.start(now);
-    /* Wood limb creak at full draw — bow bending under load */
-    var creak = oneshotNoise(drawDur * 0.4);
+
+    /* Wood limb groan — the main sound. Deep, slow, structural stress.
+       Like a thick timber bending under enormous load.               */
+    var groan = oneshotNoise(total + 0.4);
+    var glpf = audioCtx.createBiquadFilter();
+    glpf.type = 'bandpass';
+    glpf.frequency.setValueAtTime(rnd(90, 130), now);
+    glpf.frequency.linearRampToValueAtTime(rnd(160, 220), now + drawDur * 0.7);
+    glpf.frequency.setValueAtTime(rnd(140, 190), now + total);
+    glpf.Q.value = rnd(3, 6);
+    var gg = makeGain(0);
+    gg.gain.setValueAtTime(0, now);
+    gg.gain.linearRampToValueAtTime(rnd(0.055, 0.085), now + drawDur * 0.4);
+    gg.gain.linearRampToValueAtTime(rnd(0.070, 0.100), now + drawDur);
+    gg.gain.setValueAtTime(rnd(0.060, 0.090), now + total - 0.2);
+    gg.gain.linearRampToValueAtTime(0.0001, now + total + 0.4);
+    groan.connect(glpf); glpf.connect(gg); gg.connect(masterGain);
+    groan.start(now);
+
+    /* Wood fiber creak — intermittent stress sounds during draw */
+    var creak = oneshotNoise(drawDur * 0.6);
     var cbpf = audioCtx.createBiquadFilter();
-    cbpf.type = 'bandpass'; cbpf.frequency.value = rnd(180, 280); cbpf.Q.value = rnd(2, 4);
+    cbpf.type = 'bandpass';
+    cbpf.frequency.setValueAtTime(rnd(200, 320), now + drawDur * 0.3);
+    cbpf.frequency.linearRampToValueAtTime(rnd(350, 500), now + drawDur * 0.9);
+    cbpf.Q.value = rnd(4, 8);
     var cg = makeGain(0);
-    cg.gain.setValueAtTime(0, now + drawDur * 0.65);
-    cg.gain.linearRampToValueAtTime(rnd(0.006, 0.010), now + drawDur * 0.82);
-    cg.gain.exponentialRampToValueAtTime(0.0001, now + drawDur + 0.12);
+    cg.gain.setValueAtTime(0, now + drawDur * 0.25);
+    cg.gain.linearRampToValueAtTime(rnd(0.022, 0.038), now + drawDur * 0.55);
+    cg.gain.linearRampToValueAtTime(rnd(0.030, 0.048), now + drawDur * 0.88);
+    cg.gain.exponentialRampToValueAtTime(0.0001, now + drawDur + 0.15);
     creak.connect(cbpf); cbpf.connect(cg); cg.connect(masterGain);
-    creak.start(now + drawDur * 0.60);
-    /* Subtle string hum at full tension */
-    var hum = audioCtx.createOscillator();
-    hum.type = 'sine';
-    hum.frequency.setValueAtTime(rnd(280, 360), now + drawDur);
-    hum.frequency.linearRampToValueAtTime(rnd(260, 340), now + total);
-    allSources.push(hum);
-    var hg = makeGain(0);
-    hg.gain.setValueAtTime(0, now + drawDur);
-    hg.gain.linearRampToValueAtTime(rnd(0.003, 0.006), now + drawDur + 0.12);
-    hg.gain.setValueAtTime(rnd(0.003, 0.006), now + total - 0.15);
-    hg.gain.linearRampToValueAtTime(0.0001, now + total + 0.2);
-    hum.connect(hg); hg.connect(masterGain);
-    hum.start(now + drawDur); hum.stop(now + total + 0.3);
+    creak.start(now + drawDur * 0.22);
+
+    /* Heavy string — low resonant hum under tension, like a steel cable */
+    var str = audioCtx.createOscillator();
+    str.type = 'sawtooth';
+    str.frequency.setValueAtTime(rnd(55, 75), now + drawDur * 0.2);
+    str.frequency.linearRampToValueAtTime(rnd(70, 95), now + drawDur);
+    str.frequency.setValueAtTime(rnd(68, 90), now + total);
+    allSources.push(str);
+    var slpf = audioCtx.createBiquadFilter();
+    slpf.type = 'lowpass'; slpf.frequency.value = 380;
+    var sg = makeGain(0);
+    sg.gain.setValueAtTime(0, now + drawDur * 0.15);
+    sg.gain.linearRampToValueAtTime(rnd(0.030, 0.050), now + drawDur * 0.6);
+    sg.gain.linearRampToValueAtTime(rnd(0.040, 0.065), now + drawDur);
+    sg.gain.setValueAtTime(rnd(0.035, 0.058), now + total - 0.25);
+    sg.gain.linearRampToValueAtTime(0.0001, now + total + 0.3);
+    str.connect(slpf); slpf.connect(sg); sg.connect(masterGain);
+    str.start(now + drawDur * 0.12); str.stop(now + total + 0.4);
+
+    /* Sub-oscillator — feel it in your chest */
+    var sub = audioCtx.createOscillator();
+    sub.type = 'sine'; sub.frequency.value = rnd(35, 50);
+    allSources.push(sub);
+    var subg = makeGain(0);
+    subg.gain.setValueAtTime(0, now + drawDur * 0.4);
+    subg.gain.linearRampToValueAtTime(rnd(0.035, 0.055), now + drawDur);
+    subg.gain.setValueAtTime(rnd(0.030, 0.050), now + total - 0.3);
+    subg.gain.linearRampToValueAtTime(0.0001, now + total + 0.2);
+    sub.connect(subg); subg.connect(masterGain);
+    sub.start(now + drawDur * 0.35); sub.stop(now + total + 0.3);
   }
 
   function scheduleBowDraw() {
@@ -930,34 +977,9 @@
       if (!audioCtx || !masterGain) return;
       playSpell(pick(SPELL_TYPES));
       scheduleSpell();
-    }, 30, 75);
+    }, 8, 22);
   }
 
-  /* ─── LEAF RUSTLE ────────────────────────────────────────────
-     Dry crinkle of actual leaves — multiple rapid short bursts
-     at high freq, not a single swish of air.                   */
-  function scheduleLeafRustle() {
-    sched(function () {
-      if (!audioCtx || !masterGain) return;
-      var now = audioCtx.currentTime;
-      var burstCount = rndInt(3, 8);
-      for (var i = 0; i < burstCount; i++) {
-        (function (offset) {
-          var dur = rnd(0.04, 0.12);
-          var src = oneshotNoise(dur + 0.02);
-          var hpf = audioCtx.createBiquadFilter();
-          hpf.type = 'highpass'; hpf.frequency.value = rnd(2500, 4500);
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(rnd(0.012, 0.022), now + offset);
-          g.gain.exponentialRampToValueAtTime(0.0001, now + offset + dur);
-          src.connect(hpf); hpf.connect(g); g.connect(masterGain);
-          src.start(now + offset);
-        })(i * rnd(0.04, 0.11) + rnd(0, 0.03));
-      }
-      src.start(now);
-      scheduleLeafRustle();
-    }, 8, 20);
-  }
 
   /* ─── WOODPECKER ─────────────────────────────────────────────
      Hammering on a hollow tree — hard sharp knock + log resonance.
@@ -974,25 +996,27 @@
         var offset = idx < burstSplit
           ? idx / tapRate
           : burstSplit / tapRate + pauseGap + (idx - burstSplit) / tapRate;
-        /* Hard impact — very high bandpass, sharp and bright */
+        /* Hard impact — distant through trees, slightly muffled */
         var src = oneshotNoise(0.012);
         var bpf = audioCtx.createBiquadFilter();
         bpf.type = 'bandpass';
-        bpf.frequency.value = rnd(4500, 7000);  /* much higher than gallop */
+        bpf.frequency.value = rnd(4500, 7000);
         bpf.Q.value = rnd(6.0, 10.0);
+        var distLpf = audioCtx.createBiquadFilter();
+        distLpf.type = 'lowpass'; distLpf.frequency.value = rnd(3000, 4500);
         var g = audioCtx.createGain();
-        var v = rnd(0.055, 0.090);
+        var v = rnd(0.018, 0.030);   /* was 0.055-0.090, now distant */
         g.gain.setValueAtTime(v, now + offset);
         g.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.010);
-        src.connect(bpf); bpf.connect(g); g.connect(masterGain);
+        src.connect(bpf); bpf.connect(distLpf); distLpf.connect(g); g.connect(masterGain);
         src.start(now + offset);
-        /* Hollow log ring — brief resonant tone after impact */
+        /* Hollow log ring — softer at distance */
         var ring = audioCtx.createOscillator();
         ring.type = 'sine';
         ring.frequency.value = logFreq * rnd(0.96, 1.04);
         allSources.push(ring);
         var rg = makeGain(0);
-        rg.gain.setValueAtTime(rnd(0.018, 0.030), now + offset + 0.001);
+        rg.gain.setValueAtTime(rnd(0.006, 0.011), now + offset + 0.001);
         rg.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.045);
         ring.connect(rg); rg.connect(masterGain);
         ring.start(now + offset); ring.stop(now + offset + 0.05);
@@ -1307,7 +1331,6 @@
     /* Birds + rustles + footsteps: short schedulers naturally cover the window */
     scheduleBirdD();                /* chirps: ~4-13s          */
     scheduleBirdC();                /* song:   ~12-32s         */
-    scheduleLeafRustle();           /* rustle: ~8-20s          */
     scheduleForestFootstep();       /* soft hoof: ~14-40s      */
     /* Woodpecker — guaranteed early hit, then ongoing */
     at(rnd(6, 14), function () { playWoodpecker(); scheduleWoodpecker(); });
@@ -1333,7 +1356,10 @@
     at(rnd(35, 50), function () { playHarp(); });
 
     /* Spell — first arcane presence */
-    at(rnd(38, 55), function () { playSpell(pick(SPELL_TYPES)); scheduleSpell(); });
+    /* Spells — enchanted forest, start early and fire often */
+    at(rnd(8, 16), function () { playSpell(pick(SPELL_TYPES)); });
+    at(rnd(18, 28), function () { playSpell(pick(SPELL_TYPES)); });
+    at(rnd(30, 42), function () { playSpell(pick(SPELL_TYPES)); scheduleSpell(); });
 
     /* Owl — first hoot comes in around 40-55s */
     at(rnd(40, 55), function () { scheduleOwl(); });
