@@ -728,9 +728,9 @@
     sched(function () {
       if (!audioCtx || !masterGain) return;
       var now    = audioCtx.currentTime;
-      var steps  = rndInt(14, 22);    /* full bridge crossing */
-      var pace   = rnd(0.52, 0.70);   /* deliberate, heavy pace */
-      var vol    = rnd(0.10, 0.16);   /* heavy boot on metal grid */
+      var steps  = rndInt(14, 22);
+      var pace   = rnd(0.52, 0.70);
+      var vol    = rnd(0.022, 0.038);
       var cursor = now;
       var rev    = makeReverb(0.22);  /* subtle large-room tail */
       rev.output.connect(masterGain);
@@ -741,7 +741,7 @@
           nSrc.buffer = makeNoiseBuf(0.12);
           var bpf = audioCtx.createBiquadFilter();
           bpf.type = 'bandpass';
-          bpf.frequency.value = rnd(2200, 4500); bpf.Q.value = 2.2;
+          bpf.frequency.value = rnd(800, 1600); bpf.Q.value = 1.4;
           var ng = audioCtx.createGain();
           ng.gain.setValueAtTime(vol, t);
           ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
@@ -779,7 +779,7 @@
         (function (offset) {
           var steps  = rndInt(6, 12);
           var pace   = rnd(0.40, 0.60);
-          var vol    = rnd(0.028, 0.048);
+          var vol    = rnd(0.016, 0.028);
           var cursor = now + offset;
           for (var i = 0; i < steps; i++) {
             (function (t) {
@@ -1089,12 +1089,6 @@
     scheduleTransporter();
     scheduleTransporter();
 
-    /* Footsteps on metal grid — multiple independent walkers */
-    scheduleGridFootsteps();
-    scheduleGridFootsteps();
-    scheduleGridFootsteps();
-    scheduleGroupFootsteps();
-    scheduleGroupFootsteps();
 
     audioStarted = true;
   }
