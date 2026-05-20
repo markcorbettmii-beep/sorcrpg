@@ -834,8 +834,8 @@
         /* Full lobby — Corby host */
         '<div class="lobby-row" style="opacity:0.55;pointer-events:none;">' +
           '<div class="lobby-row-info">' +
-            '<h3>The Siege of Veilmark &#128512;</h3>' +
-            '<p>Host: Corby &nbsp;&middot;&nbsp; 20/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Module .004</em></p>' +
+            '<h3>The Siege of Veilmark</h3>' +
+            '<p>Host: Corby &nbsp;&middot;&nbsp; 20/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Module .002 | Aseya\'s Crypt (LVLs 6 - 10)</em></p>' +
           '</div>' +
           '<div class="lobby-row-right">' +
             '<div class="lobby-btn-col">' +
@@ -1033,9 +1033,10 @@
         }
         var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
         var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
-        var menuItems = '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+        var menuItems = '';
+        if (isCreator && !isSelf) menuItems += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+        menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
         if (isCreator && !isSelf) {
-          menuItems += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
           menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
           if (isGM) menuItems += '<button class="summon-opt" style="color:#a0d8a0;border-color:transparent;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Make Host</button>';
         }
@@ -1344,9 +1345,10 @@
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
-          var menuItems2 = '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+          var menuItems2 = '';
+          if (isCreator && !isSelf) menuItems2 += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+          menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
           if (isCreator && !isSelf) {
-            menuItems2 += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
             menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
             if (isGM) menuItems2 += '<button class="summon-opt" style="color:#a0d8a0;border-color:transparent;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Make Host</button>';
           }
