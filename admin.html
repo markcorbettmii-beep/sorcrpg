@@ -314,20 +314,22 @@
       if (!outEl) return;
       outEl.style.color = '#888'; outEl.textContent = 'Generating...';
       try {
-        var res = await apiFetch('/api/box-codes/generate', {
+        var res = await fetch(API_URL + '/api/box-codes/generate', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser ? currentUser.authKey : '' },
           body: JSON.stringify({ note: note.trim() })
         });
-        if (res.success) {
+        var data = await res.json();
+        if (data.success) {
           outEl.style.color = '#4caf50';
-          outEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + escapeHtml(res.code) + '</strong>' +
-            ' <button onclick="navigator.clipboard.writeText(\'' + escapeHtml(res.code) + '\').then(function(){document.getElementById(\'bscCodeOut\').textContent=\'Copied!\'})" ' +
+          outEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + escapeHtml(data.code) + '</strong>' +
+            ' <button onclick="navigator.clipboard.writeText(\'' + escapeHtml(data.code) + '\').then(function(){document.getElementById(\'bscCodeOut\').textContent=\'Copied!\'})" ' +
             'style="padding:2px 8px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.72rem;">Copy</button>' +
-            '<div style="color:#555;font-size:0.72rem;margin-top:2px;">Expires: ' + escapeHtml(res.expires_at ? new Date(res.expires_at).toLocaleDateString() : '2 days') + '</div>';
+            '<div style="color:#555;font-size:0.72rem;margin-top:2px;">Expires: ' + escapeHtml(data.expires_at ? new Date(data.expires_at).toLocaleDateString() : '2 days') + '</div>';
         } else {
-          outEl.style.color = '#d0021b'; outEl.textContent = res.error || 'Failed.';
+          outEl.style.color = '#d0021b'; outEl.textContent = data.error || 'Failed.';
         }
-      } catch(e) { outEl.style.color = '#d0021b'; outEl.textContent = 'Connection error.'; }
+      } catch(e) { outEl.style.color = '#d0021b'; outEl.textContent = 'Connection error: ' + (e.message || e); }
     };
 
     window.loadModQueue = async function loadModQueue() {
@@ -537,6 +539,18 @@
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
         return;
       }
+      if (role === 'MASTER') {
+        if (!confirm('Send a GM invitation to ' + uid + '? They must accept on their profile page to receive the role.')) return;
+        try {
+          var gmInvData = await apiFetch('/api/gm/invitations', {
+            method: 'POST',
+            body: JSON.stringify({ uid: uid })
+          });
+          msgEl.className = 'msg ' + (gmInvData.success ? 'success' : 'error');
+          msgEl.textContent = gmInvData.success ? '✅ GM invitation sent. They must accept on their profile.' : (gmInvData.error || 'Failed to send GM invitation.');
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
+        return;
+      }
       if (!confirm('Set role to ' + role + ' for ' + uid + '?')) return;
       try {
         var data = await apiFetch('/api/admin/members/' + uid + '/role', {
@@ -564,6 +578,18 @@
           msgEl.className = 'msg ' + (invData.success ? 'success' : 'error');
           msgEl.textContent = invData.success ? '✅ Admin invitation sent. Awaiting acceptance.' : (invData.error || 'Failed to send invitation.');
           if (invData.success) sendAdminInvitation(uid);
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        return;
+      }
+      if (role === 'MASTER') {
+        if (!confirm('Send a GM invitation to this member? They must accept on their profile page.')) return;
+        try {
+          var gmInv = await apiFetch('/api/gm/invitations', {
+            method: 'POST',
+            body: JSON.stringify({ uid: uid })
+          });
+          msgEl.className = 'msg ' + (gmInv.success ? 'success' : 'error');
+          msgEl.textContent = gmInv.success ? '✅ GM invitation sent. Awaiting acceptance.' : (gmInv.error || 'Failed.');
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
         return;
       }

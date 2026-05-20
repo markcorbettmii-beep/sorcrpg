@@ -565,9 +565,11 @@
                     '<button class="btn btn-red" onclick="doSignOut()">Logout</button>' +
                 '</div>' +
             '</div>' +
-            '<div id="adminInviteNotice"></div>';
+            '<div id="adminInviteNotice"></div>' +
+            '<div id="gmInviteNotice"></div>';
 
         checkAdminInvitation(user);
+        checkGmInvitation(user);
     });
 
     async function checkAdminInvitation(user) {
@@ -591,6 +593,57 @@
                 '</div>';
         } catch(e) {}
     }
+
+    async function checkGmInvitation(user) {
+        try {
+            var res = await fetch(API_URL + '/api/notifications', {
+                headers: { 'X-Auth-Key': user.authKey }
+            });
+            var data = await res.json();
+            if (!data.gm_invite) return;
+            var el = document.getElementById('gmInviteNotice');
+            if (!el) return;
+            el.innerHTML =
+                '<div style="background:#050f1a;border:2px solid #d4af37;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1rem;">' +
+                '<div style="font-size:0.72rem;color:#d4af37;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">&#128081; GM Invitation</div>' +
+                '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.75rem 0;">You\'ve been invited to become a <strong>Game Master [GM]</strong>. Upon accepting you will receive <strong style="color:#d4af37;">+500 Community Points</strong> and full GM access.</p>' +
+                '<div style="display:flex;gap:0.75rem;">' +
+                '<button class="btn btn-gold" onclick="respondGmInvite(true)">Accept</button>' +
+                '<button class="btn btn-dark" onclick="respondGmInvite(false)">Decline</button>' +
+                '</div>' +
+                '<div id="gmInviteMsg" class="msg" style="margin-top:0.5rem;"></div>' +
+                '</div>';
+        } catch(e) {}
+    }
+
+    window.respondGmInvite = async function(accept) {
+        var user = null;
+        try { user = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!user) return;
+        var msgEl = document.getElementById('gmInviteMsg');
+        try {
+            var res = await fetch(API_URL + '/api/gm/invitations/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
+                body: JSON.stringify({ accept: accept })
+            });
+            var data = await res.json();
+            if (data.success) {
+                if (accept) {
+                    user.role = 'MASTER'; user.sorc_role = 'GM-ADV';
+                    user.community_points = (user.community_points || 0) + 500;
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                    document.getElementById('gmInviteNotice').innerHTML =
+                        '<div style="background:#0a1a0a;border:1px solid #1a6b1a;border-radius:8px;padding:1rem 1.25rem;margin-top:1rem;color:#4caf50;font-size:0.9rem;">✅ You are now a Game Master [GM]. Refreshing...</div>';
+                    setTimeout(function() { window.location.reload(); }, 1800);
+                } else {
+                    document.getElementById('gmInviteNotice').innerHTML = '';
+                }
+            } else {
+                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+            }
+        } catch(e) { if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; } }
+    };
 
     window.respondAdminInvite = async function(accept) {
         var user = null;
