@@ -381,7 +381,9 @@ async function checkNotifications(user) {
         convs.forEach(function(conv) {
           if (!conv.last_message_at) return;
           var lastRead = parseInt(localStorage.getItem('sorc_conv_read_' + conv.id) || '0');
-          if (new Date(conv.last_message_at).getTime() > lastRead) unread++;
+          var rawTs = conv.last_message_at;
+          var msgTime = new Date(rawTs.includes('T') ? rawTs : rawTs.replace(' ', 'T') + 'Z').getTime();
+          if (msgTime > lastRead) unread++;
         });
       }
     } catch(e) {}
