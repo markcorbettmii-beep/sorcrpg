@@ -21,8 +21,8 @@
 
   var MOVEMENT_DUR  = 180;  /* 3 minutes per movement */
   var CROSSFADE_DUR = 30;   /* 30s overlap between movements */
-  var movementActive = [false, false, false];
-  var movementGains  = [null,  null,  null];
+  var movementActive = [false, false, false, false];
+  var movementGains  = [null,  null,  null,  null];
 
   /* ── Utilities ─────────────────────────────────────────────── */
   function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -264,7 +264,179 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     MOVEMENT 2 - MACALANIA WOODS (MIDDAY)
+     MOVEMENT 2 - KOROK FOREST
+     C major / G pentatonic. Ocarina melody, pizzicato strings,
+     xylophone sparkles, soft choir. Ancient, mysterious, magical.
+     Zelda BOTW/OOT inspired - forest spirits, old trees, wonder.
+  ════════════════════════════════════════════════════════════ */
+  var C3k=131, G3k=196, C4k=261, D4k=293, E4k=329, G4k=392,
+      A4k=440, C5k=523, D5k=587, E5k=659, G5k=784;
+  var KOR_PENT = [C4k, D4k, E4k, G4k, A4k, C5k, D5k, E5k];
+
+  function startKorokForest(out) {
+    var idx = 1;
+    movementActive[idx] = true;
+
+    /* Ancient forest pad - C major, very soft, slightly hollow */
+    [{f:C3k,g:0.007},{f:G3k,g:0.006},{f:C4k,g:0.007},{f:E4k,g:0.005}].forEach(function (v) {
+      [-3, 0, 3].forEach(function (c) {
+        var osc = makeOsc('sine', v.f * Math.pow(2, c / 1200));
+        var lpf = makeFilter('lowpass', 900, 0.6);
+        var g = makeGain(0);
+        var now = audioCtx.currentTime;
+        g.gain.linearRampToValueAtTime(v.g / 3, now + 7);
+        var lfo = makeOsc('sine', 1 / rnd(28, 48));
+        var ld = makeGain(v.g / 3 * 0.20);
+        lfo.connect(ld); ld.connect(g.gain); lfo.start();
+        osc.connect(lpf); lpf.connect(g); g.connect(out);
+        osc.start();
+      });
+    });
+
+    /* Ocarina melody - Saria/Korok style, stepwise C major phrases */
+    var KOR_PHRASES = [
+      [{f:E4k,d:0.35},{f:D4k,d:0.30},{f:E4k,d:0.35},{f:G4k,d:0.65}],
+      [{f:G4k,d:0.40},{f:A4k,d:0.35},{f:G4k,d:0.35},{f:E4k,d:0.55},{f:C4k,d:0.80}],
+      [{f:C5k,d:0.40},{f:A4k,d:0.35},{f:G4k,d:0.35},{f:E4k,d:0.70}],
+      [{f:D4k,d:0.35},{f:E4k,d:0.30},{f:G4k,d:0.35},{f:A4k,d:0.35},{f:G4k,d:0.60}],
+      [{f:E4k,d:0.45},{f:G4k,d:0.40},{f:A4k,d:0.40},{f:G4k,d:0.35},{f:E4k,d:0.35},{f:D4k,d:0.75}],
+      [{f:G4k,d:0.55},{f:E4k,d:0.45},{f:D4k,d:0.40},{f:C4k,d:0.90}],
+    ];
+    function doOcarina() {
+      if (!movementActive[idx]) return;
+      var phrase = pick(KOR_PHRASES);
+      var cursor = audioCtx.currentTime + rnd(0.4, 1.2);
+      phrase.forEach(function (n) {
+        (function (t, freq, dur) {
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          /* Ocarina attack - slight flat then settle */
+          osc.frequency.setValueAtTime(freq * Math.pow(2, -6 / 1200), t);
+          osc.frequency.linearRampToValueAtTime(freq, t + 0.06);
+          allSources.push(osc);
+          /* Gentle vibrato - enters late */
+          var vib = audioCtx.createOscillator();
+          vib.frequency.value = rnd(5.2, 6.2);
+          allSources.push(vib);
+          var vd = makeGain(0);
+          vd.gain.setValueAtTime(0, t);
+          vd.gain.linearRampToValueAtTime(rnd(1.8, 3.0), t + dur * 0.55);
+          vib.connect(vd); vd.connect(osc.frequency);
+          /* Breath layer - gives ocarina its hollow character */
+          var breath = oneshotNoise(dur + 0.1);
+          var bbpf = makeFilter('bandpass', freq * 1.4, 2.5);
+          var bg = makeGain(0.0004);
+          breath.connect(bbpf); bbpf.connect(bg); bg.connect(out);
+          breath.start(t);
+          var g = makeGain(0);
+          var pk = rnd(0.014, 0.022);
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(pk, t + 0.08);
+          g.gain.setValueAtTime(pk, t + dur - 0.08);
+          g.gain.linearRampToValueAtTime(0, t + dur + 0.12);
+          osc.connect(g); g.connect(out);
+          vib.start(t); vib.stop(t + dur + 0.18);
+          osc.start(t); osc.stop(t + dur + 0.20);
+        })(cursor, n.f, n.d);
+        cursor += n.d + rnd(0.03, 0.10);
+      });
+      sched(doOcarina, 8, 20);
+    }
+    sched(doOcarina, 2, 6);
+
+    /* Pizzicato strings - light plucks, like Zelda orchestral arrangements */
+    function doPizz() {
+      if (!movementActive[idx]) return;
+      var now = audioCtx.currentTime;
+      var chords = [
+        [C3k, G3k, C4k, E4k],
+        [G3k, D4k, G4k],
+        [C3k, E4k, G4k, C5k],
+        [G3k, C4k, E4k, A4k],
+      ];
+      var notes = pick(chords);
+      var cursor = now;
+      notes.forEach(function (f) {
+        pluck(f, cursor, rnd(0.018, 0.028), out);
+        cursor += rnd(0.14, 0.26);
+      });
+      sched(doPizz, 9, 22);
+    }
+    sched(doPizz, 1, 4);
+
+    /* Magic sparkle - inharmonic bell pings, like Navi or Korok seeds */
+    function doSparkle() {
+      if (!movementActive[idx]) return;
+      var now = audioCtx.currentTime;
+      var count = rndInt(2, 5);
+      for (var i = 0; i < count; i++) {
+        (function (t) {
+          var freq = pick(KOR_PENT) * rnd(1.5, 3.0);
+          [1, 2.4, 4.1].forEach(function (h, j) {
+            var osc = audioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = freq * h;
+            allSources.push(osc);
+            var g = makeGain(0);
+            var pk = [rnd(0.006,0.010), rnd(0.002,0.004), rnd(0.001,0.002)][j];
+            var dec = [rnd(0.6,1.2), rnd(0.3,0.6), rnd(0.15,0.3)][j];
+            g.gain.setValueAtTime(pk, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+            osc.connect(g); g.connect(out);
+            osc.start(t); osc.stop(t + dec + 0.05);
+          });
+        })(now + i * rnd(0.08, 0.22));
+      }
+      sched(doSparkle, 6, 18);
+    }
+    sched(doSparkle, 1, 4);
+
+    /* Soft ancient choir - "ooh" vowel, very gentle */
+    function doKorChoir() {
+      if (!movementActive[idx]) return;
+      var now = audioCtx.currentTime;
+      var root = pick([C4k, G3k, E4k, G4k]);
+      var dur = rnd(5, 9);
+      [1, 1.5, 2].forEach(function (h) {
+        [-4, 0, 4].forEach(function (c) {
+          var osc = makeOsc('sine', root * h * Math.pow(2, c / 1200));
+          var g = makeGain(0);
+          var pk = rnd(0.004, 0.007) / h;
+          g.gain.setValueAtTime(0, now);
+          g.gain.linearRampToValueAtTime(pk, now + dur * 0.32);
+          g.gain.setValueAtTime(pk * 0.80, now + dur * 0.70);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+          osc.connect(g); g.connect(out);
+          osc.start(now); osc.stop(now + dur + 0.1);
+        });
+      });
+      sched(doKorChoir, 20, 45);
+    }
+    sched(doKorChoir, 10, 22);
+
+    /* Distant hollow log percussion - like Deku drums, very soft */
+    function doDrum() {
+      if (!movementActive[idx]) return;
+      var now = audioCtx.currentTime;
+      var hits = rndInt(2, 4);
+      for (var i = 0; i < hits; i++) {
+        (function (t) {
+          var src = oneshotNoise(0.12);
+          var bpf = makeFilter('bandpass', rnd(280, 480), 3.5);
+          var g = makeGain(0);
+          g.gain.setValueAtTime(rnd(0.022, 0.038), t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+          src.connect(bpf); bpf.connect(g); g.connect(out);
+          src.start(t);
+        })(now + i * rnd(0.35, 0.65));
+      }
+      sched(doDrum, 18, 45);
+    }
+    sched(doDrum, 6, 14);
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     MOVEMENT 3 - MACALANIA WOODS (MIDDAY)
      A major / Lydian shimmer. Bell tones, ethereal choir,
      floating pads. Water drops, crystal hum. Otherworldly.
   ════════════════════════════════════════════════════════════ */
@@ -273,7 +445,7 @@
   var MAC_NOTES = [A3m, Cs4, E4m, Gs4, A4m, Cs5, E5m];
 
   function startMacalaniaWoods(out) {
-    var idx = 1;
+    var idx = 2;
     movementActive[idx] = true;
 
     /* Floating ethereal pad - A major, slow swell LFO */
@@ -416,7 +588,7 @@
   var SKY_NOTES = [D3s, F3s, G3s, A3s, C4s, D4s];
 
   function startSkyrimRiften(out) {
-    var idx = 2;
+    var idx = 3;
     movementActive[idx] = true;
 
     /* Low Nordic drone - open fifth D-A */
@@ -551,7 +723,7 @@
      Launches each movement in order, schedules crossfade,
      then launches next. Cycles forever.
   ════════════════════════════════════════════════════════════ */
-  var MOVEMENTS = [startFableForest, startMacalaniaWoods, startSkyrimRiften];
+  var MOVEMENTS = [startFableForest, startKorokForest, startMacalaniaWoods, startSkyrimRiften];
 
   function launchMovement(idx) {
     /* Create this movement's gain node */
@@ -609,7 +781,7 @@
     timeouts.forEach(function (id) { clearTimeout(id); });
     timeouts = [];
     if (keepAliveId) { clearInterval(keepAliveId); keepAliveId = null; }
-    movementActive = [false, false, false];
+    movementActive = [false, false, false, false];
 
     if (masterGain && audioCtx) {
       var now = audioCtx.currentTime;
@@ -629,7 +801,7 @@
 
     audioCtx = null; masterGain = null; audioStarted = false;
     allSources = []; allGains = [];
-    movementGains = [null, null, null];
+    movementGains = [null, null, null, null];
   }
 
   var interactionHandlerAdded = false;
