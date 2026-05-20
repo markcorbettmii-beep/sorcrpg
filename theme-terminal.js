@@ -1062,7 +1062,6 @@
 
     /* Musical elements */
     schedulePadSwell();
-    scheduleMotif();
     scheduleBrassAccent();
 
     /* Ship traffic */
