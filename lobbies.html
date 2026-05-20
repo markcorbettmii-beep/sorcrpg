@@ -105,10 +105,24 @@
     .recruit-opt { display:block;width:100%;text-align:left;background:none;border:none;padding:0.55rem 0.9rem;font-size:0.78rem;color:#c0b0a0;cursor:pointer;border-bottom:1px solid #1a1a1a; }
     .recruit-opt:last-child { border-bottom:none; }
     .recruit-opt:hover { background:#1a2a3a;color:#e0cfc0; }
-    .detail-grid { display: grid; grid-template-columns: minmax(240px, 440px) 255px; gap: 1.25rem; }
-    @media (max-width: 800px) {
+    /* Default (desktop): two columns */
+    .detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
+
+    /* Portrait phones */
+    @media screen and (max-width: 600px) and (orientation: portrait) {
       .detail-grid { grid-template-columns: 1fr; }
-      .lobbies-wrap { padding: 0.75rem 0.5rem 4rem; }
+      .lobbies-wrap { padding: 0.5rem 0.4rem 4rem; }
+    }
+
+    /* Landscape phones - short viewport height means it's a phone on its side */
+    @media screen and (max-height: 500px) and (orientation: landscape) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .lobbies-wrap { padding: 0.5rem 0.4rem 4rem; }
+    }
+
+    /* Small tablets / large phones in portrait */
+    @media screen and (min-width: 601px) and (max-width: 900px) and (orientation: portrait) {
+      .detail-grid { grid-template-columns: 1fr; }
     }
 
     /* ===== CHAT ===== */
@@ -1007,7 +1021,7 @@
           '</div>' +
         '</div>' +
         '<div class="detail-grid">' +
-          '<div style="display:flex;flex-direction:column;">' +
+          '<div style="display:flex;flex-direction:column;min-width:0;">' +
             '<div class="chat-panel" id="chatPanel">' +
               /* Tab bar — Recruit only shown to hosts */
               '<div class="chat-tab-bar">' +
