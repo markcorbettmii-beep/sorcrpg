@@ -763,7 +763,7 @@
     }, 1000);
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.88;
+    masterGain.gain.value = 1.4;
     masterGain.connect(audioCtx.destination);
     allGains.push(masterGain);
 
