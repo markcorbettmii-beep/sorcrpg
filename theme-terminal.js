@@ -1072,7 +1072,6 @@
 
     /* Station events */
     schedulePressureDoor();
-    scheduleHydraulicClank();
     scheduleHullCreak();
     scheduleDistantImpact();
 
