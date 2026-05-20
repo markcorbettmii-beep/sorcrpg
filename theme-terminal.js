@@ -1,7 +1,7 @@
 /* ============================================================
-   ORBITAL TERMINAL THEME — theme-terminal.js
-   Elite Dangerous–inspired space station soundscape
-   Deep drones · string pads · melodic motifs · ship traffic
+   OMNE TERMINAL THEME — theme-terminal.js
+   Space station soundscape with droids, metal grid footsteps,
+   ship traffic, machinery, and ambient drones.
    Exposes: window.terminalTheme = { start, stop }
    ============================================================ */
 (function () {
@@ -540,6 +540,261 @@
     }, 90, 230);
   }
 
+  /* ── DROIDS: Common — small chirp sequence (R2-style) ── */
+  function scheduleDroidChirp() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now = audioCtx.currentTime;
+      var count = rndInt(2, 5);
+      var cursor = now;
+      for (var i = 0; i < count; i++) {
+        (function (t) {
+          var freq = rnd(1200, 3800);
+          var dur  = rnd(0.04, 0.14);
+          var osc  = audioCtx.createOscillator();
+          osc.type = Math.random() > 0.5 ? 'sine' : 'square';
+          osc.frequency.setValueAtTime(freq, t);
+          osc.frequency.linearRampToValueAtTime(freq * rnd(0.78, 1.28), t + dur);
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(rnd(0.028, 0.048), t + 0.008);
+          g.gain.setValueAtTime(rnd(0.028, 0.048), t + dur - 0.01);
+          g.gain.linearRampToValueAtTime(0, t + dur + 0.02);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(t); osc.stop(t + dur + 0.04);
+        })(cursor);
+        cursor += rnd(0.08, 0.28);
+      }
+      scheduleDroidChirp();
+    }, 12, 35);
+  }
+
+  /* ── DROIDS: Common — servo motor whine ─────────────── */
+  function scheduleDroidServo() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now  = audioCtx.currentTime;
+      var dur  = rnd(0.3, 1.1);
+      var rise = Math.random() > 0.5;
+      var f0   = rnd(600, 1100);
+      var f1   = rise ? f0 * rnd(1.4, 2.2) : f0 * rnd(0.4, 0.75);
+      var osc  = audioCtx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f0, now);
+      osc.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = 2200; lpf.Q.value = 1.5;
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.022, now + 0.04);
+      g.gain.setValueAtTime(0.022, now + dur - 0.06);
+      g.gain.linearRampToValueAtTime(0, now + dur + 0.04);
+      /* slight vibrato */
+      var vib = audioCtx.createOscillator();
+      vib.frequency.value = rnd(18, 32);
+      var vDep = audioCtx.createGain(); vDep.gain.value = rnd(6, 16);
+      vib.connect(vDep); vDep.connect(osc.frequency);
+      vib.start(now); vib.stop(now + dur + 0.1);
+      osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
+      osc.start(now); osc.stop(now + dur + 0.1);
+      scheduleDroidServo();
+    }, 18, 45);
+  }
+
+  /* ── DROIDS: Common — electronic warble/scan ─────────── */
+  function scheduleDroidWarble() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now     = audioCtx.currentTime;
+      var dur     = rnd(0.4, 1.4);
+      var carrier = rnd(400, 900);
+      var modFreq = rnd(20, 60);
+      var modDepth = rnd(80, 280);
+      /* FM: modulator modulates carrier frequency */
+      var mod = audioCtx.createOscillator();
+      mod.frequency.value = modFreq;
+      var modGain = audioCtx.createGain(); modGain.gain.value = modDepth;
+      var osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = carrier;
+      mod.connect(modGain); modGain.connect(osc.frequency);
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.032, now + 0.06);
+      g.gain.setValueAtTime(0.032, now + dur - 0.08);
+      g.gain.linearRampToValueAtTime(0, now + dur + 0.05);
+      osc.connect(g); g.connect(masterGain);
+      mod.start(now); mod.stop(now + dur + 0.1);
+      osc.start(now); osc.stop(now + dur + 0.1);
+      scheduleDroidWarble();
+    }, 22, 55);
+  }
+
+  /* ── DROIDS: Rare — power-up / boot sequence ─────────── */
+  function scheduleDroidPowerUp() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      if (Math.random() > 0.45) { scheduleDroidPowerUp(); return; }
+      var now    = audioCtx.currentTime;
+      var up     = Math.random() > 0.5;
+      var notes  = up ? [320, 480, 640, 920, 1280] : [1280, 920, 640, 480, 320];
+      var cursor = now;
+      notes.forEach(function (freq, i) {
+        var dur = up ? rnd(0.06, 0.10) + i * 0.012 : rnd(0.10, 0.15) - i * 0.008;
+        var osc = audioCtx.createOscillator();
+        osc.type = i % 2 === 0 ? 'square' : 'sine';
+        osc.frequency.value = freq;
+        var g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, cursor);
+        g.gain.linearRampToValueAtTime(0.038, cursor + 0.01);
+        g.gain.setValueAtTime(0.038, cursor + dur - 0.01);
+        g.gain.linearRampToValueAtTime(0, cursor + dur + 0.02);
+        osc.connect(g); g.connect(masterGain);
+        osc.start(cursor); osc.stop(cursor + dur + 0.04);
+        cursor += dur + rnd(0.03, 0.07);
+      });
+      /* final long tone */
+      var finalOsc = audioCtx.createOscillator();
+      finalOsc.type = 'sine';
+      finalOsc.frequency.value = up ? 1800 : 180;
+      var fg = audioCtx.createGain();
+      fg.gain.setValueAtTime(0, cursor);
+      fg.gain.linearRampToValueAtTime(0.030, cursor + 0.04);
+      fg.gain.exponentialRampToValueAtTime(0.0001, cursor + 0.55);
+      finalOsc.connect(fg); fg.connect(masterGain);
+      finalOsc.start(cursor); finalOsc.stop(cursor + 0.6);
+      scheduleDroidPowerUp();
+    }, 90, 220);
+  }
+
+  /* ── DROIDS: Rare — heavy droid walking on metal ─────── */
+  function scheduleDroidHeavyWalk() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      if (Math.random() > 0.38) { scheduleDroidHeavyWalk(); return; }
+      var now    = audioCtx.currentTime;
+      var steps  = rndInt(4, 8);
+      var pace   = rnd(0.38, 0.62);
+      var cursor = now;
+      for (var i = 0; i < steps; i++) {
+        (function (t, stepIdx) {
+          /* heavy thud */
+          var osc = audioCtx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(rnd(55, 85), t);
+          osc.frequency.exponentialRampToValueAtTime(rnd(22, 38), t + 0.12);
+          var g = audioCtx.createGain();
+          g.gain.setValueAtTime(0.14, t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+          osc.connect(g); g.connect(masterGain);
+          osc.start(t); osc.stop(t + 0.22);
+          /* metallic grid clang */
+          var clangFreq = rnd(280, 480);
+          var cOsc = audioCtx.createOscillator();
+          cOsc.type = 'sine'; cOsc.frequency.value = clangFreq;
+          var cg = audioCtx.createGain();
+          cg.gain.setValueAtTime(0.045, t + 0.01);
+          cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+          cOsc.connect(cg); cg.connect(masterGain);
+          cOsc.start(t + 0.01); cOsc.stop(t + 0.26);
+          /* servo squeak between steps */
+          if (stepIdx < steps - 1) {
+            var sOsc = audioCtx.createOscillator();
+            sOsc.type = 'sawtooth';
+            sOsc.frequency.setValueAtTime(rnd(700, 1100), t + 0.08);
+            sOsc.frequency.exponentialRampToValueAtTime(rnd(400, 700), t + 0.22);
+            var sg = audioCtx.createGain();
+            sg.gain.setValueAtTime(0, t + 0.08);
+            sg.gain.linearRampToValueAtTime(0.015, t + 0.12);
+            sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+            sOsc.connect(sg); sg.connect(masterGain);
+            sOsc.start(t + 0.08); sOsc.stop(t + 0.28);
+          }
+        })(cursor, i);
+        cursor += pace + rnd(-0.04, 0.04);
+      }
+      scheduleDroidHeavyWalk();
+    }, 80, 200);
+  }
+
+  /* ── FOOTSTEPS: Metal grid — single person ───────────── */
+  function scheduleGridFootsteps() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now    = audioCtx.currentTime;
+      var steps  = rndInt(5, 10);
+      var pace   = rnd(0.28, 0.48);
+      var vol    = rnd(0.018, 0.036);
+      var cursor = now;
+      for (var i = 0; i < steps; i++) {
+        (function (t) {
+          /* sharp tap on grating — short noise burst */
+          var nSrc = audioCtx.createBufferSource();
+          nSrc.buffer = makeNoiseBuf(0.08);
+          var bpf = audioCtx.createBiquadFilter();
+          bpf.type = 'bandpass';
+          bpf.frequency.value = rnd(1800, 3200); bpf.Q.value = 3.5;
+          var ng = audioCtx.createGain();
+          ng.gain.setValueAtTime(vol, t);
+          ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+          nSrc.connect(bpf); bpf.connect(ng); ng.connect(masterGain);
+          nSrc.start(t);
+          /* metal ring from grid vibration */
+          var rOsc = audioCtx.createOscillator();
+          rOsc.type = 'sine'; rOsc.frequency.value = rnd(600, 900);
+          var rg = audioCtx.createGain();
+          rg.gain.setValueAtTime(vol * 0.6, t + 0.005);
+          rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+          rOsc.connect(rg); rg.connect(masterGain);
+          rOsc.start(t + 0.005); rOsc.stop(t + 0.14);
+        })(cursor);
+        cursor += pace + rnd(-0.03, 0.06);
+      }
+      scheduleGridFootsteps();
+    }, 20, 55);
+  }
+
+  /* ── FOOTSTEPS: Metal grid — group passing by (rare) ─── */
+  function scheduleGroupFootsteps() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      if (Math.random() > 0.40) { scheduleGroupFootsteps(); return; }
+      var now    = audioCtx.currentTime;
+      var people = rndInt(2, 4);
+      for (var p = 0; p < people; p++) {
+        (function (offset) {
+          var steps  = rndInt(6, 12);
+          var pace   = rnd(0.25, 0.42);
+          var vol    = rnd(0.012, 0.025);
+          var cursor = now + offset;
+          for (var i = 0; i < steps; i++) {
+            (function (t) {
+              var nSrc = audioCtx.createBufferSource();
+              nSrc.buffer = makeNoiseBuf(0.07);
+              var bpf = audioCtx.createBiquadFilter();
+              bpf.type = 'bandpass';
+              bpf.frequency.value = rnd(1600, 2800); bpf.Q.value = 3.0;
+              var ng = audioCtx.createGain();
+              ng.gain.setValueAtTime(vol, t);
+              ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+              nSrc.connect(bpf); bpf.connect(ng); ng.connect(masterGain);
+              nSrc.start(t);
+              var rOsc = audioCtx.createOscillator();
+              rOsc.type = 'sine'; rOsc.frequency.value = rnd(550, 820);
+              var rg = audioCtx.createGain();
+              rg.gain.setValueAtTime(vol * 0.45, t + 0.004);
+              rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+              rOsc.connect(rg); rg.connect(masterGain);
+              rOsc.start(t + 0.004); rOsc.stop(t + 0.11);
+            })(cursor);
+            cursor += pace + rnd(-0.04, 0.05);
+          }
+        })(p * rnd(0.05, 0.18));
+      }
+      scheduleGroupFootsteps();
+    }, 70, 180);
+  }
+
   /* ── START ────────────────────────────────────────────── */
   function startAudio() {
     if (audioStarted) return;
@@ -578,6 +833,18 @@
     scheduleHydraulicClank();
     scheduleHullCreak();
     scheduleDistantImpact();
+
+    /* Droids — common */
+    scheduleDroidChirp();
+    scheduleDroidServo();
+    scheduleDroidWarble();
+    /* Droids — rare */
+    scheduleDroidPowerUp();
+    scheduleDroidHeavyWalk();
+
+    /* Footsteps on metal grid */
+    scheduleGridFootsteps();
+    scheduleGroupFootsteps();
 
     audioStarted = true;
   }
