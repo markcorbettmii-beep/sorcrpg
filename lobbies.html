@@ -427,6 +427,7 @@
     var pendingSummonTarget = null; // { uid, name } for outgoing summon
     var activeSummonId = null;      // id of incoming summon being shown
     var activeSummonLobbyId = null; // lobby to join on accept
+    var myActiveLobbyId = null;     // user's own lobby id (set from list view)
 
     (function() {
       var theme = localStorage.getItem('themeSelected') || 'evil';
@@ -737,6 +738,9 @@
           return;
         }
         var lobbies = data.lobbies || [];
+        // Track the user's own active lobby so summon works from list view too
+        var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
+        if (myLobby) myActiveLobbyId = myLobby.id;
         if (lobbies.length === 0) {
           listEl.innerHTML = '<div class="empty-state">No open lobbies right now. Be the first to create one.</div>';
           return;
@@ -949,7 +953,7 @@
         var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
         var sheetIcon = '<a href="' + esc(sheetHref) + '" title="View Character Sheet" style="color:#aaa;font-size:0.8rem;margin-left:0.3rem;text-decoration:none;vertical-align:middle;">&#128196;</a>';
         return '<div class="member-row">' +
-          '<div class="member-avatar">' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '</div>' +
+          '<div class="member-avatar">' + (m.avatar ? '<img src="' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
           '<div class="member-info">' +
             '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:0;">' +
               '<a href="' + profileHref + '" class="member-name">' + esc(m.display_name || m.username) + '</a>' +
@@ -1219,7 +1223,7 @@
           var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
           var sheetIcon = '<a href="' + esc(sheetHref) + '" title="View Character Sheet" style="color:#aaa;font-size:0.8rem;margin-left:0.3rem;text-decoration:none;vertical-align:middle;">&#128196;</a>';
           return '<div class="member-row">' +
-            '<div class="member-avatar">' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '</div>' +
+            '<div class="member-avatar">' + (m.avatar ? '<img src="' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
             '<div class="member-info">' +
               '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:0;">' +
                 '<a href="' + profileHref + '" class="member-name">' + esc(m.display_name || m.username) + '</a>' + sheetIcon +
@@ -1604,9 +1608,10 @@
             if (respondMatch) rawBody = rawBody.replace(/^📋\s*/, '').replace(/\s*[—\-]+\s*https?:\/\/\S+$/, '');
             var bodyHtml = parseWorldBody(rawBody, m.id);
             var isSelf = currentUser && m.sender_uid === currentUser.id;
-            var canSummon = currentLobby && isCreator && !isSelf && m.sender_uid;
+            var hostLobbyId = (currentLobby && isCreator) ? currentLobby.id : myActiveLobbyId;
+            var canSummon = hostLobbyId && !isSelf && m.sender_uid;
             var nameEl = canSummon
-              ? '<button class="summon-name-btn ' + nameClass + '" onclick="summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\')" title="Summon to your lobby">' + esc(m.sender_name) + ' &#9889;</button>'
+              ? '<button class="summon-name-btn ' + nameClass + '" onclick="summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\',\'' + esc(hostLobbyId) + '\')" title="Summon to your lobby">' + esc(m.sender_name) + ' &#9889;</button>'
               : '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" class="' + nameClass + '">' + esc(m.sender_name) + '</a>';
             return '<div class="world-msg">' +
               nameEl +
@@ -1670,11 +1675,13 @@
     }
 
     // ===== SUMMON FEATURE =====
-    window.summonPlayer = function(uid, name) {
-      if (!currentLobby || !isCreator) return;
-      pendingSummonTarget = { uid: uid, name: name };
+    window.summonPlayer = function(uid, name, lobbyId) {
+      var targetLobbyId = lobbyId || (currentLobby && currentLobby.id);
+      if (!targetLobbyId) return;
+      var targetLobbyName = (currentLobby && currentLobby.id == targetLobbyId) ? (currentLobby.name || 'this lobby') : 'your lobby';
+      pendingSummonTarget = { uid: uid, name: name, lobbyId: targetLobbyId };
       document.getElementById('summonOutDesc').textContent =
-        'Send a summon to ' + name + ' for "' + (currentLobby.name || 'this lobby') + '". They will see your lobby details and can accept or deny.';
+        'Send a summon to ' + name + ' for "' + targetLobbyName + '". They will see your lobby details and can accept or deny.';
       document.getElementById('summonNoteInput').value = '';
       document.getElementById('summonOutModal').style.display = 'flex';
     };
@@ -1688,7 +1695,7 @@
       if (!pendingSummonTarget || !currentLobby || !currentUser) return;
       var note = document.getElementById('summonNoteInput').value.trim();
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/summon', {
+        var res = await fetch(API_URL + '/api/lobbies/' + pendingSummonTarget.lobbyId + '/summon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ to_uid: pendingSummonTarget.uid, note: note || null })
