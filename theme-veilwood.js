@@ -21,8 +21,8 @@
 
   var MOVEMENT_DUR  = 180;  /* 3 minutes per movement */
   var CROSSFADE_DUR = 30;   /* 30s overlap between movements */
-  var movementActive = [false, false, false, false];
-  var movementGains  = [null,  null,  null,  null];
+  var movementActive = [false, false, false];
+  var movementGains  = [null,  null,  null];
 
   /* ── Utilities ─────────────────────────────────────────────── */
   function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -547,121 +547,11 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     MOVEMENT 4 - DARKWOOD (NIGHT)
-     Atonal drones, dissonance, near silence. Sub rumble,
-     sparse cold piano notes, distant creaks. Pure dread.
-  ════════════════════════════════════════════════════════════ */
-  var DW_DRONE = [55, 58.3, 61.7, 82.4, 87.3];
-  var DW_NOTES = [55, 58.3, 73.4, 82.4, 110, 116.5, 130.8];
-
-  function startDarkwood(out) {
-    var idx = 3;
-    movementActive[idx] = true;
-
-    /* Low dissonant drone cluster - tritone tension */
-    [55, 58.3, 82.4].forEach(function (f) {
-      var osc = makeOsc('sawtooth', f);
-      var lpf = makeFilter('lowpass', 240, 0.3);
-      var g = makeGain(0);
-      var now = audioCtx.currentTime;
-      g.gain.linearRampToValueAtTime(rnd(0.006, 0.010), now + 12);
-      /* Slow beating LFO - unsettling */
-      var lfo = makeOsc('sine', rnd(0.08, 0.15));
-      var ld = makeGain(0.004);
-      lfo.connect(ld); ld.connect(g.gain); lfo.start();
-      osc.connect(lpf); lpf.connect(g); g.connect(out);
-      osc.start();
-    });
-
-    /* Sub rumble - felt more than heard */
-    var subSrc = loopNoise(4);
-    var subLpf = makeFilter('lowpass', 75);
-    var subG   = makeGain(0);
-    (function () {
-      var now = audioCtx.currentTime;
-      subG.gain.linearRampToValueAtTime(0.014, now + 10);
-    })();
-    subSrc.connect(subLpf); subLpf.connect(subG); subG.connect(out);
-    subSrc.start();
-
-    /* Sparse cold piano notes - inharmonic, long decay */
-    function doSparseNote() {
-      if (!movementActive[idx]) return;
-      var now = audioCtx.currentTime;
-      var freq = pick(DW_NOTES) * (Math.random() < 0.35 ? 2 : 1);
-      [1, 2.1, 4.3].forEach(function (h, i) {
-        var osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = freq * h;
-        allSources.push(osc);
-        var g = makeGain(0);
-        var pk  = [rnd(0.008,0.013), rnd(0.003,0.005), rnd(0.001,0.002)][i];
-        var dec = [rnd(3.0,5.5),     rnd(1.2,2.2),     rnd(0.5,1.0)][i];
-        g.gain.setValueAtTime(pk, now);
-        g.gain.exponentialRampToValueAtTime(0.0001, now + dec);
-        osc.connect(g); g.connect(out);
-        osc.start(now); osc.stop(now + dec + 0.1);
-      });
-      sched(doSparseNote, 14, 38);
-    }
-    sched(doSparseNote, 4, 10);
-
-    /* Wood creak - slow, isolated, wrong */
-    function doCreak() {
-      if (!movementActive[idx]) return;
-      var now = audioCtx.currentTime;
-      var src = oneshotNoise(rnd(0.4, 0.8));
-      var bpf = makeFilter('bandpass', rnd(160, 340), rnd(3, 7));
-      var g = makeGain(0);
-      var dur = rnd(0.35, 0.70);
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(rnd(0.010, 0.019), now + dur * 0.28);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      src.connect(bpf); bpf.connect(g); g.connect(out);
-      src.start(now);
-      sched(doCreak, 18, 50);
-    }
-    sched(doCreak, 5, 14);
-
-    /* Something out there - distant indistinct */
-    function doDistant() {
-      if (!movementActive[idx]) return;
-      var now = audioCtx.currentTime;
-      var src = oneshotNoise(rnd(1.8, 3.5));
-      var bpf = makeFilter('bandpass', rnd(250, 600), rnd(1, 2.5));
-      var g = makeGain(0);
-      var dur = rnd(1.8, 3.2);
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(rnd(0.003, 0.007), now + dur * 0.38);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      src.connect(bpf); bpf.connect(g); g.connect(out);
-      src.start(now);
-      sched(doDistant, 28, 65);
-    }
-    sched(doDistant, 10, 22);
-
-    /* Occasional silence-breaking impact - something falls */
-    function doThud() {
-      if (!movementActive[idx]) return;
-      var now = audioCtx.currentTime;
-      var src = oneshotNoise(0.22);
-      var lpf = makeFilter('lowpass', rnd(140, 220));
-      var g = makeGain(0);
-      g.gain.setValueAtTime(rnd(0.035, 0.055), now);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
-      src.connect(lpf); lpf.connect(g); g.connect(out);
-      src.start(now);
-      sched(doThud, 35, 80);
-    }
-    sched(doThud, 15, 35);
-  }
-
-  /* ════════════════════════════════════════════════════════════
      MOVEMENT SEQUENCER
      Launches each movement in order, schedules crossfade,
      then launches next. Cycles forever.
   ════════════════════════════════════════════════════════════ */
-  var MOVEMENTS = [startFableForest, startMacalaniaWoods, startSkyrimRiften, startDarkwood];
+  var MOVEMENTS = [startFableForest, startMacalaniaWoods, startSkyrimRiften];
 
   function launchMovement(idx) {
     /* Create this movement's gain node */
@@ -719,7 +609,7 @@
     timeouts.forEach(function (id) { clearTimeout(id); });
     timeouts = [];
     if (keepAliveId) { clearInterval(keepAliveId); keepAliveId = null; }
-    movementActive = [false, false, false, false];
+    movementActive = [false, false, false];
 
     if (masterGain && audioCtx) {
       var now = audioCtx.currentTime;
@@ -739,7 +629,7 @@
 
     audioCtx = null; masterGain = null; audioStarted = false;
     allSources = []; allGains = [];
-    movementGains = [null, null, null, null];
+    movementGains = [null, null, null];
   }
 
   var interactionHandlerAdded = false;
