@@ -723,34 +723,44 @@
       if (!audioCtx || !masterGain) return;
       var now    = audioCtx.currentTime;
       var steps  = rndInt(5, 10);
-      var pace   = rnd(0.28, 0.48);
-      var vol    = rnd(0.018, 0.036);
+      var pace   = rnd(0.48, 0.72);   /* deliberate, heavy pace */
+      var vol    = rnd(0.055, 0.085); /* heavier strike */
       var cursor = now;
-      var rev    = makeReverb(0.52);
+      var rev    = makeReverb(0.22);  /* subtle large-room tail, not cave */
       rev.output.connect(masterGain);
       for (var i = 0; i < steps; i++) {
         (function (t) {
-          /* sharp tap on grating — short noise burst */
+          /* low-mid boot impact on metal plate */
           var nSrc = audioCtx.createBufferSource();
-          nSrc.buffer = makeNoiseBuf(0.08);
+          nSrc.buffer = makeNoiseBuf(0.12);
           var bpf = audioCtx.createBiquadFilter();
           bpf.type = 'bandpass';
-          bpf.frequency.value = rnd(1800, 3200); bpf.Q.value = 3.5;
+          bpf.frequency.value = rnd(280, 520); bpf.Q.value = 1.8;
           var ng = audioCtx.createGain();
           ng.gain.setValueAtTime(vol, t);
-          ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+          ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
           nSrc.connect(bpf); bpf.connect(ng); ng.connect(rev.input);
           nSrc.start(t);
-          /* metal ring from grid vibration */
+          /* sharp metallic grid ring — longer decay, like hollow steel */
           var rOsc = audioCtx.createOscillator();
-          rOsc.type = 'sine'; rOsc.frequency.value = rnd(600, 900);
+          rOsc.type = 'sine'; rOsc.frequency.value = rnd(380, 560);
           var rg = audioCtx.createGain();
-          rg.gain.setValueAtTime(vol * 0.6, t + 0.005);
-          rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+          rg.gain.setValueAtTime(vol * 0.55, t + 0.004);
+          rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
           rOsc.connect(rg); rg.connect(rev.input);
-          rOsc.start(t + 0.005); rOsc.stop(t + 0.14);
+          rOsc.start(t + 0.004); rOsc.stop(t + 0.42);
+          /* high click of heel on grating */
+          var cSrc = audioCtx.createBufferSource();
+          cSrc.buffer = makeNoiseBuf(0.03);
+          var hpf = audioCtx.createBiquadFilter();
+          hpf.type = 'highpass'; hpf.frequency.value = 3500;
+          var cg = audioCtx.createGain();
+          cg.gain.setValueAtTime(vol * 0.35, t);
+          cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+          cSrc.connect(hpf); hpf.connect(cg); cg.connect(masterGain);
+          cSrc.start(t);
         })(cursor);
-        cursor += pace + rnd(-0.03, 0.06);
+        cursor += pace + rnd(-0.04, 0.06);
       }
       scheduleGridFootsteps();
     }, 20, 55);
@@ -763,33 +773,33 @@
       if (Math.random() > 0.40) { scheduleGroupFootsteps(); return; }
       var now    = audioCtx.currentTime;
       var people = rndInt(2, 4);
-      var rev    = makeReverb(0.58);
+      var rev    = makeReverb(0.24);
       rev.output.connect(masterGain);
       for (var p = 0; p < people; p++) {
         (function (offset) {
           var steps  = rndInt(6, 12);
-          var pace   = rnd(0.25, 0.42);
-          var vol    = rnd(0.012, 0.025);
+          var pace   = rnd(0.40, 0.60);
+          var vol    = rnd(0.030, 0.055);
           var cursor = now + offset;
           for (var i = 0; i < steps; i++) {
             (function (t) {
               var nSrc = audioCtx.createBufferSource();
-              nSrc.buffer = makeNoiseBuf(0.07);
+              nSrc.buffer = makeNoiseBuf(0.10);
               var bpf = audioCtx.createBiquadFilter();
               bpf.type = 'bandpass';
-              bpf.frequency.value = rnd(1600, 2800); bpf.Q.value = 3.0;
+              bpf.frequency.value = rnd(260, 480); bpf.Q.value = 1.6;
               var ng = audioCtx.createGain();
               ng.gain.setValueAtTime(vol, t);
-              ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
+              ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
               nSrc.connect(bpf); bpf.connect(ng); ng.connect(rev.input);
               nSrc.start(t);
               var rOsc = audioCtx.createOscillator();
-              rOsc.type = 'sine'; rOsc.frequency.value = rnd(550, 820);
+              rOsc.type = 'sine'; rOsc.frequency.value = rnd(360, 520);
               var rg = audioCtx.createGain();
               rg.gain.setValueAtTime(vol * 0.45, t + 0.004);
-              rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+              rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
               rOsc.connect(rg); rg.connect(rev.input);
-              rOsc.start(t + 0.004); rOsc.stop(t + 0.11);
+              rOsc.start(t + 0.004); rOsc.stop(t + 0.36);
             })(cursor);
             cursor += pace + rnd(-0.04, 0.05);
           }
