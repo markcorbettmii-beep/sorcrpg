@@ -81,12 +81,11 @@
   var D3=146.83, E3=164.81, Fs3=185.00, G3=196.00, A3=220.00, B3=246.94;
   var C4=261.63, D4=293.66, E4=329.63, G4=392.00, B4=493.88;
 
-  /* ── AMBIENT 1: Sub-bass space drone ─────────────────── */
+  /* ── AMBIENT 1: Sub-bass space drone (continuous low bed) ── */
   function startSpaceDrone() {
     var rev = makeReverb(0.55);
     rev.output.connect(masterGain);
-
-    /* E1 / B1 power chord sub-bass */
+    /* Sub-bass only — no mid detuned cluster (that caused metallic beating) */
     [[E1, 0.032],[B1, 0.018],[E2, 0.018],[B2, 0.010]].forEach(function (p) {
       var osc = makeOsc('sawtooth', p[0]);
       var lpf = makeFilt('lowpass', 140, 0.6);
@@ -98,48 +97,55 @@
       osc.connect(lpf); lpf.connect(g); g.connect(rev.input);
       osc.start();
     });
-
-    /* Detuned mid cluster — E3 / G3 / B3 */
-    [
-      [E3,       0.009], [E3*1.004, 0.007], [E3*0.996, 0.007],
-      [G3,       0.006], [B3,       0.005],
-    ].forEach(function (p) {
-      var osc = makeOsc('sawtooth', p[0]);
-      var lpf = makeFilt('lowpass', 700, 0.8);
-      var g   = makeGain(p[1]);
-      /* Imperceptibly slow tremolo */
-      var tLfo = makeOsc('sine', rnd(0.014, 0.022));
-      var tDep = makeGain(0.0025);
-      tLfo.connect(tDep); tDep.connect(g.gain);
-      tLfo.start();
-      osc.connect(lpf); lpf.connect(g); g.connect(rev.input);
-      osc.start();
-    });
   }
 
-  /* ── AMBIENT 2: Station machinery hum ────────────────── */
-  function startMachineryHum() {
-    [[55,0.025],[110,0.010],[165,0.005],[60,0.004],[120,0.003]].forEach(function(p) {
-      var osc = makeOsc('sine', p[0]);
-      var g   = makeGain(p[1]);
-      var dLfo = makeOsc('sine', rnd(0.007, 0.016));
-      var dDep = makeGain(0.2);
-      dLfo.connect(dDep); dDep.connect(osc.frequency);
-      dLfo.start();
-      osc.connect(g); g.connect(masterGain);
-      osc.start();
-    });
+  /* ── AMBIENT 2: Station machinery hum (periodic) ─────── */
+  function scheduleMachineryHum() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now  = audioCtx.currentTime;
+      var dur  = rnd(6, 18);
+      var fade = 1.5;
+      [[55,0.025],[110,0.010],[165,0.005],[60,0.004],[120,0.003]].forEach(function(p) {
+        var osc = audioCtx.createOscillator();
+        osc.type = 'sine'; osc.frequency.value = p[0];
+        var lfo = audioCtx.createOscillator();
+        lfo.frequency.value = rnd(0.007, 0.016);
+        var dep = audioCtx.createGain(); dep.gain.value = 0.2;
+        lfo.connect(dep); dep.connect(osc.frequency);
+        var g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, now);
+        g.gain.linearRampToValueAtTime(p[1], now + fade);
+        g.gain.setValueAtTime(p[1], now + dur - fade);
+        g.gain.linearRampToValueAtTime(0, now + dur);
+        osc.connect(g); g.connect(masterGain);
+        lfo.start(now); lfo.stop(now + dur + 0.1);
+        osc.start(now); osc.stop(now + dur + 0.1);
+      });
+      scheduleMachineryHum();
+    }, 2, 12);
   }
 
-  /* ── AMBIENT 3: Air recycling ─────────────────────────── */
-  function startAirRecycling() {
-    var src = audioCtx.createBufferSource();
-    src.buffer = makeNoiseBuf(2); src.loop = true;
-    allSources.push(src);
-    var lpf = makeFilt('lowpass', 200, 0.7);
-    var g   = makeGain(0.009);
-    src.connect(lpf); lpf.connect(g); g.connect(masterGain);
-    src.start();
+  /* ── AMBIENT 3: Air recycling (periodic) ─────────────── */
+  function scheduleAirRecycling() {
+    sched(function () {
+      if (!audioCtx || !masterGain) return;
+      var now  = audioCtx.currentTime;
+      var dur  = rnd(4, 14);
+      var fade = 1.2;
+      var src  = audioCtx.createBufferSource();
+      src.buffer = makeNoiseBuf(dur + 1);
+      var lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass'; lpf.frequency.value = 200;
+      var g = audioCtx.createGain();
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.009, now + fade);
+      g.gain.setValueAtTime(0.009, now + dur - fade);
+      g.gain.linearRampToValueAtTime(0, now + dur);
+      src.connect(lpf); lpf.connect(g); g.connect(masterGain);
+      src.start(now); src.stop(now + dur + 0.1);
+      scheduleAirRecycling();
+    }, 3, 15);
   }
 
   /* ── MUSIC 1: Slow dark pad swells ───────────────────── */
@@ -1051,8 +1057,8 @@
 
     /* Ambient beds */
     startSpaceDrone();
-    startMachineryHum();
-    startAirRecycling();
+    scheduleMachineryHum();
+    scheduleAirRecycling();
 
     /* Musical elements */
     schedulePadSwell();
