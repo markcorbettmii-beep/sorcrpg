@@ -666,8 +666,8 @@
       var adminCodeGen = priv
         ? '<div class="action-card" style="margin-top:1.25rem;">' +
             '<h2 class="gold" style="font-size:0.92rem;">&#128273; Generate Box Code</h2>' +
-            '<p>Create a single-use box code for a friend so they can host lobbies.</p>' +
-            '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. friend\'s name)..." maxlength="100" />' +
+            '<p>Create a single-use box code for a fellow so they can host lobbies.</p>' +
+            '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. fellow\'s name)..." maxlength="100" />' +
             '<button class="l-btn gold" onclick="generateBoxCode()">Generate Code</button>' +
             '<div id="genCodeResult" class="l-msg"></div>' +
           '</div>'
@@ -1063,7 +1063,7 @@
                   '</button>' +
                   '<div id="invitePoolPanel" style="display:none;background:#0d0d0d;">' +
                     '<div class="invite-tab-bar">' +
-                      '<button class="invite-tab active" id="tabFriends" onclick="switchInviteTab(\'friends\')">Friends</button>' +
+                      '<button class="invite-tab active" id="tabFellows" onclick="switchInviteTab(\'fellows\')">Fellows</button>' +
                       '<button class="invite-tab" id="tabWorld" onclick="switchInviteTab(\'world\')">World</button>' +
                     '</div>' +
                     '<div class="invite-pool-list" id="invitePoolList"><div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">Loading...</div></div>' +
@@ -1251,9 +1251,9 @@
     // ===== LEAVE / DELETE =====
     /* ── INVITE POOL ── */
     var invitePoolOpen = false;
-    var currentInviteTab = 'friends';
+    var currentInviteTab = 'fellows';
     var invitePoolData = null;
-    var invitePage = { friends: 0, world: 0 };
+    var invitePage = { fellows: 0, world: 0 };
     var INVITE_PAGE_SIZE = 10;
 
     window.toggleInvitePool = async function() {
@@ -1268,8 +1268,8 @@
 
     window.switchInviteTab = function(tab) {
       currentInviteTab = tab;
-      ['friends','world'].forEach(function(t) {
-        var el = document.getElementById('tab' + (t === 'friends' ? 'Friends' : 'World'));
+      ['fellows','world'].forEach(function(t) {
+        var el = document.getElementById('tab' + (t === 'fellows' ? 'Fellows' : 'World'));
         if (el) el.classList.toggle('active', t === tab);
       });
       renderInvitePool();
@@ -1282,7 +1282,7 @@
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite-pool', { headers: { 'X-Auth-Key': currentUser.authKey } });
         invitePoolData = await res.json();
-        invitePage = { friends: 0, world: 0 };
+        invitePage = { fellows: 0, world: 0 };
         renderInvitePool();
       } catch(e) {
         if (listEl) listEl.innerHTML = '<div style="padding:0.75rem;color:#555;font-size:0.8rem;text-align:center;">Could not load.</div>';
@@ -1293,17 +1293,17 @@
       var listEl = document.getElementById('invitePoolList');
       var pagerEl = document.getElementById('invitePoolPager');
       if (!listEl || !invitePoolData) return;
-      var allItems = currentInviteTab === 'friends' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
+      var allItems = currentInviteTab === 'fellows' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
       var page = invitePage[currentInviteTab] || 0;
       var items = allItems.slice(page * INVITE_PAGE_SIZE, (page + 1) * INVITE_PAGE_SIZE);
-      var emptyMsg = currentInviteTab === 'friends' ? 'No fellowship members to invite.' : 'No players found in the world area.';
+      var emptyMsg = currentInviteTab === 'fellows' ? 'No fellowship members to invite.' : 'No players found in the world area.';
       if (allItems.length === 0) {
         listEl.innerHTML = '<div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">' + emptyMsg + '</div>';
         if (pagerEl) pagerEl.style.display = 'none';
         return;
       }
       listEl.innerHTML = items.map(function(p) {
-        var sub = currentInviteTab === 'friends'
+        var sub = currentInviteTab === 'fellows'
           ? esc(p.sorc_role || 'Unassessed')
           : esc((p.sorc_role || 'PC') + (p.lobby_name ? ' - ' + p.lobby_name : ''));
         return '<div class="invite-row">' +
@@ -1329,7 +1329,7 @@
     }
 
     window.invitePageNav = function(dir) {
-      var allItems = currentInviteTab === 'friends' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
+      var allItems = currentInviteTab === 'fellows' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
       var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
       var p = (invitePage[currentInviteTab] || 0) + dir;
       if (p < 0 || p >= totalPages) return;
