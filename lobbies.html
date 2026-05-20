@@ -185,6 +185,9 @@
     .member-act-btn:hover { border-color: #888; color: #e0cfc0; }
     .member-act-btn.danger:hover { border-color: #d0021b; color: #d0021b; }
     .muted-tag { font-size: 0.68rem; color: #555; background: #1a1a1a; padding: 1px 6px; border-radius: 4px; }
+    @keyframes ghost-fade { 0% { opacity: 0.45; } 75% { opacity: 0.2; } 100% { opacity: 0; } }
+    .member-row-ghost { animation: ghost-fade 4s ease-out forwards; pointer-events: none; }
+    .departure-notice { font-style: italic; color: #3a3a3a; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
     .member-name-btn { background: none; border: none; padding: 0; color: #d4af37; font-size: 0.88rem; font-weight: bold; cursor: pointer; font-family: inherit; text-align: left; }
     .member-name-btn:hover { text-decoration: underline; }
     .member-name-wrap { position: relative; display: inline-flex; align-items: center; gap: 0.25rem; }
@@ -543,6 +546,7 @@
     var isCreator = false;
     var hasGMRights = false;
     var currentRooms = [];
+    var prevMemberMap = {};  // uid → member snapshot, for departure detection
 
     // ===== JOINED LOBBY TRACKING =====
     function trackJoinedLobby(lobbyId) {
@@ -1000,6 +1004,7 @@
         }
         trackJoinedLobby(lobbyId);
         currentLobby = data.lobby;
+        prevMemberMap = {};
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
         hasGMRights = isCreator || isPrivileged();
         document.documentElement.classList.add('lobby-locked');
@@ -1326,6 +1331,17 @@
       if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
     }
 
+    function notifyDeparture(name) {
+      var msgEl = document.getElementById('worldChatMessages');
+      if (!msgEl) return;
+      var notice = document.createElement('div');
+      notice.className = 'world-msg departure-notice';
+      notice.innerHTML = '&#8617; ' + esc(name) + ' left the lobby';
+      msgEl.appendChild(notice);
+      if (msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 60) msgEl.scrollTop = msgEl.scrollHeight;
+      setTimeout(function() { if (notice.parentNode) notice.parentNode.removeChild(notice); }, 8000);
+    }
+
     async function refreshMembers() {
       if (!currentLobby || !currentUser) return;
       try {
@@ -1334,6 +1350,19 @@
         if (!data.members) return;
         var membersEl = document.getElementById('membersList');
         if (!membersEl) return;
+
+        // Detect departures vs previous snapshot
+        var newMemberMap = {};
+        data.members.forEach(function(m) { newMemberMap[m.user_id] = m; });
+        var departed = [];
+        if (Object.keys(prevMemberMap).length > 0) {
+          Object.keys(prevMemberMap).forEach(function(uid) {
+            if (!newMemberMap[uid] && !(currentUser && uid === currentUser.id)) {
+              departed.push(prevMemberMap[uid]);
+            }
+          });
+        }
+        prevMemberMap = newMemberMap;
         var html = data.members.map(function(m) {
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
           var isSelf = currentUser && m.user_id === currentUser.id;
@@ -1370,6 +1399,23 @@
         membersEl.innerHTML = html || '<div style="padding:1rem;color:#444;font-size:0.82rem;">No members.</div>';
         var countEl = document.querySelector('.members-head span');
         if (countEl) countEl.textContent = 'Members (' + data.members.length + ')';
+
+        // Ghost rows + world chat notices for departed members
+        departed.forEach(function(m) {
+          var name = m.display_name || m.username || 'Unknown';
+          var initials = name.charAt(0).toUpperCase();
+          var ghost = document.createElement('div');
+          ghost.className = 'member-row member-row-ghost';
+          ghost.innerHTML =
+            '<div class="member-avatar" style="opacity:0.4;">' + initials + '</div>' +
+            '<div class="member-info">' +
+              '<span style="text-decoration:line-through;color:#444;font-size:0.85rem;">' + esc(name) + '</span>' +
+              '<div style="font-size:0.68rem;color:#333;margin-top:1px;">left the lobby</div>' +
+            '</div>';
+          membersEl.appendChild(ghost);
+          setTimeout(function() { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 4000);
+          notifyDeparture(name);
+        });
       } catch(e) {}
     }
 
