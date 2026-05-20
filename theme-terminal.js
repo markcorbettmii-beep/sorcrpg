@@ -724,7 +724,7 @@
       var now    = audioCtx.currentTime;
       var steps  = rndInt(5, 10);
       var pace   = rnd(0.48, 0.72);   /* deliberate, heavy pace */
-      var vol    = rnd(0.13, 0.20);   /* heavy boot, cuts through mix */
+      var vol    = rnd(0.038, 0.065);  /* heavy boot on metal grid */
       var cursor = now;
       var rev    = makeReverb(0.22);  /* subtle large-room tail */
       rev.output.connect(masterGain);
@@ -781,7 +781,7 @@
         (function (offset) {
           var steps  = rndInt(6, 12);
           var pace   = rnd(0.40, 0.60);
-          var vol    = rnd(0.09, 0.14);
+          var vol    = rnd(0.028, 0.048);
           var cursor = now + offset;
           for (var i = 0; i < steps; i++) {
             (function (t) {
