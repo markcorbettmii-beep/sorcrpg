@@ -185,6 +185,16 @@
     .member-act-btn:hover { border-color: #888; color: #e0cfc0; }
     .member-act-btn.danger:hover { border-color: #d0021b; color: #d0021b; }
     .muted-tag { font-size: 0.68rem; color: #555; background: #1a1a1a; padding: 1px 6px; border-radius: 4px; }
+    .member-name-btn { background: none; border: none; padding: 0; color: #d4af37; font-size: 0.88rem; font-weight: bold; cursor: pointer; font-family: inherit; text-align: left; }
+    .member-name-btn:hover { text-decoration: underline; }
+    .member-name-wrap { position: relative; display: inline-flex; align-items: center; gap: 0.25rem; }
+    .member-name-menu { position: absolute; top: 100%; left: 0; z-index: 200; background: #141414; border: 1px solid #2a2a2a; border-radius: 6px; padding: 0.3rem 0; min-width: 130px; box-shadow: 0 4px 16px rgba(0,0,0,0.7); display: none; }
+    .member-name-menu.open { display: block; }
+    .member-name-menu a, .member-name-menu button { display: block; width: 100%; text-align: left; padding: 0.35rem 0.75rem; font-size: 0.78rem; color: #ccc; background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: none; white-space: nowrap; }
+    .member-name-menu a:hover, .member-name-menu button:hover { background: #1e1e1e; color: #fff; }
+    .member-name-menu button.summon-opt { color: #d4b8ff; }
+    .member-name-menu button.summon-opt:hover { background: #1a0d2e; color: #e8d4ff; }
+    .member-sheet-hint { font-size: 0.6rem; color: #383838; margin-left: 0.15rem; }
 
     /* ===== ROOMS PANEL ===== */
     .rooms-section { margin-top: 1.5rem; max-width: 280px; }
@@ -1020,14 +1030,19 @@
         }
         var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
         var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
-        var sheetIcon = '<a href="' + esc(sheetHref) + '" title="View Character Sheet" style="color:#aaa;font-size:0.8rem;margin-left:0.3rem;text-decoration:none;vertical-align:middle;">&#128196;</a>';
+        var menuItems = '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+        if (!isSelf) menuItems += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+        if (isCreator && !isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+        var nameWrap = '<span class="member-name-wrap">' +
+          '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + esc(m.display_name || m.username) + ' &#8964;</button>' +
+          '<div class="member-name-menu">' + menuItems + '</div>' +
+          '<span class="member-sheet-hint">for stats &#8250;</span>' +
+          '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128196;</a>' +
+        '</span>';
         return '<div class="member-row">' +
           '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
           '<div class="member-info">' +
-            '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:0;">' +
-              '<a href="' + profileHref + '" class="member-name">' + esc(m.display_name || m.username) + '</a>' +
-              sheetIcon +
-            '</span>' +
+            nameWrap +
             '<div class="member-role' + (isGM ? ' gm' : '') + '">' + roleLabel(m.sorc_role) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
           '</div>' +
           '<div class="member-actions">' + actBtns + '</div>' +
@@ -1321,17 +1336,21 @@
             actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')">Kick</button>';
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
-          if (!isSelf) actBtns += '<a class="member-act-btn" href="inbox.html?to=' + esc(m.user_id) + '" title="Message this player">&#9993;</a>';
-          if (isCreator && !isSelf) actBtns += '<button class="member-act-btn" style="color:#d4b8ff;border-color:#5030a0;" onclick="summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby.id) + '\')" title="Summon">&#9889; Summon</button>';
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
-          var sheetIcon = '<a href="' + esc(sheetHref) + '" title="View Character Sheet" style="color:#aaa;font-size:0.8rem;margin-left:0.3rem;text-decoration:none;vertical-align:middle;">&#128196;</a>';
+          var menuItems2 = '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+          if (!isSelf) menuItems2 += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+          if (isCreator && !isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+          var nameWrap2 = '<span class="member-name-wrap">' +
+            '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + esc(m.display_name || m.username) + ' &#8964;</button>' +
+            '<div class="member-name-menu">' + menuItems2 + '</div>' +
+            '<span class="member-sheet-hint">for stats &#8250;</span>' +
+            '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128196;</a>' +
+          '</span>';
           return '<div class="member-row">' +
             '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
             '<div class="member-info">' +
-              '<span style="display:flex;align-items:center;flex-wrap:wrap;gap:0;">' +
-                '<a href="' + profileHref + '" class="member-name">' + esc(m.display_name || m.username) + '</a>' + sheetIcon +
-              '</span>' +
+              nameWrap2 +
               '<div class="member-role' + (isGM ? ' gm' : '') + '">' + roleLabel(m.sorc_role) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
             '</div>' +
             '<div class="member-actions">' + actBtns + '</div>' +
@@ -1342,6 +1361,19 @@
         if (countEl) countEl.textContent = 'Members (' + data.members.length + ')';
       } catch(e) {}
     }
+
+    // ===== MEMBER NAME MENU =====
+    window.toggleMemberMenu = function(e, btn) {
+      e.stopPropagation();
+      var menu = btn.parentNode.querySelector('.member-name-menu');
+      if (!menu) return;
+      var isOpen = menu.classList.contains('open');
+      document.querySelectorAll('.member-name-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      if (!isOpen) menu.classList.add('open');
+    };
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.member-name-menu.open').forEach(function(m) { m.classList.remove('open'); });
+    });
 
     // ===== MEMBER ACTIONS =====
     window.muteMember = async function(uid, memberId) {
