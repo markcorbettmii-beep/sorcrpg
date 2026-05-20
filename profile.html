@@ -274,6 +274,36 @@
         if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
     };
 
+    window.redeemGmCode = async function() {
+        var input = document.getElementById('gmCodeInput');
+        var msgEl = document.getElementById('gmCodeMsg');
+        if (!input || !msgEl) return;
+        var code = input.value.trim();
+        if (!code) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Enter a GM code.'; return; }
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!saved || !saved.authKey) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Not signed in.'; return; }
+        msgEl.style.color = '#888'; msgEl.textContent = 'Redeeming...';
+        try {
+            var res = await fetch(API_URL + '/api/box-codes/redeem-upgrade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
+                body: JSON.stringify({ code: code })
+            });
+            var data = await res.json();
+            if (data.success) {
+                msgEl.style.color = '#4caf50';
+                msgEl.textContent = '✓ Upgraded to MASTER (GM)! +' + (data.points_awarded || 500) + ' CP. Refreshing...';
+                saved.role = 'MASTER'; saved.sorc_role = 'GM-ADV';
+                localStorage.setItem('sorc_user', JSON.stringify(saved));
+                setTimeout(function() { window.location.reload(); }, 1800);
+            } else {
+                msgEl.style.color = '#d0021b';
+                msgEl.textContent = data.error || 'Could not redeem code.';
+            }
+        } catch(e) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Connection error.'; }
+    };
+
     window.unlockFeature = async function(feature, cost) {
         var saved = null;
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
@@ -370,6 +400,16 @@
                 '<div class="upgrade-info" id="pc-info">To upgrade to PLAYER you must pass a SORC Player Assessment. Assessments are currently under development. Upon upgrading you will receive <b>500 community points</b>.</div>' +
                 '<button class="upgrade-btn" onclick="toggleInfo(\'gm-info\')">▶ Upgrade to MASTER</button>' +
                 '<div class="upgrade-info" id="gm-info">To upgrade to MASTER you must pass a SORC Master Assessment AND redeem an official Master Code. Upon upgrading you will receive <b>1,000 community points</b>.</div>' +
+            '</div>';
+        } else if (role === 'PLAYER') {
+            upgradeSection = '<div class="upgrade-section">' +
+                '<h3>&#128081; Upgrade to MASTER (GM)</h3>' +
+                '<p style="color:#888;font-size:0.82rem;margin:0 0 0.75rem 0;">If an admin has issued you a GM code, enter it below to upgrade your account to Game Master status and unlock lobby hosting.</p>' +
+                '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+                    '<input type="text" id="gmCodeInput" placeholder="Enter GM code..." maxlength="20" style="flex:1;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:#e0cfc0;font-size:0.88rem;" />' +
+                    '<button onclick="redeemGmCode()" style="padding:8px 18px;background:#d4af37;color:#111;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.88rem;">Redeem</button>' +
+                '</div>' +
+                '<div id="gmCodeMsg" style="min-height:1.2em;font-size:0.8rem;margin-top:0.4rem;"></div>' +
             '</div>';
         }
 
