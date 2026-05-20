@@ -753,11 +753,18 @@
 
       var adminCodeGen = priv
         ? '<div class="action-card" style="margin-top:1.25rem;">' +
-            '<h2 class="gold" style="font-size:0.92rem;">&#128273; Generate GM Code</h2>' +
-            '<p>Create a single-use GM code for a fellow so they can host lobbies and launch Campaign Rooms.</p>' +
-            '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. fellow\'s name)..." maxlength="100" />' +
-            '<button class="l-btn gold" onclick="generateBoxCode()">Generate GM Code</button>' +
+            '<h2 class="gold" style="font-size:0.92rem;">&#128274; Generate Box Set Code</h2>' +
+            '<p>Issue a temporary box set code so a member can create lobbies (requires physical box set ownership).</p>' +
+            '<input type="text" id="codeNote" class="l-input" placeholder="Note (e.g. member name)..." maxlength="100" />' +
+            '<button class="l-btn gold" onclick="generateBoxCode()">Generate Box Set Code</button>' +
             '<div id="genCodeResult" class="l-msg"></div>' +
+            '<div style="margin-top:0.75rem;border-top:1px solid #2a2a2a;padding-top:0.75rem;">' +
+              '<h2 class="gold" style="font-size:0.92rem;">&#128081; Generate GM Code</h2>' +
+              '<p style="color:#666;font-size:0.82rem;margin:0 0 0.5rem 0;">Issue a one-time GM code that upgrades a PC member\'s role to Game Master.</p>' +
+              '<input type="text" id="gmCodeNote" class="l-input" placeholder="Note (e.g. member name)..." maxlength="100" />' +
+              '<button class="l-btn gold" style="margin-top:0.4rem;" onclick="generateGmCode()">Generate GM Code</button>' +
+              '<div id="genGmCodeResult" class="l-msg"></div>' +
+            '</div>' +
           '</div>'
         : '';
 
@@ -1012,6 +1019,24 @@
         if (data.success) {
           resultEl.className = 'l-msg ok';
           resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
+        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
+      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
+    };
+
+    window.generateGmCode = async function() {
+      var note = (document.getElementById('gmCodeNote') || {}).value || '';
+      var resultEl = document.getElementById('genGmCodeResult');
+      resultEl.className = 'l-msg'; resultEl.textContent = 'Generating...';
+      try {
+        var res = await fetch(API_URL + '/api/gm-codes/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ note: note.trim() })
+        });
+        var data = await res.json();
+        if (data.success) {
+          resultEl.className = 'l-msg ok';
+          resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genGmCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
         } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
       } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
     };

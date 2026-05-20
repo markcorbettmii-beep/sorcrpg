@@ -200,19 +200,19 @@
           '<h2>Codes</h2>' +
           '<div class="admin-grid">' +
             '<div class="admin-card">' +
-              '<h3>Generate Master Code</h3>' +
-              '<p>Issue a one-time code to allow a member to register as a Game Master [GM].</p>' +
-              '<button class="btn btn-gold btn-block" onclick="genCode(\'MASTER\')">Generate Master Code</button>' +
-              '<div class="output-box" id="masterCodeOut"></div>' +
+              '<h3>&#128081; Generate GM Code</h3>' +
+              '<p>Issue a one-time code that allows a PC-assessed member to upgrade their role to Game Master [GM].</p>' +
+              '<input type="text" id="gmCodeNote" class="admin-input" placeholder="Note (e.g. member name)..." maxlength="100" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+              '<button class="btn btn-gold btn-block" onclick="adminGenGmCode()">Generate GM Code</button>' +
+              '<div id="gmCodeOut" class="output-box" style="margin-top:0.5rem;font-size:0.82rem;"></div>' +
             '</div>' +
-            (isOwner
-              ? '<div class="admin-card">' +
-                  '<h3>Generate Box Set Code</h3>' +
-                  '<p>Issue a box set activation code for a physical product purchase.</p>' +
-                  '<button class="btn btn-gold btn-block" onclick="genCode(\'BOXSET\')">Generate Box Set Code</button>' +
-                  '<div class="output-box" id="boxsetCodeOut"></div>' +
-                '</div>'
-              : '') +
+            '<div class="admin-card">' +
+              '<h3>&#128274; Generate Box Set Code</h3>' +
+              '<p>Issue a temporary activation code for members who own a physical box set. Required to create lobbies.</p>' +
+              '<input type="text" id="bscNote" class="admin-input" placeholder="Note (e.g. member name)..." maxlength="100" style="width:100%;box-sizing:border-box;margin-bottom:6px;" />' +
+              '<button class="btn btn-gold btn-block" onclick="adminGenBoxCode()">Generate Box Set Code</button>' +
+              '<div id="bscCodeOut" class="output-box" style="margin-top:0.5rem;font-size:0.82rem;"></div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
 
@@ -286,11 +286,48 @@
         '</div>';
     }
 
-    window.genCode = function(type) {
-      var prefix = type === 'MASTER' ? 'MASTER' : 'BOXSET';
-      var code = prefix + '-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-      var outEl = document.getElementById(type === 'MASTER' ? 'masterCodeOut' : 'boxsetCodeOut');
-      if (outEl) outEl.textContent = code;
+    window.adminGenGmCode = async function() {
+      var note = (document.getElementById('gmCodeNote') || {}).value || '';
+      var outEl = document.getElementById('gmCodeOut');
+      if (!outEl) return;
+      outEl.style.color = '#888'; outEl.textContent = 'Generating...';
+      try {
+        var res = await apiFetch('/api/gm-codes/generate', {
+          method: 'POST',
+          body: JSON.stringify({ note: note.trim() })
+        });
+        if (res.success) {
+          outEl.style.color = '#4caf50';
+          outEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + escapeHtml(res.code) + '</strong>' +
+            ' <button onclick="navigator.clipboard.writeText(\'' + escapeHtml(res.code) + '\').then(function(){document.getElementById(\'gmCodeOut\').textContent=\'Copied!\'})" ' +
+            'style="padding:2px 8px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.72rem;">Copy</button>' +
+            '<div style="color:#555;font-size:0.72rem;margin-top:2px;">Expires: ' + escapeHtml(res.expires_at ? new Date(res.expires_at).toLocaleDateString() : '7 days') + '</div>';
+        } else {
+          outEl.style.color = '#d0021b'; outEl.textContent = res.error || 'Failed.';
+        }
+      } catch(e) { outEl.style.color = '#d0021b'; outEl.textContent = 'Connection error.'; }
+    };
+
+    window.adminGenBoxCode = async function() {
+      var note = (document.getElementById('bscNote') || {}).value || '';
+      var outEl = document.getElementById('bscCodeOut');
+      if (!outEl) return;
+      outEl.style.color = '#888'; outEl.textContent = 'Generating...';
+      try {
+        var res = await apiFetch('/api/box-codes/generate', {
+          method: 'POST',
+          body: JSON.stringify({ note: note.trim() })
+        });
+        if (res.success) {
+          outEl.style.color = '#4caf50';
+          outEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + escapeHtml(res.code) + '</strong>' +
+            ' <button onclick="navigator.clipboard.writeText(\'' + escapeHtml(res.code) + '\').then(function(){document.getElementById(\'bscCodeOut\').textContent=\'Copied!\'})" ' +
+            'style="padding:2px 8px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.72rem;">Copy</button>' +
+            '<div style="color:#555;font-size:0.72rem;margin-top:2px;">Expires: ' + escapeHtml(res.expires_at ? new Date(res.expires_at).toLocaleDateString() : '2 days') + '</div>';
+        } else {
+          outEl.style.color = '#d0021b'; outEl.textContent = res.error || 'Failed.';
+        }
+      } catch(e) { outEl.style.color = '#d0021b'; outEl.textContent = 'Connection error.'; }
     };
 
     window.loadModQueue = async function loadModQueue() {
