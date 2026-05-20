@@ -805,31 +805,53 @@
     }, 25, 60);
   }
 
-  /* ── DROIDS: C-3PO style — short electronic beep chatter ── */
+  /* ── DROIDS: C-3PO style — wordy harmonic chatter ───── */
   function scheduleDroidProtocol() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
       if (Math.random() > 0.85) { scheduleDroidProtocol(); return; }
       var now    = audioCtx.currentTime;
       var cursor = now;
-      var beeps  = rndInt(3, 8);
-      for (var s = 0; s < beeps; s++) {
+      var syllables = rndInt(3, 7);
+      for (var s = 0; s < syllables; s++) {
         (function (t) {
-          var freq = rnd(1800, 3600);
-          var dur  = rnd(0.03, 0.09);
-          var osc  = audioCtx.createOscillator();
-          osc.type = 'square';
-          osc.frequency.value = freq;
-          var lpf = audioCtx.createBiquadFilter();
-          lpf.type = 'lowpass'; lpf.frequency.value = freq * 1.4;
-          var g = audioCtx.createGain();
-          g.gain.setValueAtTime(0.042, t);
-          g.gain.setValueAtTime(0.042, t + dur - 0.006);
-          g.gain.linearRampToValueAtTime(0, t + dur + 0.008);
-          osc.connect(lpf); lpf.connect(g); g.connect(masterGain);
-          osc.start(t); osc.stop(t + dur + 0.012);
+          var root = rnd(1400, 2800);
+          var dur  = rnd(0.06, 0.18);
+          var o1 = audioCtx.createOscillator();
+          o1.type = 'sine';
+          o1.frequency.setValueAtTime(root, t);
+          o1.frequency.linearRampToValueAtTime(root * rnd(0.88, 1.14), t + dur);
+          var g1 = audioCtx.createGain();
+          g1.gain.setValueAtTime(0, t);
+          g1.gain.linearRampToValueAtTime(0.038, t + 0.012);
+          g1.gain.setValueAtTime(0.038, t + dur - 0.015);
+          g1.gain.linearRampToValueAtTime(0, t + dur + 0.018);
+          o1.connect(g1); g1.connect(masterGain);
+          o1.start(t); o1.stop(t + dur + 0.03);
+          var o2 = audioCtx.createOscillator();
+          o2.type = 'triangle';
+          o2.frequency.setValueAtTime(root * 2.03, t);
+          o2.frequency.linearRampToValueAtTime(root * 2.03 * rnd(0.91, 1.09), t + dur);
+          var g2 = audioCtx.createGain();
+          g2.gain.setValueAtTime(0, t);
+          g2.gain.linearRampToValueAtTime(0.018, t + 0.012);
+          g2.gain.setValueAtTime(0.018, t + dur - 0.015);
+          g2.gain.linearRampToValueAtTime(0, t + dur + 0.018);
+          o2.connect(g2); g2.connect(masterGain);
+          o2.start(t); o2.stop(t + dur + 0.03);
+          if (Math.random() > 0.65) {
+            var sq = audioCtx.createOscillator();
+            sq.type = 'sine';
+            sq.frequency.setValueAtTime(root * 3.5, t + dur + 0.02);
+            sq.frequency.exponentialRampToValueAtTime(root * 2.1, t + dur + 0.07);
+            var sqg = audioCtx.createGain();
+            sqg.gain.setValueAtTime(0.024, t + dur + 0.02);
+            sqg.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.08);
+            sq.connect(sqg); sqg.connect(masterGain);
+            sq.start(t + dur + 0.02); sq.stop(t + dur + 0.1);
+          }
         })(cursor);
-        cursor += rnd(0.06, 0.18);
+        cursor += rnd(0.10, 0.26);
       }
       scheduleDroidProtocol();
     }, 6, 18);
