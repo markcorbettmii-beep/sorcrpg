@@ -1038,7 +1038,7 @@
               '</div>' +
               /* MAIN: lobby chat */
               '<div class="chat-tab-pane active" id="chatPane-main">' +
-                (hasGMRights ? '<div style="text-align:right;padding:0.25rem 0.5rem 0;"><button onclick="clearLobbyChat()" style="font-size:0.7rem;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:3px;padding:2px 8px;cursor:pointer;">Clear Chat</button></div>' : '') +
+                (hasGMRights ? '<div style="text-align:right;padding:0.25rem 0.5rem 0;"><button id="clearChatBtn" onclick="clearLobbyChat()" style="font-size:0.7rem;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:3px;padding:2px 8px;cursor:pointer;">Clear Chat</button></div>' : '') +
                 '<div class="chat-messages" id="chatMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div></div>' +
                 '<div class="chat-input-row">' +
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
@@ -1191,7 +1191,14 @@
 
     window.clearLobbyChat = async function() {
       if (!currentLobby || !hasGMRights) return;
-      if (!confirm('Clear all chat messages? This cannot be undone.')) return;
+      var btn = document.getElementById('clearChatBtn');
+      if (btn && btn.dataset.confirm !== '1') {
+        btn.textContent = 'Confirm?';
+        btn.dataset.confirm = '1';
+        setTimeout(function() { if (btn) { btn.textContent = 'Clear Chat'; btn.dataset.confirm = '0'; } }, 3000);
+        return;
+      }
+      if (btn) { btn.textContent = 'Clear Chat'; btn.dataset.confirm = '0'; }
       try {
         await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
           method: 'DELETE',
