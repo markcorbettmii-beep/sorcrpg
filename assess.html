@@ -301,7 +301,7 @@
           gmNote + pcNote +
           '<div class="result-links">' +
             '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>' +
-            '<button class="btn-reassess" onclick="reassess()">Reassess</button>' +
+            '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)">Reassess</button>' +
           '</div>' +
         '</div>' +
         (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review the questions and answers:</p>' + qaHtml + '</div>' : '');
@@ -309,8 +309,20 @@
 
     var ANSWER_KEY = [1,2,3,1,1,2,1,2,2,1];
 
-    async function reassess() {
-      if (!confirm('This will reset your role. You will need to retake the full assessment. Continue?')) return;
+    async function reassess(btn) {
+      if (!btn) return;
+      if (btn.dataset.confirm !== '1') {
+        btn.dataset.confirm = '1';
+        btn.textContent = 'Confirm?';
+        setTimeout(function() {
+          if (btn.dataset.confirm === '1') {
+            btn.dataset.confirm = '';
+            btn.textContent = 'Reassess';
+          }
+        }, 3000);
+        return;
+      }
+      btn.dataset.confirm = '';
       try {
         await fetch(API_URL + '/api/assess', {
           method: 'DELETE',
@@ -320,7 +332,7 @@
         questions = [];
         loadQuiz();
       } catch(e) {
-        alert('Error resetting assessment. Please try again.');
+        btn.textContent = 'Reassess';
       }
     }
 
