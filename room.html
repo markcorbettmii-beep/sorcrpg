@@ -554,6 +554,7 @@
             '</div>' +
             '<div class="tab-content">' +
               '<div class="tab-pane active" id="pane-chat">' +
+                (isGM ? '<div style="text-align:right;padding:0.25rem 0.5rem 0;"><button onclick="clearChat()" style="font-size:0.7rem;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:3px;padding:2px 8px;cursor:pointer;">Clear Chat</button></div>' : '') +
                 '<div class="chat-messages" id="chatMessages"></div>' +
                 '<div class="chat-input-row">' +
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="500" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
@@ -652,10 +653,11 @@
         if (msgs.length === 0) { el.innerHTML = '<div style="color:#333;font-size:0.8rem;text-align:center;padding:1rem;">No messages yet.</div>'; return; }
         el.innerHTML = msgs.map(function(m) {
           var isGmMsg = m.sorc_role && m.sorc_role.startsWith('GM');
-          return '<div class="chat-msg">' +
+          return '<div class="chat-msg" id="msg-' + m.id + '">' +
             '<span class="msg-name' + (isGmMsg ? ' gm' : '') + '">' + esc(m.username) + ':</span>' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+            (isGM ? '<button onclick="deleteMsg(\'' + m.id + '\')" style="margin-left:6px;font-size:0.65rem;background:none;border:none;color:#c0392b;cursor:pointer;opacity:0.6;">x</button>' : '') +
           '</div>';
         }).join('');
         if (atBottom) el.scrollTop = el.scrollHeight;
@@ -677,6 +679,29 @@
         loadChat();
       } catch(e) {}
     };
+
+    window.clearChat = async function() {
+      if (!confirm('Clear all chat messages? This cannot be undone.')) return;
+      try {
+        await fetch(API_URL + '/api/rooms/' + roomId + '/messages', {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        loadChat();
+      } catch(e) {}
+    };
+
+    window.deleteMsg = async function(msgId) {
+      try {
+        await fetch(API_URL + '/api/rooms/' + roomId + '/messages/' + msgId, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var el = document.getElementById('msg-' + msgId);
+        if (el) el.remove();
+      } catch(e) {}
+    };
+
 
     // ===== ROLLS =====
     async function loadRolls() {

@@ -1090,52 +1090,62 @@ const ASSESSMENT_QUESTIONS = [
   {
     q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?",
     options: ["37", "73", "3", "7"],
-    answer: 1
+    answer: 1,
+    page: 1
   },
   {
     q: "Which die combination is used for Rare and Divine item drops in SORC?",
     options: ["1D6", "1D4", "D100 + D100", "2D6"],
-    answer: 2
+    answer: 2,
+    page: 1
   },
   {
     q: "What does rolling 00 on the d100 equal?",
     options: ["0", "10", "50", "100"],
-    answer: 3
+    answer: 3,
+    page: 1
   },
   {
     q: "The D4 is primarily used for which type of roll?",
     options: ["Damage", "Luck", "Initiative", "Loot"],
-    answer: 1
+    answer: 1,
+    page: 5
   },
   {
     q: "Which color token represents Lifeblood (HP)?",
     options: ["Blue", "Red", "Yellow", "Green"],
-    answer: 1
+    answer: 1,
+    page: 5
   },
   {
     q: "What is the maximum number of abilities a character can learn?",
     options: ["40", "50", "59", "75"],
-    answer: 2
+    answer: 2,
+    page: 4
   },
   {
     q: "What is the correct rank order from lowest to highest for ranks 1, 2, and 3?",
     options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Master, Pauper", "Commoner, Peasant, Pauper"],
-    answer: 1
+    answer: 1,
+    page: 4
   },
   {
     q: "How much time does each player have per turn before it is forfeited?",
     options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"],
-    answer: 2
+    answer: 2,
+    page: 5
   },
   {
     q: "In SORC's armor system, when does an attack successfully hit?",
     options: ["When the roll is lower than the Armor Score (AS)", "When the roll equals zero", "When the roll equals or exceeds the Armor Score (AS)", "When the roll is a natural 1"],
-    answer: 2
+    answer: 2,
+    page: 5
   },
   {
     q: "When using the D100+D100 system, what is the minimum possible total result?",
     options: ["1", "2", "10", "0"],
-    answer: 1
+    answer: 1,
+    page: 1
   }
 ];
 
@@ -1159,7 +1169,8 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
   const questions = ASSESSMENT_QUESTIONS.map((q, i) => ({
     id: i,
     q: q.q,
-    options: q.options
+    options: q.options,
+    page: q.page
   }));
   return c.json({ questions });
 });
@@ -2069,6 +2080,28 @@ app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
   ).bind(crypto.randomUUID(), roomId, user.id, user.username, body.trim(), now).run();
   return c.json({ success: true });
 });
+
+app.delete('/api/rooms/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE room_id = ?`).bind(roomId).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/rooms/:id/messages/:msgId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const msgId = c.req.param('msgId');
+  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE id = ? AND room_id = ?`).bind(msgId, roomId).run();
+  return c.json({ success: true });
+});
+
 
 // ─── ROOM VISIBILITY & SPECTATE ───────────────────────────────────────────────
 
