@@ -726,6 +726,8 @@
       var pace   = rnd(0.28, 0.48);
       var vol    = rnd(0.018, 0.036);
       var cursor = now;
+      var rev    = makeReverb(0.52);
+      rev.output.connect(masterGain);
       for (var i = 0; i < steps; i++) {
         (function (t) {
           /* sharp tap on grating — short noise burst */
@@ -737,7 +739,7 @@
           var ng = audioCtx.createGain();
           ng.gain.setValueAtTime(vol, t);
           ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-          nSrc.connect(bpf); bpf.connect(ng); ng.connect(masterGain);
+          nSrc.connect(bpf); bpf.connect(ng); ng.connect(rev.input);
           nSrc.start(t);
           /* metal ring from grid vibration */
           var rOsc = audioCtx.createOscillator();
@@ -745,7 +747,7 @@
           var rg = audioCtx.createGain();
           rg.gain.setValueAtTime(vol * 0.6, t + 0.005);
           rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
-          rOsc.connect(rg); rg.connect(masterGain);
+          rOsc.connect(rg); rg.connect(rev.input);
           rOsc.start(t + 0.005); rOsc.stop(t + 0.14);
         })(cursor);
         cursor += pace + rnd(-0.03, 0.06);
@@ -761,6 +763,8 @@
       if (Math.random() > 0.40) { scheduleGroupFootsteps(); return; }
       var now    = audioCtx.currentTime;
       var people = rndInt(2, 4);
+      var rev    = makeReverb(0.58);
+      rev.output.connect(masterGain);
       for (var p = 0; p < people; p++) {
         (function (offset) {
           var steps  = rndInt(6, 12);
@@ -777,14 +781,14 @@
               var ng = audioCtx.createGain();
               ng.gain.setValueAtTime(vol, t);
               ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.065);
-              nSrc.connect(bpf); bpf.connect(ng); ng.connect(masterGain);
+              nSrc.connect(bpf); bpf.connect(ng); ng.connect(rev.input);
               nSrc.start(t);
               var rOsc = audioCtx.createOscillator();
               rOsc.type = 'sine'; rOsc.frequency.value = rnd(550, 820);
               var rg = audioCtx.createGain();
               rg.gain.setValueAtTime(vol * 0.45, t + 0.004);
               rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
-              rOsc.connect(rg); rg.connect(masterGain);
+              rOsc.connect(rg); rg.connect(rev.input);
               rOsc.start(t + 0.004); rOsc.stop(t + 0.11);
             })(cursor);
             cursor += pace + rnd(-0.04, 0.05);
