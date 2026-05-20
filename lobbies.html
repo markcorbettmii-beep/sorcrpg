@@ -757,17 +757,20 @@
             ? ' &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong>'
             : '';
           var isBanned = isLobbyBanned(l.id);
-          var isJoined = hasJoinedLobby(l.id) || isCreatorOfLobby;
+          var isJoined = !!(l.is_member) || hasJoinedLobby(l.id) || isCreatorOfLobby;
           var joinBtn = isBanned ? '' : isJoined
-            ? '<button class="row-join-btn" style="background:#1a5a1a;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined (Enter)</button>'
-            : '<button class="row-join-btn" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')" ' + (isFull ? 'disabled' : '') + '>Join</button>';
+            ? '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined</button>'
+            : isFull
+              ? '<button class="row-join-btn" disabled>Full</button>'
+              : l.is_private
+                ? '<button class="row-join-btn" style="background:#d0021b;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>'
+                : '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>';
           return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
             '<div class="lobby-row-info">' +
               '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
               '<p>Host: ' + esc(l.creator_name || 'Unknown') + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + (l.max_members||20) + ' members' + codeSnip + '</p>' +
             '</div>' +
             '<div class="lobby-row-right">' +
-              '<span class="status-pip ' + statusClass + '">' + statusLabel + '</span>' +
               joinBtn +
             '</div>' +
           '</div>';
