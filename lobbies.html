@@ -1038,6 +1038,7 @@
               '</div>' +
               /* MAIN: lobby chat */
               '<div class="chat-tab-pane active" id="chatPane-main">' +
+                (hasGMRights ? '<div style="text-align:right;padding:0.25rem 0.5rem 0;"><button onclick="clearLobbyChat()" style="font-size:0.7rem;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:3px;padding:2px 8px;cursor:pointer;">Clear Chat</button></div>' : '') +
                 '<div class="chat-messages" id="chatMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div></div>' +
                 '<div class="chat-input-row">' +
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
@@ -1140,10 +1141,11 @@
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
         msgEl.innerHTML = visibleMsgs.map(function(m) {
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
-          return '<div class="chat-msg">' +
+          return '<div class="chat-msg" id="lmsg-' + m.id + '">' +
             '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+            (hasGMRights ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:6px;font-size:0.65rem;background:none;border:none;color:#c0392b;cursor:pointer;opacity:0.6;">x</button>' : '') +
           '</div>';
         }).join('');
         if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
@@ -1185,6 +1187,30 @@
         if (data.error) { showToast(data.error, true); input.value = body; return; }
         loadChatMessages(currentLobby.id);
       } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
+    };
+
+    window.clearLobbyChat = async function() {
+      if (!currentLobby || !hasGMRights) return;
+      if (!confirm('Clear all chat messages? This cannot be undone.')) return;
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        loadChatMessages(currentLobby.id);
+      } catch(e) {}
+    };
+
+    window.deleteLobbyMsg = async function(msgId) {
+      if (!currentLobby || !hasGMRights) return;
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages/' + msgId, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var el = document.getElementById('lmsg-' + msgId);
+        if (el) el.remove();
+      } catch(e) {}
     };
 
     var memberPollCount = 0;
