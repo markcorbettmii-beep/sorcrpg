@@ -105,24 +105,27 @@
     .recruit-opt { display:block;width:100%;text-align:left;background:none;border:none;padding:0.55rem 0.9rem;font-size:0.78rem;color:#c0b0a0;cursor:pointer;border-bottom:1px solid #1a1a1a; }
     .recruit-opt:last-child { border-bottom:none; }
     .recruit-opt:hover { background:#1a2a3a;color:#e0cfc0; }
-    /* Default (desktop): two columns */
-    .detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
-
-    /* Portrait phones */
-    @media screen and (max-width: 600px) and (orientation: portrait) {
-      .detail-grid { grid-template-columns: 1fr; }
-      .lobbies-wrap { padding: 0.5rem 0.4rem 4rem; }
+    /* ── Desktop / mouse (PC, Mac, laptop) ─────────────────────── */
+    @media (hover: hover) and (pointer: fine) {
+      .detail-grid { grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
     }
 
-    /* Landscape phones - short viewport height means it's a phone on its side */
-    @media screen and (max-height: 500px) and (orientation: landscape) {
+    /* ── Touch devices (Android + iPhone, finger input) ─────────── */
+    @media (hover: none) and (pointer: coarse) {
       .detail-grid { grid-template-columns: 1fr; }
       .lobbies-wrap { padding: 0.5rem 0.4rem 4rem; }
+      .chat-panel { height: 360px; }
     }
 
-    /* Small tablets / large phones in portrait */
-    @media screen and (min-width: 601px) and (max-width: 900px) and (orientation: portrait) {
+    /* ── Fallback for anything that doesn't match above ─────────── */
+    @media not all and (hover: hover) and (pointer: fine) {
+      .detail-grid { grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
+    }
+
+    /* ── Touch landscape: keep single column, tighten chat height ── */
+    @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
       .detail-grid { grid-template-columns: 1fr; }
+      .chat-panel { height: 280px; }
     }
 
     /* ===== CHAT ===== */
