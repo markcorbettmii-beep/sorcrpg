@@ -669,27 +669,22 @@
     })();
     windSrc.start(); wlfo.start();
 
-    /* Raven calls */
+    /* Raven calls - bandpass noise burst, not oscillator */
     function doRaven() {
       if (!movementActive[idx]) return;
       var now = audioCtx.currentTime;
       var caws = rndInt(1, 3);
       for (var c = 0; c < caws; c++) {
         (function (t) {
-          var osc = audioCtx.createOscillator();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(rnd(260, 340), t);
-          osc.frequency.linearRampToValueAtTime(rnd(200, 260), t + 0.20);
-          allSources.push(osc);
-          var lpf = makeFilter('lowpass', rnd(800, 1200));
+          var src = oneshotNoise(0.18);
+          var bpf = makeFilter('bandpass', rnd(1400, 2200), rnd(4, 8));
+          var lpf = makeFilter('lowpass', rnd(2800, 4000));
           var g = makeGain(0);
-          g.gain.setValueAtTime(0, t);
-          g.gain.linearRampToValueAtTime(rnd(0.016, 0.028), t + 0.04);
-          g.gain.setValueAtTime(rnd(0.012, 0.022), t + 0.15);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
-          osc.connect(lpf); lpf.connect(g); g.connect(out);
-          osc.start(t); osc.stop(t + 0.28);
-        })(now + c * rnd(0.38, 0.75));
+          g.gain.setValueAtTime(rnd(0.022, 0.038), t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+          src.connect(bpf); bpf.connect(lpf); lpf.connect(g); g.connect(out);
+          src.start(t);
+        })(now + c * rnd(0.40, 0.80));
       }
       sched(doRaven, 18, 50);
     }
