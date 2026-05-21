@@ -621,6 +621,7 @@
     var readyCheckDismissed = false;
     var readyCheckTimerInterval = null;
     var readyCheckInitiatedAt = null;
+    var lastReadyCheckData = null;
 
     var reportTargetUid = null;
     var reportTargetName = '';
@@ -2042,6 +2043,34 @@
     // ===== LAUNCH ROOM =====
     window.launchRoom = async function() {
       if (!currentLobby) return;
+
+      /* ── Pre-flight: member count ── */
+      var memberCount = Object.keys(prevMemberMap).length;
+      if (memberCount < 3) {
+        showToast('At least 2 players and a GM are required to launch a room.', true);
+        return;
+      }
+
+      /* ── Pre-flight: ready check ── */
+      if (!lastReadyCheckData) {
+        showToast('Run a ready check first — all players must confirm ready before launching.', true);
+        return;
+      }
+      var readyUids = (lastReadyCheckData.responses || [])
+        .filter(function(r) { return r.status === 'ready'; })
+        .map(function(r) { return r.user_id; });
+      var notReady = Object.keys(prevMemberMap).filter(function(uid) {
+        return readyUids.indexOf(uid) === -1;
+      });
+      if (notReady.length > 0) {
+        var names = notReady.map(function(uid) {
+          var m = prevMemberMap[uid];
+          return m ? (m.display_name || m.username) : uid;
+        }).join(', ');
+        showToast('Not everyone is ready: ' + names, true);
+        return;
+      }
+
       var roomName = prompt('Name this campaign room:');
       if (!roomName || !roomName.trim()) return;
       try {
@@ -2053,7 +2082,7 @@
         var data = await res.json();
         if (data.success && data.room_id) {
           window.location.href = 'room.html?id=' + data.room_id;
-        } else { alert(data.error || 'Could not launch room.'); }
+        } else { showToast(data.error || 'Could not launch room.', true); }
       } catch(e) { showToast('Could not reach server.', true); }
     };
 
@@ -2504,9 +2533,11 @@
           hasRespondedToReadyCheck = false;
           readyCheckDismissed = false;
           readyCheckInitiatedAt = null;
+          lastReadyCheckData = null;
         }
         return;
       }
+      lastReadyCheckData = rc;
       if (rc.check_id !== currentReadyCheckId) {
         currentReadyCheckId = rc.check_id;
         readyCheckInitiatedAt = rc.initiated_at;
