@@ -2146,6 +2146,25 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
   return c.json({ success: true });
 });
 
+app.post('/api/lobbies/:id/transfer-host', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can promote.' }, 403);
+  const { new_host_uid } = await c.req.json();
+  if (!new_host_uid) return c.json({ error: 'new_host_uid required.' }, 400);
+  if (new_host_uid === user.id) return c.json({ error: 'Already the host.' }, 400);
+  const member = await c.env.sorc_db.prepare(
+    `SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, new_host_uid).first() as any;
+  if (!member) return c.json({ error: 'That player is not in this lobby.' }, 404);
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
+    .bind(new_host_uid, now, lobbyId).run();
+  return c.json({ success: true });
+});
+
 // ─── LOBBY REPORTS ─────────────────────────────────────────────────────────────
 
 const VALID_LOBBY_REPORT_REASONS = ['Incompetence', 'Language', 'Threats', 'Harassment', 'Spam', 'Other'];
@@ -2210,15 +2229,17 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   ).bind(lobbyId).all();
   const memberList = members.results as any[] || [];
 
-  const { selected_members, gm_uid } = await c.req.json() as any;
-  if (!gm_uid) return c.json({ error: 'A GM is required to launch a room.' }, 400);
-  if (!selected_members || selected_members.length < 2) return c.json({ error: 'At least 2 PCs required.' }, 400);
-  if (selected_members.length > 5) return c.json({ error: 'Maximum 5 PCs per room.' }, 400);
+  const body = await c.req.json() as any;
+  // Default gm_uid to the caller; default selected_members to everyone in the lobby
+  const gm_uid: string = body.gm_uid || user.id;
+  const selected_members: string[] = body.selected_members || memberList.map((m: any) => m.user_id);
 
   const gmMember = memberList.find((m: any) => m.user_id === gm_uid);
   if (!gmMember) return c.json({ error: 'GM must be a lobby member.' }, 400);
   const gmIsPrivileged = isPrivileged({ id: gm_uid, role: gmMember.role, email: gmMember.email || '' });
-  if (!gmMember.sorc_role.startsWith('GM') && !gmIsPrivileged) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
+  const gmRoleOk = (gmMember.sorc_role && gmMember.sorc_role.startsWith('GM'))
+    || gmMember.role === 'MASTER' || gmIsPrivileged;
+  if (!gmRoleOk) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
 
   const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
