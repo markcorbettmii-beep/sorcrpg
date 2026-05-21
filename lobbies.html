@@ -2257,19 +2257,36 @@
     };
 
     window.confirmSummon = async function() {
-      if (!pendingSummonTarget || !currentLobby || !currentUser) return;
+      if (!pendingSummonTarget || !currentUser) return;
+      var lobbyId = pendingSummonTarget.lobbyId || (currentLobby && currentLobby.id);
+      if (!lobbyId) { showToast('You need an active lobby to summon players.', true); closeSummonModal(); return; }
       var note = document.getElementById('summonNoteInput').value.trim();
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + pendingSummonTarget.lobbyId + '/summon', {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/summon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ to_uid: pendingSummonTarget.uid, note: note || null })
         });
-        var data = await res.json();
+        var data;
+        try { data = await res.json(); } catch(je) { data = {}; }
         closeSummonModal();
-        if (data.success) { showToast('Summon sent to ' + pendingSummonTarget.name + '!'); }
-        else { showToast(data.error || 'Could not send summon.', true); }
-      } catch(e) { closeSummonModal(); showToast('Could not reach server.', true); }
+        if (data.success) {
+          showToast('Summon sent to ' + pendingSummonTarget.name + '! They\'ll see it when active.');
+        } else if (res.status === 403) {
+          showToast('Only the active host can send summons.', true);
+        } else if (res.status === 404) {
+          showToast(data.error || 'Lobby or player not found.', true);
+        } else if (res.status === 400) {
+          showToast(data.error || 'Cannot summon this player.', true);
+        } else if (!res.ok) {
+          showToast('Summon failed (server error ' + res.status + '). Try again.', true);
+        } else {
+          showToast(data.error || 'Could not send summon.', true);
+        }
+      } catch(e) {
+        closeSummonModal();
+        showToast('Connection error — check your internet and try again.', true);
+      }
     };
 
     async function checkPendingSummons() {
