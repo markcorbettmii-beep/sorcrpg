@@ -2229,15 +2229,17 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   ).bind(lobbyId).all();
   const memberList = members.results as any[] || [];
 
-  const { selected_members, gm_uid } = await c.req.json() as any;
-  if (!gm_uid) return c.json({ error: 'A GM is required to launch a room.' }, 400);
-  if (!selected_members || selected_members.length < 2) return c.json({ error: 'At least 2 PCs required.' }, 400);
-  if (selected_members.length > 5) return c.json({ error: 'Maximum 5 PCs per room.' }, 400);
+  const body = await c.req.json() as any;
+  // Default gm_uid to the caller; default selected_members to everyone in the lobby
+  const gm_uid: string = body.gm_uid || user.id;
+  const selected_members: string[] = body.selected_members || memberList.map((m: any) => m.user_id);
 
   const gmMember = memberList.find((m: any) => m.user_id === gm_uid);
   if (!gmMember) return c.json({ error: 'GM must be a lobby member.' }, 400);
   const gmIsPrivileged = isPrivileged({ id: gm_uid, role: gmMember.role, email: gmMember.email || '' });
-  if (!gmMember.sorc_role.startsWith('GM') && !gmIsPrivileged) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
+  const gmRoleOk = (gmMember.sorc_role && gmMember.sorc_role.startsWith('GM'))
+    || gmMember.role === 'MASTER' || gmIsPrivileged;
+  if (!gmRoleOk) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
 
   const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
