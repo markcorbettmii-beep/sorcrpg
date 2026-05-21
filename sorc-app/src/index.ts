@@ -1922,11 +1922,15 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
     const worldMsgCheck = filterContent(body.trim());
     if (worldMsgCheck.blocked) return c.json({ error: worldMsgCheck.reason }, 400);
 
-    // Must be the active creator of an open lobby
+    // Must be the active creator of an open lobby, or posting a short LFG: tag
     const lobby = await c.env.sorc_db.prepare(
       `SELECT id, name FROM lobbies WHERE creator_uid = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`
     ).bind(user.id).first() as any;
-    if (!lobby && !isPrivileged(user)) return c.json({ error: 'Only active lobby hosts can post in world chat.' }, 403);
+    const isHost = !!(lobby || isPrivileged(user));
+    if (!isHost) {
+      if (!/^LFG:/i.test(body.trim())) return c.json({ error: 'Only active lobby hosts can post freely. Use LFG: to advertise yourself.' }, 403);
+      if (body.trim().length > 40) return c.json({ error: 'LFG: tags are limited to 40 characters.' }, 400);
+    }
 
     await c.env.sorc_db.prepare(
       `CREATE TABLE IF NOT EXISTS world_messages (
