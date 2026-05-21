@@ -117,10 +117,6 @@
     .invite-row-sub  { font-size:0.72rem;color:#555; }
     .invite-row-btn  { padding:4px 10px;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;border-radius:6px;font-size:0.74rem;cursor:pointer;white-space:nowrap;flex-shrink:0; }
     .invite-row-btn:hover { background:#1e4a8a; }
-    .recruit-dropdown { position:absolute;right:0;top:110%;background:#111;border:1px solid #1a3a6b;border-radius:8px;z-index:20;min-width:240px;box-shadow:0 4px 16px #000a; }
-    .recruit-opt { display:block;width:100%;text-align:left;background:none;border:none;padding:0.55rem 0.9rem;font-size:0.78rem;color:#c0b0a0;cursor:pointer;border-bottom:1px solid #1a1a1a; }
-    .recruit-opt:last-child { border-bottom:none; }
-    .recruit-opt:hover { background:#1a2a3a;color:#e0cfc0; }
     /* ── Desktop / mouse (PC, Mac, laptop) ─────────────────────── */
     @media (hover: hover) and (pointer: fine) {
       .detail-grid { grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
@@ -161,9 +157,6 @@
     .lobby-pager-btn:disabled { opacity:0.25; cursor:default; }
     .lobby-pager-info { font-size:0.74rem; color:#444; letter-spacing:0.04em; }
     .world-tab-messages { flex: 1; overflow-y: auto; padding: 0.65rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; scrollbar-color: #2a1a4a transparent; }
-    .recruit-tab-inner { flex: 1; overflow-y: auto; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-    .recruit-template-btn { width: 100%; text-align: left; padding: 0.55rem 0.75rem; background: #0d0d18; border: 1px solid #1a2a4a; border-radius: 6px; color: #9ecde8; font-size: 0.78rem; cursor: pointer; line-height: 1.4; }
-    .recruit-template-btn:hover { background: #111828; border-color: #2a4a7a; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
     .chat-msg { font-size: 0.84rem; line-height: 1.4; user-select: none; -webkit-user-select: none; }
     .chat-msg.selected { background: #2a0808; border-radius: 4px; }
@@ -1285,7 +1278,6 @@
                 '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
-                (hasGMRights ? '<button class="chat-tab" data-tab="recruit" onclick="switchChatTab(\'recruit\')">Recruit</button>' : '') +
               '</div>' +
               /* MAIN: lobby chat */
               '<div class="chat-tab-pane active" id="chatPane-main">' +
@@ -1311,18 +1303,6 @@
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
                 '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div></div>' +
               '</div>' +
-              /* RECRUIT: host-only quick-post templates */
-              (hasGMRights
-                ? '<div class="chat-tab-pane" id="chatPane-recruit">' +
-                    '<div class="recruit-tab-inner" id="recruitTabInner">' +
-                      '<div style="color:#555;font-size:0.75rem;margin-bottom:0.25rem;">Quick-post to World Chat:</div>' +
-                    '</div>' +
-                    '<div class="chat-input-row">' +
-                      '<input type="text" class="chat-input" id="recruitCustomInput" placeholder="Custom recruit message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendRecruitMsg()" />' +
-                      '<button class="chat-send" onclick="sendRecruitMsg()">Post</button>' +
-                    '</div>' +
-                  '</div>'
-                : '') +
             '</div>' +
             buildTicker() +
           '</div>' +
@@ -1885,7 +1865,6 @@
       } catch(e) { showToast('Could not reach server.', true); }
     };
 
-    /* ── RECRUIT MENU ── */
     /* ── Chat tab switcher ─────────────────────────────────── */
     window.switchChatTab = function(tab) {
       document.querySelectorAll('.chat-tab').forEach(function(t) { t.classList.remove('active'); });
@@ -1899,9 +1878,6 @@
       if (tab === 'world') {
         loadWorldChat();
         startWorldChatPoll();
-      } else if (tab === 'recruit') {
-        stopWorldChatPoll();
-        buildRecruitTab();
       } else if (tab === 'msgs') {
         stopWorldChatPoll();
         loadLobbyMsgs();
@@ -1910,46 +1886,6 @@
       }
     };
 
-    function buildRecruitTab() {
-      if (!currentLobby) return;
-      var inner = document.getElementById('recruitTabInner');
-      if (!inner) return;
-      var code = currentLobby.lobby_code;
-      var name = currentLobby.name || 'this lobby';
-      var templates = [
-        '⚔ Recruiting now! Join "' + name + '" - Code: ' + code + '. All assessed PCs welcome.',
-        '🗡 Need more adventurers for ' + name + '! Use code ' + code + ' on the Lobbies page.',
-        '🔔 Open seats at "' + name + '", experienced players preferred. Code: ' + code,
-        '🧙 GM seeking skilled PCs. ' + name + ' - Code: ' + code + ' - Join now!',
-      ];
-      inner.innerHTML = '<div style="color:#555;font-size:0.75rem;margin-bottom:0.25rem;">Quick-post to World Chat:</div>' +
-        templates.map(function(t) {
-          return '<button class="recruit-template-btn" onclick="fillRecruitPost(' + JSON.stringify(t) + ')">' + esc(t) + '</button>';
-        }).join('');
-    }
-
-    window.fillRecruitPost = function(text) {
-      var input = document.getElementById('recruitCustomInput');
-      if (input) { input.value = text; input.focus(); }
-    };
-
-    window.sendRecruitMsg = async function() {
-      var input = document.getElementById('recruitCustomInput');
-      if (!input || !currentUser) return;
-      var body = input.value.trim();
-      if (!body) return;
-      input.value = '';
-      try {
-        var res = await fetch(API_URL + '/api/world-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ body: body })
-        });
-        var data = await res.json();
-        if (data.error) { showToast(data.error, true); input.value = body; return; }
-        showToast('Posted to world chat!', false);
-      } catch(e) { showToast('Could not reach server.', true); }
-    };
 
     window.toggleInvitePanel = function() {
       var p = document.getElementById('invitePanel');
