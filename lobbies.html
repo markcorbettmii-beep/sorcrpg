@@ -2115,8 +2115,7 @@
           var m = prevMemberMap[uid];
           return m ? (m.display_name || m.username) : uid;
         }).join(', ');
-        showToast('Not everyone is ready: ' + names, true);
-        return;
+        if (!confirm('Not everyone is ready: ' + names + '\n\nLaunch anyway?')) return;
       }
 
       var roomName = prompt('Name this campaign room:');
@@ -2660,7 +2659,14 @@
         }
         if (timeLeft <= 0) {
           stopReadyCheckTimer();
-          if (!hasRespondedToReadyCheck && !readyCheckDismissed) expireReadyCheck();
+          if (!readyCheckDismissed) {
+            if (!hasRespondedToReadyCheck) expireReadyCheck();
+            else {
+              readyCheckDismissed = true;
+              var ov = document.getElementById('readyCheckOverlay');
+              if (ov) ov.classList.add('hidden');
+            }
+          }
         }
       }, 500);
     }
