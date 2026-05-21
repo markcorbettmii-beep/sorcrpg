@@ -1230,7 +1230,7 @@
       var leaveBtn = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
-        : '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="confirmLeave(this)">Leave</button>' +
+        : '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="leaveLobby()">Leave</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
       var deleteBtn = '';
       var invitePanel = hasGMRights
@@ -1967,27 +1967,18 @@
       } catch(e) { msgEl.style.color = '#d0021b'; msgEl.textContent = 'Connection error.'; }
     };
 
-    window.confirmLeave = function(btn) {
-      btn.outerHTML =
-        '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
-          '<span style="font-size:0.75rem;color:#888;">Step away?</span>' +
-          '<button class="leave-btn" style="border-color:#3a3a5a;color:#aaa;padding:4px 10px;font-size:0.75rem;" onclick="leaveLobby()">Yes</button>' +
-          '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelLeave(this)">No</button>' +
-        '</span>';
-    };
-
-    window.cancelLeave = function(btn) {
-      var wrap = btn.closest('span');
-      if (wrap) wrap.outerHTML = '<button class="leave-btn" style="border-color:#3a3a5a;color:#888;" onclick="confirmLeave(this)">Leave</button>';
-    };
-
     window.confirmAbandon = function(btn) {
       btn.outerHTML =
         '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
           '<span style="font-size:0.75rem;color:#888;">Remove yourself?</span>' +
           '<button class="leave-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="abandonLobby()">Yes</button>' +
-          '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelLeave(this)">No</button>' +
+          '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelAbandon(this)">No</button>' +
         '</span>';
+    };
+
+    window.cancelAbandon = function(btn) {
+      var wrap = btn.closest('span');
+      if (wrap) wrap.outerHTML = '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
     };
 
     window.leaveLobby = async function() {
