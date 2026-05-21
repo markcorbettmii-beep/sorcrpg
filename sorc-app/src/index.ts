@@ -1936,7 +1936,7 @@ app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
     const profileUrl = `https://sorcrpg.com/public-profile.html?username=${encodeURIComponent(user.username)}`;
     const { type } = await c.req.json().catch(() => ({ type: 'LFM' })) as any;
     const responseBody = type === 'SUM'
-      ? `📋 ${myName} confirmed for summon — ${profileUrl}`
+      ? `SUM: ${myName} confirmed — ${profileUrl}`
       : `📋 ${myName} responds to ${original.sender_name}'s request — ${profileUrl}`;
     const now = new Date().toISOString();
 
