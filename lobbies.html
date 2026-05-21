@@ -454,8 +454,8 @@
 
   <div id="lobbyMsgModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
     <div style="background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:1.5rem;max-width:400px;width:90%;display:flex;flex-direction:column;gap:0.75rem;">
-      <h3 id="lobbyMsgModalTitle" style="margin:0;color:#d4af37;font-size:0.95rem;">Message Host</h3>
-      <textarea id="lobbyMsgModalInput" style="background:#0a0a0a;border:1px solid #333;border-radius:6px;color:#e0cfc0;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;min-height:80px;max-height:160px;" placeholder="Your message to the host..." maxlength="400"></textarea>
+      <h3 id="lobbyMsgModalTitle" style="margin:0;color:#d4af37;font-size:0.95rem;">Send Message</h3>
+      <textarea id="lobbyMsgModalInput" style="background:#0a0a0a;border:1px solid #333;border-radius:6px;color:#e0cfc0;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;min-height:80px;max-height:160px;" placeholder="Your message..." maxlength="400"></textarea>
       <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
         <button onclick="closeLobbyMsgModal()" style="padding:6px 16px;background:none;border:1px solid #333;color:#666;border-radius:6px;cursor:pointer;font-size:0.8rem;">Cancel</button>
         <button onclick="submitLobbyMsgModal()" style="padding:6px 16px;background:#d4af37;color:#111;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:0.8rem;">Send</button>
@@ -1185,7 +1185,7 @@
         var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
         var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
         var menuItems = '';
-        if (isCreator && !isSelf) menuItems += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+        if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
         menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
         if (isCreator && !isSelf) {
           menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
@@ -1303,12 +1303,9 @@
                     '</div>'
                   : '<div style="padding:0.5rem 1rem;color:#3a2a5a;font-size:0.74rem;border-top:1px solid #1a1a2a;flex-shrink:0;">Read only - respond via LFM/LFG links above</div>') +
               '</div>' +
-              /* MESSAGES: mini inbox — conversations list */
+              /* MESSAGES: lobby-scoped direct messages */
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
-                '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Loading inbox...</div></div>' +
-                '<div class="chat-input-row" style="justify-content:flex-end;padding:0.4rem 0.6rem;">' +
-                  '<a href="inbox.html" style="font-size:0.78rem;color:#d4af37;text-decoration:none;padding:5px 12px;border:1px solid #d4af37;border-radius:5px;">Open Full Inbox &#8594;</a>' +
-                '</div>' +
+                '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div></div>' +
               '</div>' +
               /* RECRUIT: host-only quick-post templates */
               (hasGMRights
@@ -1647,7 +1644,7 @@
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
           var menuItems2 = '';
-          if (isCreator && !isSelf) menuItems2 += '<a href="inbox.html?to=' + esc(m.user_id) + '" onclick="event.stopPropagation()">Message</a>';
+          if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
           menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
           if (isCreator && !isSelf) {
             menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
@@ -2264,98 +2261,80 @@
     var lobbyMsgPollTimer = null;
 
     async function loadLobbyMsgs() {
-      if (!currentUser) return;
+      if (!currentUser || !currentLobby) return;
       var el = document.getElementById('lobbyMsgsList');
       if (!el) return;
       try {
-        var res = await fetch(API_URL + '/api/conversations', {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/direct-messages', {
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
-        if (!res.ok) { el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Could not load inbox.</div>'; return; }
+        if (!res.ok) { el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Could not load messages.</div>'; return; }
         var data = await res.json();
-        var convs = data.conversations || [];
-        if (convs.length === 0) {
-          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>';
+        var msgs = data.messages || [];
+        if (msgs.length === 0) {
+          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div>';
           return;
         }
-        var newUnread = 0;
-        el.innerHTML = convs.map(function(conv) {
-          var lastRead = parseInt(localStorage.getItem('sorc_conv_read_' + conv.id) || '0');
-          var rawTs = conv.last_message_at || '';
-          var msgTime = rawTs ? new Date(rawTs.includes('T') ? rawTs : rawTs.replace(' ', 'T') + 'Z').getTime() : 0;
-          var isUnread = msgTime > lastRead;
-          if (isUnread) newUnread++;
-          var otherName = esc(conv.other_username || conv.other_display_name || 'Unknown');
-          var preview = esc((conv.last_message_body || '').slice(0, 60)) + (conv.last_message_body && conv.last_message_body.length > 60 ? '…' : '');
-          var timeStr = rawTs ? timeAgo(rawTs) : '';
-          return '<div class="chat-msg" style="cursor:pointer;border-bottom:1px solid #1a1a1a;padding:0.45rem 0.5rem;" onclick="window.location.href=\'inbox.html?conv=' + esc(conv.id) + '\'">' +
-            '<span class="msg-name" style="' + (isUnread ? 'color:#d4af37;font-weight:bold;' : '') + '">' + otherName + (isUnread ? ' <span style="background:#d0021b;color:#fff;border-radius:8px;padding:1px 5px;font-size:0.65rem;font-weight:bold;">new</span>' : '') + '</span>' +
-            '<span class="msg-body" style="color:#666;font-size:0.76rem;display:block;margin-top:1px;">' + preview + '</span>' +
-            '<span class="msg-time">' + timeStr + '</span>' +
+        var prevCount = parseInt(el.dataset.msgCount || '0');
+        var isNew = msgs.length > prevCount;
+        el.dataset.msgCount = String(msgs.length);
+        var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+        el.innerHTML = msgs.map(function(m) {
+          var isMine = currentUser && m.sender_uid === currentUser.id;
+          var name = esc(m.sender_name || 'Unknown');
+          var preview = esc((m.body || '').slice(0, 200));
+          var timeStr = m.created_at ? timeAgo(m.created_at) : '';
+          return '<div class="chat-msg" style="padding:0.45rem 0.5rem;border-bottom:1px solid #1a1a1a;">' +
+            '<span style="font-weight:bold;font-size:0.78rem;' + (isMine ? 'color:#9370db;' : 'color:#d4af37;') + '">' + name + '</span>' +
+            '<span class="msg-time" style="margin-left:0.4rem;">' + timeStr + '</span>' +
+            '<div style="color:#b0a0c8;font-size:0.82rem;margin-top:2px;">' + preview + '</div>' +
           '</div>';
         }).join('');
-        var activeTab = document.querySelector('.chat-tab.active');
-        if (newUnread > 0 && (!activeTab || activeTab.dataset.tab !== 'msgs')) {
-          var badge = document.getElementById('badge-msgs');
-          if (badge) badge.style.display = '';
+        if (atBottom) el.scrollTop = el.scrollHeight;
+        if (isNew) {
+          var activeTab = document.querySelector('.chat-tab.active');
+          if (!activeTab || activeTab.dataset.tab !== 'msgs') {
+            var badge = document.getElementById('badge-msgs');
+            if (badge) badge.style.display = '';
+          }
         }
       } catch(e) {}
     }
 
-    window.sendLobbyMsg = async function() {
-      if (!currentUser) return;
-      var input = document.getElementById('lobbyMsgInput');
-      if (!input) return;
-      var body = input.value.trim();
-      if (!body) return;
-      input.value = '';
-      var lobbyId = currentLobby ? currentLobby.id : null;
-      var targetId = lobbyId || window._lobbyMsgTargetId;
-      if (!targetId) return;
-      try {
-        await fetch(API_URL + '/api/lobbies/' + targetId + '/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ body: body })
-        });
-        if (lobbyId) loadLobbyMsgs();
-      } catch(e) {}
-    };
-
-    window.openLobbyMsgModal = function(lobbyId, hostName) {
-      if (currentLobby && currentLobby.id === lobbyId) {
-        switchChatTab('msgs');
-        return;
-      }
-      window._lobbyMsgTargetId = lobbyId;
-      var modal = document.getElementById('lobbyMsgModal');
+    window.openLobbyMsgModal = function(toUid, toName) {
+      if (!currentLobby) return;
+      window._lobbyMsgTargetUid = toUid;
       var title = document.getElementById('lobbyMsgModalTitle');
-      if (title) title.textContent = 'Message to ' + hostName;
-      if (modal) modal.style.display = 'flex';
+      if (title) title.textContent = 'Message ' + toName;
+      var input = document.getElementById('lobbyMsgModalInput');
+      if (input) { input.value = ''; input.placeholder = 'Message to ' + toName + '...'; }
+      var modal = document.getElementById('lobbyMsgModal');
+      if (modal) { modal.style.display = 'flex'; setTimeout(function() { if (input) input.focus(); }, 50); }
     };
 
     window.closeLobbyMsgModal = function() {
       var modal = document.getElementById('lobbyMsgModal');
       if (modal) modal.style.display = 'none';
-      window._lobbyMsgTargetId = null;
+      window._lobbyMsgTargetUid = null;
     };
 
     window.submitLobbyMsgModal = async function() {
       var input = document.getElementById('lobbyMsgModalInput');
-      if (!input || !currentUser || !window._lobbyMsgTargetId) return;
+      if (!input || !currentUser || !window._lobbyMsgTargetUid) return;
       var body = input.value.trim();
       if (!body) return;
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + window._lobbyMsgTargetId + '/messages', {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/direct-messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ body: body })
+          body: JSON.stringify({ to_uid: window._lobbyMsgTargetUid, body: body })
         });
         var data = await res.json();
-        if (data.success || data.id) {
+        if (data.success) {
           input.value = '';
           closeLobbyMsgModal();
           showToast('Message sent.');
+          loadLobbyMsgs();
         } else { showToast(data.error || 'Could not send message.', true); }
       } catch(e) { showToast('Connection error.', true); }
     };

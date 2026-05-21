@@ -180,3 +180,16 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 );
 CREATE INDEX idx_rate_limits_key ON rate_limits(key);
 CREATE INDEX idx_rate_limits_created ON rate_limits(created_at);
+
+CREATE TABLE IF NOT EXISTS lobby_dms (
+  id TEXT PRIMARY KEY,
+  lobby_id TEXT NOT NULL,
+  sender_uid TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  recipient_uid TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_lobby_dms_lobby ON lobby_dms(lobby_id);
+CREATE INDEX IF NOT EXISTS idx_lobby_dms_participant ON lobby_dms(lobby_id, recipient_uid);
+CREATE INDEX IF NOT EXISTS idx_lobby_dms_sender ON lobby_dms(lobby_id, sender_uid);
