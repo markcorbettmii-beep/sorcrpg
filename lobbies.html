@@ -596,7 +596,7 @@
       if (!r) return 'Civilian';
       switch(r) {
         case 'OWNER': return 'OWN';
-        case 'ADMIN': return 'ADMIN';
+        case 'ADMIN': return 'AD';
         case 'MASTER': return 'GM';
         case 'PLAYER': return 'PC';
         case 'PC-BEG': return 'PC · Beginner';
@@ -1250,6 +1250,11 @@
           menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
           menuItems += '<button class="summon-opt" style="color:#d4af37;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
         }
+        var cuRole = currentUser ? currentUser.role : '';
+        var canPrivPromote = !isSelf && (cuRole === 'OWNER' || (cuRole === 'ADMIN' && m.role !== 'OWNER'));
+        if (canPrivPromote && !isCreator) {
+          menuItems += '<button class="summon-opt" style="color:#d4af37;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
+        }
         var isLobbyHost = currentLobby && m.user_id === currentLobby.creator_uid;
         var nameWrap = '<span class="member-name-wrap">' +
           '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#d4af37;font-size:0.72rem;margin-right:0.2rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
@@ -1703,6 +1708,11 @@
           menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
           if (isCreator && !isSelf) {
             menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+            menuItems2 += '<button class="summon-opt" style="color:#d4af37;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
+          }
+          var cuRole2 = currentUser ? currentUser.role : '';
+          var canPrivPromote2 = !isSelf && (cuRole2 === 'OWNER' || (cuRole2 === 'ADMIN' && m.role !== 'OWNER'));
+          if (canPrivPromote2 && !isCreator) {
             menuItems2 += '<button class="summon-opt" style="color:#d4af37;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
           }
           var isLobbyHost2 = currentLobby && m.user_id === currentLobby.creator_uid;

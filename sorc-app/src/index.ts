@@ -2198,14 +2198,18 @@ app.post('/api/lobbies/:id/transfer-host', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can promote.' }, 403);
+  const isHost = lobby.creator_uid === user.id;
+  const isOwner = user.role === 'OWNER' || isPrivileged(user);
+  const isAdmin = user.role === 'ADMIN';
+  if (!isHost && !isOwner && !isAdmin) return c.json({ error: 'Only the host, an Admin, or an Owner can promote.' }, 403);
   const { new_host_uid } = await c.req.json();
   if (!new_host_uid) return c.json({ error: 'new_host_uid required.' }, 400);
   if (new_host_uid === user.id) return c.json({ error: 'Already the host.' }, 400);
   const member = await c.env.sorc_db.prepare(
-    `SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    `SELECT lm.*, u.role as live_role FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? AND lm.user_id = ?`
   ).bind(lobbyId, new_host_uid).first() as any;
   if (!member) return c.json({ error: 'That player is not in this lobby.' }, 404);
+  if (isAdmin && !isOwner && member.live_role === 'OWNER') return c.json({ error: 'Admins cannot promote over an Owner.' }, 403);
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
     .bind(new_host_uid, now, lobbyId).run();
