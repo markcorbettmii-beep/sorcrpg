@@ -2049,7 +2049,13 @@
       var lobbyId = currentLobby.id;
       leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
-      backToList();
+      sessionStorage.removeItem('activeLobbyId');
+      try {
+        backToList();
+      } catch(e) {
+        window.location.reload();
+        return;
+      }
       try {
         await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
@@ -2610,9 +2616,16 @@
       if (rc.check_id !== currentReadyCheckId) {
         currentReadyCheckId = rc.check_id;
         readyCheckInitiatedAt = rc.initiated_at;
+        lastReadyCheckData = rc;
+        /* If the check already expired (e.g. rejoining after leaving), don't replay it */
+        var rcElapsed = Math.floor((Date.now() - new Date(rc.initiated_at).getTime()) / 1000);
+        if (rcElapsed >= RC_DURATION) {
+          hasRespondedToReadyCheck = true;
+          readyCheckDismissed = true;
+          return;
+        }
         hasRespondedToReadyCheck = false;
         readyCheckDismissed = false;
-        lastReadyCheckData = rc;
         playReadyCheckSound();
         startReadyCheckTimer();
         renderReadyCheckOverlay(rc);
