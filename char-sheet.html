@@ -103,6 +103,25 @@
         sheetImg +
         customizeBtn +
         inviteSection;
+
+      /* Continue lobby theme audio when viewing from inside a lobby */
+      if (lobbyId) {
+        var lobbyTheme = sessionStorage.getItem('sorc_lobby_theme');
+        if (lobbyTheme && lobbyTheme !== 'default') {
+          var themeFile = lobbyTheme === 'terminal' ? 'theme-terminal.js'
+                        : lobbyTheme === 'veilwood' ? 'theme-veilwood.js'
+                        : null;
+          if (themeFile) {
+            var s = document.createElement('script');
+            s.src = themeFile;
+            s.onload = function() {
+              if (lobbyTheme === 'terminal' && window.terminalTheme) window.terminalTheme.start();
+              else if (lobbyTheme === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
+            };
+            document.body.appendChild(s);
+          }
+        }
+      }
     });
 
     window.sendInvite = async function() {
