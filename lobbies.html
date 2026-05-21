@@ -595,6 +595,7 @@
     var currentRooms = [];
     var prevMemberMap = {};   // uid → member snapshot, for departure detection
     var abandonedUids = new Set(); // uids that abandoned (show no ghost, different text)
+    var leftLobbyIds = new Set();  // lobbies the user just left — suppress stale is_member from API
 
     // ===== JOINED LOBBY TRACKING =====
     function trackJoinedLobby(lobbyId) {
@@ -886,7 +887,7 @@
             ? ' &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong>'
             : '';
           var isBanned = isLobbyBanned(l.id);
-          var isJoined = !!(l.is_member) || hasJoinedLobby(l.id) || isCreatorOfLobby;
+          var isJoined = !leftLobbyIds.has(l.id) && (!!(l.is_member) || hasJoinedLobby(l.id) || isCreatorOfLobby);
           var maxM = l.max_members || 20;
           var hostUid = l.creator_uid || '';
           var canSummon = isCreatorOfLobby && !isJoined;
@@ -1116,6 +1117,7 @@
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
       chatMemberRetried = false;
+      leftLobbyIds.delete(lobbyId); // allow rejoining a lobby the user just left
       sessionStorage.setItem('activeLobbyId', lobbyId);
       history.pushState({ lobby: lobbyId }, '');
       history.pushState({ lobby: lobbyId }, '');
@@ -1994,6 +1996,8 @@
     window.leaveLobby = async function() {
       if (!currentLobby) return;
       var lobbyId = currentLobby.id;
+      leftLobbyIds.add(lobbyId);
+      removeJoinedLobby(lobbyId);
       backToList();
       try {
         await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
