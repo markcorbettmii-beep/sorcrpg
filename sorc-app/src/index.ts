@@ -1846,6 +1846,15 @@ app.post('/api/summons/:id/respond', authMiddleware, async (c) => {
     const newStatus = accept ? 'accepted' : 'denied';
     await c.env.sorc_db.prepare(`UPDATE lobby_summons SET status = ? WHERE id = ?`).bind(newStatus, summonId).run();
 
+    if (accept) {
+      const playerName = user.display_name || user.username;
+      const activityBody = `⬡ ${playerName} joined ${summon.lobby_name}`;
+      const now = new Date().toISOString();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO world_messages (id, sender_uid, sender_name, sender_lobby_id, sender_lobby_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), user.id, playerName, summon.lobby_id, summon.lobby_name, activityBody, now).run().catch(() => {});
+    }
+
     return c.json({ success: true, status: newStatus, lobby_id: accept ? summon.lobby_id : null });
   } catch (error: any) {
     return c.json({ error: 'Failed to respond to summon.', details: error.message }, 500);
