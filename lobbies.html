@@ -1601,6 +1601,13 @@
         var membersEl = document.getElementById('membersList');
         if (!membersEl) return;
 
+        /* Sync host transfer — update isCreator/hasGMRights when creator_uid changes */
+        if (data.lobby && data.lobby.creator_uid && data.lobby.creator_uid !== currentLobby.creator_uid) {
+          currentLobby.creator_uid = data.lobby.creator_uid;
+          isCreator = !!(currentUser && currentLobby.creator_uid === currentUser.id);
+          hasGMRights = isCreator || isPrivileged();
+        }
+
         // Detect departures vs previous snapshot
         var newMemberMap = {};
         data.members.forEach(function(m) { newMemberMap[m.user_id] = m; });
