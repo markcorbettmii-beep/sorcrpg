@@ -789,9 +789,10 @@
             '<button class="section-scroll-btn" aria-label="Next" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="12,9 39,24 12,39"></polygon></svg></button>' +
           '</div>' +
         '</div>' +
+        buildWorldChat() +
+        buildTicker() +
         '<div class="section-head">Open Lobbies</div>' +
         '<div id="lobbyList"><div class="empty-state">Loading...</div></div>' +
-        buildWorldChat() +
         '<div class="lobby-actions">' +
           '<div class="action-card create">' +
             '<h2 class="gold">&#128101; Create Lobby</h2>' +
@@ -813,8 +814,7 @@
             '</div>' +
             adminCodeGen +
           '</div>' +
-        '</div>' +
-        buildTicker();
+        '</div>';
 
       loadLobbies();
       loadWorldChat();
@@ -1892,14 +1892,15 @@
 
     window.leaveLobby = async function() {
       if (!currentLobby) return;
-      sessionStorage.removeItem('activeLobbyId');
+      var lobbyId = currentLobby.id;
+      backToList();
       try {
-        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/leave', {
+        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
-          headers: { 'X-Auth-Key': currentUser.authKey }
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          keepalive: true
         });
       } catch(e) {}
-      backToList();
     };
 
     window.abandonLobby = async function() {
@@ -1907,14 +1908,14 @@
       var lobbyId = currentLobby.id;
       abandonedUids.add(currentUser.id);
       removeJoinedLobby(lobbyId);
-      sessionStorage.removeItem('activeLobbyId');
+      backToList();
       try {
         await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
-          headers: { 'X-Auth-Key': currentUser.authKey }
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          keepalive: true
         });
       } catch(e) {}
-      backToList();
     };
 
     window.deleteLobby = async function() {
