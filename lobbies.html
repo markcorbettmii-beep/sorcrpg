@@ -238,6 +238,24 @@
     .leave-btn { padding: 6px 14px; background: none; border: 1px solid #5a1a1a; color: #d0021b; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
     .leave-btn:hover { background: #1a0505; }
 
+    /* ── Ready Check overlay ─────────────────────── */
+    .rc-overlay { position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);backdrop-filter:blur(2px); }
+    .rc-overlay.hidden { display:none; }
+    .rc-box { background:#0d0d18;border:2px solid #d4af37;border-radius:16px;padding:1.75rem 2rem;min-width:300px;max-width:420px;width:92%;box-shadow:0 0 60px rgba(212,175,55,0.25),0 0 20px rgba(0,0,0,0.8);text-align:center; }
+    .rc-title { color:#d4af37;font-size:1.35rem;font-weight:bold;letter-spacing:0.08em;margin-bottom:0.25rem; }
+    .rc-sub { color:#666;font-size:0.74rem;margin-bottom:1.1rem; }
+    .rc-list { list-style:none;padding:0;margin:0 0 1.1rem;text-align:left;max-height:220px;overflow-y:auto; }
+    .rc-list li { padding:0.32rem 0.5rem;font-size:0.84rem;color:#ccc;display:flex;align-items:center;gap:0.55rem;border-bottom:1px solid #1a1a2a; }
+    .rc-list li:last-child { border-bottom:none; }
+    .rc-icon { font-size:0.9rem;width:1.1rem;text-align:center;flex-shrink:0; }
+    .rc-btns { display:flex;gap:0.75rem;justify-content:center;margin-top:0.25rem; }
+    .rc-ready-btn { background:#0d2a0d;border:1.5px solid #4caf50;color:#4caf50;padding:9px 22px;border-radius:8px;font-size:0.92rem;cursor:pointer;font-weight:bold; }
+    .rc-ready-btn:hover { background:#112e11; }
+    .rc-no-btn { background:#2a0d0d;border:1.5px solid #c0392b;color:#c0392b;padding:9px 22px;border-radius:8px;font-size:0.92rem;cursor:pointer; }
+    .rc-no-btn:hover { background:#2e1111; }
+    .rc-dismiss-btn { display:block;margin:0.85rem auto 0;background:none;border:none;color:#444;font-size:0.74rem;cursor:pointer; }
+    .rc-dismiss-btn:hover { color:#888; }
+
     /* ================================================
        ORBITAL TERMINAL THEME — canvas bg only, lobby UI unchanged
     ================================================ */
@@ -467,6 +485,19 @@
     </div>
   </div>
 
+  <div id="readyCheckOverlay" class="rc-overlay hidden">
+    <div class="rc-box">
+      <div class="rc-title">&#9876; READY CHECK</div>
+      <div class="rc-sub" id="rcSub"></div>
+      <ul class="rc-list" id="rcList"></ul>
+      <div class="rc-btns" id="rcBtns">
+        <button class="rc-ready-btn" onclick="respondReadyCheck('ready')">&#10003; Ready</button>
+        <button class="rc-no-btn" onclick="respondReadyCheck('not_ready')">&#10007; Not Ready</button>
+      </div>
+      <button class="rc-dismiss-btn" onclick="dismissReadyCheck()">Dismiss</button>
+    </div>
+  </div>
+
   <script>
     var API_URL = 'https://api.sorcrpg.com';
     var currentUser = null;
@@ -582,6 +613,9 @@
     var currentLobby = null;
     var chatPollTimer = null;
     var lastMsgId = null;
+    var currentReadyCheckId = null;
+    var hasRespondedToReadyCheck = false;
+    var readyCheckDismissed = false;
 
     var reportTargetUid = null;
     var reportTargetName = '';
@@ -724,6 +758,7 @@
         '&#128101; New: World Chat names no longer need a profile tap - names are clean and the summon flow is built right into chat',
         '&#127925; New: Lobby theme sounds carry over to character sheet view - music keeps playing while you browse a member\'s sheet',
         '&#128081; New: Host crown appears next to the current host\'s name - transfers instantly when a new host is promoted',
+        '&#10003; New: Ready Check - hosts can send a party-wide ready check with a themed sound cue, WoW-style',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -1229,6 +1264,7 @@
 
       var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
       var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
+      var readyCheckBtn = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
       var leaveBtn = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
@@ -1252,7 +1288,7 @@
             '<div class="detail-meta">' + (hasGMRights ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
-            launchBtn + inviteBtn + leaveBtn + deleteBtn +
+            launchBtn + readyCheckBtn + inviteBtn + leaveBtn + deleteBtn +
           '</div>' +
         '</div>' +
         invitePanel +
@@ -1361,6 +1397,8 @@
         if (data.lobby_theme && data.lobby_theme !== lobbyTheme) {
           applyTheme(data.lobby_theme);
         }
+        /* Ready check */
+        handleReadyCheckPoll(data.ready_check);
         var msgs = data.messages || [];
         /* Apply theme from hidden system messages — use only the most recent one */
         var lastThemeMsg = null;
@@ -2448,6 +2486,170 @@
       if (summonPollTimer) { clearInterval(summonPollTimer); summonPollTimer = null; }
     }
 
+    // ===== READY CHECK =====
+    function handleReadyCheckPoll(rc) {
+      if (!rc || readyCheckDismissed) {
+        if (!rc) {
+          /* No active check — hide overlay and reset state */
+          var o = document.getElementById('readyCheckOverlay');
+          if (o) o.classList.add('hidden');
+          currentReadyCheckId = null;
+          hasRespondedToReadyCheck = false;
+          readyCheckDismissed = false;
+        }
+        return;
+      }
+      /* New check — play sound and show overlay */
+      if (rc.check_id !== currentReadyCheckId) {
+        currentReadyCheckId = rc.check_id;
+        hasRespondedToReadyCheck = false;
+        readyCheckDismissed = false;
+        playReadyCheckSound();
+      }
+      renderReadyCheckOverlay(rc);
+    }
+
+    function renderReadyCheckOverlay(rc) {
+      var overlay = document.getElementById('readyCheckOverlay');
+      if (!overlay || readyCheckDismissed) return;
+      overlay.classList.remove('hidden');
+      var subEl = document.getElementById('rcSub');
+      if (subEl) subEl.textContent = rc.initiated_name + ' called a ready check';
+      /* Build member list from prevMemberMap */
+      var listEl = document.getElementById('rcList');
+      if (listEl) {
+        var responseMap = {};
+        (rc.responses || []).forEach(function(r) { responseMap[r.user_id] = r.status; });
+        var members = Object.values(prevMemberMap);
+        if (members.length === 0 && currentLobby) members = [{ user_id: currentUser && currentUser.id, display_name: currentUser && (currentUser.displayName || currentUser.username) }];
+        listEl.innerHTML = members.map(function(m) {
+          var st = responseMap[m.user_id];
+          var icon = st === 'ready'    ? '<span class="rc-icon" style="color:#4caf50;">&#10003;</span>'
+                   : st === 'not_ready'? '<span class="rc-icon" style="color:#c0392b;">&#10007;</span>'
+                   : '<span class="rc-icon" style="color:#444;">?</span>';
+          return '<li>' + icon + esc(m.display_name || m.username || 'Member') + '</li>';
+        }).join('');
+      }
+      var btnsEl = document.getElementById('rcBtns');
+      if (btnsEl) btnsEl.style.display = hasRespondedToReadyCheck ? 'none' : 'flex';
+    }
+
+    function playReadyCheckSound() {
+      var ctx;
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
+      if (ctx.state === 'suspended') ctx.resume();
+      var master = ctx.createGain();
+      master.gain.value = 1.0;
+      master.connect(ctx.destination);
+      var now = ctx.currentTime;
+
+      if (lobbyTheme === 'terminal') {
+        /* Sci-fi klaxon — three sharp two-tone bursts */
+        [0, 0.42, 0.84].forEach(function(off) {
+          [[880, 0], [660, 0.20]].forEach(function(pair) {
+            var t = now + off + pair[1];
+            var osc = ctx.createOscillator();
+            osc.type = 'square';
+            osc.frequency.value = pair[0];
+            var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 2200;
+            var g = ctx.createGain();
+            g.gain.setValueAtTime(0.42, t);
+            g.gain.linearRampToValueAtTime(0.36, t + 0.16);
+            g.gain.linearRampToValueAtTime(0, t + 0.19);
+            osc.connect(lpf); lpf.connect(g); g.connect(master);
+            osc.start(t); osc.stop(t + 0.22);
+          });
+        });
+        /* Sub-bass pulse on each burst */
+        [0, 0.42, 0.84].forEach(function(off) {
+          var osc = ctx.createOscillator();
+          osc.type = 'sine'; osc.frequency.value = 80;
+          var g = ctx.createGain();
+          g.gain.setValueAtTime(0.5, now + off);
+          g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.28);
+          osc.connect(g); g.connect(master);
+          osc.start(now + off); osc.stop(now + off + 0.30);
+        });
+
+      } else if (lobbyTheme === 'veilwood') {
+        /* Fantasy horn fanfare — rising four-note call */
+        var hornNotes = [392, 523, 659, 784]; /* G4 C5 E5 G5 */
+        var cursor = now;
+        hornNotes.forEach(function(freq, i) {
+          var dur = i < 3 ? 0.24 : 0.75;
+          [1, 2, 3].forEach(function(h) {
+            var osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = freq * h;
+            var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = i < 3 ? 2400 : 3200;
+            var g = ctx.createGain();
+            var vol = [0.30, 0.14, 0.07][h - 1];
+            g.gain.setValueAtTime(0, cursor);
+            g.gain.linearRampToValueAtTime(vol, cursor + 0.05);
+            g.gain.setValueAtTime(vol * 0.85, cursor + dur - 0.06);
+            g.gain.linearRampToValueAtTime(0, cursor + dur + 0.10);
+            osc.connect(lpf); lpf.connect(g); g.connect(master);
+            osc.start(cursor); osc.stop(cursor + dur + 0.15);
+          });
+          cursor += i < 3 ? 0.26 : 0;
+        });
+
+      } else {
+        /* Default — bright bell chime trio */
+        [523, 659, 784].forEach(function(freq, i) {
+          var t = now + i * 0.20;
+          [1, 2.756, 5.404].forEach(function(h, j) {
+            var osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq * h;
+            var g = ctx.createGain();
+            var pk = [0.38, 0.15, 0.07][j];
+            var dec = [1.1, 0.55, 0.28][j];
+            g.gain.setValueAtTime(pk, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+            osc.connect(g); g.connect(master);
+            osc.start(t); osc.stop(t + dec + 0.05);
+          });
+        });
+      }
+
+      setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
+    }
+
+    window.initiateReadyCheck = async function() {
+      if (!currentLobby || !currentUser || !isCreator) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await res.json();
+        if (!data.success) { showToast(data.error || 'Could not start ready check.', true); return; }
+        currentReadyCheckId = data.check_id;
+        hasRespondedToReadyCheck = false;
+        readyCheckDismissed = false;
+        playReadyCheckSound();
+        loadChatMessages(currentLobby.id);
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    window.respondReadyCheck = async function(status) {
+      if (!currentLobby || !currentUser || !currentReadyCheckId) return;
+      hasRespondedToReadyCheck = true;
+      var btnsEl = document.getElementById('rcBtns');
+      if (btnsEl) btnsEl.style.display = 'none';
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ check_id: currentReadyCheckId, status: status })
+        });
+        loadChatMessages(currentLobby.id);
+      } catch(e) {}
+    };
+
+    window.dismissReadyCheck = function() {
+      readyCheckDismissed = true;
+      var overlay = document.getElementById('readyCheckOverlay');
+      if (overlay) overlay.classList.add('hidden');
+    };
+
     // ===== BACK =====
     window.backToList = function() {
       stopChatPoll();
@@ -2457,6 +2659,11 @@
       lastMsgId = null;
       hasGMRights = false;
       isCreator = false;
+      currentReadyCheckId = null;
+      hasRespondedToReadyCheck = false;
+      readyCheckDismissed = false;
+      var rcOverlay = document.getElementById('readyCheckOverlay');
+      if (rcOverlay) rcOverlay.classList.add('hidden');
       document.documentElement.classList.remove('lobby-locked');
       applyTheme('default');
       renderListView();

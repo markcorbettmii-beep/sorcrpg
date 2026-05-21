@@ -2013,7 +2013,20 @@ app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
     const themeRow = await c.env.sorc_db.prepare(`SELECT theme FROM lobby_themes WHERE lobby_id = ?`).bind(lobbyId).first() as any;
     if (themeRow?.theme) lobbyTheme = themeRow.theme;
   } catch {}
-  return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open', lobby_theme: lobbyTheme });
+  let readyCheck: any = null;
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+    const rc = await c.env.sorc_db.prepare(`SELECT * FROM ready_checks WHERE lobby_id = ?`).bind(lobbyId).first() as any;
+    if (rc) {
+      const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      if (rc.initiated_at > fiveMinsAgo) {
+        const resp = await c.env.sorc_db.prepare(`SELECT user_id, username, status FROM ready_check_responses WHERE lobby_id = ? AND check_id = ?`).bind(lobbyId, rc.check_id).all();
+        readyCheck = { check_id: rc.check_id, initiated_at: rc.initiated_at, initiated_name: rc.initiated_name, responses: resp.results || [] };
+      }
+    }
+  } catch {}
+  return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open', lobby_theme: lobbyTheme, ready_check: readyCheck });
 });
 
 app.patch('/api/lobbies/:id/theme', authMiddleware, async (c) => {
@@ -2068,6 +2081,36 @@ app.delete('/api/lobbies/:id/messages/:msgId', authMiddleware, async (c) => {
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
   if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
   await c.env.sorc_db.prepare(`DELETE FROM lobby_messages WHERE id = ? AND lobby_id = ?`).bind(msgId, lobbyId).run();
+  return c.json({ success: true });
+});
+
+// ===== READY CHECK =====
+app.post('/api/lobbies/:id/ready-check', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Host only.' }, 403);
+  const checkId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
+  await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO ready_checks (lobby_id, check_id, initiated_at, initiated_by, initiated_name) VALUES (?, ?, ?, ?, ?)`).bind(lobbyId, checkId, now, user.id, user.display_name || user.username).run();
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+  await c.env.sorc_db.prepare(`DELETE FROM ready_check_responses WHERE lobby_id = ?`).bind(lobbyId).run();
+  return c.json({ success: true, check_id: checkId });
+});
+
+app.post('/api/lobbies/:id/ready-check/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const body = await c.req.json() as any;
+  const status = body.status === 'ready' ? 'ready' : 'not_ready';
+  const checkId = body.check_id;
+  if (!checkId) return c.json({ error: 'Missing check_id.' }, 400);
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member.' }, 403);
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+  await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO ready_check_responses (lobby_id, check_id, user_id, username, status, responded_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(lobbyId, checkId, user.id, user.display_name || user.username, status, new Date().toISOString()).run();
   return c.json({ success: true });
 });
 
