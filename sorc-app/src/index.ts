@@ -2107,15 +2107,16 @@ app.post('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
     `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
   ).bind(lobbyId, to_uid).first();
   if (!recipient) return c.json({ error: 'Recipient is not in this lobby.' }, 404);
+  const senderName = user.display_name || user.username;
+  const check = filterContent(trimmed);
+  if (check.blocked) return c.json({ error: 'Message blocked: ' + check.reason }, 400);
   try {
-    const senderName = user.display_name || user.username;
-    const filtered = filterContent(trimmed);
     await c.env.sorc_db.prepare(
       `INSERT INTO lobby_dms (id, lobby_id, sender_uid, sender_name, recipient_uid, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind(crypto.randomUUID(), lobbyId, user.id, senderName, to_uid, filtered, new Date().toISOString()).run();
+    ).bind(crypto.randomUUID(), lobbyId, user.id, senderName, to_uid, check.filtered, new Date().toISOString()).run();
     return c.json({ success: true });
   } catch (err: any) {
-    return c.json({ error: 'Could not send message. The table may need to be created — contact the admin.' }, 500);
+    return c.json({ error: 'Could not send message.' }, 500);
   }
 });
 
