@@ -595,6 +595,9 @@
     function roleLabel(r) {
       if (!r) return 'Civilian';
       switch(r) {
+        case 'OWNER': return 'OWN';
+        case 'ADMIN': return 'ADMIN';
+        case 'MASTER': return 'GM';
         case 'PC-BEG': return 'PC · Beginner';
         case 'PC-INT': return 'PC · Intermediate';
         case 'PC-ADV': return 'PC · Advanced';
@@ -1216,7 +1219,7 @@
       var app = document.getElementById('lobbiesApp');
 
       var membersHtml = members.map(function(m) {
-        var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+        var isGM = (m.sorc_role && m.sorc_role.startsWith('GM')) || m.role === 'OWNER' || m.role === 'ADMIN';
         var isSelf = currentUser && m.user_id === currentUser.id;
         var actBtns = '';
         if (!isSelf && hasGMRights) {
@@ -1673,7 +1676,7 @@
         }
         prevMemberMap = newMemberMap;
         var html = data.members.map(function(m) {
-          var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+          var isGM = (m.sorc_role && m.sorc_role.startsWith('GM')) || m.role === 'OWNER' || m.role === 'ADMIN';
           var isSelf = currentUser && m.user_id === currentUser.id;
           var actBtns = '';
           if (!isSelf && hasGMRights) {
