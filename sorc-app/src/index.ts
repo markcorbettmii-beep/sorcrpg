@@ -295,7 +295,7 @@ app.get("/api/forum/category/:categoryId", async (c) => {
   const limit = 20;
   const offset = (page - 1) * limit;
   try {
-    const threads = await c.env.sorc_db.prepare(`SELECT t.*, u.username as author_name, u.display_name, u.role as author_role FROM threads t JOIN users u ON t.author_uid = u.id WHERE t.category_id = ? ORDER BY t.pinned DESC, t.last_reply_at DESC LIMIT ? OFFSET ?`).bind(categoryId, limit, offset).all();
+    const threads = await c.env.sorc_db.prepare(`SELECT t.id, t.category_id, t.title, t.body, t.author_uid, t.views, t.reply_count, t.like_count, t.liked_by, t.pinned, t.locked, t.edited, t.created_at, t.last_reply_at, t.last_reply_by, t.updated_at, u.username as author_name, u.display_name, u.role as author_role FROM threads t JOIN users u ON t.author_uid = u.id WHERE t.category_id = ? ORDER BY t.pinned DESC, t.last_reply_at DESC LIMIT ? OFFSET ?`).bind(categoryId, limit, offset).all();
     const totalThreads = await c.env.sorc_db.prepare('SELECT COUNT(*) as count FROM threads WHERE category_id = ?').bind(categoryId).first() as any;
     return c.json({ threads: threads.results, total: totalThreads.count, page, totalPages: Math.ceil(totalThreads.count / limit) });
   } catch (error: any) {
@@ -306,9 +306,9 @@ app.get("/api/forum/category/:categoryId", async (c) => {
 app.get("/api/forum/thread/:threadId", async (c) => {
   const threadId = c.req.param('threadId');
   try {
-    const thread = await c.env.sorc_db.prepare(`SELECT t.*, u.username as author_name, u.display_name, u.role as author_role FROM threads t JOIN users u ON t.author_uid = u.id WHERE t.id = ?`).bind(threadId).first();
+    const thread = await c.env.sorc_db.prepare(`SELECT t.id, t.category_id, t.title, t.body, t.author_uid, t.views, t.reply_count, t.like_count, t.liked_by, t.pinned, t.locked, t.edited, t.created_at, t.last_reply_at, t.last_reply_by, t.updated_at, u.username as author_name, u.display_name, u.role as author_role FROM threads t JOIN users u ON t.author_uid = u.id WHERE t.id = ?`).bind(threadId).first();
     if (!thread) return c.json({ error: 'Thread not found' }, 404);
-    const posts = await c.env.sorc_db.prepare(`SELECT p.*, u.username as author_name, u.display_name, u.role as author_role FROM posts p JOIN users u ON p.author_uid = u.id WHERE p.thread_id = ? ORDER BY p.created_at ASC`).bind(threadId).all();
+    const posts = await c.env.sorc_db.prepare(`SELECT p.id, p.thread_id, p.body, p.author_uid, p.like_count, p.liked_by, p.edited, p.quoted_text, p.quoted_author, p.created_at, p.updated_at, u.username as author_name, u.display_name, u.role as author_role FROM posts p JOIN users u ON p.author_uid = u.id WHERE p.thread_id = ? ORDER BY p.created_at ASC`).bind(threadId).all();
     await c.env.sorc_db.prepare('UPDATE threads SET views = views + 1 WHERE id = ?').bind(threadId).run();
     return c.json({ thread, posts: posts.results });
   } catch (error: any) {
@@ -1592,14 +1592,14 @@ app.get('/api/lobbies/:id', authMiddleware, async (c) => {
 
   // Include username for profile links; privileged users also see user_id for admin tools
   const members = await c.env.sorc_db.prepare(
-    `SELECT lm.*, u.avatar, u.user_id as public_uid FROM lobby_members lm
+    `SELECT lm.*, u.avatar, u.user_id as public_uid, u.role as live_role, u.sorc_role as live_sorc_role FROM lobby_members lm
      LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? ORDER BY lm.joined_at ASC`
   ).bind(lobbyId).all();
 
   const memberList = (members.results || []).map((m: any) => {
     const out: any = {
       id: m.id, lobby_id: m.lobby_id, user_id: m.user_id,
-      sorc_role: m.sorc_role, username: m.username, display_name: m.display_name,
+      role: m.live_role, sorc_role: m.live_sorc_role || m.sorc_role, username: m.username, display_name: m.display_name,
       joined_at: m.joined_at, is_muted: m.is_muted, avatar: m.avatar,
       profile_url: 'public-profile.html?u=' + encodeURIComponent(m.username)
     };
