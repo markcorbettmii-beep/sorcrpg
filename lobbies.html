@@ -521,6 +521,9 @@
       if (window.veilwoodTheme) window.veilwoodTheme.stop();
       if (t === 'terminal' && window.terminalTheme) window.terminalTheme.start();
       else if (t === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
+      /* Persist theme for char-sheet continuation; clear when back to default (world chat) */
+      if (t && t !== 'default') sessionStorage.setItem('sorc_lobby_theme', t);
+      else sessionStorage.removeItem('sorc_lobby_theme');
       /* Audio starts on first gesture — theme files handle this internally via
          onUserInteraction (click/keydown/touchstart/pointerdown on document).
          AudioContext is created inside that handler so iOS allows it. */
@@ -1620,7 +1623,7 @@
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
-          var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '');
+          var sheetHref = 'char-sheet.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
           menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
