@@ -165,7 +165,9 @@
     .recruit-template-btn { width: 100%; text-align: left; padding: 0.55rem 0.75rem; background: #0d0d18; border: 1px solid #1a2a4a; border-radius: 6px; color: #9ecde8; font-size: 0.78rem; cursor: pointer; line-height: 1.4; }
     .recruit-template-btn:hover { background: #111828; border-color: #2a4a7a; }
     .chat-messages { flex: 1; overflow-y: auto; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
-    .chat-msg { font-size: 0.84rem; line-height: 1.4; }
+    .chat-msg { font-size: 0.84rem; line-height: 1.4; user-select: none; -webkit-user-select: none; }
+    .chat-msg.selected { background: #2a0808; border-radius: 4px; }
+    #chatSelectBar { display:none; flex-shrink:0; align-items:center; justify-content:space-between; padding:0.4rem 0.6rem; background:#1a0505; border-top:1px solid #5a1a1a; }
     .chat-msg .msg-name { font-weight: bold; color: #d4af37; margin-right: 0.4rem; font-size: 0.78rem; }
     .chat-msg .msg-name.gm { color: #d0021b; }
     .chat-msg .msg-body { color: #c0b0a0; }
@@ -482,6 +484,9 @@
 
     // ===== SUMMON STATE =====
     var summonPollTimer = null;
+    var chatSelectMode = false;
+    var selectedMsgIds = new Set();
+    var longPressTimer = null;
     var pendingSummonTarget = null; // { uid, name } for outgoing summon
     var activeSummonId = null;      // id of incoming summon being shown
     var activeSummonLobbyId = null; // lobby to join on accept
@@ -1279,6 +1284,7 @@
               '<div class="chat-tab-pane active" id="chatPane-main">' +
                 (hasGMRights ? '<div style="text-align:right;padding:0.25rem 0.5rem 0;"><button id="clearChatBtn" onclick="clearLobbyChat()" style="font-size:0.7rem;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:3px;padding:2px 8px;cursor:pointer;">Clear Chat</button></div>' : '') +
                 '<div class="chat-messages" id="chatMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div></div>' +
+                (hasGMRights ? '<div id="chatSelectBar"><span id="chatSelectCount" style="color:#e08080;font-size:0.8rem;">0 selected</span><div style="display:flex;gap:0.5rem;"><button onclick="exitChatSelectMode()" style="font-size:0.78rem;background:none;border:1px solid #444;color:#888;border-radius:5px;padding:4px 10px;cursor:pointer;">Cancel</button><button onclick="deleteSelectedMsgs()" style="font-size:0.78rem;background:#c0392b;border:none;color:#fff;border-radius:5px;padding:4px 10px;cursor:pointer;font-weight:bold;">Delete</button></div></div>' : '') +
                 '<div class="chat-input-row">' +
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
                   '<button class="chat-send" onclick="sendChat()">Send</button>' +
@@ -1345,6 +1351,7 @@
         '</div>';
 
       loadChatMessages(lobby.id);
+      initChatLongPress();
     }
 
     // ===== CHAT =====
@@ -1385,6 +1392,7 @@
         if (msgs.length === 0 && !lastMsgId) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; }
         if (msgs.length === 0) { return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
+        if (chatSelectMode) exitChatSelectMode();
         msgEl.innerHTML = msgs.map(function(m) {
           if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
             var themeName = m.body.replace('__sorc_theme__:', '').trim();
@@ -1394,11 +1402,10 @@
             '</div>';
           }
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
-          return '<div class="chat-msg" id="lmsg-' + m.id + '">' +
+          return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
             '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
-            (hasGMRights ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:6px;font-size:0.65rem;background:none;border:none;color:#c0392b;cursor:pointer;opacity:0.6;">x</button>' : '') +
           '</div>';
         }).join('');
         if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
@@ -1479,6 +1486,99 @@
         var el = document.getElementById('lmsg-' + msgId);
         if (el) el.remove();
       } catch(e) {}
+    };
+
+    // ── Chat long-press multi-select (GM only) ────────────────────────────────
+    function initChatLongPress() {
+      var msgEl = document.getElementById('chatMessages');
+      if (!msgEl || !hasGMRights) return;
+
+      function getMsgEl(target) {
+        return target.closest ? target.closest('[data-msg-id]') : null;
+      }
+
+      msgEl.addEventListener('touchstart', function(e) {
+        var el = getMsgEl(e.target);
+        if (!el) return;
+        longPressTimer = setTimeout(function() {
+          longPressTimer = null;
+          if (!chatSelectMode) enterChatSelectMode();
+          toggleMsgSelect(el);
+        }, 500);
+      }, { passive: true });
+
+      msgEl.addEventListener('touchend', function(e) {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        else if (chatSelectMode) {
+          var el = getMsgEl(e.target);
+          if (el) { e.preventDefault(); toggleMsgSelect(el); }
+        }
+      });
+
+      msgEl.addEventListener('touchmove', function() {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      }, { passive: true });
+
+      // Desktop: right-click to enter select mode
+      msgEl.addEventListener('contextmenu', function(e) {
+        var el = getMsgEl(e.target);
+        if (!el) return;
+        e.preventDefault();
+        if (!chatSelectMode) enterChatSelectMode();
+        toggleMsgSelect(el);
+      });
+
+      // Desktop: click to toggle while in select mode
+      msgEl.addEventListener('click', function(e) {
+        if (!chatSelectMode) return;
+        var el = getMsgEl(e.target);
+        if (el) toggleMsgSelect(el);
+      });
+    }
+
+    function enterChatSelectMode() {
+      chatSelectMode = true;
+      selectedMsgIds.clear();
+      var bar = document.getElementById('chatSelectBar');
+      if (bar) bar.style.display = 'flex';
+    }
+
+    window.exitChatSelectMode = function() {
+      chatSelectMode = false;
+      selectedMsgIds.clear();
+      var bar = document.getElementById('chatSelectBar');
+      if (bar) bar.style.display = 'none';
+      document.querySelectorAll('#chatMessages .chat-msg.selected').forEach(function(el) {
+        el.classList.remove('selected');
+      });
+    };
+
+    function toggleMsgSelect(el) {
+      var id = el.dataset.msgId;
+      if (selectedMsgIds.has(id)) {
+        selectedMsgIds.delete(id);
+        el.classList.remove('selected');
+      } else {
+        selectedMsgIds.add(id);
+        el.classList.add('selected');
+      }
+      var countEl = document.getElementById('chatSelectCount');
+      if (countEl) countEl.textContent = selectedMsgIds.size + ' selected';
+    }
+
+    window.deleteSelectedMsgs = async function() {
+      if (!currentLobby || !hasGMRights || selectedMsgIds.size === 0) return;
+      var ids = Array.from(selectedMsgIds);
+      exitChatSelectMode();
+      await Promise.all(ids.map(function(msgId) {
+        return fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages/' + msgId, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        }).then(function() {
+          var el = document.getElementById('lmsg-' + msgId);
+          if (el) el.remove();
+        }).catch(function() {});
+      }));
     };
 
     var memberPollCount = 0;
