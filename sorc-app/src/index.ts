@@ -2080,15 +2080,13 @@ app.get('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
   ).bind(lobbyId, user.id).first();
   if (!isMember) return c.json({ error: 'Not a member.' }, 403);
   try {
-    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_dms (
-      id TEXT PRIMARY KEY, lobby_id TEXT NOT NULL, sender_uid TEXT NOT NULL,
-      sender_name TEXT NOT NULL, recipient_uid TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL
-    )`).run();
-  } catch {}
-  const result = await c.env.sorc_db.prepare(
-    `SELECT * FROM lobby_dms WHERE lobby_id = ? AND (sender_uid = ? OR recipient_uid = ?) ORDER BY created_at DESC LIMIT 80`
-  ).bind(lobbyId, user.id, user.id).all();
-  return c.json({ messages: (result.results || []).reverse() });
+    const result = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobby_dms WHERE lobby_id = ? AND (sender_uid = ? OR recipient_uid = ?) ORDER BY created_at DESC LIMIT 80`
+    ).bind(lobbyId, user.id, user.id).all();
+    return c.json({ messages: (result.results || []).reverse() });
+  } catch {
+    return c.json({ messages: [] });
+  }
 });
 
 app.post('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
@@ -2110,17 +2108,15 @@ app.post('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
   ).bind(lobbyId, to_uid).first();
   if (!recipient) return c.json({ error: 'Recipient is not in this lobby.' }, 404);
   try {
-    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_dms (
-      id TEXT PRIMARY KEY, lobby_id TEXT NOT NULL, sender_uid TEXT NOT NULL,
-      sender_name TEXT NOT NULL, recipient_uid TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL
-    )`).run();
-  } catch {}
-  const senderName = user.display_name || user.username;
-  const filtered = filterContent(trimmed);
-  await c.env.sorc_db.prepare(
-    `INSERT INTO lobby_dms (id, lobby_id, sender_uid, sender_name, recipient_uid, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).bind(crypto.randomUUID(), lobbyId, user.id, senderName, to_uid, filtered, new Date().toISOString()).run();
-  return c.json({ success: true });
+    const senderName = user.display_name || user.username;
+    const filtered = filterContent(trimmed);
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_dms (id, lobby_id, sender_uid, sender_name, recipient_uid, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), lobbyId, user.id, senderName, to_uid, filtered, new Date().toISOString()).run();
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: 'Could not send message. The table may need to be created — contact the admin.' }, 500);
+  }
 });
 
 app.patch('/api/lobbies/:id/members/:uid/mute', authMiddleware, async (c) => {
