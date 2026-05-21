@@ -46,6 +46,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('*', cors({
   origin: ['https://sorcrpg.com', 'https://www.sorcrpg.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowHeaders: ['Content-Type', 'X-Auth-Key'],
   credentials: true,
 }));
 
@@ -53,12 +54,12 @@ const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
   const user = await c.env.sorc_db.prepare(
-    'SELECT * FROM users WHERE auth_key = ? AND (banned IS NULL OR banned = 0) AND (suspended_until IS NULL OR suspended_until < datetime(\'now\'))'
+    `SELECT * FROM users WHERE auth_key = ?
+     AND (banned IS NULL OR banned = 0)
+     AND (suspended_until IS NULL OR suspended_until < datetime('now'))
+     AND (auth_key_expires_at IS NULL OR auth_key_expires_at > datetime('now'))`
   ).bind(authKey).first() as any;
   if (!user) return c.json({ error: 'Invalid auth key' }, 401);
-  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at) < new Date()) {
-    return c.json({ error: 'Session expired', expired: true }, 401);
-  }
   c.set('user', user);
   await next();
 };
@@ -117,8 +118,10 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, 256);
-  const newHashHex = Array.from(new Uint8Array(bits)).map((b: number) => b.toString(16).padStart(2, '0')).join('');
-  return newHashHex === hashHex;
+  const newHash = new Uint8Array(bits);
+  const storedHash = new Uint8Array(hashHex.match(/.{2}/g)!.map((b: string) => parseInt(b, 16)));
+  if (newHash.length !== storedHash.length) return false;
+  return crypto.subtle.timingSafeEqual(newHash, storedHash);
 }
 
 app.post('/api/auth/register', async (c) => {
@@ -137,7 +140,13 @@ app.post('/api/auth/register', async (c) => {
   const passwordHash = await hashPassword(password);
   const authKey = crypto.randomUUID();
   const verificationToken = crypto.randomUUID();
-  const userId = Math.floor(Math.random() * 90000000) + 10000000;
+  let userId: number = 0;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    userId = Math.floor(Math.random() * 90000000) + 10000000;
+    const clash = await c.env.sorc_db.prepare('SELECT id FROM users WHERE user_id = ?').bind(userId).first();
+    if (!clash) break;
+    if (attempt === 9) return c.json({ error: 'Registration failed. Please try again.' }, 500);
+  }
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
   try {
