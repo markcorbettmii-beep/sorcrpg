@@ -2576,28 +2576,31 @@
     var RC_DURATION = 20; /* seconds */
 
     function handleReadyCheckPoll(rc) {
-      if (!rc || readyCheckDismissed) {
-        if (!rc) {
-          var o = document.getElementById('readyCheckOverlay');
-          if (o) o.classList.add('hidden');
-          stopReadyCheckTimer();
-          currentReadyCheckId = null;
-          hasRespondedToReadyCheck = false;
-          readyCheckDismissed = false;
-          readyCheckInitiatedAt = null;
-          lastReadyCheckData = null;
-        }
+      if (!rc) {
+        var o = document.getElementById('readyCheckOverlay');
+        if (o) o.classList.add('hidden');
+        stopReadyCheckTimer();
+        currentReadyCheckId = null;
+        hasRespondedToReadyCheck = false;
+        readyCheckDismissed = false;
+        readyCheckInitiatedAt = null;
+        lastReadyCheckData = null;
         return;
       }
-      lastReadyCheckData = rc;
+      /* New check always resets dismissed state regardless of prior check */
       if (rc.check_id !== currentReadyCheckId) {
         currentReadyCheckId = rc.check_id;
         readyCheckInitiatedAt = rc.initiated_at;
         hasRespondedToReadyCheck = false;
         readyCheckDismissed = false;
+        lastReadyCheckData = rc;
         playReadyCheckSound();
         startReadyCheckTimer();
+        renderReadyCheckOverlay(rc);
+        return;
       }
+      if (readyCheckDismissed) return;
+      lastReadyCheckData = rc;
       renderReadyCheckOverlay(rc);
     }
 
@@ -2784,8 +2787,15 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ check_id: currentReadyCheckId, status: status })
         });
+        /* Immediately patch lastReadyCheckData so launchRoom sees this response
+           without waiting for the next poll cycle */
+        if (lastReadyCheckData && currentUser) {
+          var patched = (lastReadyCheckData.responses || []).filter(function(r) { return r.user_id !== currentUser.id; });
+          patched.push({ user_id: currentUser.id, status: status });
+          lastReadyCheckData = Object.assign({}, lastReadyCheckData, { responses: patched });
+        }
         if (status === 'ready') {
-          var name = currentUser.displayName || currentUser.username || 'Unknown';
+          var name = currentUser.display_name || currentUser.displayName || currentUser.username || 'Unknown';
           await postReadyCheckChatMsg(name + ' is ready to launch room');
         } else {
           loadChatMessages(currentLobby.id);

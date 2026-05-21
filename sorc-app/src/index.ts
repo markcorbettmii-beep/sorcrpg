@@ -1592,14 +1592,20 @@ app.get('/api/lobbies/:id', authMiddleware, async (c) => {
 
   // Include username for profile links; privileged users also see user_id for admin tools
   const members = await c.env.sorc_db.prepare(
-    `SELECT lm.*, u.avatar, u.user_id as public_uid, u.role as live_role, u.sorc_role as live_sorc_role FROM lobby_members lm
+    `SELECT lm.*, u.avatar, u.user_id as public_uid, u.role as live_role, u.sorc_role as live_sorc_role, u.email as member_email FROM lobby_members lm
      LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? ORDER BY lm.joined_at ASC`
   ).bind(lobbyId).all();
 
+  const OWNER_EMAILS_LIST = ['corbett@sorcrpg.com'];
+  const ADMIN_EMAILS_LIST = ['markcorbett.mii@gmail.com'];
+
   const memberList = (members.results || []).map((m: any) => {
+    let displayRole = m.live_role;
+    if (OWNER_EMAILS_LIST.includes(m.member_email)) displayRole = 'OWNER';
+    else if (ADMIN_EMAILS_LIST.includes(m.member_email)) displayRole = 'ADMIN';
     const out: any = {
       id: m.id, lobby_id: m.lobby_id, user_id: m.user_id,
-      role: m.live_role, sorc_role: m.live_sorc_role || m.sorc_role, username: m.username, display_name: m.display_name,
+      role: displayRole, sorc_role: m.live_sorc_role || m.sorc_role, username: m.username, display_name: m.display_name,
       joined_at: m.joined_at, is_muted: m.is_muted, avatar: m.avatar,
       profile_url: 'public-profile.html?u=' + encodeURIComponent(m.username)
     };
