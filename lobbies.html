@@ -253,6 +253,8 @@
     .rc-ready-btn:hover { background:#112e11; }
     .rc-no-btn { background:#2a0d0d;border:1.5px solid #c0392b;color:#c0392b;padding:9px 22px;border-radius:8px;font-size:0.92rem;cursor:pointer; }
     .rc-no-btn:hover { background:#2e1111; }
+    .rc-timer { font-size:1.6rem;font-weight:bold;color:#d4af37;letter-spacing:0.05em;margin:0.2rem 0 0.9rem; }
+    .rc-timer.urgent { color:#c0392b; }
     .rc-dismiss-btn { display:block;margin:0.85rem auto 0;background:none;border:none;color:#444;font-size:0.74rem;cursor:pointer; }
     .rc-dismiss-btn:hover { color:#888; }
 
@@ -489,6 +491,7 @@
     <div class="rc-box">
       <div class="rc-title">&#9876; READY CHECK</div>
       <div class="rc-sub" id="rcSub"></div>
+      <div class="rc-timer" id="rcTimer">&#10003; :20</div>
       <ul class="rc-list" id="rcList"></ul>
       <div class="rc-btns" id="rcBtns">
         <button class="rc-ready-btn" onclick="respondReadyCheck('ready')">&#10003; Ready</button>
@@ -616,6 +619,8 @@
     var currentReadyCheckId = null;
     var hasRespondedToReadyCheck = false;
     var readyCheckDismissed = false;
+    var readyCheckTimerInterval = null;
+    var readyCheckInitiatedAt = null;
 
     var reportTargetUid = null;
     var reportTargetName = '';
@@ -2487,24 +2492,28 @@
     }
 
     // ===== READY CHECK =====
+    var RC_DURATION = 20; /* seconds */
+
     function handleReadyCheckPoll(rc) {
       if (!rc || readyCheckDismissed) {
         if (!rc) {
-          /* No active check — hide overlay and reset state */
           var o = document.getElementById('readyCheckOverlay');
           if (o) o.classList.add('hidden');
+          stopReadyCheckTimer();
           currentReadyCheckId = null;
           hasRespondedToReadyCheck = false;
           readyCheckDismissed = false;
+          readyCheckInitiatedAt = null;
         }
         return;
       }
-      /* New check — play sound and show overlay */
       if (rc.check_id !== currentReadyCheckId) {
         currentReadyCheckId = rc.check_id;
+        readyCheckInitiatedAt = rc.initiated_at;
         hasRespondedToReadyCheck = false;
         readyCheckDismissed = false;
         playReadyCheckSound();
+        startReadyCheckTimer();
       }
       renderReadyCheckOverlay(rc);
     }
@@ -2515,23 +2524,72 @@
       overlay.classList.remove('hidden');
       var subEl = document.getElementById('rcSub');
       if (subEl) subEl.textContent = rc.initiated_name + ' called a ready check';
-      /* Build member list from prevMemberMap */
       var listEl = document.getElementById('rcList');
       if (listEl) {
         var responseMap = {};
         (rc.responses || []).forEach(function(r) { responseMap[r.user_id] = r.status; });
         var members = Object.values(prevMemberMap);
-        if (members.length === 0 && currentLobby) members = [{ user_id: currentUser && currentUser.id, display_name: currentUser && (currentUser.displayName || currentUser.username) }];
         listEl.innerHTML = members.map(function(m) {
           var st = responseMap[m.user_id];
-          var icon = st === 'ready'    ? '<span class="rc-icon" style="color:#4caf50;">&#10003;</span>'
-                   : st === 'not_ready'? '<span class="rc-icon" style="color:#c0392b;">&#10007;</span>'
+          var icon = st === 'ready'     ? '<span class="rc-icon" style="color:#4caf50;">&#10003;</span>'
+                   : st === 'not_ready' ? '<span class="rc-icon" style="color:#c0392b;">&#10007;</span>'
                    : '<span class="rc-icon" style="color:#444;">?</span>';
           return '<li>' + icon + esc(m.display_name || m.username || 'Member') + '</li>';
         }).join('');
       }
       var btnsEl = document.getElementById('rcBtns');
       if (btnsEl) btnsEl.style.display = hasRespondedToReadyCheck ? 'none' : 'flex';
+    }
+
+    function startReadyCheckTimer() {
+      stopReadyCheckTimer();
+      readyCheckTimerInterval = setInterval(function() {
+        if (!readyCheckInitiatedAt) return;
+        var elapsed = Math.floor((Date.now() - new Date(readyCheckInitiatedAt).getTime()) / 1000);
+        var timeLeft = Math.max(0, RC_DURATION - elapsed);
+        var timerEl = document.getElementById('rcTimer');
+        if (timerEl) {
+          timerEl.textContent = '✓ :' + timeLeft;
+          timerEl.className = 'rc-timer' + (timeLeft <= 5 ? ' urgent' : '');
+        }
+        if (timeLeft <= 0) {
+          stopReadyCheckTimer();
+          if (!hasRespondedToReadyCheck && !readyCheckDismissed) expireReadyCheck();
+        }
+      }, 500);
+    }
+
+    function stopReadyCheckTimer() {
+      if (readyCheckTimerInterval) { clearInterval(readyCheckTimerInterval); readyCheckTimerInterval = null; }
+    }
+
+    function expireReadyCheck() {
+      hasRespondedToReadyCheck = true;
+      var btnsEl = document.getElementById('rcBtns');
+      if (btnsEl) btnsEl.style.display = 'none';
+      /* Post "did not accept" to lobby chat */
+      if (currentLobby && currentUser && currentReadyCheckId) {
+        var name = currentUser.displayName || currentUser.username || 'Unknown';
+        postReadyCheckChatMsg(name + ' did not accept ready check');
+        /* Also record not_ready so the host's list updates */
+        fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ check_id: currentReadyCheckId, status: 'not_ready' })
+        }).catch(function(){});
+      }
+    }
+
+    async function postReadyCheckChatMsg(text) {
+      if (!currentLobby || !currentUser) return;
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: text })
+        });
+        loadChatMessages(currentLobby.id);
+      } catch(e) {}
     }
 
     function playReadyCheckSound() {
@@ -2622,9 +2680,11 @@
         var data = await res.json();
         if (!data.success) { showToast(data.error || 'Could not start ready check.', true); return; }
         currentReadyCheckId = data.check_id;
+        readyCheckInitiatedAt = new Date().toISOString();
         hasRespondedToReadyCheck = false;
         readyCheckDismissed = false;
         playReadyCheckSound();
+        startReadyCheckTimer();
         loadChatMessages(currentLobby.id);
       } catch(e) { showToast('Could not reach server.', true); }
     };
@@ -2632,6 +2692,7 @@
     window.respondReadyCheck = async function(status) {
       if (!currentLobby || !currentUser || !currentReadyCheckId) return;
       hasRespondedToReadyCheck = true;
+      stopReadyCheckTimer();
       var btnsEl = document.getElementById('rcBtns');
       if (btnsEl) btnsEl.style.display = 'none';
       try {
@@ -2640,12 +2701,18 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ check_id: currentReadyCheckId, status: status })
         });
-        loadChatMessages(currentLobby.id);
+        if (status === 'ready') {
+          var name = currentUser.displayName || currentUser.username || 'Unknown';
+          await postReadyCheckChatMsg(name + ' is ready to launch room');
+        } else {
+          loadChatMessages(currentLobby.id);
+        }
       } catch(e) {}
     };
 
     window.dismissReadyCheck = function() {
       readyCheckDismissed = true;
+      stopReadyCheckTimer();
       var overlay = document.getElementById('readyCheckOverlay');
       if (overlay) overlay.classList.add('hidden');
     };
@@ -2662,6 +2729,8 @@
       currentReadyCheckId = null;
       hasRespondedToReadyCheck = false;
       readyCheckDismissed = false;
+      readyCheckInitiatedAt = null;
+      stopReadyCheckTimer();
       var rcOverlay = document.getElementById('readyCheckOverlay');
       if (rcOverlay) rcOverlay.classList.add('hidden');
       document.documentElement.classList.remove('lobby-locked');
