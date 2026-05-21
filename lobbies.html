@@ -1998,12 +1998,14 @@
     };
 
     // ===== WORLD CHAT =====
-    function parseWorldBody(body, msgId) {
-      // Render LFM: and LFG: as clickable badges
+    function parseWorldBody(body, msgId, summonOnclick) {
+      var sumBadgeOnclick = summonOnclick
+        ? summonOnclick
+        : "respondToWorldMsg('" + msgId + "','SUM')";
       return esc(body)
         .replace(/LFM:/g, '<span class="lfm-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFM\')">LFM:</span>')
         .replace(/LFG:/g, '<span class="lfg-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFG\')">LFG:</span>')
-        .replace(/SUM:/g, '<span class="sum-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'SUM\')">SUM:</span>');
+        .replace(/SUM:/g, '<span class="sum-badge" onclick="' + sumBadgeOnclick.replace(/"/g, '&quot;') + '">SUM:</span>');
     }
 
     async function loadWorldChat() {
@@ -2032,10 +2034,14 @@
             var isActivity = rawBody.startsWith('⬡ ');
             if (respondMatch) rawBody = rawBody.replace(/^📋\s*/, '').replace(/\s*[—\-]+\s*https?:\/\/\S+$/, '');
             if (isActivity) rawBody = rawBody.replace(/^⬡\s*/, '');
-            var bodyHtml = parseWorldBody(rawBody, m.id);
             var isSelf = currentUser && m.sender_uid === currentUser.id;
             var hostLobbyId = (currentLobby && hasGMRights) ? currentLobby.id : myActiveLobbyId;
             var canSummon = !!(hostLobbyId && !isSelf && m.sender_uid);
+            var isSummonConfirm = !!(respondMatch && rawBody.indexOf('confirmed for summon') >= 0);
+            var summonOnclick = (isSummonConfirm && canSummon && m.sender_uid)
+              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(m.sender_name) + "','" + esc(hostLobbyId) + "')"
+              : null;
+            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick);
             var nameEl;
             if (!isSelf && m.sender_uid) {
               var wcItems = '';
