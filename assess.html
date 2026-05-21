@@ -186,7 +186,7 @@
           '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">&#9876; Player Character (PC)</button>' +
           '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">&#127931; Game Master (GM)</button>' +
         '</div>' +
-        '<p class="track-note" id="trackNote">Select your intended role. GMs must score 9 or higher.</p>' +
+        '<p class="track-note" id="trackNote">&#9888; Choose your track before answering — it locks in on your first answer and cannot be changed.</p>' +
         qHtml +
         '<div class="submit-row">' +
           '<button class="submit-btn" id="submitBtn" onclick="submitAssessment()" disabled>Submit Assessment</button>' +
@@ -235,6 +235,17 @@
       var answered = Object.keys(selectedAnswers).length;
       var submitBtn = document.getElementById('submitBtn');
       if (submitBtn) submitBtn.disabled = answered < questions.length;
+      /* Lock track selection once first answer is given */
+      if (answered === 1) lockTrack();
+    }
+
+    function lockTrack() {
+      var pcBtn = document.getElementById('trackPC');
+      var gmBtn = document.getElementById('trackGM');
+      var note = document.getElementById('trackNote');
+      if (pcBtn) { pcBtn.disabled = true; pcBtn.style.opacity = '0.45'; pcBtn.style.cursor = 'default'; }
+      if (gmBtn) { gmBtn.disabled = true; gmBtn.style.opacity = '0.45'; gmBtn.style.cursor = 'default'; }
+      if (note) note.textContent = (gmTrack ? 'GM track locked in.' : 'PC track locked in.') + ' Complete all questions to submit.';
     }
 
     async function submitAssessment() {
