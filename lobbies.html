@@ -770,6 +770,7 @@
         '&#10003; New: Ready Check - hosts can send a party-wide ready check with a themed sound cue, WoW-style',
         '&#9876; Ready Check rules: you have 20 seconds to respond - no response counts as Not Ready',
         '&#127514; To launch a Campaign Room, all members must confirm Ready and the party needs at least 2 players plus a GM',
+        '&#9889; New: Hosts can click LFG: in World Chat to instantly summon that player to their lobby - no typing required',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -2141,13 +2142,16 @@
     };
 
     // ===== WORLD CHAT =====
-    function parseWorldBody(body, msgId, summonOnclick) {
+    function parseWorldBody(body, msgId, summonOnclick, lfgOnclick) {
       var sumBadgeOnclick = summonOnclick
         ? summonOnclick
         : "respondToWorldMsg('" + msgId + "','SUM')";
+      var lfgBadgeOnclick = lfgOnclick
+        ? lfgOnclick
+        : "respondToWorldMsg('" + msgId + "','LFG')";
       return esc(body)
         .replace(/LFM:/g, '<span class="lfm-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFM\')">LFM:</span>')
-        .replace(/LFG:/g, '<span class="lfg-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFG\')">LFG:</span>')
+        .replace(/LFG:/g, '<span class="lfg-badge" onclick="' + lfgBadgeOnclick.replace(/"/g, '&quot;') + '">LFG:</span>')
         .replace(/SUM:/g, '<span class="sum-badge" onclick="' + sumBadgeOnclick.replace(/"/g, '&quot;') + '">SUM:</span>');
     }
 
@@ -2198,7 +2202,10 @@
             var summonOnclick = (isSummonConfirm && canSummon && m.sender_uid)
               ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(displayName) + "','" + esc(hostLobbyId) + "')"
               : null;
-            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick);
+            var lfgOnclick = (canSummon && m.sender_uid)
+              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(displayName) + "','" + esc(hostLobbyId) + "')"
+              : null;
+            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick, lfgOnclick);
             var nameEl = '<span class="' + nameClass + '">' + esc(displayName || 'Unknown') + '</span>';
             if (isActivity) {
               return '<div class="world-msg is-activity">&#8894; ' + bodyHtml + '<span class="wmsg-time">' + timeAgo(m.created_at) + '</span></div>';
