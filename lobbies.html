@@ -1254,6 +1254,9 @@
         var cuRole = currentUser ? currentUser.role : '';
         var canPrivPromote = !isSelf && (cuRole === 'OWNER' || (cuRole === 'ADMIN' && m.role !== 'OWNER'));
         if (canPrivPromote && !isCreator) {
+          if (cuRole === 'OWNER') {
+            menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+          }
           menuItems += '<button class="summon-opt" style="color:#d4af37;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
         }
         var isLobbyHost = currentLobby && m.user_id === currentLobby.creator_uid;
@@ -1316,7 +1319,7 @@
             '<h2>' + esc(lobby.name) + (lobby.is_private ? ' &#128274;' : '') + '</h2>' +
             '<div class="detail-meta">' + (hasGMRights ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
-          '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+          '<div id="lobbyHeaderBtns" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
             launchBtn + readyCheckBtn + inviteBtn + leaveBtn + deleteBtn +
           '</div>' +
         '</div>' +
@@ -1348,6 +1351,7 @@
                 '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="activity" onclick="switchChatTab(\'activity\')">Activity <span class="tab-badge" id="badge-activity" style="display:none;"></span></button>' +
               '</div>' +
               /* MAIN: lobby chat */
               '<div class="chat-tab-pane active" id="chatPane-main">' +
@@ -1372,6 +1376,10 @@
               /* MESSAGES: lobby-scoped direct messages */
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
                 '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div></div>' +
+              '</div>' +
+              /* ACTIVITY: lobby action log */
+              '<div class="chat-tab-pane" id="chatPane-activity">' +
+                '<div class="chat-messages" id="activityList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No activity yet.</div></div>' +
               '</div>' +
             '</div>' +
             buildTicker() +
@@ -1450,6 +1458,10 @@
               '&#9670; <span class="msg-name" style="color:#8860c0;">' + esc(m.username) + '</span> changed the theme to <em>' + esc(themeName) + '</em>' +
               '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
             '</div>';
+          }
+          if (m.body && m.body.indexOf('⬡ ') === 0) {
+            var actBody = m.body.replace(/^⬡\s*/, '');
+            return '<div class="chat-msg activity-notice" id="lmsg-' + m.id + '">&#8894; ' + esc(actBody) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
           }
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
           return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
@@ -1679,6 +1691,7 @@
           currentLobby.creator_uid = data.lobby.creator_uid;
           isCreator = !!(currentUser && currentLobby.creator_uid === currentUser.id);
           hasGMRights = isCreator || isPrivileged();
+          rebuildHeaderBtns();
         }
 
         // Detect departures vs previous snapshot
@@ -1714,6 +1727,9 @@
           var cuRole2 = currentUser ? currentUser.role : '';
           var canPrivPromote2 = !isSelf && (cuRole2 === 'OWNER' || (cuRole2 === 'ADMIN' && m.role !== 'OWNER'));
           if (canPrivPromote2 && !isCreator) {
+            if (cuRole2 === 'OWNER') {
+              menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+            }
             menuItems2 += '<button class="summon-opt" style="color:#d4af37;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
           }
           var isLobbyHost2 = currentLobby && m.user_id === currentLobby.creator_uid;
@@ -1969,6 +1985,9 @@
       } else if (tab === 'msgs') {
         stopWorldChatPoll();
         loadLobbyMsgs();
+      } else if (tab === 'activity') {
+        stopWorldChatPoll();
+        loadActivityMessages();
       } else {
         stopWorldChatPoll();
       }
@@ -2044,6 +2063,7 @@
       if (!currentLobby || !currentUser) return;
       var lobbyId = currentLobby.id;
       abandonedUids.add(currentUser.id);
+      leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
       backToList();
       try {
@@ -2651,11 +2671,14 @@
 
     function expireReadyCheck() {
       hasRespondedToReadyCheck = true;
+      readyCheckDismissed = true;
       var btnsEl = document.getElementById('rcBtns');
       if (btnsEl) btnsEl.style.display = 'none';
+      var overlay = document.getElementById('readyCheckOverlay');
+      if (overlay) overlay.classList.add('hidden');
       /* Post "did not accept" to lobby chat */
       if (currentLobby && currentUser && currentReadyCheckId) {
-        var name = currentUser.displayName || currentUser.username || 'Unknown';
+        var name = currentUser.display_name || currentUser.username || 'Unknown';
         postReadyCheckChatMsg(name + ' did not accept ready check');
         /* Also record not_ready so the host's list updates */
         fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check/respond', {
@@ -2810,6 +2833,38 @@
       if (overlay) overlay.classList.add('hidden');
     };
 
+    function rebuildHeaderBtns() {
+      var container = document.getElementById('lobbyHeaderBtns');
+      if (!container) return;
+      var lb = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
+      var rcb = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var ib = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
+      var lvb = isCreator
+        ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
+      container.innerHTML = lb + rcb + ib + lvb;
+    }
+
+    async function loadActivityMessages() {
+      if (!currentLobby || !currentUser) return;
+      var el = document.getElementById('activityList');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var msgs = (data.messages || []).filter(function(m) { return m.body && m.body.indexOf('⬡ ') === 0; });
+        if (msgs.length === 0) {
+          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No activity yet.</div>';
+          return;
+        }
+        el.innerHTML = msgs.map(function(m) {
+          var body = m.body.replace(/^⬡\s*/, '');
+          return '<div class="chat-msg activity-notice" id="lact-' + m.id + '">&#8894; ' + esc(body) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
+        }).join('');
+        el.scrollTop = el.scrollHeight;
+      } catch(e) {}
+    }
+
     // ===== BACK =====
     window.backToList = function() {
       stopChatPoll();
@@ -2823,6 +2878,8 @@
       hasRespondedToReadyCheck = false;
       readyCheckDismissed = false;
       readyCheckInitiatedAt = null;
+      lastReadyCheckData = null;
+      prevMemberMap = {};
       stopReadyCheckTimer();
       var rcOverlay = document.getElementById('readyCheckOverlay');
       if (rcOverlay) rcOverlay.classList.add('hidden');
