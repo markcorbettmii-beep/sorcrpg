@@ -2287,6 +2287,33 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
 
+  /* ── Minimum party size: GM + at least 2 players ── */
+  if (memberList.length < 3) {
+    return c.json({ error: 'At least 2 players and a GM are required to launch a room.' }, 400);
+  }
+
+  /* ── Ready check: all members must have confirmed ready ── */
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+    const rc = await c.env.sorc_db.prepare(`SELECT * FROM ready_checks WHERE lobby_id = ?`).bind(lobbyId).first() as any;
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    if (!rc || rc.initiated_at < fiveMinsAgo) {
+      return c.json({ error: 'Run a ready check first — all players must confirm ready before launching.' }, 400);
+    }
+    const responses = await c.env.sorc_db.prepare(
+      `SELECT user_id FROM ready_check_responses WHERE lobby_id = ? AND check_id = ? AND status = 'ready'`
+    ).bind(lobbyId, rc.check_id).all();
+    const readyUids = new Set((responses.results as any[]).map((r: any) => r.user_id));
+    const notReady = memberList.filter((m: any) => !readyUids.has(m.user_id));
+    if (notReady.length > 0) {
+      const names = notReady.map((m: any) => m.display_name || m.username).join(', ');
+      return c.json({ error: 'Not everyone is ready: ' + names }, 400);
+    }
+  } catch (e: any) {
+    return c.json({ error: 'Could not verify ready check status.' }, 500);
+  }
+
   const roomId = crypto.randomUUID();
   const jitsiRoom = 'sorc-' + roomId.replace(/-/g, '').substring(0, 12);
   const now = new Date().toISOString();
