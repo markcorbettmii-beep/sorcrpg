@@ -1781,22 +1781,16 @@
           var activityText = isAbandon
             ? '⬡ ' + name + ' has abandoned the lobby.'
             : '⬡ ' + name + ' has left the lobby and may return at will.';
+          // Leaving user already posts their own departure to lobby messages.
+          // Creator just needs to echo it to world chat for public visibility.
           if (isCreator && currentUser) {
-            // Post to world chat for public visibility
             fetch(API_URL + '/api/world-chat', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
               body: JSON.stringify({ body: activityText })
             }).then(function() { loadWorldChat(); }).catch(function(){});
-            // Also post to lobby main chat so all members see it in Main tab
-            fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-              body: JSON.stringify({ body: activityText })
-            }).catch(function(){});
-          } else {
-            notifyDeparture(activityText);
           }
+          notifyDeparture(activityText);
         });
       } catch(e) {}
     }
@@ -2055,6 +2049,15 @@
     window.leaveLobby = async function() {
       if (!currentLobby) return;
       var lobbyId = currentLobby.id;
+      var myName = currentUser ? (currentUser.display_name || currentUser.username || 'A player') : 'A player';
+      // Post departure activity before leaving (while still authenticated)
+      try {
+        fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: '⬡ ' + myName + ' has left the lobby and may return at will.' })
+        }).catch(function(){});
+      } catch(e) {}
       leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
       sessionStorage.removeItem('activeLobbyId');
@@ -2065,28 +2068,43 @@
         return;
       }
       try {
-        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
+        var leaveRes = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
           headers: { 'X-Auth-Key': currentUser.authKey },
           keepalive: true
         });
-      } catch(e) {}
+        if (!leaveRes.ok) showToast('Warning: could not confirm leave — refresh if needed.', true);
+      } catch(e) {
+        showToast('Warning: could not confirm leave — refresh if needed.', true);
+      }
     };
 
     window.abandonLobby = async function() {
       if (!currentLobby || !currentUser) return;
       var lobbyId = currentLobby.id;
+      var myName = currentUser.display_name || currentUser.username || 'A player';
+      // Post departure activity before leaving
+      try {
+        fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: '⬡ ' + myName + ' has abandoned the lobby.' })
+        }).catch(function(){});
+      } catch(e) {}
       abandonedUids.add(currentUser.id);
       leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
       backToList();
       try {
-        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
+        var leaveRes = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
           headers: { 'X-Auth-Key': currentUser.authKey },
           keepalive: true
         });
-      } catch(e) {}
+        if (!leaveRes.ok) showToast('Warning: could not confirm abandon — refresh if needed.', true);
+      } catch(e) {
+        showToast('Warning: could not confirm abandon — refresh if needed.', true);
+      }
     };
 
     window.deleteLobby = async function() {
