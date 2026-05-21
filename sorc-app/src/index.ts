@@ -96,7 +96,7 @@ async function checkRateLimit(db: D1Database, key: string, maxAttempts: number, 
     await db.prepare('INSERT INTO rate_limits (key, created_at) VALUES (?, ?)').bind(key, now).run();
     return true;
   } catch {
-    return true;
+    return false; // deny on DB error — don't fail open
   }
 }
 
@@ -127,6 +127,9 @@ app.post('/api/auth/register', async (c) => {
   if (!allowed) return c.json({ error: 'Too many attempts. Please try again later.' }, 429);
   const { email, username, firstName, password } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
+  if (email.length > 254) return c.json({ error: 'Email address too long.' }, 400);
+  if (username.length > 30) return c.json({ error: 'Username too long (max 30 characters).' }, 400);
+  if (firstName && firstName.length > 50) return c.json({ error: 'First name too long (max 50 characters).' }, 400);
   if (!password || password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
   const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').bind(email, username).first();
@@ -411,7 +414,9 @@ app.put('/api/profile', authMiddleware, async (c) => {
   if (setParts.length === 0) return c.json({ error: 'No valid fields to update' }, 400);
   try {
     await c.env.sorc_db.prepare(`UPDATE users SET ${setParts.join(', ')}, updated_at = ? WHERE id = ?`).bind(...values, new Date().toISOString(), user.id).run();
-    const updatedUser = await c.env.sorc_db.prepare('SELECT * FROM users WHERE id = ?').bind(user.id).first();
+    const updatedUser = await c.env.sorc_db.prepare(
+      'SELECT id, username, display_name, first_name, surname, prefix, suffix, bio, avatar, website, social_twitter, social_twitch, signature, privacy_email, role, community_points, user_id, join_date, updated_at FROM users WHERE id = ?'
+    ).bind(user.id).first();
     return c.json({ success: true, user: updatedUser });
   } catch (error: any) {
     return c.json({ error: 'Failed to update profile', details: error.message }, 500);
@@ -473,8 +478,12 @@ app.post('/api/admin/invitations/respond', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const { accept } = await c.req.json();
   try {
+    const fresh = await c.env.sorc_db.prepare('SELECT admin_invited, community_points FROM users WHERE id = ?').bind(user.id).first() as any;
+    if (!fresh || !(fresh.admin_invited === 1 || fresh.admin_invited === true)) {
+      return c.json({ error: 'No pending admin invitation.' }, 403);
+    }
     if (accept) {
-      const newCp = (user.community_points || 0) + 10000;
+      const newCp = Math.min((fresh.community_points || 0) + 10000, 999999);
       await c.env.sorc_db.prepare(
         `UPDATE users SET role = 'ADMIN', community_points = ?, admin_invited = 0, updated_at = ? WHERE id = ?`
       ).bind(newCp, new Date().toISOString(), user.id).run();
@@ -685,6 +694,9 @@ app.put('/api/forum/posts/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const { body } = await c.req.json();
   if (!body) return c.json({ error: 'Body required' }, 400);
+  const editCheck = filterContent(body.trim());
+  if (editCheck.blocked) return c.json({ error: editCheck.reason }, 400);
+  const filteredBody = editCheck.filtered;
   try {
     const post = await c.env.sorc_db.prepare('SELECT * FROM posts WHERE id = ?').bind(postId).first() as any;
     if (!post) {
@@ -692,11 +704,11 @@ app.put('/api/forum/posts/:id', authMiddleware, async (c) => {
       const thread = await c.env.sorc_db.prepare('SELECT * FROM threads WHERE id = ?').bind(postId).first() as any;
       if (!thread) return c.json({ error: 'Post not found' }, 404);
       if (thread.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
-      await c.env.sorc_db.prepare('UPDATE threads SET body = ?, updated_at = ? WHERE id = ?').bind(body, new Date().toISOString(), postId).run();
+      await c.env.sorc_db.prepare('UPDATE threads SET body = ?, updated_at = ? WHERE id = ?').bind(filteredBody, new Date().toISOString(), postId).run();
       return c.json({ success: true });
     }
     if (post.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
-    await c.env.sorc_db.prepare('UPDATE posts SET body = ?, updated_at = ? WHERE id = ?').bind(body, new Date().toISOString(), postId).run();
+    await c.env.sorc_db.prepare('UPDATE posts SET body = ?, updated_at = ? WHERE id = ?').bind(filteredBody, new Date().toISOString(), postId).run();
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Failed to edit post', details: error.message }, 500);
@@ -804,11 +816,15 @@ app.post('/api/users/:uid/report', authMiddleware, async (c) => {
 const adminMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Unauthorized' }, 401);
-  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE auth_key = ?').bind(authKey).first() as any;
+  const user = await c.env.sorc_db.prepare(
+    `SELECT * FROM users WHERE auth_key = ? AND (banned IS NULL OR banned = 0)
+     AND (suspended_until IS NULL OR suspended_until < datetime('now'))`
+  ).bind(authKey).first() as any;
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
-  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
-  const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
-  if (!OWNER_EMAILS.includes(user.email) && !ADMIN_EMAILS.includes(user.email)) return c.json({ error: 'Not authorized' }, 403);
+  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at) < new Date()) {
+    return c.json({ error: 'Session expired', expired: true }, 401);
+  }
+  if (user.role !== 'ADMIN' && user.role !== 'OWNER') return c.json({ error: 'Not authorized' }, 403);
   c.set('user', user);
   await next();
 };
@@ -834,7 +850,7 @@ app.post('/api/admin/reports/:id/dismiss', adminMiddleware, async (c) => {
 
 app.get('/api/admin/members', adminMiddleware, async (c) => {
   const search = c.req.query('search') || '';
-  const limit = parseInt(c.req.query('limit') || '100');
+  const limit = Math.min(parseInt(c.req.query('limit') || '100'), 200);
   try {
     let result;
     if (search) {
@@ -879,7 +895,8 @@ app.post('/api/admin/members/:uid/warn', adminMiddleware, async (c) => {
 app.post('/api/admin/members/:uid/suspend', adminMiddleware, async (c) => {
   const uid = c.req.param('uid');
   const { days } = await c.req.json();
-  const until = new Date(Date.now() + (days || 1) * 86400000).toISOString();
+  const safeDays = Math.min(Math.max(parseInt(days) || 1, 1), 365);
+  const until = new Date(Date.now() + safeDays * 86400000).toISOString();
   try {
     await c.env.sorc_db.prepare('UPDATE users SET suspended_until = ? WHERE id = ? OR username = ?').bind(until, uid, uid).run();
     return c.json({ success: true });
@@ -944,9 +961,11 @@ app.post('/api/gm/invitations', authMiddleware, async (c) => {
 app.post('/api/gm/invitations/respond', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const { accept } = await c.req.json().catch(() => ({} as any)) as any;
-  await c.env.sorc_db.prepare(
-    `ALTER TABLE users ADD COLUMN gm_invited INTEGER DEFAULT 0`
-  ).run().catch(() => {});
+  await c.env.sorc_db.prepare(`ALTER TABLE users ADD COLUMN gm_invited INTEGER DEFAULT 0`).run().catch(() => {});
+  const fresh = await c.env.sorc_db.prepare('SELECT gm_invited FROM users WHERE id = ?').bind(user.id).first() as any;
+  if (!fresh || !(fresh.gm_invited === 1 || fresh.gm_invited === true)) {
+    return c.json({ error: 'No pending GM invitation.' }, 403);
+  }
   const now = new Date().toISOString();
   if (accept) {
     await c.env.sorc_db.prepare(
@@ -955,9 +974,7 @@ app.post('/api/gm/invitations/respond', authMiddleware, async (c) => {
     ).bind(now, user.id).run();
     return c.json({ success: true, role: 'MASTER' });
   } else {
-    await c.env.sorc_db.prepare(
-      `UPDATE users SET gm_invited = 0, updated_at = ? WHERE id = ?`
-    ).bind(now, user.id).run();
+    await c.env.sorc_db.prepare(`UPDATE users SET gm_invited = 0, updated_at = ? WHERE id = ?`).bind(now, user.id).run();
     return c.json({ success: true, role: user.role });
   }
 });
@@ -1887,6 +1904,8 @@ app.get('/api/world-chat', authMiddleware, async (c) => {
 
 app.post('/api/world-chat', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const allowed = await checkRateLimit(c.env.sorc_db, `worldchat:${user.id}`, 8, 60);
+  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
   try {
     const { body } = await c.req.json() as any;
     if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
@@ -1938,6 +1957,8 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
 
 app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const respondAllowed = await checkRateLimit(c.env.sorc_db, `wcrespond:${user.id}`, 5, 60);
+  if (!respondAllowed) return c.json({ error: 'Slow down — too many responses.' }, 429);
   const msgId = c.req.param('msgId');
   try {
     const original = await c.env.sorc_db.prepare(
@@ -1992,7 +2013,8 @@ app.patch('/api/lobbies/:id/theme', authMiddleware, async (c) => {
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
   const { theme } = await c.req.json() as any;
-  if (!theme) return c.json({ error: 'Theme required.' }, 400);
+  const VALID_THEMES = ['default', 'terminal', 'veilwood', 'ember', 'arcane', 'lawful'];
+  if (!theme || !VALID_THEMES.includes(theme)) return c.json({ error: 'Invalid theme.' }, 400);
   await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_themes (lobby_id TEXT PRIMARY KEY, theme TEXT NOT NULL)`).run();
   await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO lobby_themes (lobby_id, theme) VALUES (?, ?)`).bind(lobbyId, theme).run();
   return c.json({ success: true });
@@ -2004,6 +2026,8 @@ app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   const member = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first() as any;
   if (!member) return c.json({ error: 'Not a member of this lobby.' }, 403);
   if (member.is_muted) return c.json({ error: 'You are muted in this lobby.' }, 403);
+  const chatAllowed = await checkRateLimit(c.env.sorc_db, `lobbychat:${user.id}`, 20, 60);
+  if (!chatAllowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
   const { body } = await c.req.json() as any;
   if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
   if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
@@ -2301,7 +2325,7 @@ app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
 app.delete('/api/rooms/:id/messages', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const roomId = c.req.param('id');
-  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
   if (!room) return c.json({ error: 'Room not found.' }, 404);
   if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
   await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE room_id = ?`).bind(roomId).run();
@@ -2312,7 +2336,7 @@ app.delete('/api/rooms/:id/messages/:msgId', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const roomId = c.req.param('id');
   const msgId = c.req.param('msgId');
-  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
   if (!room) return c.json({ error: 'Room not found.' }, 404);
   if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
   await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE id = ? AND room_id = ?`).bind(msgId, roomId).run();
