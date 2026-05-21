@@ -586,7 +586,7 @@
     var currentLobby = null;
     var chatPollTimer = null;
     var lastMsgId = null;
-    var chatMemberRetried = false;
+
     var reportTargetUid = null;
     var reportTargetName = '';
     var selectedReportReason = null;
@@ -1120,7 +1120,6 @@
 
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
-      chatMemberRetried = false;
       leftLobbyIds.delete(lobbyId); // allow rejoining a lobby the user just left
       sessionStorage.setItem('activeLobbyId', lobbyId);
       history.pushState({ lobby: lobbyId }, '');
@@ -1365,18 +1364,12 @@
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
-        if (res.status === 403 && !chatMemberRetried) {
-          chatMemberRetried = true;
-          /* Re-join then retry — catches cases where is_member wasn't confirmed in openLobby */
-          fetch(API_URL + '/api/lobbies/join', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-            body: JSON.stringify({ lobby_id: lobbyId })
-          }).catch(function(){});
-          setTimeout(function() { loadChatMessages(lobbyId); }, 1500);
+        if (res.status === 403) {
+          /* Kicked or not a member — go back to list, don't rejoin */
+          backToList();
+          showToast('You have been removed from this lobby.');
           return;
         }
-        chatMemberRetried = false;
         if (data.lobby_status === 'closed') { handleLobbyClosed(); return; }
         /* Sync lobby theme for all members — host change propagates via poll */
         if (data.lobby_theme && data.lobby_theme !== lobbyTheme) {
