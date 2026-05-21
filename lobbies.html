@@ -2236,11 +2236,23 @@
             if (wb) wb.style.display = '';
           }
         }
-        // Show input only for active lobby hosts
+        // Hosts get full input; non-hosts get LFG:-only input
         if (inputRow && currentUser) {
           var isActiveHost = !!(currentLobby && isCreator);
           if (!isActiveHost && isPrivileged()) isActiveHost = true;
-          inputRow.style.display = isActiveHost ? 'flex' : 'none';
+          inputRow.style.display = 'flex';
+          var wcInput = document.getElementById('worldChatInput');
+          if (wcInput) {
+            if (isActiveHost) {
+              wcInput.placeholder = 'Post to world (LFM: or LFG:)...';
+              wcInput.maxLength = 400;
+              wcInput.dataset.hostOnly = 'false';
+            } else {
+              wcInput.placeholder = 'LFG:YourTag (e.g. LFG:LVL5-Lock-Hag)';
+              wcInput.maxLength = 40;
+              wcInput.dataset.hostOnly = 'true';
+            }
+          }
         }
       } catch(e) {}
     }
@@ -2250,6 +2262,12 @@
       if (!input || !currentUser) return;
       var body = input.value.trim();
       if (!body) return;
+
+      // Non-hosts may only post LFG: tags
+      if (input.dataset.hostOnly === 'true') {
+        if (!/^LFG:/i.test(body)) { showToast('Only LFG: posts are allowed. Start your message with LFG:', true); return; }
+        if (body.length > 40) { showToast('LFG: tags must be 40 characters or less.', true); return; }
+      }
 
       // SUM:Name command — resolve to UID and send summon directly
       var sumMatch = body.match(/^SUM:(.+)$/i);
