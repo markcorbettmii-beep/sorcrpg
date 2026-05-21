@@ -814,6 +814,7 @@
       loadLobbies();
       loadWorldChat();
       startWorldChatPoll();
+      startSummonPoll();
     }
 
     async function loadLobbies() {
@@ -2295,7 +2296,7 @@
 
     async function checkPendingSummons() {
       if (!currentUser || !currentUser.authKey) return;
-      if (document.getElementById('summonInModal').style.display !== 'none') return;
+      if (document.getElementById('activeSummonCard')) return; // already showing one
       try {
         var res = await fetch(API_URL + '/api/summons/pending', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
@@ -2304,10 +2305,20 @@
         var s = summons[0];
         activeSummonId = s.id;
         activeSummonLobbyId = s.lobby_id;
-        var noteText = s.note ? ' Note from host: "' + s.note + '"' : '';
-        document.getElementById('summonInDesc').textContent =
-          s.from_name + ' is summoning you to "' + s.lobby_name + '".' + noteText + ' Do you accept?';
-        document.getElementById('summonInModal').style.display = 'flex';
+        var noteText = s.note ? '<div style="color:#aaa;font-size:0.76rem;margin:0.25rem 0 0;">"' + esc(s.note) + '"</div>' : '';
+        var card = document.createElement('div');
+        card.id = 'activeSummonCard';
+        card.style.cssText = 'background:#0d0a18;border:1.5px solid #d4af37;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0.5rem 0.25rem;flex-shrink:0;';
+        card.innerHTML =
+          '<div style="color:#d4af37;font-weight:bold;font-size:0.82rem;margin-bottom:0.25rem;">&#9889; ' + esc(s.from_name) + ' is summoning you to <em>' + esc(s.lobby_name) + '</em></div>' +
+          noteText +
+          '<div style="display:flex;gap:0.5rem;margin-top:0.5rem;">' +
+            '<button onclick="respondSummon(true)" style="flex:1;padding:6px;background:#1a5a1a;color:#90ee90;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:0.82rem;">Accept</button>' +
+            '<button onclick="respondSummon(false)" style="flex:1;padding:6px;background:#3a0d0d;color:#e08080;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:0.82rem;">Decline</button>' +
+          '</div>';
+        // Inject at top of whichever world chat container is visible
+        var wcEl = document.getElementById('worldChatMessages');
+        if (wcEl) wcEl.insertBefore(card, wcEl.firstChild);
       } catch(e) {}
     }
 
@@ -2317,7 +2328,8 @@
       var lobbyId = activeSummonLobbyId;
       activeSummonId = null;
       activeSummonLobbyId = null;
-      document.getElementById('summonInModal').style.display = 'none';
+      var card = document.getElementById('activeSummonCard');
+      if (card) card.remove();
       try {
         var res = await fetch(API_URL + '/api/summons/' + summonId + '/respond', {
           method: 'POST',
@@ -2329,7 +2341,7 @@
           showToast('Joining lobby...');
           setTimeout(function() { openLobby(data.lobby_id); }, 500);
         } else if (!accept) {
-          showToast('Summon denied.');
+          showToast('Summon declined.');
         } else {
           showToast(data.error || 'Could not respond.', true);
         }
@@ -2360,6 +2372,7 @@
       renderListView();
       loadWorldChat();
       startWorldChatPoll();
+      startSummonPoll();
     };
 
     render();
