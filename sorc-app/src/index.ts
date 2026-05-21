@@ -2071,6 +2071,58 @@ app.delete('/api/lobbies/:id/messages/:msgId', authMiddleware, async (c) => {
   return c.json({ success: true });
 });
 
+// ===== LOBBY DIRECT MESSAGES =====
+app.get('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member.' }, 403);
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_dms (
+      id TEXT PRIMARY KEY, lobby_id TEXT NOT NULL, sender_uid TEXT NOT NULL,
+      sender_name TEXT NOT NULL, recipient_uid TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL
+    )`).run();
+  } catch {}
+  const result = await c.env.sorc_db.prepare(
+    `SELECT * FROM lobby_dms WHERE lobby_id = ? AND (sender_uid = ? OR recipient_uid = ?) ORDER BY created_at DESC LIMIT 80`
+  ).bind(lobbyId, user.id, user.id).all();
+  return c.json({ messages: (result.results || []).reverse() });
+});
+
+app.post('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const allowed = await checkRateLimit(c.env.sorc_db, `lobby_dm:${user.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Too many messages. Slow down.' }, 429);
+  const isMember = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member.' }, 403);
+  const { to_uid, body } = await c.req.json();
+  if (!to_uid || !body || typeof body !== 'string') return c.json({ error: 'to_uid and body required.' }, 400);
+  const trimmed = body.trim().slice(0, 400);
+  if (!trimmed) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (to_uid === user.id) return c.json({ error: 'Cannot message yourself.' }, 400);
+  const recipient = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, to_uid).first();
+  if (!recipient) return c.json({ error: 'Recipient is not in this lobby.' }, 404);
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_dms (
+      id TEXT PRIMARY KEY, lobby_id TEXT NOT NULL, sender_uid TEXT NOT NULL,
+      sender_name TEXT NOT NULL, recipient_uid TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL
+    )`).run();
+  } catch {}
+  const senderName = user.display_name || user.username;
+  const filtered = filterContent(trimmed);
+  await c.env.sorc_db.prepare(
+    `INSERT INTO lobby_dms (id, lobby_id, sender_uid, sender_name, recipient_uid, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), lobbyId, user.id, senderName, to_uid, filtered, new Date().toISOString()).run();
+  return c.json({ success: true });
+});
+
 app.patch('/api/lobbies/:id/members/:uid/mute', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
