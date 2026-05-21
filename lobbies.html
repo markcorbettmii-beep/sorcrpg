@@ -783,8 +783,9 @@
         '&#9876; Ready Check rules: you have 20 seconds to respond - no response counts as Not Ready',
         '&#127514; To launch a Campaign Room, all members must confirm Ready and the party needs at least 2 players plus a GM',
         '&#128081; OWN can promote any member to Host from their dropdown - AD can do the same except on OWN members',
-        '&#9878; Your lobby role badge is set by your assessment - assess on the GM track to display GM in lobbies, or the PC track to display PC',
-        '&#9878; If your lobby role looks wrong, go to your Profile and reassess on the correct track - GM or PC',
+        '&#9878; Your role badge is set by your assessment track - GM track (9+) grants GM everywhere, PC track grants PC - failing drops you to Civilian',
+        '&#9878; Assessments expire after 30 days - you will be blocked from lobbies until you reassess and restore your role',
+        '&#9878; Failing a reassessment downgrades your role - GM becomes PC or Civilian depending on score, so study before you retake',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -1078,6 +1079,8 @@
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Lobby created! Code: ' + (data.lobby_code || '');
           setTimeout(function() { openLobby(data.lobby_id); }, 600);
+        } else if (data.needs_reassess) {
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#d4af37;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
     };
@@ -1134,6 +1137,8 @@
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Joined!';
           setTimeout(function() { openLobby(data.lobby_id); }, 400);
+        } else if (data.needs_reassess) {
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#d4af37;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
     };

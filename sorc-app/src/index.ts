@@ -1266,6 +1266,8 @@ const ASSESSMENT_QUESTIONS = [
   { q: "The maximum load a character can carry is determined by which formula?", options: ["STR x 10 lbs", "STR x 15 lbs", "STR x 20 lbs", "STR x 25 lbs"], answer: 1, page: 5 },
 ];
 
+const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 function calcSorcRole(score: number, gmTrack: boolean): string {
   if (score < 6) return 'FAIL';
   if (gmTrack && score >= 9) return 'GM-ADV';
@@ -1279,7 +1281,14 @@ app.get('/api/assess', authMiddleware, async (c) => {
   const result = await c.env.sorc_db.prepare(
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
-  return c.json({ assessment: result || null });
+  let expired = false;
+  let expires_at: string | null = null;
+  if (result) {
+    const takenMs = new Date(result.taken_at).getTime();
+    expires_at = new Date(takenMs + ASSESSMENT_EXPIRY_MS).toISOString();
+    expired = Date.now() > takenMs + ASSESSMENT_EXPIRY_MS;
+  }
+  return c.json({ assessment: result || null, expired, expires_at, needs_reassess: !!(user.needs_reassess) });
 });
 
 app.get('/api/assess/questions', authMiddleware, async (c) => {
@@ -1306,7 +1315,11 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   const existing = await c.env.sorc_db.prepare(
     `SELECT id FROM assessments WHERE user_id = ?`
   ).bind(user.id).first();
-  if (existing) return c.json({ error: 'Already assessed. Use reassess to retake.' }, 400);
+  /* Allow overwrite when flagged for reassessment (expiry or incompetence) */
+  if (existing && !user.needs_reassess) return c.json({ error: 'Already assessed. Use reassess to retake.' }, 400);
+  if (existing && user.needs_reassess) {
+    await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
+  }
 
   const { answers, gm_track } = await c.req.json() as any;
   if (!Array.isArray(answers) || answers.length !== 10) {
@@ -1328,7 +1341,18 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
 
   if (role === 'FAIL') {
-    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low. Study the rules and reassess.' });
+    /* FAIL downgrades to Civilian everywhere — record it and update user */
+    try {
+      await c.env.sorc_db.prepare(
+        `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(id, user.id, score, 'FAIL', gm_track ? 1 : 0, now).run();
+      if (!isPrivileged(user)) {
+        await c.env.sorc_db.prepare(
+          `UPDATE users SET role = 'CIVILIAN', sorc_role = NULL, needs_reassess = 0, updated_at = ? WHERE id = ?`
+        ).bind(now, user.id).run();
+      }
+    } catch(_) {}
+    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
   }
 
   try {
@@ -1528,7 +1552,19 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   const assessment = await c.env.sorc_db.prepare(
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
-  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must complete the assessment before creating a lobby.' }, 403);
+  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must complete the assessment before creating a lobby.', needs_reassess: true }, 403);
+
+  if (!isPrivileged(user) && assessment) {
+    const age = Date.now() - new Date(assessment.taken_at).getTime();
+    if (age > ASSESSMENT_EXPIRY_MS) {
+      await c.env.sorc_db.prepare(`UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
+      return c.json({ error: 'Your assessment has expired (30 days). Please reassess to create lobbies.', needs_reassess: true }, 403);
+    }
+  }
+
+  if (user.needs_reassess && !isPrivileged(user)) {
+    return c.json({ error: 'You are flagged for reassessment. Please reassess before creating lobbies.', needs_reassess: true }, 403);
+  }
 
   const { name, box_set_code, is_private } = await c.req.json() as any;
   if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
@@ -1627,12 +1663,19 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   const privileged = isPrivileged(user);
 
   const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
-  if (!assessment && !privileged) return c.json({ error: 'You must complete the assessment before joining a lobby.' }, 403);
+  if (!assessment && !privileged) return c.json({ error: 'You must complete the assessment before joining a lobby.', needs_reassess: true }, 403);
 
-  // Warn about reassess requirement but don't hard-block
+  if (!privileged && assessment) {
+    const age = Date.now() - new Date(assessment.taken_at).getTime();
+    if (age > ASSESSMENT_EXPIRY_MS) {
+      await c.env.sorc_db.prepare(`UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
+      return c.json({ error: 'Your assessment has expired (30 days). Please reassess to rejoin lobbies.', needs_reassess: true }, 403);
+    }
+  }
+
   if (user.needs_reassess && !privileged) {
     return c.json({
-      error: 'You have been flagged for reassessment due to an incompetence report. Please reassess before joining lobbies.',
+      error: 'You are flagged for reassessment. Please reassess before joining lobbies.',
       needs_reassess: true
     }, 403);
   }

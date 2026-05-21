@@ -137,7 +137,11 @@
             saved.sorc_role = data.assessment.role_granted;
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
-          showResult(data.assessment, true);
+          if (data.expired || data.needs_reassess) {
+            showResult(data.assessment, true, true);
+          } else {
+            showResult(data.assessment, true, false);
+          }
         } else {
           loadQuiz();
         }
@@ -255,11 +259,20 @@
           try {
             var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
             saved.sorc_role = data.role;
+            saved.role = data.site_role || saved.role;
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
-          showResult({ score: data.score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false);
+          showResult({ score: data.score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false, false);
         } else if (data.role === 'FAIL') {
-          msgEl.textContent = 'Score: ' + data.score + '/10 - Too low to pass. Study the rules and try again.';
+          /* Downgraded to Civilian — update local cache and reload quiz for retry */
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = null;
+            saved.role = 'CIVILIAN';
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          msgEl.style.color = '#c0392b';
+          msgEl.textContent = data.message || 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess.';
           submitBtn.disabled = false;
         } else {
           msgEl.textContent = data.error || 'Submission failed.';
@@ -271,7 +284,7 @@
       }
     }
 
-    function showResult(assessment, existing) {
+    function showResult(assessment, existing, expired) {
       var app = document.getElementById('assessApp');
       var role = assessment.role_granted;
       var score = assessment.score;
@@ -290,18 +303,23 @@
         '</div>';
       }
 
-      var gmNote = isGM ? '<p class="result-note">&#9733; GM Advanced role granted. Awaiting GM Codex for further GM assessment. You may now create and join lobbies.</p>' : '';
-      var pcNote = !isGM ? '<p class="result-note">You have been assessed as <strong style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</strong>. You may now join and create lobbies. Study more and reassess to advance your rating.</p>' : '';
+      var expiryBanner = expired
+        ? '<div style="background:#3a0d0d;border:1px solid #c0392b;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#e08080;font-size:0.88rem;">&#9888; Your assessment has expired. You must reassess to re-enter lobbies. Your role has been paused — reassess now to restore it.</div>'
+        : '';
+      var gmNote = isGM ? '<p class="result-note">&#9733; GM Advanced role granted. You may now create and join lobbies as a GM.</p>' : '';
+      var pcNote = (!isGM && role !== 'FAIL') ? '<p class="result-note">You have been assessed as <strong style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</strong>. You may now join and create lobbies. Study more and reassess to advance your rating.</p>' : '';
+      var reassessLabel = expired ? 'Reassess Now' : 'Reassess';
 
       app.innerHTML =
         '<div class="result-card">' +
+          expiryBanner +
           '<h2>' + (existing ? 'Your Current Role' : 'Assessment Complete') + '</h2>' +
           '<div class="result-role" style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</div>' +
           '<div class="result-score">' + score + '/10 correct</div>' +
           gmNote + pcNote +
           '<div class="result-links">' +
-            '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>' +
-            '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)">Reassess</button>' +
+            (expired ? '' : '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>') +
+            '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)" style="' + (expired ? 'border-color:#d4af37;color:#d4af37;' : '') + '">' + reassessLabel + '</button>' +
           '</div>' +
         '</div>' +
         (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review the questions and answers:</p>' + qaHtml + '</div>' : '');
