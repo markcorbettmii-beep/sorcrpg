@@ -2020,9 +2020,22 @@
           msgEl.innerHTML = '<div class="world-chat-empty">No world chat messages yet. Active lobby hosts can post here.</div>';
         } else {
           var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
+          // Build name→ordered UIDs map for disambiguation
+          var nameUids = {};
+          msgs.forEach(function(m) {
+            if (!m.sender_uid || !m.sender_name) return;
+            if (!nameUids[m.sender_name]) nameUids[m.sender_name] = [];
+            if (nameUids[m.sender_name].indexOf(m.sender_uid) === -1) nameUids[m.sender_name].push(m.sender_uid);
+          });
           msgEl.innerHTML = msgs.map(function(m) {
             var isHost = !!m.sender_lobby_name;
             var nameClass = 'wmsg-name' + (isHost ? ' is-host' : '');
+            // Append (N) if multiple UIDs share this display name
+            var uidsForName = m.sender_uid && m.sender_name ? nameUids[m.sender_name] : null;
+            var displayName = m.sender_name;
+            if (uidsForName && uidsForName.length > 1) {
+              displayName = m.sender_name + '(' + (uidsForName.indexOf(m.sender_uid) + 1) + ')';
+            }
             var lobbyTag = m.sender_lobby_name ? '<span class="wmsg-lobby">[' + esc(m.sender_lobby_name) + ']</span>' : '';
             /* Respond messages: extract username from embedded URL for char-sheet link,
                strip the 📋 prefix and trailing raw URL before rendering */
@@ -2037,22 +2050,22 @@
             var isSelf = currentUser && m.sender_uid === currentUser.id;
             var hostLobbyId = (currentLobby && hasGMRights) ? currentLobby.id : myActiveLobbyId;
             var canSummon = !!(hostLobbyId && !isSelf && m.sender_uid);
-            var isSummonConfirm = !!(respondMatch && rawBody.indexOf('confirmed for summon') >= 0);
+            var isSummonConfirm = !!(respondMatch && rawBody.indexOf('confirmed') >= 0);
             var summonOnclick = (isSummonConfirm && canSummon && m.sender_uid)
-              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(m.sender_name) + "','" + esc(hostLobbyId) + "')"
+              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(displayName) + "','" + esc(hostLobbyId) + "')"
               : null;
             var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick);
             var nameEl;
             if (!isSelf && m.sender_uid) {
               var wcItems = '';
-              if (canSummon) wcItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(m.sender_name) + '\',\'' + esc(hostLobbyId) + '\')">&#9889; Summon</button>';
+              if (canSummon) wcItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.sender_uid) + '\',\'' + esc(displayName) + '\',\'' + esc(hostLobbyId) + '\')">&#9889; Summon</button>';
               wcItems += '<a href="public-profile.html?username=' + encodeURIComponent(m.sender_name||'') + '" onclick="event.stopPropagation()">Profile</a>';
               nameEl = '<span class="member-name-wrap" style="display:inline-flex;vertical-align:middle;">' +
-                '<button class="member-name-btn ' + nameClass + '" style="font-size:0.77rem;" onclick="toggleMemberMenu(event,this)">' + esc(m.sender_name) + ' &#8964;</button>' +
+                '<button class="member-name-btn ' + nameClass + '" style="font-size:0.77rem;" onclick="toggleMemberMenu(event,this)">' + esc(displayName) + ' &#8964;</button>' +
                 '<div class="member-name-menu">' + wcItems + '</div>' +
               '</span>';
             } else {
-              nameEl = '<span class="' + nameClass + '">' + esc(m.sender_name || 'Unknown') + '</span>';
+              nameEl = '<span class="' + nameClass + '">' + esc(displayName || 'Unknown') + '</span>';
             }
             if (isActivity) {
               return '<div class="world-msg is-activity">&#8894; ' + bodyHtml + '<span class="wmsg-time">' + timeAgo(m.created_at) + '</span></div>';
