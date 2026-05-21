@@ -1764,19 +1764,6 @@
         departed.forEach(function(m) {
           var name = m.display_name || m.username || 'Unknown';
           var isAbandon = abandonedUids.has(m.user_id);
-          if (!isAbandon) {
-            var initials = name.charAt(0).toUpperCase();
-            var ghost = document.createElement('div');
-            ghost.className = 'member-row member-row-ghost';
-            ghost.innerHTML =
-              '<div class="member-avatar" style="opacity:0.4;">' + initials + '</div>' +
-              '<div class="member-info">' +
-                '<span style="text-decoration:line-through;color:#444;font-size:0.85rem;">' + esc(name) + '</span>' +
-                '<div style="font-size:0.68rem;color:#333;margin-top:1px;">left the lobby</div>' +
-              '</div>';
-            membersEl.appendChild(ghost);
-            setTimeout(function() { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 4000);
-          }
           if (isAbandon) abandonedUids.delete(m.user_id);
           var activityText = isAbandon
             ? '⬡ ' + name + ' has abandoned the lobby.'
@@ -2583,7 +2570,7 @@
           '<button class="sum-accept-btn" onclick="respondSummon(true)">Accept</button>' +
           '<button class="sum-decline-btn" onclick="respondSummon(false)">Decline</button>';
         var wcEl = document.getElementById('worldChatMessages');
-        if (wcEl) wcEl.insertBefore(card, wcEl.firstChild);
+        if (wcEl && wcEl.parentNode) wcEl.parentNode.insertBefore(card, wcEl);
       } catch(e) {}
     }
 
