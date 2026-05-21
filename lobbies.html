@@ -335,6 +335,11 @@
     .lfm-badge:hover { background: #2a1a60; color: #d4b8ff; }
     .lfg-badge { display: inline-block; background: #001a10; color: #50d080; border: 1px solid #1a6a40; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-right: 0.2rem; transition: background 0.15s; vertical-align: middle; }
     .lfg-badge:hover { background: #002a1a; color: #70f0a0; }
+    .sum-badge { display: inline-block; background: #1a1200; color: #d4af37; border: 1px solid #a07820; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; margin-right: 0.2rem; vertical-align: middle; }
+    .sum-accept-btn { display: inline-block; background: #1a5a1a; color: #90ee90; border: 1px solid #2a8a2a; border-radius: 4px; padding: 1px 8px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-left: 0.4rem; vertical-align: middle; }
+    .sum-accept-btn:hover { background: #236b23; }
+    .sum-decline-btn { display: inline-block; background: #3a0d0d; color: #e08080; border: 1px solid #6a2020; border-radius: 4px; padding: 1px 8px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-left: 0.25rem; vertical-align: middle; }
+    .sum-decline-btn:hover { background: #5a1010; }
     .world-chat-input-row { display: flex; gap: 0.5rem; padding: 0.55rem 0.9rem; border-top: 1px solid #2a1a4a; }
     .world-chat-input { flex: 1; padding: 6px 10px; background: #0a0818; border: 1px solid #2a1a4a; border-radius: 6px; color: #c0a8e8; font-size: 0.83rem; }
     .world-chat-input:focus { outline: none; border-color: #6030b0; }
@@ -1993,11 +1998,14 @@
     };
 
     // ===== WORLD CHAT =====
-    function parseWorldBody(body, msgId) {
-      // Render LFM: and LFG: as clickable badges
+    function parseWorldBody(body, msgId, summonOnclick) {
+      var sumBadgeOnclick = summonOnclick
+        ? summonOnclick
+        : "respondToWorldMsg('" + msgId + "','SUM')";
       return esc(body)
         .replace(/LFM:/g, '<span class="lfm-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFM\')">LFM:</span>')
-        .replace(/LFG:/g, '<span class="lfg-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFG\')">LFG:</span>');
+        .replace(/LFG:/g, '<span class="lfg-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFG\')">LFG:</span>')
+        .replace(/SUM:/g, '<span class="sum-badge" onclick="' + sumBadgeOnclick.replace(/"/g, '&quot;') + '">SUM:</span>');
     }
 
     async function loadWorldChat() {
@@ -2026,10 +2034,14 @@
             var isActivity = rawBody.startsWith('⬡ ');
             if (respondMatch) rawBody = rawBody.replace(/^📋\s*/, '').replace(/\s*[—\-]+\s*https?:\/\/\S+$/, '');
             if (isActivity) rawBody = rawBody.replace(/^⬡\s*/, '');
-            var bodyHtml = parseWorldBody(rawBody, m.id);
             var isSelf = currentUser && m.sender_uid === currentUser.id;
             var hostLobbyId = (currentLobby && hasGMRights) ? currentLobby.id : myActiveLobbyId;
             var canSummon = !!(hostLobbyId && !isSelf && m.sender_uid);
+            var isSummonConfirm = !!(respondMatch && rawBody.indexOf('confirmed for summon') >= 0);
+            var summonOnclick = (isSummonConfirm && canSummon && m.sender_uid)
+              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(m.sender_name) + "','" + esc(hostLobbyId) + "')"
+              : null;
+            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick);
             var nameEl;
             if (!isSelf && m.sender_uid) {
               var wcItems = '';
