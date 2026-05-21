@@ -1644,38 +1644,42 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
 app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
-  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
-
-  // One-time migration: add commandeered_from column if not yet present
   try {
-    await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
-  } catch (_) {}
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
 
-  const now = new Date().toISOString();
-  await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
+    // One-time migration: add commandeered_from column if not yet present
+    try {
+      await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
+    } catch (_) {}
 
-  if (lobby.creator_uid === user.id) {
-    const next = await c.env.sorc_db.prepare(
-      `SELECT lm.user_id FROM lobby_members lm
-       LEFT JOIN box_set_codes bsc ON bsc.owner_uid = lm.user_id
-       WHERE lm.lobby_id = ?
-       ORDER BY CASE WHEN bsc.owner_uid IS NOT NULL THEN 0 ELSE 1 END ASC, lm.joined_at ASC
-       LIMIT 1`
-    ).bind(lobbyId).first() as any;
-    if (next) {
-      await c.env.sorc_db.prepare(
-        `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
-      ).bind(next.user_id, user.username, now, lobbyId).run();
-    } else {
-      await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
-        .bind(now, lobbyId).run();
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
+
+    if (lobby.creator_uid === user.id) {
+      const next = await c.env.sorc_db.prepare(
+        `SELECT lm.user_id FROM lobby_members lm
+         LEFT JOIN box_set_codes bsc ON bsc.owner_uid = lm.user_id
+         WHERE lm.lobby_id = ?
+         ORDER BY CASE WHEN bsc.owner_uid IS NOT NULL THEN 0 ELSE 1 END ASC, lm.joined_at ASC
+         LIMIT 1`
+      ).bind(lobbyId).first() as any;
+      if (next) {
+        await c.env.sorc_db.prepare(
+          `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
+        ).bind(next.user_id, user.username, now, lobbyId).run();
+      } else {
+        await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
+          .bind(now, lobbyId).run();
+      }
     }
-  }
 
-  const newCount = Math.max(0, (lobby.member_count || 1) - 1);
-  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
-  return c.json({ success: true });
+    const newCount = Math.max(0, (lobby.member_count || 1) - 1);
+    await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to leave lobby.', details: error.message }, 500);
+  }
 });
 
 
