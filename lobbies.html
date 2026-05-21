@@ -722,6 +722,8 @@
         '&#128172; New: Lobby Messages tab - send private messages to any lobby member directly. Use the dropdown next to their name',
         '&#128228; New: Messages are lobby-scoped and private - Corbett sees yours, you see his, nobody else does',
         '&#128101; New: World Chat names no longer need a profile tap - names are clean and the summon flow is built right into chat',
+        '&#127925; New: Lobby theme sounds carry over to character sheet view - music keeps playing while you browse a member\'s sheet',
+        '&#128081; New: Host crown appears next to the current host\'s name - transfers instantly when a new host is promoted',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -1449,11 +1451,15 @@
       }
       if (btn) { btn.textContent = 'Clear Chat'; btn.dataset.confirm = '0'; }
       try {
-        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+        var r = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
           method: 'DELETE',
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
-        loadChatMessages(currentLobby.id);
+        if (r.ok) {
+          lastMsgId = null;
+          var msgEl = document.getElementById('chatMessages');
+          if (msgEl) msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>';
+        }
       } catch(e) {}
     };
 
