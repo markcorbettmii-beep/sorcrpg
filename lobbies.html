@@ -168,7 +168,7 @@
     .chat-input-row { display: flex; gap: 0.5rem; padding: 0.6rem 0.75rem; border-top: 2px solid #333; flex-shrink: 0; }
     .chat-input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.85rem; }
     .chat-input:focus { outline: none; border-color: #555; }
-    .chat-send { padding: 7px 14px; background: #d0021b; color: #fff; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: bold; cursor: pointer; }
+    .chat-send { padding: 10px 16px; min-height: 44px; background: #d0021b; color: #fff; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: bold; cursor: pointer; }
     .chat-send:hover { background: #a50013; }
 
     /* ===== MEMBERS PANEL ===== */
@@ -235,13 +235,9 @@
     .modal-cancel:hover { border-color: #888 !important; color: #e0cfc0; }
 
     /* ===== LEAVE BTN ===== */
-    .leave-btn { padding: 6px 14px; background: none; border: 1px solid #5a1a1a; color: #d0021b; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+    .leave-btn { padding: 10px 16px; min-height: 44px; background: none; border: 1px solid #5a1a1a; color: #d0021b; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
     .leave-btn:hover { background: #1a0505; }
     #lobbyHeaderBtns { flex-wrap: wrap; }
-    @media (max-width: 480px) {
-      #lobbyHeaderBtns { flex-direction: column; align-items: stretch; }
-      #lobbyHeaderBtns .leave-btn, #lobbyHeaderBtns .l-btn { width: 100%; text-align: center; }
-    }
 
     /* ── Ready Check overlay ─────────────────────── */
     .rc-overlay { position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);backdrop-filter:blur(2px); }
@@ -2056,13 +2052,14 @@
       if (!currentLobby) return;
       var lobbyId = currentLobby.id;
       var myName = currentUser ? (currentUser.display_name || currentUser.username || 'A player') : 'A player';
-      // Post departure activity before leaving (while still authenticated)
+      // Post departure activity FIRST and await it — must arrive before the leave DELETE
+      // so the member check on the messages endpoint still passes
       try {
-        fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
+        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ body: '⬡ ' + myName + ' has left the lobby and may return at will.' })
-        }).catch(function(){});
+        });
       } catch(e) {}
       leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
@@ -2089,13 +2086,13 @@
       if (!currentLobby || !currentUser) return;
       var lobbyId = currentLobby.id;
       var myName = currentUser.display_name || currentUser.username || 'A player';
-      // Post departure activity before leaving
+      // Post departure activity FIRST and await it
       try {
-        fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
+        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ body: '⬡ ' + myName + ' has abandoned the lobby.' })
-        }).catch(function(){});
+        });
       } catch(e) {}
       abandonedUids.add(currentUser.id);
       leftLobbyIds.add(lobbyId);
