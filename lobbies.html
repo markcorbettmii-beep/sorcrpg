@@ -1219,7 +1219,9 @@
         }
         trackJoinedLobby(lobbyId);
         currentLobby = data.lobby;
+        // Seed prevMemberMap from the initial load so departures before the first poll are detected
         prevMemberMap = {};
+        (data.members || []).forEach(function(m) { prevMemberMap[m.user_id] = m; });
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
         hasGMRights = isCreator || isPrivileged();
         document.documentElement.classList.add('lobby-locked');
@@ -1473,10 +1475,14 @@
             return '<div class="chat-msg activity-notice" id="lmsg-' + m.id + '">&#8894; ' + esc(actBody) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
           }
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+          var delBtn = hasGMRights
+            ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
+            : '';
           return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
             '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+            delBtn +
           '</div>';
         }).join('');
         if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
