@@ -1114,11 +1114,31 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Capture one face to JPEG
-  // Uses html2canvas onclone to strip all parent transforms before rendering,
-  // so the output is always a clean full-page 816x1056 image.
+  // Capture one face to JPEG.
+  // Resets transforms on live elements so html2canvas sees the true 816x1056
+  // layout, then restores everything after the canvas is built.
   function captureFace(faceEl, label, btn, btnLabel) {
-    var otherFace = (faceEl === front) ? back : front;
+    var otherFace  = (faceEl === front) ? back : front;
+    var sw         = document.getElementById('scaleWrap');
+    var fp         = document.querySelector('.flipper');
+
+    // Save
+    var svSW  = sw.style.transform;
+    var svFT  = fp.style.transform;
+    var svFS  = fp.style.transformStyle;
+    var svFce = faceEl.style.transform;
+    var svOth = otherFace.style.display;
+    var svVis = faceEl.style.visibility;
+
+    // Strip transforms so html2canvas renders at native 816x1056
+    sw.style.transform        = 'none';
+    fp.style.transform        = 'none';
+    fp.style.transformStyle   = 'flat';
+    faceEl.style.transform    = 'none';   // overrides .face.back rotateY
+    faceEl.style.visibility   = 'visible';
+    otherFace.style.display   = 'none';
+
+    void faceEl.offsetHeight; // force layout
 
     html2canvas(faceEl, {
       scale: 2,
@@ -1126,42 +1146,28 @@
       backgroundColor: '#f2ece0',
       width: 816,
       height: 1056,
-      logging: false,
-      onclone: function(clonedDoc) {
-        // Strip the viewport-scaling transform so html2canvas sees native size
-        var cw = clonedDoc.getElementById('scaleWrap');
-        if (cw) { cw.style.transform = 'none'; cw.style.transformOrigin = 'top left'; }
-
-        // Flatten the 3D flipper
-        var cf = clonedDoc.querySelector('.flipper');
-        if (cf) { cf.style.transform = 'none'; cf.style.transformStyle = 'flat'; }
-
-        // Make the target face render flat, upright, and exactly sheet-sized
-        var cFace = clonedDoc.getElementById(faceEl.id);
-        if (cFace) {
-          cFace.style.transform = 'none';
-          cFace.style.position = 'absolute';
-          cFace.style.top = '0';
-          cFace.style.left = '0';
-          cFace.style.width = '816px';
-          cFace.style.height = '1056px';
-          cFace.style.backfaceVisibility = 'visible';
-          cFace.style.webkitBackfaceVisibility = 'visible';
-        }
-
-        // Hide the other face entirely
-        var cOther = clonedDoc.getElementById(otherFace.id);
-        if (cOther) cOther.style.display = 'none';
-      }
+      logging: false
     }).then(function(canvas) {
+      sw.style.transform        = svSW;
+      fp.style.transform        = svFT;
+      fp.style.transformStyle   = svFS;
+      faceEl.style.transform    = svFce;
+      faceEl.style.visibility   = svVis;
+      otherFace.style.display   = svOth;
+
       var link = document.createElement('a');
       link.download = 'sorc-character-sheet-' + label + '.jpg';
       link.href = canvas.toDataURL('image/jpeg', 0.93);
       link.click();
       btn.textContent = btnLabel;
       btn.disabled = false;
-    }).catch(function(err) {
-      console.error('html2canvas error:', err);
+    }).catch(function() {
+      sw.style.transform        = svSW;
+      fp.style.transform        = svFT;
+      fp.style.transformStyle   = svFS;
+      faceEl.style.transform    = svFce;
+      faceEl.style.visibility   = svVis;
+      otherFace.style.display   = svOth;
       btn.textContent = btnLabel;
       btn.disabled = false;
     });
