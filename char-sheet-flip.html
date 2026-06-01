@@ -10,7 +10,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      width: 100%;
+      width: 100%; height: 100%;
       overflow: hidden;
       background: #111;
       margin: 0;
@@ -22,8 +22,9 @@
       align-items: stretch;
     }
 
-    /* Viewport sized by JS to exactly fit the scaled sheet - no dead space */
+    /* Viewport fills space between flip indicator and action bar */
     .sheet-viewport {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1099,22 +1100,26 @@
     }, DUR / 2);
   });
 
-  // Scale sheet and size the viewport to exactly match - eliminates dead space
+  // Scale sheet to fit viewport. When width is the limiting dimension (mobile
+  // embedded view), postMessage the ideal iframe height to the parent so the
+  // iframe can shrink to remove dead space above and below.
   function scaleToFit() {
     var wrap = document.getElementById('scaleWrap');
     var vp = document.querySelector('.sheet-viewport');
-    var vw = window.innerWidth;
-    var availH = window.innerHeight - 76; // minus indicator (30) + action bar (46)
-    var scale = Math.min(vw / 816, availH / 1056) * 0.97;
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = Math.min(wScale, hScale);
     wrap.style.transform = 'scale(' + scale + ')';
 
-    // Size the viewport to exactly the scaled sheet height - no black gaps
-    var scaledH = Math.ceil(1056 * scale);
-    vp.style.height = scaledH + 'px';
-
-    // Tell the parent iframe the total height needed so it can resize
-    var totalH = scaledH + 76;
-    try { window.parent.postMessage({ sorcSheetHeight: totalH }, '*'); } catch(e) {}
+    // Only resize the parent iframe when width-constrained (mobile).
+    // Height-constrained means the iframe already fits the sheet - no resize needed,
+    // and posting would cause a shrink feedback loop.
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 76;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
   }
 
   scaleToFit();
