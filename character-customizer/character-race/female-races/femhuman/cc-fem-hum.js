@@ -627,57 +627,16 @@ document.getElementById("randomBtn").addEventListener("click", function() {
 
 const showJpegBtn = document.getElementById("showJpegBtn");
 showJpegBtn.addEventListener("click", function() {
-  const win = window.open('', '_blank');
-  
-  setTimeout(() => {
-    const charCanvas = document.getElementById("finalCanvas");
-    const profileCanvas = document.createElement('canvas');
-    const profileCtx = profileCanvas.getContext('2d');
-    
-    profileCanvas.width = 2100;
-    profileCanvas.height = 3045;
-    
-    const profileSheet = new Image();
-    profileSheet.src = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
-    
-    profileSheet.onload = function() {
-      profileCtx.fillStyle = 'white';
-      profileCtx.fillRect(0, 0, profileCanvas.width, profileCanvas.height);
-      profileCtx.drawImage(profileSheet, 0, 0, profileCanvas.width, profileCanvas.height);
-      
-      const portraitX = 730;
-      const portraitY = 640;
-      const portraitWidth = 640;
-      const portraitHeight = 1000;
-      
-      profileCtx.drawImage(charCanvas, portraitX, portraitY, portraitWidth, portraitHeight);
-      const dataUrl = profileCanvas.toDataURL("image/jpeg", 0.92);
-      win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
-    };
-    
-    profileSheet.onerror = function() {
-      console.error('Failed to load profile sheet template');
-      win.document.write('<p>Error: Could not load profile sheet. Make sure sorc-blank-profile-page_20260519_113341_0000.png is in the assets folder.</p>');
-    };
-  }, 100);
+  const charCanvas = document.getElementById("finalCanvas");
+  const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
+  localStorage.setItem("sorc_portrait", portraitDataUrl);
+  window.open("../../../../char-sheet-flip.html", "_blank");
 });
 
 const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
 showBlankJpegBtn.addEventListener("click", function() {
-  const win = window.open('', '_blank');
-  
-  const blankImg = new Image();
-  blankImg.src = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
-  
-  blankImg.onload = function() {
-    const dataUrl = blankImg.src;
-    win.document.write('<img src="' + dataUrl + '" style="max-width:100%;">');
-  };
-  
-  blankImg.onerror = function() {
-    console.error('Failed to load blank profile page');
-    win.document.write('<p>Error: Could not load sorc-blank-profile-page_20260519_113341_0000.png. Make sure it is in the assets folder.</p>');
-  };
+  localStorage.removeItem("sorc_portrait");
+  window.open("../../../../char-sheet-flip.html", "_blank");
 });
 
 document.getElementById("toPage2Btn").addEventListener("click", function() {
