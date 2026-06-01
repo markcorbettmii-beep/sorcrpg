@@ -970,7 +970,7 @@
           <!-- BACK CENTER: Portrait + Currency + Experience -->
           <div class="col-mid">
             <p class="sec-title" style="width:100%;">Photo or Portrait</p>
-            <div class="portrait" style="height:260px;flex:none;aspect-ratio:unset;"><span>Photo or Portrait</span></div>
+            <div class="portrait" id="portraitBox" style="height:260px;flex:none;aspect-ratio:unset;"><span>Photo or Portrait</span></div>
 
             <div style="width:100%;margin-top:10px;">
               <div class="sec">
@@ -1165,6 +1165,23 @@
       }
     }, 500);
   });
+</script>
+<script>
+  // Load portrait from character customizer if present
+  (function() {
+    var portrait = localStorage.getItem('sorc_portrait');
+    if (portrait) {
+      var box = document.getElementById('portraitBox');
+      if (box) {
+        box.innerHTML = '';
+        var img = document.createElement('img');
+        img.src = portrait;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        box.appendChild(img);
+        localStorage.removeItem('sorc_portrait');
+      }
+    }
+  })();
 </script>
 </body>
 </html>
