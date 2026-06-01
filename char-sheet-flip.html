@@ -9,853 +9,768 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #1a1a1a;
+      background: #111;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
+      padding: 2rem 1rem 4rem;
       min-height: 100vh;
-      padding: 2rem 1rem;
-      font-family: 'Cinzel', Georgia, serif;
     }
 
     .hint {
-      color: #888;
-      font-size: 0.78rem;
-      margin-bottom: 1rem;
-      letter-spacing: 0.08em;
+      color: #666;
+      font-size: 0.75rem;
       font-family: Arial, sans-serif;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.2rem;
+      text-transform: uppercase;
     }
 
-    /* --- FLIP SCENE --- */
+    /* FLIP */
     .scene {
-      width: 850px;
+      width: 760px;
       max-width: 100%;
-      perspective: 1800px;
+      perspective: 2000px;
     }
 
     .sheet {
       width: 100%;
-      aspect-ratio: 850 / 1100;
+      min-height: 1040px;
       position: relative;
       transform-style: preserve-3d;
-      transition: transform 0.85s cubic-bezier(0.4, 0.2, 0.2, 1);
+      transition: transform 0.9s cubic-bezier(0.4,0.2,0.2,1);
       cursor: pointer;
     }
 
-    .sheet.flipped {
-      transform: rotateY(180deg);
-    }
+    .sheet.flipped { transform: rotateY(180deg); }
 
     .face {
       position: absolute;
       inset: 0;
+      min-height: 1040px;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      background: #f0ebe0;
-      border-radius: 4px;
-      overflow: hidden;
+      background: #f2ece0;
     }
 
-    .face.back {
-      transform: rotateY(180deg);
-    }
+    .face.back { transform: rotateY(180deg); }
 
-    /* --- ORNATE BORDER --- */
-    .border-wrap {
+    /* BORDER */
+    .border-frame {
       position: absolute;
       inset: 0;
       pointer-events: none;
       z-index: 10;
     }
 
-    .border-wrap svg {
-      width: 100%;
-      height: 100%;
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 2.5px solid #3a4a18;
     }
 
-    /* --- WATERMARK --- */
-    .watermark {
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      inset: 14px;
+      border: 1px solid #3a4a18;
+    }
+
+    .corner {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      z-index: 11;
+      pointer-events: none;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    /* WATERMARK */
+    .wm {
       position: absolute;
       inset: 0;
-      background-image: url('images/sorc-char-sheet_20260529_230132_0000.png');
-      background-size: 55%;
-      background-repeat: no-repeat;
-      background-position: center 38%;
-      opacity: 0.07;
+      background: url('images/sorc-char-sheet_20260529_230132_0000.png') no-repeat center 40%;
+      background-size: 50%;
+      opacity: 0.06;
       pointer-events: none;
       z-index: 0;
     }
 
-    /* --- INNER CONTENT --- */
+    /* INNER PAD */
     .inner {
       position: relative;
       z-index: 1;
-      padding: 48px 40px 32px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
+      padding: 52px 52px 40px;
     }
 
-    /* --- TITLES --- */
-    .sheet-title {
+    /* TITLE */
+    .title-block {
       text-align: center;
-      margin-bottom: 6px;
+      margin-bottom: 10px;
     }
 
-    .sheet-title h1 {
-      font-family: 'Cinzel Decorative', 'Cinzel', serif;
-      font-size: 2rem;
-      color: #3a4a18;
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', Cinzel, serif;
+      font-size: 1.9rem;
+      color: #2e3d0f;
       font-weight: 900;
-      letter-spacing: 0.04em;
-      line-height: 1.1;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
     }
 
-    .sheet-title h2 {
+    .title-block h2 {
       font-family: 'Cinzel', serif;
-      font-size: 1rem;
-      color: #3a4a18;
+      font-size: 0.85rem;
+      color: #2e3d0f;
       font-weight: 700;
-      letter-spacing: 0.18em;
-      margin-top: 4px;
+      letter-spacing: 0.22em;
+      margin-top: 5px;
     }
 
-    .sheet-title .tagline {
+    .title-block .sub {
       font-family: Arial, sans-serif;
-      font-size: 0.72rem;
-      color: #3a3a2a;
-      margin-top: 8px;
-      font-style: normal;
+      font-size: 0.7rem;
+      color: #444;
+      margin-top: 7px;
+      font-style: italic;
     }
 
-    /* --- DIVIDER --- */
-    .divider {
+    .rule {
       border: none;
-      border-top: 1.5px solid #5a6a28;
-      margin: 8px 0;
-      opacity: 0.5;
+      border-top: 1.5px solid #4a5a20;
+      margin: 10px 0;
+      opacity: 0.45;
     }
 
-    /* --- THREE COLUMN BODY --- */
-    .body-cols {
+    /* THREE COL */
+    .cols {
       display: grid;
-      grid-template-columns: 1fr 1.3fr 1fr;
-      gap: 16px;
-      flex: 1;
-      margin-top: 4px;
+      grid-template-columns: 200px 1fr 200px;
+      gap: 20px;
+      margin-top: 6px;
     }
 
-    /* --- SECTION HEADERS --- */
-    .sec-head {
+    /* SECTION */
+    .sec { margin-bottom: 20px; }
+
+    .sec-title {
       font-family: 'Cinzel', serif;
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       font-weight: 700;
-      color: #3a4a18;
-      letter-spacing: 0.15em;
-      text-align: center;
-      margin-bottom: 5px;
+      color: #2e3d0f;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 4px;
     }
 
-    .sec-list {
+    .sec ul {
       list-style: disc;
-      padding-left: 14px;
+      padding-left: 16px;
       font-family: Arial, sans-serif;
-      font-size: 0.64rem;
-      color: #2a2a1a;
-      line-height: 1.75;
+      font-size: 0.7rem;
+      color: #222;
+      line-height: 2;
     }
 
-    .sec-list li { }
-
-    /* --- CENTER COLUMN --- */
-    .col-center {
+    /* CENTER COL */
+    .col-mid {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .portrait-box {
+    .portrait {
       width: 100%;
       aspect-ratio: 3/4;
-      border: 1.5px solid #5a6a28;
-      background: #e8e2d0;
+      border: 1.5px solid #4a5a20;
+      background: #e5ddc8;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .portrait-box span {
+    .portrait span {
       font-family: 'Cinzel', serif;
-      font-size: 0.65rem;
-      color: #888;
-      letter-spacing: 0.12em;
+      font-size: 0.6rem;
+      color: #999;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
-    .center-label {
-      font-family: 'Cinzel', serif;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #3a4a18;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      text-align: center;
-    }
-
-    .center-line {
-      width: 80%;
-      border: none;
-      border-bottom: 1px solid #5a6a28;
-      height: 14px;
-      display: block;
-    }
-
-    /* --- CARDS SECTION --- */
-    .cards-section {
-      margin-top: 8px;
-      width: 100%;
-    }
-
-    .cards-label {
+    .field-label {
       font-family: 'Cinzel', serif;
       font-size: 0.75rem;
       font-weight: 700;
-      color: #3a4a18;
-      letter-spacing: 0.2em;
-      text-align: center;
-      margin-bottom: 6px;
+      color: #2e3d0f;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
+    }
+
+    .field-line {
+      width: 85%;
+      height: 1px;
+      background: #4a5a20;
+      margin-top: 2px;
+    }
+
+    /* CARDS */
+    .cards-wrap { width: 100%; }
+
+    .cards-head {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 8px;
     }
 
     .cards-row {
       display: flex;
-      gap: 4px;
-      justify-content: center;
+      gap: 5px;
     }
 
-    .card-slot {
+    .cslot {
       flex: 1;
-      border: 1px solid #5a6a28;
-      background: #dde8ee;
+      border: 1px solid #4a5a20;
       overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    .card-slot-label {
-      background: #b8ccd4;
+    .cslot-lbl {
+      background: #c0d0d8;
       font-family: Arial, sans-serif;
-      font-size: 0.45rem;
+      font-size: 0.42rem;
       font-weight: bold;
-      color: #2a3a44;
+      color: #1a2a34;
       text-align: center;
-      padding: 2px 1px;
-      letter-spacing: 0.05em;
+      padding: 3px 1px;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
+      line-height: 1.3;
     }
 
-    .card-slot-img {
-      flex: 1;
-      background: linear-gradient(to bottom, #c8dce8 55%, #6a9a3a 55%, #5a8a2a 100%);
-      min-height: 28px;
+    .cslot-img {
+      height: 38px;
+      background: linear-gradient(to bottom, #b8d4e4 60%, #6a9a38 60%, #4a7a22 100%);
     }
 
     .cards-note {
       font-family: Arial, sans-serif;
-      font-size: 0.55rem;
-      color: #444;
+      font-size: 0.56rem;
+      color: #555;
       text-align: center;
-      margin-top: 6px;
-      line-height: 1.5;
+      margin-top: 7px;
+      line-height: 1.55;
     }
 
-    /* ===================== BACK SIDE ===================== */
-
-    .back-inner {
-      position: relative;
-      z-index: 1;
-      padding: 48px 40px 32px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .back-title {
-      text-align: center;
-      margin-bottom: 8px;
-    }
-
-    .back-title h1 {
-      font-family: 'Cinzel Decorative', 'Cinzel', serif;
-      font-size: 2rem;
-      color: #3a4a18;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-    }
-
-    .back-title h2 {
-      font-family: 'Cinzel', serif;
-      font-size: 1rem;
-      color: #3a4a18;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      margin-top: 4px;
-    }
+    /* ===== BACK ===== */
 
     .back-cols {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
-      flex: 1;
+      gap: 22px;
       margin-top: 8px;
     }
 
-    /* ATTRIBUTE BLOCK */
+    .b-sec { margin-bottom: 18px; }
+
+    .b-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    /* ATTRIBUTE GRID */
     .attr-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 5px;
-      margin-top: 4px;
+      gap: 6px;
     }
 
-    .attr-box {
-      border: 1px solid #5a6a28;
+    .abox {
+      border: 1px solid #4a5a20;
+      background: #e8e0cc;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 4px 2px;
-      background: #eae4d0;
+      padding: 6px 4px 5px;
+      gap: 4px;
     }
 
-    .attr-name {
+    .abox.wide { grid-column: span 2; }
+
+    .aname {
       font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       font-weight: 700;
-      color: #3a4a18;
-      letter-spacing: 0.08em;
+      color: #2e3d0f;
+      letter-spacing: 0.1em;
     }
 
-    .attr-score {
-      width: 28px;
-      height: 20px;
-      border: 1px solid #5a6a28;
-      background: #f5f0e0;
-      margin-top: 3px;
+    .afield {
+      width: 36px;
+      height: 22px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
     }
 
-    /* TRAIT GRID */
+    /* STAT ROWS */
+    .srow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.66rem;
+      color: #222;
+      padding: 4px 0;
+      border-bottom: 1px dotted #bbb;
+    }
+
+    .sfield {
+      width: 40px;
+      height: 16px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    .sfield.wide { width: 70px; }
+
+    /* TRAITS */
     .trait-list {
       list-style: none;
       padding: 0;
-      font-family: Arial, sans-serif;
-      font-size: 0.58rem;
-      color: #2a2a1a;
-      margin-top: 4px;
     }
 
     .trait-list li {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px dotted #bbb;
-      padding: 2px 0;
-    }
-
-    .trait-list li span.tscore {
-      width: 22px;
-      height: 12px;
-      border: 1px solid #5a6a28;
-      display: inline-block;
-      background: #f5f0e0;
-      flex-shrink: 0;
-    }
-
-    /* STAT BOXES */
-    .stat-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       font-family: Arial, sans-serif;
-      font-size: 0.62rem;
-      border-bottom: 1px dotted #bbb;
+      font-size: 0.66rem;
+      color: #222;
       padding: 3px 0;
-      color: #2a2a1a;
+      border-bottom: 1px dotted #ccc;
     }
 
-    .stat-box {
-      width: 36px;
+    .tfield {
+      width: 26px;
       height: 14px;
-      border: 1px solid #5a6a28;
-      background: #f5f0e0;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
     }
 
-    /* CURRENCY */
-    .currency-row {
+    /* CHIPS */
+    .chip-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-family: Arial, sans-serif;
-      font-size: 0.62rem;
-      border-bottom: 1px dotted #bbb;
-      padding: 3px 0;
-      color: #2a2a1a;
-    }
-
-    .currency-box {
-      width: 50px;
-      height: 14px;
-      border: 1px solid #5a6a28;
-      background: #f5f0e0;
-    }
-
-    /* CHIP TRACK */
-    .chip-track {
-      display: flex;
-      gap: 3px;
       flex-wrap: wrap;
-      margin-top: 4px;
+      gap: 4px;
+      margin-top: 5px;
     }
 
     .chip {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      border: 1px solid #5a6a28;
-      background: #f5f0e0;
+      border: 1.5px solid #4a5a20;
+      background: #f5f0e4;
     }
 
-    .chip.purple { border-color: #7a3a9a; background: #ede0f5; }
+    .chip.purple {
+      border-color: #7a3a9a;
+      background: #ece0f5;
+    }
 
-    /* NOTES */
-    .notes-box {
-      border: 1px solid #5a6a28;
-      background: #f5f0e0;
-      flex: 1;
-      margin-top: 4px;
-      min-height: 40px;
+    .chip-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.52rem;
+      color: #777;
+      margin-top: 3px;
     }
 
     /* CONDITIONS */
     .cond-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 3px;
-      margin-top: 4px;
+      gap: 4px 8px;
     }
 
-    .cond-item {
+    .citem {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       font-family: Arial, sans-serif;
-      font-size: 0.55rem;
-      color: #2a2a1a;
+      font-size: 0.62rem;
+      color: #222;
     }
 
-    .cond-check {
-      width: 10px;
-      height: 10px;
-      border: 1px solid #5a6a28;
-      background: #f5f0e0;
+    .cbox {
+      width: 12px;
+      height: 12px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
       flex-shrink: 0;
     }
 
-    /* XP BAR */
-    .xp-bar-wrap {
-      border: 1px solid #5a6a28;
-      height: 10px;
-      background: #f5f0e0;
+    /* NOTES */
+    .notes-area {
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      height: 60px;
       margin-top: 4px;
-      position: relative;
+    }
+
+    /* XP BAR */
+    .xp-bar {
+      border: 1px solid #4a5a20;
+      height: 10px;
+      background: #f5f0e4;
+      margin-top: 5px;
       overflow: hidden;
     }
 
-    .xp-bar-fill {
-      height: 100%;
-      background: #5a7a28;
-      width: 0%;
+    .xp-fill { height: 100%; width: 0; background: #5a7a28; }
+
+    .small-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.52rem;
+      color: #777;
+      margin-top: 3px;
     }
 
-    .xp-label {
+    .bottom-note {
       font-family: Arial, sans-serif;
-      font-size: 0.55rem;
-      color: #555;
-      text-align: right;
-      margin-top: 2px;
-    }
-
-    /* BACK BOTTOM NOTE */
-    .back-note {
-      font-family: Arial, sans-serif;
-      font-size: 0.55rem;
-      color: #555;
+      font-size: 0.58rem;
+      color: #666;
       text-align: center;
-      margin-top: 8px;
-    }
-
-    /* FULL WIDTH ROW */
-    .back-bottom-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 10px;
-    }
-
-    /* ---- RESPONSIVE ---- */
-    @media (max-width: 900px) {
-      .scene { width: 100%; }
-      .inner, .back-inner { padding: 28px 18px 20px; }
-      .sheet-title h1, .back-title h1 { font-size: 1.3rem; }
-      .body-cols, .back-cols { gap: 8px; }
+      margin-top: 14px;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
 
-<p class="hint">Tap or click the sheet to flip</p>
+<p class="hint">Tap to flip</p>
 
 <div class="scene">
   <div class="sheet" id="sheet" onclick="this.classList.toggle('flipped')">
 
-    <!-- ==================== FRONT ==================== -->
+    <!-- CORNER SVG helper -->
+    <template id="corner-svg">
+      <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="22" r="14" fill="none" stroke="#3a4a18" stroke-width="1.4"/>
+        <circle cx="22" cy="22" r="7"  fill="none" stroke="#3a4a18" stroke-width="1"/>
+        <circle cx="22" cy="22" r="2.5" fill="#3a4a18"/>
+        <line x1="8"  y1="22" x2="0"  y2="22" stroke="#3a4a18" stroke-width="1.4"/>
+        <line x1="22" y1="8"  x2="22" y2="0"  stroke="#3a4a18" stroke-width="1.4"/>
+        <path d="M8,8 Q22,14 36,8" fill="none" stroke="#3a4a18" stroke-width="0.9"/>
+        <path d="M8,8 Q14,22 8,36" fill="none" stroke="#3a4a18" stroke-width="0.9"/>
+      </svg>
+    </template>
+
+    <!-- ========== FRONT ========== -->
     <div class="face front">
-      <div class="watermark"></div>
-
-      <!-- SVG Border -->
-      <div class="border-wrap">
-        <svg viewBox="0 0 850 1100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-          <!-- Outer frame -->
-          <rect x="8" y="8" width="834" height="1084" fill="none" stroke="#3a4a18" stroke-width="3"/>
-          <rect x="16" y="16" width="818" height="1068" fill="none" stroke="#3a4a18" stroke-width="1"/>
-
-          <!-- Corner TL -->
-          <circle cx="40" cy="40" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="40" cy="40" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <line x1="16" y1="40" x2="22" y2="40" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="40" y1="16" x2="40" y2="22" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="58" y1="40" x2="64" y2="40" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="40" y1="58" x2="40" y2="64" stroke="#3a4a18" stroke-width="1.5"/>
-          <path d="M22,22 Q40,30 58,22" fill="none" stroke="#3a4a18" stroke-width="1"/>
-
-          <!-- Corner TR -->
-          <circle cx="810" cy="40" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="810" cy="40" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <line x1="786" y1="40" x2="792" y2="40" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="810" y1="16" x2="810" y2="22" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="828" y1="40" x2="834" y2="40" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="810" y1="58" x2="810" y2="64" stroke="#3a4a18" stroke-width="1.5"/>
-          <path d="M792,22 Q810,30 828,22" fill="none" stroke="#3a4a18" stroke-width="1"/>
-
-          <!-- Corner BL -->
-          <circle cx="40" cy="1060" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="40" cy="1060" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <line x1="16" y1="1060" x2="22" y2="1060" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="40" y1="1036" x2="40" y2="1042" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="58" y1="1060" x2="64" y2="1060" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="40" y1="1078" x2="40" y2="1084" stroke="#3a4a18" stroke-width="1.5"/>
-
-          <!-- Corner BR -->
-          <circle cx="810" cy="1060" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="810" cy="1060" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <line x1="786" y1="1060" x2="792" y2="1060" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="810" y1="1036" x2="810" y2="1042" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="828" y1="1060" x2="834" y2="1060" stroke="#3a4a18" stroke-width="1.5"/>
-          <line x1="810" y1="1078" x2="810" y2="1084" stroke="#3a4a18" stroke-width="1.5"/>
-
-          <!-- Side mid ornaments -->
-          <circle cx="425" cy="12" r="5" fill="#3a4a18"/>
-          <circle cx="425" cy="1088" r="5" fill="#3a4a18"/>
-          <circle cx="12" cy="550" r="5" fill="#3a4a18"/>
-          <circle cx="838" cy="550" r="5" fill="#3a4a18"/>
-        </svg>
-      </div>
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl" id="c1"></div>
+      <div class="corner tr" id="c2"></div>
+      <div class="corner bl" id="c3"></div>
+      <div class="corner br" id="c4"></div>
 
       <div class="inner">
-        <!-- Title -->
-        <div class="sheet-title">
+        <div class="title-block">
           <h1>Slayers of Rings &amp; Crowns</h1>
           <h2>SORC Character Sheet</h2>
-          <p class="tagline">Players will display all of their character's profile features and items they're carrying here.</p>
+          <p class="sub">Players will display all of their character's profile features and items they're carrying here.</p>
         </div>
 
-        <hr class="divider" />
+        <hr class="rule" />
 
-        <!-- Three columns -->
-        <div class="body-cols">
+        <div class="cols">
 
           <!-- LEFT -->
-          <div class="col-left">
-            <p class="sec-head">Basic Info.</p>
-            <ul class="sec-list">
-              <li>Name &amp; UID</li>
-              <li>Nickname(s)</li>
-              <li>Gender</li>
-              <li>Species / Race</li>
-              <li>Age</li>
-              <li>Birthday</li>
-              <li>Place of Birth</li>
-              <li>Occupation / Role</li>
-              <li>Planet / World</li>
-              <li>Languages</li>
-            </ul>
+          <div>
+            <div class="sec">
+              <p class="sec-title">Basic Info.</p>
+              <ul>
+                <li>Name &amp; UID</li>
+                <li>Nickname(s)</li>
+                <li>Gender</li>
+                <li>Species / Race</li>
+                <li>Age</li>
+                <li>Birthday</li>
+                <li>Place of Birth</li>
+                <li>Occupation / Role</li>
+                <li>Planet / World</li>
+                <li>Languages</li>
+              </ul>
+            </div>
 
-            <br/>
-
-            <p class="sec-head">Physical</p>
-            <ul class="sec-list">
-              <li>Height</li>
-              <li>Weight</li>
-              <li>Body Type / Build</li>
-              <li>Skin Color / Tone</li>
-              <li>Hair Color / Style</li>
-              <li>Eye Color / Shape</li>
-              <li>Scars, tattoos, birthmarks, etc.</li>
-              <li>Voice (tone, accent)</li>
-              <li>Posture / Gait</li>
-            </ul>
+            <div class="sec">
+              <p class="sec-title">Physical</p>
+              <ul>
+                <li>Height</li>
+                <li>Weight</li>
+                <li>Body Type / Build</li>
+                <li>Skin Color / Tone</li>
+                <li>Hair Color / Style</li>
+                <li>Eye Color / Shape</li>
+                <li>Scars, tattoos, birthmarks</li>
+                <li>Voice (tone, accent)</li>
+                <li>Posture / Gait</li>
+              </ul>
+            </div>
           </div>
 
           <!-- CENTER -->
-          <div class="col-center">
-            <p class="sec-head" style="width:100%;text-align:center;">Photo or Portrait</p>
-            <div class="portrait-box">
+          <div class="col-mid">
+            <p class="sec-title" style="width:100%;text-align:center;border-bottom:1px solid #4a5a20;padding-bottom:4px;">Photo or Portrait</p>
+
+            <div class="portrait">
               <span>Photo or Portrait</span>
             </div>
 
-            <p class="center-label">Class</p>
-            <span class="center-line"></span>
+            <div style="width:100%;text-align:center;margin-top:4px;">
+              <p class="field-label">Class</p>
+              <div class="field-line" style="margin:4px auto 0;"></div>
+            </div>
 
-            <p class="center-label">Level &amp; Rank</p>
-            <span class="center-line"></span>
+            <div style="width:100%;text-align:center;">
+              <p class="field-label">Level &amp; Rank</p>
+              <div class="field-line" style="margin:4px auto 0;"></div>
+            </div>
 
-            <!-- SORC Cards -->
-            <div class="cards-section">
-              <p class="cards-label">SORC Cards</p>
+            <div class="cards-wrap">
+              <p class="cards-head">SORC Cards</p>
               <div class="cards-row">
-                <div class="card-slot">
-                  <div class="card-slot-label">Armor<br/>Cards</div>
-                  <div class="card-slot-img"></div>
-                </div>
-                <div class="card-slot">
-                  <div class="card-slot-label">Weapon<br/>Cards</div>
-                  <div class="card-slot-img"></div>
-                </div>
-                <div class="card-slot">
-                  <div class="card-slot-label">Companions</div>
-                  <div class="card-slot-img"></div>
-                </div>
-                <div class="card-slot">
-                  <div class="card-slot-label">Action<br/>Cards</div>
-                  <div class="card-slot-img"></div>
-                </div>
-                <div class="card-slot">
-                  <div class="card-slot-label">Equip.<br/>&amp; Items</div>
-                  <div class="card-slot-img"></div>
-                </div>
+                <div class="cslot"><div class="cslot-lbl">Armor<br/>Cards</div><div class="cslot-img"></div></div>
+                <div class="cslot"><div class="cslot-lbl">Weapon<br/>Cards</div><div class="cslot-img"></div></div>
+                <div class="cslot"><div class="cslot-lbl">Companions</div><div class="cslot-img"></div></div>
+                <div class="cslot"><div class="cslot-lbl">Action<br/>Cards</div><div class="cslot-img"></div></div>
+                <div class="cslot"><div class="cslot-lbl">Equip.<br/>&amp; Items</div><div class="cslot-img"></div></div>
               </div>
-              <p class="cards-note">For character stats, owned items not on person, i.e. at your home or storage, are not listed. Digital Cards are stacked, click to reveal next card.</p>
+              <p class="cards-note">Owned items not on person (at home or in storage) are not listed here. Digital Cards are stacked - click to reveal next card.</p>
             </div>
           </div>
 
           <!-- RIGHT -->
-          <div class="col-right">
-            <p class="sec-head">Relations</p>
-            <ul class="sec-list">
-              <li>Family</li>
-              <li>Enemies</li>
-              <li>Affiliations</li>
-              <li>Associations</li>
-              <li>Standing</li>
-              <li>Alignment</li>
-              <li>Reputation</li>
-              <li>Prestige</li>
-              <li>Titles</li>
-              <li>Legacy</li>
-            </ul>
+          <div>
+            <div class="sec">
+              <p class="sec-title">Relations</p>
+              <ul>
+                <li>Family</li>
+                <li>Enemies</li>
+                <li>Affiliations</li>
+                <li>Associations</li>
+                <li>Standing</li>
+                <li>Alignment</li>
+                <li>Reputation</li>
+                <li>Prestige</li>
+                <li>Titles</li>
+                <li>Legacy</li>
+              </ul>
+            </div>
 
-            <br/>
-
-            <p class="sec-head">Journal</p>
-            <ul class="sec-list">
-              <li>Prestige</li>
-              <li>Background (micro)</li>
-              <li>Mission Statement (micro)</li>
-              <li>Current Quests</li>
-              <li>Finished Quests</li>
-              <li>Achievements</li>
-              <li>Boasted Title</li>
-              <li>Exposed Title (GM assigned)</li>
-            </ul>
+            <div class="sec">
+              <p class="sec-title">Journal</p>
+              <ul>
+                <li>Prestige</li>
+                <li>Background (micro)</li>
+                <li>Mission Statement (micro)</li>
+                <li>Current Quests</li>
+                <li>Finished Quests</li>
+                <li>Achievements</li>
+                <li>Boasted Title</li>
+                <li>Exposed Title (GM assigned)</li>
+              </ul>
+            </div>
           </div>
 
-        </div><!-- /body-cols -->
+        </div><!-- /cols -->
       </div><!-- /inner -->
-    </div><!-- /face front -->
+    </div><!-- /front -->
 
-    <!-- ==================== BACK ==================== -->
+
+    <!-- ========== BACK ========== -->
     <div class="face back">
-      <div class="watermark"></div>
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl" id="c5"></div>
+      <div class="corner tr" id="c6"></div>
+      <div class="corner bl" id="c7"></div>
+      <div class="corner br" id="c8"></div>
 
-      <div class="border-wrap">
-        <svg viewBox="0 0 850 1100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-          <rect x="8" y="8" width="834" height="1084" fill="none" stroke="#3a4a18" stroke-width="3"/>
-          <rect x="16" y="16" width="818" height="1068" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <circle cx="40" cy="40" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="40" cy="40" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <circle cx="810" cy="40" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="810" cy="40" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <circle cx="40" cy="1060" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="40" cy="1060" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <circle cx="810" cy="1060" r="18" fill="none" stroke="#3a4a18" stroke-width="1.5"/>
-          <circle cx="810" cy="1060" r="10" fill="none" stroke="#3a4a18" stroke-width="1"/>
-          <circle cx="425" cy="12" r="5" fill="#3a4a18"/>
-          <circle cx="425" cy="1088" r="5" fill="#3a4a18"/>
-          <circle cx="12" cy="550" r="5" fill="#3a4a18"/>
-          <circle cx="838" cy="550" r="5" fill="#3a4a18"/>
-        </svg>
-      </div>
-
-      <div class="back-inner">
-        <div class="back-title">
+      <div class="inner">
+        <div class="title-block">
           <h1>Slayers of Rings &amp; Crowns</h1>
           <h2>SORC Character Sheet</h2>
         </div>
 
-        <hr class="divider" />
+        <hr class="rule" />
 
         <div class="back-cols">
 
-          <!-- BACK LEFT: Attributes + Vitality -->
+          <!-- BACK LEFT -->
           <div>
-            <p class="sec-head">Attributes</p>
-            <div class="attr-grid">
-              <div class="attr-box"><span class="attr-name">ART</span><div class="attr-score"></div></div>
-              <div class="attr-box"><span class="attr-name">FRT</span><div class="attr-score"></div></div>
-              <div class="attr-box"><span class="attr-name">INT</span><div class="attr-score"></div></div>
-              <div class="attr-box"><span class="attr-name">PRC</span><div class="attr-score"></div></div>
-              <div class="attr-box"><span class="attr-name">PHY</span><div class="attr-score"></div></div>
-              <div class="attr-box"><span class="attr-name">RES</span><div class="attr-score"></div></div>
-              <div class="attr-box" style="grid-column:span 2;"><span class="attr-name">WIS</span><div class="attr-score"></div></div>
+            <div class="b-sec">
+              <p class="b-title">Attributes</p>
+              <div class="attr-grid">
+                <div class="abox"><span class="aname">ART</span><div class="afield"></div></div>
+                <div class="abox"><span class="aname">FRT</span><div class="afield"></div></div>
+                <div class="abox"><span class="aname">INT</span><div class="afield"></div></div>
+                <div class="abox"><span class="aname">PRC</span><div class="afield"></div></div>
+                <div class="abox"><span class="aname">PHY</span><div class="afield"></div></div>
+                <div class="abox"><span class="aname">RES</span><div class="afield"></div></div>
+                <div class="abox wide"><span class="aname">WIS</span><div class="afield"></div></div>
+              </div>
             </div>
 
-            <br/>
-
-            <p class="sec-head">Vitality</p>
-            <div class="stat-row"><span>Life (max)</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Life (current)</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Stamina (max)</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Stamina (current)</span><div class="stat-box"></div></div>
-
-            <p class="sec-head" style="margin-top:8px;">Life Chips</p>
-            <div class="chip-track">
-              <div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div>
-              <div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div>
-              <div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div>
-              <div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div>
+            <div class="b-sec">
+              <p class="b-title">Vitality</p>
+              <div class="srow"><span>Max Life</span><div class="sfield"></div></div>
+              <div class="srow"><span>Current Life</span><div class="sfield"></div></div>
+              <div class="srow"><span>Max Stamina</span><div class="sfield"></div></div>
+              <div class="srow"><span>Current Stamina</span><div class="sfield"></div></div>
+              <p class="b-title" style="margin-top:10px;">Life Chips</p>
+              <div class="chip-row">
+                <div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div>
+                <div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div>
+                <div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div>
+                <div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div><div class="chip purple"></div>
+              </div>
+              <p class="chip-note">White = Life | Purple = Dying (dead at -10)</p>
             </div>
-            <p style="font-family:Arial,sans-serif;font-size:0.5rem;color:#777;margin-top:3px;">White = Life | Purple = Dying (dead at -10)</p>
 
-            <br/>
+            <div class="b-sec">
+              <p class="b-title">Currency</p>
+              <div class="srow"><span>Silver</span><div class="sfield wide"></div></div>
+              <div class="srow"><span>Gold</span><div class="sfield wide"></div></div>
+              <div class="srow"><span>Electrum</span><div class="sfield wide"></div></div>
+              <div class="srow"><span>Platinum</span><div class="sfield wide"></div></div>
+            </div>
 
-            <p class="sec-head">XP &amp; Progression</p>
-            <div class="stat-row"><span>Total XP</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Level</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Rank</span><div class="stat-box" style="width:60px;"></div></div>
-            <div class="xp-bar-wrap"><div class="xp-bar-fill"></div></div>
-            <p class="xp-label">XP to next level</p>
-
-            <br/>
-
-            <p class="sec-head">Currency</p>
-            <div class="currency-row"><span>Silver</span><div class="currency-box"></div></div>
-            <div class="currency-row"><span>Gold</span><div class="currency-box"></div></div>
-            <div class="currency-row"><span>Electrum</span><div class="currency-box"></div></div>
-            <div class="currency-row"><span>Platinum</span><div class="currency-box"></div></div>
+            <div class="b-sec">
+              <p class="b-title">XP &amp; Rank</p>
+              <div class="srow"><span>Total XP</span><div class="sfield"></div></div>
+              <div class="srow"><span>Level</span><div class="sfield"></div></div>
+              <div class="srow"><span>Rank</span><div class="sfield wide"></div></div>
+              <div class="xp-bar"><div class="xp-fill"></div></div>
+              <p class="small-note">XP to next level</p>
+            </div>
           </div>
 
           <!-- BACK CENTER: Traits -->
           <div>
-            <p class="sec-head">Traits</p>
-            <ul class="trait-list">
-              <li><span>Agility</span><span class="tscore"></span></li>
-              <li><span>Charisma</span><span class="tscore"></span></li>
-              <li><span>Deception</span><span class="tscore"></span></li>
-              <li><span>Defense</span><span class="tscore"></span></li>
-              <li><span>Dexterity</span><span class="tscore"></span></li>
-              <li><span>Diplomacy</span><span class="tscore"></span></li>
-              <li><span>Endurance</span><span class="tscore"></span></li>
-              <li><span>Fortitude</span><span class="tscore"></span></li>
-              <li><span>Initiative</span><span class="tscore"></span></li>
-              <li><span>Intuition</span><span class="tscore"></span></li>
-              <li><span>Knowledge</span><span class="tscore"></span></li>
-              <li><span>Leadership</span><span class="tscore"></span></li>
-              <li><span>Lore</span><span class="tscore"></span></li>
-              <li><span>Piety</span><span class="tscore"></span></li>
-              <li><span>Speed</span><span class="tscore"></span></li>
-              <li><span>Stamina</span><span class="tscore"></span></li>
-              <li><span>Stealth</span><span class="tscore"></span></li>
-              <li><span>Strength</span><span class="tscore"></span></li>
-              <li><span>Survival</span><span class="tscore"></span></li>
-              <li><span>Versatility</span><span class="tscore"></span></li>
-              <li><span>Vigilance</span><span class="tscore"></span></li>
-              <li><span>Willpower</span><span class="tscore"></span></li>
-            </ul>
-            <p style="font-family:Arial,sans-serif;font-size:0.5rem;color:#777;margin-top:3px;">Trait SCR capped at 20. Cannot exceed aligned ATT SCR.</p>
+            <div class="b-sec">
+              <p class="b-title">Traits</p>
+              <ul class="trait-list">
+                <li><span>Agility</span><div class="tfield"></div></li>
+                <li><span>Charisma</span><div class="tfield"></div></li>
+                <li><span>Deception</span><div class="tfield"></div></li>
+                <li><span>Defense</span><div class="tfield"></div></li>
+                <li><span>Dexterity</span><div class="tfield"></div></li>
+                <li><span>Diplomacy</span><div class="tfield"></div></li>
+                <li><span>Endurance</span><div class="tfield"></div></li>
+                <li><span>Fortitude</span><div class="tfield"></div></li>
+                <li><span>Initiative</span><div class="tfield"></div></li>
+                <li><span>Intuition</span><div class="tfield"></div></li>
+                <li><span>Knowledge</span><div class="tfield"></div></li>
+                <li><span>Leadership</span><div class="tfield"></div></li>
+                <li><span>Lore</span><div class="tfield"></div></li>
+                <li><span>Piety</span><div class="tfield"></div></li>
+                <li><span>Speed</span><div class="tfield"></div></li>
+                <li><span>Stamina</span><div class="tfield"></div></li>
+                <li><span>Stealth</span><div class="tfield"></div></li>
+                <li><span>Strength</span><div class="tfield"></div></li>
+                <li><span>Survival</span><div class="tfield"></div></li>
+                <li><span>Versatility</span><div class="tfield"></div></li>
+                <li><span>Vigilance</span><div class="tfield"></div></li>
+                <li><span>Willpower</span><div class="tfield"></div></li>
+              </ul>
+              <p class="small-note">Trait SCR capped at 20. Cannot exceed aligned ATT SCR.</p>
+            </div>
           </div>
 
-          <!-- BACK RIGHT: Combat + Conditions + Notes -->
+          <!-- BACK RIGHT -->
           <div>
-            <p class="sec-head">Combat Stats</p>
-            <div class="stat-row"><span>PROTS</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>AS (Armor Score)</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Speed (ft)</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Initiative</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Attack Bonus</span><div class="stat-box"></div></div>
-            <div class="stat-row"><span>Crit Range</span><div class="stat-box"></div></div>
-
-            <br/>
-
-            <p class="sec-head">Resistances / Vulnerabilities</p>
-            <div class="stat-row"><span>Resistances</span><div class="stat-box" style="width:60px;"></div></div>
-            <div class="stat-row"><span>Vulnerabilities</span><div class="stat-box" style="width:60px;"></div></div>
-            <div class="stat-row"><span>Immunities</span><div class="stat-box" style="width:60px;"></div></div>
-
-            <br/>
-
-            <p class="sec-head">Active Conditions</p>
-            <div class="cond-grid">
-              <div class="cond-item"><div class="cond-check"></div><span>Poisoned</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Stunned</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Blinded</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Silenced</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Prone</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Restrained</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Frightened</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Charmed</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Bleeding</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Burning</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Frozen</span></div>
-              <div class="cond-item"><div class="cond-check"></div><span>Cursed</span></div>
+            <div class="b-sec">
+              <p class="b-title">Combat Stats</p>
+              <div class="srow"><span>PROTS</span><div class="sfield"></div></div>
+              <div class="srow"><span>AS (Armor Score)</span><div class="sfield"></div></div>
+              <div class="srow"><span>Speed (ft)</span><div class="sfield"></div></div>
+              <div class="srow"><span>Initiative</span><div class="sfield"></div></div>
+              <div class="srow"><span>Attack Bonus</span><div class="sfield"></div></div>
+              <div class="srow"><span>Crit Range</span><div class="sfield"></div></div>
             </div>
 
-            <br/>
+            <div class="b-sec">
+              <p class="b-title">Resistances</p>
+              <div class="srow"><span>Resistances</span><div class="sfield wide"></div></div>
+              <div class="srow"><span>Vulnerabilities</span><div class="sfield wide"></div></div>
+              <div class="srow"><span>Immunities</span><div class="sfield wide"></div></div>
+            </div>
 
-            <p class="sec-head">Notes</p>
-            <div class="notes-box"></div>
-            <div class="notes-box" style="margin-top:4px;"></div>
+            <div class="b-sec">
+              <p class="b-title">Active Conditions</p>
+              <div class="cond-grid">
+                <div class="citem"><div class="cbox"></div>Poisoned</div>
+                <div class="citem"><div class="cbox"></div>Stunned</div>
+                <div class="citem"><div class="cbox"></div>Blinded</div>
+                <div class="citem"><div class="cbox"></div>Silenced</div>
+                <div class="citem"><div class="cbox"></div>Prone</div>
+                <div class="citem"><div class="cbox"></div>Restrained</div>
+                <div class="citem"><div class="cbox"></div>Frightened</div>
+                <div class="citem"><div class="cbox"></div>Charmed</div>
+                <div class="citem"><div class="cbox"></div>Bleeding</div>
+                <div class="citem"><div class="cbox"></div>Burning</div>
+                <div class="citem"><div class="cbox"></div>Frozen</div>
+                <div class="citem"><div class="cbox"></div>Cursed</div>
+              </div>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Notes</p>
+              <div class="notes-area"></div>
+              <div class="notes-area" style="margin-top:6px;height:50px;"></div>
+            </div>
           </div>
 
         </div><!-- /back-cols -->
 
-        <p class="back-note">Tap or click to flip to front. For character stats, owned items not on person are not listed.</p>
-      </div><!-- /back-inner -->
-    </div><!-- /face back -->
+        <p class="bottom-note">Tap to flip back to front.</p>
+      </div><!-- /inner -->
+    </div><!-- /back -->
 
   </div><!-- /sheet -->
 </div><!-- /scene -->
 
+<script>
+  // Stamp corner SVGs
+  var tmpl = document.getElementById('corner-svg').content.querySelector('svg');
+  ['c1','c2','c3','c4','c5','c6','c7','c8'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.appendChild(tmpl.cloneNode(true));
+  });
+</script>
 </body>
 </html>
