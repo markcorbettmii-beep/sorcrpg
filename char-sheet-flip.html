@@ -8,57 +8,74 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
       background: #111;
+    }
+
+    body {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 0.75rem 4rem;
-      min-height: 100vh;
+      justify-content: center;
     }
 
-    .hint {
-      color: #666;
-      font-size: 0.7rem;
-      font-family: Arial, sans-serif;
-      letter-spacing: 0.12em;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
+    /* ── SCALE WRAPPER ── */
+    /* Sheet is always 816×1056px internally (8.5×11in at 96dpi).
+       JS scales it to fit the viewport. */
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
     }
 
     /* ── FLIP CONTAINER ── */
-    .scene {
-      width: 100%;
-      max-width: 820px;
-      perspective: 2000px;
-    }
-
-    .sheet {
-      width: 100%;
+    .flipper {
+      width: 816px;
+      height: 1056px;
       position: relative;
       transform-style: preserve-3d;
       transition: transform 0.85s cubic-bezier(0.4,0.2,0.2,1);
       cursor: pointer;
     }
 
-    .sheet.flipped { transform: rotateY(180deg); }
+    .flipper.flipped { transform: rotateY(180deg); }
 
-    /* Each face is block-level, not absolutely positioned,
-       so it sizes to its own content. The back is hidden via
-       rotate + backface-visibility. */
+    /* ── FACES ── */
     .face {
-      width: 100%;
+      position: absolute;
+      inset: 0;
+      background: #f2ece0;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      background: #f2ece0;
-      position: relative;
+      overflow: hidden;
     }
 
-    .face.back {
+    .face.back { transform: rotateY(180deg); }
+
+    /* ── TAP TO FLIP OVERLAY ── */
+    .flip-hint {
       position: absolute;
-      top: 0; left: 0;
-      transform: rotateY(180deg);
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(58,74,24,0.82);
+      color: #f2ece0;
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 6px 18px;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 20;
+      white-space: nowrap;
     }
+
+    .flip-hint.back-hint { bottom: 22px; }
 
     /* ── BORDER ── */
     .border-frame {
@@ -80,7 +97,7 @@
       border: 1px solid #3a4a18;
     }
 
-    /* ── CORNER ORNAMENTS ── */
+    /* ── CORNERS ── */
     .corner {
       position: absolute;
       width: 40px;
@@ -109,89 +126,88 @@
     .inner {
       position: relative;
       z-index: 1;
-      padding: 48px 44px 44px;
+      padding: 46px 42px 36px;
+      height: 100%;
     }
 
     /* ── TITLE ── */
-    .title-block { text-align: center; margin-bottom: 10px; }
+    .title-block { text-align: center; margin-bottom: 8px; }
 
     .title-block h1 {
       font-family: 'Cinzel Decorative', Cinzel, serif;
-      font-size: clamp(1.2rem, 3.5vw, 1.85rem);
+      font-size: 1.75rem;
       color: #2e3d0f;
       font-weight: 900;
       letter-spacing: 0.03em;
-      line-height: 1.2;
+      line-height: 1.15;
     }
 
     .title-block h2 {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.6rem, 1.8vw, 0.82rem);
+      font-size: 0.78rem;
       color: #2e3d0f;
       font-weight: 700;
       letter-spacing: 0.22em;
-      margin-top: 5px;
+      margin-top: 4px;
     }
 
     .title-block .sub {
       font-family: Arial, sans-serif;
-      font-size: clamp(0.55rem, 1.5vw, 0.68rem);
+      font-size: 0.64rem;
       color: #444;
-      margin-top: 7px;
+      margin-top: 5px;
       font-style: italic;
     }
 
     .rule {
       border: none;
       border-top: 1.5px solid #4a5a20;
-      margin: 10px 0;
+      margin: 8px 0;
       opacity: 0.4;
     }
 
-    /* ── THREE COLUMNS ── */
+    /* ── THREE COLUMNS (front) ── */
     .cols {
       display: grid;
-      grid-template-columns: 1fr 1.15fr 1fr;
-      gap: 18px;
-      margin-top: 8px;
+      grid-template-columns: 1fr 1.12fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
     }
 
     /* ── SECTION ── */
-    .sec { margin-bottom: 18px; }
+    .sec { margin-bottom: 14px; }
 
     .sec-title {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.52rem, 1.4vw, 0.63rem);
+      font-size: 0.6rem;
       font-weight: 700;
       color: #2e3d0f;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       text-align: center;
       border-bottom: 1px solid #4a5a20;
-      padding-bottom: 4px;
-      margin-bottom: 9px;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
     }
 
-    /* ── FILL-IN FIELD ── */
-    .field {
-      margin-bottom: 6px;
-    }
+    /* ── FILL-IN FIELDS ── */
+    .field { margin-bottom: 5px; }
 
     .field-lbl {
       font-family: Arial, sans-serif;
-      font-size: clamp(0.52rem, 1.35vw, 0.63rem);
+      font-size: 0.6rem;
       color: #444;
       display: block;
       margin-bottom: 1px;
     }
 
-    .field-lbl.long { font-size: clamp(0.48rem, 1.2vw, 0.58rem); }
+    .field-lbl.sm { font-size: 0.55rem; }
 
     .fline {
       width: 100%;
       height: 1px;
       background: #6a7a48;
-      margin-bottom: 1px;
+      margin-bottom: 2px;
     }
 
     /* ── CENTER COLUMN ── */
@@ -199,7 +215,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
     }
 
     .portrait {
@@ -214,7 +230,7 @@
 
     .portrait span {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.45rem, 1.2vw, 0.58rem);
+      font-size: 0.55rem;
       color: #999;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -222,7 +238,7 @@
 
     .mid-label {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.58rem, 1.6vw, 0.73rem);
+      font-size: 0.7rem;
       font-weight: 700;
       color: #2e3d0f;
       letter-spacing: 0.18em;
@@ -232,10 +248,10 @@
     }
 
     .mid-line {
-      width: 90%;
+      width: 88%;
       height: 1px;
       background: #4a5a20;
-      margin-top: 3px;
+      margin: 3px auto 0;
     }
 
     /* ── CARDS ── */
@@ -243,13 +259,13 @@
 
     .cards-head {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.58rem, 1.6vw, 0.7rem);
+      font-size: 0.66rem;
       font-weight: 700;
       color: #2e3d0f;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       text-align: center;
-      margin-bottom: 7px;
+      margin-bottom: 6px;
     }
 
     .cards-row { display: flex; gap: 4px; }
@@ -265,7 +281,7 @@
     .cslot-lbl {
       background: #c0d0d8;
       font-family: Arial, sans-serif;
-      font-size: clamp(0.35rem, 0.9vw, 0.42rem);
+      font-size: 0.38rem;
       font-weight: bold;
       color: #1a2a34;
       text-align: center;
@@ -275,41 +291,41 @@
     }
 
     .cslot-img {
-      height: 34px;
+      height: 32px;
       background: linear-gradient(to bottom, #b8d4e4 60%, #6a9a38 60%, #4a7a22 100%);
     }
 
     .cards-note {
       font-family: Arial, sans-serif;
-      font-size: clamp(0.45rem, 1.1vw, 0.54rem);
+      font-size: 0.5rem;
       color: #555;
       text-align: center;
-      margin-top: 6px;
+      margin-top: 5px;
       line-height: 1.5;
     }
 
-    /* ════════════════════ BACK ════════════════════ */
+    /* ════════ BACK ════════ */
 
     .back-cols {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 18px;
-      margin-top: 8px;
+      gap: 16px;
+      margin-top: 6px;
     }
 
-    .b-sec { margin-bottom: 16px; }
+    .b-sec { margin-bottom: 13px; }
 
     .b-title {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.52rem, 1.4vw, 0.63rem);
+      font-size: 0.6rem;
       font-weight: 700;
       color: #2e3d0f;
       letter-spacing: 0.16em;
       text-transform: uppercase;
       text-align: center;
       border-bottom: 1px solid #4a5a20;
-      padding-bottom: 4px;
-      margin-bottom: 8px;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
     }
 
     /* ATTRIBUTES */
@@ -333,14 +349,14 @@
 
     .aname {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.55rem, 1.4vw, 0.63rem);
+      font-size: 0.6rem;
       font-weight: 700;
       color: #2e3d0f;
       letter-spacing: 0.1em;
     }
 
     .afield {
-      width: 38px;
+      width: 36px;
       height: 20px;
       border: 1px solid #4a5a20;
       background: #f5f0e4;
@@ -352,21 +368,21 @@
       justify-content: space-between;
       align-items: center;
       font-family: Arial, sans-serif;
-      font-size: clamp(0.52rem, 1.35vw, 0.63rem);
+      font-size: 0.6rem;
       color: #222;
-      padding: 4px 0;
+      padding: 3px 0;
       border-bottom: 1px dotted #bbb;
     }
 
     .sfield {
-      width: 38px;
-      height: 14px;
+      width: 36px;
+      height: 13px;
       border: 1px solid #4a5a20;
       background: #f5f0e4;
       flex-shrink: 0;
     }
 
-    .sfield.wide { width: 65px; }
+    .sfield.wide { width: 62px; }
 
     /* TRAITS */
     .trait-list { list-style: none; padding: 0; }
@@ -376,15 +392,15 @@
       justify-content: space-between;
       align-items: center;
       font-family: Arial, sans-serif;
-      font-size: clamp(0.52rem, 1.35vw, 0.63rem);
+      font-size: 0.6rem;
       color: #222;
-      padding: 3px 0;
+      padding: 2.5px 0;
       border-bottom: 1px dotted #ccc;
     }
 
     .tfield {
       width: 24px;
-      height: 13px;
+      height: 12px;
       border: 1px solid #4a5a20;
       background: #f5f0e4;
       flex-shrink: 0;
@@ -395,7 +411,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 3px;
-      margin-top: 5px;
+      margin-top: 4px;
     }
 
     .chip {
@@ -406,14 +422,11 @@
       background: #f5f0e4;
     }
 
-    .chip.purple {
-      border-color: #7a3a9a;
-      background: #ece0f5;
-    }
+    .chip.purple { border-color: #7a3a9a; background: #ece0f5; }
 
     .chip-note {
       font-family: Arial, sans-serif;
-      font-size: 0.5rem;
+      font-size: 0.48rem;
       color: #777;
       margin-top: 3px;
     }
@@ -430,7 +443,7 @@
       align-items: center;
       gap: 4px;
       font-family: Arial, sans-serif;
-      font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+      font-size: 0.57rem;
       color: #222;
     }
 
@@ -442,68 +455,71 @@
       flex-shrink: 0;
     }
 
-    /* JOURNAL LINES (back notes) */
-    .journal-lines {
-      margin-top: 4px;
-    }
-
-    .jline-item {
-      margin-bottom: 8px;
-    }
+    /* JOURNAL LINES */
+    .jline-item { margin-bottom: 7px; }
 
     .jline-lbl {
       font-family: Arial, sans-serif;
-      font-size: clamp(0.5rem, 1.2vw, 0.58rem);
+      font-size: 0.56rem;
       color: #444;
       display: block;
       margin-bottom: 1px;
     }
 
-    .jline { width: 100%; height: 1px; background: #6a7a48; margin-bottom: 2px; }
-    .jline + .jline { margin-top: 5px; }
+    .jline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 5px;
+    }
 
     /* XP BAR */
     .xp-bar {
       border: 1px solid #4a5a20;
-      height: 9px;
+      height: 8px;
       background: #f5f0e4;
-      margin-top: 4px;
+      margin-top: 3px;
       overflow: hidden;
     }
     .xp-fill { height: 100%; width: 0; background: #5a7a28; }
 
     .small-note {
       font-family: Arial, sans-serif;
-      font-size: 0.5rem;
+      font-size: 0.48rem;
       color: #777;
       margin-top: 2px;
     }
 
-    .bottom-note {
-      font-family: Arial, sans-serif;
-      font-size: clamp(0.48rem, 1.2vw, 0.56rem);
-      color: #666;
-      text-align: center;
-      margin-top: 12px;
-      font-style: italic;
+    /* ── PRINT ── */
+    @media print {
+      html, body { overflow: visible; height: auto; background: white; }
+      .scale-wrap { transform: none !important; width: 8.5in; height: 11in; }
+      .flipper { width: 8.5in; height: 11in; transform: none !important; }
+      .face { position: absolute; inset: 0; }
+      .face.back { display: none; }
+      .flip-hint { display: none; }
     }
   </style>
 </head>
 <body>
 
-<p class="hint">Tap to flip</p>
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
 
-<div class="scene">
-  <div class="sheet" id="sheet" onclick="this.classList.toggle('flipped')">
+    <!-- corner SVG shorthand -->
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+    </defs></svg>
 
     <!-- ══════════════ FRONT ══════════════ -->
-    <div class="face front">
+    <div class="face" id="front">
       <div class="wm"></div>
       <div class="border-frame"></div>
-      <div class="corner tl"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
-      <div class="corner tr"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
-      <div class="corner bl"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
-      <div class="corner br"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="flip-hint">Tap to flip &rarr; Back</div>
 
       <div class="inner">
         <div class="title-block">
@@ -539,7 +555,7 @@
               <div class="field"><span class="field-lbl">Skin Color / Tone</span><div class="fline"></div></div>
               <div class="field"><span class="field-lbl">Hair Color / Style</span><div class="fline"></div></div>
               <div class="field"><span class="field-lbl">Eye Color / Shape</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl long">Scars, tattoos, birthmarks</span><div class="fline"></div></div>
+              <div class="field"><span class="field-lbl sm">Scars, tattoos, birthmarks</span><div class="fline"></div></div>
               <div class="field"><span class="field-lbl">Voice (tone, accent)</span><div class="fline"></div></div>
               <div class="field"><span class="field-lbl">Posture / Gait</span><div class="fline"></div></div>
             </div>
@@ -552,12 +568,12 @@
 
             <div style="width:100%;text-align:center;">
               <p class="mid-label">Class</p>
-              <div class="mid-line" style="margin:4px auto 0;"></div>
+              <div class="mid-line"></div>
             </div>
 
             <div style="width:100%;text-align:center;">
               <p class="mid-label">Level &amp; Rank</p>
-              <div class="mid-line" style="margin:4px auto 0;"></div>
+              <div class="mid-line"></div>
             </div>
 
             <div class="cards-wrap">
@@ -569,7 +585,7 @@
                 <div class="cslot"><div class="cslot-lbl">Action<br/>Cards</div><div class="cslot-img"></div></div>
                 <div class="cslot"><div class="cslot-lbl">Equip.<br/>&amp; Items</div><div class="cslot-img"></div></div>
               </div>
-              <p class="cards-note">Owned items not on person (at home or in storage) are not listed here. Digital Cards are stacked - tap to reveal next card.</p>
+              <p class="cards-note">Owned items not on person (at home or in storage) are not listed. Digital Cards are stacked - tap to reveal next card.</p>
             </div>
           </div>
 
@@ -598,23 +614,24 @@
               <div class="field"><span class="field-lbl">Finished Quests</span><div class="fline"></div><div class="fline"></div></div>
               <div class="field"><span class="field-lbl">Achievements</span><div class="fline"></div></div>
               <div class="field"><span class="field-lbl">Boasted Title</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl long">Exposed Title (GM assigned)</span><div class="fline"></div></div>
+              <div class="field"><span class="field-lbl sm">Exposed Title (GM assigned)</span><div class="fline"></div></div>
             </div>
           </div>
 
-        </div><!-- /cols -->
+        </div>
       </div>
     </div><!-- /front -->
 
 
     <!-- ══════════════ BACK ══════════════ -->
-    <div class="face back">
+    <div class="face back" id="back">
       <div class="wm"></div>
       <div class="border-frame"></div>
-      <div class="corner tl"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
-      <div class="corner tr"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
-      <div class="corner bl"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
-      <div class="corner br"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></svg></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="flip-hint back-hint">&larr; Tap to flip back to Front</div>
 
       <div class="inner">
         <div class="title-block">
@@ -625,7 +642,7 @@
 
         <div class="back-cols">
 
-          <!-- BACK LEFT: Attributes + Vitality + Currency + XP -->
+          <!-- BACK LEFT -->
           <div>
             <div class="b-sec">
               <p class="b-title">Attributes</p>
@@ -646,7 +663,7 @@
               <div class="srow"><span>Current Life</span><div class="sfield"></div></div>
               <div class="srow"><span>Max Stamina</span><div class="sfield"></div></div>
               <div class="srow"><span>Current Stamina</span><div class="sfield"></div></div>
-              <p class="b-title" style="margin-top:10px;">Life Chips</p>
+              <p class="b-title" style="margin-top:9px;">Life Chips</p>
               <div class="chip-row">
                 <div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div>
                 <div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div><div class="chip"></div>
@@ -706,7 +723,7 @@
             </div>
           </div>
 
-          <!-- BACK RIGHT: Combat + Conditions + Journal lines -->
+          <!-- BACK RIGHT -->
           <div>
             <div class="b-sec">
               <p class="b-title">Combat Stats</p>
@@ -745,24 +762,62 @@
 
             <div class="b-sec">
               <p class="b-title">Journal</p>
-              <div class="journal-lines">
-                <div class="jline-item"><span class="jline-lbl">Notes</span><div class="jline"></div><div class="jline"></div><div class="jline"></div><div class="jline"></div></div>
-                <div class="jline-item"><span class="jline-lbl">Current Quests</span><div class="jline"></div><div class="jline"></div><div class="jline"></div></div>
-                <div class="jline-item"><span class="jline-lbl">Achievements</span><div class="jline"></div><div class="jline"></div></div>
-                <div class="jline-item"><span class="jline-lbl">Boasted Title</span><div class="jline"></div></div>
-                <div class="jline-item"><span class="jline-lbl">Exposed Title (GM)</span><div class="jline"></div></div>
-              </div>
+              <div class="jline-item"><span class="jline-lbl">Notes</span><div class="jline"></div><div class="jline"></div><div class="jline"></div><div class="jline"></div></div>
+              <div class="jline-item"><span class="jline-lbl">Current Quests</span><div class="jline"></div><div class="jline"></div><div class="jline"></div></div>
+              <div class="jline-item"><span class="jline-lbl">Achievements</span><div class="jline"></div><div class="jline"></div></div>
+              <div class="jline-item"><span class="jline-lbl">Boasted Title</span><div class="jline"></div></div>
+              <div class="jline-item"><span class="jline-lbl">Exposed Title (GM)</span><div class="jline"></div></div>
             </div>
           </div>
 
-        </div><!-- /back-cols -->
-
-        <p class="bottom-note">Tap to flip back to front.</p>
+        </div>
       </div>
     </div><!-- /back -->
 
-  </div><!-- /sheet -->
-</div><!-- /scene -->
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
 
+<script>
+  var flipper = document.getElementById('flipper');
+  var front   = document.getElementById('front');
+  var back    = document.getElementById('back');
+  var flipped = false;
+  var DUR     = 850;
+
+  // Start with back hidden to prevent bleed-through
+  back.style.visibility = 'hidden';
+
+  flipper.addEventListener('click', function() {
+    flipped = !flipped;
+    flipper.classList.toggle('flipped');
+
+    // At the halfway point of the flip, swap which face is visible
+    setTimeout(function() {
+      if (flipped) {
+        front.style.visibility = 'hidden';
+        back.style.visibility  = 'visible';
+      } else {
+        back.style.visibility  = 'hidden';
+        front.style.visibility = 'visible';
+      }
+    }, DUR / 2);
+  });
+
+  // Scale the 816x1056 sheet to fit the viewport
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var sw = window.innerWidth;
+    var sh = window.innerHeight;
+    var scale = Math.min(sw / 816, sh / 1056) * 0.97;
+    wrap.style.transform = 'scale(' + scale + ')';
+    wrap.style.marginTop = (((1056 * scale) - 1056) / 2) + 'px';
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() {
+    setTimeout(scaleToFit, 150);
+  });
+</script>
 </body>
 </html>
