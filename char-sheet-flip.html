@@ -1114,36 +1114,68 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Save current face as JPEG using html2canvas
+  // Capture one face to JPEG - strips 3D transforms so html2canvas renders correctly
+  function captureFace(faceEl, label, btn, btnLabel) {
+    var flipper = document.querySelector('.flipper');
+    // Save current inline styles
+    var prevFlipperTransform = flipper.style.transform;
+    var prevFlipperTransformStyle = flipper.style.transformStyle;
+    var prevFaceTransform = faceEl.style.transform;
+    var prevFacePosition = faceEl.style.position;
+
+    // Strip 3D context so html2canvas sees a flat element
+    flipper.style.transformStyle = 'flat';
+    flipper.style.transform = 'none';
+    faceEl.style.transform = 'none';
+    faceEl.style.position = 'relative';
+
+    // Hide every sibling face
+    var allFaces = flipper.querySelectorAll('.face');
+    var prevDisplays = [];
+    allFaces.forEach(function(f) {
+      prevDisplays.push(f.style.display);
+      if (f !== faceEl) f.style.display = 'none';
+    });
+
+    html2canvas(faceEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f2ece0',
+      width: 816,
+      height: 1056,
+      logging: false
+    }).then(function(canvas) {
+      // Restore styles
+      flipper.style.transform = prevFlipperTransform;
+      flipper.style.transformStyle = prevFlipperTransformStyle;
+      faceEl.style.transform = prevFaceTransform;
+      faceEl.style.position = prevFacePosition;
+      allFaces.forEach(function(f, i) { f.style.display = prevDisplays[i]; });
+
+      var link = document.createElement('a');
+      link.download = 'sorc-character-sheet-' + label + '.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.93);
+      link.click();
+      btn.textContent = btnLabel;
+      btn.disabled = false;
+    }).catch(function() {
+      flipper.style.transform = prevFlipperTransform;
+      flipper.style.transformStyle = prevFlipperTransformStyle;
+      faceEl.style.transform = prevFaceTransform;
+      faceEl.style.position = prevFacePosition;
+      allFaces.forEach(function(f, i) { f.style.display = prevDisplays[i]; });
+      btn.textContent = btnLabel;
+      btn.disabled = false;
+    });
+  }
+
   document.getElementById('saveJpegBtn').addEventListener('click', function() {
     var btn = this;
     btn.textContent = 'Saving...';
     btn.disabled = true;
     var target = flipped ? back : front;
-    var other  = flipped ? front : back;
-    // Fully hide the other face so it doesn't bleed into the capture
-    var prevOtherDisplay = other.style.display;
-    other.style.display = 'none';
-    target.style.visibility = 'visible';
-    html2canvas(target, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#f2ece0',
-      width: 816,
-      height: 1056
-    }).then(function(canvas) {
-      other.style.display = prevOtherDisplay;
-      var link = document.createElement('a');
-      link.download = 'sorc-character-sheet-' + (flipped ? 'back' : 'front') + '.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.93);
-      link.click();
-      btn.textContent = 'Save as JPEG';
-      btn.disabled = false;
-    }).catch(function() {
-      other.style.display = prevOtherDisplay;
-      btn.textContent = 'Save as JPEG';
-      btn.disabled = false;
-    });
+    var label  = flipped ? 'back' : 'front';
+    captureFace(target, label, btn, 'Save as JPEG');
   });
 
   // Print tabs
