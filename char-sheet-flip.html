@@ -1114,30 +1114,38 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Capture one face to JPEG - strips 3D transforms so html2canvas renders correctly
+  // Capture one face to JPEG - clones into an off-screen container free of all parent transforms
   function captureFace(faceEl, label, btn, btnLabel) {
-    var flipper = document.querySelector('.flipper');
-    // Save current inline styles
-    var prevFlipperTransform = flipper.style.transform;
-    var prevFlipperTransformStyle = flipper.style.transformStyle;
-    var prevFaceTransform = faceEl.style.transform;
-    var prevFacePosition = faceEl.style.position;
+    // Build a clean off-screen wrapper with exactly the sheet dimensions
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = [
+      'position:fixed',
+      'left:-9999px',
+      'top:0',
+      'width:816px',
+      'height:1056px',
+      'overflow:hidden',
+      'background:#f2ece0',
+      'transform:none',
+      'z-index:-1'
+    ].join(';');
 
-    // Strip 3D context so html2canvas sees a flat element
-    flipper.style.transformStyle = 'flat';
-    flipper.style.transform = 'none';
-    faceEl.style.transform = 'none';
-    faceEl.style.position = 'relative';
+    // Deep-clone the face, strip any residual transforms, make it fill the wrapper
+    var clone = faceEl.cloneNode(true);
+    clone.style.cssText = [
+      'position:relative',
+      'width:816px',
+      'height:1056px',
+      'transform:none',
+      'backface-visibility:visible',
+      '-webkit-backface-visibility:visible',
+      'overflow:hidden'
+    ].join(';');
 
-    // Hide every sibling face
-    var allFaces = flipper.querySelectorAll('.face');
-    var prevDisplays = [];
-    allFaces.forEach(function(f) {
-      prevDisplays.push(f.style.display);
-      if (f !== faceEl) f.style.display = 'none';
-    });
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
 
-    html2canvas(faceEl, {
+    html2canvas(wrapper, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#f2ece0',
@@ -1145,13 +1153,7 @@
       height: 1056,
       logging: false
     }).then(function(canvas) {
-      // Restore styles
-      flipper.style.transform = prevFlipperTransform;
-      flipper.style.transformStyle = prevFlipperTransformStyle;
-      faceEl.style.transform = prevFaceTransform;
-      faceEl.style.position = prevFacePosition;
-      allFaces.forEach(function(f, i) { f.style.display = prevDisplays[i]; });
-
+      document.body.removeChild(wrapper);
       var link = document.createElement('a');
       link.download = 'sorc-character-sheet-' + label + '.jpg';
       link.href = canvas.toDataURL('image/jpeg', 0.93);
@@ -1159,11 +1161,7 @@
       btn.textContent = btnLabel;
       btn.disabled = false;
     }).catch(function() {
-      flipper.style.transform = prevFlipperTransform;
-      flipper.style.transformStyle = prevFlipperTransformStyle;
-      faceEl.style.transform = prevFaceTransform;
-      faceEl.style.position = prevFacePosition;
-      allFaces.forEach(function(f, i) { f.style.display = prevDisplays[i]; });
+      document.body.removeChild(wrapper);
       btn.textContent = btnLabel;
       btn.disabled = false;
     });
