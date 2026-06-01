@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -18,7 +19,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
     }
 
     /* ── SCALE WRAPPER ── */
@@ -490,14 +491,56 @@
       margin-top: 2px;
     }
 
+    /* ── ACTION BAR ── */
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 46px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 200;
+    }
+
+    .action-bar button {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .action-bar button:active { background: #2a3a10; }
+
     /* ── PRINT ── */
     @media print {
-      html, body { overflow: visible; height: auto; background: white; }
-      .scale-wrap { transform: none !important; width: 8.5in; height: 11in; }
-      .flipper { width: 8.5in; height: 11in; transform: none !important; }
-      .face { position: absolute; inset: 0; }
-      .face.back { display: none; }
-      .flip-hint { display: none; }
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body { overflow: visible !important; height: auto !important; background: white !important; }
+      .action-bar { display: none !important; }
+      .flip-hint { display: none !important; }
+      .scale-wrap { transform: none !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; }
+      .flipper { transform: none !important; width: 8.5in !important; height: 11in !important; position: relative !important; }
+      .face {
+        position: static !important;
+        width: 8.5in !important; height: 11in !important;
+        visibility: visible !important;
+        backface-visibility: visible !important;
+        -webkit-backface-visibility: visible !important;
+        transform: none !important;
+        display: block !important;
+      }
+      .face.front { page-break-after: always; }
+      .face.back { page-break-before: always; }
     }
   </style>
 </head>
@@ -777,6 +820,11 @@
   </div><!-- /flipper -->
 </div><!-- /scale-wrap -->
 
+<div class="action-bar">
+  <button id="saveJpegBtn">Save as JPEG</button>
+  <button id="printBothBtn">Print Both Sides</button>
+</div>
+
 <script>
   var flipper = document.getElementById('flipper');
   var front   = document.getElementById('front');
@@ -784,14 +832,11 @@
   var flipped = false;
   var DUR     = 850;
 
-  // Start with back hidden to prevent bleed-through
   back.style.visibility = 'hidden';
 
   flipper.addEventListener('click', function() {
     flipped = !flipped;
     flipper.classList.toggle('flipped');
-
-    // At the halfway point of the flip, swap which face is visible
     setTimeout(function() {
       if (flipped) {
         front.style.visibility = 'hidden';
@@ -803,20 +848,66 @@
     }, DUR / 2);
   });
 
-  // Scale the 816x1056 sheet to fit the viewport
+  // Scale sheet to fit viewport minus action bar
   function scaleToFit() {
     var wrap = document.getElementById('scaleWrap');
+    var barH = 46;
     var sw = window.innerWidth;
-    var sh = window.innerHeight;
+    var sh = window.innerHeight - barH;
     var scale = Math.min(sw / 816, sh / 1056) * 0.97;
     wrap.style.transform = 'scale(' + scale + ')';
-    wrap.style.marginTop = (((1056 * scale) - 1056) / 2) + 'px';
+    var scaledH = 1056 * scale;
+    var topOffset = Math.max(0, (sh - scaledH) / 2);
+    wrap.style.marginTop = topOffset + 'px';
   }
 
   scaleToFit();
   window.addEventListener('resize', scaleToFit);
-  window.addEventListener('orientationchange', function() {
-    setTimeout(scaleToFit, 150);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+
+  // Save current face as JPEG using html2canvas
+  document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    var btn = this;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    var target = flipped ? back : front;
+    // Temporarily make visible for capture
+    var prevVis = target.style.visibility;
+    target.style.visibility = 'visible';
+    html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f2ece0',
+      width: 816,
+      height: 1056
+    }).then(function(canvas) {
+      target.style.visibility = prevVis;
+      var link = document.createElement('a');
+      link.download = 'sorc-character-sheet-' + (flipped ? 'back' : 'front') + '.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.93);
+      link.click();
+      btn.textContent = 'Save as JPEG';
+      btn.disabled = false;
+    }).catch(function() {
+      target.style.visibility = prevVis;
+      btn.textContent = 'Save as JPEG';
+      btn.disabled = false;
+    });
+  });
+
+  // Print both sides
+  document.getElementById('printBothBtn').addEventListener('click', function() {
+    // Make both faces visible before print dialog
+    var prevFrontVis = front.style.visibility;
+    var prevBackVis  = back.style.visibility;
+    front.style.visibility = 'visible';
+    back.style.visibility  = 'visible';
+    window.print();
+    // Restore after print dialog closes
+    setTimeout(function() {
+      front.style.visibility = prevFrontVis;
+      back.style.visibility  = prevBackVis;
+    }, 500);
   });
 </script>
 </body>
