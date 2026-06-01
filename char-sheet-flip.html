@@ -609,23 +609,52 @@
     /* ── PRINT ── */
     @media print {
       @page { size: 8.5in 11in; margin: 0; }
-      html, body { overflow: visible !important; height: auto !important; background: white !important; }
-      .action-bar { display: none !important; }
-      .flip-indicator { display: none !important; }
-      .sheet-viewport { display: block !important; }
-      .scale-wrap { transform: none !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; }
-      .flipper { transform: none !important; width: 8.5in !important; height: 11in !important; position: relative !important; }
-      .face {
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      /* Let the flipper flow normally so faces stack vertically */
+      .flipper {
+        transform: none !important;
+        transform-style: flat !important;
+        width: 8.5in !important;
+        height: auto !important;
         position: static !important;
-        width: 8.5in !important; height: 11in !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
         visibility: visible !important;
+        opacity: 1 !important;
         backface-visibility: visible !important;
         -webkit-backface-visibility: visible !important;
         transform: none !important;
         display: block !important;
+        overflow: hidden !important;
       }
-      .face.front { page-break-after: always; }
-      .face.back { page-break-before: always; }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
     }
   </style>
 </head>
