@@ -993,8 +993,10 @@
     btn.textContent = 'Saving...';
     btn.disabled = true;
     var target = flipped ? back : front;
-    // Temporarily make visible for capture
-    var prevVis = target.style.visibility;
+    var other  = flipped ? front : back;
+    // Fully hide the other face so it doesn't bleed into the capture
+    var prevOtherDisplay = other.style.display;
+    other.style.display = 'none';
     target.style.visibility = 'visible';
     html2canvas(target, {
       scale: 2,
@@ -1003,7 +1005,7 @@
       width: 816,
       height: 1056
     }).then(function(canvas) {
-      target.style.visibility = prevVis;
+      other.style.display = prevOtherDisplay;
       var link = document.createElement('a');
       link.download = 'sorc-character-sheet-' + (flipped ? 'back' : 'front') + '.jpg';
       link.href = canvas.toDataURL('image/jpeg', 0.93);
@@ -1011,7 +1013,7 @@
       btn.textContent = 'Save as JPEG';
       btn.disabled = false;
     }).catch(function() {
-      target.style.visibility = prevVis;
+      other.style.display = prevOtherDisplay;
       btn.textContent = 'Save as JPEG';
       btn.disabled = false;
     });
