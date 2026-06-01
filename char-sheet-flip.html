@@ -10,7 +10,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      width: 100%; height: 100%;
+      width: 100%;
       overflow: hidden;
       background: #111;
       margin: 0;
@@ -22,9 +22,8 @@
       align-items: stretch;
     }
 
-    /* Viewport fills space between flip indicator and action bar */
+    /* Viewport sized by JS to exactly fit the scaled sheet - no dead space */
     .sheet-viewport {
-      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1100,14 +1099,22 @@
     }, DUR / 2);
   });
 
-  // Scale sheet to fit the sheet-viewport container
+  // Scale sheet and size the viewport to exactly match - eliminates dead space
   function scaleToFit() {
     var wrap = document.getElementById('scaleWrap');
     var vp = document.querySelector('.sheet-viewport');
-    var vw = vp.clientWidth  || window.innerWidth;
-    var vh = vp.clientHeight || (window.innerHeight - 76);
-    var scale = Math.min(vw / 816, vh / 1056) * 0.97;
+    var vw = window.innerWidth;
+    var availH = window.innerHeight - 76; // minus indicator (30) + action bar (46)
+    var scale = Math.min(vw / 816, availH / 1056) * 0.97;
     wrap.style.transform = 'scale(' + scale + ')';
+
+    // Size the viewport to exactly the scaled sheet height - no black gaps
+    var scaledH = Math.ceil(1056 * scale);
+    vp.style.height = scaledH + 'px';
+
+    // Tell the parent iframe the total height needed so it can resize
+    var totalH = scaledH + 76;
+    try { window.parent.postMessage({ sorcSheetHeight: totalH }, '*'); } catch(e) {}
   }
 
   scaleToFit();
