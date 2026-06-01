@@ -554,14 +554,15 @@
     .action-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 46px;
+      height: 52px;
       background: #1a1a1a;
       border-top: 1px solid #2a2a2a;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
       z-index: 200;
+      padding: 0 12px;
     }
 
     .action-bar button {
@@ -580,6 +581,58 @@
     }
 
     .action-bar button:active { background: #2a3a10; }
+
+    /* Print tab group */
+    .print-group {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .print-group .ptab {
+      background: #2a2a2a;
+      color: #888;
+      border: none;
+      border-radius: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .print-group .ptab:last-of-type { border-right: none; }
+
+    .print-group .ptab.active {
+      background: #3a4a18;
+      color: #f2ece0;
+    }
+
+    .print-group .ptab:active { background: #2a3a10; color: #f2ece0; }
+
+    #printBtn {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #printBtn:active { background: #2a3a10; }
 
     /* ── CLASS / LEVEL / RANK ROW ── */
     .clr-row {
@@ -609,23 +662,52 @@
     /* ── PRINT ── */
     @media print {
       @page { size: 8.5in 11in; margin: 0; }
-      html, body { overflow: visible !important; height: auto !important; background: white !important; }
-      .action-bar { display: none !important; }
-      .flip-indicator { display: none !important; }
-      .sheet-viewport { display: block !important; }
-      .scale-wrap { transform: none !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; }
-      .flipper { transform: none !important; width: 8.5in !important; height: 11in !important; position: relative !important; }
-      .face {
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      /* Let the flipper flow normally so faces stack vertically */
+      .flipper {
+        transform: none !important;
+        transform-style: flat !important;
+        width: 8.5in !important;
+        height: auto !important;
         position: static !important;
-        width: 8.5in !important; height: 11in !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
         visibility: visible !important;
+        opacity: 1 !important;
         backface-visibility: visible !important;
         -webkit-backface-visibility: visible !important;
         transform: none !important;
         display: block !important;
+        overflow: hidden !important;
       }
-      .face.front { page-break-after: always; }
-      .face.back { page-break-before: always; }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
     }
   </style>
 </head>
@@ -914,7 +996,12 @@
 
 <div class="action-bar">
   <button id="saveJpegBtn">Save as JPEG</button>
-  <button id="printBothBtn">Print Both Sides</button>
+  <div class="print-group">
+    <button class="ptab active" data-side="front">Front</button>
+    <button class="ptab" data-side="back">Back</button>
+    <button class="ptab" data-side="both">Both</button>
+  </div>
+  <button id="printBtn">Print</button>
 </div>
 
 <script>
@@ -964,8 +1051,10 @@
     btn.textContent = 'Saving...';
     btn.disabled = true;
     var target = flipped ? back : front;
-    // Temporarily make visible for capture
-    var prevVis = target.style.visibility;
+    var other  = flipped ? front : back;
+    // Fully hide the other face so it doesn't bleed into the capture
+    var prevOtherDisplay = other.style.display;
+    other.style.display = 'none';
     target.style.visibility = 'visible';
     html2canvas(target, {
       scale: 2,
@@ -974,7 +1063,7 @@
       width: 816,
       height: 1056
     }).then(function(canvas) {
-      target.style.visibility = prevVis;
+      other.style.display = prevOtherDisplay;
       var link = document.createElement('a');
       link.download = 'sorc-character-sheet-' + (flipped ? 'back' : 'front') + '.jpg';
       link.href = canvas.toDataURL('image/jpeg', 0.93);
@@ -982,24 +1071,49 @@
       btn.textContent = 'Save as JPEG';
       btn.disabled = false;
     }).catch(function() {
-      target.style.visibility = prevVis;
+      other.style.display = prevOtherDisplay;
       btn.textContent = 'Save as JPEG';
       btn.disabled = false;
     });
   });
 
-  // Print both sides
-  document.getElementById('printBothBtn').addEventListener('click', function() {
-    // Make both faces visible before print dialog
-    var prevFrontVis = front.style.visibility;
-    var prevBackVis  = back.style.visibility;
+  // Print tabs
+  var printSide = 'front';
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      printSide = tab.dataset.side;
+    });
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
     front.style.visibility = 'visible';
     back.style.visibility  = 'visible';
+
+    if (printSide === 'front') {
+      back.style.display = 'none';
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+    }
+    // 'both' shows both faces - no hiding needed
+
     window.print();
-    // Restore after print dialog closes
+
     setTimeout(function() {
-      front.style.visibility = prevFrontVis;
-      back.style.visibility  = prevBackVis;
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
+      // Restore correct visibility after print
+      if (flipped) {
+        front.style.visibility = 'hidden';
+        back.style.visibility  = 'visible';
+      } else {
+        back.style.visibility  = 'hidden';
+        front.style.visibility = 'visible';
+      }
     }, 500);
   });
 </script>
