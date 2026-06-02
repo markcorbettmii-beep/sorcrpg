@@ -54,6 +54,10 @@
       letter-spacing: 0.16em;
       text-transform: uppercase;
       flex-shrink: 0;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* ── FLIP CONTAINER ── */
@@ -62,6 +66,9 @@
       height: 1056px;
       position: relative;
       cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* ── FACES ── */
@@ -1467,7 +1474,7 @@
   var flipped   = false;
   var indicator = document.getElementById('flipIndicator');
 
-  flipper.addEventListener('click', function() {
+  function doFlip() {
     flipped = !flipped;
     if (flipped) {
       front.style.display = 'none';
@@ -1478,7 +1485,10 @@
       front.style.display = 'block';
       indicator.innerHTML = 'Tap sheet to flip &rarr; Back';
     }
-  });
+  }
+
+  flipper.addEventListener('click', doFlip);
+  indicator.addEventListener('click', doFlip);
 
   // Scale sheet to fit viewport. When width is the limiting dimension (mobile
   // embedded view), postMessage the ideal iframe height to the parent so the
