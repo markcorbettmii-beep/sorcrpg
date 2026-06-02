@@ -1483,14 +1483,15 @@
 
   // Capture back face as static image after fonts load
   document.fonts.ready.then(function() {
-    var sw = document.getElementById('scaleWrap');
+    var sw  = document.getElementById('scaleWrap');
+    var dpr = window.devicePixelRatio || 1;
     var svSW = sw.style.transform;
     sw.style.transform  = 'none';
     back.style.display  = 'block';
     front.style.display = 'none';
     void back.offsetHeight;
     html2canvas(back, {
-      scale: 2, useCORS: true, backgroundColor: '#f2ece0',
+      scale: dpr, useCORS: true, backgroundColor: '#f2ece0',
       width: 816, height: 1056, logging: false
     }).then(function(canvas) {
       sw.style.transform  = svSW;
@@ -1498,8 +1499,12 @@
       back.style.display  = 'none';
       backImg = document.createElement('img');
       backImg.src = canvas.toDataURL('image/jpeg', 0.93);
-      backImg.className = 'face';
-      backImg.style.cssText = 'display:none;width:816px;height:1056px;';
+      backImg.style.position = 'absolute';
+      backImg.style.left     = '0';
+      backImg.style.top      = '0';
+      backImg.style.width    = '816px';
+      backImg.style.height   = '1056px';
+      backImg.style.display  = 'none';
       flipper.appendChild(backImg);
       if (flipped) { front.style.display = 'none'; backImg.style.display = 'block'; }
     }).catch(function() {
