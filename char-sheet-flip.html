@@ -61,25 +61,18 @@
       width: 816px;
       height: 1056px;
       position: relative;
-      transform-style: preserve-3d;
-      -webkit-transform-style: preserve-3d;
-      transition: transform 0.85s cubic-bezier(0.4,0.2,0.2,1);
       cursor: pointer;
     }
-
-    .flipper.flipped { transform: rotateY(180deg); }
 
     /* ── FACES ── */
     .face {
       position: absolute;
       inset: 0;
       background: #f2ece0;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
       overflow: hidden;
     }
 
-    .face.back { transform: rotateY(180deg) translateZ(0); will-change: transform; }
+    .face.back { display: none; }
 
     /* ── BORDER ── */
     .border-frame {
@@ -866,8 +859,6 @@
       }
       /* Let the flipper flow normally so faces stack vertically */
       .flipper {
-        transform: none !important;
-        transform-style: flat !important;
         width: 8.5in !important;
         height: auto !important;
         position: static !important;
@@ -879,9 +870,6 @@
         height: 11in !important;
         visibility: visible !important;
         opacity: 1 !important;
-        backface-visibility: visible !important;
-        -webkit-backface-visibility: visible !important;
-        transform: none !important;
         display: block !important;
         overflow: hidden !important;
       }
@@ -1473,30 +1461,51 @@
 </div>
 
 <script>
-  var flipper = document.getElementById('flipper');
-  var front   = document.getElementById('front');
-  var back    = document.getElementById('back');
-  var flipped = false;
-  var DUR     = 850;
-
-  back.style.visibility = 'hidden';
-
+  var flipper   = document.getElementById('flipper');
+  var front     = document.getElementById('front');
+  var back      = document.getElementById('back');
+  var flipped   = false;
+  var backImg   = null;
   var indicator = document.getElementById('flipIndicator');
 
   flipper.addEventListener('click', function() {
     flipped = !flipped;
-    flipper.classList.toggle('flipped');
-    setTimeout(function() {
-      if (flipped) {
-        front.style.visibility = 'hidden';
-        back.style.visibility  = 'visible';
-        indicator.innerHTML = '&larr; Tap sheet to flip back to Front';
-      } else {
-        back.style.visibility  = 'hidden';
-        front.style.visibility = 'visible';
-        indicator.innerHTML = 'Tap sheet to flip &rarr; Back';
-      }
-    }, DUR / 2);
+    if (flipped) {
+      front.style.display = 'none';
+      if (backImg) backImg.style.display = 'block';
+      indicator.innerHTML = '&larr; Tap sheet to flip back to Front';
+    } else {
+      if (backImg) backImg.style.display = 'none';
+      front.style.display = 'block';
+      indicator.innerHTML = 'Tap sheet to flip &rarr; Back';
+    }
+  });
+
+  // Capture back face as static image after fonts load
+  document.fonts.ready.then(function() {
+    var sw = document.getElementById('scaleWrap');
+    var svSW = sw.style.transform;
+    sw.style.transform  = 'none';
+    back.style.display  = 'block';
+    front.style.display = 'none';
+    void back.offsetHeight;
+    html2canvas(back, {
+      scale: 2, useCORS: true, backgroundColor: '#f2ece0',
+      width: 816, height: 1056, logging: false
+    }).then(function(canvas) {
+      sw.style.transform  = svSW;
+      front.style.display = 'block';
+      back.style.display  = 'none';
+      backImg = document.createElement('img');
+      backImg.src = canvas.toDataURL('image/jpeg', 0.93);
+      backImg.style.cssText = 'position:absolute;top:0;left:0;width:816px;height:1056px;display:none;';
+      flipper.appendChild(backImg);
+      if (flipped) { front.style.display = 'none'; backImg.style.display = 'block'; }
+    }).catch(function() {
+      sw.style.transform  = svSW;
+      front.style.display = 'block';
+      back.style.display  = 'none';
+    });
   });
 
   // Scale sheet to fit viewport. When width is the limiting dimension (mobile
@@ -1588,9 +1597,16 @@
     var btn = this;
     btn.textContent = 'Saving...';
     btn.disabled = true;
-    var target = flipped ? back : front;
-    var label  = flipped ? 'back' : 'front';
-    captureFace(target, label, btn, 'Save as JPEG');
+    if (flipped && backImg) {
+      var link = document.createElement('a');
+      link.download = 'sorc-character-sheet-back.jpg';
+      link.href = backImg.src;
+      link.click();
+      btn.textContent = 'Save as JPEG';
+      btn.disabled = false;
+    } else {
+      captureFace(front, 'front', btn, 'Save as JPEG');
+    }
   });
 
   // Print tabs
@@ -1607,29 +1623,25 @@
   document.getElementById('printBtn').addEventListener('click', function() {
     var prevFrontDisplay = front.style.display;
     var prevBackDisplay  = back.style.display;
-    front.style.visibility = 'visible';
-    back.style.visibility  = 'visible';
+    if (backImg) backImg.style.display = 'none';
 
     if (printSide === 'front') {
-      back.style.display = 'none';
+      front.style.display = 'block';
+      back.style.display  = 'none';
     } else if (printSide === 'back') {
       front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
     }
-    // 'both' shows both faces - no hiding needed
 
     window.print();
 
     setTimeout(function() {
       front.style.display = prevFrontDisplay;
-      back.style.display  = prevBackDisplay;
-      // Restore correct visibility after print
-      if (flipped) {
-        front.style.visibility = 'hidden';
-        back.style.visibility  = 'visible';
-      } else {
-        back.style.visibility  = 'hidden';
-        front.style.visibility = 'visible';
-      }
+      back.style.display  = 'none';
+      if (backImg && flipped) backImg.style.display = 'block';
     }, 500);
   });
 </script>
