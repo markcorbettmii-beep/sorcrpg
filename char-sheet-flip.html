@@ -1465,53 +1465,19 @@
   var front     = document.getElementById('front');
   var back      = document.getElementById('back');
   var flipped   = false;
-  var backImg   = null;
   var indicator = document.getElementById('flipIndicator');
 
   flipper.addEventListener('click', function() {
     flipped = !flipped;
     if (flipped) {
       front.style.display = 'none';
-      if (backImg) backImg.style.display = 'block';
+      back.style.display  = 'block';
       indicator.innerHTML = '&larr; Tap sheet to flip back to Front';
     } else {
-      if (backImg) backImg.style.display = 'none';
+      back.style.display  = 'none';
       front.style.display = 'block';
       indicator.innerHTML = 'Tap sheet to flip &rarr; Back';
     }
-  });
-
-  // Capture back face as static image after fonts load
-  document.fonts.ready.then(function() {
-    var sw  = document.getElementById('scaleWrap');
-    var dpr = window.devicePixelRatio || 1;
-    var svSW = sw.style.transform;
-    sw.style.transform  = 'none';
-    back.style.display  = 'block';
-    front.style.display = 'none';
-    void back.offsetHeight;
-    html2canvas(back, {
-      scale: dpr, useCORS: true, backgroundColor: '#f2ece0',
-      width: 816, height: 1056, logging: false
-    }).then(function(canvas) {
-      sw.style.transform  = svSW;
-      front.style.display = 'block';
-      back.style.display  = 'none';
-      backImg = document.createElement('img');
-      backImg.src = canvas.toDataURL('image/jpeg', 0.93);
-      backImg.style.position = 'absolute';
-      backImg.style.left     = '0';
-      backImg.style.top      = '0';
-      backImg.style.width    = '816px';
-      backImg.style.height   = '1056px';
-      backImg.style.display  = 'none';
-      flipper.appendChild(backImg);
-      if (flipped) { front.style.display = 'none'; backImg.style.display = 'block'; }
-    }).catch(function() {
-      sw.style.transform  = svSW;
-      front.style.display = 'block';
-      back.style.display  = 'none';
-    });
   });
 
   // Scale sheet to fit viewport. When width is the limiting dimension (mobile
@@ -1603,16 +1569,9 @@
     var btn = this;
     btn.textContent = 'Saving...';
     btn.disabled = true;
-    if (flipped && backImg) {
-      var link = document.createElement('a');
-      link.download = 'sorc-character-sheet-back.jpg';
-      link.href = backImg.src;
-      link.click();
-      btn.textContent = 'Save as JPEG';
-      btn.disabled = false;
-    } else {
-      captureFace(front, 'front', btn, 'Save as JPEG');
-    }
+    var faceEl = flipped ? back : front;
+    var label  = flipped ? 'back' : 'front';
+    captureFace(faceEl, label, btn, 'Save as JPEG');
   });
 
   // Print tabs
@@ -1629,8 +1588,6 @@
   document.getElementById('printBtn').addEventListener('click', function() {
     var prevFrontDisplay = front.style.display;
     var prevBackDisplay  = back.style.display;
-    if (backImg) backImg.style.display = 'none';
-
     if (printSide === 'front') {
       front.style.display = 'block';
       back.style.display  = 'none';
@@ -1646,8 +1603,7 @@
 
     setTimeout(function() {
       front.style.display = prevFrontDisplay;
-      back.style.display  = 'none';
-      if (backImg && flipped) backImg.style.display = 'block';
+      back.style.display  = prevBackDisplay;
     }, 500);
   });
 </script>
