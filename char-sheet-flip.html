@@ -1470,10 +1470,12 @@
   var flipper   = document.getElementById('flipper');
   var front     = document.getElementById('front');
   var back      = document.getElementById('back');
+  var saving    = false;
   var flipped   = false;
   var indicator = document.getElementById('flipIndicator');
 
   function doFlip() {
+    if (saving) return;
     flipped = !flipped;
     if (flipped) {
       front.style.display = 'none';
@@ -1520,6 +1522,7 @@
   // Resets transforms on live elements so html2canvas sees the true 816x1056
   // layout, then restores everything after the canvas is built.
   function captureFace(faceEl, label, btn, btnLabel) {
+    saving = true;
     var otherFace  = (faceEl === front) ? back : front;
     var sw         = document.getElementById('scaleWrap');
     var fp         = document.querySelector('.flipper');
@@ -1572,6 +1575,7 @@
       }
       btn.textContent = btnLabel;
       btn.disabled = false;
+      saving = false;
     }).catch(function() {
       sw.style.transform        = svSW;
       fp.style.transform        = svFT;
@@ -1582,6 +1586,7 @@
       otherFace.style.display   = svOth;
       btn.textContent = btnLabel;
       btn.disabled = false;
+      saving = false;
     });
   }
 
