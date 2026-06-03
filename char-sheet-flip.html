@@ -124,7 +124,7 @@
     .inner {
       position: relative;
       z-index: 1;
-      padding: 28px 42px 28px;
+      padding: 28px 42px 6px;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -576,7 +576,7 @@
     .card-row {
       display: flex;
       gap: 10px;
-      margin-bottom: 4px;
+      margin-bottom: 0;
     }
     .sheet-card {
       flex: 1;
@@ -1557,10 +1557,16 @@
       faceEl.style.visibility   = svVis;
       otherFace.style.display   = svOth;
 
-      var link = document.createElement('a');
-      link.download = 'sorc-character-sheet-' + label + '.jpg';
-      link.href = canvas.toDataURL('image/jpeg', 0.93);
-      link.click();
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
+      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        window.open(dataUrl, '_blank');
+      } else {
+        var link = document.createElement('a');
+        link.download = 'sorc-character-sheet-' + label + '.jpg';
+        link.href = dataUrl;
+        link.click();
+      }
       btn.textContent = btnLabel;
       btn.disabled = false;
     }).catch(function() {
