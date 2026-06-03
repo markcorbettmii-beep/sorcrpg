@@ -1470,31 +1470,9 @@
   var flipper    = document.getElementById('flipper');
   var front      = document.getElementById('front');
   var back       = document.getElementById('back');
-  var saving     = false;
-  var flipped    = false;
-  var backCanvas = null;
-  var indicator  = document.getElementById('flipIndicator');
-
-  function captureBackFace() {
-    var sw = document.getElementById('scaleWrap');
-    var svSW = sw.style.transform;
-    sw.style.transform = 'none';
-    back.style.display = 'block';
-    void back.offsetHeight;
-    setTimeout(function() {
-      html2canvas(back, {
-        scale: 2, useCORS: true, backgroundColor: '#f2ece0',
-        width: 816, height: 1056, logging: false
-      }).then(function(canvas) {
-        backCanvas = canvas;
-        sw.style.transform = svSW;
-        if (!flipped) back.style.display = 'none';
-      }).catch(function() {
-        sw.style.transform = svSW;
-        if (!flipped) back.style.display = 'none';
-      });
-    }, 100);
-  }
+  var saving    = false;
+  var flipped   = false;
+  var indicator = document.getElementById('flipIndicator');
 
   function doFlip() {
     if (saving) return;
@@ -1503,7 +1481,6 @@
       front.style.display = 'none';
       back.style.display  = 'block';
       indicator.innerHTML = '&larr; Tap sheet to flip back to Front';
-      if (!backCanvas) captureBackFace();
     } else {
       back.style.display  = 'none';
       front.style.display = 'block';
@@ -1627,25 +1604,39 @@
     var btn = this;
     btn.textContent = 'Saving...';
     btn.disabled = true;
-    if (snap && backCanvas) {
-      var dataUrl = backCanvas.toDataURL('image/jpeg', 0.93);
-      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) { window.open(dataUrl, '_blank'); }
-      else {
-        var link = document.createElement('a');
-        link.download = 'sorc-character-sheet-back.jpg';
-        link.href = dataUrl;
-        link.click();
-      }
-      btn.textContent = 'Save as JPEG';
-      btn.disabled = false;
-      saving = false;
+    if (snap) {
+      // Clone back face into an offscreen element so html2canvas captures it
+      // in complete isolation - no dependency on live display state.
+      var clone = back.cloneNode(true);
+      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
+      document.body.appendChild(clone);
+      setTimeout(function() {
+        html2canvas(clone, {
+          scale: 2, useCORS: true, backgroundColor: '#f2ece0',
+          width: 816, height: 1056, logging: false
+        }).then(function(canvas) {
+          document.body.removeChild(clone);
+          var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
+          var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          if (isIOS) { window.open(dataUrl, '_blank'); }
+          else {
+            var link = document.createElement('a');
+            link.download = 'sorc-character-sheet-back.jpg';
+            link.href = dataUrl;
+            link.click();
+          }
+          btn.textContent = 'Save as JPEG';
+          btn.disabled = false;
+          saving = false;
+        }).catch(function() {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
+          btn.textContent = 'Save as JPEG';
+          btn.disabled = false;
+          saving = false;
+        });
+      }, 150);
     } else {
-      var faceEl = snap ? back : front;
-      var label  = snap ? 'back' : 'front';
-      faceEl.style.display = 'block';
-      ((snap ? front : back)).style.display = 'none';
-      captureFace(faceEl, label, btn, 'Save as JPEG');
+      captureFace(front, 'front', btn, 'Save as JPEG');
     }
   });
 
