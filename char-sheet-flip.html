@@ -1590,12 +1590,22 @@
     });
   }
 
+  var saveFlippedSnap;
+  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
+    saveFlippedSnap = flipped;
+    saving = true;
+  }, { passive: true });
   document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    saving = true;
+    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
+    saveFlippedSnap = undefined;
     var btn = this;
     btn.textContent = 'Saving...';
     btn.disabled = true;
-    var faceEl = flipped ? back : front;
-    var label  = flipped ? 'back' : 'front';
+    var faceEl = snap ? back : front;
+    var label  = snap ? 'back' : 'front';
+    faceEl.style.display = 'block';
+    ((snap ? front : back)).style.display = 'none';
     captureFace(faceEl, label, btn, 'Save as JPEG');
   });
 
