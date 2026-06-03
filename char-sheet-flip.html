@@ -1525,18 +1525,20 @@
     var fp         = document.querySelector('.flipper');
 
     // Save
-    var svSW  = sw.style.transform;
-    var svFT  = fp.style.transform;
-    var svFS  = fp.style.transformStyle;
-    var svFce = faceEl.style.transform;
-    var svOth = otherFace.style.display;
-    var svVis = faceEl.style.visibility;
+    var svSW   = sw.style.transform;
+    var svFT   = fp.style.transform;
+    var svFS   = fp.style.transformStyle;
+    var svFce  = faceEl.style.transform;
+    var svDisp = faceEl.style.display;
+    var svOth  = otherFace.style.display;
+    var svVis  = faceEl.style.visibility;
 
-    // Strip transforms so html2canvas renders at native 816x1056
+    // Strip transforms and ensure face is visible for capture
     sw.style.transform        = 'none';
     fp.style.transform        = 'none';
     fp.style.transformStyle   = 'flat';
-    faceEl.style.transform    = 'none';   // overrides .face.back rotateY
+    faceEl.style.transform    = 'none';
+    faceEl.style.display      = 'block';
     faceEl.style.visibility   = 'visible';
     otherFace.style.display   = 'none';
 
@@ -1554,6 +1556,7 @@
       fp.style.transform        = svFT;
       fp.style.transformStyle   = svFS;
       faceEl.style.transform    = svFce;
+      faceEl.style.display      = svDisp;
       faceEl.style.visibility   = svVis;
       otherFace.style.display   = svOth;
 
@@ -1574,6 +1577,7 @@
       fp.style.transform        = svFT;
       fp.style.transformStyle   = svFS;
       faceEl.style.transform    = svFce;
+      faceEl.style.display      = svDisp;
       faceEl.style.visibility   = svVis;
       otherFace.style.display   = svOth;
       btn.textContent = btnLabel;
