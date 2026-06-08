@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=900, initial-scale=1.0" />
   <title>SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #111; margin: 0; }
@@ -37,112 +36,29 @@
     .flipper { width: 816px; height: 1056px; position: relative; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
     .face { position: absolute; inset: 0; background: #f2ece0; overflow: hidden; cursor: pointer; }
     .face.back { display: none; }
-    .border-frame { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-    .border-frame::before { content: ''; position: absolute; inset: 7px; border: 2.5px solid #3a4a18; }
-    .border-frame::after { content: ''; position: absolute; inset: 13px; border: 1px solid #3a4a18; }
-    .corner { position: absolute; width: 40px; height: 40px; z-index: 12; pointer-events: none; }
-    .corner svg { width: 100%; height: 100%; }
-    .corner.tl { top: 0; left: 0; }
-    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
-    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
-    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
-    .wm { display: none; }
-    .inner { position: relative; z-index: 1; padding: 14px 42px 14px; height: 100%; display: flex; flex-direction: column; }
-    .title-block { text-align: center; margin-bottom: 8px; }
-    .title-block h1 {
-      font-family: 'Cinzel Decorative', Cinzel, serif; font-size: 1.75rem;
-      color: #2e3d0f; font-weight: 900; letter-spacing: 0.03em; line-height: 1.15;
-    }
-    .title-block h2 {
-      font-family: 'Cinzel', serif; font-size: 0.78rem; color: #2e3d0f;
-      font-weight: 700; letter-spacing: 0.22em; margin-top: 4px;
-    }
-    .title-block .sub {
-      font-family: Arial, sans-serif; font-size: 0.64rem; color: #444; margin-top: 5px; font-style: italic;
-    }
-    .rule { border: none; border-top: 1.5px solid #4a5a20; margin: 8px 0; opacity: 0.4; }
-    .cols { display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 16px; margin-top: 6px; align-content: start; overflow: hidden; }
-    .sec { margin-bottom: 14px; }
-    .sec-title {
-      font-family: 'Cinzel', serif; font-size: 0.6rem; font-weight: 700;
-      color: #2e3d0f; letter-spacing: 0.16em; text-transform: uppercase;
-      text-align: center; border-bottom: 1px solid #4a5a20; padding-bottom: 3px; margin-bottom: 7px;
-    }
-    .field { margin-bottom: 5px; display: flex; align-items: center; }
-    .field-lbl {
-      font-family: Arial, sans-serif; font-size: 0.6rem; color: #444; display: block; margin-bottom: 1px;
-    }
-    .field-lbl.sm { font-size: 0.55rem; }
-    .fline {
-      width: 100%; height: 1px; background: #6a7a48; margin-bottom: 2px;
-    }
-    .col-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .portrait { width: 100%; aspect-ratio: 3/4; border: 1.5px solid #4a5a20; background: #e5ddc8; display: flex; align-items: center; justify-content: center; }
-    .portrait span { font-family: 'Cinzel', serif; font-size: 0.55rem; color: #999; letter-spacing: 0.14em; text-transform: uppercase; }
-    .mid-label { font-family: 'Cinzel', serif; font-size: 0.7rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.18em; text-transform: uppercase; text-align: center; width: 100%; }
-    .mid-line { width: 88%; height: 1px; background: #4a5a20; margin: 3px auto 0; }
-    .bp-sub { font-family: 'Cinzel', serif; font-size: 0.54rem; font-weight: 700; color: #4a5a20; letter-spacing: 0.1em; text-transform: uppercase; margin: 6px 0 2px; }
-    .chips-lbl { font-family: Arial, sans-serif; font-size: 0.46rem; color: #666; flex-shrink: 0; white-space: nowrap; margin-left: 3px; }
-    .cards-wrap { margin-top: 8px; }
-    .cards-head { font-family: 'Cinzel', serif; font-size: 0.66rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; margin-bottom: 8px; }
-    .cards-main-row { display: flex; gap: 8px; align-items: stretch; }
-    .cards-center { flex: 1; }
-    .cards-side { width: 82px; flex-shrink: 0; display: flex; flex-direction: column; }
-    .cards-side-title { font-family: 'Cinzel', serif; font-size: 0.5rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; border-bottom: 1px solid #4a5a20; padding-bottom: 3px; margin-bottom: 5px; }
-    .cards-side .fline { margin-bottom: 7px; }
-    .cards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 8px; }
-    .card-tpl { border: 1px solid #4a5a20; display: flex; flex-direction: column; }
-    .card-tpl-hdr { background: #2e3d0f; color: #e8dfc0; font-family: 'Cinzel', serif; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; padding: 2px 2px; }
-    .card-tpl-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 4px; padding: 5px 5px 4px; }
-    .card-tpl-body.single { grid-template-columns: 1fr; }
-    .card-tpl-pending { font-family: 'Cinzel', serif; font-size: 0.44rem; color: #888; text-align: center; padding: 10px 4px; font-style: italic; letter-spacing: 0.08em; }
-    .cf { margin-bottom: 4px; }
-    .cl { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; display: block; margin-bottom: 1px; line-height: 1.1; }
-    .cf .fline { margin-bottom: 0; }
 
-    .attr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-    .abox { border: 1px solid #4a5a20; background: #e8e0cc; display: flex; flex-direction: row; align-items: center; padding: 3px 2px 3px; gap: 2px; }
-    .abox.wide { grid-column: span 2; }
-    .aname { font-family: 'Cinzel', serif; font-size: 0.52rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.08em; }
+    .inner { position: relative; z-index: 1; padding: 24px 42px 24px; height: 100%; display: flex; flex-direction: column; }
 
-    .afield, .vfield, .sfield, .tfield, .repo-field {
-      border: 1px solid #4a5a20;
-      background: #f5f0e4;
-      text-align: center;
-      font-size: 0.78rem;
-      color: #222;
-      margin-left: 4px;
-      box-sizing: border-box;
-      padding: 0 2px;
+    /* Example fields and styling */
+    .field-label { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 700; color: #2e3d0f; margin-bottom: 4px; }
+    .field-input { width: 95%; font-size: 1.1rem; padding: 4px 8px; margin-bottom: 12px; border: 1px solid #aaa; border-radius: 4px; background: #f9f7ef; }
+    .section-title { font-family: 'Cinzel Decorative', serif; font-size: 1.5rem; color: #354f1e; margin: 18px 0 10px 0; text-align: center; }
+
+    .action-bar {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: #f5f0e4; border-top: 1.5px solid #4a5a20; z-index: 2000;
+      display: flex; align-items: center; justify-content: center; gap: 1.5em;
+      padding: 0.7em 0 0.7em 0;
     }
-    .afield { width: 28px; height: 16px; }
-    .vfield { width: 100%; height: 18px; }
-    .sfield { width: 36px; height: 13px; }
-    .sfield.wide { width: 62px; }
-    .tfield { width: 24px; height: 12px; }
-    .repo-field { width: 22px; height: 12px; }
-
-    .trait-list { list-style: none; padding: 0; }
-    .trait-list li {
-      display: flex; justify-content: space-between; align-items: center;
-      font-family: Arial, sans-serif; font-size: 0.6rem; color: #222;
-      padding: 2.5px 0; border-bottom: 1px dotted #ccc;
+    .action-bar button, .action-bar .ptab {
+      font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
+      background: #354f1e; color: #f6f0e1; border: none; border-radius: 7px;
+      padding: 8px 20px; margin: 0 0.2em; cursor: pointer;
+      transition: background 0.2s;
     }
-
-    .vit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-    .vbox { display: flex; flex-direction: row; align-items: center; gap: 2px; }
-    .vname { font-family: 'Cinzel', serif; font-size: 0.5rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.06em; }
-
-    .srow { display: flex; justify-content: space-between; align-items: center; font-family: Arial, sans-serif; font-size: 0.6rem; color: #222; padding: 3px 0; border-bottom: 1px dotted #bbb; }
-
-    .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
-    .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
-    .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
-    .repo-pts { display: flex; gap: 2px; }
-    .repo-pt { width: 8px; height: 8px; border: 1px solid #4a5a20; background: #f5f0e4; flex-shrink: 0; }
-
-    .xp-bar { border: 1px solid #4a5a20; height: 8px; background: #f5f0e4; margin-top: 3px; overflow: hidden; }
-    .xp-fill { height: 100%; width: 0; background: #5a7a28; }
+    .action-bar button:hover, .action-bar .ptab.active { background: #4a5a20; }
+    .print-group { margin: 0 1.2em 0 1.2em; }
+    .print-note { display: block; }
     @media print {
       @page { size: 8.5in 11in; margin: 0; }
       html, body { overflow: visible !important; height: auto !important; background: white !important; }
@@ -165,22 +81,58 @@
   <div class="scale-wrap" id="scaleWrap">
     <div class="flipper" id="flipper">
 
-      <!-- corner SVG shorthand -->
-      <svg style="display:none"><defs>
-        <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
-      </defs></svg>
-
       <!-- FRONT FACE -->
       <div class="face" id="front">
-        <!-- [front face content goes here, see previous long code block for all the fields and layout] -->
-        <!-- ... -->
+        <div class="inner">
+          <div class="section-title">Character Sheet (Front)</div>
+          <label class="field-label" for="cname">Name</label>
+          <input class="field-input" id="cname" type="text" value="Elanor Swiftbow">
+
+          <label class="field-label" for="cclass">Class & Level</label>
+          <input class="field-input" id="cclass" type="text" value="Elf Ranger • 4">
+
+          <label class="field-label" for="cbackground">Background</label>
+          <input class="field-input" id="cbackground" type="text" value="Wanderer">
+
+          <div class="section-title">Abilities</div>
+          <label class="field-label" for="cstrength">Strength</label>
+          <input class="field-input" id="cstrength" type="text" value="14">
+
+          <label class="field-label" for="cdexterity">Dexterity</label>
+          <input class="field-input" id="cdexterity" type="text" value="17">
+
+          <label class="field-label" for="cconstitution">Constitution</label>
+          <input class="field-input" id="cconstitution" type="text" value="12">
+
+          <label class="field-label" for="cintelligence">Intelligence</label>
+          <input class="field-input" id="cintelligence" type="text" value="11">
+
+          <label class="field-label" for="cwisdom">Wisdom</label>
+          <input class="field-input" id="cwisdom" type="text" value="13">
+
+          <label class="field-label" for="ccharisma">Charisma</label>
+          <input class="field-input" id="ccharisma" type="text" value="15">
+        </div>
       </div>
 
       <!-- BACK FACE -->
       <div class="face back" id="back">
-        <!-- [back face content goes here, see previous long code block for all the fields and layout] -->
-        <!-- ... -->
+        <div class="inner">
+          <div class="section-title">Character Sheet (Back)</div>
+          <label class="field-label" for="cequipment">Equipment</label>
+          <input class="field-input" id="cequipment" type="text" value="Longbow, Leather Armor, Rations">
+
+          <label class="field-label" for="cnotes">Notes</label>
+          <input class="field-input" id="cnotes" type="text" value="Has a pet hawk named Fenris.">
+
+          <label class="field-label" for="cspells">Spells</label>
+          <input class="field-input" id="cspells" type="text" value="Speak with Animals, Cure Wounds">
+
+          <label class="field-label" for="callies">Allies</label>
+          <input class="field-input" id="callies" type="text" value="Thorin, Mira, Fenris">
+        </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -196,7 +148,7 @@
 </div>
 
 <script>
-  // Your flipping, scaling, printing JS goes here (unchanged)
+  // scaling
   function scaleToFit() {
     var wrap = document.getElementById('scaleWrap');
     var vp = document.querySelector('.sheet-viewport');
@@ -211,7 +163,7 @@
   window.addEventListener('orientationchange', scaleToFit);
   document.addEventListener('DOMContentLoaded', scaleToFit);
 
-  // Flip logic
+  // flip logic
   (function(){
     var flipper = document.getElementById('flipper');
     var front = document.getElementById('front');
@@ -234,21 +186,41 @@
     flipIndicator.addEventListener('click', flip);
   })();
 
-  // Load portrait from character customizer if present
-  (function() {
-    var portrait = localStorage.getItem('sorc_portrait');
-    if (portrait) {
-      var box = document.getElementById('portraitBox');
-      if (box) {
-        box.innerHTML = '';
-        var img = document.createElement('img');
-        img.src = portrait;
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        box.appendChild(img);
-        localStorage.removeItem('sorc_portrait');
+  // Print and tab logic
+  document.querySelectorAll('.ptab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var side = btn.getAttribute('data-side');
+      var front = document.getElementById('front');
+      var back = document.getElementById('back');
+      if(side === 'front') {
+        front.style.display = "block";
+        back.style.display = "none";
+      } else if(side === 'back') {
+        front.style.display = "none";
+        back.style.display = "block";
+      } else {
+        front.style.display = "block";
+        back.style.display = "block";
       }
-    }
-  })();
+    });
+  });
+  document.getElementById('printBtn').addEventListener('click', function() {
+    window.print();
+  });
+
+  // Save as JPEG using html2canvas
+  document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    var node = document.getElementById('scaleWrap');
+    html2canvas(node, {backgroundColor: "#f2ece0"}).then(function(canvas) {
+      var link = document.createElement('a');
+      link.download = 'character-sheet.jpg';
+      link.href = canvas.toDataURL("image/jpeg");
+      link.click();
+    });
+  });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
