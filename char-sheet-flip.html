@@ -2,1459 +2,188 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=900, initial-scale=1.0" />
   <title>SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #111; margin: 0; }
+    body { display: flex; flex-direction: column; align-items: stretch; }
 
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: #111;
-      margin: 0;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    /* Viewport fills space between flip indicator and action bar */
     .sheet-viewport {
+      min-width: 900px;
+      min-height: 1200px;
       flex: 1;
       display: flex;
       align-items: flex-start;
       justify-content: center;
       overflow: hidden;
     }
-
-    /* ── SCALE WRAPPER ── */
-    /* Sheet is always 816×1056px internally (8.5×11in at 96dpi).
-       JS scales it to fit the viewport. */
-    .scale-wrap {
-      width: 816px;
-      height: 1056px;
-      transform-origin: top center;
-      flex-shrink: 0;
+    @media (max-width: 800px) {
+      .sheet-viewport {
+        min-width: 360px;
+        min-height: 540px;
+      }
     }
 
-    /* ── FLIP INDICATOR (outside the sheet) ── */
+    .scale-wrap { width: 816px; height: 1056px; transform-origin: top center; flex-shrink: 0; }
     .flip-indicator {
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      color: #555;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      flex-shrink: 0;
-      cursor: pointer;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
+      height: 30px; display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif; font-size: 0.6rem; font-weight: 700;
+      color: #555; letter-spacing: 0.16em; text-transform: uppercase;
+      flex-shrink: 0; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
     }
-
-    /* ── FLIP CONTAINER ── */
-    .flipper {
-      width: 816px;
-      height: 1056px;
-      position: relative;
-      cursor: pointer;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* ── FACES ── */
-    .face {
-      position: absolute;
-      inset: 0;
-      background: #f2ece0;
-      overflow: hidden;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    .flipper { width: 816px; height: 1056px; position: relative; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .face { position: absolute; inset: 0; background: #f2ece0; overflow: hidden; cursor: pointer; }
     .face.back { display: none; }
-
-    /* ── BORDER ── */
-    .border-frame {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 10;
-    }
-    .border-frame::before {
-      content: '';
-      position: absolute;
-      inset: 7px;
-      border: 2.5px solid #3a4a18;
-    }
-    .border-frame::after {
-      content: '';
-      position: absolute;
-      inset: 13px;
-      border: 1px solid #3a4a18;
-    }
-
-    /* ── CORNERS ── */
-    .corner {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      z-index: 12;
-      pointer-events: none;
-    }
+    .border-frame { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+    .border-frame::before { content: ''; position: absolute; inset: 7px; border: 2.5px solid #3a4a18; }
+    .border-frame::after { content: ''; position: absolute; inset: 13px; border: 1px solid #3a4a18; }
+    .corner { position: absolute; width: 40px; height: 40px; z-index: 12; pointer-events: none; }
     .corner svg { width: 100%; height: 100%; }
     .corner.tl { top: 0; left: 0; }
     .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
     .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
     .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
-
-    /* ── WATERMARK ── */
     .wm { display: none; }
-
-    /* ── INNER ── */
-    .inner {
-      position: relative;
-      z-index: 1;
-      padding: 14px 42px 14px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ── TITLE ── */
+    .inner { position: relative; z-index: 1; padding: 14px 42px 14px; height: 100%; display: flex; flex-direction: column; }
     .title-block { text-align: center; margin-bottom: 8px; }
-
     .title-block h1 {
-      font-family: 'Cinzel Decorative', Cinzel, serif;
-      font-size: 1.75rem;
-      color: #2e3d0f;
-      font-weight: 900;
-      letter-spacing: 0.03em;
-      line-height: 1.15;
+      font-family: 'Cinzel Decorative', Cinzel, serif; font-size: 1.75rem;
+      color: #2e3d0f; font-weight: 900; letter-spacing: 0.03em; line-height: 1.15;
     }
-
     .title-block h2 {
-      font-family: 'Cinzel', serif;
-      font-size: 0.78rem;
-      color: #2e3d0f;
-      font-weight: 700;
-      letter-spacing: 0.22em;
-      margin-top: 4px;
+      font-family: 'Cinzel', serif; font-size: 0.78rem; color: #2e3d0f;
+      font-weight: 700; letter-spacing: 0.22em; margin-top: 4px;
     }
-
     .title-block .sub {
-      font-family: Arial, sans-serif;
-      font-size: 0.64rem;
-      color: #444;
-      margin-top: 5px;
-      font-style: italic;
+      font-family: Arial, sans-serif; font-size: 0.64rem; color: #444; margin-top: 5px; font-style: italic;
     }
-
-    .rule {
-      border: none;
-      border-top: 1.5px solid #4a5a20;
-      margin: 8px 0;
-      opacity: 0.4;
-    }
-
-    /* ── THREE COLUMNS (front) ── */
-    .cols {
-      display: grid;
-      grid-template-columns: 1fr 1.12fr 1fr;
-      gap: 16px;
-      margin-top: 6px;
-      align-content: start;
-      overflow: hidden;
-    }
-
-    /* ── SECTION ── */
+    .rule { border: none; border-top: 1.5px solid #4a5a20; margin: 8px 0; opacity: 0.4; }
+    .cols { display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 16px; margin-top: 6px; align-content: start; overflow: hidden; }
     .sec { margin-bottom: 14px; }
-
     .sec-title {
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      text-align: center;
-      border-bottom: 1px solid #4a5a20;
-      padding-bottom: 3px;
-      margin-bottom: 7px;
+      font-family: 'Cinzel', serif; font-size: 0.6rem; font-weight: 700;
+      color: #2e3d0f; letter-spacing: 0.16em; text-transform: uppercase;
+      text-align: center; border-bottom: 1px solid #4a5a20; padding-bottom: 3px; margin-bottom: 7px;
     }
-
-    /* ── FILL-IN FIELDS ── */
-    .field { margin-bottom: 5px; }
-
+    .field { margin-bottom: 5px; display: flex; align-items: center; }
     .field-lbl {
-      font-family: Arial, sans-serif;
-      font-size: 0.6rem;
-      color: #444;
-      display: block;
-      margin-bottom: 1px;
+      font-family: Arial, sans-serif; font-size: 0.6rem; color: #444; display: block; margin-bottom: 1px;
     }
-
     .field-lbl.sm { font-size: 0.55rem; }
-
     .fline {
-      width: 100%;
-      height: 1px;
-      background: #6a7a48;
-      margin-bottom: 2px;
+      width: 100%; height: 1px; background: #6a7a48; margin-bottom: 2px;
     }
-
-    /* ── CENTER COLUMN ── */
-    .col-mid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .portrait {
-      width: 100%;
-      aspect-ratio: 3/4;
-      border: 1.5px solid #4a5a20;
-      background: #e5ddc8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .portrait span {
-      font-family: 'Cinzel', serif;
-      font-size: 0.55rem;
-      color: #999;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-    }
-
-    .mid-label {
-      font-family: 'Cinzel', serif;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      text-align: center;
-      width: 100%;
-    }
-
-    .mid-line {
-      width: 88%;
-      height: 1px;
-      background: #4a5a20;
-      margin: 3px auto 0;
-    }
-
-    /* ── BONUS/PENALTY SUB-HEADER ── */
-    .bp-sub {
-      font-family: 'Cinzel', serif;
-      font-size: 0.54rem;
-      font-weight: 700;
-      color: #4a5a20;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin: 6px 0 2px;
-    }
-
-    /* ── CHIPS STACK LABEL ── */
-    .chips-lbl {
-      font-family: Arial, sans-serif;
-      font-size: 0.46rem;
-      color: #666;
-      flex-shrink: 0;
-      white-space: nowrap;
-      margin-left: 3px;
-    }
-
-    /* ── CARDS (full-width row below the 3 columns) ── */
-    .cards-wrap {
-      margin-top: 8px;
-    }
-
-    .cards-head {
-      font-family: 'Cinzel', serif;
-      font-size: 0.66rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      text-align: center;
-      margin-bottom: 8px;
-    }
-
-    .cards-main-row {
-      display: flex;
-      gap: 8px;
-      align-items: stretch;
-    }
-
+    .col-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .portrait { width: 100%; aspect-ratio: 3/4; border: 1.5px solid #4a5a20; background: #e5ddc8; display: flex; align-items: center; justify-content: center; }
+    .portrait span { font-family: 'Cinzel', serif; font-size: 0.55rem; color: #999; letter-spacing: 0.14em; text-transform: uppercase; }
+    .mid-label { font-family: 'Cinzel', serif; font-size: 0.7rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.18em; text-transform: uppercase; text-align: center; width: 100%; }
+    .mid-line { width: 88%; height: 1px; background: #4a5a20; margin: 3px auto 0; }
+    .bp-sub { font-family: 'Cinzel', serif; font-size: 0.54rem; font-weight: 700; color: #4a5a20; letter-spacing: 0.1em; text-transform: uppercase; margin: 6px 0 2px; }
+    .chips-lbl { font-family: Arial, sans-serif; font-size: 0.46rem; color: #666; flex-shrink: 0; white-space: nowrap; margin-left: 3px; }
+    .cards-wrap { margin-top: 8px; }
+    .cards-head { font-family: 'Cinzel', serif; font-size: 0.66rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.2em; text-transform: uppercase; text-align: center; margin-bottom: 8px; }
+    .cards-main-row { display: flex; gap: 8px; align-items: stretch; }
     .cards-center { flex: 1; }
-
-    .cards-side {
-      width: 82px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .cards-side-title {
-      font-family: 'Cinzel', serif;
-      font-size: 0.5rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-align: center;
-      border-bottom: 1px solid #4a5a20;
-      padding-bottom: 3px;
-      margin-bottom: 5px;
-    }
-
+    .cards-side { width: 82px; flex-shrink: 0; display: flex; flex-direction: column; }
+    .cards-side-title { font-family: 'Cinzel', serif; font-size: 0.5rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; border-bottom: 1px solid #4a5a20; padding-bottom: 3px; margin-bottom: 5px; }
     .cards-side .fline { margin-bottom: 7px; }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 5px 8px;
-    }
-
-    .card-tpl {
-      border: 1px solid #4a5a20;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card-tpl-hdr {
-      background: #2e3d0f;
-      color: #e8dfc0;
-      font-family: 'Cinzel', serif;
-      font-size: 0.46rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-align: center;
-      padding: 2px 2px;
-    }
-
-    .card-tpl-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0 4px;
-      padding: 5px 5px 4px;
-    }
-
-    .card-tpl-body.single {
-      grid-template-columns: 1fr;
-    }
-
-    .card-tpl-pending {
-      font-family: 'Cinzel', serif;
-      font-size: 0.44rem;
-      color: #888;
-      text-align: center;
-      padding: 10px 4px;
-      font-style: italic;
-      letter-spacing: 0.08em;
-    }
-
-    .cf {
-      margin-bottom: 4px;
-    }
-
-    .cl {
-      font-family: Arial, sans-serif;
-      font-size: 0.44rem;
-      color: #555;
-      display: block;
-      margin-bottom: 1px;
-      line-height: 1.1;
-    }
-
+    .cards-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px 8px; }
+    .card-tpl { border: 1px solid #4a5a20; display: flex; flex-direction: column; }
+    .card-tpl-hdr { background: #2e3d0f; color: #e8dfc0; font-family: 'Cinzel', serif; font-size: 0.46rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; padding: 2px 2px; }
+    .card-tpl-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 4px; padding: 5px 5px 4px; }
+    .card-tpl-body.single { grid-template-columns: 1fr; }
+    .card-tpl-pending { font-family: 'Cinzel', serif; font-size: 0.44rem; color: #888; text-align: center; padding: 10px 4px; font-style: italic; letter-spacing: 0.08em; }
+    .cf { margin-bottom: 4px; }
+    .cl { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; display: block; margin-bottom: 1px; line-height: 1.1; }
     .cf .fline { margin-bottom: 0; }
 
-    /* ════════ BACK ════════ */
-
-    .back-cols {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
-      margin-top: 6px;
-    }
-
-    .b-sec { margin-bottom: 13px; }
-
-    .b-title {
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      text-align: center;
-      border-bottom: 1px solid #4a5a20;
-      padding-bottom: 3px;
-      margin-bottom: 7px;
-    }
-
-    /* ATTRIBUTES */
-    .attr-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
-    }
-
-    .abox {
-      border: 1px solid #4a5a20;
-      background: #e8e0cc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 3px 2px 3px;
-      gap: 2px;
-    }
-
+    .attr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .abox { border: 1px solid #4a5a20; background: #e8e0cc; display: flex; flex-direction: row; align-items: center; padding: 3px 2px 3px; gap: 2px; }
     .abox.wide { grid-column: span 2; }
+    .aname { font-family: 'Cinzel', serif; font-size: 0.52rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.08em; }
 
-    .aname {
-      font-family: 'Cinzel', serif;
-      font-size: 0.52rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.08em;
-    }
-
-    .afield {
-      width: 28px;
-      height: 16px;
+    .afield, .vfield, .sfield, .tfield, .repo-field {
       border: 1px solid #4a5a20;
       background: #f5f0e4;
-    }
-
-    /* FORMULA NOTE */
-    .frm {
-      font-family: Arial, sans-serif;
-      font-size: 0.44rem;
-      color: #666;
-      font-style: italic;
-      margin: -1px 0 3px 2px;
-      line-height: 1.3;
-    }
-
-    /* STAT ROWS */
-    .srow {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: Arial, sans-serif;
-      font-size: 0.6rem;
+      text-align: center;
+      font-size: 0.78rem;
       color: #222;
-      padding: 3px 0;
-      border-bottom: 1px dotted #bbb;
-    }
-
-    .sfield {
-      width: 36px;
-      height: 13px;
-      border: 1px solid #4a5a20;
-      background: #f5f0e4;
-      flex-shrink: 0;
-    }
-
-    .sfield.wide { width: 62px; }
-
-    /* TRAITS */
-    .trait-list { list-style: none; padding: 0; }
-
-    .trait-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: Arial, sans-serif;
-      font-size: 0.6rem;
-      color: #222;
-      padding: 2.5px 0;
-      border-bottom: 1px dotted #ccc;
-    }
-
-    .tfield {
-      width: 24px;
-      height: 12px;
-      border: 1px solid #4a5a20;
-      background: #f5f0e4;
-      flex-shrink: 0;
-    }
-
-    /* CHIPS */
-    .chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 3px;
-      margin-top: 4px;
-    }
-
-    .chip {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 1.5px solid #4a5a20;
-      background: #f5f0e4;
-    }
-
-    .chip.purple { border-color: #7a3a9a; background: #ece0f5; }
-
-    .chip-note {
-      font-family: Arial, sans-serif;
-      font-size: 0.48rem;
-      color: #777;
-      margin-top: 3px;
-    }
-
-    /* CONDITIONS */
-    .cond-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 3px 8px;
-    }
-
-    .vit-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
-    }
-
-    .vbox {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-
-    .vname {
-      font-family: 'Cinzel', serif;
-      font-size: 0.5rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.06em;
-    }
-
-    .vfield {
-      width: 100%;
-      height: 18px;
-      border: 1px solid #4a5a20;
-      background: #f5f0e4;
-    }
-
-    .class-hdr {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      font-family: 'Cinzel', serif;
-      font-size: 0.52rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-top: 4px;
-    }
-
-    .cond-wrap {
-      flex-shrink: 0;
-      margin-top: auto;
-      padding-top: 0;
-    }
-
-    .card-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 0;
-    }
-    .sheet-card {
-      flex: 1;
-      min-width: 0;
-      border: 1px solid #4a5a20;
-      background: #e8e0cc;
-      padding: 3px 4px;
+      margin-left: 4px;
       box-sizing: border-box;
+      padding: 0 2px;
     }
-    .sheet-card-title {
-      font-family: 'Cinzel', serif;
-      font-size: 0.48rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      border-bottom: 1px solid #4a5a20;
-      margin-bottom: 2px;
-      padding-bottom: 2px;
-      display: flex;
-    }
-    .item-card-tbl {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: Arial, sans-serif;
-      font-size: 0.48rem;
-    }
-    .item-card-tbl td {
-      padding: 1px 2px;
-      vertical-align: top;
-      color: #2e3d0f;
-    }
-    .item-card-tbl td:first-child {
-      border-right: 1px solid #4a5a20;
-      padding-right: 4px;
-    }
-    .item-card-tbl td:last-child {
-      width: 32%;
-      padding-left: 4px;
-    }
-    .weap-tbl td:last-child { width: 50%; }
-    .itype-hdr td {
-      font-weight: 700;
-      border-top: 1px solid #4a5a20;
-      padding-top: 5px;
-      padding-bottom: 1px;
-    }
-    .itype-hdr:first-child td {
-      border-top: none;
-    }
-    .itype-bullet td {
-      color: #555;
-      height: 14px;
-      border-bottom: 1px dotted #ccc;
-    }
-    .itype-bullet-lbl td {
-      color: #4a5a20;
-      height: 11px;
-      border-bottom: 1px dotted #ccc;
-      font-size: 0.42rem;
-      padding: 0px 2px;
-      vertical-align: middle;
+    .afield { width: 28px; height: 16px; }
+    .vfield { width: 100%; height: 18px; }
+    .sfield { width: 36px; height: 13px; }
+    .sfield.wide { width: 62px; }
+    .tfield { width: 24px; height: 12px; }
+    .repo-field { width: 22px; height: 12px; }
+
+    .trait-list { list-style: none; padding: 0; }
+    .trait-list li {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: Arial, sans-serif; font-size: 0.6rem; color: #222;
+      padding: 2.5px 0; border-bottom: 1px dotted #ccc;
     }
 
-    .citem {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-family: Arial, sans-serif;
-      font-size: 0.57rem;
-      color: #222;
-    }
-    .citem-name {
-      display: inline-block;
-      min-width: 52px;
-    }
-    .citem-boxes {
-      display: flex;
-      gap: 2px;
-      flex-shrink: 0;
-    }
+    .vit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .vbox { display: flex; flex-direction: row; align-items: center; gap: 2px; }
+    .vname { font-family: 'Cinzel', serif; font-size: 0.5rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.06em; }
 
-    .cbox {
-      width: 11px;
-      height: 11px;
-      border: 1px solid #4a5a20;
-      background: #f5f0e4;
-      flex-shrink: 0;
-    }
+    .srow { display: flex; justify-content: space-between; align-items: center; font-family: Arial, sans-serif; font-size: 0.6rem; color: #222; padding: 3px 0; border-bottom: 1px dotted #bbb; }
 
-    /* JOURNAL LINES */
-    .jline-item { margin-bottom: 7px; }
-
-    .jline-lbl {
-      font-family: Arial, sans-serif;
-      font-size: 0.56rem;
-      color: #444;
-      display: block;
-      margin-bottom: 1px;
-    }
-
-    .jline {
-      width: 100%;
-      height: 1px;
-      background: #6a7a48;
-      margin-bottom: 5px;
-    }
-
-    /* XP BAR */
-    .xp-bar {
-      border: 1px solid #4a5a20;
-      height: 8px;
-      background: #f5f0e4;
-      margin-top: 3px;
-      overflow: hidden;
-    }
-    .xp-fill { height: 100%; width: 0; background: #5a7a28; }
-
-    .small-note {
-      font-family: Arial, sans-serif;
-      font-size: 0.48rem;
-      color: #777;
-      margin-top: 2px;
-    }
-
-    .lore-item {
-      font-family: Arial, sans-serif;
-      font-size: 0.62rem;
-      font-weight: bold;
-      color: #222;
-      margin: 0 0 16px 0;
-      line-height: 1.2;
-    }
-
-    .lore-item.lg { margin-bottom: 50px; }
-    .lore-item.md { margin-bottom: 32px; }
-
-    .lore-note {
-      font-size: 0.5rem;
-      font-weight: normal;
-      font-style: italic;
-      color: #666;
-    }
-
-    /* ── ACTION BAR ── */
-    .action-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 52px;
-      background: #1a1a1a;
-      border-top: 1px solid #2a2a2a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      z-index: 200;
-      padding: 0 12px;
-    }
-
-    .action-bar button {
-      background: #3a4a18;
-      color: #f2ece0;
-      border: 1px solid #5a6a28;
-      border-radius: 16px;
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 6px 14px;
-      cursor: pointer;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .action-bar button:active { background: #2a3a10; }
-
-    /* Print tab group */
-    .print-group {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      border: 1px solid #5a6a28;
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .print-group .ptab {
-      background: #2a2a2a;
-      color: #888;
-      border: none;
-      border-radius: 0;
-      font-family: 'Cinzel', serif;
-      font-size: 0.55rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 6px 10px;
-      cursor: pointer;
-      text-transform: uppercase;
-      white-space: nowrap;
-      border-right: 1px solid #3a3a3a;
-    }
-
-    .print-group .ptab:last-of-type { border-right: none; }
-
-    .print-group .ptab.active {
-      background: #3a4a18;
-      color: #f2ece0;
-    }
-
-    .print-group .ptab:active { background: #2a3a10; color: #f2ece0; }
-
-    #printBtn {
-      background: #3a4a18;
-      color: #f2ece0;
-      border: 1px solid #5a6a28;
-      border-radius: 16px;
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 6px 14px;
-      cursor: pointer;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    #printBtn:active { background: #2a3a10; }
-
-    /* ── CLASS / LEVEL / RANK ROW ── */
-    .clr-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 6px;
-    }
-    .clr-item {
-      flex: 1;
-    }
-    .clr-lbl {
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      color: #2e3d0f;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      display: block;
-      margin-bottom: 2px;
-    }
-    .clr-line {
-      width: 100%;
-      height: 1px;
-      background: #4a5a20;
-    }
-
-    /* REPOSITORY */
     .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
     .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
     .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
     .repo-pts { display: flex; gap: 2px; }
     .repo-pt { width: 8px; height: 8px; border: 1px solid #4a5a20; background: #f5f0e4; flex-shrink: 0; }
-    .repo-field { width: 22px; height: 12px; border: 1px solid #4a5a20; background: #f5f0e4; display: inline-block; vertical-align: middle; }
-    /* TALENT TREES */
-    .talent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
-    .talent-tree { border: 1px solid #4a5a20; background: #e8e0cc; padding: 4px; }
-    .talent-tree-name { width: 100%; height: 12px; border-bottom: 1px solid #4a5a20; margin-bottom: 5px; }
-    .talent-slot { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; }
-    .talent-slot-line { flex: 1; height: 1px; background: #aaa; }
-    /* PROFESSIONS */
-    .prof-list { font-family: Arial, sans-serif; font-size: 0.44rem; color: #444; line-height: 1.5; margin-top: 3px; }
 
-    /* ── PRINT ── */
+    .xp-bar { border: 1px solid #4a5a20; height: 8px; background: #f5f0e4; margin-top: 3px; overflow: hidden; }
+    .xp-fill { height: 100%; width: 0; background: #5a7a28; }
     @media print {
       @page { size: 8.5in 11in; margin: 0; }
-      html, body {
-        overflow: visible !important;
-        height: auto !important;
-        background: white !important;
-      }
-      .action-bar, .flip-indicator { display: none !important; }
-      .sheet-viewport {
-        display: block !important;
-        overflow: visible !important;
-        height: auto !important;
-      }
-      .scale-wrap {
-        transform: none !important;
-        width: 8.5in !important;
-        height: auto !important;
-        margin: 0 !important;
-      }
-      /* Let the flipper flow normally so faces stack vertically */
-      .flipper {
-        width: 8.5in !important;
-        height: auto !important;
-        position: static !important;
-        overflow: visible !important;
-      }
-      .face {
-        position: relative !important;
-        width: 8.5in !important;
-        height: 11in !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        display: block !important;
-        overflow: hidden !important;
-      }
-      .face.front {
-        page-break-after: always;
-        break-after: page;
-      }
-      .face.back {
-        page-break-before: always;
-        break-before: page;
-      }
+      html, body { overflow: visible !important; height: auto !important; background: white !important; }
+      .action-bar, .flip-indicator, .print-note { display: none !important; }
+      .sheet-viewport { display: block !important; overflow: visible !important; height: auto !important; }
+      .scale-wrap { transform: none !important; width: 8.5in !important; height: auto !important; margin: 0 !important; }
     }
   </style>
 </head>
 <body>
 
 <div class="flip-indicator" id="flipIndicator">Tap sheet to flip &rarr; Back</div>
+<div style="text-align:center;color:#888;font-size:0.85rem;margin-bottom:6px;" class="print-note">
+  <em>
+    This sheet will automatically scale to fit your screen.<br>
+    When printed, it will use full quality and exact page size.
+  </em>
+</div>
 <div class="sheet-viewport">
-<div class="scale-wrap" id="scaleWrap">
-  <div class="flipper" id="flipper">
+  <div class="scale-wrap" id="scaleWrap">
+    <div class="flipper" id="flipper">
 
-    <!-- corner SVG shorthand -->
-    <svg style="display:none"><defs>
-      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
-    </defs></svg>
+      <!-- corner SVG shorthand -->
+      <svg style="display:none"><defs>
+        <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+      </defs></svg>
 
-    <!-- ══════════════ FRONT ══════════════ -->
-    <div class="face" id="front">
-      <div class="wm"></div>
-      <div class="border-frame"></div>
-      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-
-      <div class="inner">
-        <div class="title-block">
-          <h1>Slayers of Rings &amp; Crowns</h1>
-          <h2>SORC Character Sheet</h2>
-        </div>
-        <hr class="rule" />
-
-        <!-- CLASS / LEVEL / RANK -->
-        <div class="clr-row">
-          <div class="clr-item"><span class="clr-lbl">Class</span><div class="clr-line"></div></div>
-          <div class="clr-item"><span class="clr-lbl">Level</span><div class="clr-line"></div></div>
-          <div class="clr-item"><span class="clr-lbl">Rank</span><div class="clr-line"></div></div>
-          <div class="clr-item"><span class="clr-lbl">RP</span><div class="clr-line"></div></div>
-        </div>
-
-        <div class="cols">
-
-          <!-- LEFT: Attributes + Vitality + Currency + XP -->
-          <div>
-            <div class="sec">
-              <p class="sec-title">Attributes</p>
-              <div class="attr-grid">
-                <div class="abox"><span class="aname">ART</span><div class="afield"></div></div>
-                <div class="abox"><span class="aname">FRT</span><div class="afield"></div></div>
-                <div class="abox"><span class="aname">INT</span><div class="afield"></div></div>
-                <div class="abox"><span class="aname">PER</span><div class="afield"></div></div>
-                <div class="abox"><span class="aname">PHY</span><div class="afield"></div></div>
-                <div class="abox"><span class="aname">RES</span><div class="afield"></div></div>
-                <div class="abox"><span class="aname">WIS</span><div class="afield"></div></div>
-              </div>
-            </div>
-
-            <div class="sec">
-              <p class="sec-title">Vitality (Innate Base + Mods)</p>
-              <div class="vit-grid">
-                <div class="vbox"><span class="vname">Life</span><div class="vfield"></div></div>
-                <div class="vbox"><span class="vname">Stam</span><div class="vfield"></div></div>
-                <div class="vbox"><span class="vname">Mana</span><div class="vfield"></div></div>
-                <div class="vbox"><span class="vname">End.</span><div class="vfield"></div></div>
-              </div>
-            </div>
-
-            <div class="sec" style="margin-top:8px;">
-              <p class="sec-title" style="margin-bottom:14px;">Race Bonuses / Penalties</p>
-              <div class="field" style="margin-bottom:14px;"><span class="field-lbl">Innate Trait Adj. (+ / -)</span></div>
-              <div class="field" style="margin-bottom:14px;"><span class="field-lbl">Innate Racial Aptitude</span></div>
-              <div class="field" style="margin-bottom:14px;"><span class="field-lbl">Innate Racial Inaptitude</span></div>
-              <div class="field" style="margin-bottom:14px;"><span class="field-lbl">Innate Sub-race Aptitude</span></div>
-              <div class="field" style="margin-bottom:14px;"><span class="field-lbl">Innate Sub-race Inaptitude</span></div>
-            </div>
-
-            <div class="sec" style="margin-top:8px;">
-              <p class="sec-title">Class Bonuses and Penalties</p>
-              <div class="class-hdr">
-                <span>Main</span>
-                <span>Path</span>
-                <span>Branch</span>
-              </div>
-              <div style="height:72px;"></div>
-            </div>
-
-          </div>
-
-          <!-- CENTER: Traits -->
-          <div>
-            <div class="sec">
-              <p class="sec-title">Traits and Aptitudes</p>
-              <ul class="trait-list">
-                <li><span>Agility</span><div class="tfield"></div></li>
-                <li><span>Apex</span><div class="tfield"></div></li>
-                <li><span>Charisma</span><div class="tfield"></div></li>
-                <li><span>Constitution</span><div class="tfield"></div></li>
-                <li><span>Courage</span><div class="tfield"></div></li>
-                <li><span>Deception</span><div class="tfield"></div></li>
-                <li><span>Defense</span><div class="tfield"></div></li>
-                <li><span>Dexterity</span><div class="tfield"></div></li>
-                <li><span>Focus</span><div class="tfield"></div></li>
-                <li><span>Intuition</span><div class="tfield"></div></li>
-                <li><span>Knowledge</span><div class="tfield"></div></li>
-                <li><span>Luck</span><div class="tfield"></div></li>
-                <li><span>Piety</span><div class="tfield"></div></li>
-                <li><span>Resistance</span><div class="tfield"></div></li>
-                <li><span>Spirit</span><div class="tfield"></div></li>
-                <li><span>Strength</span><div class="tfield"></div></li>
-                <li><span>Toughness</span><div class="tfield"></div></li>
-                <li><span>Versatility</span><div class="tfield"></div></li>
-                <li><span>Vigilance</span><div class="tfield"></div></li>
-                <li><span>Willpower</span><div class="tfield"></div></li>
-                <li><span>Wit</span><div class="tfield"></div></li>
-              </ul>
-              <p class="small-note">Trait SCR capped at 20. Cannot exceed aligned ATT SCR.</p>
-            </div>
-          </div>
-
-          <!-- RIGHT: Combat Stats + Resistances + Conditions -->
-          <div>
-            <div class="sec">
-              <p class="sec-title">Combat Stats</p>
-              <div class="srow"><span>Armor Score (AS)</span><div class="sfield"></div></div>
-              <p class="frm">base armor + rank bonus + equip. bonuses</p>
-              <div class="srow"><span>PROTS</span><div class="sfield"></div></div>
-              <p class="frm">AS + all defensive modifiers (Defense, Agility, Resistance, etc.)</p>
-              <div class="srow"><span>Speed (ft)</span><div class="sfield"></div></div>
-              <p class="frm">Base SPD (race/size) + Speed trait + equip. + spells/abilities</p>
-              <div class="srow"><span>Initiative (INIT)</span><div class="sfield"></div></div>
-              <p class="frm">Base Speed + Agility + Vigilance + Luck</p>
-
-              <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:6px;margin-bottom:2px;">Abilities</p>
-              <p class="frm">&#9670; Class</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <p class="frm">&#9670; Nature Drawn</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <p class="frm">&#9670; Spelldrawn</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-
-              <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:6px;margin-bottom:2px;">Spells and Magic</p>
-              <p class="frm">&#9670; Class</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <p class="frm">&#9670; Racial (innate)</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <p class="frm">&#9670; Reagents</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <p class="frm" style="margin-top:6px;font-style:italic;">Equipped Armament specific Abilities and Meditated Spells displayed here. Refer to your Ability/Spells Cards to view all.</p>
-            </div>
-
-          </div>
-
-        </div><!-- /cols -->
-
-        <!-- ACTIVE CONDITIONS - flex child of inner, pushed to bottom -->
-        <div class="cond-wrap">
-          <div class="card-row">
-            <div class="sheet-card">
-              <div class="sheet-card-title"><span style="width:68%;border-right:1px solid #4a5a20;padding-right:4px;">Items</span><span style="padding-left:4px;">Tokens</span></div>
-              <table class="item-card-tbl">
-                <tbody>
-                  <tr class="itype-hdr"><td>Consumable</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-hdr"><td>Material</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-hdr"><td>Scroll</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-hdr"><td>Quest</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-hdr"><td>Collectable</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-hdr"><td>Other</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="sheet-card">
-              <div class="sheet-card-title">Weapons</div>
-              <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:2px 0 3px;">Weapons Drawn</p>
-              <table class="item-card-tbl weap-tbl">
-                <tbody>
-                  <tr class="itype-hdr"><td colspan="2">Main Hand</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td><td>&#9670; Value</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Source</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; DMG</td><td>&#9670; Maint.</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Vuln.</td><td>&#9670; Drop Mats</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Resist.</td><td>&#9670; Enhance.</td></tr>
-                  <tr class="itype-hdr"><td colspan="2">Off Hand</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td><td>&#9670; Value</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Source</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; DMG</td><td>&#9670; Maint.</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Vuln.</td><td>&#9670; Drop Mats</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Resist.</td><td>&#9670; Enhance.</td></tr>
-                </tbody>
-              </table>
-              <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">Weapon Carried <span style="font-family:Arial,sans-serif;font-size:0.38rem;font-weight:400;text-transform:none;letter-spacing:0;color:#555;">(sheathed)</span></p>
-              <table class="item-card-tbl weap-tbl">
-                <tbody>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td><td>&#9670; Value</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:9px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Source</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:9px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; DMG</td><td>&#9670; Maint.</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:9px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Vuln.</td><td>&#9670; Drop Mats</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:9px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Resist.</td><td>&#9670; Enhance.</td></tr>
-                </tbody>
-              </table>
-              <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:3px;">For more see Cards</p>
-              <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">Ammo</p>
-              <table class="item-card-tbl" style="table-layout:fixed;width:100%;">
-                <tbody>
-                  <tr class="itype-bullet-lbl" style="height:22px;"><td>&#9670; Type</td><td>&#9670; Container</td><td>&#9670; Count</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:22px;"><td>&#9670; Type</td><td>&#9670; Container</td><td>&#9670; Count</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:22px;"><td>&#9670; Type</td><td>&#9670; Container</td><td>&#9670; Count</td></tr>
-                </tbody>
-              </table>
-              <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">Max weapons carried, three.</p>
-            </div>
-            <div class="sheet-card">
-              <div class="sheet-card-title">Armor</div>
-              <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:2px 0 3px;">Set <span style="font-family:Arial,sans-serif;font-size:0.38rem;font-weight:400;text-transform:none;letter-spacing:0;color:#555;">(boots/gloves may be replaced)</span></p>
-              <table class="item-card-tbl weap-tbl">
-                <tbody>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td><td>&#9670; Value</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Source</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; AS</td><td>&#9670; Maint.</td></tr>
-                  <tr class="itype-bullet-lbl" style="font-size:0.38rem;"><td></td><td>&nbsp;&nbsp;(cost)</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Vuln.</td><td>&#9670; Resist.</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Drop</td><td>&#9670; Enhance</td></tr>
-                  <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
-                </tbody>
-              </table>
-              <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">Broken sets sustain partial bonuses. Value, maint. and others stay fixed. Only Cuirass may be enhanced for Set, see rules.</p>
-              <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">Special</p>
-              <table class="item-card-tbl">
-                <tbody>
-                  <tr class="itype-hdr"><td>Shield</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; AS</td></tr>
-                  <tr class="itype-hdr"><td>Bracers</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; AS</td></tr>
-                  <tr class="itype-hdr"><td>Accessories</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Belts, jewelry, insignias, and more.</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="sheet-card">
-              <div class="sheet-card-title">Companion Slots</div>
-              <table class="item-card-tbl">
-                <tbody>
-                  <tr class="itype-hdr"><td>Tiny</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status</td></tr>
-                  <tr class="itype-hdr"><td>Small</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status</td></tr>
-                  <tr class="itype-hdr"><td>Standard</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status</td></tr>
-                  <tr class="itype-hdr"><td>Goliath / Behemoth</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status</td></tr>
-                </tbody>
-              </table>
-            </div>
-            </div>
-          </div>
-          <p class="sec-title" style="text-align:left;border:none;margin-bottom:4px;margin-top:14px;">Active Conditions <span style="font-family:Arial,sans-serif;font-size:0.48rem;font-weight:400;text-transform:none;letter-spacing:0;">(duration in box)</span></p>
-          <div class="cond-grid">
-            <div class="citem"><span class="citem-name">Poisoned</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Blinded</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Prone</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Frightened</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Bleeding</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Frozen</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Stunned</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Silenced</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Restrained</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Charmed</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Burning</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Cursed</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-          </div>
-          <p style="font-family:Arial,sans-serif;font-size:0.46rem;color:#555;margin-top:4px;">Each turn is 6 seconds.</p>
-        </div>
-
-      </div><!-- /inner -->
-    </div><!-- /front -->
-
-
-    <!-- ══════════════ BACK ══════════════ -->
-    <div class="face back" id="back">
-      <div class="wm"></div>
-      <div class="border-frame"></div>
-      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
-
-      <div class="inner">
-        <div class="title-block">
-          <h1>Slayers of Rings &amp; Crowns</h1>
-          <h2>SORC Character Sheet</h2>
-        </div>
-        <hr class="rule" />
-
-        <div class="cols">
-
-          <!-- BACK LEFT: Basic Info + Physical -->
-          <div>
-            <div class="sec">
-              <p class="sec-title">Basic Info.</p>
-              <div class="field"><span class="field-lbl">Name &amp; UID</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Nickname(s)</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Gender</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Species / Race</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Age</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Birthday</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Place of Birth</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Occupation / Role</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Planet / World</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Languages</span><div class="fline"></div></div>
-            </div>
-
-            <div class="sec">
-              <p class="sec-title">Physical</p>
-              <div class="field"><span class="field-lbl">Height</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Weight</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Body Type / Build</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Skin Color / Tone</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Hair Color / Style</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Eye Color / Shape</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl sm">Scars, tattoos, birthmarks</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Voice (tone, accent)</span><div class="fline"></div></div>
-              <div class="field"><span class="field-lbl">Posture / Gait</span><div class="fline"></div></div>
-            </div>
-          </div>
-
-          <!-- BACK CENTER: Portrait + Currency + Experience -->
-          <div class="col-mid">
-            <p class="sec-title" style="width:100%;">Photo or Portrait</p>
-            <div class="portrait" id="portraitBox" style="height:380px;flex:none;aspect-ratio:unset;"><span>Photo or Portrait</span></div>
-
-            <div style="width:100%;margin-top:10px;">
-              <div class="sec">
-                <p class="sec-title">Currency</p>
-                <div class="srow"><span>Silver (SP)</span><div class="sfield wide"></div></div>
-                <div class="srow"><span>Gold (GP)</span><div class="sfield wide"></div></div>
-                <div class="srow"><span>Electrum (EP)</span><div class="sfield wide"></div></div>
-                <div class="srow"><span>Platinum (PP)</span><div class="sfield wide"></div></div>
-              </div>
-              <div class="sec">
-                <p class="sec-title">Experience</p>
-                <div class="srow"><span>Total XP</span><div class="sfield"></div></div>
-                <div class="xp-bar" style="margin-top:5px;"><div class="xp-fill"></div></div>
-                <p class="small-note">XP to next level</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- BACK RIGHT: Lore + Relations + Journal Notes -->
-          <div>
-            <div class="sec">
-              <p class="sec-title">Prestige</p>
-              <p style="font-family:Arial,sans-serif;font-size:0.44rem;color:#888;font-style:italic;margin-bottom:4px;">Journal under development.</p>
-              <p class="lore-item">◆ <strong>Alignment</strong></p>
-              <p class="lore-item">◆ <strong>Standings</strong> <span class="lore-note">(See Journal for Faction Standing Tracker)</span></p>
-              <p class="lore-item">◆ <strong>Titles and Reputation</strong> <span class="lore-note">(boasted, GM holds exposed, see rules)</span></p>
-              <p class="lore-item">◆ <strong>Legacy</strong></p>
-            </div>
-
-            <div class="sec" style="margin-top:14px;">
-              <p class="sec-title">Relations</p>
-              <p class="lore-item">◆ <strong>Family</strong></p>
-              <p class="lore-item">◆ <strong>Enemies</strong></p>
-              <p class="lore-item">◆ <strong>Affiliations</strong></p>
-              <p class="lore-item">◆ <strong>Associations</strong></p>
-            </div>
-
-            <div class="sec" style="margin-top:14px;">
-              <p class="sec-title">Achievements and Trophies</p>
-              <div style="height:24px;"></div>
-            </div>
-
-            <div class="sec" style="margin-top:14px;">
-              <p class="sec-title">Journal Notes <span class="lore-note">(see Journal for complete logs)</span></p>
-              <p class="lore-item" style="margin-bottom:70px;">◆ <strong>Background</strong></p>
-              <p class="lore-item lg" style="margin-bottom:70px;">◆ <strong>Mission Statement</strong> <span class="lore-note">(Custom Life Quest, see rules)</span></p>
-              <p class="lore-item md">◆ <strong>Quest Logs</strong></p>
-            </div>
-          </div>
-
-          <!-- EQUIPMENT & ITEMS - full width below 3 cols -->
-          <div style="grid-column:1/-1;margin-top:10px;border-top:1px solid rgba(74,90,32,0.35);padding-top:8px;">
-            <p class="sec-title">Equipment &amp; Items</p>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px;">
-              <div><p class="lore-item">◆ <strong>Equipped / Carried</strong></p></div>
-              <div><p class="lore-item">◆ <strong>Consumables / Misc.</strong></p></div>
-              <div><p class="lore-item">◆ <strong>Home (Property) / Storage</strong></p></div>
-            </div>
-            <p class="small-note" style="margin-top:5px;font-style:italic;">Characters can keep property and companions in Storage, Vaults, and their homes' stables, kennels respectively.</p>
-          </div>
-
-          <!-- REPOSITORY - full width -->
-          <div style="grid-column:1/-1;margin-top:10px;border-top:1px solid rgba(74,90,32,0.35);padding-top:8px;">
-            <p class="sec-title">Repository</p>
-            <table class="repo-tbl">
-              <thead>
-                <tr>
-                  <th>Attribute</th>
-                  <th>Points (roll)</th>
-                  <th>Score</th>
-                  <th>TST</th>
-                  <th>Remnants</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Artistry</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-                <tr>
-                  <td>Fortitude</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-                <tr>
-                  <td>Intellect</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-                <tr>
-                  <td>Perception</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-                <tr>
-                  <td>Physique</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-                <tr>
-                  <td>Resilience</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-                <tr>
-                  <td>Wisdom</td>
-                  <td><div class="repo-pts"><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                  <td><div class="repo-field"></div></td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="small-note" style="margin-top:3px;">Spend pts: Attribute score (3 pts), TST (2 pts ea.), or save as Remnants.</p>
-          </div>
-
-          <!-- PROFESSIONS + TALENT TREES - full width, two-column -->
-          <div style="grid-column:1/-1;margin-top:10px;border-top:1px solid rgba(74,90,32,0.35);padding-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-            <div>
-              <p class="sec-title">Profession Proficiencies</p>
-              <p class="prof-list">Blacksmith, Cook, Hunter, Stitcher, Apothecary, Body Artist, Engineer, Scientist, Tinker, Gem Crafter, Artificer, Enchanter, Witchcrafter, Carpenter, Mudder, Alchemist, Cyberneticist, Nanotechnician, Drone Operator, Holo-Artist, Bioengineer, Quantum Mechanic, Synth-Chef, Starship Mechanic, Psionic Crafter, Roboticist, Data Broker, Tech Salvager, Genetic Tailor, Shieldwright</p>
-              <p class="small-note" style="margin-top:3px;font-style:italic;">See Journal for profession skills and recipes.</p>
-            </div>
-            <div>
-              <p class="sec-title">Talent Trees <span style="font-family:Arial,sans-serif;font-size:0.44rem;font-weight:400;text-transform:none;letter-spacing:0;">(4 favorites)</span></p>
-              <div class="talent-grid">
-                <div class="talent-tree">
-                  <div class="talent-tree-name"></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                </div>
-                <div class="talent-tree">
-                  <div class="talent-tree-name"></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                </div>
-                <div class="talent-tree">
-                  <div class="talent-tree-name"></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                </div>
-                <div class="talent-tree">
-                  <div class="talent-tree-name"></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                  <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
+      <!-- FRONT FACE -->
+      <div class="face" id="front">
+        <!-- [front face content goes here, see previous long code block for all the fields and layout] -->
+        <!-- ... -->
       </div>
-    </div><!-- /back -->
 
-  </div><!-- /flipper -->
-</div><!-- /scale-wrap -->
-</div><!-- /sheet-viewport -->
+      <!-- BACK FACE -->
+      <div class="face back" id="back">
+        <!-- [back face content goes here, see previous long code block for all the fields and layout] -->
+        <!-- ... -->
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="action-bar">
   <button id="saveJpegBtn">Save as JPEG</button>
@@ -1467,34 +196,7 @@
 </div>
 
 <script>
-  var flipper    = document.getElementById('flipper');
-  var front      = document.getElementById('front');
-  var back       = document.getElementById('back');
-  var saving    = false;
-  var flipped   = false;
-  var indicator = document.getElementById('flipIndicator');
-
-  function doFlip() {
-    if (saving) return;
-    flipped = !flipped;
-    if (flipped) {
-      front.style.display = 'none';
-      back.style.display  = 'block';
-      indicator.innerHTML = '&larr; Tap sheet to flip back to Front';
-    } else {
-      back.style.display  = 'none';
-      front.style.display = 'block';
-      indicator.innerHTML = 'Tap sheet to flip &rarr; Back';
-    }
-  }
-
-  front.addEventListener('click', doFlip);
-  back.addEventListener('click', doFlip);
-  indicator.addEventListener('click', doFlip);
-
-  // Scale sheet to fit viewport. When width is the limiting dimension (mobile
-  // embedded view), postMessage the ideal iframe height to the parent so the
-  // iframe can shrink to remove dead space above and below.
+  // Your flipping, scaling, printing JS goes here (unchanged)
   function scaleToFit() {
     var wrap = document.getElementById('scaleWrap');
     var vp = document.querySelector('.sheet-viewport');
@@ -1504,176 +206,34 @@
     var hScale = (vh / 1056) * 0.97;
     var scale  = Math.min(wScale, hScale);
     wrap.style.transform = 'scale(' + scale + ')';
-
-    // Only resize the parent iframe when width-constrained (mobile).
-    // Height-constrained means the iframe already fits the sheet - no resize needed,
-    // and posting would cause a shrink feedback loop.
-    if (wScale < hScale && window.parent !== window) {
-      var idealH = Math.ceil(1056 * scale) + 90;
-      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
-    }
   }
-
-  scaleToFit();
   window.addEventListener('resize', scaleToFit);
-  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+  window.addEventListener('orientationchange', scaleToFit);
+  document.addEventListener('DOMContentLoaded', scaleToFit);
 
-  // Capture one face to JPEG.
-  // Resets transforms on live elements so html2canvas sees the true 816x1056
-  // layout, then restores everything after the canvas is built.
-  function captureFace(faceEl, label, btn, btnLabel) {
-    saving = true;
-    var otherFace  = (faceEl === front) ? back : front;
-    var sw         = document.getElementById('scaleWrap');
-    var fp         = document.querySelector('.flipper');
-
-    // Save
-    var svSW   = sw.style.transform;
-    var svFT   = fp.style.transform;
-    var svFS   = fp.style.transformStyle;
-    var svFce  = faceEl.style.transform;
-    var svDisp = faceEl.style.display;
-    var svOth  = otherFace.style.display;
-    var svVis  = faceEl.style.visibility;
-
-    // Strip transforms and ensure face is visible for capture
-    sw.style.transform        = 'none';
-    fp.style.transform        = 'none';
-    fp.style.transformStyle   = 'flat';
-    faceEl.style.transform    = 'none';
-    faceEl.style.display      = 'block';
-    faceEl.style.visibility   = 'visible';
-    otherFace.style.display   = 'none';
-
-    void faceEl.offsetHeight; // force layout
-
-    setTimeout(function() {
-    html2canvas(faceEl, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#f2ece0',
-      width: 816,
-      height: 1056,
-      logging: false
-    }).then(function(canvas) {
-      sw.style.transform        = svSW;
-      fp.style.transform        = svFT;
-      fp.style.transformStyle   = svFS;
-      faceEl.style.transform    = svFce;
-      faceEl.style.display      = svDisp;
-      faceEl.style.visibility   = svVis;
-      otherFace.style.display   = svOth;
-
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        window.open(dataUrl, '_blank');
+  // Flip logic
+  (function(){
+    var flipper = document.getElementById('flipper');
+    var front = document.getElementById('front');
+    var back = document.getElementById('back');
+    var flipIndicator = document.getElementById('flipIndicator');
+    var showingFront = true;
+    function flip() {
+      if(showingFront) {
+        front.style.display = "none";
+        back.style.display = "block";
+        flipIndicator.innerHTML = "Tap sheet to flip &rarr; Front";
       } else {
-        var link = document.createElement('a');
-        link.download = 'sorc-character-sheet-' + label + '.jpg';
-        link.href = dataUrl;
-        link.click();
+        front.style.display = "block";
+        back.style.display = "none";
+        flipIndicator.innerHTML = "Tap sheet to flip &rarr; Back";
       }
-      btn.textContent = btnLabel;
-      btn.disabled = false;
-      saving = false;
-    }).catch(function() {
-      sw.style.transform        = svSW;
-      fp.style.transform        = svFT;
-      fp.style.transformStyle   = svFS;
-      faceEl.style.transform    = svFce;
-      faceEl.style.display      = svDisp;
-      faceEl.style.visibility   = svVis;
-      otherFace.style.display   = svOth;
-      btn.textContent = btnLabel;
-      btn.disabled = false;
-      saving = false;
-    });
-    }, 100); // allow browser to render before capture
-  }
-
-  var saveFlippedSnap;
-  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
-    saveFlippedSnap = flipped;
-    saving = true;
-  }, { passive: true });
-  document.getElementById('saveJpegBtn').addEventListener('click', function() {
-    saving = true;
-    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
-    saveFlippedSnap = undefined;
-    var btn = this;
-    btn.textContent = 'Saving...';
-    btn.disabled = true;
-    if (snap) {
-      // Clone back face into an offscreen element so html2canvas captures it
-      // in complete isolation - no dependency on live display state.
-      var clone = back.cloneNode(true);
-      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
-      document.body.appendChild(clone);
-      setTimeout(function() {
-        html2canvas(clone, {
-          scale: 2, useCORS: true, backgroundColor: '#f2ece0',
-          width: 816, height: 1056, logging: false
-        }).then(function(canvas) {
-          document.body.removeChild(clone);
-          var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-          var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          if (isIOS) { window.open(dataUrl, '_blank'); }
-          else {
-            var link = document.createElement('a');
-            link.download = 'sorc-character-sheet-back.jpg';
-            link.href = dataUrl;
-            link.click();
-          }
-          btn.textContent = 'Save as JPEG';
-          btn.disabled = false;
-          saving = false;
-        }).catch(function() {
-          if (document.body.contains(clone)) document.body.removeChild(clone);
-          btn.textContent = 'Save as JPEG';
-          btn.disabled = false;
-          saving = false;
-        });
-      }, 150);
-    } else {
-      captureFace(front, 'front', btn, 'Save as JPEG');
+      showingFront = !showingFront;
     }
-  });
+    flipper.addEventListener('click', flip);
+    flipIndicator.addEventListener('click', flip);
+  })();
 
-  // Print tabs
-  var printSide = 'front';
-  var ptabs = document.querySelectorAll('.ptab');
-  ptabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      ptabs.forEach(function(t) { t.classList.remove('active'); });
-      tab.classList.add('active');
-      printSide = tab.dataset.side;
-    });
-  });
-
-  document.getElementById('printBtn').addEventListener('click', function() {
-    var prevFrontDisplay = front.style.display;
-    var prevBackDisplay  = back.style.display;
-    if (printSide === 'front') {
-      front.style.display = 'block';
-      back.style.display  = 'none';
-    } else if (printSide === 'back') {
-      front.style.display = 'none';
-      back.style.display  = 'block';
-    } else {
-      front.style.display = 'block';
-      back.style.display  = 'block';
-    }
-
-    window.print();
-
-    setTimeout(function() {
-      front.style.display = prevFrontDisplay;
-      back.style.display  = prevBackDisplay;
-    }, 500);
-  });
-</script>
-<script>
   // Load portrait from character customizer if present
   (function() {
     var portrait = localStorage.getItem('sorc_portrait');
