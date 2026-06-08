@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=900, initial-scale=1.0" />
-  <title>SORC Character Sheet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>Character Sheet (Flip)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css"/>
   <style>
-    html, body {
-      width: 100vw; height: 100vh; margin: 0; padding: 0;
-      background: #111; font-family: 'Cinzel', serif; overflow: hidden;
-    }
-    .sheet-viewport {
-      display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh;
+    body {
       background: #111;
+      font-family: 'Cinzel', serif;
+      margin: 0;
+      padding: 0;
     }
-    .sheet-container {
+    .flip-container {
+      width: 740px;
+      margin: 40px auto 0 auto;
+      background: #f6f0e1;
+      border: 2px solid #4a5a20;
+      border-radius: 16px;
+      box-shadow: 0 0 18px #2222;
       display: flex;
-      align-items: stretch;
-      justify-content: center;
-      width: 1100px;
-      max-width: 98vw;
-      max-height: 98vh;
+      flex-direction: row;
+      overflow: hidden;
     }
     .flip-panel {
-      width: 320px;
-      min-width: 220px;
+      width: 200px;
       background: #222;
       color: #eaeaea;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      border-radius: 24px 0 0 24px;
-      margin-right: 0;
-      box-shadow: 0 0 18px #2228;
-      height: 1056px;
-      max-height: 98vh;
-      cursor: pointer;
+      border-radius: 16px 0 0 16px;
       user-select: none;
+      cursor: pointer;
+      transition: background 0.15s;
+      padding: 0 10px;
+    }
+    .flip-panel:hover {
+      background: #171717;
     }
     .flip-indicator {
       font-family: 'Cinzel', serif;
@@ -50,7 +51,6 @@
       margin-bottom: 22px;
       margin-top: 0;
       line-height: 1.18;
-      cursor: pointer;
       transition: color 0.15s;
     }
     .flip-panel em {
@@ -65,141 +65,94 @@
       letter-spacing: 0.04em;
       pointer-events: none;
     }
-    .scale-wrap {
-      width: 816px; height: 1056px;
-      background: none;
-      box-shadow: 0 0 18px #2226;
-      border-radius: 0 24px 24px 0;
-      display: flex; flex-direction: column; align-items: center;
+    .sheet-area {
+      flex: 1;
+      background: #f6f0e1;
+      border-radius: 0 16px 16px 0;
+      padding: 24px 24px 32px 24px;
+      display: flex;
+      flex-direction: column;
+      min-height: 900px;
+      min-width: 520px;
       position: relative;
-      overflow: hidden;
     }
-    .sheet-image {
-      width: 816px; height: 1056px; border-radius: 0 24px 24px 0;
-      display: none; position: absolute; left: 0; top: 0; z-index: 1;
-      box-shadow: 0 4px 18px #2223;
+    .sheet-face {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
     }
-    .sheet-image.active { display: block; }
-    .action-bar {
-      width: 1100px;
-      max-width: 99vw;
-      background: #ede7d4;
-      border-radius: 0 0 24px 24px;
-      box-shadow: 0 4px 18px #2222;
-      display: flex; align-items: center; justify-content: center; gap: 2em;
-      padding: 24px 0 24px 0;
-      margin: 0 auto 24px auto;
-      position: relative;
-      z-index: 10;
-    }
-    .action-bar button, .action-bar .ptab {
-      font-family: 'Cinzel', serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      background: #415122;
-      color: #ede7d4;
-      border: none;
-      border-radius: 12px;
-      padding: 15px 22px;
-      margin: 0 0.25em;
-      cursor: pointer;
-      transition: background 0.2s;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      box-shadow: 0 2px 7px #0002;
-    }
-    .action-bar button:hover, .action-bar .ptab.active { background: #253511; }
-    .print-group { display: flex; flex-direction: column; gap: 0.5em; }
-    @media (max-width: 1300px) {
-      .sheet-container, .action-bar { max-width: 99vw; width: 99vw; }
-      .flip-panel, .scale-wrap { height: 98vw; max-height: 98vw; }
-      .scale-wrap { width: 72vw; }
-      .sheet-image { width: 72vw; height: 93vw; }
+    .sheet-face.active {
+      display: block;
+      z-index: 1;
     }
     @media (max-width: 900px) {
-      .sheet-container { flex-direction: column; align-items: stretch; }
-      .flip-panel, .scale-wrap { border-radius: 18px 18px 0 0 !important; width: 99vw; min-width: unset; max-width: unset; }
-      .flip-panel { margin-bottom: 0; }
-      .scale-wrap { margin-bottom: 0; width: 99vw; }
-      .sheet-image { border-radius: 0 0 18px 18px !important; }
+      .flip-container { width: 99vw; }
+      .sheet-area { min-width: 0; padding: 12px 2vw; }
     }
-    @media print {
-      @page { size: 8.5in 11in; margin: 0; }
-      html, body { overflow: visible !important; height: auto !important; background: white !important; }
-      .action-bar, .flip-panel { display: none !important; }
-      .sheet-viewport, .scale-wrap { box-shadow: none !important; }
-      .scale-wrap { transform: none !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; }
-      .sheet-image { box-shadow: none !important; width: 8.5in !important; height: 11in !important; }
+    @media (max-width: 700px) {
+      .flip-container { flex-direction: column; }
+      .flip-panel {
+        width: 100%;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+        padding: 18px 0;
+      }
+      .sheet-area {
+        border-radius: 0 0 16px 16px;
+        min-width: 0;
+      }
     }
   </style>
 </head>
 <body>
-
-<div class="sheet-viewport">
-  <div class="sheet-container">
-    <div class="flip-panel" id="flipPanel">
-      <div class="flip-indicator" id="flipIndicator">SHEET TO FLIP → BACK</div>
-      <em>
-        This sheet<br>
-        will automatically<br>
-        scale to fit<br>
-        your screen.<br>
-        When printed,<br>
-        it will use<br>
-        full quality<br>
-        and exact<br>
-        page size.
-      </em>
+<div class="flip-container">
+  <div class="flip-panel" id="flipPanel">
+    <div class="flip-indicator" id="flipIndicator">SHEET TO FLIP → BACK</div>
+    <em>
+      This sheet<br>
+      will automatically<br>
+      scale to fit<br>
+      your screen.<br>
+      When printed,<br>
+      it will use<br>
+      full quality<br>
+      and exact<br>
+      page size.
+    </em>
+  </div>
+  <div class="sheet-area">
+    <div class="sheet-face active" id="frontFace">
+      <!-- FRONT SHEET CONTENT GOES HERE -->
+      <h2>Front side of sheet</h2>
+      <!-- ... full editable fields, layout, etc. ... -->
     </div>
-    <div class="scale-wrap" id="scaleWrap">
-      <img src="https://i.imgur.com/hCkJb8l.png" class="sheet-image active" id="frontSheet" alt="SORC Sheet Front">
-      <img src="https://i.imgur.com/2NnXf1x.png" class="sheet-image" id="backSheet" alt="SORC Sheet Back">
+    <div class="sheet-face" id="backFace">
+      <!-- BACK SHEET CONTENT GOES HERE -->
+      <h2>Back side of sheet</h2>
+      <!-- ... full editable fields, layout, etc. ... -->
     </div>
   </div>
 </div>
-
-<div class="action-bar">
-  <button id="saveJpegBtn">Save as JPEG</button>
-  <div class="print-group">
-    <button class="ptab active" data-side="front">Front</button>
-    <button class="ptab" data-side="back">Back</button>
-    <button class="ptab" data-side="both">Both</button>
-  </div>
-  <button id="printBtn">Print</button>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-  // Scaling
-  function scaleToFit() {
-    var wrap = document.getElementById('scaleWrap');
-    var sw = wrap.offsetWidth, sh = wrap.offsetHeight;
-    var container = document.querySelector('.sheet-container');
-    var cw = container.offsetWidth, ch = container.offsetHeight;
-    var wScale = (cw - 320) / sw * 0.98;
-    var hScale = (ch) / sh * 0.98;
-    var scale  = Math.min(wScale, hScale, 1);
-    wrap.style.transform = 'scale(' + scale + ')';
-  }
-  window.addEventListener('resize', scaleToFit);
-  window.addEventListener('orientationchange', scaleToFit);
-  document.addEventListener('DOMContentLoaded', scaleToFit);
-
   // Flip logic
   (function(){
-    var frontSheet = document.getElementById('frontSheet');
-    var backSheet = document.getElementById('backSheet');
+    var front = document.getElementById('frontFace');
+    var back = document.getElementById('backFace');
     var flipIndicator = document.getElementById('flipIndicator');
     var flipPanel = document.getElementById('flipPanel');
     var showingFront = true;
     function flip() {
       if(showingFront) {
-        frontSheet.classList.remove('active');
-        backSheet.classList.add('active');
+        front.classList.remove('active');
+        back.classList.add('active');
         flipIndicator.innerHTML = "SHEET TO FLIP → FRONT";
       } else {
-        frontSheet.classList.add('active');
-        backSheet.classList.remove('active');
+        front.classList.add('active');
+        back.classList.remove('active');
         flipIndicator.innerHTML = "SHEET TO FLIP → BACK";
       }
       showingFront = !showingFront;
@@ -207,41 +160,6 @@
     flipPanel.addEventListener('click', flip);
     flipIndicator.addEventListener('click', flip);
   })();
-
-  // Print and tab logic
-  document.querySelectorAll('.ptab').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      var side = btn.getAttribute('data-side');
-      var frontSheet = document.getElementById('frontSheet');
-      var backSheet = document.getElementById('backSheet');
-      if(side === 'front') {
-        frontSheet.classList.add('active');
-        backSheet.classList.remove('active');
-      } else if(side === 'back') {
-        frontSheet.classList.remove('active');
-        backSheet.classList.add('active');
-      } else {
-        frontSheet.classList.add('active');
-        backSheet.classList.add('active');
-      }
-    });
-  });
-  document.getElementById('printBtn').addEventListener('click', function() {
-    window.print();
-  });
-
-  // Save as JPEG using html2canvas
-  document.getElementById('saveJpegBtn').addEventListener('click', function() {
-    var node = document.getElementById('scaleWrap');
-    html2canvas(node, {backgroundColor: "#ede7d4"}).then(function(canvas) {
-      var link = document.createElement('a');
-      link.download = 'character-sheet.jpg';
-      link.href = canvas.toDataURL("image/jpeg");
-      link.click();
-    });
-  });
 </script>
 </body>
 </html>
