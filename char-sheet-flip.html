@@ -20,19 +20,9 @@
       display: flex; align-items: flex-start; justify-content: center;
       overflow: hidden;
     }
-    .scale-wrap {
-      width: 700px; height: 900px;
-      transform-origin: top center;
-      background: none;
-      box-shadow: 0 0 18px #2226;
-      border-radius: 16px;
-      display: flex; flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-      margin-bottom: 30px;
-    }
     .header-area {
-      width: 100%;
+      width: 700px;
+      max-width: 98vw;
       background: #222;
       color: #ccc;
       border-radius: 16px 16px 0 0;
@@ -41,6 +31,8 @@
       font-family: 'Cinzel', serif;
       letter-spacing: 0.14em;
       box-shadow: 0 2px 7px #0004;
+      margin-top: 20px;
+      margin-bottom: 0;
     }
     .flip-indicator {
       font-size: 1.1rem;
@@ -61,19 +53,28 @@
       user-select: none;
     }
 
-    .sheet-face {
-      width: 100%;
-      background: #ede7d4;
+    .scale-wrap {
+      width: 700px; height: 900px;
+      transform-origin: top center;
+      background: none;
+      box-shadow: 0 0 18px #2226;
+      border-radius: 16px;
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .sheet-card {
+      width: 100%; background: #ede7d4;
       min-height: 650px;
       border-radius: 0 0 16px 16px;
       padding: 36px 32px 36px 32px;
       box-sizing: border-box;
-      display: none;
       box-shadow: 0 4px 18px #2223;
       flex-direction: column;
       align-items: stretch;
+      display: none;
     }
-    .sheet-face.active { display: flex; }
+    .sheet-card.active { display: flex; }
 
     .sheet-title {
       font-family: 'Cinzel Decorative', serif;
@@ -128,7 +129,7 @@
       margin-bottom: 24px;
     }
     .action-bar button, .action-bar .ptab {
-      font-family: 'Cinzel', serif; 
+      font-family: 'Cinzel', serif;
       font-size: 1.32rem;
       font-weight: 700;
       background: #415122;
@@ -147,8 +148,8 @@
 
     .print-group { display: flex; flex-direction: column; gap: 0.5em; }
     @media (max-width: 750px) {
-      .scale-wrap, .action-bar { width: 99vw !important; }
-      .sheet-face { padding: 18px 5vw; }
+      .scale-wrap, .action-bar, .header-area { width: 99vw !important; }
+      .sheet-card { padding: 18px 5vw; }
     }
     @media print {
       @page { size: 8.5in 11in; margin: 0; }
@@ -156,24 +157,24 @@
       .action-bar, .header-area { display: none !important; }
       .sheet-viewport, .scale-wrap { box-shadow: none !important; }
       .scale-wrap { transform: none !important; width: 8.5in !important; height: auto !important; margin: 0 !important; }
-      .sheet-face { box-shadow: none !important; }
+      .sheet-card { box-shadow: none !important; }
     }
   </style>
 </head>
 <body>
 
 <div class="sheet-viewport">
-  <div class="scale-wrap" id="scaleWrap">
-    <div class="header-area">
-      <div class="flip-indicator" id="flipIndicator">TAP SHEET TO FLIP &rarr; BACK</div>
-      <div class="print-note">
-        This sheet will automatically scale to fit your screen.<br>
-        When printed, it will use full quality and exact page size.
-      </div>
+  <div class="header-area">
+    <div class="flip-indicator" id="flipIndicator">TAP SHEET TO FLIP &rarr; BACK</div>
+    <div class="print-note">
+      This sheet will automatically scale to fit your screen.<br>
+      When printed, it will use full quality and exact page size.
     </div>
+  </div>
+  <div class="scale-wrap" id="scaleWrap">
 
     <!-- FRONT FACE -->
-    <form class="sheet-face active" id="front" autocomplete="off" onsubmit="return false;">
+    <form class="sheet-card active" id="front" autocomplete="off" onsubmit="return false;">
       <div class="sheet-title">CHARACTER SHEET (FRONT)</div>
       <div class="field-label">Name</div>
       <input class="field-input" id="cname" type="text" value="Elanor Swiftbow">
@@ -198,7 +199,7 @@
     </form>
 
     <!-- BACK FACE -->
-    <form class="sheet-face" id="back" autocomplete="off" onsubmit="return false;">
+    <form class="sheet-card" id="back" autocomplete="off" onsubmit="return false;">
       <div class="sheet-title">CHARACTER SHEET (BACK)</div>
       <div class="field-label">Equipment</div>
       <input class="field-input" id="cequipment" type="text" value="Longbow, Leather Armor, Rations">
