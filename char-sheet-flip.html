@@ -4,139 +4,103 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=900, initial-scale=1.0" />
   <title>SORC Character Sheet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet" />
   <style>
     html, body {
-      width: 100%; height: 100%; margin: 0; padding: 0; background: #111;
-      font-family: 'Cinzel', serif; overflow: hidden;
+      width: 100vw; height: 100vh; margin: 0; padding: 0;
+      background: #111; font-family: 'Cinzel', serif; overflow: hidden;
     }
-    body { display: flex; flex-direction: column; align-items: center; }
-
     .sheet-viewport {
-      min-width: 375px;
-      min-height: 600px;
-      width: 100vw;
-      height: 100vh;
-      display: flex; align-items: flex-start; justify-content: center;
-      overflow: hidden;
+      display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh;
+      background: #111;
     }
-    .header-area {
-      width: 700px;
+    .sheet-container {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      width: 1100px;
       max-width: 98vw;
+      max-height: 98vh;
+    }
+    .flip-panel {
+      width: 320px;
+      min-width: 220px;
       background: #222;
-      color: #ccc;
-      border-radius: 16px 16px 0 0;
-      padding: 18px 0 10px 0;
-      text-align: center;
-      font-family: 'Cinzel', serif;
-      letter-spacing: 0.14em;
-      box-shadow: 0 2px 7px #0004;
-      margin-top: 20px;
-      margin-bottom: 0;
+      color: #eaeaea;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 24px 0 0 24px;
+      margin-right: 0;
+      box-shadow: 0 0 18px #2228;
+      height: 1056px;
+      max-height: 98vh;
+      cursor: pointer;
+      user-select: none;
     }
     .flip-indicator {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #ccc;
-      text-transform: uppercase;
-      user-select: none;
-      cursor: pointer;
-      margin-bottom: 2px;
-    }
-    .print-note {
-      color: #aaa;
-      font-size: 1.1rem;
-      margin-bottom: 0;
       font-family: 'Cinzel', serif;
-      font-style: italic;
-      line-height: 1.2;
-      user-select: none;
+      font-size: 1.4rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      color: #eaeaea;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 22px;
+      margin-top: 0;
+      line-height: 1.18;
+      cursor: pointer;
+      transition: color 0.15s;
     }
-
+    .flip-panel em {
+      display: block;
+      font-family: 'Cinzel', serif;
+      font-size: 1.12rem;
+      color: #bdbdbd;
+      margin-top: 18px;
+      font-style: italic;
+      text-align: center;
+      line-height: 1.3;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
     .scale-wrap {
-      width: 700px; height: 900px;
-      transform-origin: top center;
+      width: 816px; height: 1056px;
       background: none;
       box-shadow: 0 0 18px #2226;
-      border-radius: 16px;
+      border-radius: 0 24px 24px 0;
       display: flex; flex-direction: column; align-items: center;
-      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
     }
-
-    .sheet-card {
-      width: 100%; background: #ede7d4;
-      min-height: 650px;
-      border-radius: 0 0 16px 16px;
-      padding: 36px 32px 36px 32px;
-      box-sizing: border-box;
+    .sheet-image {
+      width: 816px; height: 1056px; border-radius: 0 24px 24px 0;
+      display: none; position: absolute; left: 0; top: 0; z-index: 1;
       box-shadow: 0 4px 18px #2223;
-      flex-direction: column;
-      align-items: stretch;
-      display: none;
     }
-    .sheet-card.active { display: flex; }
-
-    .sheet-title {
-      font-family: 'Cinzel Decorative', serif;
-      font-size: 2rem;
-      color: #374d26;
-      font-weight: 900;
-      text-align: center;
-      margin-bottom: 18px;
-      letter-spacing: 0.04em;
-    }
-    .section-label {
-      font-family: 'Cinzel', serif;
-      font-size: 1.1rem;
-      color: #374d26;
-      font-weight: 700;
-      margin-top: 18px;
-      margin-bottom: 6px;
-      text-align: left;
-      letter-spacing: 0.03em;
-    }
-    .field-label {
-      font-family: 'Cinzel', serif;
-      font-size: 1rem;
-      color: #374d26;
-      font-weight: 700;
-      margin-bottom: 2px;
-      margin-top: 10px;
-      text-align: left;
-      letter-spacing: 0.01em;
-    }
-    .field-input {
-      width: 100%;
-      font-size: 1.04rem;
-      font-family: 'Cinzel', serif;
-      padding: 7px 8px;
-      margin-bottom: 6px;
-      border: 1px solid #b5af96;
-      border-radius: 4px;
-      background: #f4f2ea;
-      color: #222;
-      box-sizing: border-box;
-    }
-
+    .sheet-image.active { display: block; }
     .action-bar {
-      width: 700px;
-      max-width: 98vw;
+      width: 1100px;
+      max-width: 99vw;
       background: #ede7d4;
-      border-radius: 0 0 16px 16px;
+      border-radius: 0 0 24px 24px;
       box-shadow: 0 4px 18px #2222;
       display: flex; align-items: center; justify-content: center; gap: 2em;
       padding: 24px 0 24px 0;
-      margin-bottom: 24px;
+      margin: 0 auto 24px auto;
+      position: relative;
+      z-index: 10;
     }
     .action-bar button, .action-bar .ptab {
       font-family: 'Cinzel', serif;
-      font-size: 1.32rem;
+      font-size: 1.1rem;
       font-weight: 700;
       background: #415122;
       color: #ede7d4;
       border: none;
       border-radius: 12px;
-      padding: 22px 24px;
+      padding: 15px 22px;
       margin: 0 0.25em;
       cursor: pointer;
       transition: background 0.2s;
@@ -145,71 +109,52 @@
       box-shadow: 0 2px 7px #0002;
     }
     .action-bar button:hover, .action-bar .ptab.active { background: #253511; }
-
     .print-group { display: flex; flex-direction: column; gap: 0.5em; }
-    @media (max-width: 750px) {
-      .scale-wrap, .action-bar, .header-area { width: 99vw !important; }
-      .sheet-card { padding: 18px 5vw; }
+    @media (max-width: 1300px) {
+      .sheet-container, .action-bar { max-width: 99vw; width: 99vw; }
+      .flip-panel, .scale-wrap { height: 98vw; max-height: 98vw; }
+      .scale-wrap { width: 72vw; }
+      .sheet-image { width: 72vw; height: 93vw; }
+    }
+    @media (max-width: 900px) {
+      .sheet-container { flex-direction: column; align-items: stretch; }
+      .flip-panel, .scale-wrap { border-radius: 18px 18px 0 0 !important; width: 99vw; min-width: unset; max-width: unset; }
+      .flip-panel { margin-bottom: 0; }
+      .scale-wrap { margin-bottom: 0; width: 99vw; }
+      .sheet-image { border-radius: 0 0 18px 18px !important; }
     }
     @media print {
       @page { size: 8.5in 11in; margin: 0; }
       html, body { overflow: visible !important; height: auto !important; background: white !important; }
-      .action-bar, .header-area { display: none !important; }
+      .action-bar, .flip-panel { display: none !important; }
       .sheet-viewport, .scale-wrap { box-shadow: none !important; }
-      .scale-wrap { transform: none !important; width: 8.5in !important; height: auto !important; margin: 0 !important; }
-      .sheet-card { box-shadow: none !important; }
+      .scale-wrap { transform: none !important; width: 8.5in !important; height: 11in !important; margin: 0 !important; }
+      .sheet-image { box-shadow: none !important; width: 8.5in !important; height: 11in !important; }
     }
   </style>
 </head>
 <body>
 
 <div class="sheet-viewport">
-  <div class="header-area">
-    <div class="flip-indicator" id="flipIndicator">TAP SHEET TO FLIP &rarr; BACK</div>
-    <div class="print-note">
-      This sheet will automatically scale to fit your screen.<br>
-      When printed, it will use full quality and exact page size.
+  <div class="sheet-container">
+    <div class="flip-panel" id="flipPanel">
+      <div class="flip-indicator" id="flipIndicator">SHEET TO FLIP → BACK</div>
+      <em>
+        This sheet<br>
+        will automatically<br>
+        scale to fit<br>
+        your screen.<br>
+        When printed,<br>
+        it will use<br>
+        full quality<br>
+        and exact<br>
+        page size.
+      </em>
     </div>
-  </div>
-  <div class="scale-wrap" id="scaleWrap">
-
-    <!-- FRONT FACE -->
-    <form class="sheet-card active" id="front" autocomplete="off" onsubmit="return false;">
-      <div class="sheet-title">CHARACTER SHEET (FRONT)</div>
-      <div class="field-label">Name</div>
-      <input class="field-input" id="cname" type="text" value="Elanor Swiftbow">
-      <div class="field-label">Class & Level</div>
-      <input class="field-input" id="cclass" type="text" value="Elf Ranger • 4">
-      <div class="field-label">Background</div>
-      <input class="field-input" id="cbackground" type="text" value="Wanderer">
-
-      <div class="section-label">Abilities</div>
-      <div class="field-label">Strength</div>
-      <input class="field-input" id="cstrength" type="text" value="14">
-      <div class="field-label">Dexterity</div>
-      <input class="field-input" id="cdexterity" type="text" value="17">
-      <div class="field-label">Constitution</div>
-      <input class="field-input" id="cconstitution" type="text" value="12">
-      <div class="field-label">Intelligence</div>
-      <input class="field-input" id="cintelligence" type="text" value="11">
-      <div class="field-label">Wisdom</div>
-      <input class="field-input" id="cwisdom" type="text" value="13">
-      <div class="field-label">Charisma</div>
-      <input class="field-input" id="ccharisma" type="text" value="15">
-    </form>
-
-    <!-- BACK FACE -->
-    <form class="sheet-card" id="back" autocomplete="off" onsubmit="return false;">
-      <div class="sheet-title">CHARACTER SHEET (BACK)</div>
-      <div class="field-label">Equipment</div>
-      <input class="field-input" id="cequipment" type="text" value="Longbow, Leather Armor, Rations">
-      <div class="field-label">Notes</div>
-      <input class="field-input" id="cnotes" type="text" value="Has a pet hawk named Fenris.">
-      <div class="field-label">Spells</div>
-      <input class="field-input" id="cspells" type="text" value="Speak with Animals, Cure Wounds">
-      <div class="field-label">Allies</div>
-      <input class="field-input" id="callies" type="text" value="Thorin, Mira, Fenris">
-    </form>
+    <div class="scale-wrap" id="scaleWrap">
+      <img src="https://i.imgur.com/hCkJb8l.png" class="sheet-image active" id="frontSheet" alt="SORC Sheet Front">
+      <img src="https://i.imgur.com/2NnXf1x.png" class="sheet-image" id="backSheet" alt="SORC Sheet Back">
+    </div>
   </div>
 </div>
 
@@ -228,11 +173,11 @@
   // Scaling
   function scaleToFit() {
     var wrap = document.getElementById('scaleWrap');
-    var vp = document.querySelector('.sheet-viewport');
-    var vw = vp.clientWidth  || window.innerWidth;
-    var vh = vp.clientHeight || (window.innerHeight - 76);
-    var wScale = (vw / 700) * 0.98;
-    var hScale = (vh / 900) * 0.98;
+    var sw = wrap.offsetWidth, sh = wrap.offsetHeight;
+    var container = document.querySelector('.sheet-container');
+    var cw = container.offsetWidth, ch = container.offsetHeight;
+    var wScale = (cw - 320) / sw * 0.98;
+    var hScale = (ch) / sh * 0.98;
     var scale  = Math.min(wScale, hScale, 1);
     wrap.style.transform = 'scale(' + scale + ')';
   }
@@ -242,26 +187,24 @@
 
   // Flip logic
   (function(){
-    var front = document.getElementById('front');
-    var back = document.getElementById('back');
+    var frontSheet = document.getElementById('frontSheet');
+    var backSheet = document.getElementById('backSheet');
     var flipIndicator = document.getElementById('flipIndicator');
+    var flipPanel = document.getElementById('flipPanel');
     var showingFront = true;
     function flip() {
       if(showingFront) {
-        front.classList.remove('active');
-        back.classList.add('active');
-        flipIndicator.innerHTML = "TAP SHEET TO FLIP &rarr; FRONT";
+        frontSheet.classList.remove('active');
+        backSheet.classList.add('active');
+        flipIndicator.innerHTML = "SHEET TO FLIP → FRONT";
       } else {
-        front.classList.add('active');
-        back.classList.remove('active');
-        flipIndicator.innerHTML = "TAP SHEET TO FLIP &rarr; BACK";
+        frontSheet.classList.add('active');
+        backSheet.classList.remove('active');
+        flipIndicator.innerHTML = "SHEET TO FLIP → BACK";
       }
       showingFront = !showingFront;
     }
-    document.getElementById('scaleWrap').addEventListener('click', function(e){
-      // Only flip if click is NOT on a field
-      if(!e.target.classList.contains('field-input')) flip();
-    });
+    flipPanel.addEventListener('click', flip);
     flipIndicator.addEventListener('click', flip);
   })();
 
@@ -271,17 +214,17 @@
       document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
       var side = btn.getAttribute('data-side');
-      var front = document.getElementById('front');
-      var back = document.getElementById('back');
+      var frontSheet = document.getElementById('frontSheet');
+      var backSheet = document.getElementById('backSheet');
       if(side === 'front') {
-        front.classList.add('active');
-        back.classList.remove('active');
+        frontSheet.classList.add('active');
+        backSheet.classList.remove('active');
       } else if(side === 'back') {
-        front.classList.remove('active');
-        back.classList.add('active');
+        frontSheet.classList.remove('active');
+        backSheet.classList.add('active');
       } else {
-        front.classList.add('active');
-        back.classList.add('active');
+        frontSheet.classList.add('active');
+        backSheet.classList.add('active');
       }
     });
   });
