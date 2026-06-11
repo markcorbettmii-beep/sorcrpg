@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kaida - SORC Character Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Viewport fills space between flip indicator and action bar */
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ── SCALE WRAPPER ── */
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
+    }
+
+    /* ── FLIP INDICATOR (outside the sheet) ── */
+    .flip-indicator {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #555;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── FLIP CONTAINER ── */
+    .flipper {
+      width: 816px;
+      height: 1056px;
+      position: relative;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── FACES ── */
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #f2ece0;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face.back { display: none; }
+
+    /* ── BORDER ── */
+    .border-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 7px;
+      border: 2.5px solid #3a4a18;
+    }
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      inset: 13px;
+      border: 1px solid #3a4a18;
+    }
+
+    /* ── CORNERS ── */
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      z-index: 12;
+      pointer-events: none;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    /* ── WATERMARK ── */
+    .wm { display: none; }
+
+    /* ── INNER ── */
+    .inner {
+      position: relative;
+      z-index: 1;
+      padding: 14px 42px 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TITLE ── */
+    .title-block { text-align: center; margin-bottom: 8px; }
+
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', Cinzel, serif;
+      font-size: 1.75rem;
+      color: #2e3d0f;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+    }
+
+    .title-block h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      color: #2e3d0f;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      margin-top: 4px;
+    }
+
+    .title-block .sub {
+      font-family: Arial, sans-serif;
+      font-size: 0.64rem;
+      color: #444;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    .rule {
+      border: none;
+      border-top: 1.5px solid #4a5a20;
+      margin: 8px 0;
+      opacity: 0.4;
+    }
+
+   /* ── THREE COLUMNS (front) ── */
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1.12fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+      align-content: start;
+      overflow: hidden;
+    }
+
+    /* ── SECTION ── */
+    .sec { margin-bottom: 14px; }
+
+    .sec-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    /* ── FILL-IN FIELDS ── */
+    .field { margin-bottom: 5px; }
+
+    .field-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .field-lbl.sm { font-size: 0.55rem; }
+
+    .fline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 2px;
+    }
+
+    /* ── CENTER COLUMN ── */
+    .col-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .portrait {
+      width: 100%;
+      aspect-ratio: 3/4;
+      border: 1.5px solid #4a5a20;
+      background: #e5ddc8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .portrait span {
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      color: #999;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .mid-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: center;
+      width: 100%;
+    }
+
+    .mid-line {
+      width: 88%;
+      height: 1px;
+      background: #4a5a20;
+      margin: 3px auto 0;
+    }
+
+    /* ── BONUS/PENALTY SUB-HEADER ── */
+    .bp-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 0.54rem;
+      font-weight: 700;
+      color: #4a5a20;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 6px 0 2px;
+    }
+
+    /* ── CHIPS STACK LABEL ── */
+    .chips-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.46rem;
+      color: #666;
+      flex-shrink: 0;
+      white-space: nowrap;
+      margin-left: 3px;
+    }
+
+    /* ── CARDS (full-width row below the 3 columns) ── */
+    .cards-wrap {
+      margin-top: 8px;
+    }
+
+    .cards-head {
+      font-family: 'Cinzel', serif;
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .cards-main-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .cards-center { flex: 1; }
+
+    .cards-side {
+      width: 82px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cards-side-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 5px;
+    }
+
+    .cards-side .fline { margin-bottom: 7px; }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5px 8px;
+    }
+
+    .card-tpl {
+      border: 1px solid #4a5a20;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-tpl-hdr {
+      background: #2e3d0f;
+      color: #e8dfc0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.46rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: 2px 2px;
+    }
+
+    .card-tpl-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 4px;
+      padding: 5px 5px 4px;
+    }
+
+    .card-tpl-body.single {
+      grid-template-columns: 1fr;
+    }
+
+    .card-tpl-pending {
+      font-family: 'Cinzel', serif;
+      font-size: 0.44rem;
+      color: #888;
+      text-align: center;
+      padding: 10px 4px;
+      font-style: italic;
+      letter-spacing: 0.08em;
+    }
+
+    .cf {
+      margin-bottom: 4px;
+    }
+
+    .cl {
+      font-family: Arial, sans-serif;
+      font-size: 0.44rem;
+      color: #555;
+      display: block;
+      margin-bottom: 1px;
+      line-height: 1.1;
+    }
+
+    .cf .fline { margin-bottom: 0; }
+
+    /* ════════ BACK ════════ */
+
+    .back-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .b-sec { margin-bottom: 13px; }
+
+    .b-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    /* ATTRIBUTES */
+    .attr-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .abox {
+      border: 1px solid #4a5a20;
+      background: #e8e0cc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3px 2px 3px;
+      gap: 2px;
+    }
+
+    .abox.wide { grid-column: span 2; }
+
+    .aname {
+      font-family: 'Cinzel', serif;
+      font-size: 0.52rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.08em;
+    }
+
+    .afield {
+      width: 28px;
+      height: 16px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* FORMULA NOTE */
+    .frm {
+      font-family: Arial, sans-serif;
+      font-size: 0.44rem;
+      color: #666;
+      font-style: italic;
+      margin: -1px 0 3px 2px;
+      line-height: 1.3;
+    }
+
+    /* STAT ROWS */
+    .srow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 3px 0;
+      border-bottom: 1px dotted #bbb;
+    }
+
+    .sfield {
+      width: 36px;
+      height: 13px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    .sfield.wide { width: 62px; }
+
+    /* TRAITS */
+    .trait-list { list-style: none; padding: 0; }
+
+    .trait-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 2.5px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+
+    .tfield {
+      width: 24px;
+      height: 12px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* CHIPS */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid #4a5a20;
+      background: #f5f0e4;
+    }
+
+    .chip.purple { border-color: #7a3a9a; background: #ece0f5; }
+
+    .chip-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    /* CONDITIONS */
+    .cond-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 3px 8px;
+    }
+
+    .vit-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .vbox {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .vname {
+      font-family: 'Cinzel', serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.06em;
+    }
+
+    .vfield {
+      width: 100%;
+      height: 18px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .class-hdr {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      font-family: 'Cinzel', serif;
+      font-size: 0.52rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .cond-wrap {
+      flex-shrink: 0;
+      margin-top: auto;
+      padding-top: 0;
+    }
+
+    .card-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+    .sheet-card {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #4a5a20;
+      background: #e8e0cc;
+      padding: 3px 4px;
+      box-sizing: border-box;
+    }
+    .sheet-card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.48rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #4a5a20;
+      margin-bottom: 2px;
+      padding-bottom: 2px;
+      display: flex;
+    }
+    .item-card-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+    }
+    .item-card-tbl td {
+      padding: 1px 2px;
+      vertical-align: top;
+      color: #2e3d0f;
+    }
+    .item-card-tbl td:first-child {
+      border-right: 1px solid #4a5a20;
+      padding-right: 4px;
+    }
+    .item-card-tbl td:last-child {
+      width: 32%;
+      padding-left: 4px;
+    }
+    .weap-tbl td:last-child { width: 50%; }
+    .itype-hdr td {
+      font-weight: 700;
+      border-top: 1px solid #4a5a20;
+      padding-top: 5px;
+      padding-bottom: 1px;
+    }
+    .itype-hdr:first-child td {
+      border-top: none;
+    }
+    .itype-bullet td {
+      color: #555;
+      height: 14px;
+      border-bottom: 1px dotted #ccc;
+    }
+    .itype-bullet-lbl td {
+      color: #4a5a20;
+      height: 11px;
+      border-bottom: 1px dotted #ccc;
+      font-size: 0.42rem;
+      padding: 0px 2px;
+      vertical-align: middle;
+    }
+    .citem {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: Arial, sans-serif;
+      font-size: 0.57rem;
+      color: #222;
+    }
+    .citem-name {
+      display: inline-block;
+      min-width: 52px;
+    }
+    .citem-boxes {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .cbox {
+      width: 11px;
+      height: 11px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    /* JOURNAL LINES */
+    .jline-item { margin-bottom: 7px; }
+
+    .jline-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .jline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 5px;
+    }
+
+    /* XP BAR */
+    .xp-bar {
+      border: 1px solid #4a5a20;
+      height: 8px;
+      background: #f5f0e4;
+      margin-top: 3px;
+      overflow: hidden;
+    }
+    .xp-fill { height: 100%; width: 0; background: #5a7a28; }
+
+    .small-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+      color: #777;
+      margin-top: 2px;
+    }
+
+    .lore-item {
+      font-family: Arial, sans-serif;
+      font-size: 0.62rem;
+      font-weight: bold;
+      color: #222;
+      margin: 0 0 16px 0;
+      line-height: 1.2;
+    }
+
+    .lore-item.lg { margin-bottom: 50px; }
+    .lore-item.md { margin-bottom: 32px; }
+
+    .lore-note {
+      font-size: 0.5rem;
+      font-weight: normal;
+      font-style: italic;
+      color: #666;
+    }
+
+    /* ── ACTION BAR ── */
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 52px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 200;
+      padding: 0 12px;
+    }
+
+    .action-bar button {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .action-bar button:active { background: #2a3a10; }
+
+    /* ── CLASS / LEVEL / RANK ROW ── */
+    .clr-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .clr-item {
+      flex: 1;
+    }
+    .clr-lbl {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .clr-line {
+      width: 100%;
+      height: 1px;
+      background: #4a5a20;
+    }
+
+    /* REPOSITORY */
+    .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
+    .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
+    .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
+    .repo-pts { display: flex; gap: 2px; }
+    .repo-pt { width: 8px; height: 8px; border: 1px solid #4a5a20; background: #f5f0e4; flex-shrink: 0; }
+    .repo-pt.filled { background: #4a5a20; }
+    .repo-field { width: 22px; height: 12px; border: 1px solid #4a5a20; background: #f5f0e4; display: inline-block; vertical-align: middle; }
+    /* TALENT TREES */
+    .talent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+    .talent-tree { border: 1px solid #4a5a20; background: #e8e0cc; padding: 4px; }
+    .talent-tree-name { width: 100%; height: 12px; border-bottom: 1px solid #4a5a20; margin-bottom: 5px; font-family: 'Cinzel', serif; font-size: 0.5rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.08em; display: flex; align-items: flex-end; }
+    .talent-slot { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; }
+    .talent-slot-line { flex: 1; height: 1px; background: #aaa; }
+    /* PROFESSIONS */
+    .prof-list { font-family: Arial, sans-serif; font-size: 0.44rem; color: #444; line-height: 1.5; margin-top: 3px; }
+
+    /* ── PENCIL / HANDWRITING STYLE ── */
+    .pencil {
+      font-family: 'Caveat', cursive;
+      color: #3d3d3d;
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+    }
+
+    /* Pencil inside afield / vfield / tfield sizing adjustments */
+    .afield .pencil { font-size: 0.65rem; }
+    .vfield .pencil { font-size: 0.65rem; }
+    .tfield .pencil { font-size: 0.62rem; }
+
+    /* Back side input fields */
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.62rem;
+      color: #222;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
+
+    input.repo-field-input {
+      background: #f5f0e4;
+      border: 1px solid #4a5a20;
+      width: 22px;
+      height: 12px;
+      font-family: Arial, sans-serif;
+      font-size: 0.42rem;
+      color: #2e3d0f;
+      text-align: center;
+      outline: none;
+      padding: 0;
+    }
+
+    input.sfield-input {
+      background: #f5f0e4;
+      border: 1px solid #4a5a20;
+      width: 62px;
+      height: 13px;
+      font-family: Arial, sans-serif;
+      font-size: 0.52rem;
+      color: #222;
+      text-align: center;
+      outline: none;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="flip-indicator" id="flipIndicator">Tap sheet to flip &rarr; Back</div>
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <!-- corner SVG shorthand -->
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ FRONT ══════════════ -->
+    <div class="face" id="front">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC Character Sheet</h2>
+        </div>
+        <hr class="rule" />
+
+        <!-- CLASS / LEVEL / RANK -->
+        <div class="clr-row">
+          <div class="clr-item"><span class="clr-lbl">Class</span><div class="clr-line"><span class="pencil">Barbarian / Mountaineer / Amazon</span></div></div>
+          <div class="clr-item"><span class="clr-lbl">Level</span><div class="clr-line"><span class="pencil">30</span></div></div>
+          <div class="clr-item"><span class="clr-lbl">Rank</span><div class="clr-line"><span class="pencil">Legend</span></div></div>
+          <div class="clr-item"><span class="clr-lbl">RP</span><div class="clr-line"><span class="pencil">4,800</span></div></div>
+        </div>
+
+        <div class="cols">
+
+          <!-- LEFT: Attributes + Vitality + Race/Class Bonuses -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Attributes</p>
+              <div class="attr-grid">
+                <div class="abox"><span class="aname">ART</span><div class="afield"><span class="pencil">18</span></div></div>
+                <div class="abox"><span class="aname">FRT</span><div class="afield"><span class="pencil">40</span></div></div>
+                <div class="abox"><span class="aname">INT</span><div class="afield"><span class="pencil">20</span></div></div>
+                <div class="abox"><span class="aname">PER</span><div class="afield"><span class="pencil">35</span></div></div>
+                <div class="abox"><span class="aname">PHY</span><div class="afield"><span class="pencil">40</span></div></div>
+                <div class="abox"><span class="aname">RES</span><div class="afield"><span class="pencil">25</span></div></div>
+                <div class="abox"><span class="aname">WIS</span><div class="afield"><span class="pencil">28</span></div></div>
+              </div>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Vitality (Innate Base + Mods)</p>
+              <div class="vit-grid">
+                <div class="vbox"><span class="vname">Life</span><div class="vfield"><span class="pencil">380</span></div></div>
+                <div class="vbox"><span class="vname">Stam</span><div class="vfield"><span class="pencil">260</span></div></div>
+                <div class="vbox"><span class="vname">Mana</span><div class="vfield"><span class="pencil">85</span></div></div>
+                <div class="vbox"><span class="vname">End.</span><div class="vfield"><span class="pencil">140</span></div></div>
+              </div>
+            </div>
+
+            <div class="sec" style="margin-top:8px;">
+              <p class="sec-title" style="margin-bottom:4px;">Race Bonuses / Penalties</p>
+              <p style="font-family:'Cinzel',serif;font-size:0.44rem;color:#4a5a20;font-weight:700;letter-spacing:0.08em;margin-bottom:2px;">Blood Draco — Red</p>
+              <div class="field" style="margin-bottom:6px;">
+                <span class="field-lbl">Innate Trait Adj. (+ / -)</span>
+                <div class="clr-line" style="height:1px;background:#4a5a20;"><span class="pencil">+4 STR, +2 FRT</span></div>
+              </div>
+              <div class="field" style="margin-bottom:6px;">
+                <span class="field-lbl">Innate Racial Aptitude</span>
+                <div class="clr-line" style="height:1px;background:#4a5a20;"><span class="pencil">Fire Resistance; Dragon Sight</span></div>
+              </div>
+              <div class="field" style="margin-bottom:6px;">
+                <span class="field-lbl">Innate Racial Inaptitude</span>
+                <div class="clr-line" style="height:1px;background:#4a5a20;"><span class="pencil">Cold Vulnerability; Water Weakness</span></div>
+              </div>
+              <div class="field" style="margin-bottom:6px;">
+                <span class="field-lbl">Innate Sub-race Aptitude</span>
+                <div class="clr-line" style="height:1px;background:#4a5a20;"><span class="pencil">Flame Breath (innate)</span></div>
+              </div>
+              <div class="field" style="margin-bottom:6px;">
+                <span class="field-lbl">Innate Sub-race Inaptitude</span>
+                <div class="clr-line" style="height:1px;background:#4a5a20;"><span class="pencil">Arcane Sensitivity</span></div>
+              </div>
+            </div>
+
+            <div class="sec" style="margin-top:8px;">
+              <p class="sec-title">Class Bonuses and Penalties</p>
+              <div class="class-hdr">
+                <span>Main</span>
+                <span>Path</span>
+                <span>Branch</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-top:4px;">
+                <div style="font-size:0.42rem;color:#555;font-family:Arial,sans-serif;line-height:1.4;">
+                  <span class="pencil" style="font-size:0.6rem;">+STR, +CON, +Courage; −CHA</span>
+                </div>
+                <div style="font-size:0.42rem;color:#555;font-family:Arial,sans-serif;line-height:1.4;">
+                  <span class="pencil" style="font-size:0.6rem;">+Climbing, +Cold Endurance; −Flatland Speed</span>
+                </div>
+                <div style="font-size:0.42rem;color:#555;font-family:Arial,sans-serif;line-height:1.4;">
+                  <span class="pencil" style="font-size:0.6rem;">+Agility, +Ranged Accuracy; −Heavy Armor</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- CENTER: Traits -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Traits</p>
+              <ul class="trait-list">
+                <li><span>Agility</span><div class="tfield"><span class="pencil">34</span></div></li>
+                <li><span>Apex</span><div class="tfield"><span class="pencil">36</span></div></li>
+                <li><span>Charisma</span><div class="tfield"><span class="pencil">14</span></div></li>
+                <li><span>Constitution</span><div class="tfield"><span class="pencil">38</span></div></li>
+                <li><span>Courage</span><div class="tfield"><span class="pencil">34</span></div></li>
+                <li><span>Deception</span><div class="tfield"><span class="pencil">8</span></div></li>
+                <li><span>Defense</span><div class="tfield"><span class="pencil">26</span></div></li>
+                <li><span>Dexterity</span><div class="tfield"><span class="pencil">24</span></div></li>
+                <li><span>Focus</span><div class="tfield"><span class="pencil">16</span></div></li>
+                <li><span>Intuition</span><div class="tfield"><span class="pencil">30</span></div></li>
+                <li><span>Knowledge</span><div class="tfield"><span class="pencil">22</span></div></li>
+                <li><span>Luck</span><div class="tfield"><span class="pencil">28</span></div></li>
+                <li><span>Piety</span><div class="tfield"><span class="pencil">10</span></div></li>
+                <li><span>Resistance</span><div class="tfield"><span class="pencil">22</span></div></li>
+                <li><span>Spirit</span><div class="tfield"><span class="pencil">22</span></div></li>
+                <li><span>Strength</span><div class="tfield"><span class="pencil">38</span></div></li>
+                <li><span>Toughness</span><div class="tfield"><span class="pencil">36</span></div></li>
+                <li><span>Versatility</span><div class="tfield"><span class="pencil">18</span></div></li>
+                <li><span>Vigilance</span><div class="tfield"><span class="pencil">34</span></div></li>
+                <li><span>Willpower</span><div class="tfield"><span class="pencil">16</span></div></li>
+                <li><span>Wit</span><div class="tfield"><span class="pencil">14</span></div></li>
+              </ul>
+              <p class="small-note">Trait SCR capped at 40. Cannot exceed aligned ATT SCR.</p>
+            </div>
+          </div>
+
+          <!-- RIGHT: Combat Stats + Abilities + Spells -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Combat Stats</p>
+              <div class="srow"><span>Armor Score (AS)</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">38</span></div></div>
+              <p class="frm">base armor + rank bonus + equip. bonuses</p>
+              <div class="srow"><span>PROTS</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">64</span></div></div>
+              <p class="frm">AS + all defensive modifiers (Defense, Agility, Resistance, etc.)</p>
+              <div class="srow"><span>Speed (ft)</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">35</span></div></div>
+              <p class="frm">Base SPD (race/size) + Speed trait + equip. + spells/abilities</p>
+              <div class="srow"><span>Initiative (INIT)</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">96</span></div></div>
+              <p class="frm">Base Speed + Agility + Vigilance + Luck</p>
+
+              <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:6px;margin-bottom:2px;">Abilities</p>
+              <p class="frm">&#9670; Class</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil">Rage Strike</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil">Iron Rampage</span></div>
+              <p class="frm">&#9670; Nature Drawn</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil">Grounding Spike (Amazonian Greatbow)</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil">Olympiad Sprint</span></div>
+              <p class="frm">&#9670; Spell Drawn</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+
+              <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:6px;margin-bottom:2px;">Spells and Magic (Meditated)</p>
+              <p class="frm">&#9670; Class</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <p class="frm">&#9670; Racial (innate)</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil">Flame Breath</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil">Dragon Sight</span></div>
+              <p class="frm">&#9670; Reagents</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <p class="frm" style="margin-top:6px;font-style:italic;">Equipped Armament specific Abilities and Meditated Spells displayed here. Refer to your Ability/Spells Cards to view all.</p>
+            </div>
+
+          </div>
+
+        </div><!-- /cols -->
+
+        <!-- CARDS + ACTIVE CONDITIONS -->
+        <div class="cond-wrap">
+          <div class="card-row">
+            <!-- ITEMS CARD (blank) -->
+            <div class="sheet-card">
+              <div class="sheet-card-title"><span style="width:68%;border-right:1px solid #4a5a20;padding-right:4px;">Items</span><span style="padding-left:4px;">Tokens</span></div>
+              <table class="item-card-tbl">
+                <tbody>
+                  <tr class="itype-hdr"><td>Consumable</td><td></td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-hdr"><td>Material</td><td></td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-hdr"><td>Scroll</td><td></td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-hdr"><td>Quest</td><td></td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-hdr"><td>Collectable</td><td></td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-hdr"><td>Other</td><td></td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- WEAPONS CARD -->
+            <div class="sheet-card">
+  <div class="sheet-card-title">Weapons (Daily Set)</div>
+  <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:2px 0 3px;">
+    Weapons Drawn
+  </p>
+  <table class="item-card-tbl weap-tbl">
+    <tbody>
+      <tr class="itype-hdr"><td>Main Hand</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit &nbsp;<span class="pencil">+38</span></td><td>&#9670; Type &nbsp;<span class="pencil">2h Ranged (Divine)</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG &nbsp;<span class="pencil">5d6+12</span></td><td>&#9670; Maint. &nbsp;<span class="pencil">See Card</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Amazonian Greatbow</span></td><td>&#9670; Value &nbsp;<span class="pencil">Priceless</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Divine</span></td><td>&#9670; Source &nbsp;<span class="pencil">Lore Quest</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Vuln. &nbsp;<span class="pencil">None</span></td><td>&#9670; Drop Mats &nbsp;<span class="pencil">See Card</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Resist. &nbsp;<span class="pencil">None</span></td><td>&#9670; Enhance. &nbsp;<span class="pencil">See Card</span></td></tr>
+      <tr class="itype-hdr"><td>Off Hand</td><td><span style="font-size:0.38rem;color:#888;font-style:italic;">2h weapon — slot unused</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit</td><td>&#9670; Type</td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG</td><td>&#9670; Maint.</td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name</td><td>&#9670; Value</td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Source</td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Vuln.</td><td>&#9670; Drop Mats</td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Resist.</td><td>&#9670; Enhance.</td></tr>
+    </tbody>
+  </table>
+  <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">
+    Weapons Sheathed
+  </p>
+  <table class="item-card-tbl weap-tbl">
+    <tbody>
+      <tr class="itype-hdr"><td>Sheathed Weap. 1</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit &nbsp;<span class="pencil">+34</span></td><td>&#9670; Type &nbsp;<span class="pencil">2h Melee (Legendary)</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG &nbsp;<span class="pencil">4d6+10</span></td><td>&#9670; Maint. &nbsp;<span class="pencil">1,250 GP</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Battle Axe</span></td><td>&#9670; Value &nbsp;<span class="pencil">25,000 GP</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Legendary</span></td><td>&#9670; Source &nbsp;<span class="pencil">Loot</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Vuln. &nbsp;<span class="pencil">None</span></td><td>&#9670; Drop Mats &nbsp;<span class="pencil">See Card</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Resist. &nbsp;<span class="pencil">None</span></td><td>&#9670; Enhance. &nbsp;<span class="pencil">See Card</span></td></tr>
+      <tr class="itype-hdr"><td>Sheathed Weap. 2</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit &nbsp;<span class="pencil">+22</span></td><td>&#9670; Type &nbsp;<span class="pencil">1h Melee (Common)</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG &nbsp;<span class="pencil">1d4+8</span></td><td>&#9670; Maint. &nbsp;<span class="pencil">37 SP</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Dagger (Sentimental)</span></td><td>&#9670; Value &nbsp;<span class="pencil">15 GP</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Common</span></td><td>&#9670; Source &nbsp;<span class="pencil">Personal</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Vuln. &nbsp;<span class="pencil">None</span></td><td>&#9670; Drop Mats &nbsp;<span class="pencil">—</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Resist. &nbsp;<span class="pencil">None</span></td><td>&#9670; Enhance. &nbsp;<span class="pencil">—</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:3px;">For more see Cards</p>
+  <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">Ammo</p>
+  <table class="item-card-tbl" style="table-layout:fixed;width:100%;">
+    <tbody>
+      <tr class="itype-bullet-lbl" style="height:22px;"><td>&#9670; Type &nbsp;<span class="pencil">Divine Arrow (50-ct)</span></td><td>&#9670; Container &nbsp;<span class="pencil">Divine Quiver</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">Max weapons <b>readied</b>, 3/day.</p>
+            </div>
+
+            <!-- ARMOR CARD -->
+            <div class="sheet-card">
+  <div class="sheet-card-title">Armor (worn)</div>
+  <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:2px 0 3px;">
+    Set <span style="font-family:Arial,sans-serif;font-size:0.38rem;font-weight:400;text-transform:none;letter-spacing:0;color:#555;">(boots/gloves may be replaced)</span>
+  </p>
+  <table class="item-card-tbl weap-tbl">
+    <tbody>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Blue Whale Fur Set</span></td><td>&#9670; Value &nbsp;<span class="pencil">10,000 GP</span></td></tr>
+      <tr class="itype-bullet-lbl" style="height:11px;"><td><span style="font-size:0.38rem;color:#888;">&nbsp;&nbsp;(w/ Blue Bear Skin Hood/Cape)</span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Legendary</span></td><td>&#9670; Source &nbsp;<span class="pencil">Loot/Crafted</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; AS &nbsp;<span class="pencil">38</span></td><td>&#9670; Maint. &nbsp;<span class="pencil">500 GP</span></td></tr>
+      <tr class="itype-bullet-lbl" style="height:11px;"><td><span style="font-size:0.38rem;color:#888;">&nbsp;&nbsp;(incl. rank + Excellent)</span></td><td><span style="font-size:0.38rem;color:#888;">&nbsp;&nbsp;(cost)</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Vuln. &nbsp;<span class="pencil">Fire (mitigated)</span></td><td>&#9670; Resist. &nbsp;<span class="pencil">Blunt, Cold</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Drop &nbsp;<span class="pencil">See Card</span></td><td>&#9670; Enhance &nbsp;<span class="pencil">See Card</span></td></tr>
+    </tbody>
+  </table>
+  <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">
+    Broken sets sustain partial bonuses. Value, maint. and others stay fixed. Only Cuirass may be enhanced for Set, see rules.
+  </p>
+  <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">
+    Special
+  </p>
+  <table class="item-card-tbl weap-tbl">
+    <tbody>
+      <tr class="itype-hdr"><td>Shield</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">None</span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; AS</td><td></td></tr>
+      <tr class="itype-hdr"><td>Bracers</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">None</span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; AS</td><td></td></tr>
+      <tr class="itype-hdr"><td>Accessories</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; <span class="pencil">Blue Bear Skin Hood/Cape (armor matched)</span></td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+            <!-- COMPANIONS CARD -->
+            <div class="sheet-card">
+              <div class="sheet-card-title">Companion Slots</div>
+              <table class="item-card-tbl">
+                <tbody>
+                  <tr class="itype-hdr"><td>Tiny</td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Bee</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil">—</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Common</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil">Praying Mantis</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil">Speaks any flying creature or spider language</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil">Calm</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil">No</span></td></tr>
+                  <tr class="itype-hdr"><td>Small</td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Twink</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil">—</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Uncommon</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil">Weasel</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil">Thief talents</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil">Curious</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil">No</span></td></tr>
+                  <tr class="itype-hdr"><td>Standard</td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">Bear</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil">—</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Heroic</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil">Guardian Bear</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil">Carry, Mount</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil">Loyal</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil">Yes</span></td></tr>
+                  <tr class="itype-hdr"><td>Goliath / Behemoth</td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil">— (Unnamed)</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil">—</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil">Legendary</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil">Mountain Troll</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil">Summon 1x/week, 3hr max; tolerates communication max 3 hrs</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil">Hostile</span></td></tr>
+                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil">No</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            </div>
+          </div>
+          <p class="sec-title" style="text-align:left;border:none;margin-bottom:4px;margin-top:14px;">Active Conditions <span style="font-family:Arial,sans-serif;font-size:0.48rem;font-weight:400;text-transform:none;letter-spacing:0;">(duration in box)</span></p>
+          <div class="cond-grid">
+            <div class="citem"><span class="citem-name">Poisoned</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Blinded</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Prone</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Frightened</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Bleeding</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Frozen</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Stunned</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Silenced</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Restrained</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Charmed</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Burning</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Cursed</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+          </div>
+          <p style="font-family:Arial,sans-serif;font-size:0.46rem;color:#555;margin-top:4px;">Each turn is 6 seconds.</p>
+        </div>
+
+      </div><!-- /inner -->
+    </div><!-- /front -->
+
+
+    <!-- ══════════════ BACK ══════════════ -->
+    <div class="face back" id="back">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC Character Sheet — Kaida</h2>
+        </div>
+        <hr class="rule" />
+
+        <div class="cols">
+
+          <!-- BACK LEFT: Basic Info + Physical -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Basic Info.</p>
+              <div class="field"><span class="field-lbl">Name &amp; UID</span><input type="text" class="fline" value="Kaida / *******" /></div>
+              <div class="field"><span class="field-lbl">Nickname(s)</span><input type="text" class="fline" value="None" /></div>
+              <div class="field"><span class="field-lbl">Gender</span><input type="text" class="fline" value="Female" /></div>
+              <div class="field"><span class="field-lbl">Species / Race</span><input type="text" class="fline" value="Blood Draco (Red) / Amazon" /></div>
+              <div class="field"><span class="field-lbl">Age</span><input type="text" class="fline" value="28" /></div>
+              <div class="field"><span class="field-lbl">Birthday</span><input type="text" class="fline" value="14th of the Red Moon" /></div>
+              <div class="field"><span class="field-lbl">Place of Birth</span><input type="text" class="fline" value="Crown Range, Northern Zailister" /></div>
+              <div class="field"><span class="field-lbl">Occupation / Role</span><input type="text" class="fline" value="Barbarian Archer / Demon Slayer" /></div>
+              <div class="field"><span class="field-lbl">Planet / World</span><input type="text" class="fline" value="Zailister" /></div>
+              <div class="field"><span class="field-lbl">Languages</span><input type="text" class="fline" value="Common, Draconic (Blood), Amazon Tongue" /></div>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Physical</p>
+              <div class="field"><span class="field-lbl">Height</span><input type="text" class="fline" value="6'2&quot;" /></div>
+              <div class="field"><span class="field-lbl">Weight</span><input type="text" class="fline" value="187 lbs" /></div>
+              <div class="field"><span class="field-lbl">Body Type / Build</span><input type="text" class="fline" value="Tall, muscular, athletic" /></div>
+              <div class="field"><span class="field-lbl">Skin Color / Tone</span><input type="text" class="fline" value="Deep bronze, reddish undertone (Blood Draco)" /></div>
+              <div class="field"><span class="field-lbl">Hair Color / Style</span><input type="text" class="fline" value="Deep red, long, war-braided with bone clasps" /></div>
+              <div class="field"><span class="field-lbl">Eye Color / Shape</span><input type="text" class="fline" value="Purple - almond-shaped (Blood Draco: red+blue = purple)" /></div>
+              <div class="field"><span class="field-lbl sm">Scars, tattoos, birthmarks</span><input type="text" class="fline" value="Claw scar across left cheekbone; Amazon sigil branded on right shoulder" /></div>
+              <div class="field"><span class="field-lbl">Voice (tone, accent)</span><input type="text" class="fline" value="Deep, commanding, Northern accent" /></div>
+              <div class="field"><span class="field-lbl">Posture / Gait</span><input type="text" class="fline" value="Upright, deliberate - predator's economy of movement" /></div>
+            </div>
+          </div>
+
+          <!-- BACK CENTER: Portrait + Currency + Experience -->
+          <div class="col-mid">
+            <p class="sec-title" style="width:100%;">Photo or Portrait</p>
+            <div class="portrait" id="portraitBox" style="height:380px;flex:none;aspect-ratio:unset;"><span>Portrait</span></div>
+
+            <div style="width:100%;margin-top:10px;">
+              <div class="sec">
+                <p class="sec-title">Currency</p>
+                <div class="srow"><span>Silver (SP)</span><input type="text" class="sfield-input" value="30" /></div>
+                <div class="srow"><span>Gold (GP)</span><input type="text" class="sfield-input" value="847" /></div>
+                <div class="srow"><span>Electrum (EP)</span><input type="text" class="sfield-input" value="0" /></div>
+                <div class="srow"><span>Platinum (PP)</span><input type="text" class="sfield-input" value="0" /></div>
+              </div>
+              <div class="sec">
+                <p class="sec-title">Experience</p>
+                <div class="srow"><span>Total XP</span><input type="text" class="sfield-input" style="width:80px;" value="Level Cap (30)" /></div>
+                <div class="xp-bar" style="margin-top:5px;"><div class="xp-fill" style="width:100%;"></div></div>
+                <p class="small-note">XP to next level</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- BACK RIGHT: Prestige + Relations + Journal + Equipment -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Prestige</p>
+              <p class="lore-item">&#9670; <strong>Alignment</strong> <span class="lore-note" style="font-weight:normal;font-style:normal;color:#222;">Good</span></p>
+              <p class="lore-item">&#9670; <strong>Standings</strong> <span class="lore-note">Adored — Prophets of the Crown; Liked — Ozanic Vanwa Tribe; Despised — Red Dwarf Societies; Hated — All demon races</span></p>
+              <p class="lore-item">&#9670; <strong>Titles and Reputation</strong> <span class="lore-note">"Demon Slayer" (Boasted)</span></p>
+              <p class="lore-item">&#9670; <strong>Legacy</strong> <span class="lore-note">See Journal</span></p>
+              <p class="lore-item" style="margin-bottom:4px;">&#9670; <strong>Reputation</strong></p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#444;margin-bottom:3px;margin-left:8px;line-height:1.3;">Word crossing the lands is that Kaida is a demon slayer.</p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#444;margin-bottom:8px;margin-left:8px;line-height:1.3;font-style:italic;">Exposure by GM: Nothing shared. Nothing noticed or rumored — though Kaida herself senses a secret from her youth may be surfacing.</p>
+            </div>
+
+            <div class="sec" style="margin-top:8px;">
+              <p class="sec-title">Relations</p>
+              <p class="lore-item">&#9670; <strong>Family</strong> <span class="lore-note" style="color:#222;">None</span></p>
+              <p class="lore-item">&#9670; <strong>Enemies</strong> <span class="lore-note" style="color:#222;">Red Dwarf Societies; all demon races</span></p>
+              <p class="lore-item">&#9670; <strong>Affiliations</strong> <span class="lore-note" style="color:#222;">Barbarians of the North (High Stature)</span></p>
+              <p class="lore-item">&#9670; <strong>Associations</strong> <span class="lore-note" style="color:#222;">Prophets of the Crown</span></p>
+            </div>
+
+            <div class="sec" style="margin-top:8px;">
+              <p class="sec-title">Achievements and Trophies</p>
+              <div style="height:18px;"></div>
+            </div>
+
+            <div class="sec" style="margin-top:8px;">
+              <p class="sec-title">Journal Notes <span class="lore-note">(see Journal for complete logs)</span></p>
+              <p class="lore-item" style="margin-bottom:12px;">&#9670; <strong>Background</strong> <span class="lore-note" style="color:#333;font-style:normal;">Born in the Crown Range to a tribe now gone. Raised among the Amazon warriors of the North. Her past carries a shadow she has never spoken aloud. See journal.</span></p>
+              <p class="lore-item" style="margin-bottom:12px;">&#9670; <strong>Mission Statement</strong> <span class="lore-note">(Custom Life Quest, see rules)</span><br/><span style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;font-weight:normal;">Revenge. See journal.</span></p>
+              <p class="lore-item" style="margin-bottom:6px;">&#9670; <strong>Quest Logs</strong> <span class="lore-note">(active)</span></p>
+            </div>
+          </div>
+
+          <!-- EQUIPMENT & ITEMS - full width below 3 cols -->
+          <div style="grid-column:1/-1;margin-top:10px;border-top:1px solid rgba(74,90,32,0.35);padding-top:8px;">
+            <p class="sec-title">Equipment &amp; Items</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px;">
+              <div>
+                <p class="lore-item" style="margin-bottom:2px;">&#9670; <strong>Equipped / Carried</strong></p>
+                <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.4;">Amazonian Greatbow, Divine Quiver (50), Battle Axe, Dagger, Throwing Axes x4 (Heroic), Throwing Knives x6 (Rare), Blue Whale Fur Armor Set</p>
+              </div>
+              <div>
+                <p class="lore-item" style="margin-bottom:2px;">&#9670; <strong>Consumables / Misc.</strong></p>
+                <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.4;">See journal</p>
+              </div>
+              <div>
+                <p class="lore-item" style="margin-bottom:2px;">&#9670; <strong>Home (Property) / Storage</strong></p>
+                <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.4;">Small plot, tent dwelling — Northern wilderness</p>
+              </div>
+            </div>
+            <p class="small-note" style="margin-top:5px;font-style:italic;">Characters can keep property and companions in Storage, Vaults, and their homes' stables, kennels respectively.</p>
+          </div>
+
+          <!-- REPOSITORY - full width -->
+          <div style="grid-column:1/-1;margin-top:10px;border-top:1px solid rgba(74,90,32,0.35);padding-top:8px;">
+            <p class="sec-title">Repository</p>
+            <table class="repo-tbl">
+              <thead>
+                <tr>
+                  <th>Attribute</th>
+                  <th>Points (roll - change value as you spend or save as Rems)</th>
+                  <th>Score</th>
+                  <th>TST</th>
+                  <th>Remnants</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Artistry: Score 18 → 1/6 filled | TST 6 | Remnants 0 -->
+                <tr>
+                  <td>Artistry</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="18" /></td>
+                  <td><input type="text" class="repo-field-input" value="6" /></td>
+                  <td><input type="text" class="repo-field-input" value="0" /></td>
+                </tr>
+                <!-- Fortitude: Score 40 → 6/6 filled | TST 8 | Remnants 2 -->
+                <tr>
+                  <td>Fortitude</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="40" /></td>
+                  <td><input type="text" class="repo-field-input" value="8" /></td>
+                  <td><input type="text" class="repo-field-input" value="2" /></td>
+                </tr>
+                <!-- Intellect: Score 20 → 2/6 filled | TST 6 | Remnants 1 -->
+                <tr>
+                  <td>Intellect</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="20" /></td>
+                  <td><input type="text" class="repo-field-input" value="6" /></td>
+                  <td><input type="text" class="repo-field-input" value="1" /></td>
+                </tr>
+                <!-- Perception: Score 35 → 5/6 filled | TST 8 | Remnants 0 -->
+                <tr>
+                  <td>Perception</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="35" /></td>
+                  <td><input type="text" class="repo-field-input" value="8" /></td>
+                  <td><input type="text" class="repo-field-input" value="0" /></td>
+                </tr>
+                <!-- Physique: Score 40 → 6/6 filled | TST 8 | Remnants 2 -->
+                <tr>
+                  <td>Physique</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="40" /></td>
+                  <td><input type="text" class="repo-field-input" value="8" /></td>
+                  <td><input type="text" class="repo-field-input" value="2" /></td>
+                </tr>
+                <!-- Resilience: Score 25 → 3/6 filled | TST 6 | Remnants 1 -->
+                <tr>
+                  <td>Resilience</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="25" /></td>
+                  <td><input type="text" class="repo-field-input" value="6" /></td>
+                  <td><input type="text" class="repo-field-input" value="1" /></td>
+                </tr>
+                <!-- Wisdom: Score 28 → 4/6 filled | TST 6 | Remnants 2 -->
+                <tr>
+                  <td>Wisdom</td>
+                  <td><div class="repo-pts"><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt filled"></div><div class="repo-pt"></div><div class="repo-pt"></div></div></td>
+                  <td><input type="text" class="repo-field-input" value="28" /></td>
+                  <td><input type="text" class="repo-field-input" value="6" /></td>
+                  <td><input type="text" class="repo-field-input" value="2" /></td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="small-note" style="margin-top:3px;">Spend pts: Attribute score (3 pts), TST (2 pts ea.), or save as Remnants.</p>
+          </div>
+
+          <!-- TALENT TREES -->
+          <div style="grid-column:1/-1;margin-top:10px;">
+            <p class="sec-title">Talent Trees <span style="font-family:Arial,sans-serif;font-size:0.44rem;font-weight:400;text-transform:none;letter-spacing:0;">(4 favorites)</span></p>
+            <div class="talent-grid">
+              <div class="talent-tree">
+                <div class="talent-tree-name">Olympiad</div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+              </div>
+              <div class="talent-tree">
+                <div class="talent-tree-name">Hunter</div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+              </div>
+              <div class="talent-tree">
+                <div class="talent-tree-name">Field Medic</div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+              </div>
+              <div class="talent-tree">
+                <div class="talent-tree-name">Cook</div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+                <div class="talent-slot">&#9670; <div class="talent-slot-line"></div></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /cols -->
+      </div><!-- /inner -->
+    </div><!-- /back -->
+
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
+</div><!-- /sheet-viewport -->
+
+<!-- Minimal action bar: flip button only, no print/download -->
+<div class="action-bar">
+  <button id="flipBtn">Flip Sheet</button>
+</div>
+
+<script>
+  var flipper    = document.getElementById('flipper');
+  var front      = document.getElementById('front');
+  var back       = document.getElementById('back');
+  var flipped    = false;
+  var indicator  = document.getElementById('flipIndicator');
+  var flipBtn    = document.getElementById('flipBtn');
+
+  function doFlip() {
+    flipped = !flipped;
+    if (flipped) {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+      indicator.innerHTML = '&larr; Tap sheet to flip back to Front';
+      flipBtn.textContent = 'Flip to Front';
+    } else {
+      back.style.display  = 'none';
+      front.style.display = 'block';
+      indicator.innerHTML = 'Tap sheet to flip &rarr; Back';
+      flipBtn.textContent = 'Flip Sheet';
+    }
+  }
+
+  // Flip when clicking the sheet itself (but not on inputs)
+  front.addEventListener('click', function(e) {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') doFlip();
+  });
+  back.addEventListener('click', function(e) {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') doFlip();
+  });
+  indicator.addEventListener('click', doFlip);
+  flipBtn.addEventListener('click', doFlip);
+
+  // Scale sheet to fit viewport
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 90;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+</script>
+</body>
+</html>
