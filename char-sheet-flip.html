@@ -28,7 +28,12 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;   /* desktop: sheet scrolls vertically at native size */
+    }
+    /* Mobile: clip overflow so scaled-down layout box doesn't add dead scroll space */
+    @media (max-width: 815px) {
+      .sheet-viewport { overflow: hidden; }
     }
 
     /* ── SCALE WRAPPER ── */
@@ -1561,7 +1566,9 @@
     var vh = vp.clientHeight || (window.innerHeight - 76);
     var wScale = (vw / 816) * 0.97;
     var hScale = (vh / 1056) * 0.97;
-    var scale  = Math.min(wScale, hScale);
+    // Desktop (wide viewport): scale to width, cap at 1.0, let height scroll.
+    // Mobile (narrow viewport): scale to fit both so the sheet fills the screen.
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
     wrap.style.transform = 'scale(' + scale + ')';
 
     // Only resize the parent iframe when width-constrained (mobile).
