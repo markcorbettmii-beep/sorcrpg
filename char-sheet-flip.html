@@ -1580,8 +1580,13 @@
     }
   }
 
-  front.addEventListener('click', doFlip);
-  back.addEventListener('click', doFlip);
+  function guardedFlip(e) {
+    var t = e.target;
+    if (t.isContentEditable || t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'BUTTON' || t.tagName === 'SELECT') return;
+    doFlip();
+  }
+  front.addEventListener('click', guardedFlip);
+  back.addEventListener('click', guardedFlip);
   indicator.addEventListener('click', doFlip);
 
   // Scale sheet to fit viewport. When width is the limiting dimension (mobile
