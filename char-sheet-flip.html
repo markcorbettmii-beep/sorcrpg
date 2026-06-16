@@ -1689,10 +1689,19 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
+  // Browsers block navigating a tab directly to a data: URL, so instead we
+  // write the image into the already-opened tab as a normal <img> element.
+  function openImageInWindow(win, dataUrl) {
+    if (!win) { window.open(dataUrl, '_blank'); return; }
+    win.document.open();
+    win.document.write('<!DOCTYPE html><html><head><title>SORC Character Sheet</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="' + dataUrl + '" style="max-width:100%;height:auto;display:block;" alt="Character Sheet"></body></html>');
+    win.document.close();
+  }
+
   // Capture one face to JPEG.
   // Resets transforms on live elements so html2canvas sees the true 816x1056
   // layout, then restores everything after the canvas is built.
-  function captureFace(faceEl, label, btn, btnLabel) {
+  function captureFace(faceEl, label, btn, btnLabel, winRef) {
     saving = true;
     var otherFace  = (faceEl === front) ? back : front;
     var sw         = document.getElementById('scaleWrap');
@@ -1736,7 +1745,7 @@
       otherFace.style.display   = svOth;
 
       var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-      window.open(dataUrl, '_blank');
+      openImageInWindow(winRef, dataUrl);
       btn.textContent = btnLabel;
       btn.disabled = false;
       saving = false;
@@ -1748,6 +1757,7 @@
       faceEl.style.display      = svDisp;
       faceEl.style.visibility   = svVis;
       otherFace.style.display   = svOth;
+      if (winRef) winRef.close();
       btn.textContent = btnLabel;
       btn.disabled = false;
       saving = false;
@@ -1767,6 +1777,7 @@
     var btn = this;
     btn.textContent = 'Saving...';
     btn.disabled = true;
+    var winRef = window.open('', '_blank');
     if (snap) {
       // Clone back face into an offscreen element so html2canvas captures it
       // in complete isolation - no dependency on live display state.
@@ -1780,19 +1791,20 @@
         }).then(function(canvas) {
           document.body.removeChild(clone);
           var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-          window.open(dataUrl, '_blank');
+          openImageInWindow(winRef, dataUrl);
           btn.textContent = 'View / Save';
           btn.disabled = false;
           saving = false;
         }).catch(function() {
           if (document.body.contains(clone)) document.body.removeChild(clone);
+          if (winRef) winRef.close();
           btn.textContent = 'View / Save';
           btn.disabled = false;
           saving = false;
         });
       }, 150);
     } else {
-      captureFace(front, 'front', btn, 'View / Save');
+      captureFace(front, 'front', btn, 'View / Save', winRef);
     }
   });
 
