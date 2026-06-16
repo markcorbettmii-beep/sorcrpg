@@ -81,6 +81,8 @@ let selected = {
 };
 
 let isPortraitView = false;
+let charRenderGen = 0;
+let finalRenderGen = 0;
 
 function pickFirstEnabledFace(skin) {
   const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
@@ -309,11 +311,13 @@ function renderCharacter(callback) {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const gen = ++charRenderGen;
 
   if (isPortraitView) {
     const img = new window.Image();
     img.src = PORTRAIT_EXAMPLE;
     img.onload = function() {
+      if (gen !== charRenderGen) return;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       if (callback) callback(canvas);
     };
@@ -383,6 +387,7 @@ function renderCharacter(callback) {
       })
     )
   ).then(imgs => {
+    if (gen !== charRenderGen) return;
     imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
@@ -480,6 +485,7 @@ function renderFinalCharacter() {
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const gen = ++finalRenderGen;
 
   let layers = [];
   
@@ -541,6 +547,7 @@ function renderFinalCharacter() {
       })
     )
   ).then(imgs => {
+    if (gen !== finalRenderGen) return;
     imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
