@@ -658,33 +658,51 @@ showBlankJpegBtn.addEventListener("click", function() {
   window.open("../../../../char-sheet-flip.html", "_blank");
 });
 
-document.getElementById("toPage2Btn").addEventListener("click", function() {
-  document.getElementById("page1").classList.remove("active");
-  document.getElementById("page2").classList.add("active");
-  renderFacePreview();
+function showPage(n) {
+  document.getElementById("page1").classList.toggle("active", n === 1);
+  document.getElementById("page2").classList.toggle("active", n === 2);
+  document.getElementById("page3").classList.toggle("active", n === 3);
   window.scrollTo(0, 0);
+
+  if (n === 2) {
+    renderFacePreview();
+  }
+
+  if (n === 3) {
+    document.getElementById("equipWeaponsChkFinal").checked = selected.weapon;
+    document.getElementById("equipArmorChkFinal").checked = selected.armor;
+    document.getElementById("equipHelmetChkFinal").checked = selected.helmet;
+
+    setTimeout(function() {
+      const finalCanvas = document.getElementById("finalCanvas");
+      if (finalCanvas) {
+        const { width, height } = getCanvasSize();
+        finalCanvas.width = width;
+        finalCanvas.height = height;
+        finalCanvas.style.width = width + "px";
+        finalCanvas.style.height = height + "px";
+        renderFinalCharacter();
+      }
+    }, 50);
+  }
+}
+
+// Give each customizer step its own history entry so the browser's back
+// button steps back through the customizer pages instead of leaving it.
+history.replaceState({ page: 1 }, "");
+
+document.getElementById("toPage2Btn").addEventListener("click", function() {
+  showPage(2);
+  history.pushState({ page: 2 }, "");
 });
 
 document.getElementById("toPage3Btn").addEventListener("click", function() {
-  document.getElementById("page2").classList.remove("active");
-  document.getElementById("page3").classList.add("active");
-  window.scrollTo(0, 0);
+  showPage(3);
+  history.pushState({ page: 3 }, "");
+});
 
-  document.getElementById("equipWeaponsChkFinal").checked = selected.weapon;
-  document.getElementById("equipArmorChkFinal").checked = selected.armor;
-  document.getElementById("equipHelmetChkFinal").checked = selected.helmet;
-
-  setTimeout(function() {
-    const finalCanvas = document.getElementById("finalCanvas");
-    if (finalCanvas) {
-      const { width, height } = getCanvasSize();
-      finalCanvas.width = width;
-      finalCanvas.height = height;
-      finalCanvas.style.width = width + "px";
-      finalCanvas.style.height = height + "px";
-      renderFinalCharacter();
-    }
-  }, 50);
+window.addEventListener("popstate", function(e) {
+  showPage((e.state && e.state.page) || 1);
 });
 
 window.addEventListener("resize", resizeCanvasAndRender);
