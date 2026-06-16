@@ -583,17 +583,36 @@ physiqueForm.addEventListener("submit", function(e) {
 
 document.getElementById("equipArmorChk").addEventListener("change", function(e) {
   selected.armor = e.target.checked;
+  document.getElementById("equipArmorChkFinal").checked = e.target.checked;
   renderCharacter();
   renderFinalCharacter();
 });
 document.getElementById("equipHelmetChk").addEventListener("change", function(e) {
   selected.helmet = e.target.checked;
+  document.getElementById("equipHelmetChkFinal").checked = e.target.checked;
   renderCharacter();
   renderFinalCharacter();
 });
 document.getElementById("equipWeaponsChk").addEventListener("change", function(e) {
   selected.weapon = e.target.checked;
+  document.getElementById("equipWeaponsChkFinal").checked = e.target.checked;
   renderCharacter();
+  renderFinalCharacter();
+});
+
+document.getElementById("equipArmorChkFinal").addEventListener("change", function(e) {
+  selected.armor = e.target.checked;
+  document.getElementById("equipArmorChk").checked = e.target.checked;
+  renderFinalCharacter();
+});
+document.getElementById("equipHelmetChkFinal").addEventListener("change", function(e) {
+  selected.helmet = e.target.checked;
+  document.getElementById("equipHelmetChk").checked = e.target.checked;
+  renderFinalCharacter();
+});
+document.getElementById("equipWeaponsChkFinal").addEventListener("change", function(e) {
+  selected.weapon = e.target.checked;
+  document.getElementById("equipWeaponsChk").checked = e.target.checked;
   renderFinalCharacter();
 });
 
@@ -650,7 +669,11 @@ document.getElementById("toPage3Btn").addEventListener("click", function() {
   document.getElementById("page2").classList.remove("active");
   document.getElementById("page3").classList.add("active");
   window.scrollTo(0, 0);
-  
+
+  document.getElementById("equipWeaponsChkFinal").checked = selected.weapon;
+  document.getElementById("equipArmorChkFinal").checked = selected.armor;
+  document.getElementById("equipHelmetChkFinal").checked = selected.helmet;
+
   setTimeout(function() {
     const finalCanvas = document.getElementById("finalCanvas");
     if (finalCanvas) {
