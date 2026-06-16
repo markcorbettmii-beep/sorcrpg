@@ -1825,10 +1825,34 @@
       if (box) {
         box.innerHTML = '';
         box.style.overflow = 'hidden';
-        var img = document.createElement('img');
+        var canvas = document.createElement('canvas');
+        canvas.style.cssText = 'width:100%;height:100%;display:block;';
+        box.appendChild(canvas);
+        var img = new Image();
+        img.onload = function() {
+          var boxW = box.clientWidth, boxH = box.clientHeight;
+          canvas.width = boxW;
+          canvas.height = boxH;
+          var ctx = canvas.getContext('2d');
+          // Crop from just above the character's head down past the feet,
+          // then narrow/shorten that window so it matches the portrait box's
+          // aspect ratio without stretching (character art has a lot of sky
+          // above the head, so a fixed % is enough to skip past it).
+          var sx = 0, sw = img.naturalWidth;
+          var sy = img.naturalHeight * 0.15;
+          var sh = img.naturalHeight * 0.80;
+          var cropAspect = sw / sh;
+          var boxAspect = boxW / boxH;
+          if (cropAspect > boxAspect) {
+            var newSw = sh * boxAspect;
+            sx = (sw - newSw) / 2;
+            sw = newSw;
+          } else {
+            sh = sw / boxAspect;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, boxW, boxH);
+        };
         img.src = portrait;
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center bottom;display:block;transform:scale(1.2);transform-origin:center bottom;';
-        box.appendChild(img);
         localStorage.removeItem('sorc_portrait');
       }
     }
