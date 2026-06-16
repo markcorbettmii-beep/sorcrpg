@@ -1624,8 +1624,7 @@
   </div><!-- /flipper -->
 </div><!-- /scale-wrap -->
 </div><!-- /sheet-viewport -->
-
-
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;opacity:0.6;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
 
 <div class="action-bar">
   <button id="saveJpegBtn">View / Save</button>
@@ -1640,6 +1639,8 @@
   if (new URLSearchParams(window.location.search).get('embed') === '1') {
     var ab = document.querySelector('.action-bar');
     if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
   }
 
   var flipper    = document.getElementById('flipper');
@@ -1679,7 +1680,7 @@
     // Height-constrained means the iframe already fits the sheet - no resize needed,
     // and posting would cause a shrink feedback loop.
     if (wScale < hScale && window.parent !== window) {
-      var idealH = Math.ceil(1056 * scale) + 120;
+      var idealH = Math.ceil(1056 * scale) + 28;
       try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
     }
   }
