@@ -1628,7 +1628,7 @@
 
 
 <div class="action-bar">
-  <button id="saveJpegBtn">Save as JPEG</button>
+  <button id="saveJpegBtn">View / Save</button>
   <div class="print-group">
     <button class="ptab active" data-side="front">Front</button>
     <button class="ptab" data-side="back">Back</button>
@@ -1731,15 +1731,7 @@
       otherFace.style.display   = svOth;
 
       var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        window.open(dataUrl, '_blank');
-      } else {
-        var link = document.createElement('a');
-        link.download = 'sorc-character-sheet-' + label + '.jpg';
-        link.href = dataUrl;
-        link.click();
-      }
+      window.open(dataUrl, '_blank');
       btn.textContent = btnLabel;
       btn.disabled = false;
       saving = false;
@@ -1783,26 +1775,19 @@
         }).then(function(canvas) {
           document.body.removeChild(clone);
           var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-          var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-          if (isIOS) { window.open(dataUrl, '_blank'); }
-          else {
-            var link = document.createElement('a');
-            link.download = 'sorc-character-sheet-back.jpg';
-            link.href = dataUrl;
-            link.click();
-          }
-          btn.textContent = 'Save as JPEG';
+          window.open(dataUrl, '_blank');
+          btn.textContent = 'View / Save';
           btn.disabled = false;
           saving = false;
         }).catch(function() {
           if (document.body.contains(clone)) document.body.removeChild(clone);
-          btn.textContent = 'Save as JPEG';
+          btn.textContent = 'View / Save';
           btn.disabled = false;
           saving = false;
         });
       }, 150);
     } else {
-      captureFace(front, 'front', btn, 'Save as JPEG');
+      captureFace(front, 'front', btn, 'View / Save');
     }
   });
 
