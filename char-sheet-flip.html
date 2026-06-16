@@ -1699,65 +1699,40 @@
   }
 
   // Capture one face to JPEG.
-  // Resets transforms on live elements so html2canvas sees the true 816x1056
-  // layout, then restores everything after the canvas is built.
-  function captureFace(faceEl, label, btn, btnLabel, winRef) {
+  // Clones the face into an offscreen element so html2canvas captures it in
+  // complete isolation - no dependency on live display/transform state. Text
+  // <input> fields are swapped for plain divs first, since html2canvas hand-
+  // approximates input rendering and gets the alignment wrong.
+  function captureFace(faceEl, btn, btnLabel, winRef) {
     saving = true;
-    var otherFace  = (faceEl === front) ? back : front;
-    var sw         = document.getElementById('scaleWrap');
-    var fp         = document.querySelector('.flipper');
-    
-    // Save
-    var svSW   = sw.style.transform;
-    var svFT   = fp.style.transform;
-    var svFS   = fp.style.transformStyle;
-    var svFce  = faceEl.style.transform;
-    var svDisp = faceEl.style.display;
-    var svOth  = otherFace.style.display;
-    var svVis  = faceEl.style.visibility;
-
-    // Strip transforms and ensure face is visible for capture
-    sw.style.transform        = 'none';
-    fp.style.transform        = 'none';
-    fp.style.transformStyle   = 'flat';
-    faceEl.style.transform    = 'none';
-    faceEl.style.display      = 'block';
-    faceEl.style.visibility   = 'visible';
-    otherFace.style.display   = 'none';
-
-    void faceEl.offsetHeight; // force layout
+    var clone = faceEl.cloneNode(true);
+    clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
+    clone.querySelectorAll('input.fline').forEach(function(inp) {
+      var div = document.createElement('div');
+      div.textContent = inp.value;
+      div.className = 'fline';
+      div.style.cssText = 'background:transparent;border:none;border-bottom:1px solid #aaa;width:100%;font-family:Arial, sans-serif;font-size:0.72rem;color:#3d3d3d;height:auto;padding:0 1px;display:block;min-height:1em;';
+      inp.parentNode.replaceChild(div, inp);
+    });
+    document.body.appendChild(clone);
 
     setTimeout(function() {
-    html2canvas(faceEl, {
+    html2canvas(clone, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#f2ece0',
       width: 816,
       height: 1056,
-      foreignObjectRendering: true,
       logging: false
     }).then(function(canvas) {
-      sw.style.transform        = svSW;
-      fp.style.transform        = svFT;
-      fp.style.transformStyle   = svFS;
-      faceEl.style.transform    = svFce;
-      faceEl.style.display      = svDisp;
-      faceEl.style.visibility   = svVis;
-      otherFace.style.display   = svOth;
-
+      document.body.removeChild(clone);
       var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
       openImageInWindow(winRef, dataUrl);
       btn.textContent = btnLabel;
       btn.disabled = false;
       saving = false;
     }).catch(function() {
-      sw.style.transform        = svSW;
-      fp.style.transform        = svFT;
-      fp.style.transformStyle   = svFS;
-      faceEl.style.transform    = svFce;
-      faceEl.style.display      = svDisp;
-      faceEl.style.visibility   = svVis;
-      otherFace.style.display   = svOth;
+      if (document.body.contains(clone)) document.body.removeChild(clone);
       if (winRef) winRef.close();
       btn.textContent = btnLabel;
       btn.disabled = false;
@@ -1779,34 +1754,7 @@
     btn.textContent = 'Saving...';
     btn.disabled = true;
     var winRef = window.open('', '_blank');
-    if (snap) {
-      // Clone back face into an offscreen element so html2canvas captures it
-      // in complete isolation - no dependency on live display state.
-      var clone = back.cloneNode(true);
-      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
-      document.body.appendChild(clone);
-      setTimeout(function() {
-        html2canvas(clone, {
-          scale: 2, useCORS: true, backgroundColor: '#f2ece0',
-          width: 816, height: 1056, foreignObjectRendering: true, logging: false
-        }).then(function(canvas) {
-          document.body.removeChild(clone);
-          var dataUrl = canvas.toDataURL('image/jpeg', 0.93);
-          openImageInWindow(winRef, dataUrl);
-          btn.textContent = 'View / Save';
-          btn.disabled = false;
-          saving = false;
-        }).catch(function() {
-          if (document.body.contains(clone)) document.body.removeChild(clone);
-          if (winRef) winRef.close();
-          btn.textContent = 'View / Save';
-          btn.disabled = false;
-          saving = false;
-        });
-      }, 150);
-    } else {
-      captureFace(front, 'front', btn, 'View / Save', winRef);
-    }
+    captureFace(snap ? back : front, btn, 'View / Save', winRef);
   });
 
   // Print tabs
