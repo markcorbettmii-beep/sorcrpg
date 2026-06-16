@@ -1590,12 +1590,21 @@
   </div><!-- /flipper -->
 </div><!-- /scale-wrap -->
 </div><!-- /sheet-viewport -->
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;opacity:0.6;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
 
 <div class="action-bar">
+  <a href="content/basic_rules/basic_rules_5.html#kaida-example" style="color:#c5a042;font-family:'Cinzel',serif;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-decoration:underline;white-space:nowrap;">&#8592; Resume SORC Basic Rules Pg. 5</a>
   <button id="flipBtn">Flip Sheet</button>
 </div>
 
 <script>
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var ab = document.querySelector('.action-bar');
+    if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
+  }
+
   var flipper    = document.getElementById('flipper');
   var front      = document.getElementById('front');
   var back       = document.getElementById('back');
@@ -1629,7 +1638,7 @@
     wrap.style.transform = 'scale(' + scale + ')';
 
     if (wScale < hScale && window.parent !== window) {
-      var idealH = Math.ceil(1056 * scale) + 90;
+      var idealH = Math.ceil(1056 * scale) + 28;
       try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
     }
   }
