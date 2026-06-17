@@ -89,6 +89,87 @@ function pickFirstEnabledFace(skin) {
   return index !== -1 ? index : 0;
 }
 
+const holdPreviewOverlay = document.getElementById("holdPreviewOverlay");
+const HOLD_PREVIEW_DELAY = 450;
+
+function showHoldPreview(src) {
+  if (!holdPreviewOverlay || !src) return;
+  holdPreviewOverlay.innerHTML = "";
+  const previewImg = document.createElement("img");
+  previewImg.src = src;
+  holdPreviewOverlay.appendChild(previewImg);
+  holdPreviewOverlay.classList.add("visible");
+}
+
+function hideHoldPreview() {
+  if (holdPreviewOverlay) holdPreviewOverlay.classList.remove("visible");
+}
+
+function attachHoldPreview(img, previewSrc) {
+  if (!previewSrc) return;
+  img.draggable = false;
+  let timer = null;
+  let moved = false;
+
+  function clearTimer() {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+
+  img.addEventListener("contextmenu", function(e) {
+    e.preventDefault();
+  });
+
+  img.addEventListener("mousedown", function() {
+    moved = false;
+    clearTimer();
+    timer = setTimeout(function() {
+      if (!moved) showHoldPreview(previewSrc);
+    }, HOLD_PREVIEW_DELAY);
+  });
+  img.addEventListener("mousemove", function() {
+    moved = true;
+    clearTimer();
+    hideHoldPreview();
+  });
+  img.addEventListener("mouseup", function() {
+    clearTimer();
+    hideHoldPreview();
+  });
+  img.addEventListener("mouseleave", function() {
+    clearTimer();
+    hideHoldPreview();
+  });
+
+  img.addEventListener("touchstart", function(e) {
+    if (e.touches.length > 1) {
+      clearTimer();
+      return;
+    }
+    e.preventDefault();
+    moved = false;
+    clearTimer();
+    timer = setTimeout(function() {
+      if (!moved) showHoldPreview(previewSrc);
+    }, HOLD_PREVIEW_DELAY);
+  }, { passive: false });
+  img.addEventListener("touchmove", function() {
+    moved = true;
+    clearTimer();
+    hideHoldPreview();
+  }, { passive: true });
+  img.addEventListener("touchend", function() {
+    clearTimer();
+    hideHoldPreview();
+  });
+  img.addEventListener("touchcancel", function() {
+    clearTimer();
+    hideHoldPreview();
+  });
+}
+
 function createPlaceholder(text) {
   const canvas = document.createElement('canvas');
   canvas.width = 100;
@@ -151,6 +232,8 @@ function renderBodyPickers() {
       }
     };
 
+    attachHoldPreview(img, body.src);
+
     wrap.appendChild(img);
     rowDiv.appendChild(wrap);
   });
@@ -194,6 +277,9 @@ function renderFacePickers() {
         renderFinalCharacter();
       }
     };
+
+    attachHoldPreview(img, face.clup && face.clup.length > 0 ? face.clup : face.src);
+
     rowDiv.appendChild(img);
   });
 
@@ -234,6 +320,11 @@ function renderFacePaintPickers() {
         renderFinalCharacter();
       }
     };
+
+    if (idx !== 0) {
+      attachHoldPreview(img, paint.clup && paint.clup.length > 0 ? paint.clup : paint.src);
+    }
+
     rowDiv.appendChild(img);
   });
 
@@ -271,6 +362,9 @@ function renderHairPickers() {
         renderFinalCharacter();
       }
     };
+
+    attachHoldPreview(img, hair.clup && hair.clup.length > 0 ? hair.clup : hair.src);
+
     rowDiv.appendChild(img);
   });
 
