@@ -47,8 +47,8 @@ const faceOptions = [
 
 const facePaintOptions = [
   { src: "", thumb: "", clup: "", label: "None", enabled: true },
-  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: false, disabledNote: "Not available in Beta" },
   { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, clup: `${BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
   { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, clup: `${BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
   { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, clup: `${BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
@@ -364,6 +364,11 @@ function renderFacePaintPickers() {
 
     img.className = className;
 
+    if (!paint.enabled && paint.disabledNote) {
+      img.alt = paint.disabledNote;
+      img.title = paint.disabledNote;
+    }
+
     img.onclick = function() {
       if (paint.enabled) {
         selected.facePaint = idx;
@@ -371,10 +376,12 @@ function renderFacePaintPickers() {
         renderCharacter();
         renderFacePreview();
         renderFinalCharacter();
+      } else if (paint.disabledNote) {
+        showDisabledNote(paint.disabledNote);
       }
     };
 
-    if (idx !== 0) {
+    if (idx !== 0 && paint.enabled) {
       attachHoldPreview(img, paint.clup && paint.clup.length > 0 ? paint.clup : paint.src);
     }
 
@@ -633,7 +640,7 @@ function renderFacePreview() {
             // so extraYShift lets specific faces get an additional nudge.
             const FACE_SCALE_BOOST = 1.8;
             const FACE_Y_SHIFT = canvas.height * -0.01;
-            const FACE_X_SHIFT = canvas.width * 0.03;
+            const FACE_X_SHIFT = 0;
             const boostedWidth = drawWidth * FACE_SCALE_BOOST;
             const boostedHeight = drawHeight * FACE_SCALE_BOOST;
             drawX -= (boostedWidth - drawWidth) / 2;
