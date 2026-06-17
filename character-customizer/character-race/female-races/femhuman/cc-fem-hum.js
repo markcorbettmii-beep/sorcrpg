@@ -161,13 +161,12 @@ function attachHoldPreview(img, previewSrc) {
       clearTimer();
       return;
     }
-    e.preventDefault();
     moved = false;
     clearTimer();
     timer = setTimeout(function() {
       if (!moved) showHoldPreview(previewSrc);
     }, HOLD_PREVIEW_DELAY);
-  }, { passive: false });
+  }, { passive: true });
   img.addEventListener("touchmove", function() {
     moved = true;
     clearTimer();
