@@ -630,7 +630,7 @@ function renderFacePreview() {
             // Face art sits small/low within its clup frame, so scale it
             // up and shift it upward to better fill the hair's face window.
             const FACE_SCALE_BOOST = 1.8;
-            const FACE_Y_SHIFT = canvas.height * 0.02;
+            const FACE_Y_SHIFT = canvas.height * -0.01;
             const boostedWidth = drawWidth * FACE_SCALE_BOOST;
             const boostedHeight = drawHeight * FACE_SCALE_BOOST;
             drawX -= (boostedWidth - drawWidth) / 2;
