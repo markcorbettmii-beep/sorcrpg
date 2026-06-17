@@ -39,10 +39,10 @@ const faceOptions = [
   { src: `${BASE}femface4-med-brn.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
   { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
-  // Pale skin faces
+  // Pale skin faces - only the first is available during beta
   { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-vlt-clup.png`, skin: "pale", eyes: "vlt", enabled: true },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: true }
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: false, disabledNote: "Not available in Beta" }
 ];
 
 const facePaintOptions = [
@@ -103,6 +103,19 @@ function showHoldPreview(src) {
 
 function hideHoldPreview() {
   if (holdPreviewOverlay) holdPreviewOverlay.classList.remove("visible");
+}
+
+let disabledNoteTimer = null;
+function showDisabledNote(message) {
+  if (!holdPreviewOverlay) return;
+  clearTimeout(disabledNoteTimer);
+  holdPreviewOverlay.innerHTML = "";
+  const note = document.createElement("div");
+  note.className = "disabled-note-text";
+  note.textContent = message;
+  holdPreviewOverlay.appendChild(note);
+  holdPreviewOverlay.classList.add("visible");
+  disabledNoteTimer = setTimeout(hideHoldPreview, 1600);
 }
 
 function attachHoldPreview(img, previewSrc) {
@@ -268,6 +281,11 @@ function renderFacePickers() {
 
     img.className = className;
 
+    if (!face.enabled && face.disabledNote) {
+      img.alt = face.disabledNote;
+      img.title = face.disabledNote;
+    }
+
     img.onclick = function() {
       if (face.enabled) {
         selected.face = globalIdx;
@@ -275,10 +293,14 @@ function renderFacePickers() {
         renderCharacter();
         renderFacePreview();
         renderFinalCharacter();
+      } else if (face.disabledNote) {
+        showDisabledNote(face.disabledNote);
       }
     };
 
-    attachHoldPreview(img, face.clup && face.clup.length > 0 ? face.clup : face.src);
+    if (face.enabled) {
+      attachHoldPreview(img, face.clup && face.clup.length > 0 ? face.clup : face.src);
+    }
 
     rowDiv.appendChild(img);
   });
