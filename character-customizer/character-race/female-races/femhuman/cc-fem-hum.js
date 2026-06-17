@@ -123,6 +123,10 @@ function attachHoldPreview(img, previewSrc) {
   img.draggable = false;
   let timer = null;
   let moved = false;
+  let shown = false;
+  let startX = 0;
+  let startY = 0;
+  const MOVE_THRESHOLD = 12;
 
   function clearTimer() {
     if (timer) {
@@ -131,30 +135,46 @@ function attachHoldPreview(img, previewSrc) {
     }
   }
 
+  function checkMoved(x, y) {
+    if (Math.hypot(x - startX, y - startY) > MOVE_THRESHOLD) {
+      moved = true;
+      clearTimer();
+      if (shown) {
+        shown = false;
+        hideHoldPreview();
+      }
+    }
+  }
+
+  function endHold() {
+    clearTimer();
+    if (shown) {
+      shown = false;
+      hideHoldPreview();
+    }
+  }
+
   img.addEventListener("contextmenu", function(e) {
     e.preventDefault();
   });
 
-  img.addEventListener("mousedown", function() {
+  img.addEventListener("mousedown", function(e) {
     moved = false;
+    startX = e.clientX;
+    startY = e.clientY;
     clearTimer();
     timer = setTimeout(function() {
-      if (!moved) showHoldPreview(previewSrc);
+      if (!moved) {
+        shown = true;
+        showHoldPreview(previewSrc);
+      }
     }, HOLD_PREVIEW_DELAY);
   });
-  img.addEventListener("mousemove", function() {
-    moved = true;
-    clearTimer();
-    hideHoldPreview();
+  img.addEventListener("mousemove", function(e) {
+    checkMoved(e.clientX, e.clientY);
   });
-  img.addEventListener("mouseup", function() {
-    clearTimer();
-    hideHoldPreview();
-  });
-  img.addEventListener("mouseleave", function() {
-    clearTimer();
-    hideHoldPreview();
-  });
+  img.addEventListener("mouseup", endHold);
+  img.addEventListener("mouseleave", endHold);
 
   img.addEventListener("touchstart", function(e) {
     if (e.touches.length > 1) {
@@ -162,24 +182,23 @@ function attachHoldPreview(img, previewSrc) {
       return;
     }
     moved = false;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
     clearTimer();
     timer = setTimeout(function() {
-      if (!moved) showHoldPreview(previewSrc);
+      if (!moved) {
+        shown = true;
+        showHoldPreview(previewSrc);
+      }
     }, HOLD_PREVIEW_DELAY);
   }, { passive: true });
-  img.addEventListener("touchmove", function() {
-    moved = true;
-    clearTimer();
-    hideHoldPreview();
+  img.addEventListener("touchmove", function(e) {
+    if (e.touches.length > 0) {
+      checkMoved(e.touches[0].clientX, e.touches[0].clientY);
+    }
   }, { passive: true });
-  img.addEventListener("touchend", function() {
-    clearTimer();
-    hideHoldPreview();
-  });
-  img.addEventListener("touchcancel", function() {
-    clearTimer();
-    hideHoldPreview();
-  });
+  img.addEventListener("touchend", endHold);
+  img.addEventListener("touchcancel", endHold);
 }
 
 function createPlaceholder(text) {
