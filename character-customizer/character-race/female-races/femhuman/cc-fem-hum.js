@@ -40,9 +40,9 @@ const faceOptions = [
   { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
   // Pale skin faces
-  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, skin: "pale", eyes: "grn", enabled: true },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, skin: "pale", eyes: "brn", enabled: true },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, skin: "pale", eyes: "blu", enabled: true }
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-vlt-clup.png`, skin: "pale", eyes: "vlt", enabled: true },
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
 const facePaintOptions = [
@@ -406,9 +406,18 @@ function renderFacePreview() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   let layers = [];
-  
-  // NO face layer - faces don't appear in closeup
-  
+
+  // Use face CLUP for closeup window
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.enabled !== false) {
+      let faceImg = face.clup && face.clup.length > 0 ? face.clup : face.src;
+      if (faceImg) {
+        layers.push({ src: faceImg, layer: "face", useCloseupFit: face.clup && face.clup.length > 0 });
+      }
+    }
+  }
+
   // Use facepaint CLUP for closeup window
   if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
     let paint = facePaintOptions[selected.facePaint];
