@@ -40,8 +40,8 @@ const faceOptions = [
   { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
   // Pale skin faces - all available once Pale body is selected
-  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-vlt-clup.png`, skin: "pale", eyes: "vlt", enabled: true },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true },
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-vlt-clup.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 18 },
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: 18 },
   { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
@@ -560,7 +560,7 @@ function renderFacePreview() {
     if (face && face.enabled !== false) {
       let faceImg = face.clup && face.clup.length > 0 ? face.clup : face.src;
       if (faceImg) {
-        layers.push({ src: faceImg, layer: "face", useCloseupFit: face.clup && face.clup.length > 0 });
+        layers.push({ src: faceImg, layer: "face", useCloseupFit: face.clup && face.clup.length > 0, extraYShift: face.closeupExtraYShift || 0 });
       }
     }
   }
@@ -593,7 +593,7 @@ function renderFacePreview() {
         if (!opt || !opt.src) return resolve(null);
         const im = new window.Image();
         im.src = opt.src;
-        im.onload = () => resolve({ img: im, useCloseupFit: opt.useCloseupFit, layer: opt.layer });
+        im.onload = () => resolve({ img: im, useCloseupFit: opt.useCloseupFit, layer: opt.layer, extraYShift: opt.extraYShift || 0 });
         im.onerror = () => {
           console.warn(`Failed to load preview image: ${opt.src}`);
           resolve(null);
@@ -629,13 +629,18 @@ function renderFacePreview() {
           if (result.layer === "face") {
             // Face art sits small/low within its clup frame, so scale it
             // up and shift it upward to better fill the hair's face window.
+            // Individual face images differ slightly in content placement,
+            // so extraYShift lets specific faces get an additional nudge.
             const FACE_SCALE_BOOST = 1.8;
             const FACE_Y_SHIFT = canvas.height * -0.01;
+            const FACE_X_SHIFT = canvas.width * 0.03;
             const boostedWidth = drawWidth * FACE_SCALE_BOOST;
             const boostedHeight = drawHeight * FACE_SCALE_BOOST;
             drawX -= (boostedWidth - drawWidth) / 2;
             drawY -= (boostedHeight - drawHeight) / 2;
             drawY -= FACE_Y_SHIFT;
+            drawY -= result.extraYShift || 0;
+            drawX += FACE_X_SHIFT;
             drawWidth = boostedWidth;
             drawHeight = boostedHeight;
           }
