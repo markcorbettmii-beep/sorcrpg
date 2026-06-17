@@ -349,6 +349,10 @@ function renderFacePaintPickers() {
       img.src = createPlaceholder('None');
     } else if (paint.thumb) {
       img.src = paint.thumb;
+      img.onerror = function() {
+        img.onerror = null;
+        img.src = paint.clup || paint.src || createPlaceholder('Coming Soon');
+      };
     } else {
       img.src = createPlaceholder('Coming Soon');
     }
@@ -626,7 +630,7 @@ function renderFacePreview() {
             // Face art sits small/low within its clup frame, so scale it
             // up and shift it upward to better fill the hair's face window.
             const FACE_SCALE_BOOST = 1.8;
-            const FACE_Y_SHIFT = canvas.height * 0.08;
+            const FACE_Y_SHIFT = canvas.height * 0.02;
             const boostedWidth = drawWidth * FACE_SCALE_BOOST;
             const boostedHeight = drawHeight * FACE_SCALE_BOOST;
             drawX -= (boostedWidth - drawWidth) / 2;
