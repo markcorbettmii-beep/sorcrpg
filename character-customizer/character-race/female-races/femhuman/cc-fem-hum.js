@@ -40,9 +40,9 @@ const faceOptions = [
   { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
   // Pale skin faces - all available once Pale body is selected
-  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-vlt-clup.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 18 },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: -6 },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: true }
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-violet_20260617_154437_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 18 },
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-brown_20260617_154504_0000.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: -6 },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-green_20260617_154658_0000.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
 const facePaintOptions = [
