@@ -17,8 +17,8 @@ const IMG_WEAPON_FRONT = `${BASE}kaida-btlax-frnt.png`;
 
 // ONLY MUSCULAR BODY TYPES
 const bodyOptions = [
-  { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: true },
-  { src: `${BASE}fbody-musc-med.png`, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: true },
+  { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BASE}fbody-musc-med.png`, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
   { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
 ];
 
@@ -39,10 +39,10 @@ const faceOptions = [
   { src: `${BASE}femface4-med-brn.png`, thumb: `${BASE}femface4-med-brn-tmb.png`, skin: "med", eyes: "brn", enabled: true },
   { src: `${BASE}femface5-med-blu.png`, thumb: `${BASE}femface5-med-blu-mkp-tmb.png`, skin: "med", eyes: "blu", enabled: true },
   
-  // Pale skin faces - only the first is available during beta
+  // Pale skin faces - all available once Pale body is selected
   { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}femface2-pale-vlt-clup.png`, skin: "pale", eyes: "vlt", enabled: true },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: false, disabledNote: "Not available in Beta" },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: false, disabledNote: "Not available in Beta" }
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}femface4-pale-brn-clup.png`, skin: "pale", eyes: "brn", enabled: true },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}femface5-pale-blu-mkp-clup.png`, skin: "pale", eyes: "blu", enabled: true }
 ];
 
 const facePaintOptions = [
@@ -234,6 +234,11 @@ function renderBodyPickers() {
 
     img.className = className;
 
+    if (!body.enabled && body.disabledNote) {
+      img.alt = body.disabledNote;
+      img.title = body.disabledNote;
+    }
+
     img.onclick = function() {
       if (body.enabled) {
         selected.body = idx;
@@ -241,10 +246,14 @@ function renderBodyPickers() {
         renderAllPickers();
         renderCharacter();
         renderFacePreview();
+      } else if (body.disabledNote) {
+        showDisabledNote(body.disabledNote);
       }
     };
 
-    attachHoldPreview(img, body.src);
+    if (body.enabled) {
+      attachHoldPreview(img, body.src);
+    }
 
     wrap.appendChild(img);
     rowDiv.appendChild(wrap);
