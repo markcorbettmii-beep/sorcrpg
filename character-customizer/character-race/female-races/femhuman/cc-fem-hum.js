@@ -580,7 +580,27 @@ function drawCompanionSizeLabels(ctx, canvas) {
   drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.30, canvas.height * 0.18);
   drawSlot("Pet (small/tiny)", canvas.width * 0.72, canvas.height * 0.49);
   drawSlot("Standard (empty)", canvas.width * 0.22, canvas.height * 0.47);
-  drawSlot("Camp/Light Source", canvas.width * 0.33, canvas.height * 0.55, "Wayfarer Location");
+  drawSlot("Camp/Light Source", canvas.width * 0.2, canvas.height * 0.55, "Wayfarer Location");
+
+  const bootLines = [
+    "Character in street clothes, TABA Boots.",
+    "Refer to selections below for earned",
+    "Armament and Companion choices."
+  ];
+  const bootFont = `bold ${Math.round(canvas.width * 0.02)}px sans-serif`;
+  const bootLineHeight = canvas.height * 0.026;
+  const bootX = canvas.width * 0.5;
+  const bootStartY = canvas.height * 0.94;
+  ctx.font = bootFont;
+  ctx.lineWidth = outlineWidth;
+  ctx.strokeStyle = outlineColor;
+  ctx.fillStyle = labelColor;
+  bootLines.forEach((line, i) => {
+    const y = bootStartY + i * bootLineHeight;
+    ctx.strokeText(line, bootX, y);
+    ctx.fillText(line, bootX, y);
+  });
+
   ctx.restore();
 }
 
