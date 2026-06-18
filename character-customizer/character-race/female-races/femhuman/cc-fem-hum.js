@@ -579,6 +579,10 @@ function drawCompanionSizeLabels(ctx, canvas) {
   drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.30, canvas.height * 0.18);
   drawSlot("Pet (small/tiny)", canvas.width * 0.72, canvas.height * 0.49);
   drawSlot("Standard (empty)", canvas.width * 0.22, canvas.height * 0.47);
+
+  ctx.font = labelFont;
+  ctx.strokeText("Wayfarer Location: Camp/Light Source", canvas.width * 0.32, canvas.height * 0.81);
+  ctx.fillText("Wayfarer Location: Camp/Light Source", canvas.width * 0.32, canvas.height * 0.81);
   ctx.restore();
 }
 
