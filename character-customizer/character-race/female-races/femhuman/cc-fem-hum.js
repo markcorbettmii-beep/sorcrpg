@@ -583,7 +583,7 @@ function drawCompanionSizeLabels(ctx, canvas) {
   drawSlot("Camp/Light Source", canvas.width * 0.22, canvas.height * 0.55, "Wayfarer Location");
 
   const bootLines = [
-    "Character in street clothes, TABA Boots.",
+    "Character default in street clothes and TABA Boots.",
     "Refer to selections below for earned Armament and Companion choices."
   ];
   const bootFontSize = Math.round(canvas.width * 0.02);
