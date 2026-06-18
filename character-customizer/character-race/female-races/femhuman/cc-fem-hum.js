@@ -42,7 +42,7 @@ const faceOptions = [
   // Pale skin faces - all available once Pale body is selected
   { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-green_20260617_154658_0000.png`, skin: "pale", eyes: "grn", enabled: true, closeupExtraYShift: 6 },
   { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-brown_20260617_154504_0000.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: 6 },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-violet_20260617_154437_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 22 }
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}images/female/f-human/fface-pale-violet_20260617_154437_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 36 }
 ];
 
 const facePaintOptions = [
@@ -545,8 +545,22 @@ function renderCharacter(callback) {
     imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
+    drawCompanionSizeLabels(ctx, canvas);
     if (callback) callback(canvas);
   });
+}
+
+function drawCompanionSizeLabels(ctx, canvas) {
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = "#DED463";
+  ctx.font = `bold ${Math.round(canvas.width * 0.024)}px sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("Angelic (small/tiny)", canvas.width * 0.74, canvas.height * 0.18);
+  ctx.fillText("Large/Goliath/Behemoth (empty)", canvas.width * 0.22, canvas.height * 0.18);
+  ctx.fillText("Pet (small/tiny)", canvas.width * 0.62, canvas.height * 0.70);
+  ctx.fillText("Standard (empty)", canvas.width * 0.23, canvas.height * 0.62);
+  ctx.restore();
 }
 
 function renderFacePreview() {
