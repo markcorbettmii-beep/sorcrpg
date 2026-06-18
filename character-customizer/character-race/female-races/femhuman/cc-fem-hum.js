@@ -562,14 +562,14 @@ function drawCompanionSizeLabels(ctx, canvas) {
   const outlineColor = "rgba(0,0,0,0.85)";
   const outlineWidth = Math.max(2, canvas.width * 0.003);
 
-  function drawSlot(label, x, y) {
+  function drawSlot(label, x, y, header) {
     ctx.globalAlpha = 1;
     ctx.font = headerFont;
     ctx.lineWidth = outlineWidth;
     ctx.strokeStyle = outlineColor;
-    ctx.strokeText("Companion Slot", x, y - headerGap);
+    ctx.strokeText(header || "Companion Slot", x, y - headerGap);
     ctx.fillStyle = labelColor;
-    ctx.fillText("Companion Slot", x, y - headerGap);
+    ctx.fillText(header || "Companion Slot", x, y - headerGap);
 
     ctx.font = labelFont;
     ctx.strokeText(label, x, y);
@@ -580,10 +580,7 @@ function drawCompanionSizeLabels(ctx, canvas) {
   drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.30, canvas.height * 0.18);
   drawSlot("Pet (small/tiny)", canvas.width * 0.72, canvas.height * 0.49);
   drawSlot("Standard (empty)", canvas.width * 0.22, canvas.height * 0.47);
-
-  ctx.font = labelFont;
-  ctx.strokeText("Wayfarer Location: Camp/Light Source", canvas.width * 0.32, canvas.height * 0.81);
-  ctx.fillText("Wayfarer Location: Camp/Light Source", canvas.width * 0.32, canvas.height * 0.81);
+  drawSlot("Camp/Light Source", canvas.width * 0.33, canvas.height * 0.55, "Wayfarer Location");
   ctx.restore();
 }
 
