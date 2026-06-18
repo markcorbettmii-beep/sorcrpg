@@ -67,7 +67,7 @@ const hairOptions = [
   { src: `${BASE}femhair9.png`, thumb: `${BASE}femhair9-tmb.png`, clup: `${BASE}femhair9-clup.png`, enabled: true },
   { src: `${BASE}femhair10.png`, thumb: `${BASE}femhair10-tmb.png`, clup: `${BASE}femhair10-clup.png`, enabled: true },
   { src: `${BASE}femhair11.png`, thumb: `${BASE}femhair11-tmb.png`, clup: `${BASE}femhair11-clup.png`, enabled: true },
-  { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, clup: `${BASE}femhair12-clup.png?v=5`, enabled: true }
+  { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, clup: `${BASE}femhair12-clup.png?v=6`, enabled: true }
 ];
 
 let selected = {
