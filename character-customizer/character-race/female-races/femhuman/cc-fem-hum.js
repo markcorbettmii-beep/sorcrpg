@@ -938,6 +938,11 @@ function showPage(n) {
 history.replaceState({ page: 1 }, "");
 
 document.getElementById("toPage2Btn").addEventListener("click", function() {
+  document.getElementById("gmCodeOverlay").classList.add("visible");
+});
+
+document.getElementById("gmCodeSubmitBtn").addEventListener("click", function() {
+  document.getElementById("gmCodeOverlay").classList.remove("visible");
   showPage(2);
   history.pushState({ page: 2 }, "");
 });
