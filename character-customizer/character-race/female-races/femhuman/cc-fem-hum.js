@@ -557,32 +557,27 @@ function drawCompanionSizeLabels(ctx, canvas) {
   const labelFont = `bold ${Math.round(canvas.width * 0.024)}px sans-serif`;
   const headerGap = canvas.height * 0.03;
 
-  function drawSlot(label, x, y, opts) {
-    opts = opts || {};
-    const alpha = opts.alpha || 0.35;
+  const labelColor = "#FFEE00";
+  const outlineColor = "rgba(0,0,0,0.85)";
+  const outlineWidth = Math.max(2, canvas.width * 0.003);
 
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = "#DED463";
+  function drawSlot(label, x, y) {
+    ctx.globalAlpha = 1;
     ctx.font = headerFont;
+    ctx.lineWidth = outlineWidth;
+    ctx.strokeStyle = outlineColor;
+    ctx.strokeText("Companion Slot", x, y - headerGap);
+    ctx.fillStyle = labelColor;
     ctx.fillText("Companion Slot", x, y - headerGap);
 
     ctx.font = labelFont;
-    if (opts.outline) {
-      // Sits over the backpack art, so outline it to stay legible against busy art.
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = Math.max(2, canvas.width * 0.003);
-      ctx.strokeStyle = "rgba(0,0,0,0.85)";
-      ctx.strokeText(label, x, y);
-      ctx.fillStyle = "#FFF6C8";
-      ctx.fillText(label, x, y);
-    } else {
-      ctx.fillText(label, x, y);
-    }
+    ctx.strokeText(label, x, y);
+    ctx.fillText(label, x, y);
   }
 
   drawSlot("Angelic (small/tiny)", canvas.width * 0.74, canvas.height * 0.18);
   drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.22, canvas.height * 0.18);
-  drawSlot("Pet (small/tiny)", canvas.width * 0.62, canvas.height * 0.70);
+  drawSlot("Pet (small/tiny)", canvas.width * 0.62, canvas.height * 0.42);
   drawSlot("Standard (empty)", canvas.width * 0.14, canvas.height * 0.47);
   ctx.restore();
 }
