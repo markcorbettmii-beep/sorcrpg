@@ -587,8 +587,9 @@ function drawCompanionSizeLabels(ctx, canvas) {
     "Refer to selections below for earned",
     "Armament and Companion choices."
   ];
-  const bootFont = `bold ${Math.round(canvas.width * 0.02)}px sans-serif`;
-  const bootLineHeight = canvas.height * 0.026;
+  const bootFontSize = Math.round(canvas.width * 0.02);
+  const bootFont = `bold ${bootFontSize}px sans-serif`;
+  const bootLineHeight = bootFontSize * 1.5;
   const bootX = canvas.width * 0.5;
   const bootStartY = canvas.height * 0.94;
   ctx.font = bootFont;
