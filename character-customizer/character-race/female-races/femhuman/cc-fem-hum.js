@@ -60,7 +60,7 @@ const hairOptions = [
   { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png`, clup: `${BASE}femhair2-clup.png`, enabled: true },
   { src: `${BASE}femhair3.png`, thumb: `${BASE}femhair3-tmb.png`, clup: `${BASE}femhair3-clup.png`, enabled: true },
   { src: `${BASE}femhair4.png`, thumb: `${BASE}femhair4-tmb.png`, clup: `${BASE}femhair4-clup.png`, enabled: true },
-  { src: `${BASE}femhair5.png`, thumb: `${BASE}femhair5-tmb.png`, clup: `${BASE}femhair5-clup-v2.png`, enabled: true },
+  { src: `${BASE}femhair5.png`, thumb: `${BASE}femhair5-tmb.png`, clup: `${BASE}femhair5-clup-v3.png`, enabled: true },
   { src: `${BASE}femhair6.png`, thumb: `${BASE}femhair6-tmb.png`, clup: `${BASE}femhair6-clup-v4.png`, enabled: true },
   { src: `${BASE}femhair7.png`, thumb: `${BASE}femhair7-tmb.png`, clup: `${BASE}femhair7-clup.png`, enabled: true, closeupExtraXShift: 4 },
   { src: `${BASE}femhair8.png`, thumb: `${BASE}femhair8-tmb.png`, clup: `${BASE}femhair8-clup.png`, enabled: true },
