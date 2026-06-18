@@ -988,7 +988,6 @@ if (canvasEl) {
         renderCharacter();
       }
     }, 1200);
-    e.preventDefault();
   });
   
   canvasEl.addEventListener("touchmove", function(e) {
@@ -1016,9 +1015,8 @@ if (canvasEl) {
       clearTimeout(holdTimer);
       holdTimer = null;
     }
-    e.preventDefault();
   });
-  
+
   canvasEl.addEventListener("touchcancel", function(e) {
     if (holdTimer) {
       clearTimeout(holdTimer);
