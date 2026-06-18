@@ -584,7 +584,8 @@ function drawCompanionSizeLabels(ctx, canvas) {
 
   const bootLines = [
     "Character default in street clothes and TABA Boots.",
-    "Refer to selections below for earned Armament and Companion choices."
+    "Selections; Armaments, Companions and Physique must be earned",
+    "and approved by GM before submitting custom portraits (see rules)."
   ];
   const bootFontSize = Math.round(canvas.width * 0.02);
   const bootFont = `bold ${bootFontSize}px sans-serif`;
