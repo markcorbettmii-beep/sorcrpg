@@ -582,7 +582,7 @@ function drawCompanionSizeLabels(ctx, canvas) {
 
   drawSlot("Angelic (small/tiny)", canvas.width * 0.74, canvas.height * 0.18);
   drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.22, canvas.height * 0.18);
-  drawSlot("Pet (small/tiny)", canvas.width * 0.62, canvas.height * 0.70);
+  drawSlot("Pet (small/tiny)", canvas.width * 0.62, canvas.height * 0.70, { alpha: 0.9, outline: true });
   drawSlot("Standard (empty)", canvas.width * 0.23, canvas.height * 0.62, { alpha: 0.9, outline: true });
   ctx.restore();
 }
