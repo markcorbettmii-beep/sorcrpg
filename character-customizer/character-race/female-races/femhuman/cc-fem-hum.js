@@ -584,8 +584,7 @@ function drawCompanionSizeLabels(ctx, canvas) {
 
   const bootLines = [
     "Character in street clothes, TABA Boots.",
-    "Refer to selections below for earned",
-    "Armament and Companion choices."
+    "Refer to selections below for earned Armament and Companion choices."
   ];
   const bootFontSize = Math.round(canvas.width * 0.02);
   const bootFont = `bold ${bootFontSize}px sans-serif`;
