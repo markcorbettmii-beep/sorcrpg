@@ -580,7 +580,7 @@ function drawCompanionSizeLabels(ctx, canvas) {
   drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.30, canvas.height * 0.18);
   drawSlot("Pet (small/tiny)", canvas.width * 0.72, canvas.height * 0.49);
   drawSlot("Standard (empty)", canvas.width * 0.22, canvas.height * 0.47);
-  drawSlot("Camp/Light Source", canvas.width * 0.2, canvas.height * 0.55, "Wayfarer Location");
+  drawSlot("Camp/Light Source", canvas.width * 0.22, canvas.height * 0.55, "Wayfarer Location");
 
   const bootLines = [
     "Character in street clothes, TABA Boots.",
