@@ -47,8 +47,8 @@ const faceOptions = [
 
 const facePaintOptions = [
   { src: "", thumb: "", clup: "", label: "None", enabled: true },
-  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: false, disabledNote: "Not available in Beta" },
-  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
   { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, clup: `${BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
   { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, clup: `${BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
   { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, clup: `${BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
