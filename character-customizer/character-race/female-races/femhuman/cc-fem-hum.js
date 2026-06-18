@@ -696,7 +696,7 @@ function renderFacePreview() {
             // so extraYShift lets specific faces get an additional nudge.
             const FACE_SCALE_BOOST = 1.8;
             const FACE_Y_SHIFT = canvas.height * -0.01;
-            const FACE_X_SHIFT = canvas.width * 0.015;
+            const FACE_X_SHIFT = canvas.width * 0.005;
             const boostedWidth = drawWidth * FACE_SCALE_BOOST;
             const boostedHeight = drawHeight * FACE_SCALE_BOOST;
             drawX -= (boostedWidth - drawWidth) / 2;
@@ -710,6 +710,8 @@ function renderFacePreview() {
 
           drawX += result.extraXShift || 0;
           if (result.layer !== "face") {
+            const HAIR_Y_SHIFT = canvas.height * -0.015;
+            drawY += HAIR_Y_SHIFT;
             drawY += result.extraYShift || 0;
           }
 
