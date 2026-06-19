@@ -709,7 +709,11 @@ function renderFacePreview() {
           }
 
           drawX += result.extraXShift || 0;
-          if (result.layer !== "face") {
+          if (result.layer === "facepaint") {
+            const FACEPAINT_Y_SHIFT = canvas.height * -0.02;
+            drawY += FACEPAINT_Y_SHIFT;
+            drawY += result.extraYShift || 0;
+          } else if (result.layer !== "face") {
             const HAIR_Y_SHIFT = canvas.height * -0.015;
             drawY += HAIR_Y_SHIFT;
             drawY += result.extraYShift || 0;
