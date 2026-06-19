@@ -696,7 +696,7 @@ function renderFacePreview() {
           if (result.layer === "facepaint") {
             const FACEPAINT_Y_SHIFT = canvas.height * -0.02;
             const FACEPAINT_X_SHIFT = canvas.width * -0.01;
-            const FACEPAINT_EXTRA_Y_SHIFT = canvas.height * 0.02;
+            const FACEPAINT_EXTRA_Y_SHIFT = canvas.height * 0.035;
             drawX += FACEPAINT_X_SHIFT;
             drawY += FACEPAINT_Y_SHIFT;
             drawY += FACEPAINT_EXTRA_Y_SHIFT;
