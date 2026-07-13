@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
   if (footerDiv) {
     footerDiv.innerHTML = '<footer>' +
       '<div class="container">' +
-        '<p>&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer. All rights reserved.</p>' +
         '<p>&copy; Slayers of Rings &sect; Crowns [sorcrpg.com] holds all rights reserved to all published content through this website.</p>' +
+        '<p>&copy; 2025 Slayers of Rings &sect; Crowns by Ogre Adventurer. All rights reserved.</p>' +
         '<nav class="footer-links">' +
           '<a href="/terms.html">Terms of Service</a>' +
           '<a href="/privacy.html">Privacy Policy</a>' +
