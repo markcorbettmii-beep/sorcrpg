@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORC GM Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    @media (max-width: 815px) {
+      .sheet-viewport { overflow: hidden; }
+    }
+
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
+    }
+
+    .flip-indicator {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .flipper {
+      width: 816px;
+      height: 1056px;
+      position: relative;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #f2ece0;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face.back { display: none; }
+
+    .border-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 7px;
+      border: 2.5px solid #3a4a18;
+    }
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      inset: 13px;
+      border: 1px solid #3a4a18;
+    }
+
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      z-index: 12;
+      pointer-events: none;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    .wm { display: none; }
+
+    .inner {
+      position: relative;
+      z-index: 1;
+      padding: 14px 42px 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-block { text-align: center; margin-bottom: 4px; }
+
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', Cinzel, serif;
+      font-size: 1.75rem;
+      color: #2e3d0f;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+    }
+
+    .title-block h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      color: #2e3d0f;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      margin-top: 4px;
+    }
+
+    .title-block .sub {
+      font-family: Arial, sans-serif;
+      font-size: 0.64rem;
+      color: #444;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    .rule {
+      border: none;
+      border-top: 1.5px solid #4a5a20;
+      margin: 4px 0;
+      opacity: 0.4;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1.12fr 1fr;
+      gap: 10px;
+      margin-top: 3px;
+      align-content: start;
+      overflow: hidden;
+    }
+
+    .sec { margin-bottom: 8px; }
+
+    .sec-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    .pencil {
+      font-family: Arial, sans-serif;
+      color: #3d3d3d;
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      display: block;
+      width: 100%;
+      min-height: 1em;
+      outline: none;
+    }
+    .afield .pencil { font-size: 0.65rem; }
+    .vfield .pencil { font-size: 0.65rem; }
+    .tfield .pencil { font-size: 0.62rem; }
+    .sfield .pencil { font-size: 0.62rem; }
+    .clr-line .pencil { display: inline; }
+    .itype-bullet-lbl .pencil, .itype-bullet .pencil { font-size: 0.58rem; display: inline; }
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.72rem;
+      color: #3d3d3d;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
+    .field { margin-bottom: 5px; }
+
+    .field-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .field-lbl.sm { font-size: 0.55rem; }
+
+    .fline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 2px;
+    }
+
+    .col-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mid-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: center;
+      width: 100%;
+    }
+
+    .mid-line {
+      width: 88%;
+      height: 1px;
+      background: #4a5a20;
+      margin: 3px auto 0;
+    }
+
+    .bp-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 0.54rem;
+      font-weight: 700;
+      color: #4a5a20;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 6px 0 2px;
+    }
+
+    .back-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .b-sec { margin-bottom: 13px; }
+
+    .b-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    .frm {
+      font-family: Arial, sans-serif;
+      font-size: 0.44rem;
+      color: #666;
+      font-style: italic;
+      margin: -1px 0 3px 2px;
+      line-height: 1.3;
+    }
+
+    .srow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 3px 0;
+      border-bottom: 1px dotted #bbb;
+    }
+
+    .sfield {
+      width: 36px;
+      height: 13px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    .sfield.wide { width: 62px; }
+
+    .vit-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .vbox {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .vname {
+      font-family: 'Cinzel', serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.06em;
+    }
+
+    .vfield {
+      width: 100%;
+      height: 18px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+    }
+
+    .card-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .sheet-card {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #4a5a20;
+      background: #e8e0cc;
+      padding: 3px 4px;
+      box-sizing: border-box;
+    }
+    .sheet-card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.48rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid #4a5a20;
+      margin-bottom: 2px;
+      padding-bottom: 2px;
+      display: flex;
+    }
+    .item-card-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+    }
+    .item-card-tbl td {
+      padding: 1px 2px;
+      vertical-align: top;
+      color: #2e3d0f;
+    }
+    .itype-hdr td {
+      font-weight: 700;
+      border-top: 1px solid #4a5a20;
+      padding-top: 5px;
+      padding-bottom: 1px;
+    }
+    .itype-hdr:first-child td {
+      border-top: none;
+    }
+    .itype-bullet-lbl td {
+      color: #4a5a20;
+      height: 11px;
+      border-bottom: 1px dotted #ccc;
+      font-size: 0.42rem;
+      padding: 0px 2px;
+      vertical-align: middle;
+    }
+
+    .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
+    .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
+    .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
+
+    .small-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+      color: #777;
+      margin-top: 2px;
+    }
+
+    .clr-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .clr-item {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 2px;
+    }
+    .clr-lbl {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .clr-line {
+      width: 100%;
+      height: 1px;
+      background: #4a5a20;
+    }
+
+    /* ── ACTION BAR ── */
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 52px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 200;
+      padding: 0 12px;
+    }
+
+    .action-bar button {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .action-bar button:active { background: #2a3a10; }
+
+    .print-group {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .print-group .ptab {
+      background: #2a2a2a;
+      color: #888;
+      border: none;
+      border-radius: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .print-group .ptab:last-of-type { border-right: none; }
+
+    .print-group .ptab.active {
+      background: #3a4a18;
+      color: #f2ece0;
+    }
+
+    .print-group .ptab:active { background: #2a3a10; color: #f2ece0; }
+
+    #printBtn {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #printBtn:active { background: #2a3a10; }
+
+    /* ── PRINT ── */
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ FRONT ══════════════ -->
+    <div class="face" id="front">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC GM Sheet</h2>
+        </div>
+        <hr class="rule" />
+
+        <!-- GM PROFILE -->
+        <div class="clr-row">
+          <div class="clr-item"><span class="clr-lbl">GM Name</span><span class="pencil" contenteditable="true"></span></div>
+          <div class="clr-item"><span class="clr-lbl">Nickname</span><span class="pencil" contenteditable="true"></span></div>
+          <div class="clr-item"><span class="clr-lbl">Campaign/Module</span><span class="pencil" contenteditable="true"></span></div>
+          <div class="clr-item"><span class="clr-lbl">Date Started</span><span class="pencil" contenteditable="true"></span></div>
+        </div>
+
+        <p class="sec-title" style="text-align:left;margin-top:2px;">Player Roster, Quick Stats</p>
+        <p class="small-note" style="margin-bottom:6px;">One card per player at the table, up to five. See back for the full Per-Character Progression, Simulated Characters, Companion, and Attunement tables.</p>
+
+        <!-- PLAYER CARDS 1-3 -->
+        <div class="card-row">
+          <div class="sheet-card">
+            <div class="sheet-card-title">Player 1</div>
+            <table class="item-card-tbl">
+              <tbody>
+                <tr class="itype-bullet-lbl"><td>&#9670; Player Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Character Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Class / Path / Branch <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Progression</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Ch. Lvl <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Growth <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Rank / RP <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Alignment / Drift <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Falling/Rising Stage <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Vitality</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Life / Mana <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Stamina / End. <span class="pencil" contenteditable="true"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sheet-card">
+            <div class="sheet-card-title">Player 2</div>
+            <table class="item-card-tbl">
+              <tbody>
+                <tr class="itype-bullet-lbl"><td>&#9670; Player Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Character Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Class / Path / Branch <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Progression</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Ch. Lvl <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Growth <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Rank / RP <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Alignment / Drift <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Falling/Rising Stage <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Vitality</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Life / Mana <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Stamina / End. <span class="pencil" contenteditable="true"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sheet-card">
+            <div class="sheet-card-title">Player 3</div>
+            <table class="item-card-tbl">
+              <tbody>
+                <tr class="itype-bullet-lbl"><td>&#9670; Player Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Character Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Class / Path / Branch <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Progression</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Ch. Lvl <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Growth <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Rank / RP <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Alignment / Drift <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Falling/Rising Stage <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Vitality</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Life / Mana <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Stamina / End. <span class="pencil" contenteditable="true"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PLAYER CARDS 4-5 -->
+        <div class="card-row">
+          <div class="sheet-card">
+            <div class="sheet-card-title">Player 4</div>
+            <table class="item-card-tbl">
+              <tbody>
+                <tr class="itype-bullet-lbl"><td>&#9670; Player Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Character Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Class / Path / Branch <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Progression</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Ch. Lvl <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Growth <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Rank / RP <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Alignment / Drift <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Falling/Rising Stage <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Vitality</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Life / Mana <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Stamina / End. <span class="pencil" contenteditable="true"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sheet-card">
+            <div class="sheet-card-title">Player 5</div>
+            <table class="item-card-tbl">
+              <tbody>
+                <tr class="itype-bullet-lbl"><td>&#9670; Player Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Character Name <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Class / Path / Branch <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Progression</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Ch. Lvl <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Growth <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Rank / RP <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Alignment / Drift <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Falling/Rising Stage <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Vitality</td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Life / Mana <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Stamina / End. <span class="pencil" contenteditable="true"></span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sheet-card">
+            <div class="sheet-card-title">Campaign Log</div>
+            <table class="item-card-tbl">
+              <tbody>
+                <tr class="itype-bullet-lbl"><td>&#9670; Current Module <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; In-Game Time <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; Dilemma Choices <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-bullet-lbl"><td>&#9670; NPC Dispositions <span class="pencil" contenteditable="true"></span></td></tr>
+                <tr class="itype-hdr"><td>Notes</td></tr>
+                <tr class="itype-bullet-lbl" style="height:40px;"><td>&nbsp;</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <p class="small-note" style="margin-top:auto;">GMs may also review a player's Journal with their consent; the GM keeps this Sheet as their own separate record. Journal tooling is not yet built, see rules.</p>
+      </div>
+    </div><!-- /front -->
+
+
+    <!-- ══════════════ BACK ══════════════ -->
+    <div class="face back" id="back">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC GM Sheet, Per-Character Detail</h2>
+        </div>
+        <hr class="rule" />
+        <p class="small-note" style="text-align:center;margin-bottom:6px;">One of these back pages per active character, GM Codex Ch. I.</p>
+
+        <div class="clr-row">
+          <div class="clr-item"><span class="clr-lbl">Character</span><span class="pencil" contenteditable="true"></span></div>
+          <div class="clr-item"><span class="clr-lbl">Player</span><span class="pencil" contenteditable="true"></span></div>
+        </div>
+
+        <div class="back-cols">
+
+          <!-- COLUMN 1: Per-Character Progression -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Per-Character Progression</p>
+              <div class="srow"><span>Current Growth</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Current Ch. Lvl</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Years to Next Growth</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Drawn Abilities Log</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Current Rank</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>RP to Next Rank</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Alignment Pos. + Drift</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Fall/Rise Stage (1-9)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Trigger Type</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Boasted vs. Exposed</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Neutral Threshold?</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Mission Statement</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Downtime Remaining</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Age / Retirement Cd.</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+            </div>
+          </div>
+
+          <!-- COLUMN 2: Simulated Characters + Attunement -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Simulated Characters</p>
+              <p class="frm">Rank is never simulated, only earned.</p>
+              <div class="srow"><span>Simulated Ch. Lvl</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Simulated Growth</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Actual Earned Rank</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Actual Earned RP</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Equippable Rank Tier</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+            </div>
+            <div class="b-sec">
+              <p class="b-title">Attunement</p>
+              <div class="srow" style="border-bottom:none;height:34px;align-items:flex-start;"><span>Attuned Items<br><span class="frm" style="margin:0;">(item, rank)</span></span></div>
+              <div class="srow" style="border-bottom:none;height:34px;align-items:flex-start;"><span>Boss-Attuned Claimed<br><span class="frm" style="margin:0;">(campaign-wide)</span></span></div>
+            </div>
+          </div>
+
+          <!-- COLUMN 3: Companion Tracking + Retirement -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Companion Tracking</p>
+              <p class="frm">One row per Companion.</p>
+              <div class="srow"><span>Ailments</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Perf. Tier Progress</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Caretaker Effectiveness</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Boneyard Status</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+            </div>
+            <div class="b-sec">
+              <p class="b-title">Retirement</p>
+              <div class="srow"><span>Rank at Retirement</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Mortal or Immortal</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Living NPC Status</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Commemoration</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Lore Cameo Log</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+            </div>
+          </div>
+
+        </div><!-- /back-cols -->
+
+        <div style="margin-top:6px;border-top:1px solid rgba(74,90,32,0.35);padding-top:6px;">
+          <p class="sec-title" style="text-align:left;">Quick Reference, Module Level to Card Rank</p>
+          <table class="repo-tbl">
+            <thead><tr><th>Module Lvl.</th><th>1-5</th><th>5-8</th><th>9-14</th><th>14-18</th><th>18-23</th><th>23-26</th><th>26-29</th><th>29-30</th></tr></thead>
+            <tbody>
+              <tr><td>Card Rank</td><td>Common</td><td>Uncommon</td><td>Rare</td><td>Unique</td><td>Heroic</td><td>Elite</td><td>Legendary</td><td>Divine</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /inner -->
+    </div><!-- /back -->
+
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
+</div><!-- /sheet-viewport -->
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
+
+<div class="action-bar">
+  <button id="saveJpegBtn">View / Save</button>
+  <div class="print-group">
+    <button class="ptab active" data-side="front">Front</button>
+    <button class="ptab" data-side="back">Back</button>
+  </div>
+  <button id="printBtn">Print</button>
+</div>
+
+<script>
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var ab = document.querySelector('.action-bar');
+    if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
+  }
+
+  var flipper    = document.getElementById('flipper');
+  var front      = document.getElementById('front');
+  var back       = document.getElementById('back');
+  var saving    = false;
+  var flipped   = false;
+
+  function doFlip() {
+    if (saving) return;
+    flipped = !flipped;
+    if (flipped) {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      back.style.display  = 'none';
+      front.style.display = 'block';
+    }
+  }
+
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 28;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+
+  function openImageWindowWithFlip(win, frontUrl, backUrl, initialSide) {
+    if (!win) return;
+    var html = '<!DOCTYPE html><html><head><title>SORC GM Sheet</title>' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"></head>' +
+      '<body style="margin:0;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:70px;">' +
+      '<img id="sheetImg" style="max-width:100%;height:auto;display:block;" alt="GM Sheet">' +
+      '<div style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:12px;padding:12px;background:#1a1a1a;border-top:1px solid #2a2a2a;">' +
+      '<button id="frontBtn" style="background:#3a4a18;color:#f2ece0;border:1px solid #5a6a28;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Front</button>' +
+      '<button id="backBtn" style="background:#3a4a18;color:#f2ece0;border:1px solid #5a6a28;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Back</button>' +
+      '</div>' +
+      '<scr' + 'ipt>' +
+      'var frontUrl = ' + JSON.stringify(frontUrl) + ';' +
+      'var backUrl = ' + JSON.stringify(backUrl) + ';' +
+      'var img = document.getElementById("sheetImg");' +
+      'var frontBtn = document.getElementById("frontBtn");' +
+      'var backBtn = document.getElementById("backBtn");' +
+      'function setActive(side){' +
+      '  img.src = side === "back" ? backUrl : frontUrl;' +
+      '  frontBtn.style.opacity = side === "back" ? "0.55" : "1";' +
+      '  backBtn.style.opacity = side === "back" ? "1" : "0.55";' +
+      '}' +
+      'frontBtn.addEventListener("click", function(){ setActive("front"); });' +
+      'backBtn.addEventListener("click", function(){ setActive("back"); });' +
+      'setActive(' + JSON.stringify(initialSide) + ');' +
+      '</scr' + 'ipt>' +
+      '</body></html>';
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function captureFaceDataUrl(faceEl) {
+    return new Promise(function(resolve, reject) {
+      var clone = faceEl.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
+      clone.querySelectorAll('input.fline').forEach(function(inp) {
+        var div = document.createElement('div');
+        div.textContent = inp.value;
+        div.className = 'fline';
+        div.style.cssText = 'background:transparent;border:none;border-bottom:1px solid #aaa;width:100%;font-family:Arial, sans-serif;font-size:0.72rem;color:#3d3d3d;height:auto;padding:0 1px;display:block;min-height:1em;';
+        inp.parentNode.replaceChild(div, inp);
+      });
+      document.body.appendChild(clone);
+
+      setTimeout(function() {
+        html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#f2ece0',
+          width: 816,
+          height: 1056,
+          logging: false
+        }).then(function(canvas) {
+          document.body.removeChild(clone);
+          resolve(canvas.toDataURL('image/jpeg', 0.93));
+        }).catch(function(err) {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
+          reject(err);
+        });
+      }, 100);
+    });
+  }
+
+  var saveFlippedSnap;
+  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
+    saveFlippedSnap = flipped;
+    saving = true;
+  }, { passive: true });
+  document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    saving = true;
+    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
+    saveFlippedSnap = undefined;
+    var btn = this;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    var winRef = window.open('', '_blank');
+    Promise.all([captureFaceDataUrl(front), captureFaceDataUrl(back)]).then(function(urls) {
+      openImageWindowWithFlip(winRef, urls[0], urls[1], snap ? 'back' : 'front');
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    }).catch(function() {
+      if (winRef) winRef.close();
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    });
+  });
+
+  var printSide = 'front';
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      printSide = tab.dataset.side;
+      if (tab.dataset.side === 'front' && flipped) doFlip();
+      if (tab.dataset.side === 'back'  && !flipped) doFlip();
+    });
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
+    if (printSide === 'front') {
+      front.style.display = 'block';
+      back.style.display  = 'none';
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
+    }
+
+    window.print();
+
+    setTimeout(function() {
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
+    }, 500);
+  });
+</script>
+</body>
+</html>
