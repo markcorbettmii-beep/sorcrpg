@@ -5742,5 +5742,17 @@
   </div>
   <script src="../../nav.js"></script>
   <script src="../../main.js"></script>
+  <script>
+    var isAbilities = function (d) { return /Expand Abilities/.test(d.firstElementChild.textContent); };
+    document.querySelectorAll('details.tree-details').forEach(function (el) {
+      if (!isAbilities(el)) return;
+      el.addEventListener('toggle', function () {
+        if (!el.open) return;
+        Array.from(el.parentElement.children).forEach(function (s) {
+          if (s !== el && s.tagName === 'DETAILS' && isAbilities(s)) s.open = false;
+        });
+      });
+    });
+  </script>
 </body>
 </html>
