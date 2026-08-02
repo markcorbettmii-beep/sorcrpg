@@ -477,8 +477,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var arrowClone = hintClone.querySelector('.tree-hint-arrow');
     if (arrowClone) arrowClone.remove();
     var expandText = hintClone.textContent.replace(/\s+/g, ' ').trim();
-    if (!/select to expand/i.test(expandText)) return;
-    var collapseText = expandText.replace(/select to expand/i, 'Collapse');
+    if (!/^(?:select to )?expand/i.test(expandText)) return;
+    var collapseText = expandText.replace(/^(?:select to )?expand/i, 'Collapse');
 
     function render() {
       while (hint.lastChild && hint.lastChild !== arrow) hint.removeChild(hint.lastChild);
