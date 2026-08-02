@@ -463,3 +463,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
   }
 });
+
+// ========== DETAILS "SELECT TO EXPAND" / "COLLAPSE" TOGGLE TEXT ==========
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('details').forEach(function(det) {
+    var summary = det.querySelector(':scope > summary');
+    if (!summary) return;
+    var hint = summary.querySelector('.tree-hint');
+    if (!hint) return;
+    var arrow = hint.querySelector('.tree-hint-arrow');
+
+    var hintClone = hint.cloneNode(true);
+    var arrowClone = hintClone.querySelector('.tree-hint-arrow');
+    if (arrowClone) arrowClone.remove();
+    var expandText = hintClone.textContent.replace(/\s+/g, ' ').trim();
+    if (!/select to expand/i.test(expandText)) return;
+    var collapseText = expandText.replace(/select to expand/i, 'Collapse');
+
+    function render() {
+      while (hint.lastChild && hint.lastChild !== arrow) hint.removeChild(hint.lastChild);
+      hint.appendChild(document.createTextNode(' ' + (det.open ? collapseText : expandText)));
+    }
+    det.addEventListener('toggle', render);
+  });
+});
