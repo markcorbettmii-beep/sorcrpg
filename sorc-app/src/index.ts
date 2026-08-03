@@ -50,6 +50,15 @@ app.use('*', cors({
   credentials: true,
 }));
 
+// Every API response is dynamic (auth state, DB reads, randomized content like
+// assessment questions). Without this, browsers and intermediate caches can
+// serve a stale response instead of hitting the Worker, which is why things
+// like the assessment quiz kept showing the same questions on repeat visits.
+app.use('*', async (c, next) => {
+  await next();
+  c.header('Cache-Control', 'no-store');
+});
+
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
