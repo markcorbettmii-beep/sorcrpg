@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Slayers of Rings &amp; Crowns (SorC) - Vitality Formulas</title>
+  <title>Slayers of Rings &amp; Crowns (SorC) - Formulas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="../../styles.css?v=2">
   <style>
@@ -15,6 +15,11 @@
     .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.9; }
     body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
     body.lawful-mode .callout { background: rgba(212,175,55,0.1); border-color: rgba(180,140,20,0.5); }
+    .toc { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,100,220,0.3); border-radius: 6px; padding: 1rem 1.4rem; margin: 1.2rem 0 2rem; }
+    .toc h2 { margin-top: 0; }
+    .toc ul { columns: 2; -webkit-columns: 2; column-gap: 2rem; padding-left: 1.2rem; }
+    .toc li { font-size: 0.9rem; line-height: 1.9; break-inside: avoid; }
+    body.lawful-mode .toc { background: rgba(212,175,55,0.07); border-color: rgba(180,140,20,0.35); }
   </style>
 </head>
 <body>
@@ -33,9 +38,63 @@
     <main>
 
       <div class="rules-section">
-        <h2 class="chapter">Vitality Formulas</h2>
-        <p>This page holds the full math behind Vitality, Apex, Spirit, and Wellness, pulled out of Basic Rules pg. 2 so that page stays plain-language only. Nothing here is required reading to play, Basic Rules pg. 2 covers everything a player actually needs. This is for anyone who wants to see the formulas themselves, or verify a number. The GM Codex still carries its own full copies of this math as well, this page doesn't replace that, it's an additional, player-accessible reference.</p>
+        <h2 class="chapter">Formulas</h2>
+        <p>This page holds every formula behind the game, Vitality, Apex, Spirit, Wellness, Traits, Abilities, Combat, Crafting, and Spellcasting alike, pulled out of the player-facing chapters so those stay plain-language only. Nothing here is required reading to play, the Basic Rules chapters cover everything a player actually needs at the table. This is for anyone who wants to see the math itself, verify a number, or homebrew off the same logic the book uses. The GM Codex carries its own step-by-step walkthroughs of the same formulas as well, this page doesn't replace that, it's an additional, player-accessible reference.</p>
 
+        <h3>How These Formulas Work</h3>
+        <p>Every formula on this page runs off a small set of discrete character values: Attribute scores, Trait scores, Apex, Spirit, Character Level, Growth, and the flat numbers on a piece of gear. None of them move on their own between turns, a stat only changes the moment one of its inputs changes, a Trait score rises, a new piece of gear goes on, a buff or Hex lands or ends. That's the whole point of writing it this way: nobody re-runs math every round. A value gets resolved once, when it actually changes, and whatever it resolves to gets written down and used as-is until the next change.</p>
+        <p>Buffs, Hexes, and other temporary modifiers work the same way. When one lands, resolve its effect against the current score once, write down the new number, and use that number for as long as the buff or Hex lasts, don't re-add the modifier on every roll. When it ends, the score reverts to whatever it was before. A Card or Trait entry that grants a temporary bonus states what it changes and by how much, this page is where the underlying formula for that base value lives, so a GM can always verify the new number is right.</p>
+        <p>Ability, Nature Drawn or Spell Drawn alike, roll against the same target a basic weapon attack does, the target's Protection Score (PROTS), never a Difficulty Score (DIFS). DIFS is reserved for Trait checks, resisting an effect, sensing a lie, forcing a check, and skill or Crafting checks, see Trait Checks &amp; Opposed Rolls, below, for what sets a DIFS in each case. SORC doesn't use a Challenge Rating, DIFS, Armor Score (AS), and PROTS together cover every target number an attack, Ability, or check ever needs.</p>
+
+        <div class="toc">
+          <h2>On This Page</h2>
+          <ul>
+            <li><a href="#trait-checks">Trait Checks &amp; Opposed Rolls</a></li>
+            <li><a href="#vitality-formulas">Vitality</a></li>
+            <li><a href="#trait-secondary">Trait Secondary Effects</a></li>
+            <li><a href="#ability-formulas">Abilities</a></li>
+            <li><a href="#combat-formulas">Combat</a></li>
+            <li><a href="#crafting-formulas">Skills &amp; Crafting</a></li>
+            <li><a href="#spell-formulas">Spellcasting</a></li>
+            <li><a href="#formulas-appendix">Appendix: Extended Tables</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rules-section" id="trait-checks">
+        <h2>Trait Checks &amp; Opposed Rolls</h2>
+        <p><strong>Trait Check Formula:</strong> d100 + Trait score vs. DIFS. Success resists the effect or lands the offensive attempt, failure lets it proceed. A DIFS is set one of two ways: a fixed, GM-set difficulty for an impersonal or environmental challenge, or an opposed creature's own Trait score when another character is the source, see the table below for which applies to which Trait. An ongoing effect, poison, a sustained physical effort, a collapsing structure, calls for a fresh check every round against the same DIFS until it's cured, ends, or fails outright, the DIFS itself doesn't change round to round, only whether that round's roll clears it.</p>
+        <table class="rules-table">
+          <thead><tr><th>Trait</th><th>DIFS Opposed By</th></tr></thead>
+          <tbody>
+            <tr><td>Agility (balance/speed)</td><td>Target's Grit, or a GM-set DIFS for terrain/chase challenges</td></tr>
+            <tr><td>Strength (grapple, sustained force)</td><td>Target's own Strength; sustained feats use a GM-set DIFS, fresh check every round</td></tr>
+            <tr><td>Courage (fear/intimidation)</td><td>Source's Strength or Charisma, or a fixed DIFS for impersonal dread</td></tr>
+            <tr><td>Vigilance (hazard detection)</td><td>Hazard-setter's Dexterity, or GM judgment for a natural hazard</td></tr>
+            <tr><td>Intuition (sensing lies/danger)</td><td>Deceiver's Deceit, or GM-set DIFS for other hidden danger</td></tr>
+            <tr><td>Dexterity (trap avoidance/disassembly)</td><td>Trap-maker's Dexterity (its own craftsmanship)</td></tr>
+            <tr><td>Deceit (feints, mimicry)</td><td>Target's Vigilance or Intuition, GM's choice</td></tr>
+            <tr><td>Toughness (breaking through)</td><td>A GM-set DIFS from the obstacle's material, not an opposing Trait</td></tr>
+            <tr><td>Grit (stun/knockback/knockdown)</td><td>Source's Strength, or a fixed DIFS for a natural force; fresh check every round while ongoing</td></tr>
+            <tr><td>Vigor (poison/disease/bleeding)</td><td>A DIFS set by the affliction's own potency; fresh check every round until cured or run its course</td></tr>
+            <tr><td>Willpower (charm/temptation/confusion)</td><td>Source's Charisma, or a spell's own DIFS</td></tr>
+            <tr><td>Wit (scams, traps, mental defense)</td><td>Trap/scam's own concealment DIFS, or an opponent's Deceit</td></tr>
+            <tr><td>Piety (divine corruption/curses)</td><td>A DIFS set by the corrupting effect's own divine potency</td></tr>
+            <tr><td>Knowledge (lore/skill checks)</td><td>A DIFS set by how obscure the information is</td></tr>
+            <tr><td>Charisma (persuasion/intimidation)</td><td>Target's Willpower (persuade/charm) or Courage (intimidate)</td></tr>
+            <tr><td>Resistance (Spell-sourced damage only)</td><td>Adds directly to PROTS instead, see PROTS Formula, below</td></tr>
+            <tr><td>Defense (martial/Nature-sourced only)</td><td>Opposes the attacker's hit roll directly, not a DIFS at all</td></tr>
+          </tbody>
+        </table>
+        <p>Constitution, Focus, and Luck don't resolve as opposed checks, Constitution feeds the Total Vitality Formula directly (see Vitality, below), Focus is a passive concentration bonus (see Panic Engine, GM Codex), and Luck adds its own roll on top of any other roll rather than being checked against anything itself (see Luck Formula, below).</p>
+        <div class="callout"><strong>Reminder:</strong> Resistance and Defense never both apply to the same incoming attack. Resistance adds to PROTS only against a Spell-sourced attack, Defense adds to PROTS only against a martial or Nature-sourced attack. They don't stack against each other's source, exactly one of the two is ever live on any given attack, see PROTS Formula, below.</div>
+
+        <h3>Luck Formula</h3>
+        <p>Luck roll = 1d4 + Luck score, added on top of basic Hit rolls, Defense rolls, all Trait checks, Skills, Talents, and all DIFS checks, never ability-based hit rolls. On tied Initiative, Luck breaks the tie. The final probability of any outcome still can't exceed 100%.</p>
+      </div>
+
+      <div class="rules-section" id="vitality-formulas">
+        <h2>Vitality</h2>
         <h3>Total Vitality Formula</h3>
         <p>Total Vitality for a given resource = [Base + ((Character Level + Growth) x per-level rate) + Trait modifier] x (1 + 0.01 x Effective Apex allocated to that resource). Effective Apex is a character's Fortitude-derived Apex as currently adjusted by Wellness (see Effective Apex/Spirit Formula, below). Growth uses the same per-level rate as Character Level but arrives on its own slower schedule (see Growth: Vitality, GM Codex Ch. II, for the full table).</p>
         <p>Per-level rates: Life +18, plus Constitution score. Mana +12, plus Wit score. Stamina +12, plus Willpower score. Endurance +11, no Trait modifier. These rates are consistent across all sizes, size differences are reflected in the base values (see Base Vitality by Size, Basic Rules pg. 2).</p>
@@ -55,7 +114,10 @@
         <p>Her Spirit of 16 is split 10/Life, 6/Stamina, 0/Mana (she has no use for Mana regeneration), regenerating 10 Life Chips and 6 Stamina Chips every Turn, on top of whatever her Traits regenerate at Score 5+ (see Trait Secondary Effect Formula, below).</p>
 
         <div class="callout"><strong>Reminder:</strong> Every stat, cost, and threshold in this book is formulated, none are hand-tuned by the designers. These formulas exist so the logic is never hidden, not so a player needs to run them. See Basic Rules pg. 2 for the plain-language version, and the GM Codex, Ch. II, for full step-by-step walkthroughs and the Wellness tick-rate tables.</div>
+      </div>
 
+      <div class="rules-section" id="trait-secondary">
+        <h2>Trait Secondary Effects</h2>
         <h3>Trait Secondary Effect Formula</h3>
         <p>Effect tier = floor(Trait Score &divide; 5), 0 below a score of 5. Constitution, Willpower, Grit, and Vigor add [tier] Chips to their aligned Vitality resource (Life, Mana, Stamina, Endurance respectively) at the start of each Turn. Every other Trait lets the player designate one Ability aligned with that Trait's theme; that Ability's Cooldown or Recharge resets [tier] times per encounter instead of waiting on its normal Turn or Rest timer.</p>
         <table class="rules-table">
@@ -73,10 +135,168 @@
           </tbody>
         </table>
 
+      </div>
+
+      <div class="rules-section" id="ability-formulas">
+        <h2>Abilities</h2>
+        <h3>Vitality Cost Formula</h3>
+        <p>Chip Cost = ceil(Slot Level &divide; 2), minimum 2. A Level 3 Tier pick costs 2, a Level 5 Path pick costs 3, a Level 21 Branch pick costs 11, a Level 30 capstone costs 15. Nature Drawn spends Stamina, Spell Drawn spends Mana, both use the same formula. Costed independently per pick, a Level that grants two picks at once (a Character Level and its midpoint) simply adds both picks' costs together. Both Nature and Spell Abilities cost at least 1 action as well.</p>
+
+        <h3>Ability Uses Formula</h3>
+        <p>N = floor(Character's Max Pool for that resource &divide; Ability's Cost), the number of times a full pool alone affords the Ability with zero regeneration. Match N against the Tier table below. Every Ability Card states both Cost and Uses, Uses is the hard ceiling, Cost is whether the character can currently afford to reach it. Regardless of Tier, no Ability may be used more than once in the same Turn, the Round/Day Tiers govern spacing across Turns, never a same-Turn multiplier.</p>
+        <table class="rules-table">
+          <thead><tr><th>N</th><th>Uses Tier</th></tr></thead>
+          <tbody>
+            <tr><td>N &ge; 12</td><td>Unlimited</td></tr>
+            <tr><td>N = 6-11</td><td>3/Round</td></tr>
+            <tr><td>N = 4-5</td><td>2/Round</td></tr>
+            <tr><td>N = 3</td><td>1/Round</td></tr>
+            <tr><td>N = 2</td><td>3/Day</td></tr>
+            <tr><td>N = 1</td><td>2/Day</td></tr>
+          </tbody>
+        </table>
+        <p>A handful of Cards override the formula outright, Resurrection, permanent transformations, and other narrative capstone effects are fixed at Uses: 1/Day by design, a Tier the formula alone can never produce, Breather/Short Rest regeneration always leaves room for a second use before a Long Rest.</p>
+
         <h3>Ability Cooldown &amp; Recharge Formula</h3>
         <p><strong>Cooldown (&#9203;):</strong> Applies to Round-tier Abilities. Charges = the Ability's Uses/Round number (3/Round = 3 Charges, 2/Round = 2 Charges, 1/Round = 1 Charge). One Ability Reset/Recharge Chip returns to the Card per Turn (6 seconds) until all Charges are restored.</p>
         <p><strong>Recharge (&#128267;):</strong> Applies to Day-tier Abilities. Charges = the Ability's Uses/Day number (3/Day = 3 Charges, 2/Day = 2 Charges). Chips return at the next Long Rest, or Short Rest if the Card specifically allows it.</p>
         <p>Unlimited-Use Abilities carry neither symbol and use no Chips, there's nothing to track.</p>
+      </div>
+
+      <div class="rules-section" id="combat-formulas">
+        <h2>Combat</h2>
+        <h3>PROTS Formula</h3>
+        <p>PROTS = Base Armor Score (AS) + all positive and negative modifiers to Protection. Because Defense and Resistance never both apply to the same attack (see Trait Checks &amp; Opposed Rolls, above), PROTS actually resolves as two separate numbers off the same Base AS:</p>
+        <p><strong>PROTS vs. martial or Nature-sourced attacks</strong> = Base AS + Defense Trait score + shield AS + environmental/situational modifiers + buffs/debuffs.<br>
+        <strong>PROTS vs. Spell-sourced attacks</strong> = Base AS + Resistance Trait score (typed, see Trait Checks &amp; Opposed Rolls) + environmental/situational modifiers + buffs/debuffs.</p>
+        <p>An attacker must roll equal to or above whichever of the two applies to their attack's source to hit. A character with no Defense score simply uses Base AS + modifiers against martial/Nature attacks, a character with no Resistance score does the same against Spells, neither Trait is required to have a PROTS at all.</p>
+
+        <h3>Initiative Formula</h3>
+        <p>Initiative = Base Speed + Agility + Vigilance. Luck breaks ties (see Luck Formula, above).</p>
+
+        <h3>Critical Hit Formula</h3>
+        <p>A roll of 96-100 is a Critical Hit, dealing 2x damage dice. Add a bonus score on top of that doubled roll depending on the attack's source: Strength for melee, Agility for martial ranged (Shoot), Cognition for Spells. A roll of 1-5 is a Botch/Fizzle instead, see Hit Results, below.</p>
+
+        <h3>Hit Results</h3>
+        <table class="rules-table">
+          <thead><tr><th>Result</th><th>Condition</th><th>Damage</th></tr></thead>
+          <tbody>
+            <tr><td>Miss</td><td>Roll below graze threshold</td><td>No damage; possible counter opportunity</td></tr>
+            <tr><td>Graze</td><td>Within ~5 points below PROTS</td><td>Half damage (rounded down)</td></tr>
+            <tr><td>Direct Hit</td><td>Roll &ge; PROTS</td><td>Full damage (xd6 &plusmn; modifiers)</td></tr>
+            <tr><td>Critical Hit</td><td>Roll result 96-100</td><td>2x damage dice + source bonus score, see Critical Hit Formula above</td></tr>
+            <tr><td>Botch / Fizzle</td><td>Roll result 1-5</td><td>Stumbles 1d10 ft., open to counters and AoO</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Weapon Damage Formula</h3>
+        <p>dmg = xd6 &plusmn; x. x = Strength (Melee), Agility (Shoot), Cognition (Spells) &plusmn; other modifiers (enchantments, Traits, buffs, environmental factors, situational bonuses). Hit Bonus and damage dice both scale by weapon Rank, see the Appendix, below, for the full Rank tables.</p>
+
+        <h3>Unarmed &amp; TAW Combat</h3>
+        <p><strong>Unarmed Hit:</strong> d100 + Strength vs PROTS. <strong>Damage (main):</strong> 1d4 + Strength. <strong>Damage (off):</strong> 1d2 + Strength.<br>
+        <strong>TAW Melee:</strong> Agility replaces Strength for both hit and damage. Hit: d100 + weapon rank + Agility vs PROTS. Damage: weapon rank dice + Agility + modifiers.</p>
+      </div>
+
+      <div class="rules-section" id="crafting-formulas">
+        <h2>Skills &amp; Crafting</h2>
+        <h3>Crafting Check Formula</h3>
+        <p>d100 + Skill Score + Attribute Modifier vs. DIFS. The Attribute modifier used depends on the specific skill, a Blacksmith check might use Strength or Intellect, a Jeweler check uses Artistry or Intellect, an Herbalist check uses Wisdom or Perception, the skill card or GM determines which. DIFS depends on the item's complexity, rarity tier, and required quality, see Difficulty by Rarity in the Appendix, below, for the baseline bands.</p>
+      </div>
+
+      <div class="rules-section" id="spell-formulas">
+        <h2>Spellcasting</h2>
+        <h3>Meditated Spells Formula</h3>
+        <p>Max spells meditated = Base 3 + Ch. Lvl + Willpower score + Rank Modifier, see the Appendix, below, for the Rank Modifier table.</p>
+      </div>
+
+      <div class="rules-section" id="formulas-appendix">
+        <h2 class="chapter">Appendix: Extended Tables</h2>
+        <p>Reference tables that back the formulas above, unchanged unless the underlying set values themselves change.</p>
+
+        <h3>Base Vitality by Size</h3>
+        <table class="rules-table">
+          <thead><tr><th>Size</th><th>Life</th><th>Mana</th><th>Stamina</th><th>Endurance</th></tr></thead>
+          <tbody>
+            <tr><td>Goliath</td><td>60</td><td>24</td><td>40</td><td>35</td></tr>
+            <tr><td>Standard</td><td>50</td><td>32</td><td>32</td><td>35</td></tr>
+            <tr><td>Small</td><td>40</td><td>40</td><td>24</td><td>35</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Hit Bonus by Weapon Rank</h3>
+        <table class="rules-table">
+          <thead><tr><th>Rank</th><th>Hit Main Hand</th><th>Hit Off Hand</th></tr></thead>
+          <tbody>
+            <tr><td>Common</td><td>+8 &plusmn; x</td><td>+4 &plusmn; x</td></tr>
+            <tr><td>Uncommon</td><td>+14 &plusmn; x</td><td>+7 &plusmn; x</td></tr>
+            <tr><td>Rare</td><td>+20 &plusmn; x</td><td>+10 &plusmn; x</td></tr>
+            <tr><td>Unique</td><td>+23 &plusmn; x</td><td>+12 &plusmn; x</td></tr>
+            <tr><td>Heroic</td><td>+26 &plusmn; x</td><td>+13 &plusmn; x</td></tr>
+            <tr><td>Elite</td><td>+32 &plusmn; x</td><td>+16 &plusmn; x</td></tr>
+            <tr><td>Legendary</td><td>+38 &plusmn; x</td><td>+19 &plusmn; x</td></tr>
+            <tr><td>Divine</td><td>+50 &plusmn; x</td><td>+25 &plusmn; x</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Weapon Damage by Rank</h3>
+        <table class="rules-table">
+          <thead><tr><th>Rank</th><th>1H Weapon</th><th>2H Weapon</th><th>Off Hand (1H)</th></tr></thead>
+          <tbody>
+            <tr><td>Common</td><td>+2d6 &plusmn; x</td><td>+4d6 &plusmn; x</td><td>+1d4 &plusmn; x</td></tr>
+            <tr><td>Uncommon</td><td>+3d6 &plusmn; x</td><td>+6d6 &plusmn; x</td><td>+1d6 &plusmn; x</td></tr>
+            <tr><td>Rare</td><td>+4d6 &plusmn; x</td><td>+8d6 &plusmn; x</td><td>+2d6 &plusmn; x</td></tr>
+            <tr><td>Unique</td><td>+5d6 &plusmn; x</td><td>+10d6 &plusmn; x</td><td>+3d6 &plusmn; x</td></tr>
+            <tr><td>Heroic</td><td>+6d6 &plusmn; x</td><td>+12d6 &plusmn; x</td><td>+3d6 &plusmn; x</td></tr>
+            <tr><td>Elite</td><td>+8d6 &plusmn; x</td><td>+16d6 &plusmn; x</td><td>+4d6 &plusmn; x</td></tr>
+            <tr><td>Legendary</td><td>+10d6 &plusmn; x</td><td>+20d6 &plusmn; x</td><td>+5d6 &plusmn; x</td></tr>
+            <tr><td>Divine</td><td>+12d6 &plusmn; x</td><td>+24d6 &plusmn; x</td><td>+6d6 &plusmn; x</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Difficulty by Rarity (Crafting)</h3>
+        <table class="rules-table">
+          <thead><tr><th>Rarity</th><th>DIFS</th></tr></thead>
+          <tbody>
+            <tr><td>Common</td><td>40-50</td></tr>
+            <tr><td>Uncommon</td><td>55-65</td></tr>
+            <tr><td>Rare</td><td>70-80</td></tr>
+            <tr><td>Unique and above</td><td>85+</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Meditated Spells Rank Modifier</h3>
+        <table class="rules-table">
+          <thead><tr><th>Rank</th><th>Modifier</th></tr></thead>
+          <tbody>
+            <tr><td>Pauper</td><td>+1</td></tr>
+            <tr><td>Peasant</td><td>+2</td></tr>
+            <tr><td>Commoner</td><td>+3</td></tr>
+            <tr><td>Adventurer</td><td>+4</td></tr>
+            <tr><td>Hero</td><td>+5</td></tr>
+            <tr><td>Uber</td><td>+6</td></tr>
+            <tr><td>Elite</td><td>+7</td></tr>
+            <tr><td>Legend</td><td>+8</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Character Level XP Progression</h3>
+        <p>Ch. Lvl 1-10 follow an unscaled early pace, Ch. Lvl 11 onward compounds roughly 20% per level. Full table lives in GM Codex Ch. II, linked here rather than duplicated since it runs 30 rows.</p>
+
+        <h3>Growth: Vitality (per Growth milestone)</h3>
+        <table class="rules-table">
+          <thead><tr><th>Growth</th><th>Cumulative Years</th><th>Life</th><th>Mana</th><th>Stamina</th><th>Endurance</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>1</td><td>+18</td><td>+12</td><td>+12</td><td>+11</td></tr>
+            <tr><td>2</td><td>3</td><td>+36</td><td>+24</td><td>+24</td><td>+22</td></tr>
+            <tr><td>3</td><td>6</td><td>+54</td><td>+36</td><td>+36</td><td>+33</td></tr>
+            <tr><td>4</td><td>10</td><td>+72</td><td>+48</td><td>+48</td><td>+44</td></tr>
+            <tr><td>5</td><td>15</td><td>+90</td><td>+60</td><td>+60</td><td>+55</td></tr>
+            <tr><td>6</td><td>21</td><td>+108</td><td>+72</td><td>+72</td><td>+66</td></tr>
+            <tr><td>7</td><td>28</td><td>+126</td><td>+84</td><td>+84</td><td>+77</td></tr>
+            <tr><td>8</td><td>36</td><td>+144</td><td>+96</td><td>+96</td><td>+88</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">This page is the single hub for every formula in SORC. If a number in the book doesn't match what's derivable here, the formula here is correct and the other spot needs a fix, flag it.</div>
       </div>
 
     </main>
