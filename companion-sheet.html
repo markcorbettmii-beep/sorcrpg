@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORC Companion Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    @media (max-width: 815px) {
+      .sheet-viewport { overflow: hidden; }
+    }
+
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
+    }
+
+    .flip-indicator {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .flipper {
+      width: 816px;
+      height: 1056px;
+      position: relative;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #f2ece0;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face.back { display: none; }
+
+    .border-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 7px;
+      border: 2.5px solid #3a4a18;
+    }
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      inset: 13px;
+      border: 1px solid #3a4a18;
+    }
+
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      z-index: 12;
+      pointer-events: none;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    .wm { display: none; }
+
+    .inner {
+      position: relative;
+      z-index: 1;
+      padding: 14px 42px 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-block { text-align: center; margin-bottom: 4px; }
+
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', Cinzel, serif;
+      font-size: 1.75rem;
+      color: #2e3d0f;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+    }
+
+    .title-block h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      color: #2e3d0f;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      margin-top: 4px;
+    }
+
+    .title-block .sub {
+      font-family: Arial, sans-serif;
+      font-size: 0.64rem;
+      color: #444;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    .rule {
+      border: none;
+      border-top: 1.5px solid #4a5a20;
+      margin: 4px 0;
+      opacity: 0.4;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1.12fr 1fr;
+      gap: 10px;
+      margin-top: 3px;
+      align-content: start;
+      overflow: hidden;
+    }
+
+    .sec { margin-bottom: 8px; }
+
+    .sec-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    .pencil {
+      font-family: Arial, sans-serif;
+      color: #3d3d3d;
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      display: block;
+      width: 100%;
+      min-height: 1em;
+      outline: none;
+    }
+    .afield .pencil { font-size: 0.65rem; }
+    .vfield .pencil { font-size: 0.65rem; }
+    .tfield .pencil { font-size: 0.62rem; }
+    .sfield .pencil { font-size: 0.62rem; }
+    .clr-line .pencil { display: inline; }
+    .itype-bullet-lbl .pencil, .itype-bullet .pencil { font-size: 0.58rem; display: inline; }
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.72rem;
+      color: #3d3d3d;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
+    .field { margin-bottom: 5px; }
+
+    .field-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .field-lbl.sm { font-size: 0.55rem; }
+
+    .fline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 2px;
+    }
+
+    .col-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .portrait {
+      width: 100%;
+      aspect-ratio: 3/4;
+      border: 1.5px solid #4a5a20;
+      background: #e5ddc8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .portrait span {
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      color: #999;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .mid-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: center;
+      width: 100%;
+    }
+
+    .mid-line {
+      width: 88%;
+      height: 1px;
+      background: #4a5a20;
+      margin: 3px auto 0;
+    }
+
+    .bp-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 0.54rem;
+      font-weight: 700;
+      color: #4a5a20;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin: 6px 0 2px;
+    }
+
+    .chips-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.46rem;
+      color: #666;
+      flex-shrink: 0;
+      white-space: nowrap;
+      margin-left: 3px;
+    }
+
+    .cards-wrap { margin-top: 8px; }
+
+    .cards-head {
+      font-family: 'Cinzel', serif;
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .cf { margin-bottom: 4px; }
+
+    .cl {
+      font-family: Arial, sans-serif;
+      font-size: 0.44rem;
+      color: #555;
+      display: block;
+      margin-bottom: 1px;
+      line-height: 1.1;
+    }
+
+    .cf .fline { margin-bottom: 0; }
+
+    .back-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .b-sec { margin-bottom: 13px; }
+
+    .b-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    .abox {
+      border: 1px solid #4a5a20;
+      background: #e8e0cc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3px 2px 3px;
+      gap: 2px;
+    }
+
+    .abox.wide { grid-column: span 2; }
+
+    .aname {
+      font-family: 'Cinzel', serif;
+      font-size: 0.52rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.08em;
+    }
+
+    .afield {
+      width: 28px;
+      height: 16px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+    }
+
+    .frm {
+      font-family: Arial, sans-serif;
+      font-size: 0.44rem;
+      color: #666;
+      font-style: italic;
+      margin: -1px 0 3px 2px;
+      line-height: 1.3;
+    }
+
+    .srow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 3px 0;
+      border-bottom: 1px dotted #bbb;
+    }
+
+    .sfield {
+      width: 36px;
+      height: 13px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    .sfield.wide { width: 62px; }
+
+    .trait-list { list-style: none; padding: 0; }
+
+    .trait-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 1.5px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+
+    .tfield {
+      width: 24px;
+      height: 12px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid #4a5a20;
+      background: #f5f0e4;
+    }
+
+    .chip.purple { border-color: #7a3a9a; background: #ece0f5; }
+
+    .chip-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    .cond-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px 8px;
+    }
+
+    .vit-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .vbox {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .vname {
+      font-family: 'Cinzel', serif;
+      font-size: 0.5rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.06em;
+    }
+
+    .vfield {
+      width: 100%;
+      height: 18px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+    }
+
+    .class-hdr {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      font-family: 'Cinzel', serif;
+      font-size: 0.52rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .cond-wrap {
+      flex-shrink: 0;
+      margin-top: auto;
+      padding-top: 0;
+    }
+
+    .citem {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: Arial, sans-serif;
+      font-size: 0.57rem;
+      color: #222;
+    }
+    .citem-name {
+      display: inline-block;
+      min-width: 52px;
+    }
+    .citem-boxes {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .cbox {
+      width: 11px;
+      height: 11px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+      font-family: Arial, sans-serif;
+      font-size: 7px;
+      line-height: 11px;
+      text-align: center;
+      outline: none;
+      cursor: text;
+      overflow: hidden;
+    }
+
+    .jline-item { margin-bottom: 7px; }
+
+    .jline-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .jline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 5px;
+    }
+
+    .xp-bar {
+      border: 1px solid #4a5a20;
+      height: 8px;
+      background: #f5f0e4;
+      margin-top: 3px;
+      overflow: hidden;
+    }
+    .xp-fill { height: 100%; width: 0; background: #5a7a28; }
+
+    .small-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.48rem;
+      color: #777;
+      margin-top: 2px;
+    }
+
+    .lore-item {
+      font-family: Arial, sans-serif;
+      font-size: 0.62rem;
+      font-weight: bold;
+      color: #222;
+      margin: 0 0 16px 0;
+      line-height: 1.2;
+    }
+
+    .lore-item.lg { margin-bottom: 50px; }
+    .lore-item.md { margin-bottom: 32px; }
+
+    .lore-note {
+      font-size: 0.5rem;
+      font-weight: normal;
+      font-style: normal;
+      color: #666;
+    }
+
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 52px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 200;
+      padding: 0 12px;
+    }
+
+    .action-bar button {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .action-bar button:active { background: #2a3a10; }
+
+    .print-group {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .print-group .ptab {
+      background: #2a2a2a;
+      color: #888;
+      border: none;
+      border-radius: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .print-group .ptab:last-of-type { border-right: none; }
+
+    .print-group .ptab.active {
+      background: #3a4a18;
+      color: #f2ece0;
+    }
+
+    .print-group .ptab:active { background: #2a3a10; color: #f2ece0; }
+
+    #printBtn {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #printBtn:active { background: #2a3a10; }
+
+    .clr-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .clr-item {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 2px;
+    }
+    .clr-lbl {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .clr-line {
+      width: 100%;
+      height: 1px;
+      background: #4a5a20;
+    }
+
+    .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
+    .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
+    .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
+
+    /* ── PERFORMANCE TIER TRACKER ── */
+    .tier-row { position: relative; border: 1px solid #4a5a20; margin-top: 3px; overflow: hidden; }
+    .tier-row .tier-fill { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(90,122,40,0.18); }
+    .tier-row .tier-grid { position: relative; display: grid; grid-template-columns: 1.1fr 1fr 1fr; z-index: 1; }
+    .tier-row .tier-cell { border-right: 1px solid #4a5a20; padding: 2px 4px; font-family: Arial, sans-serif; font-size: 0.4rem; color: #2e3d0f; }
+    .tier-row .tier-cell:last-child { border-right: none; }
+    .tier-row .tier-box { width: 9px; height: 9px; border: 1px solid #4a5a20; background: #f5f0e4; display: inline-block; vertical-align: middle; margin-right: 3px; }
+
+    /* PRINT */
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <!-- corner SVG shorthand -->
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ FRONT ══════════════ -->
+    <div class="face" id="front">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC Companion Sheet</h2>
+        </div>
+        <hr class="rule" />
+
+        <div class="cols">
+
+          <!-- LEFT: Basic Info + Acquisition -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Basic Info.</p>
+              <div class="field"><span class="field-lbl">Name (fixed, from Card)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Nickname</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Variant</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Role(s)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Rank</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Size Category</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Mountable (Y/N)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Bonded Character (Owner)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Companion Ref# (mod-ref#pg.)</span><input type="text" class="fline" /></div>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Acquisition</p>
+              <div class="field"><span class="field-lbl">Source Module / Ticket Rank</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Date Acquired (Growth/Age)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Faction Restriction (if any)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Race Affinity / Incompatibility</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Lifespan</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Current Age</span><input type="text" class="fline" /></div>
+            </div>
+          </div>
+
+          <!-- CENTER: Portrait + Life + Performance Tier + Mood -->
+          <div class="col-mid">
+            <p class="sec-title" style="width:100%;">Companion Art</p>
+            <div class="portrait" id="portraitBox" style="height:230px;flex:none;aspect-ratio:unset;"><span>Card Art / Portrait</span></div>
+
+            <div style="width:100%;margin-top:6px;">
+              <div class="sec">
+                <p class="sec-title">Life (Companions have no Mana, Stamina, or Endurance)</p>
+                <div class="vit-grid" style="grid-template-columns:1fr;">
+                  <div class="vbox"><span class="vname">Life</span><div class="vfield"><span class="pencil" contenteditable="true"></span></div></div>
+                </div>
+              </div>
+
+              <div class="sec">
+                <p class="sec-title">Performance Tier</p>
+                <div class="tier-row">
+                  <div class="tier-fill"></div>
+                  <div class="tier-grid">
+                    <div class="tier-cell"><span class="tier-box" contenteditable="true"></span>Basic</div>
+                    <div class="tier-cell">Base card values</div>
+                    <div class="tier-cell">Standard</div>
+                  </div>
+                </div>
+                <div class="tier-row">
+                  <div class="tier-fill" style="background:rgba(40,100,200,0.14);"></div>
+                  <div class="tier-grid">
+                    <div class="tier-cell"><span class="tier-box" contenteditable="true"></span>Int.</div>
+                    <div class="tier-cell">+1 Life, +1 Primary</div>
+                    <div class="tier-cell">Increased</div>
+                  </div>
+                </div>
+                <div class="tier-row">
+                  <div class="tier-fill" style="background:linear-gradient(90deg, rgba(212,175,55,0.32) 0%, rgba(140,60,180,0.32) 100%);"></div>
+                  <div class="tier-grid">
+                    <div class="tier-cell"><span class="tier-box" contenteditable="true"></span>Adv.</div>
+                    <div class="tier-cell">+2 Life, +2 Primary, Secondaries improve</div>
+                    <div class="tier-cell">Maximum</div>
+                  </div>
+                </div>
+                <p class="small-note">Mark the current Tier. Sustained Mood at Comfortable+ advances it, neglect pushes it back toward Basic.</p>
+              </div>
+
+              <div class="sec">
+                <p class="sec-title">Mood</p>
+                <div style="position:relative;border:1px solid #1a6a5a;margin-top:3px;overflow:hidden;">
+                  <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(20,150,120,0.18);"></div>
+                  <div style="position:relative;display:grid;grid-template-columns:1fr 1fr;z-index:1;">
+                    <div style="border-right:1px solid #1a6a5a;padding:2px 3px;display:flex;align-items:center;"><div class="xp-bar" style="position:relative;width:100%;height:5px;"><div class="xp-fill"></div></div></div>
+                    <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f3d33;">Current Tier: <span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.32rem;width:52px;min-width:0;min-height:0;border-bottom:1px solid #999;"></span></span></div>
+                  </div>
+                </div>
+                <p class="small-note">Annoyed &middot; Distressed &middot; Uneasy &middot; Wary &middot; Neutral &middot; Content &middot; Comfortable &middot; Tranquil &middot; Exalted. Starts at Neutral. See back for full effects.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Abilities -->
+          <div>
+            <div class="sec">
+              <p class="sec-title">Primary Ability</p>
+              <div class="field"><span class="field-lbl">Name</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Effect / Range</span><input type="text" class="fline" /></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:2px;">
+                <div class="field"><span class="field-lbl sm">Value (Basic)</span><input type="text" class="fline" /></div>
+                <div class="field"><span class="field-lbl sm">Value (Int.)</span><input type="text" class="fline" /></div>
+                <div class="field"><span class="field-lbl sm">Value (Adv.)</span><input type="text" class="fline" /></div>
+              </div>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Secondary Abilities</p>
+              <div class="field"><span class="field-lbl">1. Name / Effect</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Value (Basic / Int. / Adv.)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">2. Name / Effect</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Value (Basic / Int. / Adv.)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">3. Name / Effect</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Value (Basic / Int. / Adv.)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">4. Name / Effect</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Value (Basic / Int. / Adv.)</span><input type="text" class="fline" /></div>
+            </div>
+          </div>
+
+          <!-- EQUIPMENT & MODIFIERS - full width -->
+          <div style="grid-column:1/-1;margin-top:4px;border-top:1px solid rgba(74,90,32,0.35);padding-top:4px;">
+            <p class="sec-title">Equipment &amp; Modifiers</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px;">
+              <div class="sheet-card" style="background:#e8e0cc;border:1px solid #4a5a20;padding:4px 6px;">
+                <p class="lore-item" style="margin-bottom:4px;">&#9670; <strong>Summoning Device</strong></p>
+                <div class="field"><span class="field-lbl sm">Item (whistle, orb, token)</span><input type="text" class="fline" /></div>
+                <div class="field"><span class="field-lbl sm">Range</span><input type="text" class="fline" /></div>
+              </div>
+              <div class="sheet-card" style="background:#e8e0cc;border:1px solid #4a5a20;padding:4px 6px;">
+                <p class="lore-item" style="margin-bottom:4px;">&#9670; <strong>Saddle / Tack</strong></p>
+                <div class="field"><span class="field-lbl sm">Item</span><input type="text" class="fline" /></div>
+                <div class="field"><span class="field-lbl sm">Effect (glide, travel time, rider capacity)</span><input type="text" class="fline" /></div>
+              </div>
+              <div class="sheet-card" style="background:#e8e0cc;border:1px solid #4a5a20;padding:4px 6px;">
+                <p class="lore-item" style="margin-bottom:4px;">&#9670; <strong>Armor</strong></p>
+                <div class="field"><span class="field-lbl sm">Item</span><input type="text" class="fline" /></div>
+                <div class="field"><span class="field-lbl sm">Effect (AS bonus, etc.)</span><input type="text" class="fline" /></div>
+              </div>
+            </div>
+            <p class="small-note" style="margin-top:4px;">Any gear or gift that alters printed Card values, record the modified total here, not just the raw bonus.</p>
+          </div>
+
+          <!-- ACTIVE BUFFS / DEBUFFS / AILMENTS - full width -->
+          <div style="grid-column:1/-1;margin-top:6px;border-top:1px solid rgba(74,90,32,0.35);padding-top:4px;">
+            <p class="sec-title" style="text-align:left;border:none;margin-bottom:4px;">Active Buffs, Debuffs &amp; Ailments <span style="font-family:Arial,sans-serif;font-size:0.48rem;font-weight:400;text-transform:none;letter-spacing:0;">(duration in box)</span></p>
+            <div class="cond-grid">
+              <div class="citem"><span class="citem-name">Buff 1</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+              <div class="citem"><span class="citem-name">Buff 2</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+              <div class="citem"><span class="citem-name">Debuff</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+              <div class="citem"><span class="citem-name">Ailment</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+              <div class="citem"><span class="citem-name">Wound</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+              <div class="citem"><span class="citem-name">Other</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            </div>
+            <p style="font-family:Arial,sans-serif;font-size:0.46rem;color:#555;margin-top:4px;">Ailments are GM-applied temporary debuffs, not tied to Mood directly, though higher Mood clears them sooner.</p>
+          </div>
+
+        </div>
+      </div>
+    </div><!-- /front -->
+
+
+    <!-- ══════════════ BACK ══════════════ -->
+    <div class="face back" id="back">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC Companion Sheet</h2>
+        </div>
+        <hr class="rule" />
+
+        <div class="back-cols">
+
+          <!-- LEFT: Upkeep + Caretaker -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Upkeep</p>
+              <div class="srow"><span>Feeding</span><div class="sfield" contenteditable="true"></div></div>
+              <div class="srow"><span>Exercise / Activity</span><div class="sfield" contenteditable="true"></div></div>
+              <div class="srow"><span>Rest</span><div class="sfield" contenteditable="true"></div></div>
+              <div class="srow"><span>Injury Care</span><div class="sfield" contenteditable="true"></div></div>
+              <div class="srow"><span>Presence (Absence Threshold)</span><div class="sfield wide" contenteditable="true"></div></div>
+              <p class="small-note">Managed as one unit with any other accompanying Companions, not individually. Favored environment = self-sufficient, no upkeep required.</p>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Caretaker</p>
+              <div class="field"><span class="field-lbl">Caretaker Name</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Safe Keep Location</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Caretaker Effectiveness (GM)</span><input type="text" class="fline" /></div>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Weekly Upkeep Log</p>
+              <table class="repo-tbl">
+                <thead><tr><th>Day</th><th>Fed</th><th>Exer.</th><th>Rest</th><th>Notes</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>2</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>3</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>4</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>5</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>6</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>7</td><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CENTER: Mood Scale + Gifting -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Mood Scale</p>
+              <table class="repo-tbl">
+                <thead><tr><th>Tier</th><th>Roll Bonus</th></tr></thead>
+                <tbody>
+                  <tr><td>Annoyed</td><td>-1</td></tr>
+                  <tr><td>Distressed</td><td>-</td></tr>
+                  <tr><td>Uneasy</td><td>-</td></tr>
+                  <tr><td>Wary</td><td>-</td></tr>
+                  <tr><td>Neutral (start)</td><td>0</td></tr>
+                  <tr><td>Content</td><td>+1</td></tr>
+                  <tr><td>Comfortable</td><td>+2</td></tr>
+                  <tr><td>Tranquil</td><td>+3</td></tr>
+                  <tr><td>Exalted</td><td>+4</td></tr>
+                </tbody>
+              </table>
+              <p class="small-note">Common/Uncommon Companions cap at Tranquil, no Bond Quest. Higher tiers resist decline longer, see Formulas/GM Codex for exact day-counts.</p>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Gifting</p>
+              <div class="field"><span class="field-lbl">Preferred Category (discovered)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Disliked Category (discovered)</span><input type="text" class="fline" /></div>
+              <table class="repo-tbl" style="margin-top:4px;">
+                <thead><tr><th>Date</th><th>Gift</th><th>Effect</th></tr></thead>
+                <tbody>
+                  <tr><td>&nbsp;</td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td></tr>
+                </tbody>
+              </table>
+              <p class="small-note">Once per day per Companion. Over-gifting the same category dulls its effect, variety is rewarded.</p>
+            </div>
+          </div>
+
+          <!-- RIGHT: Bond, Ailments, Presence -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Bond Quest</p>
+              <div class="field"><span class="field-lbl">Eligible (Rare+ only) Y/N</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Unlocked at Tranquil Y/N</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Completed / Exalted Y/N</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Notes</span><input type="text" class="fline" /></div>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Accompanying</p>
+              <div class="field"><span class="field-lbl">Currently Accompanying Y/N</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl sm">Last Accompanied (date)</span><input type="text" class="fline" /></div>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Presence Bonus</p>
+              <div class="field"><span class="field-lbl">Trait Boosted (from Card)</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Years Accompanied</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Current Bonus (+1/yr)</span><input type="text" class="fline" /></div>
+              <p class="small-note">Lost after 2 consecutive months unaccompanied, rebuilds at the same +1/year rate once resumed.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- JOURNAL / PERSONALITY - full width -->
+        <div style="margin-top:8px;border-top:1px solid rgba(74,90,32,0.35);padding-top:6px;">
+          <p class="sec-title">Journal &amp; Personality</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px;">
+            <div>
+              <p class="jline-lbl">Personality &amp; Temperament</p>
+              <div class="jline"></div><div class="jline"></div><div class="jline"></div>
+              <p class="jline-lbl" style="margin-top:6px;">History / How Acquired</p>
+              <div class="jline"></div><div class="jline"></div><div class="jline"></div>
+            </div>
+            <div>
+              <p class="jline-lbl">Notable Moments</p>
+              <div class="jline"></div><div class="jline"></div><div class="jline"></div>
+              <p class="jline-lbl" style="margin-top:6px;">Nickname Origin / Bond Quest Notes</p>
+              <div class="jline"></div><div class="jline"></div><div class="jline"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /inner -->
+    </div><!-- /back -->
+
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
+</div><!-- /sheet-viewport -->
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
+
+<div class="action-bar">
+  <button id="saveJpegBtn">View / Save</button>
+  <div class="print-group">
+    <button class="ptab active" data-side="front">Front</button>
+    <button class="ptab" data-side="back">Back</button>
+  </div>
+  <button id="printBtn">Print</button>
+</div>
+
+<script>
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var ab = document.querySelector('.action-bar');
+    if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
+  }
+
+  var flipper    = document.getElementById('flipper');
+  var front      = document.getElementById('front');
+  var back       = document.getElementById('back');
+  var saving    = false;
+  var flipped   = false;
+
+  function doFlip() {
+    if (saving) return;
+    flipped = !flipped;
+    if (flipped) {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      back.style.display  = 'none';
+      front.style.display = 'block';
+    }
+  }
+
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 28;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+
+  function openImageWindowWithFlip(win, frontUrl, backUrl, initialSide) {
+    if (!win) return;
+    var html = '<!DOCTYPE html><html><head><title>SORC Companion Sheet</title>' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"></head>' +
+      '<body style="margin:0;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:70px;">' +
+      '<img id="sheetImg" style="max-width:100%;height:auto;display:block;" alt="Companion Sheet">' +
+      '<div style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:12px;padding:12px;background:#1a1a1a;border-top:1px solid #2a2a2a;">' +
+      '<button id="frontBtn" style="background:#3a4a18;color:#f2ece0;border:1px solid #5a6a28;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Front</button>' +
+      '<button id="backBtn" style="background:#3a4a18;color:#f2ece0;border:1px solid #5a6a28;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Back</button>' +
+      '</div>' +
+      '<scr' + 'ipt>' +
+      'var frontUrl = ' + JSON.stringify(frontUrl) + ';' +
+      'var backUrl = ' + JSON.stringify(backUrl) + ';' +
+      'var img = document.getElementById("sheetImg");' +
+      'var frontBtn = document.getElementById("frontBtn");' +
+      'var backBtn = document.getElementById("backBtn");' +
+      'function setActive(side){' +
+      '  img.src = side === "back" ? backUrl : frontUrl;' +
+      '  frontBtn.style.opacity = side === "back" ? "0.55" : "1";' +
+      '  backBtn.style.opacity = side === "back" ? "1" : "0.55";' +
+      '}' +
+      'frontBtn.addEventListener("click", function(){ setActive("front"); });' +
+      'backBtn.addEventListener("click", function(){ setActive("back"); });' +
+      'setActive(' + JSON.stringify(initialSide) + ');' +
+      '</scr' + 'ipt>' +
+      '</body></html>';
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function captureFaceDataUrl(faceEl) {
+    return new Promise(function(resolve, reject) {
+      var clone = faceEl.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
+      clone.querySelectorAll('input.fline').forEach(function(inp) {
+        var div = document.createElement('div');
+        div.textContent = inp.value;
+        div.className = 'fline';
+        div.style.cssText = 'background:transparent;border:none;border-bottom:1px solid #aaa;width:100%;font-family:Arial, sans-serif;font-size:0.72rem;color:#3d3d3d;height:auto;padding:0 1px;display:block;min-height:1em;';
+        inp.parentNode.replaceChild(div, inp);
+      });
+      document.body.appendChild(clone);
+
+      setTimeout(function() {
+        html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#f2ece0',
+          width: 816,
+          height: 1056,
+          logging: false
+        }).then(function(canvas) {
+          document.body.removeChild(clone);
+          resolve(canvas.toDataURL('image/jpeg', 0.93));
+        }).catch(function(err) {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
+          reject(err);
+        });
+      }, 100);
+    });
+  }
+
+  var saveFlippedSnap;
+  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
+    saveFlippedSnap = flipped;
+    saving = true;
+  }, { passive: true });
+  document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    saving = true;
+    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
+    saveFlippedSnap = undefined;
+    var btn = this;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    var winRef = window.open('', '_blank');
+    Promise.all([captureFaceDataUrl(front), captureFaceDataUrl(back)]).then(function(urls) {
+      openImageWindowWithFlip(winRef, urls[0], urls[1], snap ? 'back' : 'front');
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    }).catch(function() {
+      if (winRef) winRef.close();
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    });
+  });
+
+  var printSide = 'front';
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      printSide = tab.dataset.side;
+      if (tab.dataset.side === 'front' && flipped) doFlip();
+      if (tab.dataset.side === 'back'  && !flipped) doFlip();
+    });
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
+    if (printSide === 'front') {
+      front.style.display = 'block';
+      back.style.display  = 'none';
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
+    }
+
+    window.print();
+
+    setTimeout(function() {
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
+    }, 500);
+  });
+</script>
+</body>
+</html>
