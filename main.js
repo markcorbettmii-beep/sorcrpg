@@ -68,6 +68,51 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+// ========== PROFILE BUTTON (site-wide, floats/follows scroll) ==========
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('headerControls')) return;
+
+  var headerControls = document.createElement('div');
+  headerControls.id = 'headerControls';
+  headerControls.style.cssText = 'position:fixed;top:1.2rem;right:1.5rem;display:flex;gap:0.75rem;align-items:center;z-index:500;';
+
+  var profileBtn = document.createElement('button');
+  profileBtn.id = 'profileBtn';
+  profileBtn.title = 'Profile';
+  profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;color:#fff;overflow:hidden;padding:0;';
+  profileBtn.innerHTML = '&#128100;';
+
+  window._profileBtn_loggedIn = function(avatarFilename) {
+    if (avatarFilename) {
+      profileBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'&#128100;\'" />';
+    } else {
+      profileBtn.innerHTML = '&#128100;';
+    }
+    profileBtn.onclick = function(e) {
+      e.stopPropagation();
+      window.location.href = '/profile.html';
+    };
+  };
+
+  window._profileBtn_loggedOut = function() {
+    profileBtn.innerHTML = '&#128100;';
+    profileBtn.onclick = function(e) {
+      e.stopPropagation();
+      window.location.href = '/signin.html';
+    };
+  };
+
+  profileBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
+    window.location.href = (saved && saved.authKey) ? '/profile.html' : '/signin.html';
+  });
+
+  headerControls.appendChild(profileBtn);
+  document.body.appendChild(headerControls);
+});
+
 // ========== HOME ICON INJECTION ==========
 document.addEventListener('DOMContentLoaded', function() {
   var path = window.location.pathname;
