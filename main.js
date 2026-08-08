@@ -522,6 +522,16 @@ async function checkNotifications(user) {
   } catch(e) {}
 }
 
+// ========== LOGGED-OUT BADGE ==========
+function showLoggedOutBadge() {
+  var existing = document.getElementById('navRoleBadge');
+  if (!existing) return;
+  var isLawful = document.body.classList.contains('lawful-mode');
+  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
+  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <a href="/signin.html" style="color:' + linkColor + ';text-decoration:underline;">Badge Log In</a>';
+}
+
 // ========== AUTH STATE ==========
 document.addEventListener('DOMContentLoaded', function() {
   try {
@@ -536,13 +546,16 @@ document.addEventListener('DOMContentLoaded', function() {
         setInterval(function() { checkNotifications(user); }, 15000);
         if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(user.avatar || null);
       } else {
+        showLoggedOutBadge();
         if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
       }
     } else {
+      showLoggedOutBadge();
       if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
     }
   } catch(e) {
     localStorage.removeItem('sorc_user');
+    showLoggedOutBadge();
     if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
   }
 });
