@@ -528,6 +528,20 @@ async function checkNotifications(user) {
   } catch(e) {}
 }
 
+// ========== PUBLIC NOTIFICATION UPDATE (for inbox.html, etc.) ==========
+// Call this immediately after resolving a notification so badge updates right away
+window.sorcUpdateNotifications = function() {
+  try {
+    var saved = localStorage.getItem('sorc_user');
+    if (saved) {
+      var user = JSON.parse(saved);
+      if (user && user.authKey) {
+        checkNotifications(user);
+      }
+    }
+  } catch(e) {}
+};
+
 // ========== LOGGED-OUT BADGE ==========
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
