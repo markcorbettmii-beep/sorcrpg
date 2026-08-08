@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (footerDiv) {
     footerDiv.innerHTML = '<footer>' +
       '<div class="container">' +
-        '<p class="footer-copyright">&copy; Slayers of Rings &sect; Crowns [sorcrpg.com], by Ogre Adventurer, holds all rights reserved to all published content through this website.</p>' +
         '<nav class="footer-links">' +
           '<a href="/terms.html">Terms of Service</a>' +
           '<a href="/privacy.html">Privacy Policy</a>' +
@@ -91,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
           '<a href="/sorc-beyond.html">SORC Beyond</a>' +
           '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
         '</nav>' +
+        '<p class="footer-copyright">&copy; Slayers of Rings &sect; Crowns [sorcrpg.com], by Ogre Adventurer, holds all rights reserved to all published content through this website.</p>' +
       '</div>' +
     '</footer>';
   }
