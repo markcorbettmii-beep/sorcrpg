@@ -81,12 +81,12 @@ document.addEventListener('DOMContentLoaded', function() {
   window._updateProfileBtnColors = function() {
     var isLawful = document.body.classList.contains('lawful-mode');
     if (isLawful) {
-      profileBtn.style.backgroundColor = '#b9aa00';
-      profileBtn.style.borderColor = '#2196f3';
+      profileBtn.style.backgroundColor = '#2196f3';
+      profileBtn.style.borderColor = '#b9aa00';
       profileBtn.style.color = '#b9aa00';
     } else {
-      profileBtn.style.backgroundColor = '#c93f35';
-      profileBtn.style.borderColor = '#9c27b0';
+      profileBtn.style.backgroundColor = '#9c27b0';
+      profileBtn.style.borderColor = '#c93f35';
       profileBtn.style.color = '#c93f35';
     }
   };
