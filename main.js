@@ -342,10 +342,11 @@ function showRoleBadge(user) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
 
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + colors.color + ';border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  var linkColor = (colors.bg === '#2196f3') ? '#b9aa00' : '#c93f35';
+  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:#fff;border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
   var adminLink = isAdminUser
-    ? ' <a href="/admin.html" style="color:inherit;text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
+    ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
     : '';
 
   var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
@@ -353,14 +354,14 @@ function showRoleBadge(user) {
 
   existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
-    ' <a href="/profile.html" style="color:inherit;text-decoration:underline;">Profile</a>' +
-    ' <a href="' + lobbiesHref + '" style="color:inherit;text-decoration:underline;">Lobbies</a>' +
-    ' <a id="badgeInboxLink" href="/inbox.html" style="color:inherit;text-decoration:underline;">Inbox</a>' +
-    ' <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:inherit;text-decoration:underline;">Fellowships</a>' +
-    ' <a href="/forum.html" style="color:inherit;text-decoration:underline;">Forums</a>' +
-    ' <a href="/content.html" style="color:inherit;text-decoration:underline;">Content</a>' +
+    ' <a href="/profile.html" style="color:' + linkColor + ';text-decoration:underline;">Profile</a>' +
+    ' <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
+    ' <a id="badgeInboxLink" href="/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
+    ' <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
+    ' <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
+    ' <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
-    ' <button onclick="sorcSignOut()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
+    ' <button onclick="sorcSignOut()" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
 
   existing.querySelector('.role-tag').addEventListener('click', function(e) {
     e.stopPropagation();
