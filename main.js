@@ -532,8 +532,10 @@ async function checkNotifications(user) {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;color:#fff;border-radius:20px;font-size:0.85rem;margin:0.5rem 0 1rem 0;';
-  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Badge Log In</button>';
+  var isLawful = document.body.classList.contains('lawful-mode');
+  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
+  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;color:' + linkColor + ';border-radius:20px;font-size:0.85rem;margin:0.5rem 0 1rem 0;';
+  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-weight:bold;font-size:0.85rem;">Badge Log In</button>';
 }
 
 // ========== AUTH STATE ==========
