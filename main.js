@@ -1,11 +1,15 @@
 // ========== FAVICON (site-wide) ==========
 (function() {
-  var existing = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+  var existing = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
   existing.forEach(function(el) { el.parentNode.removeChild(el); });
   var link = document.createElement('link');
   link.rel = 'icon';
-  link.href = '/images/favicon-zailister-emblem.png';
+  link.href = '/images/favicon-zailister-emblem-v2.png';
   document.head.appendChild(link);
+  var touchLink = document.createElement('link');
+  touchLink.rel = 'apple-touch-icon';
+  touchLink.href = '/images/apple-touch-icon-zailister.png';
+  document.head.appendChild(touchLink);
 })();
 
 var SORC_API = 'https://api.sorcrpg.com';
