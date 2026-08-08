@@ -346,7 +346,16 @@ function showRoleBadge(user) {
 
   var isLawful = document.body.classList.contains('lawful-mode');
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + linkColor + ';border-radius:20px;font-size:0.85rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  existing.style.display = 'inline-flex';
+  existing.style.alignItems = 'center';
+  existing.style.gap = '8px';
+  existing.style.padding = '6px 14px';
+  existing.style.background = colors.bg;
+  existing.style.color = linkColor;
+  existing.style.borderRadius = '20px';
+  existing.style.fontSize = '0.85rem';
+  existing.style.flexWrap = 'wrap';
+  existing.style.margin = '0.5rem 0 1rem 0';
 
   var adminLink = isAdminUser
     ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
@@ -556,7 +565,16 @@ function showLoggedOutBadge() {
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   // Default avatar icon (user circle)
   var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);font-size:0.9rem;margin-right:4px;">👤</span>';
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + linkColor + ';border-radius:20px;font-size:0.85rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  existing.style.display = 'inline-flex';
+  existing.style.alignItems = 'center';
+  existing.style.gap = '8px';
+  existing.style.padding = '6px 14px';
+  existing.style.background = colors.bg;
+  existing.style.color = linkColor;
+  existing.style.borderRadius = '20px';
+  existing.style.fontSize = '0.85rem';
+  existing.style.flexWrap = 'wrap';
+  existing.style.margin = '0.5rem 0 1rem 0';
   existing.innerHTML = defaultAvatar + 'Name AD' +
     ' · Profile · Lobbies · Inbox · Fellowships · Forums · Content' +
     ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
