@@ -348,7 +348,7 @@ function showRoleBadge(user) {
   var lobbiesHref = hasAssessed ? '/lobbies.html' : '/assess.html';
 
   existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;color:' + linkColor + ';">' + abbr + '</span>' +
     ' · <a href="/profile.html" style="color:' + linkColor + ';text-decoration:underline;">Profile</a>' +
     ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
     ' · <a id="badgeInboxLink" href="/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
@@ -549,8 +549,8 @@ function showLoggedOutBadge() {
   // Default avatar icon (user circle)
   var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);font-size:0.9rem;margin-right:4px;">👤</span>';
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + colors.bg + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
-  existing.innerHTML = defaultAvatar + 'Name AD' +
-    ' · Profile · Lobbies · Inbox · Fellowships · Forums · Content' +
+  existing.innerHTML = defaultAvatar + '<span style="color:' + linkColor + ';">Name AD</span>' +
+    ' · <span style="color:' + linkColor + ';">Profile</span> · <span style="color:' + linkColor + ';">Lobbies</span> · <span style="color:' + linkColor + ';">Inbox</span> · <span style="color:' + linkColor + ';">Fellowships</span> · <span style="color:' + linkColor + ';">Forums</span> · <span style="color:' + linkColor + ';">Content</span>' +
     ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
 }
 
