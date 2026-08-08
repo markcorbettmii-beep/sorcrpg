@@ -27,11 +27,15 @@ function escapeHtml(str) {
 }
 
 // ========== THEME SYSTEM ==========
+function sorcSyncHtmlBg(isLawful) {
+  document.documentElement.style.background = isLawful ? '#f5f5f0' : '#0a0a0a';
+}
 (function() {
   var savedTheme = localStorage.getItem('themeSelected') || 'evil';
   if (savedTheme === 'lawful') {
     document.body.classList.add('lawful-mode');
   }
+  sorcSyncHtmlBg(savedTheme === 'lawful');
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -52,11 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
     evilBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'evil');
       document.body.classList.remove('lawful-mode');
+      sorcSyncHtmlBg(false);
       updateButtonStates();
     });
     lawfulBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'lawful');
       document.body.classList.add('lawful-mode');
+      sorcSyncHtmlBg(true);
       updateButtonStates();
     });
   }
