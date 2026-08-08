@@ -4,7 +4,7 @@
   existing.forEach(function(el) { el.parentNode.removeChild(el); });
   var link = document.createElement('link');
   link.rel = 'icon';
-  link.href = '/images/map-of-zail_20260805_181343_0000.png';
+  link.href = '/images/favicon-zailister-emblem.png';
   document.head.appendChild(link);
 })();
 
