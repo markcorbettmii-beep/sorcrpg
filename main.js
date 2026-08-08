@@ -342,7 +342,8 @@ function showRoleBadge(user) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.3);vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
 
-  var linkColor = (colors.bg === '#2196f3') ? '#b9aa00' : '#c93f35';
+  var isLawful = document.body.classList.contains('lawful-mode');
+  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:#fff;border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
 
   var adminLink = isAdminUser
