@@ -353,16 +353,16 @@ function showRoleBadge(user) {
   var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
   var lobbiesHref = hasAssessed ? '/lobbies.html' : '/assess.html';
 
-  existing.innerHTML = avatarHtml + displayName +
+  existing.innerHTML = avatarHtml + 'Name AD' +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
-    ' <a href="/profile.html" style="color:' + linkColor + ';text-decoration:underline;">Profile</a>' +
-    ' <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
-    ' <a id="badgeInboxLink" href="/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
-    ' <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
-    ' <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
-    ' <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
+    ' · <a href="/profile.html" style="color:' + linkColor + ';text-decoration:underline;">Profile</a>' +
+    ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
+    ' · <a id="badgeInboxLink" href="/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
+    ' · <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
+    ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
+    ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
-    ' <button onclick="sorcSignOut()" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
+    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
 
   existing.querySelector('.role-tag').addEventListener('click', function(e) {
     e.stopPropagation();
