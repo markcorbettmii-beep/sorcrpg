@@ -502,14 +502,20 @@ async function checkNotifications(user) {
     if (badgeEl) {
       var inboxLink = badgeEl.querySelector('#badgeInboxLink');
       if (inboxLink) {
+        var isLawfulInbox = document.body.classList.contains('lawful-mode');
+        var inboxBg = isLawfulInbox ? '#b9aa00' : '#c93f35';
+        var inboxColor = isLawfulInbox ? '#222' : '#fff';
         inboxLink.innerHTML = unread > 0
-          ? 'Inbox <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
+          ? 'Inbox <span style="background:' + inboxBg + ';color:' + inboxColor + ';border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
           : 'Inbox';
       }
       var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
       if (fellowLink) {
+        var isLawfulBadge = document.body.classList.contains('lawful-mode');
+        var fellowBg = isLawfulBadge ? '#b9aa00' : '#c93f35';
+        var fellowColor = isLawfulBadge ? '#222' : '#fff';
         fellowLink.innerHTML = fellowBadge > 0
-          ? 'Fellowships <span style="background:#b9aa00;color:#222;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
+          ? 'Fellowships <span style="background:' + fellowBg + ';color:' + fellowColor + ';border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
       var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
@@ -526,7 +532,7 @@ async function checkNotifications(user) {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;color:#fff;border-radius:20px;font-size:0.85rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;color:#fff;border-radius:20px;font-size:0.85rem;margin:0.5rem 0 1rem 0;';
   existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Badge Log In</button>';
 }
 
