@@ -1,11 +1,15 @@
 // ========== FAVICON (site-wide) ==========
 (function() {
-  var existing = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+  var existing = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
   existing.forEach(function(el) { el.parentNode.removeChild(el); });
   var link = document.createElement('link');
   link.rel = 'icon';
-  link.href = '/images/map-of-zail_20260805_181343_0000.png';
+  link.href = '/images/images20260808_085352_0000.png_20260808_090242_0000.png';
   document.head.appendChild(link);
+  var touchLink = document.createElement('link');
+  touchLink.rel = 'apple-touch-icon';
+  touchLink.href = '/images/images20260808_085352_0000.png_20260808_090242_0000.png';
+  document.head.appendChild(touchLink);
 })();
 
 var SORC_API = 'https://api.sorcrpg.com';
