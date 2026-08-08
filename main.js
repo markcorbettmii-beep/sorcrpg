@@ -528,14 +528,31 @@ async function checkNotifications(user) {
   } catch(e) {}
 }
 
+// ========== PUBLIC NOTIFICATION UPDATE (for inbox.html, etc.) ==========
+// Call this immediately after resolving a notification so badge updates right away
+window.sorcUpdateNotifications = function() {
+  try {
+    var saved = localStorage.getItem('sorc_user');
+    if (saved) {
+      var user = JSON.parse(saved);
+      if (user && user.authKey) {
+        checkNotifications(user);
+      }
+    }
+  } catch(e) {}
+};
+
 // ========== LOGGED-OUT BADGE ==========
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
   var isLawful = document.body.classList.contains('lawful-mode');
+  var bgColor = isLawful ? '#2196f3' : '#9c27b0';
+  var borderColor = isLawful ? '#b9aa00' : '#c93f35';
+  var textColor = isLawful ? '#e0e0e0' : '#e0e0e0';
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;color:' + linkColor + ';border-radius:20px;font-size:0.85rem;margin:0.5rem 0 1rem 0;';
-  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-weight:bold;font-size:0.85rem;">Badge Log In</button>';
+  existing.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 12px;background:' + bgColor + ';color:' + textColor + ';border-radius:8px;font-size:0.8rem;margin:0.5rem 0 1rem 0;border:1px solid ' + borderColor + ';';
+  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-weight:bold;font-size:0.8rem;">Badge Log In</button>';
 }
 
 // ========== AUTH STATE ==========
