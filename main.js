@@ -326,7 +326,6 @@ function showRoleBadge(user) {
 
   var displayName = escapeHtml(user.username || user.display_name || user.email.split('@')[0]);
   var abbr = getRoleAbbr(role);
-  var colors = getRoleColor(role);
   var safeId = escapeHtml(String(user.id || ''));
   var isAdminUser = OWNER_EMAILS.includes(user.email) || ADMIN_EMAILS.includes(user.email);
 
@@ -337,8 +336,9 @@ function showRoleBadge(user) {
   }
 
   var isLawful = document.body.classList.contains('lawful-mode');
-  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + colors.bg + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
+  var bgColor = isLawful ? '#2196f3' : '#9c27b0';
+  var linkColor = '#b9aa00';
+  existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + bgColor + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
 
   var adminLink = isAdminUser
     ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
@@ -543,12 +543,12 @@ window.sorcUpdateNotifications = function() {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
-  var colors = getRoleColor('CIVILIAN');
   var isLawful = document.body.classList.contains('lawful-mode');
+  var bgColor = isLawful ? '#2196f3' : '#9c27b0';
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   // Default avatar icon (user circle)
   var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);font-size:0.9rem;margin-right:4px;">👤</span>';
-  existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + colors.bg + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
+  existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + '<span style="color:' + linkColor + ';">Name AD</span>' +
     ' · <span style="color:' + linkColor + ';">Profile</span> · <span style="color:' + linkColor + ';">Lobbies</span> · <span style="color:' + linkColor + ';">Inbox</span> · <span style="color:' + linkColor + ';">Fellowships</span> · <span style="color:' + linkColor + ';">Forums</span> · <span style="color:' + linkColor + ';">Content</span>' +
     ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
