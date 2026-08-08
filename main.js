@@ -55,19 +55,11 @@ document.addEventListener('DOMContentLoaded', function() {
     updateButtonStates();
     evilBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'evil');
-      document.body.classList.remove('lawful-mode');
-      sorcSyncHtmlBg(false);
-      updateButtonStates();
-      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
-      if (window._updateBadgeColors) window._updateBadgeColors();
+      location.reload();
     });
     lawfulBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'lawful');
-      document.body.classList.add('lawful-mode');
-      sorcSyncHtmlBg(true);
-      updateButtonStates();
-      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
-      if (window._updateBadgeColors) window._updateBadgeColors();
+      location.reload();
     });
   }
 });
