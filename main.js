@@ -569,6 +569,7 @@ window._updateBadgeColors = function() {
     try {
       var user = JSON.parse(saved);
       showRoleBadge(user);
+      checkNotifications(user);
     } catch(e) {}
   } else {
     showLoggedOutBadge();
