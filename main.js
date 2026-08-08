@@ -137,8 +137,8 @@ window.showUserMiniPopup = function(e, uid, name) {
   popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
   popup.innerHTML =
     '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + escapeHtml(name) + '</div>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#d4af37;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
   document.body.appendChild(popup);
   setTimeout(function() {
     document.addEventListener('click', function removePopup() {
@@ -231,8 +231,8 @@ function getRoleAbbr(role) {
 }
 
 function getRoleColor(role) {
-  if (role === 'OWNER') return { bg: '#d4af37', color: '#222' };
-  if (role === 'ADMIN') return { bg: '#8B0000', color: '#fff' };
+  if (role === 'OWNER') return { bg: '#b9aa00', color: '#222' };
+  if (role === 'ADMIN') return { bg: '#c93f35', color: '#fff' };
   if (role === 'MASTER') return { bg: '#1a6b1a', color: '#fff' };
   if (role === 'PLAYER') return { bg: '#1a3a6b', color: '#fff' };
   return { bg: '#333', color: '#e0cfc0' };
@@ -323,14 +323,14 @@ window.showAdminPanel = function showAdminPanel() {
   if (document.querySelector('.admin-panel')) return;
   var panel = document.createElement('div');
   panel.className = 'admin-panel';
-  panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #d4af37;';
+  panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #b9aa00;';
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-      '<h3 style="color:#d4af37;margin:0;">Admin Panel</h3>' +
-      '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#d4af37;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
+      '<h3 style="color:#b9aa00;margin:0;">Admin Panel</h3>' +
+      '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#b9aa00;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
     '</div>' +
     '<div id="adminPanelContent">' +
-      '<button onclick="generateGMCode()" style="background:#d4af37;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
+      '<button onclick="generateGMCode()" style="background:#b9aa00;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
       '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
     '</div>';
   document.body.appendChild(panel);
@@ -352,7 +352,7 @@ window.generateGMCode = function() {
 var _toastQueue = [];
 var _toastShowing = false;
 function sorcToast(msg, color) {
-  _toastQueue.push({ msg: msg, color: color || '#d4af37' });
+  _toastQueue.push({ msg: msg, color: color || '#b9aa00' });
   if (!_toastShowing) _showNextToast();
 }
 function _showNextToast() {
@@ -360,7 +360,7 @@ function _showNextToast() {
   _toastShowing = true;
   var t = _toastQueue.shift();
   var el = document.createElement('div');
-  el.style.cssText = 'position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(80px);background:' + t.color + ';color:' + (t.color === '#d4af37' ? '#222' : '#fff') + ';padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:bold;z-index:99999;box-shadow:0 4px 18px rgba(0,0,0,0.5);transition:transform 0.3s ease;max-width:90vw;text-align:center;';
+  el.style.cssText = 'position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(80px);background:' + t.color + ';color:' + (t.color === '#b9aa00' ? '#222' : '#fff') + ';padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:bold;z-index:99999;box-shadow:0 4px 18px rgba(0,0,0,0.5);transition:transform 0.3s ease;max-width:90vw;text-align:center;';
   document.body.appendChild(el);
   el.textContent = msg;
   setTimeout(function() { el.style.transform = 'translateX(-50%) translateY(0)'; }, 30);
@@ -408,7 +408,7 @@ async function checkNotifications(user) {
     // ---- CP change toast ----
     var newCp = data.community_points || 0;
     if (_lastNotifCp !== null && newCp > _lastNotifCp) {
-      sorcToast('⚡ You earned ' + (newCp - _lastNotifCp) + ' Community Points!', '#d4af37');
+      sorcToast('⚡ You earned ' + (newCp - _lastNotifCp) + ' Community Points!', '#b9aa00');
       // Update localStorage so profile page reflects new value
       try {
         var cached = JSON.parse(localStorage.getItem('sorc_user') || '{}');
@@ -421,7 +421,7 @@ async function checkNotifications(user) {
     // ---- Admin invite toast (once per session) ----
     if (data.admin_invite && !sessionStorage.getItem('sorc_invite_toasted')) {
       sessionStorage.setItem('sorc_invite_toasted', '1');
-      sorcToast('📜 You have an Admin invitation! Visit your Profile to respond.', '#8B0000');
+      sorcToast('📜 You have an Admin invitation! Visit your Profile to respond.', '#c93f35');
     }
 
     // ---- Update nav badges ----
@@ -430,19 +430,19 @@ async function checkNotifications(user) {
       var inboxLink = badgeEl.querySelector('#badgeInboxLink');
       if (inboxLink) {
         inboxLink.innerHTML = unread > 0
-          ? 'Inbox <span style="background:#d0021b;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
+          ? 'Inbox <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
           : 'Inbox';
       }
       var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
       if (fellowLink) {
         fellowLink.innerHTML = fellowBadge > 0
-          ? 'Fellowships <span style="background:#d4af37;color:#222;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
+          ? 'Fellowships <span style="background:#b9aa00;color:#222;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
       var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
       if (profileLink) {
         profileLink.innerHTML = data.admin_invite
-          ? 'Profile <span style="background:#8B0000;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
+          ? 'Profile <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
           : 'Profile';
       }
     }
