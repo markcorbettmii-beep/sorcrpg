@@ -502,8 +502,11 @@ async function checkNotifications(user) {
     if (badgeEl) {
       var inboxLink = badgeEl.querySelector('#badgeInboxLink');
       if (inboxLink) {
+        var isLawfulInbox = document.body.classList.contains('lawful-mode');
+        var inboxBg = isLawfulInbox ? '#b9aa00' : '#c93f35';
+        var inboxColor = isLawfulInbox ? '#222' : '#fff';
         inboxLink.innerHTML = unread > 0
-          ? 'Inbox <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
+          ? 'Inbox <span style="background:' + inboxBg + ';color:' + inboxColor + ';border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
           : 'Inbox';
       }
       var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
