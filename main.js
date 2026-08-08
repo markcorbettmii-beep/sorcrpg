@@ -55,17 +55,11 @@ document.addEventListener('DOMContentLoaded', function() {
     updateButtonStates();
     evilBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'evil');
-      document.body.classList.remove('lawful-mode');
-      sorcSyncHtmlBg(false);
-      updateButtonStates();
-      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
+      location.reload();
     });
     lawfulBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'lawful');
-      document.body.classList.add('lawful-mode');
-      sorcSyncHtmlBg(true);
-      updateButtonStates();
-      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
+      location.reload();
     });
   }
 });
@@ -344,7 +338,7 @@ function showRoleBadge(user) {
 
   var isLawful = document.body.classList.contains('lawful-mode');
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:#fff;border-radius:20px;font-size:0.85rem;font-weight:bold;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + colors.bg + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
 
   var adminLink = isAdminUser
     ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
@@ -362,13 +356,16 @@ function showRoleBadge(user) {
     ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
     ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
-    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Logout</button>';
+    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Logout</button>';
 
-  existing.querySelector('.role-tag').addEventListener('click', function(e) {
-    e.stopPropagation();
-    e.preventDefault();
-    showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
-  });
+  var roleTag = existing.querySelector('.role-tag');
+  if (roleTag) {
+    roleTag.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
+    });
+  }
 }
 
 // ========== ROLE POPUP ==========
@@ -546,13 +543,15 @@ window.sorcUpdateNotifications = function() {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
+  var colors = getRoleColor('CIVILIAN');
   var isLawful = document.body.classList.contains('lawful-mode');
-  var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var borderColor = isLawful ? '#b9aa00' : '#c93f35';
-  var textColor = isLawful ? '#e0e0e0' : '#e0e0e0';
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  existing.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 12px;background:' + bgColor + ';color:' + textColor + ';border-radius:8px;font-size:0.8rem;margin:0.5rem 0 1rem 0;border:1px solid ' + borderColor + ';';
-  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-weight:bold;font-size:0.8rem;">Badge Log In</button>';
+  // Default avatar icon (user circle)
+  var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);font-size:0.9rem;margin-right:4px;">👤</span>';
+  existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + colors.bg + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
+  existing.innerHTML = defaultAvatar + 'Name AD' +
+    ' · Profile · Lobbies · Inbox · Fellowships · Forums · Content' +
+    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
 }
 
 // ========== AUTH STATE ==========
