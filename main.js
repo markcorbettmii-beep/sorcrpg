@@ -1,3 +1,13 @@
+// ========== FAVICON (site-wide) ==========
+(function() {
+  var existing = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]');
+  existing.forEach(function(el) { el.parentNode.removeChild(el); });
+  var link = document.createElement('link');
+  link.rel = 'icon';
+  link.href = '/images/map-of-zail_20260805_181343_0000.png';
+  document.head.appendChild(link);
+})();
+
 var SORC_API = 'https://api.sorcrpg.com';
 
 var OWNER_EMAILS = ["corbett@sorcrpg.com"];
