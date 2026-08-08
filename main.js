@@ -55,19 +55,11 @@ document.addEventListener('DOMContentLoaded', function() {
     updateButtonStates();
     evilBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'evil');
-      document.body.classList.remove('lawful-mode');
-      sorcSyncHtmlBg(false);
-      updateButtonStates();
-      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
-      if (window._updateBadgeColors) window._updateBadgeColors();
+      location.reload();
     });
     lawfulBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'lawful');
-      document.body.classList.add('lawful-mode');
-      sorcSyncHtmlBg(true);
-      updateButtonStates();
-      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
-      if (window._updateBadgeColors) window._updateBadgeColors();
+      location.reload();
     });
   }
 });
@@ -346,16 +338,7 @@ function showRoleBadge(user) {
 
   var isLawful = document.body.classList.contains('lawful-mode');
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  existing.style.setProperty('display', 'inline-flex', 'important');
-  existing.style.setProperty('align-items', 'center', 'important');
-  existing.style.setProperty('gap', '8px', 'important');
-  existing.style.setProperty('padding', '6px 14px', 'important');
-  existing.style.setProperty('background', colors.bg, 'important');
-  existing.style.setProperty('color', linkColor, 'important');
-  existing.style.setProperty('border-radius', '20px', 'important');
-  existing.style.setProperty('font-size', '0.85rem', 'important');
-  existing.style.setProperty('flex-wrap', 'wrap', 'important');
-  existing.style.setProperty('margin', '0.5rem 0 1rem 0', 'important');
+  existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + colors.bg + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
 
   var adminLink = isAdminUser
     ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
@@ -565,33 +548,11 @@ function showLoggedOutBadge() {
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   // Default avatar icon (user circle)
   var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);font-size:0.9rem;margin-right:4px;">👤</span>';
-  existing.style.setProperty('display', 'inline-flex', 'important');
-  existing.style.setProperty('align-items', 'center', 'important');
-  existing.style.setProperty('gap', '8px', 'important');
-  existing.style.setProperty('padding', '6px 14px', 'important');
-  existing.style.setProperty('background', colors.bg, 'important');
-  existing.style.setProperty('color', linkColor, 'important');
-  existing.style.setProperty('border-radius', '20px', 'important');
-  existing.style.setProperty('font-size', '0.85rem', 'important');
-  existing.style.setProperty('flex-wrap', 'wrap', 'important');
-  existing.style.setProperty('margin', '0.5rem 0 1rem 0', 'important');
+  existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + colors.bg + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + 'Name AD' +
     ' · Profile · Lobbies · Inbox · Fellowships · Forums · Content' +
     ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
 }
-
-// ========== UPDATE BADGE COLORS ON THEME CHANGE ==========
-window._updateBadgeColors = function() {
-  var saved = localStorage.getItem('sorc_user');
-  if (saved) {
-    try {
-      var user = JSON.parse(saved);
-      showRoleBadge(user);
-    } catch(e) {}
-  } else {
-    showLoggedOutBadge();
-  }
-};
 
 // ========== AUTH STATE ==========
 document.addEventListener('DOMContentLoaded', function() {
