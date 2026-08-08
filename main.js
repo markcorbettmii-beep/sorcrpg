@@ -554,20 +554,6 @@ function showLoggedOutBadge() {
     ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
 }
 
-// ========== UPDATE BADGE COLORS ON THEME CHANGE ==========
-window._updateBadgeColors = function() {
-  var saved = localStorage.getItem('sorc_user');
-  if (saved) {
-    try {
-      var user = JSON.parse(saved);
-      showRoleBadge(user);
-      checkNotifications(user);
-    } catch(e) {}
-  } else {
-    showLoggedOutBadge();
-  }
-};
-
 // ========== AUTH STATE ==========
 document.addEventListener('DOMContentLoaded', function() {
   try {
