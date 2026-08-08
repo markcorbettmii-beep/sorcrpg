@@ -527,7 +527,7 @@ function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
   existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#888;color:#fff;border-radius:20px;font-size:0.85rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
-  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:#fff;cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
+  existing.innerHTML = 'Profile · Lobbies · Inbox · Fellowships · Forums · Content · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:#fff;cursor:pointer;font-weight:bold;font-size:0.85rem;">Badge Log In</button>';
 }
 
 // ========== AUTH STATE ==========
