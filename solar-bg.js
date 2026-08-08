@@ -372,6 +372,15 @@
 
   function render() {
     if (!solarRunning) return;
+
+    /* Lawful mode: no black background anywhere, including this canvas.
+       Leave it fully transparent so the page's own light background shows. */
+    if (document.body.classList.contains('lawful-mode')) {
+      ctx.clearRect(0, 0, W, H);
+      solarRafId = requestAnimationFrame(render);
+      return;
+    }
+
     currentT += 0.0032;
     const t = currentT;
 
