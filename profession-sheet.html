@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORC Profession Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    @media (max-width: 815px) {
+      .sheet-viewport { overflow: hidden; }
+    }
+
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
+    }
+
+    .flipper {
+      width: 816px;
+      height: 1056px;
+      position: relative;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #f0ece2;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face.hidden { display: none; }
+
+    .border-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 7px;
+      border: 2.5px solid #5a3a1a;
+    }
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      inset: 13px;
+      border: 1px solid #5a3a1a;
+    }
+
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      z-index: 12;
+      pointer-events: none;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    .wm {
+      position: absolute; inset: 0; z-index: 60; pointer-events: none;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .wm::after {
+      content: 'BETA';
+      font-family: 'Cinzel', serif; font-weight: 900; font-size: 26rem;
+      color: #5a3a1a; opacity: 0.15; letter-spacing: 0.15em;
+      transform: rotate(-52deg); white-space: nowrap;
+    }
+
+    .inner {
+      position: relative;
+      z-index: 1;
+      padding: 14px 30px 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-block { text-align: center; margin-bottom: 4px; }
+
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', Cinzel, serif;
+      font-size: 1.6rem;
+      color: #5a3a1a;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+    }
+
+    .title-block h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.74rem;
+      color: #5a3a1a;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      margin-top: 4px;
+    }
+
+    .title-block .sub {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      color: #444;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .rule {
+      border: none;
+      border-top: 1.5px solid #7e5a30;
+      margin: 4px 0;
+      opacity: 0.4;
+    }
+
+    .sec { margin-bottom: 8px; }
+
+    .sec-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #5a3a1a;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #7e5a30;
+      padding-bottom: 3px;
+      margin-bottom: 6px;
+    }
+
+    .field { margin-bottom: 5px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+
+    .field-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.68rem;
+      color: #3d3d3d;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
+
+    .small-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.46rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .lore-item {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      font-weight: bold;
+      color: #222;
+      margin: 0 0 5px 0;
+      line-height: 1.3;
+    }
+
+    /* ── RECIPE/SKILL TRACKER TABLE ── */
+    .skill-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.56rem; }
+    .skill-tbl th {
+      font-family: 'Cinzel', serif; font-size: 0.46rem; font-weight: 700; color: #f0ece2;
+      background: #5a3a1a; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 4px 5px; text-align: left; border: 1px solid #5a3a1a;
+    }
+    .skill-tbl td {
+      padding: 4px 5px; border: 1px solid #7e5a30; color: #222; vertical-align: middle;
+    }
+    .skill-tbl td[contenteditable] { font-family: Arial, sans-serif; outline: none; cursor: text; background: #f7f2e6; }
+    .skill-tbl tr:nth-child(even) td { background: #ece4d2; }
+    .skill-tbl tr:nth-child(even) td[contenteditable] { background: #e8dfc9; }
+
+    /* ── PROFICIENCY TIER TABLE ── */
+    .tier-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.54rem; }
+    .tier-tbl th {
+      font-family: 'Cinzel', serif; font-size: 0.46rem; font-weight: 700; color: #f0ece2;
+      background: #7e5a30; padding: 3px 5px; text-align: center; border: 1px solid #5a3a1a;
+    }
+    .tier-tbl td { border: 1px solid #7e5a30; padding: 3px 5px; text-align: center; color: #222; }
+    .tier-tbl td.tier-name { text-align: left; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.48rem; color: #5a3a1a; background: #e3d7bb; }
+    .tier-tbl td[contenteditable] { outline: none; cursor: text; background: #f7f2e6; }
+
+    /* ── PROFESSION REFERENCE LIST (page 2/3) ── */
+    .prof-ref { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.44rem; }
+    .prof-ref th {
+      font-family: 'Cinzel', serif; font-size: 0.4rem; font-weight: 700; color: #f0ece2;
+      background: #5a3a1a; letter-spacing: 0.02em; text-transform: uppercase;
+      padding: 3px 4px; text-align: left; border: 1px solid #5a3a1a;
+    }
+    .prof-ref td { border: 1px solid #7e5a30; padding: 3px 4px; color: #222; vertical-align: top; }
+    .prof-ref td.pname { font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.44rem; color: #5a3a1a; background: #e3d7bb; white-space: nowrap; }
+    .prof-ref tr:nth-child(even) td:not(.pname) { background: #f7f2e6; }
+
+    /* ── ACTION BAR ── */
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 52px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 200;
+      padding: 0 12px;
+    }
+
+    .action-bar button {
+      background: #5a3a1a;
+      color: #f0ece2;
+      border: 1px solid #7e5a30;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .action-bar button:active { background: #422a12; }
+
+    .print-group {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #7e5a30;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .print-group .ptab {
+      background: #2a2a2a;
+      color: #888;
+      border: none;
+      border-radius: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .print-group .ptab:last-of-type { border-right: none; }
+
+    .print-group .ptab.active {
+      background: #5a3a1a;
+      color: #f0ece2;
+    }
+
+    .print-group .ptab:active { background: #422a12; color: #f0ece2; }
+
+    #printBtn {
+      background: #5a3a1a;
+      color: #f0ece2;
+      border: 1px solid #7e5a30;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #printBtn:active { background: #422a12; }
+
+    /* ── PRINT ── */
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.print-front { page-break-after: always; break-after: page; }
+      .face.print-mid { page-break-after: always; break-after: page; }
+      .face.print-last { page-break-before: always; break-before: page; }
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#5a3a1a" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#5a3a1a" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#5a3a1a"/><line x1="7" y1="20" x2="0" y2="20" stroke="#5a3a1a" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#5a3a1a" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#5a3a1a" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#5a3a1a" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ PAGE 1: FRONT TRACKER ══════════════ -->
+    <div class="face" id="page1">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Profession Sheet</h2>
+          <p class="sub">One sheet per Profession a character has invested in</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="field-row" style="margin-top:4px;">
+          <div class="field"><span class="field-lbl">Character Name</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Profession</span><input type="text" class="fline" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><span class="field-lbl">Aligned Attribute (ATT)</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">As Hobby (unpaid version, if practiced)</span><input type="text" class="fline" /></div>
+        </div>
+        <p class="small-note" style="margin-top:2px;">A character may practice the same craft as both, a paid Profession and an unpaid Hobby, at once, they're distinguished only by whether coin changes hands. See Hobbies, Basic Rules pg. 2.</p>
+
+        <div class="sec" style="margin-top:8px;">
+          <p class="sec-title">Skills / Recipes Learned</p>
+          <table class="skill-tbl" id="skillTbl">
+            <thead><tr><th style="width:30%;">Skill / Recipe Name</th><th style="width:12%;">Score</th><th style="width:16%;">Tools / Workshop</th><th style="width:42%;">Materials / Notes</th></tr></thead>
+            <tbody id="skillBody"></tbody>
+          </table>
+          <p class="small-note" style="margin-top:4px;">A skill's score can never exceed the Profession's aligned Attribute Score. Crafting requires appropriate tools, a workspace, materials, and time, all three must be available. See Crafting Resolution, Basic Rules pg. 2.</p>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Proficiency Tier Tracker</p>
+          <table class="tier-tbl">
+            <thead><tr><th>Tier</th><th>Open Cost</th><th>Per Skill</th><th>Opened? (&#10003;/date)</th><th>Tier Total Score</th></tr></thead>
+            <tbody>
+              <tr><td class="tier-name">Novice</td><td>2 REM</td><td>2 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Apprentice</td><td>3 REM</td><td>2 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Journeyman</td><td>4 REM</td><td>2 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Master</td><td>5 REM</td><td>3 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Grandmaster</td><td>6 REM</td><td>4 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+          <p class="small-note" style="margin-top:4px;">Tiers unlock in order, no skipping. Advancement thresholds (total tier score needed to open the next one): Novice&rarr;Apprentice 10, Apprentice&rarr;Journeyman 25, Journeyman&rarr;Master 45, Master&rarr;Grandmaster 80. Individual skill cap: 45. Accumulated cap per tier: 79.</p>
+        </div>
+
+      </div>
+    </div><!-- /page1 -->
+
+
+    <!-- ══════════════ PAGE 2: HOW IT WORKS + PROFESSIONS A-N ══════════════ -->
+    <div class="face hidden" id="page2">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Profession Sheet</h2>
+          <p class="sub">How Professions Work &amp; Reference, A-M</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:4px;">
+          <p class="sec-title">How Professions Work</p>
+          <p class="lore-item" style="font-weight:normal;">Skills are craftsmanship-based actions tied to a chosen Profession, creating items, gathering resources, and performing tasks that require knowledge, tools, recipes, and a suitable work area. Opening a Profession's current Proficiency Tier and raising an individual skill inside it are two separate purchases, same as Talents. Crafting resolves as d100 + Skill Score + Attribute Modifier vs. a Difficulty Score (DIFS) set by the GM. See Skills (TST) and Crafting Resolution, Basic Rules pg. 2.</p>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Profession Reference, A-M (see Skills pg. 1 for full descriptions)</p>
+          <table class="prof-ref">
+            <thead><tr><th style="width:16%;">Profession</th><th style="width:26%;">As Hobby</th><th style="width:58%;">Focus</th></tr></thead>
+            <tbody id="profBodyA"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div><!-- /page2 -->
+
+
+    <!-- ══════════════ PAGE 3: PROFESSIONS N-Z ══════════════ -->
+    <div class="face hidden" id="page3">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Profession Sheet</h2>
+          <p class="sub">Reference, N-Z</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:4px;">
+          <p class="sec-title">Profession Reference, N-Z (see Skills pg. 1 for full descriptions)</p>
+          <table class="prof-ref">
+            <thead><tr><th style="width:16%;">Profession</th><th style="width:26%;">As Hobby</th><th style="width:58%;">Focus</th></tr></thead>
+            <tbody id="profBodyB"></tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Note</p>
+          <p class="small-note">"As Hobby" marks whether this craft has a recognized unpaid Hobby counterpart already named in the Hobbies list (Basic Rules pg. 2). Where none is separately named, the Profession itself can still always be practiced unpaid, on the side, for no coin, per the general Hobbies rule, marked "Same craft, unpaid" below.</p>
+        </div>
+
+      </div>
+    </div><!-- /page3 -->
+
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
+</div><!-- /sheet-viewport -->
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
+
+<div class="action-bar">
+  <button id="saveJpegBtn">View / Save</button>
+  <div class="print-group">
+    <button class="ptab active" data-page="1">Front</button>
+    <button class="ptab" data-page="2">Back</button>
+    <button class="ptab" data-page="3">Pg. 3</button>
+  </div>
+  <button id="printBtn">Print</button>
+</div>
+
+<script>
+  // Build 14 blank skill rows
+  (function() {
+    var body = document.getElementById('skillBody');
+    var rows = '';
+    for (var i = 0; i < 14; i++) {
+      rows += '<tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>';
+    }
+    body.innerHTML = rows;
+  })();
+
+  // Profession reference data: [Name, As Hobby, Focus]
+  var profDataA = [
+    ["Alchemist","Same craft, unpaid","Transmutes substances into potions, explosives, and elixirs with unpredictable effects."],
+    ["Apothecary","Same craft, unpaid","Creates healing tinctures, restorative salves, and potions using herbs and natural ingredients."],
+    ["Artificer","Gadgeteer","Combines magic and technology to craft powerful items and unravel mechanisms."],
+    ["Bioengineer","Same craft, unpaid","Breeds or modifies organisms for utility, defense, or companionship."],
+    ["Blacksmith","Same craft, unpaid","Forges and repairs weapons, armor, and tools from metal, with the ability to enchant and upgrade items."],
+    ["Body Artist","Same craft, unpaid","Designs tattoos and piercings infused with magical or technological enhancements."],
+    ["Carpenter","Same craft, unpaid","Works wood into structures, furniture, and fine items alike."],
+    ["Cook","Same craft, unpaid","Crafts nourishing meals, beverages, and potions with various effects using rare and common ingredients."],
+    ["Cyberneticist","Same craft, unpaid","Designs and implants cybernetic enhancements, melding flesh with technology for upgrades."],
+    ["Drone Operator","Same craft, unpaid","Builds and commands drones for exploration, surveillance, or combat."],
+    ["Engineer","Gadgeteer","Builds mechanical systems, devices, and structures, solving practical and technical challenges."],
+    ["Enchanter","Same craft, unpaid","Imbues items with magical effects, harmonizing craft with arcane power."],
+    ["Farmhand","Same craft, unpaid","Tends crops, raises livestock, and supports communities through agricultural labor."],
+    ["Gem Crafter","Gemstone Collector","Shapes and enchants stones and gems, producing decorative items and magical artifacts."],
+    ["Hauler","Same craft, unpaid","Overland logistics, wagon and caravan routes, salvaging, brokering, commandeering land vehicles."],
+    ["Holo-Artist","Doodler / Graffiti Artist","Creates holographic art, advertisements, or environments with advanced technology."],
+    ["Hunter","Fisherman","Tracks, captures, and dispatches game, bushcraft, skinning, leatherworking, and animal taming."],
+    ["Mechanic","Same craft, unpaid","Repairs and maintains vehicles, machinery, and complex systems across land, sea, air, and space."],
+    ["Mole","Same craft, unpaid","Collects and sells valuable information, hacking and social engineering for influence."]
+  ];
+  var profDataB = [
+    ["Nanotechnician","Same craft, unpaid","Manipulates nanomachines for healing, crafting, sabotage, or adaptation."],
+    ["Psionic Crafter","Same craft, unpaid","Crafts items or implants to amplify, focus, or shield psionic powers."],
+    ["Quartermaster","Same craft, unpaid","Runs the day-to-day life of a ship, logistics, boarding combat, and field medicine."],
+    ["Roboticist","Model Builder","Creates and programs robots and androids for diverse tasks."],
+    ["Sculptor","Hobby Potter / Whittler","Sculpts clay, ivory, bone, stone, and wood into weapons, armor, and crafted objects."],
+    ["Scientist","Same craft, unpaid","Explores scientific and arcane phenomena, innovates through experiment and inquiry."],
+    ["Shipwright","Model Builder","Builds, repairs, and maintains vessels of every kind, sea, air, and void alike."],
+    ["Stitcher","Knitter / Embroiderer","Repairs and creates garments, armor, and magical clothing with advanced tailoring and enchanting."],
+    ["Stonesmith","Same craft, unpaid","Constructs buildings and structures using stone, brick, clay, and cement."],
+    ["Tinker","Gadgeteer","Repairs and invents gadgets, blending artistry and practical problem-solving."],
+    ["Witchcrafter","Same craft, unpaid","Channels folklore and primal energies to create charms, curses, and herbal brews."]
+  ];
+
+  function fillProfTable(bodyId, data) {
+    var body = document.getElementById(bodyId);
+    var rows = '';
+    for (var i = 0; i < data.length; i++) {
+      rows += '<tr><td class="pname">' + data[i][0] + '</td><td>' + data[i][1] + '</td><td>' + data[i][2] + '</td></tr>';
+    }
+    body.innerHTML = rows;
+  }
+  fillProfTable('profBodyA', profDataA);
+  fillProfTable('profBodyB', profDataB);
+
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var ab = document.querySelector('.action-bar');
+    if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
+  }
+
+  var flipper = document.getElementById('flipper');
+  var pages = { 1: document.getElementById('page1'), 2: document.getElementById('page2'), 3: document.getElementById('page3') };
+  var saving = false;
+  var currentPage = 1;
+
+  function showPage(n) {
+    if (saving) return;
+    currentPage = n;
+    [1,2,3].forEach(function(p) {
+      pages[p].classList.toggle('hidden', p !== n);
+    });
+  }
+
+  flipper.addEventListener('click', function(e) {
+    if (e.target.closest('input, [contenteditable]')) return;
+    var next = currentPage >= 3 ? 1 : currentPage + 1;
+    showPage(next);
+  });
+
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 28;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+
+  function openImageWindowWithPages(win, urls, initialPage) {
+    if (!win) return;
+    var html = '<!DOCTYPE html><html><head><title>SORC Profession Sheet</title>' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"></head>' +
+      '<body style="margin:0;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:70px;">' +
+      '<img id="sheetImg" style="max-width:100%;height:auto;display:block;" alt="Profession Sheet">' +
+      '<div style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:12px;padding:12px;background:#1a1a1a;border-top:1px solid #2a2a2a;">' +
+      '<button id="p1Btn" style="background:#5a3a1a;color:#f0ece2;border:1px solid #7e5a30;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Front</button>' +
+      '<button id="p2Btn" style="background:#5a3a1a;color:#f0ece2;border:1px solid #7e5a30;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Back</button>' +
+      '<button id="p3Btn" style="background:#5a3a1a;color:#f0ece2;border:1px solid #7e5a30;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Pg. 3</button>' +
+      '</div>' +
+      '<scr' + 'ipt>' +
+      'var urls = ' + JSON.stringify(urls) + ';' +
+      'var img = document.getElementById("sheetImg");' +
+      'var btns = { 1: document.getElementById("p1Btn"), 2: document.getElementById("p2Btn"), 3: document.getElementById("p3Btn") };' +
+      'function setActive(n){' +
+      '  img.src = urls[n-1];' +
+      '  [1,2,3].forEach(function(k){ btns[k].style.opacity = (k===n) ? "1" : "0.55"; });' +
+      '}' +
+      'btns[1].addEventListener("click", function(){ setActive(1); });' +
+      'btns[2].addEventListener("click", function(){ setActive(2); });' +
+      'btns[3].addEventListener("click", function(){ setActive(3); });' +
+      'setActive(' + JSON.stringify(initialPage) + ');' +
+      '</scr' + 'ipt>' +
+      '</body></html>';
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function captureFaceDataUrl(faceEl) {
+    return new Promise(function(resolve, reject) {
+      var clone = faceEl.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.classList.remove('hidden');
+      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
+      clone.querySelectorAll('input.fline').forEach(function(inp) {
+        var div = document.createElement('div');
+        div.textContent = inp.value;
+        div.className = 'fline';
+        div.style.cssText = 'background:transparent;border:none;border-bottom:1px solid #aaa;width:100%;font-family:Arial, sans-serif;font-size:0.68rem;color:#3d3d3d;height:auto;padding:0 1px;display:block;min-height:1em;';
+        inp.parentNode.replaceChild(div, inp);
+      });
+      document.body.appendChild(clone);
+
+      setTimeout(function() {
+        html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#f0ece2',
+          width: 816,
+          height: 1056,
+          logging: false
+        }).then(function(canvas) {
+          document.body.removeChild(clone);
+          resolve(canvas.toDataURL('image/jpeg', 0.93));
+        }).catch(function(err) {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
+          reject(err);
+        });
+      }, 100);
+    });
+  }
+
+  document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    saving = true;
+    var snap = currentPage;
+    var btn = this;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    var winRef = window.open('', '_blank');
+    Promise.all([captureFaceDataUrl(pages[1]), captureFaceDataUrl(pages[2]), captureFaceDataUrl(pages[3])]).then(function(urls) {
+      openImageWindowWithPages(winRef, urls, snap);
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    }).catch(function() {
+      if (winRef) winRef.close();
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    });
+  });
+
+  var printPage = 1;
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      printPage = parseInt(tab.dataset.page, 10);
+      showPage(printPage);
+    });
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevClasses = {1: pages[1].className, 2: pages[2].className, 3: pages[3].className};
+    pages[1].classList.remove('hidden'); pages[1].classList.add('print-front');
+    pages[2].classList.remove('hidden'); pages[2].classList.add('print-mid');
+    pages[3].classList.remove('hidden'); pages[3].classList.add('print-last');
+
+    window.print();
+
+    setTimeout(function() {
+      pages[1].className = prevClasses[1];
+      pages[2].className = prevClasses[2];
+      pages[3].className = prevClasses[3];
+      showPage(currentPage);
+    }, 500);
+  });
+</script>
+</body>
+</html>
