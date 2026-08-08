@@ -337,7 +337,7 @@ function showRoleBadge(user) {
 
   var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = '#b9aa00';
+  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + bgColor + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
 
   var adminLink = isAdminUser
