@@ -4,11 +4,11 @@
   existing.forEach(function(el) { el.parentNode.removeChild(el); });
   var link = document.createElement('link');
   link.rel = 'icon';
-  link.href = '/images/images20260808_085352_0000.png_20260808_090242_0000.png';
+  link.href = '/images/favicon-zailister-crown.png';
   document.head.appendChild(link);
   var touchLink = document.createElement('link');
   touchLink.rel = 'apple-touch-icon';
-  touchLink.href = '/images/images20260808_085352_0000.png_20260808_090242_0000.png';
+  touchLink.href = '/images/apple-touch-icon-crown.png';
   document.head.appendChild(touchLink);
 })();
 
