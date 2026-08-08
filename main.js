@@ -546,13 +546,15 @@ window.sorcUpdateNotifications = function() {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
-  var defaultColors = { bg: '#333', color: '#e0cfc0' };
+  var colors = getRoleColor('CIVILIAN');
+  var isLawful = document.body.classList.contains('lawful-mode');
+  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   // Default avatar icon (user circle)
   var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);font-size:0.9rem;margin-right:4px;">👤</span>';
-  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + defaultColors.bg + ';color:' + defaultColors.color + ';border-radius:20px;font-size:0.85rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
+  existing.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:' + colors.bg + ';color:' + linkColor + ';border-radius:20px;font-size:0.85rem;flex-wrap:wrap;margin:0.5rem 0 1rem 0;';
   existing.innerHTML = defaultAvatar + 'Name AD' +
     ' · Profile · Lobbies · Inbox · Fellowships · Forums · Content' +
-    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + defaultColors.color + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
+    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;">Badge Log In</button>';
 }
 
 // ========== AUTH STATE ==========
