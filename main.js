@@ -353,7 +353,7 @@ function showRoleBadge(user) {
   var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
   var lobbiesHref = hasAssessed ? '/lobbies.html' : '/assess.html';
 
-  existing.innerHTML = avatarHtml + 'Name AD' +
+  existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;">' + abbr + '</span>' +
     ' · <a href="/profile.html" style="color:' + linkColor + ';text-decoration:underline;">Profile</a>' +
     ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
