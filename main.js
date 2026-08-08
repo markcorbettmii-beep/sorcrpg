@@ -58,12 +58,14 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.classList.remove('lawful-mode');
       sorcSyncHtmlBg(false);
       updateButtonStates();
+      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
     });
     lawfulBtn.addEventListener('click', function() {
       localStorage.setItem('themeSelected', 'lawful');
       document.body.classList.add('lawful-mode');
       sorcSyncHtmlBg(true);
       updateButtonStates();
+      if (window._updateProfileBtnColors) window._updateProfileBtnColors();
     });
   }
 });
@@ -79,8 +81,22 @@ document.addEventListener('DOMContentLoaded', function() {
   var profileBtn = document.createElement('button');
   profileBtn.id = 'profileBtn';
   profileBtn.title = 'Profile';
-  profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;color:#fff;overflow:hidden;padding:0;';
+  profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
   profileBtn.innerHTML = '&#128100;';
+
+  window._updateProfileBtnColors = function() {
+    var isLawful = document.body.classList.contains('lawful-mode');
+    if (isLawful) {
+      profileBtn.style.backgroundColor = '#2196f3';
+      profileBtn.style.borderColor = '#b9aa00';
+      profileBtn.style.color = '#b9aa00';
+    } else {
+      profileBtn.style.backgroundColor = '#9c27b0';
+      profileBtn.style.borderColor = '#c93f35';
+      profileBtn.style.color = '#c93f35';
+    }
+  };
+  window._updateProfileBtnColors();
 
   window._profileBtn_loggedIn = function(avatarFilename) {
     if (avatarFilename) {
