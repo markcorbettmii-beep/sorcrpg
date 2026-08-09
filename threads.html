@@ -269,7 +269,7 @@
         if (body.length > MAX_CHARS) { msgEl.className = 'msg error'; msgEl.textContent = 'Post exceeds limit.'; return false; }
         if (countLinks(body) > MAX_LINKS) { msgEl.className = 'msg error'; msgEl.textContent = 'Only 1 link per post.'; return false; }
         // Check if post uses hashtags or @mentions (only allow admins/owners)
-        if (!isAdminOrOwner(currentUser ? currentUser.email : null)) {
+        if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'OWNER')) {
             var hasHashtag = /#[a-zA-Z0-9_]+/.test(body);
             var hasMention = /@(?:everyone|members|[a-zA-Z0-9_]+)/.test(body);
             if (hasHashtag || hasMention) {
