@@ -44,6 +44,9 @@
         .post-timestamp { font-size: 0.75rem; color: #444; margin-top: 2px; }
         .post-body { font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
         .post-body a { color: #b9aa00; text-decoration: underline; }
+        .post-body .hashtag { color: #b9aa00; font-weight: bold; text-decoration: none; }
+        .post-body .mention { color: #9889e0; font-weight: bold; text-decoration: none; }
+        .post-body .mention.group { color: #ff6b6b; }
         .quote-block { background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.85rem; color: #777; }
         .post-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap; }
         .post-action-btn { background: none; border: 1px solid #333; color: #666; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; transition: all 0.2s; }
@@ -238,14 +241,43 @@
     function countLinks(text) { var m = text.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g); return m ? m.length : 0; }
     function renderPostBody(text) {
         var escaped = escapeHtml(text);
-        return escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, function(m, t, u) {
+        // Render markdown links first
+        var withLinks = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, function(m, t, u) {
             return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + t + '</a>';
         });
+        // Render hashtags and @mentions (split by whitespace to avoid breaking links)
+        var parts = withLinks.split(/(\s+)/);
+        var rendered = parts.map(function(part) {
+            if (!part || /^\s+$/.test(part)) return part;
+            // Hashtags
+            if (/^#[a-zA-Z0-9_]+$/.test(part)) {
+                return '<span class="hashtag">' + part + '</span>';
+            }
+            // @mentions
+            if (part === '@everyone' || part === '@members') {
+                return '<span class="mention group">' + part + '</span>';
+            }
+            if (/^@[a-zA-Z0-9_]+$/.test(part)) {
+                return '<span class="mention">' + part + '</span>';
+            }
+            return part;
+        }).join('');
+        return rendered;
     }
     function validatePost(body, msgEl) {
         if (!body) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write something.'; return false; }
         if (body.length > MAX_CHARS) { msgEl.className = 'msg error'; msgEl.textContent = 'Post exceeds limit.'; return false; }
         if (countLinks(body) > MAX_LINKS) { msgEl.className = 'msg error'; msgEl.textContent = 'Only 1 link per post.'; return false; }
+        // Check if post uses hashtags or @mentions (only allow admins/owners)
+        if (!isAdminOrOwner(currentUser ? currentUser.email : null)) {
+            var hasHashtag = /#[a-zA-Z0-9_]+/.test(body);
+            var hasMention = /@(?:everyone|members|[a-zA-Z0-9_]+)/.test(body);
+            if (hasHashtag || hasMention) {
+                msgEl.className = 'msg error';
+                msgEl.textContent = 'Only admins can use hashtags and @mentions.';
+                return false;
+            }
+        }
         return true;
     }
     window.insertLink = function(textareaId) {
