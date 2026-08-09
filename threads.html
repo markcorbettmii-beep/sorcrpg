@@ -404,7 +404,8 @@
                         + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '')
                         + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" data-pid="' + post.id + '" onclick="modDeletePost(this.dataset.pid)">🛡 Remove</button>' : '')
                         + (!isOwnPost && myId ? '<button class="post-action-btn" data-pid="' + post.id + '" onclick="reportPost(this.dataset.pid)">🚩 Report</button>' : '')
-                        + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\')">🔗 Share</button>'
+                        + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\', \'x\')">𝕏 X</button>'
+                        + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\', \'youtube\')">▶ YouTube</button>'
                     + '</div>'
                 + '</div>';
             }).join('');
@@ -563,11 +564,17 @@
         } catch(e) {}
     };
 
-    window.shareThread = function(threadId, threadTitle) {
+    window.shareThread = function(threadId, threadTitle, platform) {
         var threadUrl = window.location.origin + window.location.pathname + '?cat=' + encodeURIComponent(categoryId) + '&name=' + encodeURIComponent(categoryName) + '&thread=' + encodeURIComponent(threadId);
         var text = threadTitle + ' - ' + window.location.origin;
-        var twitterUrl = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(threadUrl) + '&text=' + encodeURIComponent(text) + '&hashtags=sorcrpg';
-        window.open(twitterUrl, 'twitter-share', 'width=600,height=400');
+
+        if (platform === 'x') {
+            var xUrl = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(threadUrl) + '&text=' + encodeURIComponent(text) + '&hashtags=sorcrpg';
+            window.open(xUrl, 'x-share', 'width=600,height=400');
+        } else if (platform === 'youtube') {
+            var youtubeUrl = 'https://www.youtube.com/';
+            window.open(youtubeUrl, 'youtube-share', 'width=800,height=600');
+        }
     };
 
     window.showHashtagContent = function(hashtag) {
