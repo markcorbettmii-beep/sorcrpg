@@ -44,7 +44,7 @@
         .post-timestamp { font-size: 0.75rem; color: #444; margin-top: 2px; }
         .post-body { font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
         .post-body a { color: #b9aa00; text-decoration: underline; }
-        .post-body .hashtag { color: #b9aa00; font-weight: bold; text-decoration: none; }
+        .post-body .hashtag { color: #b9aa00; font-weight: bold; text-decoration: none; background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: inherit; font-family: inherit; }
         .post-body .mention { color: #9889e0; font-weight: bold; text-decoration: none; }
         .post-body .mention.group { color: #ff6b6b; }
         .quote-block { background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.85rem; color: #777; }
@@ -249,9 +249,9 @@
         var parts = withLinks.split(/(\s+)/);
         var rendered = parts.map(function(part) {
             if (!part || /^\s+$/.test(part)) return part;
-            // Hashtags
+            // Hashtags (clickable)
             if (/^#[a-zA-Z0-9_]+$/.test(part)) {
-                return '<span class="hashtag">' + part + '</span>';
+                return '<button class="hashtag" onclick="showHashtagContent(\'' + escapeAttr(part) + '\'); return false;">' + part + '</button>';
             }
             // @mentions
             if (part === '@everyone' || part === '@members') {
@@ -568,6 +568,49 @@
         var text = threadTitle + ' - ' + window.location.origin;
         var twitterUrl = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(threadUrl) + '&text=' + encodeURIComponent(text) + '&hashtags=sorcrpg';
         window.open(twitterUrl, 'twitter-share', 'width=600,height=400');
+    };
+
+    window.showHashtagContent = function(hashtag) {
+        var allPostEls = document.querySelectorAll('.post-card');
+        var matchingPosts = [];
+        allPostEls.forEach(function(postEl) {
+            var bodyEl = postEl.querySelector('.post-body');
+            if (bodyEl && bodyEl.textContent.indexOf(hashtag) !== -1) {
+                var authorEl = postEl.querySelector('.post-author-name');
+                var timestampEl = postEl.querySelector('.post-timestamp');
+                var author = authorEl ? authorEl.textContent : 'Unknown';
+                var timestamp = timestampEl ? timestampEl.textContent : '';
+                var body = bodyEl.textContent.substring(0, 150) + (bodyEl.textContent.length > 150 ? '...' : '');
+                matchingPosts.push({
+                    element: postEl,
+                    author: author,
+                    timestamp: timestamp,
+                    preview: body
+                });
+            }
+        });
+        if (matchingPosts.length === 0) {
+            alert('No posts found with ' + hashtag);
+            return;
+        }
+        var html = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:2px solid #c93f35;border-radius:10px;padding:1.5rem;max-width:500px;max-height:70vh;overflow-y:auto;z-index:1000;box-shadow:0 0 30px rgba(0,0,0,0.8);">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid #333;padding-bottom:0.75rem;">'
+            + '<h3 style="margin:0;color:#e0cfc0;font-size:1.1rem;">Posts with ' + escapeHtml(hashtag) + ' (' + matchingPosts.length + ')</h3>'
+            + '<button onclick="this.closest(\'[data-hashtag-modal]\').remove();" style="background:#c93f35;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>'
+            + '</div>'
+            + matchingPosts.map(function(post) {
+                return '<div style="border-bottom:1px solid #222;padding:0.75rem 0;cursor:pointer;" onclick="this.closest(\'[data-hashtag-modal]\').remove();document.getElementById(\'post-\' + this.dataset.postid).scrollIntoView({behavior:\'smooth\'});document.getElementById(\'post-\' + this.dataset.postid).style.backgroundColor=\'#2a1a1a\';setTimeout(function(){document.getElementById(\'post-\' + arguments[0]).style.backgroundColor=\'\';},2000);" data-postid="' + post.element.id.replace('post-', '') + '">'
+                + '<div style="color:#b9aa00;font-size:0.85rem;">' + escapeHtml(post.author) + ' · ' + escapeHtml(post.timestamp) + '</div>'
+                + '<div style="color:#888;font-size:0.9rem;margin-top:4px;">' + escapeHtml(post.preview) + '</div>'
+                + '</div>';
+            }).join('')
+            + '</div>'
+            + '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;" onclick="this.nextElementSibling.remove();this.remove();"></div>';
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        wrapper.setAttribute('data-hashtag-modal', 'true');
+        document.body.appendChild(wrapper.firstChild);
+        document.body.appendChild(wrapper.lastChild);
     };
 
     window.modDeletePost = function(postId) {
