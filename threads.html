@@ -404,6 +404,7 @@
                         + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '')
                         + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" data-pid="' + post.id + '" onclick="modDeletePost(this.dataset.pid)">🛡 Remove</button>' : '')
                         + (!isOwnPost && myId ? '<button class="post-action-btn" data-pid="' + post.id + '" onclick="reportPost(this.dataset.pid)">🚩 Report</button>' : '')
+                        + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\')">🔗 Share</button>'
                     + '</div>'
                 + '</div>';
             }).join('');
@@ -560,6 +561,13 @@
                 msgEl.textContent = data.success ? '✅ Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
             }
         } catch(e) {}
+    };
+
+    window.shareThread = function(threadId, threadTitle) {
+        var threadUrl = window.location.origin + window.location.pathname + '?cat=' + encodeURIComponent(categoryId) + '&name=' + encodeURIComponent(categoryName) + '&thread=' + encodeURIComponent(threadId);
+        var text = threadTitle + ' - ' + window.location.origin;
+        var twitterUrl = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(threadUrl) + '&text=' + encodeURIComponent(text) + '&hashtags=sorcrpg';
+        window.open(twitterUrl, 'twitter-share', 'width=600,height=400');
     };
 
     window.modDeletePost = function(postId) {
