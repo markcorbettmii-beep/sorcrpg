@@ -381,7 +381,7 @@
         if (!title) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a title.'; return; }
         if (!validatePost(body, msgEl)) return;
         var cat = CATEGORIES.find(function(c) { return c.id === categoryId; });
-        if (cat && cat.adminOnly && !isAdminOrOwner(currentUser.email)) { msgEl.className = 'msg error'; msgEl.textContent = 'Only admins can post in this category.'; return; }
+        if (cat && cat.adminOnly && (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'OWNER'))) { msgEl.className = 'msg error'; msgEl.textContent = 'Only admins can post in this category.'; return; }
         try {
             var res = await fetch(API_URL + '/api/forum/thread', {
                 method: 'POST',
@@ -410,7 +410,7 @@
             document.getElementById('newThreadBtn').disabled = true;
             currentUser = null;
         }
-        if (currentUser && isAdminOrOwner(currentUser.email)) {
+        if (currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER')) {
             document.getElementById('adminMembersSection').style.display = 'block';
         }
         loadForumStats();

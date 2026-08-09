@@ -208,10 +208,10 @@
     function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
     function canPost() {
         if (!currentUser) return false;
-        if (ADMIN_ONLY_CATEGORIES.includes(categoryId)) return isAdminOrOwner(currentUser.email);
+        if (ADMIN_ONLY_CATEGORIES.includes(categoryId)) return currentUser.role === 'ADMIN' || currentUser.role === 'OWNER';
         return true;
     }
-    function canModerate() { return currentUser && isAdminOrOwner(currentUser.email); }
+    function canModerate() { return currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER'); }
     function escapeHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function escapeAttr(str) { return String(str).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
     function timeAgo(ts) {
