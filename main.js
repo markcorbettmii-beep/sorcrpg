@@ -358,7 +358,7 @@ function showRoleBadge(user) {
     ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
     ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
-    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Logout</strong></button>';
+    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;"><strong>Logout</strong></button>';
 
   var roleTag = existing.querySelector('.role-tag');
   if (roleTag) {
