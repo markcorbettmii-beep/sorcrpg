@@ -358,7 +358,7 @@ function showRoleBadge(user) {
     ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
     ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
-    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;"><strong>Logout</strong></button>';
+    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Logout</strong></button>';
 
   var roleTag = existing.querySelector('.role-tag');
   if (roleTag) {
@@ -553,7 +553,7 @@ function showLoggedOutBadge() {
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + '<span style="color:' + linkColor + ';">Name AD</span>' +
     ' · <span style="color:' + linkColor + ';">Profile</span> · <span style="color:' + linkColor + ';">Lobbies</span> · <span style="color:' + linkColor + ';">Inbox</span> · <span style="color:' + linkColor + ';">Fellowships</span> · <span style="color:' + linkColor + ';">Forums</span> · <span style="color:' + linkColor + ';">Content</span>' +
-    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;"><strong>Badge Login</strong></button>';
+    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Badge Login</strong></button>';
 }
 
 // ========== AUTH STATE ==========
