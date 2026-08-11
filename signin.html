@@ -44,3 +44,283 @@
     </style>
 </head>
 <body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Welcome to Essentia</h1>
+            <p>Sign in to continue your adventure</p>
+
+            <div class="account-type-selector">
+                <button class="account-type-btn active" onclick="selectType('civilian', this)">CIVILIAN</button>
+                <button class="account-type-btn" onclick="selectType('player', this)">PLAYER</button>
+                <button class="account-type-btn" onclick="selectType('master', this)">MASTER</button>
+            </div>
+
+            <div class="account-info" id="civilianInfo" style="display:block;border-color:#555;background:#1a1a1a;">
+                <b>CIVILIAN</b> -  Our free starter account. Browse the library, access basic rules, join forums, and start earning community points toward SORC Beyond unlocks.
+            </div>
+            <div class="account-info coming-soon" id="playerInfo">
+                <b>PLAYER</b> -  Short for <b>Player Character</b>. Players join SORC Beyond online lobbies and digital campaigns as active adventurers.<br /><br />
+                To become a Player, you must pass a <b>SORC Player Assessment</b>. Assessments are currently under development. Upon upgrading you will receive <b>500 community points</b> to spend on unlocks.<br /><br />
+                Create a <b>Civilian</b> account now -  it will be upgraded when assessments launch.
+            </div>
+            <div class="account-info coming-soon" id="masterInfo">
+                <b>MASTER</b> -  Short for <b>Game Master</b>. Masters run campaigns, host online lobbies, and guide players through Essentia.<br /><br />
+                To become a Master, you must pass a <b>SORC Master Assessment</b> AND receive an official Master Code. Upon upgrading you will receive <b>1,000 community points</b> to spend on unlocks.<br /><br />
+                Create a <b>Civilian</b> account now -  it will be upgraded when assessments launch.
+            </div>
+
+            <div class="status-msg" id="statusMsg"></div>
+            <a href="javascript:void(0)" id="resendBtn" style="display:none;color:#b9aa00;font-size:0.85rem;text-decoration:underline;" onclick="handleResendVerification()">Resend verification email</a>
+
+            <div id="signinForm">
+                <p style="text-align:left;color:#888;font-size:0.8rem;margin-bottom:0.5rem;">Sign In</p>
+                <input type="email" id="emailInput" class="signin-input" placeholder="Email address" autocomplete="email" />
+                <div class="password-wrapper">
+                    <input type="password" id="passwordInput" class="signin-input" placeholder="Password" autocomplete="current-password" />
+                    <button class="toggle-pw" onclick="togglePassword('passwordInput', this)" type="button">👁</button>
+                </div>
+                <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
+
+                <div class="signin-divider">or create account</div>
+
+                <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" autocomplete="email" />
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" autocomplete="new-password" />
+                    <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
+                </div>
+                <div class="password-wrapper">
+                    <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" autocomplete="new-password" />
+                    <button class="toggle-pw" onclick="togglePassword('signupConfirmPassword', this)" type="button">👁</button>
+                </div>
+                <input type="text" id="signupUsername" class="signin-input" placeholder="Choose 1st Name (Later Surname)" maxlength="30" />
+                <p style="text-align:left;color:#555;font-size:0.75rem;margin-top:-8px;margin-bottom:12px;">
+                    Once you earn <b style="color:#b9aa00;">500 Community Points</b> you can unlock a proper Surname with a real space -  e.g. <b style="color:#b9aa00;">Jon Doe</b>. Hyphens allowed but no underscores.
+                </p>
+                <button class="signin-btn" onclick="handleSignUp()" style="background:#555;color:#fff;">
+                    Create Profile
+                </button>
+            </div>
+
+            <div class="signin-links">
+                <a href="javascript:void(0)" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
+                <a href="index.html">Back to site</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+        var lastUnverifiedEmail = null;
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // Show success message if redirected after verification
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('verified') === 'true') {
+                showStatus('✅ Email verified! You can now sign in.', 'success');
+            }
+            if (params.get('expired') === 'true') {
+                showStatus('Your session expired. Please sign in again.', 'error');
+            }
+            if (params.get('verify_error') === 'true') {
+                showStatus('That verification link is invalid or already used. Try signing in, or request a new verification email.', 'error');
+            }
+            if (params.get('reset') === 'true') {
+                showStatus('✅ Password updated! You can now sign in with your new password.', 'success');
+            }
+        })();
+
+        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+        function containsBadWord(str) {
+            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return badWords.some(function(word) { return lower.includes(word); });
+        }
+        function isValidUsername(username) {
+            if (username.length < 3) return 'Name must be at least 3 characters.';
+            if (username.length > 30) return 'Name must be 30 characters or less.';
+            if (!/^[a-zA-Z0-9-]+$/.test(username)) return 'Letters, numbers and hyphens only. No underscores or spaces.';
+            if (containsBadWord(username)) return 'Name contains inappropriate language.';
+            return null;
+        }
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
+
+        window.togglePassword = function(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+            else { input.type = 'password'; btn.textContent = '👁'; }
+        };
+
+        window.selectType = function(type, btn) {
+            document.querySelectorAll('.account-type-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            document.querySelectorAll('.account-info').forEach(function(el) { el.style.display = 'none'; });
+            if (type === 'civilian') {
+                document.getElementById('civilianInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'block';
+            } else if (type === 'player') {
+                document.getElementById('playerInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'none';
+            } else if (type === 'master') {
+                document.getElementById('masterInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'none';
+            }
+        };
+
+        window.handleSignIn = async function() {
+            var email = document.getElementById('emailInput').value.trim();
+            var password = document.getElementById('passwordInput').value;
+            if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
+
+            showStatus('Signing in...', 'success');
+            document.getElementById('resendBtn').style.display = 'none';
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    if (data.unverified) {
+                        lastUnverifiedEmail = email;
+                        showStatus(data.error + ' <a href="javascript:void(0)" onclick="handleResendVerification()" style="color:#b9aa00;text-decoration:underline;">Resend verification email</a>', 'error');
+                    } else if (res.status === 401 && data.error && data.error.includes('No password')) {
+                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendResetFromSignin(\'' + email.replace(/'/g, '') + '\')" style="color:#b9aa00;text-decoration:underline;">Send me a reset link</a>', 'error');
+                    } else {
+                        showStatus(data.error || 'Sign in failed.', 'error');
+                    }
+                    return;
+                }
+
+                localStorage.setItem('sorc_user', JSON.stringify({
+                    ...data.user,
+                    authKey: data.authKey
+                }));
+
+                window.location.href = 'index.html';
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.handleSignUp = async function() {
+            var email = document.getElementById('signupEmail').value.trim();
+            var password = document.getElementById('signupPassword').value;
+            var confirmPassword = document.getElementById('signupConfirmPassword').value;
+            var username = document.getElementById('signupUsername').value.trim();
+
+            if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
+            if (!username) { showStatus('Please choose a first name.', 'error'); return; }
+            if (password.length < 6) { showStatus('Password must be at least 6 characters.', 'error'); return; }
+            if (password !== confirmPassword) { showStatus('Passwords do not match.', 'error'); return; }
+
+            var usernameError = isValidUsername(username);
+            if (usernameError) { showStatus(usernameError, 'error'); return; }
+
+            showStatus('Creating your profile...', 'success');
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, username, firstName: username, accountType: 'CIVILIAN' })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showStatus(data.error || 'Registration failed.', 'error');
+                    return;
+                }
+
+                // Don't log them in-show verification message
+                lastUnverifiedEmail = email;
+                showStatus('✅ Profile created! Please check your email to verify your account before signing in. Check your spam folder if you don\'t see it.', 'success');
+                document.getElementById('resendBtn').style.display = 'block';
+
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.handleResendVerification = async function() {
+            var email = lastUnverifiedEmail || document.getElementById('emailInput').value.trim() || document.getElementById('signupEmail').value.trim();
+            if (!email) { showStatus('Please enter your email address.', 'error'); return; }
+            try {
+                var res = await fetch(API_URL + '/api/auth/resend-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                } else {
+                    showStatus(data.error || 'Could not resend email.', 'error');
+                }
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.sendResetFromSignin = async function(email) {
+            showStatus('Sending reset link...', 'success');
+            try {
+                await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showStatus('Reset link sent to ' + email + '. Check your inbox.', 'success');
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.showForgotPassword = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            var msg = email ? '' : 'Enter your email above, then click Forgot password.';
+            if (!email) { showStatus(msg, 'error'); return; }
+            showStatus('Sending reset email...', 'success');
+            fetch(window.SORC_API + '/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            }).then(function() {
+                showStatus('If that email is registered, a password reset link has been sent. Check your inbox.', 'success');
+            }).catch(function() {
+                showStatus('Connection error. Please try again.', 'error');
+            });
+        };
+    </script>
+  <script type="module" src="main.js?v=24"></script>
+  <div id="footer"></div>
+</body>
+</html>
