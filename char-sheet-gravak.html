@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravak - SORC Character Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    @media (max-width: 815px) {
+      .sheet-viewport { overflow: hidden; }
+    }
+
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
+    }
+
+    .flip-indicator {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .flipper {
+      width: 816px;
+      height: 1056px;
+      position: relative;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #f2ece0;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face.back { display: none; }
+    #front .inner { zoom: 0.96; }
+
+    .border-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 7px;
+      border: 2.5px solid #3a4a18;
+    }
+
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      pointer-events: none;
+    }
+    .corner.tl { top: 7px; left: 7px; }
+    .corner.tr { top: 7px; right: 7px; transform: scaleX(-1); }
+    .corner.bl { bottom: 7px; left: 7px; transform: scaleY(-1); }
+    .corner.br { bottom: 7px; right: 7px; transform: scale(-1); }
+    .corner svg { width: 100%; height: 100%; }
+
+    .wm {
+      position: absolute;
+      inset: 0;
+      opacity: 0.03;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" font-size="80" text-anchor="middle" dominant-baseline="middle">S</text></svg>');
+      background-repeat: repeat;
+      pointer-events: none;
+    }
+
+    .inner {
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .title-block {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.05em;
+      margin: 0;
+    }
+    .title-block h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #4a5a20;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin: 3px 0 0;
+    }
+
+    .rule {
+      border: none;
+      height: 1px;
+      background: #4a5a20;
+      margin: 8px 0;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .sec {
+      margin-bottom: 10px;
+    }
+
+    .sec-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    .field { margin-bottom: 5px; }
+
+    .field-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    .field-lbl.sm { font-size: 0.55rem; }
+
+    .fline {
+      width: 100%;
+      height: 1px;
+      background: #6a7a48;
+      margin-bottom: 2px;
+    }
+
+    .col-mid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .portrait {
+      width: 100%;
+      aspect-ratio: 3/4;
+      border: 1.5px solid #4a5a20;
+      background: #e5ddc8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .portrait span {
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      color: #999;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .srow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 3px 0;
+      border-bottom: 1px dotted #bbb;
+    }
+
+    .sfield-input {
+      background: #f5f0e4;
+      border: 1px solid #4a5a20;
+      width: 62px;
+      height: 13px;
+      font-family: Arial, sans-serif;
+      font-size: 0.52rem;
+      color: #222;
+      text-align: center;
+      outline: none;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .xp-bar {
+      position: relative;
+      width: 100%;
+      height: 5px;
+      background: #e8dfc0;
+      border: 0.5px solid #4a5a20;
+    }
+
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #c4a000 0%, #d4b010 50%, #c4a000 100%);
+    }
+
+    .lore-item {
+      font-family: Arial, sans-serif;
+      font-size: 0.54rem;
+      color: #2e3d0f;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+
+    .lore-note {
+      font-weight: normal;
+      font-style: italic;
+      color: #666;
+    }
+
+    .trait-list { list-style: none; padding: 0; }
+
+    .trait-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 0.6rem;
+      color: #222;
+      padding: 1.5px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+
+    .tfield {
+      width: 24px;
+      height: 12px;
+      border: 1px solid #4a5a20;
+      background: #f5f0e4;
+      flex-shrink: 0;
+    }
+
+    .pencil {
+      font-family: Arial, sans-serif;
+      color: #3d3d3d;
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+    }
+
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.62rem;
+      color: #222;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
+
+    .repo-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: Arial, sans-serif;
+      font-size: 0.46rem;
+      margin-top: 4px;
+    }
+    .repo-tbl th {
+      font-family: 'Cinzel', serif;
+      font-size: 0.42rem;
+      color: #2e3d0f;
+      padding: 2px 3px;
+      border-bottom: 1px solid #4a5a20;
+      text-align: left;
+    }
+    .repo-tbl td {
+      padding: 2px 3px;
+      color: #2e3d0f;
+      border-bottom: 1px dotted #ccc;
+      vertical-align: middle;
+    }
+
+    .back-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 6px;
+    }
+
+    .b-sec { margin-bottom: 13px; }
+
+    .b-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #2e3d0f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #4a5a20;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ FRONT ══════════════ -->
+    <div class="face" id="front">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>SORC Character Sheet</h2>
+        </div>
+        <hr class="rule" />
+
+        <div class="cols">
+          <div>
+            <div class="sec">
+              <p class="sec-title">Character</p>
+              <div class="field"><span class="field-lbl">Name &amp; UID</span><input type="text" class="fline" value="Gravak / Party ID-002" /></div>
+              <div class="field"><span class="field-lbl">Nickname(s)</span><input type="text" class="fline" value="The Shadow, Gray" /></div>
+              <div class="field"><span class="field-lbl">Gender</span><input type="text" class="fline" value="Male" /></div>
+              <div class="field"><span class="field-lbl">Race</span><input type="text" class="fline" value="Orcus" /></div>
+              <div class="field"><span class="field-lbl">Class</span><input type="text" class="fline" value="Rogue" /></div>
+              <div class="field"><span class="field-lbl">Level</span><input type="text" class="fline" value="1" /></div>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Vitality (Level 1)</p>
+              <div class="srow"><span>Life</span><input type="text" class="sfield-input" value="51" /></div>
+              <div class="srow"><span>Mana</span><input type="text" class="sfield-input" value="32" /></div>
+              <div class="srow"><span>Stamina</span><input type="text" class="sfield-input" value="32" /></div>
+              <div class="srow"><span>Endurance</span><input type="text" class="sfield-input" value="35" /></div>
+              <div class="srow"><span>Apex</span><input type="text" class="sfield-input" value="0" /></div>
+              <div class="srow"><span>Spirit</span><input type="text" class="sfield-input" value="0" /></div>
+            </div>
+          </div>
+
+          <div class="col-mid">
+            <p class="sec-title" style="width:100%;">Photo</p>
+            <div class="portrait" style="height:300px;flex:none;aspect-ratio:unset;"><span>Portrait</span></div>
+          </div>
+
+          <div>
+            <div class="sec">
+              <p class="sec-title">Attributes (Level 1)</p>
+              <div class="srow"><span>Artistry (ART)</span><input type="text" class="sfield-input" value="1" /></div>
+              <div class="srow"><span>Physique (PHY)</span><input type="text" class="sfield-input" value="1" /></div>
+              <div class="srow"><span>Perception (PER)</span><input type="text" class="sfield-input" value="1" /></div>
+              <div class="srow"><span>Fortitude (FRT)</span><input type="text" class="sfield-input" value="1" /></div>
+              <div class="srow"><span>Wisdom (WIS)</span><input type="text" class="sfield-input" value="0" /></div>
+              <div class="srow"><span>Resilience (RES)</span><input type="text" class="sfield-input" value="0" /></div>
+              <div class="srow"><span>Intellect (INT)</span><input type="text" class="sfield-input" value="0" /></div>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Traits (Level 1)</p>
+              <ul class="trait-list">
+                <li><span>Dexterity (ART)</span><span class="tfield">1</span></li>
+                <li><span>Strength (PHY)</span><span class="tfield">2</span></li>
+                <li><span>Intuition (PER)</span><span class="tfield">1</span></li>
+                <li><span>Constitution (FRT)</span><span class="tfield">1</span></li>
+                <li><span>Courage (RES)</span><span class="tfield">1</span></li>
+                <li><span>Knowledge (WIS)</span><span class="tfield">1</span></li>
+              </ul>
+            </div>
+
+            <div class="sec">
+              <p class="sec-title">Resources</p>
+              <div class="srow"><span>Remnant Points</span><input type="text" class="sfield-input" value="3" /></div>
+              <div class="srow"><span>Initiative</span><input type="text" class="sfield-input" value="41" /></div>
+              <div class="srow"><span>Base PROTS</span><input type="text" class="sfield-input" value="25" /></div>
+              <div class="srow"><span>Base Speed</span><input type="text" class="sfield-input" value="30 ft" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════ BACK ══════════════ -->
+    <div class="face back" id="back">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h2 style="font-size: 0.8rem; margin-bottom: 3px;">Gravak — Level 1 Rogue</h2>
+        </div>
+        <hr class="rule" />
+
+        <div class="back-cols">
+          <!-- LEFT COLUMN: Basic Info -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Basic Info</p>
+              <div class="field"><span class="field-lbl">Age</span><input type="text" class="fline" value="45" /></div>
+              <div class="field"><span class="field-lbl">Height</span><input type="text" class="fline" value="5'10&quot;" /></div>
+              <div class="field"><span class="field-lbl">Weight</span><input type="text" class="fline" value="175 lbs" /></div>
+              <div class="field"><span class="field-lbl">Build</span><input type="text" class="fline" value="Lean, muscular, athletic" /></div>
+              <div class="field"><span class="field-lbl">Skin</span><input type="text" class="fline" value="Dark grey-green" /></div>
+              <div class="field"><span class="field-lbl">Hair</span><input type="text" class="fline" value="Black, slicked back" /></div>
+              <div class="field"><span class="field-lbl">Eyes</span><input type="text" class="fline" value="Yellow-gold" /></div>
+              <div class="field"><span class="field-lbl">Scars/Marks</span><input type="text" class="fline" value="Burn scar on left forearm" /></div>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Background</p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#444;margin-bottom:6px;line-height:1.3;">Gravak grew up in the slums of Ashmark, the forgotten son of a blacksmith and a street merchant. His father was killed in a gang war when Gravak was 8; his mother abandoned him to the streets to fend for himself. He survived through theft, pickpocketing, and contract work for local crime lords. Now 45, he's looking to escape the gutter life and find wealth, redemption, or at least a new identity in the adventuring trade.</p>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Mission Statement</p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;margin-bottom:3px;line-height:1.3;"><strong>Primary Goal:</strong> Earn enough wealth and reputation to buy land and establish a legitimate business (a trading post or safe house) where he's no longer beholden to crime lords.</p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.3;"><strong>Personal Quest:</strong> Uncover the truth about his father's death and settle old debts with the gang lords of Ashmark.</p>
+            </div>
+          </div>
+
+          <!-- CENTER COLUMN: Progression & Abilities -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">Progression</p>
+              <div style="position:relative;border:1px solid #4a5a20;margin-top:5px;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(90,122,40,0.3);"></div>
+                <div style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;z-index:1;">
+                  <div style="border-right:1px solid #4a5a20;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Character Level</span></div>
+                  <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">1 / XP 0/300</span></div>
+                </div>
+              </div>
+              <div style="position:relative;border:1px solid #4a5a20;margin-top:3px;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(90,122,40,0.18);"></div>
+                <div style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;z-index:1;">
+                  <div style="border-right:1px solid #4a5a20;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Current Rank</span></div>
+                  <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Pauper (0 RP)</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Class Abilities (Tier 1)</p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;margin-bottom:3px;"><strong>• Backstab:</strong> <span style="font-size:0.48rem;">2d6 + Dex bonus (10), vs PROTS. Only used against unaware targets or flanking. 1 action, 2 Stamina.</span></p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;margin-bottom:3px;"><strong>• Shadowstep:</strong> <span style="font-size:0.48rem;">Move 15 ft as bonus action. Requires dim light/shadow. 1 Stamina.</span></p>
+              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;"><strong>• Lockpicking:</strong> <span style="font-size:0.48rem;">d100 + Dexterity (10) vs lock DIFS. Opens simple locks, bypasses traps.</span></p>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: TST Repository -->
+          <div>
+            <div class="b-sec">
+              <p class="b-title">TST Repository</p>
+              <table class="repo-tbl">
+                <thead>
+                  <tr>
+                    <th colspan="2">Talent Trees</th>
+                  </tr>
+                  <tr>
+                    <th>Tree</th>
+                    <th>Talents</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Thief</td><td>Lockpicking, Pickpocket</td></tr>
+                  <tr><td>Scout</td><td>Lead the Way</td></tr>
+                  <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                </tbody>
+              </table>
+
+              <table class="repo-tbl" style="margin-top:8px;">
+                <thead>
+                  <tr>
+                    <th colspan="2">Professions</th>
+                  </tr>
+                  <tr>
+                    <th>Profession</th>
+                    <th>Skills</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Fence</td><td>Appraise, Fence Goods</td></tr>
+                  <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="b-sec">
+              <p class="b-title">Currency</p>
+              <div class="srow"><span>Gold (GP)</span><input type="text" class="sfield-input" value="15" /></div>
+              <div class="srow"><span>Silver (SP)</span><input type="text" class="sfield-input" value="8" /></div>
+              <div class="srow"><span>Copper (CP)</span><input type="text" class="sfield-input" value="42" /></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;border-top:1px solid #4a5a20;padding-top:6px;">
+          <p style="font-family:Arial,sans-serif;font-size:0.48rem;color:#666;"><strong>Equipment:</strong> Common Shortsword (2d6+10), Common Dagger (1d4+10), Common Leather Armor (AS 25), Thief's Tools, 50 ft Rope, Lockpicks</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+  const flipper = document.getElementById('flipper');
+  const front = document.getElementById('front');
+  const back = document.getElementById('back');
+  let flipped = false;
+
+  flipper.addEventListener('click', () => {
+    flipped = !flipped;
+    if (flipped) {
+      front.style.display = 'none';
+      back.style.display = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
