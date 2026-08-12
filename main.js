@@ -360,7 +360,7 @@ function showRoleBadge(user) {
     ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
     ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
-    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;"><strong>Logout</strong></button>';
+    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Logout</strong></button>';
 
   var roleTag = existing.querySelector('.role-tag');
   if (roleTag) {
@@ -507,7 +507,7 @@ async function checkNotifications(user) {
         var notifBg = '#fff';
         var notifColor = isLawfulInbox ? '#2196f3' : '#9c27b0';
         inboxLink.innerHTML = unread > 0
-          ? 'Inbox <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
+          ? 'Inbox <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;">' + unread + '</span>'
           : 'Inbox';
       }
       var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
@@ -516,7 +516,7 @@ async function checkNotifications(user) {
         var notifBg = '#fff';
         var notifColor = isLawfulBadge ? '#2196f3' : '#9c27b0';
         fellowLink.innerHTML = fellowBadge > 0
-          ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
+          ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
       var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
@@ -550,6 +550,7 @@ function showLoggedOutBadge() {
   var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
+  var shadowColor = isLawful ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
   // Default avatar icon (user circle)
   var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
   var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
@@ -557,7 +558,7 @@ function showLoggedOutBadge() {
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + '<span style="color:' + linkColor + ';">Name AD</span>' +
     ' · <span style="color:' + linkColor + ';">Profile</span> · <span style="color:' + linkColor + ';">Lobbies</span> · <span style="color:' + linkColor + ';">Inbox</span> · <span style="color:' + linkColor + ';">Fellowships</span> · <span style="color:' + linkColor + ';">Forums</span> · <span style="color:' + linkColor + ';">Content</span>' +
-    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Badge Login</strong></button>';
+    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;text-shadow:1px 1px 0 ' + shadowColor + ';"><strong>Badge Login</strong></button>';
 }
 
 // ========== AUTH STATE ==========
