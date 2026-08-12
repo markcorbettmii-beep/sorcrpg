@@ -128,7 +128,7 @@
     .rolls-list { flex: 1; overflow-y: auto; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
     .roll-entry { background: #1a1a1a; border: 1px solid #222; border-radius: 6px; padding: 0.5rem 0.75rem; }
     .roll-entry-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-    .roll-player { color: #888; font-size: 0.75rem; font-weight: bold; }
+    .roll-Player { color: #888; font-size: 0.75rem; font-weight: bold; }
     .roll-total { font-size: 1.1rem; font-weight: bold; color: #b9aa00; }
     .roll-detail { color: #444; font-size: 0.7rem; margin-top: 0.15rem; }
 
@@ -200,7 +200,7 @@
     .lt-terminal .chat-send { background: #00e5ff; color: #030d1a; font-family: monospace; }
     .lt-terminal .roll-entry { background: #020f1e; border-color: #00e5ff11; }
     .lt-terminal .roll-total { color: #00e5ff; text-shadow: 0 0 6px #00e5ff66; }
-    .lt-terminal .roll-player { color: #1a5a6a; font-family: monospace; }
+    .lt-terminal .roll-Player { color: #1a5a6a; font-family: monospace; }
     .lt-terminal .theme-pill.active { border-color: #00e5ff; color: #00e5ff; background: #010a14; }
     .lt-terminal .hdr-btn { border-color: #00e5ff22; color: #1a5a6a; font-family: monospace; }
     .lt-terminal .hdr-btn:hover { border-color: #00e5ff66; color: #00e5ff; }
@@ -238,7 +238,7 @@
     .lt-veilwood .chat-send { background: #7b2fff; color: #fff; }
     .lt-veilwood .roll-entry { background: #060b12; border-color: #7b2fff11; }
     .lt-veilwood .roll-total { color: #00cc77; text-shadow: 0 0 6px #00cc7766; }
-    .lt-veilwood .roll-player { color: #3a2a5a; }
+    .lt-veilwood .roll-Player { color: #3a2a5a; }
     .lt-veilwood .theme-pill.active { border-color: #7b2fff; color: #b57bff; background: #060b12; }
     .lt-veilwood .hdr-btn { border-color: #7b2fff22; color: #3a2a5a; }
     .lt-veilwood .hdr-btn:hover { border-color: #7b2fff66; color: #b57bff; }
@@ -437,7 +437,7 @@
       app.innerHTML =
         '<div class="request-view">' +
           '<h2>&#128274; Private Room</h2>' +
-          '<p>You are not currently a member of this room. You can request to join as a player, or request spectator access if the GM has enabled it.</p>' +
+          '<p>You are not currently a member of this room. You can request to join as a Player, or request spectator access if the GM has enabled it.</p>' +
           '<div class="req-action-btns">' +
             '<button style="background:#c93f35;color:#fff;" onclick="requestJoin(\'join\')">Request to Join</button>' +
             '<button style="background:#1a1a1a;border:1px solid #333;color:#888;" onclick="requestJoin(\'spectate\')">Request to Spectate</button>' +
@@ -735,7 +735,7 @@
           var detail = dieEmoji(r.die_type) + (r.result2 ? ' (' + r.result1 + '+' + r.result2 + ')' : ' (' + r.result1 + ')');
           return '<div class="roll-entry">' +
             '<div class="roll-entry-top">' +
-              '<span class="roll-player">' + esc(r.player_uid === currentUser?.id ? 'You' : r.player_uid) + '</span>' +
+              '<span class="roll-Player">' + esc(r.Player_uid === currentUser?.id ? 'You' : r.Player_uid) + '</span>' +
               '<span class="roll-total">' + r.total + '</span>' +
             '</div>' +
             '<div class="roll-detail">' + esc(r.roll_purpose) + ' &nbsp;&middot;&nbsp; ' + detail + ' &nbsp;&middot;&nbsp; ' + timeAgo(r.rolled_at) + '</div>' +
@@ -844,15 +844,15 @@
     function buildRoomTicker() {
       var msgs = [
         '&#127925; GMs can load and play audio files directly in this room - atmospheric music and ambient sounds that pair with each module cue',
-        '&#128421; When the module calls for it, the GM triggers the audio - every player in the room hears it at the same time for full immersion',
-        '&#128421; Campaign Rooms work at a physical table or fully online - GMs set audio, players roll live dice, everyone follows the same session',
+        '&#128421; When the module calls for it, the GM triggers the audio - every Player in the room hears it at the same time for full immersion',
+        '&#128421; Campaign Rooms work at a physical table or fully online - GMs set audio, Players roll live dice, everyone follows the same session',
         '&#127922; Roll D4, D6, or D100 using the dice tab - all rolls are visible to everyone in the room and logged in the session',
-        '&#128196; Click the character sheet icon next to any member\'s name to view their armaments, companions, achievements, and more',
+        '&#128196; Click the Character sheet icon next to any member\'s name to view their armaments, companions, achievements, and more',
         '&#128101; If the GM steps away, leadership passes to the next party member - the room stays active and the session continues',
         '&#128172; Use room chat to coordinate during combat or send private notes - voice is available through the voice tab',
-        '&#127775; GMs playing from home can use audio cues, dice, and compendium tools to run a fully immersive session for remote or in-person players',
+        '&#127775; GMs playing from home can use audio cues, dice, and compendium tools to run a fully immersive session for remote or in-person Players',
         '&#9876; All dice rolls are synced across the room - no need for physical dice when playing online',
-        '&#127514; The GM launched this room from the lobby - players still in the lobby can join the room from the Active Rooms section',
+        '&#127514; The GM launched this room from the lobby - Players still in the lobby can join the room from the Active Rooms section',
       ];
       var html = msgs.map(function(m) {
         return '<span class="room-ticker-item"><span class="rt-bullet">&#9670;</span>' + m + '</span>';
