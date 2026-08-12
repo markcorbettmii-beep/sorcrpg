@@ -507,7 +507,7 @@ async function checkNotifications(user) {
         var notifBg = '#fff';
         var notifColor = isLawfulInbox ? '#2196f3' : '#9c27b0';
         inboxLink.innerHTML = unread > 0
-          ? 'Inbox <span style="background:' + notifBg + ';color:' + notifColor + ';border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
+          ? 'Inbox <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + unread + '</span>'
           : 'Inbox';
       }
       var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
@@ -516,7 +516,7 @@ async function checkNotifications(user) {
         var notifBg = '#fff';
         var notifColor = isLawfulBadge ? '#2196f3' : '#9c27b0';
         fellowLink.innerHTML = fellowBadge > 0
-          ? 'Fellowships <span style="background:' + notifBg + ';color:' + notifColor + ';border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
+          ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
       var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
