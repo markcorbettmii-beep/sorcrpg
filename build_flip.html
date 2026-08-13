@@ -1667,6 +1667,7 @@
 <p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
 
 <div class="action-bar">
+  <button id="downloadBtn">Download</button>
   <button id="saveJpegBtn">View / Save</button>
   <div class="print-group">
     <button class="ptab active" data-side="front">Front</button>
@@ -1861,6 +1862,20 @@
       front.style.display = prevFrontDisplay;
       back.style.display  = prevBackDisplay;
     }, 500);
+  });
+
+  // Download button
+  document.getElementById('downloadBtn').addEventListener('click', function() {
+    var html = document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'character-sheet.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   });
 </script>
 <script>
