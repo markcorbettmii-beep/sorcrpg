@@ -1666,7 +1666,7 @@
 <p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
 
 <div class="action-bar">
-  <button id="saveJpegBtn">View / Save</button>
+  <button id="downloadBtn">Download</button>
   <div class="print-group">
     <button class="ptab active" data-side="front">Front</button>
     <button class="ptab" data-side="back">Back</button>
@@ -1728,102 +1728,18 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Browsers block navigating a tab directly to a data: URL, so instead we
-  // write the images into the already-opened tab as <img> elements, with
-  // Front/Back buttons so the saved view can be flipped without re-capturing.
-  function openImageWindowWithFlip(win, frontUrl, backUrl, initialSide) {
-    if (!win) return;
-    var html = '<!DOCTYPE html><html><head><title>SORC Character Sheet</title>' +
-      '<meta name="viewport" content="width=device-width, initial-scale=1"></head>' +
-      '<body style="margin:0;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:70px;">' +
-      '<img id="sheetImg" style="max-width:100%;height:auto;display:block;" alt="Character Sheet">' +
-      '<div style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:12px;padding:12px;background:#1a1a1a;border-top:1px solid #2a2a2a;">' +
-      '<button id="frontBtn" style="background:#3a4a18;color:#f2ece0;border:1px solid #5a6a28;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Front</button>' +
-      '<button id="backBtn" style="background:#3a4a18;color:#f2ece0;border:1px solid #5a6a28;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Back</button>' +
-      '</div>' +
-      '<scr' + 'ipt>' +
-      'var frontUrl = ' + JSON.stringify(frontUrl) + ';' +
-      'var backUrl = ' + JSON.stringify(backUrl) + ';' +
-      'var img = document.getElementById("sheetImg");' +
-      'var frontBtn = document.getElementById("frontBtn");' +
-      'var backBtn = document.getElementById("backBtn");' +
-      'function setActive(side){' +
-      '  img.src = side === "back" ? backUrl : frontUrl;' +
-      '  frontBtn.style.opacity = side === "back" ? "0.55" : "1";' +
-      '  backBtn.style.opacity = side === "back" ? "1" : "0.55";' +
-      '}' +
-      'frontBtn.addEventListener("click", function(){ setActive("front"); });' +
-      'backBtn.addEventListener("click", function(){ setActive("back"); });' +
-      'setActive(' + JSON.stringify(initialSide) + ');' +
-      '</scr' + 'ipt>' +
-      '</body></html>';
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-  }
-
-  // Capture one face to a JPEG data URL.
-  // Clones the face into an offscreen element so html2canvas captures it in
-  // complete isolation - no dependency on live display/transform state. Text
-  // <input> fields are swapped for plain divs first, since html2canvas hand-
-  // approximates input rendering and gets the alignment wrong.
-  function captureFaceDataUrl(faceEl) {
-    return new Promise(function(resolve, reject) {
-      var clone = faceEl.cloneNode(true);
-      clone.removeAttribute('id');
-      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
-      clone.querySelectorAll('input.fline').forEach(function(inp) {
-        var div = document.createElement('div');
-        div.textContent = inp.value;
-        div.className = 'fline';
-        div.style.cssText = 'background:transparent;border:none;border-bottom:1px solid #aaa;width:100%;font-family:Arial, sans-serif;font-size:0.72rem;color:#3d3d3d;height:auto;padding:0 1px;display:block;min-height:1em;';
-        inp.parentNode.replaceChild(div, inp);
-      });
-      document.body.appendChild(clone);
-
-      setTimeout(function() {
-        html2canvas(clone, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#f2ece0',
-          width: 816,
-          height: 1056,
-          logging: false
-        }).then(function(canvas) {
-          document.body.removeChild(clone);
-          resolve(canvas.toDataURL('image/jpeg', 0.93));
-        }).catch(function(err) {
-          if (document.body.contains(clone)) document.body.removeChild(clone);
-          reject(err);
-        });
-      }, 100); // allow browser to render before capture
-    });
-  }
-
-  var saveFlippedSnap;
-  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
-    saveFlippedSnap = flipped;
-    saving = true;
-  }, { passive: true });
-  document.getElementById('saveJpegBtn').addEventListener('click', function() {
-    saving = true;
-    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
-    saveFlippedSnap = undefined;
-    var btn = this;
-    btn.textContent = 'Saving...';
-    btn.disabled = true;
-    var winRef = window.open('', '_blank');
-    Promise.all([captureFaceDataUrl(front), captureFaceDataUrl(back)]).then(function(urls) {
-      openImageWindowWithFlip(winRef, urls[0], urls[1], snap ? 'back' : 'front');
-      btn.textContent = 'View / Save';
-      btn.disabled = false;
-      saving = false;
-    }).catch(function() {
-      if (winRef) winRef.close();
-      btn.textContent = 'View / Save';
-      btn.disabled = false;
-      saving = false;
-    });
+  // Download button
+  document.getElementById('downloadBtn').addEventListener('click', function() {
+    var html = document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'character-sheet.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   });
 
   // Print tabs
