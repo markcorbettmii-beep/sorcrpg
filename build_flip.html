@@ -1802,30 +1802,15 @@
     });
   }
 
-  var saveFlippedSnap;
-  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
-    saveFlippedSnap = flipped;
-    saving = true;
-  }, { passive: true });
+  // View / Save button - opens editable interactive version in new tab
   document.getElementById('saveJpegBtn').addEventListener('click', function() {
-    saving = true;
-    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
-    saveFlippedSnap = undefined;
-    var btn = this;
-    btn.textContent = 'Saving...';
-    btn.disabled = true;
-    var winRef = window.open('', '_blank');
-    Promise.all([captureFaceDataUrl(front), captureFaceDataUrl(back)]).then(function(urls) {
-      openImageWindowWithFlip(winRef, urls[0], urls[1], snap ? 'back' : 'front');
-      btn.textContent = 'View / Save';
-      btn.disabled = false;
-      saving = false;
-    }).catch(function() {
-      if (winRef) winRef.close();
-      btn.textContent = 'View / Save';
-      btn.disabled = false;
-      saving = false;
-    });
+    var html = document.documentElement.outerHTML;
+    var newWin = window.open('', '_blank');
+    if (newWin) {
+      newWin.document.open();
+      newWin.document.write(html);
+      newWin.document.close();
+    }
   });
 
   // Print tabs
