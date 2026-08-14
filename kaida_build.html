@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kaida - SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,13 +30,16 @@
       align-items: flex-start;
       justify-content: center;
       overflow-x: hidden;
-      overflow-y: auto;
+      overflow-y: auto;   /* desktop: sheet scrolls vertically at native size */
     }
+    /* Mobile: clip overflow so scaled-down layout box doesn't add dead scroll space */
     @media (max-width: 815px) {
       .sheet-viewport { overflow: hidden; }
     }
 
     /* ── SCALE WRAPPER ── */
+    /* Sheet is always 816×1056px internally (8.5×11in at 96dpi).
+       JS scales it to fit the viewport. */
     .scale-wrap {
       width: 816px;
       height: 1056px;
@@ -84,7 +88,6 @@
     }
 
     .face.back { display: none; }
-    #front .inner { zoom: 0.96; }
 
     /* ── BORDER ── */
     .border-frame {
@@ -127,7 +130,7 @@
     .inner {
       position: relative;
       z-index: 1;
-      padding: 14px 18px 14px;
+      padding: 14px 42px 14px;
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -196,6 +199,36 @@
     }
 
     /* ── FILL-IN FIELDS ── */
+    .pencil {
+      font-family: Arial, sans-serif;
+      color: #3d3d3d;
+      font-size: 0.72rem;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+      display: block;
+      width: 100%;
+      min-height: 1em;
+      outline: none;
+    }
+    .afield .pencil { font-size: 0.65rem; }
+    .vfield .pencil { font-size: 0.65rem; }
+    .tfield .pencil { font-size: 0.62rem; }
+    .sfield .pencil { font-size: 0.62rem; }
+    .clr-line .pencil { display: inline; }
+    .itype-bullet-lbl .pencil, .itype-bullet .pencil { font-size: 0.58rem; display: inline; }
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.72rem;
+      color: #3d3d3d;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
     .field { margin-bottom: 5px; }
 
     .field-lbl {
@@ -442,9 +475,6 @@
       height: 16px;
       border: 1px solid #4a5a20;
       background: #f5f0e4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     /* FORMULA NOTE */
@@ -480,7 +510,7 @@
     .sfield.wide { width: 62px; }
 
     /* TRAITS */
-    .trait-list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 4px; }
+    .trait-list { list-style: none; padding: 0; }
 
     .trait-list li {
       display: flex;
@@ -499,9 +529,6 @@
       border: 1px solid #4a5a20;
       background: #f5f0e4;
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     /* CHIPS */
@@ -562,9 +589,6 @@
       height: 18px;
       border: 1px solid #4a5a20;
       background: #f5f0e4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .class-hdr {
@@ -606,23 +630,20 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       border-bottom: 1px solid #4a5a20;
-      margin-bottom: 2px;
-      padding-bottom: 2px;
+      margin-bottom: 0px;
+      padding-bottom: 0px;
       display: flex;
     }
     .item-card-tbl {
       width: 100%;
       border-collapse: collapse;
       font-family: Arial, sans-serif;
-      font-size: 0.41rem;
-      table-layout: fixed;
+      font-size: 0.48rem;
     }
     .item-card-tbl td {
-      padding: 0px 2px;
-      vertical-align: middle;
+      padding: 1px 2px;
+      vertical-align: top;
       color: #2e3d0f;
-      white-space: nowrap;
-      overflow: hidden;
     }
     .item-card-tbl td:first-child {
       padding-right: 4px;
@@ -632,13 +653,10 @@
       padding-left: 4px;
     }
     .weap-tbl td:last-child { width: 50%; }
-    .ammo-tbl td:first-child { width: 38%; border-right: none; }
-    .ammo-tbl td:last-child { width: 62%; }
-    .ammo-tbl .pencil { font-size: 0.36rem; }
     .itype-hdr td {
       font-weight: 700;
       border-top: 1px solid #4a5a20;
-      padding-top: 2px;
+      padding-top: 5px;
       padding-bottom: 1px;
     }
     .itype-hdr:first-child td {
@@ -651,13 +669,12 @@
     }
     .itype-bullet-lbl td {
       color: #4a5a20;
-      height: 9px;
+      height: 11px;
       border-bottom: 1px dotted #ccc;
-      font-size: 0.38rem;
+      font-size: 0.42rem;
       padding: 0px 2px;
       vertical-align: middle;
     }
-    .itype-bullet-lbl .pencil { font-size: 0.48rem; }
     .citem {
       display: flex;
       align-items: center;
@@ -682,6 +699,13 @@
       border: 1px solid #4a5a20;
       background: #f5f0e4;
       flex-shrink: 0;
+      font-family: Arial, sans-serif;
+      font-size: 7px;
+      line-height: 11px;
+      text-align: center;
+      outline: none;
+      cursor: text;
+      overflow: hidden;
     }
 
     /* JOURNAL LINES */
@@ -713,7 +737,7 @@
     .xp-bar {
       border: 1px solid #4a5a20;
       height: 8px;
-      background: rgba(90, 122, 40, 0.18);
+      background: #f5f0e4;
       margin-top: 3px;
       overflow: hidden;
     }
@@ -777,6 +801,58 @@
 
     .action-bar button:active { background: #2a3a10; }
 
+    /* Print tab group */
+    .print-group {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .print-group .ptab {
+      background: #2a2a2a;
+      color: #888;
+      border: none;
+      border-radius: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .print-group .ptab:last-of-type { border-right: none; }
+
+    .print-group .ptab.active {
+      background: #3a4a18;
+      color: #f2ece0;
+    }
+
+    .print-group .ptab:active { background: #2a3a10; color: #f2ece0; }
+
+    #printBtn {
+      background: #3a4a18;
+      color: #f2ece0;
+      border: 1px solid #5a6a28;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #printBtn:active { background: #2a3a10; }
+
     /* ── CLASS / LEVEL / RANK ROW ── */
     .clr-row {
       display: flex;
@@ -806,81 +882,30 @@
       height: 1px;
       background: #4a5a20;
     }
-
+    
+    
+    
+    
     /* REPOSITORY */
     .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
     .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
     .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
     .repo-pts { display: inline-flex; gap: 2px; vertical-align: middle; }
-    .repo-pt { width: 8px; height: 8px; border: 1px solid #4a5a20; background: #f5f0e4; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-family: Arial, sans-serif; font-size: 7px; line-height: 1; color: #2e3d0f; }
-    .repo-pt.spent { text-decoration: line-through; color: #8a9a70; }
+    .repo-pt { width: 8px; height: 8px; border: 1px solid #4a5a20; background: #f5f0e4; flex-shrink: 0; }
     .repo-pt-rem { border: 1.5px solid #22cc44 !important; }
     .rem-lbl { font-size: 0.36rem; color: #22aa44; font-weight: 700; margin-left: 2px; display: inline-block; vertical-align: middle; }
+    .rem-carry { display: inline-block; width: 8px; height: 8px; border: 1px solid rgba(100,100,100,0.35); background: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(120,120,120,0.25) 2px, rgba(120,120,120,0.25) 3px); margin-left: 2px; vertical-align: middle; }
+    .repo-pt[contenteditable], .repo-pt-rem[contenteditable] { font-family: Arial, sans-serif; font-size: 7px; line-height: 8px; text-align: center; outline: none; cursor: text; overflow: hidden; }
+    .repo-field[contenteditable] { font-family: Arial, sans-serif; font-size: 8px; line-height: 12px; text-align: center; outline: none; cursor: text; overflow: hidden; }
     .repo-field { width: 22px; height: 12px; border: 1px solid #4a5a20; background: #f5f0e4; display: inline-block; vertical-align: middle; }
     /* TALENT TREES */
     .talent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
     .talent-tree { border: 1px solid #4a5a20; background: #e8e0cc; padding: 4px; }
-    .talent-tree-name { width: 100%; height: 12px; border-bottom: 1px solid #4a5a20; margin-bottom: 5px; font-family: 'Cinzel', serif; font-size: 0.5rem; font-weight: 700; color: #2e3d0f; letter-spacing: 0.08em; display: flex; align-items: flex-end; }
+    .talent-tree-name { width: 100%; height: 12px; border-bottom: 1px solid #4a5a20; margin-bottom: 5px; }
     .talent-slot { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; }
     .talent-slot-line { flex: 1; height: 1px; background: #aaa; }
     /* PROFESSIONS */
     .prof-list { font-family: Arial, sans-serif; font-size: 0.44rem; color: #444; line-height: 1.5; margin-top: 3px; }
-
-    /* ── PENCIL / HANDWRITING STYLE ── */
-    .pencil {
-      font-family: Arial, sans-serif;
-      color: #3d3d3d;
-      font-size: 0.72rem;
-      letter-spacing: 0.01em;
-      line-height: 1.2;
-    }
-
-    /* Pencil inside afield / vfield / tfield sizing adjustments */
-    .afield .pencil { font-size: 0.65rem; }
-    .vfield .pencil { font-size: 0.65rem; }
-    .tfield .pencil { font-size: 0.62rem; }
-
-    /* Back side input fields */
-    input.fline {
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid #aaa;
-      width: 100%;
-      font-family: Arial, sans-serif;
-      font-size: 0.62rem;
-      color: #222;
-      height: auto;
-      padding: 0 1px;
-      outline: none;
-      display: block;
-    }
-
-    input.repo-field-input {
-      background: #f5f0e4;
-      border: 1px solid #4a5a20;
-      width: 22px;
-      height: 12px;
-      font-family: Arial, sans-serif;
-      font-size: 0.42rem;
-      color: #2e3d0f;
-      text-align: center;
-      outline: none;
-      padding: 0;
-    }
-
-    input.sfield-input {
-      background: #f5f0e4;
-      border: 1px solid #4a5a20;
-      width: 62px;
-      height: 13px;
-      font-family: Arial, sans-serif;
-      font-size: 0.52rem;
-      color: #222;
-      text-align: center;
-      outline: none;
-      padding: 0;
-      flex-shrink: 0;
-    }
 
     /* ── PRINT ── */
     @media print {
@@ -902,6 +927,7 @@
         height: auto !important;
         margin: 0 !important;
       }
+      /* Let the flipper flow normally so faces stack vertically */
       .flipper {
         width: 8.5in !important;
         height: auto !important;
@@ -925,6 +951,19 @@
         page-break-before: always;
         break-before: page;
       }
+    }
+    /* Character sheet link colors - rare rank blue */
+    a {
+      color: #2196f3 !important;
+    }
+    a:visited {
+      color: #2196f3 !important;
+    }
+    a:hover, a:focus {
+      color: #2196f3 !important;
+    }
+    a:active {
+      color: #2196f3 !important;
     }
   </style>
 </head>
@@ -962,59 +1001,61 @@
           <div>
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-creation">Basic Info.</a></p>
-              <div class="field"><span class="field-lbl">Name &amp; UID</span><input type="text" class="fline" value="Kaida / *******" /></div>
-              <div class="field"><span class="field-lbl">Nickname(s)</span><input type="text" class="fline" value="None" /></div>
-              <div class="field"><span class="field-lbl">Gender</span><input type="text" class="fline" value="Female" /></div>
-              <div class="field"><span class="field-lbl">Species</span><input type="text" class="fline" value="Humanoid / Reptilian" /></div>
-              <div class="field"><span class="field-lbl">Race</span><input type="text" class="fline" value="Dr&#257;co Blood (Red)" /></div>
-              <div class="field"><span class="field-lbl">Culture</span><input type="text" class="fline" value="Crownlander" /></div>
-              <div class="field"><span class="field-lbl">Age</span><input type="text" class="fline" value="86" /></div>
-              <div class="field"><span class="field-lbl">Birthday</span><input type="text" class="fline" value="Aut 14, 10,023 EA" /></div>
-              <div class="field"><span class="field-lbl">Place of Birth</span><input type="text" class="fline" value="Crown Range, Northern Zailister" /></div>
-              <div class="field"><span class="field-lbl">Occupation / Role</span><input type="text" class="fline" value="Barbarian Archer / Demon Slayer" /></div>
-              <div class="field"><span class="field-lbl">Planet / World</span><input type="text" class="fline" value="Zailister" /></div>
-              <div class="field"><span class="field-lbl">Languages</span><input type="text" class="fline" value="Common, Draconic (Blood), Crownlander Tongue" /></div>
+              <div class="field"><span class="field-lbl">Name &amp; UID</span><input type="text" class="fline" value="Kaida" /></div>
+              <div class="field"><span class="field-lbl">Nickname(s)</span><input type="text" class="fline" value="Moonwhisper" /></div>
+              <div class="field"><span class="field-lbl">Gender</span><input type="text" class="fline" value="Male" /></div>
+              <div class="field"><span class="field-lbl">Species</span><input type="text" class="fline" value="Humanoid" /></div>
+              <div class="field"><span class="field-lbl">Race†</span><input type="text" class="fline" value="Elf" /></div>
+              <div class="field"><span class="field-lbl">Culture†</span><input type="text" class="fline" value="Stonekeep Dwarves" /></div>
+              <div class="field"><span class="field-lbl">Age</span><input type="text" class="fline" value="52" /></div>
+              <div class="field"><span class="field-lbl">Birthday</span><input type="text" class="fline" value="Win 22, 10,023 EA" /></div>
+              <div class="field"><span class="field-lbl">Place of Birth</span><input type="text" class="fline" value="Stonekeep Mountains, Essentia" /></div>
+              <div class="field"><span class="field-lbl">Occupation / Role</span><input type="text" class="fline" value="Blacksmith / Armorsmith" /></div>
+              <div class="field"><span class="field-lbl">Planet / World</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Languages</span><input type="text" class="fline" value="Dwarvish, Common" /></div>
+              <div class="small-note">† see back of sheet for details</div>
             </div>
 
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-creation">Physical</a></p>
-              <div class="field"><span class="field-lbl">Height</span><input type="text" class="fline" value="6'2&quot;" /></div>
-              <div class="field"><span class="field-lbl">Weight</span><input type="text" class="fline" value="187 lbs" /></div>
-              <div class="field"><span class="field-lbl">Body Type / Build</span><input type="text" class="fline" value="Tall, muscular, athletic" /></div>
-              <div class="field"><span class="field-lbl">Skin Color / Tone</span><input type="text" class="fline" value="Deep bronze, reddish undertone (Blood Draco)" /></div>
-              <div class="field"><span class="field-lbl">Hair Color / Style</span><input type="text" class="fline" value="Deep red, long, war-braided with bone clasps" /></div>
-              <div class="field"><span class="field-lbl">Eye Color / Shape</span><input type="text" class="fline" value="Purple - almond-shaped (Blood Draco: red+blue = purple)" /></div>
-              <div class="field"><span class="field-lbl sm">Scars, tattoos, birthmarks</span><input type="text" class="fline" value="Claw scar across left cheekbone; Crownlander sigil branded on right shoulder" /></div>
-              <div class="field"><span class="field-lbl">Voice (tone, accent)</span><input type="text" class="fline" value="Deep, commanding, Northern accent" /></div>
-              <div class="field"><span class="field-lbl">Posture / Gait</span><input type="text" class="fline" value="Upright, deliberate - predator's economy of movement" /></div>
+              <div class="field"><span class="field-lbl">Height</span><input type="text" class="fline" value="6'2" /></div>
+              <div class="field"><span class="field-lbl">Weight</span><input type="text" class="fline" value="210 lbs" /></div>
+              <div class="field"><span class="field-lbl">Body Type / Build</span><input type="text" class="fline" value="Stocky, powerfully built" /></div>
+              <div class="field"><span class="field-lbl">Skin Color / Tone</span><input type="text" class="fline" value="Fair, ruddy (forge-hardened)" /></div>
+              <div class="field"><span class="field-lbl">Hair Color / Style</span><input type="text" class="fline" value="Black, shoulder-length with forked beard" /></div>
+              <div class="field"><span class="field-lbl">Eye Color / Shape</span><input type="text" class="fline" value="Brown, keen and focused" /></div>
+              <div class="field"><span class="field-lbl sm">Scars, tattoos, birthmarks</span><input type="text" class="fline" value="Burn marks on hands and forearms; forge-master's pride" /></div>
+              <div class="field"><span class="field-lbl">Voice (tone, accent)</span><input type="text" class="fline" value="Strong, steady; measured Dwarvish accent" /></div>
+              <div class="field"><span class="field-lbl">Posture / Gait</span><input type="text" class="fline" value="Deliberate and controlled; walks with the gait of a craftsman" /></div>
             </div>
 
           </div>
 
           <!-- BACK CENTER: Portrait + Currency + Experience -->
           <div class="col-mid">
-            <p class="sec-title" style="width:100%;"><a href="character-customizer/creation-overview.html" target="rules">Photo or Portrait</a></p>
-            <div class="portrait" id="portraitBox" style="height:380px;flex:none;aspect-ratio:unset;"><span>Portrait</span></div>
+            <p class="sec-title" style="width:100%;"><a target="rules" href="demos/character-customization-demo.html">Photo or Portrait</a></p>
+            <div class="portrait" id="portraitBox" style="height:380px;flex:none;aspect-ratio:unset;"><span>Photo or Portrait</span></div>
 
             <div style="width:100%;margin-top:10px;">
               <div class="sec">
                 <div style="font-size: 0.55rem; color: #666; margin-top: 8px; line-height: 1.5; text-align: center;"><p style="margin:0;"><strong><a href="content/essentia_core/rules_ref_004.html#gear-equipment" target="rules" style="text-decoration:underline;color:#0066cc;">EQUIPMENT &amp; ITEMS</a></strong></p></div>
-                <div style="font-size: 0.55rem; color: #666; line-height: 1.5;" contenteditable="true"><strong>Armaments:</strong> Longbow 2H (30 GP, 4 lbs) | Light Armor (10 GP, 10 lbs) | Arrows Bundle (1 GP, 3 lbs)<br><strong>Gear:</strong> Scout's Kit (10 GP, 8 lbs) | Backpack (2 GP, 5 lbs) | Rope 50ft (1 GP, 10 lbs) | Lantern (5 GP, 2 lbs) | Bedroll (1 GP, 7 lbs) | Tinderbox (0.5 GP, 1 lb) | Oil Flask (0.1 GP, 1 lb) | Flask (0.02 GP, 1 lb) | Belt (1 GP, 1 lb) = 30.62 GP<br><strong>Free:</strong> Starting Attire (2 lbs) + Rations 7 days (14 lbs)<br><strong>TOTAL WEIGHT:</strong> 62 lbs / 160 lbs capacity = <strong>LIGHT LOAD (38.75%)</strong> → full speed, no penalties. Remaining capacity: 98 lbs<br><strong>Remaining Gold:</strong> 19.38 GP</div>
+                <div style="font-size: 0.55rem; color: #666; line-height: 1.5;" contenteditable="true"><strong>Armaments:</strong> Magic Hammer 1H (15 GP, 3 lbs) | Medium Shield (10 GP, 6 lbs) | Light Armor (10 GP, 10 lbs)<br><strong>Gear:</strong> Blacksmith's Kit (15 GP, 12 lbs) | Backpack (2 GP, 5 lbs) | Rope 50ft (1 GP, 10 lbs) | Lantern (5 GP, 2 lbs) | Bedroll (1 GP, 7 lbs) | Tinderbox (0.5 GP, 1 lb) | Oil Flask (0.1 GP, 1 lb) | Flask (0.02 GP, 1 lb) | Belt Pouch (5 Silver, 1 lb) = 45.12 GP<br><strong>Free:</strong> Starting Attire (2 lbs) + Rations 7 days (14 lbs)<br><strong>TOTAL WEIGHT:</strong> 78 lbs / 160 lbs capacity = <strong>LIGHT LOAD (48.75%)</strong> → full speed, no penalties. Remaining capacity: 82 lbs (Burdened at 94%+)</div>
               </div>
               <div class="sec">
-                <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#currency-system">Currency</a></p>
-                <div class="srow"><span>Copper (CP)</span><input type="text" class="sfield-input" value="17" /></div>
-                <div class="srow"><span>Silver (SP)</span><input type="text" class="sfield-input" value="30" /></div>
-                <div class="srow"><span>Gold (GP)</span><input type="text" class="sfield-input" value="847" /></div>
-                <div class="srow"><span>Electrum (EP)</span><input type="text" class="sfield-input" value="0" /></div>
-                <div class="srow"><span>Platinum (PP)</span><input type="text" class="sfield-input" value="0" /></div>
+                <p class="sec-title" style="margin-top:12px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#currency-system">Currency</a></p>
+                <div class="srow"><span>Copper (CP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+                <div class="srow"><span>Silver (SP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+                <div class="srow"><span>Gold (GP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">2.29</span></div></div>
+                <div class="srow"><span>Electrum (EP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+                <div class="srow"><span>Platinum (PP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+                <div class="srow"><span>Remaining Currency</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
               </div>
               <div class="sec">
                 <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression">Progression Tracker</a></p>
                 <div style="position:relative;border:1px solid #4a5a20;margin-top:5px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(90,122,40,0.3);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #4a5a20;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Growth (Years)</span></div>
+                    <div style="border-right:1px solid #4a5a20;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Growth† (Years)</span></div>
                     <div style="border-right:1px solid #4a5a20;padding:2px 3px;display:flex;align-items:center;"><div class="xp-bar" style="position:relative;width:100%;height:5px;"><div class="xp-fill"></div></div></div>
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">to next Growth <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
@@ -1022,19 +1063,20 @@
                 <div style="position:relative;border:1px solid #4a5a20;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(90,122,40,0.18);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #4a5a20;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Character LVL.</span></div>
+                    <div style="border-right:1px solid #4a5a20;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Character LVL†</span></div>
                     <div style="border-right:1px solid #4a5a20;padding:2px 3px;display:flex;align-items:center;"><div class="xp-bar" style="position:relative;width:100%;height:5px;"><div class="xp-fill"></div><div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:#a06010;"></div></div></div>
-                    <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Lvl <span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:8px;min-width:0;min-height:0;border-bottom:1px solid #999;">30</span>/XP <span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:16px;min-width:0;min-height:0;border-bottom:1px solid #999;">0</span> <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
+                    <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e3d0f;">Lvl <span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:8px;min-width:0;min-height:0;border-bottom:1px solid #999;">1</span>/XP <span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:16px;min-width:0;min-height:0;border-bottom:1px solid #999;">0</span> <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
                 </div>
                 <div style="position:relative;border:1px solid #1a4080;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(40,100,200,0.18);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #1a4080;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f2e5a;">Current Rank</span></div>
+                    <div style="border-right:1px solid #1a4080;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f2e5a;">Current Rank†</span></div>
                     <div style="border-right:1px solid #1a4080;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f2e5a;">Current RP</span></div>
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f2e5a;">RP to next Rank <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
                 </div>
+                <div style="font-size:0.50rem;color:#666;padding:3px 0;text-align:center;">† see back of sheet for details</div>
                 <div style="position:relative;border:1px solid #a09010;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(220,200,30,0.2);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
@@ -1046,7 +1088,7 @@
                 <div style="position:relative;border:1px solid #8a5010;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(200,120,30,0.18);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #8a5010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;">Anim. Wayfarer</span></div>
+                    <div style="border-right:1px solid #8a5010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;"><a target="rules" href="content/essentia_core/rules_ref_005.html#wayfarer" style="color:#5a3000;">Anim. Wayfarer</a></span></div>
                     <div style="border-right:1px solid #8a5010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;">Wayfarer Level</span></div>
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;">Cooldown</span></div>
                   </div>
@@ -1070,32 +1112,29 @@
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(20,150,120,0.18);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
                     <div style="border-right:1px solid #1a6a5a;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f3d33;">Wellness</span></div>
-                    <div style="border-right:1px solid #1a6a5a;padding:2px 3px;display:flex;align-items:center;"><div class="xp-bar" style="position:relative;width:100%;height:5px;"><div class="xp-fill"></div><span style="position:absolute;left:0;top:0;font-family:Arial,sans-serif;font-size:0.22rem;line-height:5px;color:#0f3d33;opacity:0.35;">-150%</span><span style="position:absolute;left:66.7%;top:0;transform:translateX(-50%);font-family:Arial,sans-serif;font-size:0.22rem;line-height:5px;color:#0f3d33;opacity:0.35;">50%</span><span style="position:absolute;right:0;top:0;font-family:Arial,sans-serif;font-size:0.22rem;line-height:5px;color:#0f3d33;opacity:0.35;">150%</span></div></div>
-                    <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f3d33;"><span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:14px;min-width:0;min-height:0;border-bottom:1px solid #999;">+40</span>% <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
+                    <div style="border-right:1px solid #1a6a5a;padding:2px 3px;display:flex;align-items:center;"><div class="xp-bar" style="position:relative;width:100%;height:5px;"><div class="xp-fill"></div></div></div>
+                    <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f3d33;"><span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:14px;min-width:0;min-height:0;border-bottom:1px solid #999;"></span>% <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- BACK RIGHT: Prestige + Relations + Journal + Equipment -->
+          <!-- BACK RIGHT: Lore + Relations + Journal Notes -->
           <div>
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#prestige">Prestige</a></p>
-              <p class="lore-item">&#9670; <strong>Alignment</strong> <span class="lore-note" style="font-weight:normal;font-style:normal;color:#222;">Good</span></p>
-              <p class="lore-item">&#9670; <strong>Standings</strong> <span class="lore-note">Adored - Prophets of the Crown; Liked - Ozanic Vanwa Tribe; Despised - Red Dwarf Societies; Hated - All demon races</span></p>
-              <p class="lore-item">&#9670; <strong>Titles and Reputation</strong> <span class="lore-note">"Demon Slayer" (Boasted)</span></p>
-              <p class="lore-item">&#9670; <strong>Legacy</strong> <span class="lore-note">See Journal</span></p>
-              <p class="lore-item" style="margin-bottom:4px;">&#9670; <strong>Reputation</strong></p>
-              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#444;margin-bottom:3px;margin-left:8px;line-height:1.3;">Word crossing the lands is that Kaida is a demon slayer.</p>
-              <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#444;margin-bottom:8px;margin-left:8px;line-height:1.3;font-style:italic;">Exposure by GM: Nothing shared. Nothing noticed or rumored - though Kaida herself senses a secret from her youth may be surfacing.</p>
+              <div class="field"><span class="field-lbl">Alignment</span><input type="text" class="fline" value="Lawful" /></div>
+              <div class="field"><span class="field-lbl">Standings <span style="font-size:0.5rem;color:#888;">(See Journal)</span></span><input type="text" class="fline" value="Stonekeep Dwarves: Respected" /></div>
+              <div class="field"><span class="field-lbl">Titles and Reputation</span><input type="text" class="fline" value="Forgeborn" /></div>
+              <div class="field"><span class="field-lbl">Legacy</span><input type="text" class="fline" /></div>
             </div>
 
             <div class="sec" style="margin-top:8px;">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_004.html#home-and-family">Relations</a></p>
-              <p class="lore-item">&#9670; <strong>Family</strong> <span class="lore-note" style="color:#222;">None</span></p>
-              <p class="lore-item">&#9670; <strong>Enemies</strong> <span class="lore-note" style="color:#222;">Red Dwarf Societies; all demon races</span></p>
-              <p class="lore-item">&#9670; <strong>Affiliations</strong> <span class="lore-note" style="color:#222;">Barbarians of the North (High Stature)</span></p>
+              <div class="field"><span class="field-lbl">Family</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Enemies</span><input type="text" class="fline" /></div>
+              <div class="field"><span class="field-lbl">Affiliations</span><input type="text" class="fline" /></div>
             </div>
 
             <div class="sec" style="margin-top:8px;">
@@ -1103,11 +1142,12 @@
               <div style="height:12px;"></div>
             </div>
 
-            <div class="sec" style="margin-top:2px;">
+            <div class="sec" style="margin-top:4px;">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#journal">Journal Notes</a><br><span class="lore-note" style="font-family:Arial,sans-serif;font-size:0.42rem;letter-spacing:0;text-transform:none;font-weight:400;">(see Journal for complete logs)</span></p>
-              <p class="lore-item" style="margin-bottom:6px;">&#9670; <strong>Background</strong> <span class="lore-note" style="color:#333;font-style:normal;">Born in the Crown Range to a tribe now gone. Raised among the Amazon warriors of the North. Her past carries a shadow she has never spoken aloud. See journal.</span></p>
-              <p class="lore-item" style="margin-bottom:6px;">&#9670; <strong>Mission Statement</strong> <span class="lore-note">(Custom Life Quest, see rules)</span><br/><span style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;font-weight:normal;">Revenge against the demon races responsible for the destruction of her tribe in the Crown Range. See journal.</span></p>
-              <p class="lore-item" style="margin-top:10px;margin-bottom:4px;">&#9670; <strong>Quest Logs</strong> <span class="lore-note">(active)</span></p>
+              <p class="lore-item" style="margin-bottom:6px;">◆ <strong>Background:</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">A dwarf born to the craft, Brunn has dedicated his life to perfecting the art of blacksmithing and armorcraft. Forged in the heat of the forge, he seeks to create the finest weapons and armor to protect those he holds dear.</span></p>
+              <p class="lore-item" style="margin-bottom:6px;">◆ <strong>Mission Statement:</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">Establish a legendary forge and create the finest armor and weapons in all the lands to protect kingdoms and earn lasting renown.)</span></p>
+              <p class="lore-item" style="margin-bottom:6px;">◆ <strong>First Quest (Level 1):</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">Brunn's first task was to retrieve mining tools stolen from the Stonekeep dwarves' workshop. A simple task that tested his growing skills—tracking thieves through the mountain passes, negotiating with local merchants, and recovering the stolen goods. Upon completion, Brunn earned his first level and was able to select his Class Tier Abilities as a Barbarian, choosing to focus on Spell-Drawn techniques to complement his natural strength and combat prowess.</span></p>
+              <p class="lore-item" style="margin-top:10px;margin-bottom:4px;">◆ <strong>Quest Logs</strong> <span class="lore-note">(active)</span></p>
               <table class="repo-tbl" style="width:100%;margin-bottom:4px;">
                 <thead>
                   <tr>
@@ -1118,11 +1158,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
                 </tbody>
               </table>
               <table class="repo-tbl" style="margin-top:4px;width:100%;">
@@ -1143,21 +1183,20 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td contenteditable="true">Olympiad</td><td contenteditable="true">Master</td><td style="border-right:1px solid #bbb;" contenteditable="true">Acrobatics, Athletics, Surge, Climb</td><td contenteditable="true">Hunter</td><td contenteditable="true">Master</td><td contenteditable="true">Leather Work, Skinning, Hunting, Fishing</td></tr>
-                  <tr><td contenteditable="true">Scout</td><td contenteditable="true">Journeyman</td><td style="border-right:1px solid #bbb;" contenteditable="true">Lead the Way, Sense Danger</td><td contenteditable="true">Cook</td><td contenteditable="true">Journeyman</td><td contenteditable="true">Party Feast, Meat Dehydration, Water Purification</td></tr>
-                  <tr><td contenteditable="true">Traveler</td><td contenteditable="true">Apprentice</td><td style="border-right:1px solid #bbb;" contenteditable="true">Pack Mule, Dietician</td><td contenteditable="true">Body Artist&#8224;</td><td contenteditable="true">Apprentice</td><td contenteditable="true">Tribal Barbarian Tattoo, Pierce Ears</td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td style="border-right:1px solid #bbb;" contenteditable="true"></td><td contenteditable="true">Field Medic</td><td contenteditable="true">&nbsp;</td><td contenteditable="true">Treat Wound</td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td style="border-right:1px solid #bbb;" contenteditable="true"></td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td style="border-right:1px solid #bbb;" contenteditable="true"></td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td style="border-right:1px solid #bbb;" contenteditable="true"></td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
-                  <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td style="border-right:1px solid #bbb;" contenteditable="true"></td><td contenteditable="true">&nbsp;</td><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
+                  <tr><td>Patriarch</td><td>Authority's Shield</td><td>1</td><td style="border-right:1px solid #bbb;">Novice</td><td>Blacksmith</td><td>Basic Armor Smith</td><td>1</td><td>Novice</td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
                 </tbody>
               </table>
-              <p style="font-family:Arial,sans-serif;font-size:0.36rem;color:#555;margin-top:3px;line-height:1.4;">&#8224;Body Artist tattoos hold magical properties. Piercings require the accessories that hold magic properties. See the ref# pointing to module specific details, including lore and recipes, on talent and skill cards.</p>
             </div>
 
             <div class="sec" style="margin-top:8px;">
-              <p class="sec-title">Animated Wayfarer</p>
+              <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_005.html#wayfarer">Animated Wayfarer</a></p>
               <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:0.44rem;">
                 <thead>
                   <tr style="background:rgba(200,120,30,0.18);">
@@ -1168,9 +1207,9 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td style="padding:2px 4px;border:1px solid #ccc;">Compass</td>
-                    <td style="padding:2px 4px;border:1px solid #ccc;">4</td>
-                    <td style="padding:2px 4px;border:1px solid #ccc;">5 days</td>
+                    <td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td>
+                    <td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td>
+                    <td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td>
                   </tr>
                 </tbody>
               </table>
@@ -1182,61 +1221,29 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Port (Universal Base)</td><td style="padding:2px 4px;border:1px solid #ccc;">Unlocked - nearest fire or water</td></tr>
-                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Nearest Camp</td><td style="padding:2px 4px;border:1px solid #ccc;">Unlocked</td></tr>
-                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Mark Spot</td><td style="padding:2px 4px;border:1px solid #ccc;">Unlocked</td></tr>
-                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Alert</td><td style="padding:2px 4px;border:1px solid #ccc;">Unlocked</td></tr>
-                  <tr style="background:rgba(40,100,200,0.08);"><td style="padding:2px 4px;border:1px solid #ccc;">Compass Sp. 1</td><td style="padding:2px 4px;border:1px solid #ccc;">Unlocked - detects nearest beacon direction</td></tr>
-                  <tr><td style="padding:2px 4px;border:1px solid #ccc;color:#aaa;">Find Secret</td><td style="padding:2px 4px;border:1px solid #ccc;color:#aaa;">Locked</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Port (Universal Base)</td><td style="padding:2px 4px;border:1px solid #ccc;">Nearest fire or water</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Nearest Camp</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Mark Spot</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Alert</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Find Secret</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Deep Down</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">All Aboard</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;">Quest Guidance</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr style="background:rgba(40,100,200,0.08);"><td style="padding:2px 4px;border:1px solid #ccc;">Form Special 1</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr style="background:rgba(40,100,200,0.08);"><td style="padding:2px 4px;border:1px solid #ccc;">Form Special 2</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr style="background:rgba(40,100,200,0.08);"><td style="padding:2px 4px;border:1px solid #ccc;">Form Special 3</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr style="background:rgba(40,100,200,0.08);"><td style="padding:2px 4px;border:1px solid #ccc;">Form Special 4</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
+                  <tr style="background:rgba(40,100,200,0.08);"><td style="padding:2px 4px;border:1px solid #ccc;">Form Special 5</td><td style="padding:2px 4px;border:1px solid #ccc;">&nbsp;</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- EQUIPMENT & ITEMS - full width below 3 cols -->
-          <div style="grid-column:1/-1;margin-top:4px;border-top:1px solid rgba(74,90,32,0.35);padding-top:4px;">
-            <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_004.html#gear-equipment">Equipment &amp; Items</a></p>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px;">
-              <div>
-                <p class="lore-item" style="margin-bottom:2px;">&#9670; <strong>Equipped / Carried</strong></p>
-                <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.4;">Backpack and sleeping gear, Lvl 25 Wayfarer, Torches, Rope, Hunter Kit, Body Armor Kit, First Aid Kit, Cooking Utensils, Leather Worker Kit, Relic Frags x5, Silver Sword (not readied)</p>
-              </div>
-              <div>
-                <p class="lore-item" style="margin-bottom:2px;">&#9670; <strong>Other Items / Misc.</strong><br><span style="font-family:Arial,sans-serif;font-size:0.44rem;font-weight:normal;color:#666;">(See front for consumables)</span></p>
-                <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.4;">See journal</p>
-              </div>
-              <div>
-                <p class="lore-item" style="margin-bottom:2px;">&#9670; <strong>Home (Property) / Storage</strong></p>
-                <p style="font-family:Arial,sans-serif;font-size:0.52rem;color:#333;line-height:1.4;">Small plot, tent dwelling - Northern wilderness</p>
-              </div>
-            </div>
-            <p class="small-note" style="margin-top:5px;font-style:italic;">Characters can keep property and companions in Storage, Vaults, and their homes' stables, kennels respectively.</p>
+
           </div>
 
-          <!-- REPOSITORY - full width -->
-          <div style="grid-column:1/-1;margin-top:0;border-top:1px solid rgba(74,90,32,0.35);padding-top:0;">
-            <p class="sec-title" style="margin-bottom:3px;padding-bottom:1px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#traits-tst">Repository</a></p>
-            <div style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;margin-top:1px;">ATT. REM PTS.</div>
-            <div style="font-family:Arial,sans-serif;font-size:0.36rem;font-weight:normal;color:#555;">REM Points (roll - change value as you spend or save as Rems)</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:16px;">
-              <table class="repo-tbl" style="margin-top:1px;">
-                <tbody>
-                  <tr>
-                    <td>ART <div class="repo-pts"><div class="repo-pt">1</div><div class="repo-pt"></div><div class="repo-pt"></div></div><span class="rem-lbl">REMs</span></td>
-                  </tr>
-                  <tr>
-                    <td>FOR <div class="repo-pts"><div class="repo-pt">1</div><div class="repo-pt"></div><div class="repo-pt"></div></div><span class="rem-lbl">REMs</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p class="small-note" style="margin-top:3px;">Crossed-out pts = spent. Plain pts = unspent. * = saving all pts as Remnants for future levels or items.</p>
-          </div>
-
-
-
-        </div><!-- /cols -->
-      </div><!-- /inner -->
+        </div>
+      </div>
     </div><!-- /front -->
 
 
@@ -1256,50 +1263,50 @@
         </div>
         <hr class="rule" />
 
-        <!-- CLASS / LEVEL / RANK -->
+        <!-- CHARACTER LEVEL / CLASS ABILITIES / RANK -->
         <div class="clr-row">
-          <div class="clr-item"><span class="clr-lbl">Char. LVL</span><span class="pencil" contenteditable="true" style="flex:1;border-bottom:1px solid #4a5a20;padding-bottom:1px;display:block;min-height:1em;">30</span></div>
-          <div class="clr-item"><span class="clr-lbl">Class Abil. (Tier/Path/Branch)</span><span class="pencil" contenteditable="true" style="flex:1;border-bottom:1px solid #4a5a20;padding-bottom:1px;display:block;min-height:1em;">Barbarian / Mountaineer / Amazon</span></div>
-          <div class="clr-item"><span class="clr-lbl">Growth <span style="font-size:0.75em;opacity:0.7;">(already at retirement age 85)</span></span><span class="pencil" contenteditable="true" style="flex:1;border-bottom:1px solid #4a5a20;padding-bottom:1px;display:block;min-height:1em;">8</span></div>
-          <div class="clr-item"><span class="clr-lbl">Rank</span><span class="pencil" contenteditable="true" style="flex:1;border-bottom:1px solid #4a5a20;padding-bottom:1px;display:block;min-height:1em;">Legend</span></div>
-          <div class="clr-item"><span class="clr-lbl">RP</span><span class="pencil" contenteditable="true" style="flex:1;border-bottom:1px solid #4a5a20;padding-bottom:1px;display:block;min-height:1em;">11,700</span></div>
+          <div class="clr-item" style="flex-direction:column;align-items:flex-start;"><span class="clr-lbl"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression" style="color:inherit;">Main Class Abil. (LVL)</a></span><span class="pencil" contenteditable="true" style="min-height:1.5em;width:100%;"></span></div>
+          <div class="clr-item"><span class="clr-lbl"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression" style="color:inherit;">Growth</a> <span style="font-size:0.75em;opacity:0.7;">(76 years before retirement at age 128)</span></span><span class="pencil" contenteditable="true">0</span></div>
+          <div class="clr-item"><span class="clr-lbl"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression" style="color:inherit;">Rank</a></span><span class="pencil" contenteditable="true">0</span></div>
+          <div class="clr-item"><span class="clr-lbl">RP</span><span class="pencil" contenteditable="true">0</span></div>
         </div>
 
         <div class="cols">
 
-          <!-- LEFT: Attributes + Vitality + Race/Class Bonuses -->
+          <!-- LEFT: Attributes + Vitality + Currency + XP -->
           <div>
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#attribute-development">Attributes</a></p>
               <div class="attr-grid">
-                <div class="abox"><span class="aname">ART</span><div class="afield"><span class="pencil" contenteditable="true">18</span></div></div>
-                <div class="abox"><span class="aname">FRT</span><div class="afield"><span class="pencil" contenteditable="true">40</span></div></div>
-                <div class="abox"><span class="aname">INT</span><div class="afield"><span class="pencil" contenteditable="true">20</span></div></div>
-                <div class="abox"><span class="aname">PER</span><div class="afield"><span class="pencil" contenteditable="true">35</span></div></div>
-                <div class="abox"><span class="aname">PHY</span><div class="afield"><span class="pencil" contenteditable="true">40</span></div></div>
-                <div class="abox"><span class="aname">RES</span><div class="afield"><span class="pencil" contenteditable="true">25</span></div></div>
-                <div class="abox"><span class="aname">WIS</span><div class="afield"><span class="pencil" contenteditable="true">28</span></div></div>
+                <div class="abox"><span class="aname">ART</span><div class="afield"><span class="pencil" contenteditable="true">2</span></div></div>
+                <div class="abox"><span class="aname">FRT</span><div class="afield"><span class="pencil" contenteditable="true">4</span></div></div>
+                <div class="abox"><span class="aname">INT</span><div class="afield"><span class="pencil" contenteditable="true">2</span></div></div>
+                <div class="abox"><span class="aname">PHY</span><div class="afield"><span class="pencil" contenteditable="true">4</span></div></div>
+                <div class="abox"><span class="aname">VIG</span><div class="afield"><span class="pencil" contenteditable="true">3</span></div></div>
+                <div class="abox"><span class="aname">WIS</span><div class="afield"><span class="pencil" contenteditable="true">3</span></div></div>
               </div>
             </div>
 
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#vitality">Vitality (Innate Base + Mods)</a></p>
               <div class="vit-grid">
-                <div class="vbox"><span class="vname">Life</span><div class="vfield"><span class="pencil" contenteditable="true">965</span></div></div>
-                <div class="vbox"><span class="vname">Stam</span><div class="vfield"><span class="pencil" contenteditable="true">554</span></div></div>
-                <div class="vbox"><span class="vname">Mana</span><div class="vfield"><span class="pencil" contenteditable="true">502</span></div></div>
-                <div class="vbox"><span class="vname">End.</span><div class="vfield"><span class="pencil" contenteditable="true">476</span></div></div>
+                <div class="vbox"><span class="vname">Life</span><div class="vfield"><span class="pencil" contenteditable="true">50</span></div></div>
+                <div class="vbox"><span class="vname">Stam</span><div class="vfield"><span class="pencil" contenteditable="true">32</span></div></div>
+                <div class="vbox"><span class="vname">Mana</span><div class="vfield"><span class="pencil" contenteditable="true">32</span></div></div>
+                <div class="vbox"><span class="vname">End.</span><div class="vfield"><span class="pencil" contenteditable="true">35</span></div></div>
               </div>
             </div>
 
             <div class="sec" style="margin-top:8px;">
-              <p class="sec-title" style="margin-bottom:4px;">Race Bonuses / Penalties</p>
-              <p style="font-family:'Cinzel',serif;font-size:0.44rem;color:#4a5a20;font-weight:700;letter-spacing:0.08em;margin-bottom:2px;">Blood Draco - Red</p>
-              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Innate Trait Adj.:</span><span class="pencil" contenteditable="true" style="flex:1;">+4 STR, +2 FRT</span></div>
-              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Racial Aptitude:</span><span class="pencil" contenteditable="true" style="flex:1;">Fire Resistance; Dragon Sight</span></div>
-              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Racial Inaptitude:</span><span class="pencil" contenteditable="true" style="flex:1;">Cold Vulnerability; Water Weakness</span></div>
-              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Sub-race Aptitude:</span><span class="pencil" contenteditable="true" style="flex:1;">Flame Breath (innate)</span></div>
-              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Sub-race Inaptitude:</span><span class="pencil" contenteditable="true" style="flex:1;">Arcane Sensitivity</span></div>
+              <p class="sec-title" style="margin-bottom:14px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#playable-races">Race Bonuses / Penalties</a></p>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Innate Trait Adj.:</span><span class="pencil" contenteditable="true" style="flex:1;">+2 Strength, +2 Constitution | -2 Charisma, -2 Piety</span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Racial Aptitude:</span><span class="pencil" contenteditable="true" style="flex:1;">Stonesense (navigate/sense through rock/tunnels without light; immune to darkness penalties). Oathsense (sense broken oaths; +2 Insight on oath-related lies). +2 to all enclosed/underground/mining environment rolls.</span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Racial Inaptitude:</span><span class="pencil" contenteditable="true" style="flex:1;">Sunlight sensitivity (-2 all rolls in direct sunlight; Stonesense doesn't work outdoors). Cannot resist Bard aggression (Composure check to avoid attacking). -2 social rolls with those aware of cursed lineage.</span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Favored Class Trees:</span><span class="pencil" contenteditable="true" style="flex:1;">Tyrant (Warrior) +4 / Path: Berserker +4 / Branch: Fury +6; Doom Knight +5; Shaman +5; Warlock +5</span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Favored Companions:</span><span class="pencil" contenteditable="true" style="flex:1;">Theowarg (Standard wolf-boar hybrid, bond half-time, -25% upkeep); Tunnelmole (Small burrowing pet, bond half-time, -25% upkeep)</span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Carry Capacity (lbs):</span><span class="pencil" contenteditable="true" style="flex:1;">160 (100 base + 60 from Strength 4)</span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Sub-race Aptitude:</span><span class="pencil" contenteditable="true" style="flex:1;"></span></div>
+              <div style="display:flex;align-items:baseline;gap:4px;border-bottom:1px solid #4a5a20;margin-bottom:8px;"><span class="field-lbl" style="white-space:nowrap;flex-shrink:0;">Sub-race Inaptitude:</span><span class="pencil" contenteditable="true" style="flex:1;"></span></div>
             </div>
 
             <div class="sec" style="margin-top:8px;">
@@ -1308,15 +1315,21 @@
                 <span>Path</span>
                 <span>Branch</span>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-top:4px;">
-                <div style="font-size:0.42rem;color:#555;font-family:Arial,sans-serif;line-height:1.4;">
-                  <span class="pencil" style="font-size:0.6rem;">+STR, +CON, +Courage; −CHA</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px;">
+                <div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
                 </div>
-                <div style="font-size:0.42rem;color:#555;font-family:Arial,sans-serif;line-height:1.4;">
-                  <span class="pencil" style="font-size:0.6rem;">+Climbing, +Cold Endurance; −Flatland Speed</span>
+                <div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
                 </div>
-                <div style="font-size:0.42rem;color:#555;font-family:Arial,sans-serif;line-height:1.4;">
-                  <span class="pencil" style="font-size:0.6rem;">+Agility, +Ranged Accuracy; −Heavy Armor</span>
+                <div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
                 </div>
               </div>
             </div>
@@ -1328,74 +1341,81 @@
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#traits-tst">Traits</a></p>
               <ul class="trait-list">
-                <li><span>Agility</span><div class="tfield"><span class="pencil" contenteditable="true">34</span></div></li>
-                <li><span>Charisma</span><div class="tfield"><span class="pencil" contenteditable="true">14</span></div></li>
-                <li><span>Cognition</span><div class="tfield"><span class="pencil" contenteditable="true">0</span></div></li>
-                <li><span>Constitution</span><div class="tfield"><span class="pencil" contenteditable="true">38</span></div></li>
-                <li><span>Courage</span><div class="tfield"><span class="pencil" contenteditable="true">34</span></div></li>
-                <li><span>Craftsmanship</span><div class="tfield"><span class="pencil" contenteditable="true">6</span></div></li>
-                <li><span>Deceit</span><div class="tfield"><span class="pencil" contenteditable="true">8</span></div></li>
-                <li><span>Defense</span><div class="tfield"><span class="pencil" contenteditable="true">26</span></div></li>
-                <li><span>Dexterity</span><div class="tfield"><span class="pencil" contenteditable="true">18</span></div></li>
-                <li><span>Focus</span><div class="tfield"><span class="pencil" contenteditable="true">16</span></div></li>
-                <li><span>Health</span><div class="tfield"><span class="pencil" contenteditable="true">30</span></div></li>
-                <li><span>Intuition</span><div class="tfield"><span class="pencil" contenteditable="true">30</span></div></li>
-                <li><span>Knowledge</span><div class="tfield"><span class="pencil" contenteditable="true">22</span></div></li>
-                <li><span>Luck</span><div class="tfield"><span class="pencil" contenteditable="true">28</span></div></li>
-                <li><span>Piety</span><div class="tfield"><span class="pencil" contenteditable="true">10</span></div></li>
-                <li><span>Resistance</span><div class="tfield"><span class="pencil" contenteditable="true">22</span></div></li>
-                <li><span>Strength</span><div class="tfield"><span class="pencil" contenteditable="true">38</span></div></li>
-                <li><span>Toughness</span><div class="tfield"><span class="pencil" contenteditable="true">36</span></div></li>
-                <li><span>Vigilance</span><div class="tfield"><span class="pencil" contenteditable="true">34</span></div></li>
-                <li><span>Willpower</span><div class="tfield"><span class="pencil" contenteditable="true">16</span></div></li>
-                <li><span>Wit</span><div class="tfield"><span class="pencil" contenteditable="true">14</span></div></li>
+                <li><span>Agility</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Charisma</span><div class="tfield"><span class="pencil" contenteditable="true">-1</span></div></li>
+                <li><span>Cognition</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Constitution</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Courage</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Craftsmanship</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Deceit</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
+                <li><span>Defense</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
+                <li><span>Dexterity</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Focus</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Health</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Intuition</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
+                <li><span>Knowledge</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
+                <li><span>Luck</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Piety</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
+                <li><span>Resistance</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
+                <li><span>Strength</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Toughness</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Vigilance</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Willpower</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
+                <li><span>Wit</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
               </ul>
               <p class="small-note">Trait SCR capped at 40. Cannot exceed aligned ATT SCR.</p>
-              <p class="small-note">Awaiting Kaida's sentimental value and companion presence data - refer to Basic Rules on pgs. 4 and 5.</p>
+              <p style="font-size: 0.55rem; color: #666; margin-top: 8px; line-height: 1.4;">
+                <strong>Innate Adjustments (Orcus):</strong><br>
+                Strength: 2 (purchased) + 2 (innate) = 4 | Agility: 2 + 0 = 2 | Charisma: 1 - 2 = -1<br>
+                Constitution: 2 + 2 = 4 | Cognition: 2 + 0 = 2 | Courage: 2 + 0 = 2<br>
+                Defense: 1 + 0 = 1 | Dexterity: 2 + 0 = 2 | Focus: 2 + 0 = 2<br>
+                Health: 2 + 0 = 2 | Intuition: 2 + 0 = 2 | Knowledge: 2 + 0 = 2<br>
+                Luck: 2 + 0 = 2 | Piety: 1 - 2 = -1 | Toughness: 2 + 0 = 2<br>
+                Vigilance: 2 + 0 = 2 | Willpower: 2 + 0 = 2 | Craftsmanship: 2 + 0 = 2
+              </p>
             </div>
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_006.html#term-apex">Apex &amp; Spirit</a></p>
               <ul class="trait-list">
-                <li><span>Apex</span><div class="tfield"><span class="pencil" contenteditable="true">40</span></div></li>
-                <li><span>Spirit</span><div class="tfield"><span class="pencil" contenteditable="true">16</span></div></li>
+                <li><span>Apex</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
+                <li><span>Spirit</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
               </ul>
             </div>
           </div>
 
-          <!-- RIGHT: Combat Stats + Abilities + Spells -->
+          <!-- RIGHT: Combat Stats + Resistances + Conditions -->
           <div>
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_004.html#trials-of-combat">Combat Stats</a></p>
-              <div class="srow"><span>Armor Score (AS)</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">38</span></div></div>
+              <div class="srow"><span>Armor Score (AS)</span><div class="sfield"><span class="pencil" contenteditable="true">33</span></div></div>
               <p class="frm">base armor + rank bonus + equip. bonuses</p>
-              <div class="srow"><span>PROTS</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">64</span></div></div>
+              <div class="srow"><span>PROTS</span><div class="sfield"><span class="pencil" contenteditable="true">34</span></div></div>
               <p class="frm">AS + all defensive modifiers (Defense, Agility, Resistance, etc.)</p>
-              <div class="srow"><span>Speed (ft)</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">35</span></div></div>
+              <div class="srow"><span>Speed (ft)</span><div class="sfield"><span class="pencil" contenteditable="true">30</span></div></div>
               <p class="frm">Base SPD (race/size) + Speed trait + equip. + tactics/spells</p>
-              <div class="srow"><span>Initiative (INIT)</span><div class="sfield" style="display:flex;align-items:center;justify-content:center;"><span class="pencil" style="font-size:0.62rem;">96</span></div></div>
+              <div class="srow"><span>Initiative (INIT)</span><div class="sfield"><span class="pencil" contenteditable="true"></span></div></div>
               <p class="frm">Base Speed + Agility + Intuition + Luck</p>
 
               <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:6px;margin-bottom:2px;">Abilities</p>
-              <p class="frm">&#9670; Class</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Rage Strike</span></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Iron Rampage</span></div>
+              <p class="frm">&#9670; Class (Tier LVL 1)</p>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Barbarian - Tier (Levels 1-3)</span></div>
               <p class="frm">&#9670; Nature Drawn</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Grounding Spike (Amazonian Greatbow)</span></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Olympiad Sprint</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
               <p class="frm">&#9670; Spell Drawn</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">a. Ancestor's Ward - calls spectral ancestor's shield for temporary PROTS bonus</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
 
               <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:10px;margin-bottom:2px;">Spells and Magic</p>
               <p class="frm">&#9670; Class</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
               <p class="frm">&#9670; Racial (innate)</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Flame Breath</span></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Dragon Sight</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
               <p class="frm">&#9670; Reagents</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
               <p class="frm" style="margin-top:6px;font-style:italic;">Equipped Armament specific Abilities displayed here. Refer to your Ability Cards to view all.</p>
             </div>
 
@@ -1403,121 +1423,123 @@
 
         </div><!-- /cols -->
 
-        <!-- CARDS + ACTIVE CONDITIONS -->
+        <!-- ACTIVE CONDITIONS - flex child of inner, pushed to bottom -->
         <div class="cond-wrap">
           <div class="card-row">
-            <!-- ITEMS CARD (blank) -->
             <div class="sheet-card">
-              <div class="sheet-card-title"><span style="width:68%;border-right:1px solid #4a5a20;padding-right:4px;">Items</span><span style="padding-left:4px;">Tokens</span></div>
+              <div class="sheet-card-title"><a href="content/essentia_core/rules_ref_004.html#item-cards" target="rules" style="text-decoration:underline;color:#2196f3;"><span style="width:68%;border-right:1px solid #4a5a20;padding-right:4px;">Items</span></a><a href="content/essentia_core/rules_ref_004.html#encounter-tokens" target="rules" style="text-decoration:underline;color:#2196f3;"><span style="padding-left:4px;">Tokens</span></a></div>
               <table class="item-card-tbl">
                 <tbody>
                   <tr class="itype-hdr"><td>Consumable</td><td></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; <span class="pencil" contenteditable="true">Flint n Steel</span></td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; <span class="pencil" contenteditable="true">Old Garlic</span></td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; <span class="pencil" contenteditable="true">Candles (4)</span></td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; <span class="pencil" contenteditable="true">Stone Dust (bag)</span></td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                   <tr class="itype-hdr"><td>Material</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                   <tr class="itype-hdr"><td>Scroll</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                   <tr class="itype-hdr"><td>Quest</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                   <tr class="itype-hdr"><td>Collectable</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                   <tr class="itype-hdr"><td>Other</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
-                  <tr class="itype-bullet"><td>&#9670;</td><td>&#9670;</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                 </tbody>
               </table>
             </div>
 
-            <!-- WEAPONS CARD -->
             <div class="sheet-card">
-  <div class="sheet-card-title">Weapons (Readied)</div>
+  <div class="sheet-card-title"><a href="content/essentia_core/rules_ref_004.html#weapon-cards" target="rules" style="text-decoration:underline;color:#2196f3;">Weap. (readied date):</a> <span contenteditable="true" style="display: inline-block; width: 10em; padding: 0 4px;"></span> EA</div>
   <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:2px 0 3px;">
     Weapons Drawn
   </p>
   <table class="item-card-tbl weap-tbl">
     <tbody>
-      <tr class="itype-hdr"><td colspan="2">Main Hand - Amazonian Greatbow</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Hit &nbsp;<span class="pencil" contenteditable="true">+38</span></td><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">2h Ranged (Divine)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG &nbsp;<span class="pencil" contenteditable="true">5d6+12</span></td><td>&#9670; Maint. &nbsp;<span class="pencil" contenteditable="true">See Card ref #</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Divine</span></td><td>&#9670; Value &nbsp;<span class="pencil" contenteditable="true">Priceless</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods &nbsp;<span class="pencil" contenteditable="true">Cloth +4, Plate -4, Comp -5</span></td><td>&#9670; Enhance. &nbsp;<span class="pencil" contenteditable="true">+3 STR Enchant, +20 Upgrade, Fire Enchant</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods &nbsp;<span class="pencil" contenteditable="true">Beast +2, Spirit -4</span></td><td></td></tr>
-      <tr class="itype-hdr"><td colspan="2">Off Hand</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Hit</td><td>&#9670; Type</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG</td><td>&#9670; Maint.</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Value</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods</td><td>&#9670; Enhance.</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods</td><td></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Main Hand - <span class="pencil" contenteditable="true">Magic Hammer 1H</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true">d100+8</span></td><td>&#9670; Type <span class="pencil" contenteditable="true">1H Melee</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true">2d6+STR</span></td><td>&#9670; Weight <span class="pencil" contenteditable="true">3 lbs</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true">Common</span></td><td>&#9670; Value <span class="pencil" contenteditable="true">15 Gold</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Condition <span class="pencil" contenteditable="true">Good</span></td><td>&#9670; Quality <span class="pencil" contenteditable="true">Good</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true">Blunt</span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true">0.20 GP</span></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Off Hand - <span class="pencil" contenteditable="true">Medium Shield</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true">Block</span></td><td>&#9670; Type <span class="pencil" contenteditable="true">Shield</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true">Defense</span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true">0.10 GP</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true">Common</span></td><td>&#9670; Value <span class="pencil" contenteditable="true">10 Gold</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true">AS +10</span></td><td>&#9670; Enhance. <span class="pencil" contenteditable="true">None</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td></td></tr>
     </tbody>
   </table>
   <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">
-    Weapons Sheathed
+    Weapons Sheathed<span style="font-family:Arial,sans-serif;font-size:0.38rem;font-weight:400;text-transform:none;letter-spacing:0;color:#555;"></span>
   </p>
   <table class="item-card-tbl weap-tbl">
     <tbody>
-      <tr class="itype-hdr"><td colspan="2">Sheathed 1 - Dagger (Sentimental)</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Hit &nbsp;<span class="pencil" contenteditable="true">+22</span></td><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">1h Melee (Common)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG &nbsp;<span class="pencil" contenteditable="true">1d4+8</span></td><td>&#9670; Maint. &nbsp;<span class="pencil" contenteditable="true">37 SP (val × 5%)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Common</span></td><td>&#9670; Value &nbsp;<span class="pencil" contenteditable="true">15 GP</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods &nbsp;<span class="pencil" contenteditable="true">Lthr +3, Chain -2</span></td><td>&#9670; Enhance. &nbsp;<span class="pencil" contenteditable="true">-</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods &nbsp;<span class="pencil" contenteditable="true">Beast +2, Undead -2</span></td><td></td></tr>
-      <tr class="itype-hdr"><td colspan="2">Sheathed 2 - War Hammer (Sentimental)</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Hit &nbsp;<span class="pencil" contenteditable="true">+16</span></td><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">2h Melee (Rare)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG &nbsp;<span class="pencil" contenteditable="true">8d6+8</span></td><td>&#9670; Maint. &nbsp;<span class="pencil" contenteditable="true">10 GP (val × 5%)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Rare</span></td><td>&#9670; Value &nbsp;<span class="pencil" contenteditable="true">200 GP</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods &nbsp;<span class="pencil" contenteditable="true">Chain +3, Plate +5</span></td><td>&#9670; Enhance. &nbsp;<span class="pencil" contenteditable="true">-</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods &nbsp;<span class="pencil" contenteditable="true">Undead +4, Construct +4</span></td><td></td></tr>
-      <tr class="itype-hdr"><td colspan="2">Sheathed 3 (0 drawn) -</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Hit</td><td>&#9670; Type</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG</td><td>&#9670; Maint.</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td>&#9670; Value</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods</td><td>&#9670; Enhance.</td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods</td><td></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Sheathed 1 - <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true"></span></td><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true"></span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td>&#9670; Value <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td>&#9670; Enhance. <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Sheathed 2 - <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true"></span></td><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true"></span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td>&#9670; Value <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td>&#9670; Enhance. <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Sheathed 3 (0 drawn) - <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true"></span></td><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true"></span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td>&#9670; Value <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td>&#9670; Enhance. <span class="pencil" contenteditable="true"></span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td></td></tr>
     </tbody>
   </table>
   <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:3px;">For more see Cards</p>
   <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:6px 0 3px;">Ammo</p>
-  <table class="item-card-tbl ammo-tbl" style="table-layout:fixed;width:100%;">
-    <colgroup><col style="width:42%"><col style="width:58%"></colgroup>
+  <table class="item-card-tbl" style="table-layout:fixed;width:100%;">
     <tbody>
-      <tr class="itype-bullet-lbl"><td style="width:42%;overflow:hidden;white-space:nowrap;">&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Infernium, Arrows, Divine</span></td><td style="width:58%;overflow:hidden;white-space:nowrap;">&#9670; Container &nbsp;<span class="pencil" contenteditable="true">Mithril/Osmium Quiver (Divine, 50 ct.)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td style="width:42%;overflow:hidden;white-space:nowrap;">&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Throwing Knife</span></td><td style="width:58%;overflow:hidden;white-space:nowrap;">&#9670; Container &nbsp;<span class="pencil" contenteditable="true">Boots (3 ea.)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td style="width:42%;overflow:hidden;white-space:nowrap;">&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Throwing Axe</span></td><td style="width:58%;overflow:hidden;white-space:nowrap;">&#9670; Container &nbsp;<span class="pencil" contenteditable="true">Belt (2)</span></td></tr>
+      <tr class="itype-bullet-lbl" style="height:22px;"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td><td>&#9670; Container <span class="pencil" contenteditable="true"></span></td></tr>
     </tbody>
   </table>
   <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">Max weapons <b>readied</b>, 3/day.</p>
             </div>
-
-            <!-- ARMOR CARD -->
-            <div class="sheet-card">
-  <div class="sheet-card-title">Armor (Readied)</div>
+            
+<div class="sheet-card">
+  <div class="sheet-card-title"><a href="content/essentia_core/rules_ref_004.html#armor-cards" target="rules" style="text-decoration:underline;color:#2196f3;">Armor (readied date):</a> <span contenteditable="true" style="display: inline-block; width: 10em; padding: 0 4px;"></span> EA</div>
   <p style="font-family:'Cinzel',serif;font-size:0.42rem;color:#2e3d0f;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:2px 0 3px;">
     Set <span style="font-family:Arial,sans-serif;font-size:0.38rem;font-weight:400;text-transform:none;letter-spacing:0;color:#555;">(boots/gloves may be replaced)</span>
   </p>
   <table class="item-card-tbl weap-tbl">
     <tbody>
-      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">Blue Whale Fur Set</span></td><td>&#9670; Value &nbsp;<span class="pencil" contenteditable="true">10,000 GP</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Legendary</span></td><td>&#9670; Source &nbsp;<span class="pencil" contenteditable="true">Loot/Crafted</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; AS &nbsp;<span class="pencil" contenteditable="true">38</span></td><td>&#9670; Maint. &nbsp;<span class="pencil" contenteditable="true">500 GP (val × 5%)</span></td></tr>
-      <tr class="itype-bullet-lbl" style="height:11px;"><td><span style="font-size:0.38rem;color:#888;">&nbsp;&nbsp;(incl. rank + Excellent)</span></td><td><span style="font-size:0.38rem;color:#888;">&nbsp;&nbsp;(cost)</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; PROTS &nbsp;<span class="pencil" contenteditable="true">70</span></td><td></td></tr>
-      <tr class="itype-bullet-lbl" style="height:9px;"><td><span style="font-size:0.38rem;color:#888;">&nbsp;&nbsp;(AS 38 + Enhance +20 + Mantle +12)</span></td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Vuln. &nbsp;<span class="pencil" contenteditable="true">Fire (mitigated)</span></td><td>&#9670; Resist. &nbsp;<span class="pencil" contenteditable="true">Blunt, Cold, Fire +5</span></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Drop &nbsp;<span class="pencil" contenteditable="true">See Card ref #</span></td><td>&#9670; Enhance &nbsp;<span class="pencil" contenteditable="true">+20 Upgrade, +5 Fire Resist Enchant, Socket</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true">Light Armor</span></td><td>&#9670; Value <span class="pencil" contenteditable="true">10 Gold</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Weight <span class="pencil" contenteditable="true">15 lbs</span></td><td>&#9670; Condition <span class="pencil" contenteditable="true">Good</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Quality <span class="pencil" contenteditable="true">Good</span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true">Common</span></td><td>&#9670; Source <span class="pencil" contenteditable="true">Starting Equip</span></td></tr>
+      <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
+      <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; AS <span class="pencil" contenteditable="true">25</span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true">0.15 GP</span></td></tr>
+      <tr class="itype-bullet-lbl" style="font-size:0.38rem;"><td>Base 25 - Good</td><td>&nbsp;&nbsp;(cost)</td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; PROTS <span class="pencil" contenteditable="true">25</span></td><td></td></tr>
+      <tr class="itype-bullet-lbl" style="font-size:0.38rem;"><td><span style="color:#888;">25 + Defense 0</span></td><td></td></tr>
+      <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Vuln. <span class="pencil" contenteditable="true">None</span></td><td>&#9670; Resist. <span class="pencil" contenteditable="true">None</span></td></tr>
+      <tr class="itype-bullet-lbl" style="height:18px;"><td></td><td></td></tr>
+      <tr class="itype-bullet-lbl" style="height:10px;"><td></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Drop <span class="pencil" contenteditable="true">-3 sq mov</span></td><td>&#9670; Enhance <span class="pencil" contenteditable="true">None</span></td></tr>
+      <tr class="itype-bullet-lbl" style="height:18px;"><td>Fair condition</td><td></td></tr>
     </tbody>
   </table>
   <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">
@@ -1529,87 +1551,169 @@
   <table class="item-card-tbl weap-tbl">
     <tbody>
       <tr class="itype-hdr"><td>Shield</td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">None</span></td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; AS</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; AS <span class="pencil" contenteditable="true"></span></td><td></td></tr>
       <tr class="itype-hdr"><td>Bracers</td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">None</span></td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; Rank</td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td>&#9670; AS</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; AS <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-hdr"><td>Under-Armor</td><td></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Quilted Gambeson (free, Common, 5 lbs) <span class="pencil" contenteditable="true"></span></td><td></td></tr>
       <tr class="itype-hdr"><td>Accessories</td><td></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Mantle</strong> &nbsp;<span class="pencil" contenteditable="true">Bear (blue) Hooded Fur Mantle - +12 AS, +5 Cold Resist, +2 CON</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Ring 1</strong> &nbsp;<span class="pencil" contenteditable="true">Ironblood Band - +8 STR, +3 to all melee hit rolls</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Ring 2</strong> &nbsp;<span class="pencil" contenteditable="true">Swiftcoil Ring - +5 AGI, +10 max Life</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Earring 1</strong> &nbsp;<span class="pencil" contenteditable="true">Warcry Hoop - +3 Courage, immune to Fear</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Earring 2</strong> &nbsp;<span class="pencil" contenteditable="true">Stalker's Loop - +2 VIG, +5 to all Perception rolls</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Nose Ring</strong> &nbsp;<span class="pencil" contenteditable="true">Spirit Piercing - +2 Piety, +1 to all rolls vs Spirits</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Belt</strong> &nbsp;<span class="pencil" contenteditable="true">Greatbeast Hide Belt - +15 max Life, +5 max Endurance</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Pendant</strong> &nbsp;<span class="pencil" contenteditable="true">Fang of the Deep - +3 STR, +5 to all melee DMG</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Bracelet</strong> &nbsp;<span class="pencil" contenteditable="true">Mirebone Cuff - +2 CON, +8 PROTS</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Necklace &amp; Charm</strong> &nbsp;<span class="pencil" contenteditable="true">Tidecaller's Chain w/ Stormcharm - +4 Courage, +2 to all rolls below 50% Life</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Seal 1</strong> &nbsp;<span class="pencil" contenteditable="true">Seal of the Undying Hunt - +10 to hit vs Undead, +5 Spirit DMG</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Seal 2</strong> &nbsp;<span class="pencil" contenteditable="true">Amazon War Seal - +5 to all rolls in Wilderness, +3 VIG</span></td></tr>
-      <tr class="itype-bullet-lbl"><td colspan="2">&#9670; <strong>Headband</strong> &nbsp;<span class="pencil" contenteditable="true">Bloodtide Wreath - +3 WIT, +2 to all initiative rolls</span></td></tr>
+      <tr class="itype-bullet-lbl"><td>&#9670; Belts, jewelry, insignias, and more. <span class="pencil" contenteditable="true"></span></td><td></td></tr>
     </tbody>
   </table>
 </div>
 
-            <!-- COMPANIONS CARD -->
-            <div class="sheet-card">
-              <div class="sheet-card-title">Companion Slots</div>
-              <table class="item-card-tbl">
-                <tbody>
-                  <tr class="itype-hdr"><td>Tiny</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">Bee</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil" contenteditable="true">-</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Common</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Praying Mantis</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil" contenteditable="true">Speaks any flying creature or spider language</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil" contenteditable="true">Calm</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil" contenteditable="true">No</span></td></tr>
-                  <tr class="itype-hdr"><td>Small</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">Twink</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil" contenteditable="true">-</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Uncommon</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Weasel</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil" contenteditable="true">Thief talents</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil" contenteditable="true">Curious</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil" contenteditable="true">No</span></td></tr>
-                  <tr class="itype-hdr"><td>Standard</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">Bear</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil" contenteditable="true">-</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Heroic</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Guardian Bear</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil" contenteditable="true">Carry, Mount</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil" contenteditable="true">Loyal</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil" contenteditable="true">Yes</span></td></tr>
-                  <tr class="itype-hdr"><td>Large / Goliath / Behemoth (shared slot)</td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Name &nbsp;<span class="pencil" contenteditable="true">- (Unnamed)</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Nickname &nbsp;<span class="pencil" contenteditable="true">-</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Rank &nbsp;<span class="pencil" contenteditable="true">Legendary</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Type &nbsp;<span class="pencil" contenteditable="true">Mountain Troll</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Abilities &nbsp;<span class="pencil" contenteditable="true">Summon 1x/week, 3hr max; tolerates communication max 3 hrs</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance &nbsp;<span class="pencil" contenteditable="true">Hostile</span></td></tr>
-                  <tr class="itype-bullet-lbl"><td>&#9670; Mount Status &nbsp;<span class="pencil" contenteditable="true">No</span></td></tr>
-                </tbody>
-              </table>
+            
+                          <div class="sheet-card" style="align-self:flex-start;">
+              <div class="sheet-card-title"><a href="content/essentia_core/rules_ref_004.html#companions" target="rules" style="text-decoration:underline;color:#2196f3;">Companion Slot Data</a></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <!-- Column 1: Tiny, Standard, Goliath -->
+                <div>
+                  <!-- TINY -->
+                  <div style="margin-bottom:16px;">
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Tiny</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <!-- STANDARD -->
+                  <div style="margin-bottom:16px;">
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Standard</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <!-- GOLIATH -->
+                  <div>
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Goliath†</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- Column 2: Small, Large, Behemoth -->
+                <div>
+                  <!-- SMALL -->
+                  <div style="margin-bottom:16px;">
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Small</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <!-- LARGE -->
+                  <div style="margin-bottom:16px;">
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Large</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <!-- BEHEMOTH -->
+                  <div>
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Behemoth†</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:0.85rem;color:#666;text-align:center;">†Shared Slot (see rules)</div>
             </div>
             </div>
-          </div>
-          <p class="sec-title" style="text-align:left;border:none;margin-bottom:4px;margin-top:14px;"><a target="rules" href="content/essentia_core/rules_ref_004.html#trials-of-combat">Active Conditions</a> <span style="font-family:Arial,sans-serif;font-size:0.48rem;font-weight:400;text-transform:none;letter-spacing:0;">(duration in box)</span></p>
+          <p class="sec-title" style="text-align:left;border:none;margin-bottom:4px;margin-top:14px;"><a target="rules" href="content/essentia_core/rules_ref_004.html#active-conditions">Active Conditions</a> <span style="font-family:Arial,sans-serif;font-size:0.48rem;font-weight:400;text-transform:none;letter-spacing:0;">(duration in box)</span></p>
           <div class="cond-grid">
-            <div class="citem"><span class="citem-name">Poisoned</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Blinded</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Prone</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Frightened</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Bleeding</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Frozen</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Stunned</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Silenced</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Restrained</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Charmed</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Burning</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
-            <div class="citem"><span class="citem-name">Cursed</span><div class="citem-boxes"><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div><div class="cbox"></div></div></div>
+            <div class="citem"><span class="citem-name">Poisoned</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Blinded</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Prone</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Frightened</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Bleeding</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Frozen</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Stunned</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Silenced</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Restrained</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Charmed</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Burning</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
+            <div class="citem"><span class="citem-name">Cursed</span><div class="citem-boxes"><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div><div class="cbox" contenteditable="true"></div></div></div>
           </div>
           <p style="font-family:Arial,sans-serif;font-size:0.46rem;color:#555;margin-top:4px;">Each turn is 6 seconds.</p>
 
@@ -1623,8 +1727,11 @@
 
 <div class="action-bar">
   <button id="downloadBtn">Download</button>
-  <a href="content/basic_rules/basic_rules_5.html#kaida-example" style="color:#c5a042;font-family:'Cinzel',serif;font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-decoration:underline;white-space:nowrap;">&#8592; Resume SORC Basic Rules Pg. 5</a>
-  <button id="flipBtn">Flip Sheet</button>
+  <div class="print-group">
+    <button class="ptab active" data-side="front">Front</button>
+    <button class="ptab" data-side="back">Back</button>
+  </div>
+  <button id="printBtn">Print</button>
 </div>
 
 <script>
@@ -1638,23 +1745,48 @@
   var flipper    = document.getElementById('flipper');
   var front      = document.getElementById('front');
   var back       = document.getElementById('back');
-  var flipped    = false;
-  var flipBtn    = document.getElementById('flipBtn');
+  var saving    = false;
+  var flipped   = false;
 
   function doFlip() {
+    if (saving) return;
     flipped = !flipped;
     if (flipped) {
       front.style.display = 'none';
       back.style.display  = 'block';
-      flipBtn.textContent = 'Flip to Front';
     } else {
       back.style.display  = 'none';
       front.style.display = 'block';
-      flipBtn.textContent = 'Flip Sheet';
     }
   }
 
-  flipBtn.addEventListener('click', doFlip);
+  // Scale sheet to fit viewport. When width is the limiting dimension (mobile
+  // embedded view), postMessage the ideal iframe height to the parent so the
+  // iframe can shrink to remove dead space above and below.
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    // Desktop (wide viewport): scale to width, cap at 1.0, let height scroll.
+    // Mobile (narrow viewport): scale to fit both so the sheet fills the screen.
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    // Only resize the parent iframe when width-constrained (mobile).
+    // Height-constrained means the iframe already fits the sheet - no resize needed,
+    // and posting would cause a shrink feedback loop.
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 28;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
   // Download button
   document.getElementById('downloadBtn').addEventListener('click', function() {
@@ -1670,26 +1802,91 @@
     URL.revokeObjectURL(url);
   });
 
-  // Scale sheet to fit viewport
-  function scaleToFit() {
-    var wrap = document.getElementById('scaleWrap');
-    var vp = document.querySelector('.sheet-viewport');
-    var vw = vp.clientWidth  || window.innerWidth;
-    var vh = vp.clientHeight || (window.innerHeight - 76);
-    var wScale = (vw / 816) * 0.97;
-    var hScale = (vh / 1056) * 0.97;
-    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
-    wrap.style.transform = 'scale(' + scale + ')';
+  // Print tabs
+  var printSide = 'front';
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      printSide = tab.dataset.side;
+      // Also flip the sheet to show the selected side
+      if (tab.dataset.side === 'front' && flipped) doFlip();
+      if (tab.dataset.side === 'back'  && !flipped) doFlip();
+    });
+  });
 
-    if (wScale < hScale && window.parent !== window) {
-      var idealH = Math.ceil(1056 * scale) + 28;
-      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
+    if (printSide === 'front') {
+      front.style.display = 'block';
+      back.style.display  = 'none';
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
     }
-  }
 
-  scaleToFit();
-  window.addEventListener('resize', scaleToFit);
-  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+    window.print();
+
+    setTimeout(function() {
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
+    }, 500);
+  });
+</script>
+<script>
+  // Load portrait from character customizer if present
+  (function() {
+    var portrait = localStorage.getItem('sorc_portrait');
+    if (portrait) {
+      var box = document.getElementById('portraitBox');
+      if (box) {
+        box.innerHTML = '';
+        box.style.overflow = 'hidden';
+        var canvas = document.createElement('canvas');
+        canvas.style.cssText = 'width:100%;height:100%;display:block;';
+        box.appendChild(canvas);
+        var img = new Image();
+        img.onload = function() {
+          var boxW = box.clientWidth, boxH = box.clientHeight;
+          canvas.width = boxW;
+          canvas.height = boxH;
+          var ctx = canvas.getContext('2d');
+          // Crop from just above the character's head down past the feet,
+          // then narrow/shorten that window so it matches the portrait box's
+          // aspect ratio without stretching (character art has a lot of sky
+          // above the head, so a fixed % is enough to skip past it).
+          var sx = 0, sw = img.naturalWidth;
+          var sy = img.naturalHeight * 0.15;
+          var sh = img.naturalHeight * 0.80;
+          var cropAspect = sw / sh;
+          var boxAspect = boxW / boxH;
+          if (cropAspect > boxAspect) {
+            var newSw = sh * boxAspect;
+            sx = (sw - newSw) / 2;
+            sw = newSw;
+          } else {
+            sh = sw / boxAspect;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, boxW, boxH);
+        };
+        img.src = portrait;
+        localStorage.removeItem('sorc_portrait');
+      }
+    }
+  })();
+</script>
+<script>
+  // Prevent Enter key in contenteditable fields
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.hasAttribute('contenteditable')) {
+      e.preventDefault();
+    }
+  });
 </script>
 </body>
 </html>
