@@ -41,7 +41,11 @@ interface Env {
   RESEND_API_KEY: string;
 }
 
-const app = new Hono<{ Bindings: Env }>();
+interface Variables {
+  user: any;
+}
+
+const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', cors({
   origin: ['https://sorcrpg.com', 'https://www.sorcrpg.com'],
