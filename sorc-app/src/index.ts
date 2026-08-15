@@ -2819,6 +2819,109 @@ async function rotateGeneratedCodes(db: D1Database) {
   }
 }
 
+// ─── GOOGLE OAUTH 2.0 HANDLER ─────────────────────────────────────────────────
+
+const GOOGLE_CLIENT_ID = '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com';
+const GOOGLE_CLIENT_SECRET = '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';
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
+
+app.get('/auth/google/callback', async (c) => {
+  try {
+    const code = c.req.query('code');
+    const state = c.req.query('state');
+
+    if (!code) {
+      return c.redirect('https://sorcrpg.com/signin.html?error=no_code');
+    }
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
+        redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.text();
+      console.error('Token exchange failed:', error);
+      return c.redirect('https://sorcrpg.com/signin.html?error=token_exchange');
+    }
+
+    const tokenData = await tokenResponse.json() as any;
+    const accessToken = tokenData.access_token;
+
+    // Get user info
+    const userResponse = await fetch(GOOGLE_USERINFO_URL, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+
+    if (!userResponse.ok) {
+      console.error('Failed to fetch user info');
+      return c.redirect('https://sorcrpg.com/signin.html?error=userinfo');
+    }
+
+    const userInfo = await userResponse.json() as any;
+
+    // Create or update user in database
+    const email = userInfo.email;
+    const displayName = userInfo.name || 'User';
+    const avatar = userInfo.picture || null;
+    const now = new Date().toISOString();
+    const userId = Math.floor(Math.random() * 90000000) + 10000000;
+    const authKey = crypto.randomUUID();
+
+    try {
+      // Check if user exists
+      let user = await c.env.sorc_db.prepare(
+        'SELECT id, auth_key FROM users WHERE email = ?'
+      ).bind(email).first() as any;
+
+      if (!user) {
+        // Create new user
+        const uuid = crypto.randomUUID();
+        await c.env.sorc_db.prepare(`
+          INSERT INTO users (id, email, auth_key, username, display_name, avatar, role, join_date, created_at, updated_at, user_id, email_verified)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)
+        `).bind(uuid, email, authKey, email.split('@')[0], displayName, avatar, 'CIVILIAN', now, now, now, userId).run();
+        user = { id: uuid, auth_key: authKey };
+      } else {
+        // Update existing user's auth key and avatar
+        await c.env.sorc_db.prepare(
+          'UPDATE users SET auth_key = ?, display_name = ?, avatar = ?, updated_at = ? WHERE id = ?'
+        ).bind(authKey, displayName, avatar, now, user.id).run();
+      }
+
+      // Set cookies and redirect
+      return c.json(
+        { success: true, auth_key: user.auth_key, user_id: user.id },
+        {
+          headers: {
+            'Set-Cookie': [
+              `kidVerified=true; Path=/; Max-Age=${60 * 60 * 24 * 30}; Secure; SameSite=Lax`,
+              `sorc_session=${user.auth_key}; Path=/; Max-Age=${60 * 60 * 24 * 30}; Secure; SameSite=Lax; HttpOnly`,
+            ].join(', '),
+            'Location': 'https://sorcrpg.com/index.html?auth_success=true',
+          },
+          status: 302,
+        }
+      );
+    } catch (dbError: any) {
+      console.error('Database error:', dbError);
+      return c.redirect('https://sorcrpg.com/signin.html?error=server');
+    }
+  } catch (error: any) {
+    console.error('OAuth callback error:', error);
+    return c.redirect('https://sorcrpg.com/signin.html?error=server');
+  }
+});
+
 export default {
   fetch: app.fetch,
   async scheduled(_event: any, env: Env, _ctx: any) {
