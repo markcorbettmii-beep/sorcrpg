@@ -560,7 +560,7 @@ function showLoggedOutBadge() {
   var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
   var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
-  existing.innerHTML = defaultAvatar + 'User · Lobbies† · Inbox · Fellowships · Forums · Content · <a href="#" style="color:' + linkColor + ' !important;text-decoration:underline;" onclick="event.preventDefault();checkKIDVerification(function(){window.location.href=\'/signin.html\';});">Login</a> · (†Assess into role)';
+  existing.innerHTML = defaultAvatar + 'User · Lobbies† · Inbox · <a href="#" style="color:' + linkColor + ' !important;text-decoration:underline;" onclick="event.preventDefault();checkKIDVerification(function(){window.location.href=\'/signin.html\';});">Login</a> (†Assess into role) · Fellowships · Forums · Content';
 }
 
 // ========== AUTH STATE ==========
