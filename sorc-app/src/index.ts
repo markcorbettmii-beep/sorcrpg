@@ -39,6 +39,8 @@ interface Env {
   AVATARS: R2Bucket;
   FORUM_MEDIA: R2Bucket;
   RESEND_API_KEY: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
 }
 
 interface Variables {
@@ -2821,8 +2823,6 @@ async function rotateGeneratedCodes(db: D1Database) {
 
 // ─── GOOGLE OAUTH 2.0 HANDLER ─────────────────────────────────────────────────
 
-const GOOGLE_CLIENT_ID = '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = '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';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 
@@ -2841,8 +2841,8 @@ app.get('/auth/google/callback', async (c) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
+        client_id: c.env.GOOGLE_CLIENT_ID,
+        client_secret: c.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
         grant_type: 'authorization_code',
       }),
