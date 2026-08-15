@@ -1943,7 +1943,7 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Download button - shows browser save dialog
+  // Download button - standard browser downloads with format options
   var charName = document.querySelector('h1')?.textContent || 'character-sheet';
 
   document.getElementById('downloadBtn').addEventListener('click', async function() {
@@ -1956,125 +1956,97 @@
         html2canvas(back, { scale: 2, useCORS: true })
       ]);
 
-      // Show browser's native Save As dialog if supported
-      if (window.showSaveFilePicker) {
-        try {
-          var handle = await window.showSaveFilePicker({
-            suggestedName: charName + '-sheet',
-            types: [
-              { description: 'PDF Document', accept: { 'application/pdf': ['.pdf'] } },
-              { description: 'HTML Document', accept: { 'text/html': ['.html'] } },
-              { description: 'JPEG Image', accept: { 'image/jpeg': ['.jpg'] } },
-              { description: 'PNG Image', accept: { 'image/png': ['.png'] } },
-              { description: 'Word Document', accept: { 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] } }
-            ]
-          });
+      // Create a simple format selection menu
+      var formatMenu = document.createElement('div');
+      formatMenu.style.position = 'fixed';
+      formatMenu.style.top = '50%';
+      formatMenu.style.left = '50%';
+      formatMenu.style.transform = 'translate(-50%, -50%)';
+      formatMenu.style.backgroundColor = '#222';
+      formatMenu.style.border = '2px solid #d4a574';
+      formatMenu.style.borderRadius = '8px';
+      formatMenu.style.padding = '20px';
+      formatMenu.style.zIndex = '10000';
+      formatMenu.style.minWidth = '200px';
+      formatMenu.style.boxShadow = '0 0 20px rgba(0,0,0,0.8)';
 
-          var writable = await handle.createWritable();
-          var filename = handle.name;
-          var ext = filename.split('.').pop().toLowerCase();
+      var title = document.createElement('div');
+      title.textContent = 'Save As:';
+      title.style.color = '#d4a574';
+      title.style.marginBottom = '12px';
+      title.style.fontWeight = 'bold';
+      formatMenu.appendChild(title);
 
-          var blob;
-          if (ext === 'pdf') {
-            blob = await generatePDFBlob(canvases);
-          } else if (ext === 'html') {
-            blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-          } else if (ext === 'jpg' || ext === 'jpeg') {
-            blob = await generateImageBlob(canvases, 'image/jpeg');
-          } else if (ext === 'png') {
-            blob = await generateImageBlob(canvases, 'image/png');
-          } else if (ext === 'docx') {
-            blob = await generateDocxBlob(canvases);
-          } else {
-            blob = await generatePDFBlob(canvases);
-          }
+      var formats = ['PDF', 'HTML', 'JPG', 'PNG', 'DOCX'];
+      formats.forEach(function(format) {
+        var btn = document.createElement('button');
+        btn.textContent = format;
+        btn.style.display = 'block';
+        btn.style.width = '100%';
+        btn.style.padding = '10px';
+        btn.style.marginBottom = '8px';
+        btn.style.backgroundColor = '#333';
+        btn.style.color = '#fff';
+        btn.style.border = '1px solid #555';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontFamily = 'inherit';
+        btn.style.fontSize = '13px';
+        btn.onmouseover = function() { this.style.backgroundColor = '#444'; };
+        btn.onmouseout = function() { this.style.backgroundColor = '#333'; };
+        btn.onclick = function() {
+          document.body.removeChild(formatMenu);
+          downloadFormat(format.toLowerCase(), canvases);
+        };
+        formatMenu.appendChild(btn);
+      });
 
-          await writable.write(blob);
-          await writable.close();
-        } catch(err) {
-          if (err.name !== 'AbortError') {
-            console.error('Save dialog error:', err);
-            fallbackDownload(canvases);
-          }
-        }
-      } else {
-        fallbackDownload(canvases);
-      }
+      var cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.style.display = 'block';
+      cancelBtn.style.width = '100%';
+      cancelBtn.style.padding = '10px';
+      cancelBtn.style.backgroundColor = '#555';
+      cancelBtn.style.color = '#fff';
+      cancelBtn.style.border = '1px solid #777';
+      cancelBtn.style.borderRadius = '4px';
+      cancelBtn.style.cursor = 'pointer';
+      cancelBtn.style.fontFamily = 'inherit';
+      cancelBtn.style.fontSize = '13px';
+      cancelBtn.onmouseover = function() { this.style.backgroundColor = '#666'; };
+      cancelBtn.onmouseout = function() { this.style.backgroundColor = '#555'; };
+      cancelBtn.onclick = function() { document.body.removeChild(formatMenu); };
+      formatMenu.appendChild(cancelBtn);
+
+      document.body.appendChild(formatMenu);
+
     } catch(err) {
-      console.error('Download failed:', err);
+      console.error('Download error:', err);
       alert('Failed to prepare download.');
     }
   });
 
-  function generatePDFBlob(canvases) {
-    return new Promise(function(resolve) {
-      var jsPDF = window.jspdf.jsPDF;
-      var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-
-      canvases.forEach(function(canvas, index) {
-        if (index > 0) pdf.addPage();
-        var imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-      });
-
-      pdf.output('blob').then(resolve);
-    });
+  function downloadFormat(format, canvases) {
+    switch(format) {
+      case 'pdf':
+        downloadAsPDF(canvases);
+        break;
+      case 'html':
+        downloadAsHTML();
+        break;
+      case 'jpg':
+        downloadAsImage(canvases, 'image/jpeg', 'jpg');
+        break;
+      case 'png':
+        downloadAsImage(canvases, 'image/png', 'png');
+        break;
+      case 'docx':
+        downloadAsDocx(canvases);
+        break;
+    }
   }
 
-  function generateImageBlob(canvases, mimeType) {
-    return new Promise(function(resolve) {
-      var tempCanvas = document.createElement('canvas');
-      var ctx = tempCanvas.getContext('2d');
-
-      var totalHeight = canvases[0].height + canvases[1].height + 20;
-      tempCanvas.width = canvases[0].width;
-      tempCanvas.height = totalHeight;
-
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-      ctx.drawImage(canvases[0], 0, 0);
-      ctx.drawImage(canvases[1], 0, canvases[0].height + 20);
-
-      tempCanvas.toBlob(resolve, mimeType);
-    });
-  }
-
-  function generateDocxBlob(canvases) {
-    return new Promise(function(resolve, reject) {
-      try {
-        var docx = window.docx;
-        if (!docx) {
-          generatePDFBlob(canvases).then(resolve);
-          return;
-        }
-
-        var sections = [];
-        canvases.forEach(function(canvas, index) {
-          var imgData = canvas.toDataURL('image/png');
-          sections.push(new docx.Paragraph({
-            children: [
-              new docx.ImageRun({
-                data: imgData,
-                transformation: { width: 600, height: 800 }
-              })
-            ]
-          }));
-          if (index === 0) {
-            sections.push(new docx.Paragraph({ text: '' }));
-            sections.push(new docx.PageBreak());
-          }
-        });
-
-        var doc = new docx.Document({ sections: [{ children: sections }] });
-        docx.Packer.toBlob(doc).then(resolve);
-      } catch(err) {
-        generatePDFBlob(canvases).then(resolve);
-      }
-    });
-  }
-
-  function fallbackDownload(canvases) {
+  function downloadAsPDF(canvases) {
     var jsPDF = window.jspdf.jsPDF;
     var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
 
@@ -2085,6 +2057,87 @@
     });
 
     pdf.save(charName + '-sheet.pdf');
+  }
+
+  function downloadAsHTML() {
+    var html = document.documentElement.outerHTML;
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = charName + '.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadAsImage(canvases, mimeType, ext) {
+    var tempCanvas = document.createElement('canvas');
+    var ctx = tempCanvas.getContext('2d');
+
+    var totalHeight = canvases[0].height + canvases[1].height + 20;
+    tempCanvas.width = canvases[0].width;
+    tempCanvas.height = totalHeight;
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+    ctx.drawImage(canvases[0], 0, 0);
+    ctx.drawImage(canvases[1], 0, canvases[0].height + 20);
+
+    tempCanvas.toBlob(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = charName + '-sheet.' + ext;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, mimeType);
+  }
+
+  function downloadAsDocx(canvases) {
+    try {
+      var docx = window.docx;
+      if (!docx) {
+        downloadAsPDF(canvases);
+        return;
+      }
+
+      var sections = [];
+      canvases.forEach(function(canvas, index) {
+        var imgData = canvas.toDataURL('image/png');
+        sections.push(new docx.Paragraph({
+          children: [
+            new docx.ImageRun({
+              data: imgData,
+              transformation: { width: 600, height: 800 }
+            })
+          ]
+        }));
+        if (index === 0) {
+          sections.push(new docx.Paragraph({ text: '' }));
+          sections.push(new docx.PageBreak());
+        }
+      });
+
+      var doc = new docx.Document({ sections: [{ children: sections }] });
+      docx.Packer.toBlob(doc).then(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = charName + '-sheet.docx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      });
+    } catch(err) {
+      console.error('DOCX export failed:', err);
+      downloadAsPDF(canvases);
+    }
   }
 
   // Print tabs
