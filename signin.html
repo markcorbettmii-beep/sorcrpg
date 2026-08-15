@@ -84,10 +84,34 @@
                     Continue with Apple
                 </button>
                 <div class="signup-link-text">
-                    New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { }, '/signup.html');">Delve in now</a>
+                    New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); });">Delve in now</a>
                 </div>
             </div>
 
+            <div id="signupForm" style="display:none;">
+                <h2 style="color:#c93f35;margin-bottom:1.5rem;">Create Your Account</h2>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" class="signin-input" placeholder="your@email.com" />
+                </div>
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a name" />
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" class="signin-input" placeholder="8-64 chars, 1 upper, 1 lower, 1 number" />
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" />
+                </div>
+                <button class="signin-btn signin-btn-primary" onclick="handleSignUp()">Create Account</button>
+                <div id="statusMsg" class="status-msg"></div>
+                <div style="margin-top:1.5rem;text-align:center;">
+                    <a href="javascript:void(0)" onclick="hideSignupForm()" style="color:#b9aa00;text-decoration:underline;font-size:0.9rem;">Back to login</a>
+                </div>
+            </div>
 
             <div class="signin-links">
                 <a href="javascript:void(0)" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
@@ -304,6 +328,16 @@
             }).catch(function() {
                 showStatus('Connection error. Please try again.', 'error');
             });
+        };
+
+        window.showSignupForm = function() {
+            document.getElementById('oauthSection').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+        };
+
+        window.hideSignupForm = function() {
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('oauthSection').style.display = 'block';
         };
 
 
