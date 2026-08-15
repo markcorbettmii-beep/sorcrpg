@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+  <script src="verify-kid.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1808,11 +1809,13 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Download button - toggle menu
+  // Download button - toggle menu (with K-ID verification)
   document.getElementById('downloadBtn').addEventListener('click', function(e) {
     e.stopPropagation();
-    var menu = document.getElementById('downloadMenu');
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    checkKIDVerification(function() {
+      var menu = document.getElementById('downloadMenu');
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    });
   });
 
   // Close menu when clicking elsewhere
