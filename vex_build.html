@@ -6,6 +6,7 @@
   <title>Vex - SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1941,16 +1942,38 @@
 
   // Download button
   document.getElementById('downloadBtn').addEventListener('click', function() {
-    var html = document.documentElement.outerHTML;
-    var blob = new Blob([html], { type: 'text/html' });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    link.download = 'character-sheet.html';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    var front = document.getElementById('front');
+    var back = document.getElementById('back');
+    var charName = document.querySelector('h1')?.textContent || 'character-sheet';
+
+    Promise.all([
+      html2canvas(front, { scale: 2, useCORS: true }),
+      html2canvas(back, { scale: 2, useCORS: true })
+    ]).then(function(canvases) {
+      var jsPDF = window.jspdf.jsPDF;
+      var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+
+      canvases.forEach(function(canvas, index) {
+        if (index > 0) pdf.addPage();
+        var imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+      });
+
+      pdf.save(charName + '-sheet.pdf');
+    }).catch(function(err) {
+      console.error('PDF generation failed:', err);
+      alert('Failed to generate PDF. Downloading HTML instead.');
+      var html = document.documentElement.outerHTML;
+      var blob = new Blob([html], { type: 'text/html' });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = charName + '.html';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
   });
 
   // Print tabs
