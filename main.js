@@ -551,6 +551,11 @@ window.sorcUpdateNotifications = function() {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
+  // Hide badge on signin page
+  if (window.location.pathname.includes('signin')) {
+    existing.style.display = 'none';
+    return;
+  }
   var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
   var linkColor = isLawful ? '#ffffff' : '#c93f35';
