@@ -312,44 +312,19 @@
         ageError.style.display = 'none';
       }
 
-      // Show loading
-      document.getElementById('loading').style.display = 'block';
+      // Set cookie for 1 year
+      var expiryDate = new Date();
+      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      document.cookie = 'kidVerified=true; expires=' + expiryDate.toUTCString() + '; path=/';
 
-      // Submit to backend (you'll need to create a Worker endpoint)
-      fetch('/api/verify-kid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: location,
-          birthDate: year + '-' + month + '-' + day,
-          timestamp: new Date().toISOString()
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('loading').style.display = 'none';
-        if (data.success) {
-          // Set cookie for 1 year
-          var expiryDate = new Date();
-          expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-          document.cookie = 'kidVerified=true; expires=' + expiryDate.toUTCString() + '; path=/';
+      // Show success message
+      document.getElementById('success').style.display = 'block';
+      document.getElementById('kidForm').style.display = 'none';
 
-          document.getElementById('success').style.display = 'block';
-          document.getElementById('kidForm').style.display = 'none';
-
-          // Redirect to return URL after a short delay
-          setTimeout(function() {
-            window.location.href = getReturnUrl();
-          }, 1500);
-        } else {
-          alert('Verification failed. Please try again.');
-        }
-      })
-      .catch(error => {
-        document.getElementById('loading').style.display = 'none';
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
-      });
+      // Redirect to return URL after a short delay
+      setTimeout(function() {
+        window.location.href = getReturnUrl();
+      }, 1500);
     });
   </script>
 </body>
