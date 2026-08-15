@@ -2368,8 +2368,19 @@
   document.getElementById('downloadBtn').addEventListener('click', function(e) {
     e.stopPropagation();
     checkKIDVerification(function() {
-      var menu = document.getElementById('downloadMenu');
-      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      var front = document.getElementById('front');
+      var back = document.getElementById('back');
+      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
+
+      Promise.all([
+        html2canvas(front, { scale: 2, useCORS: true }),
+        html2canvas(back, { scale: 2, useCORS: true })
+      ]).then(function(canvases) {
+        downloadAsPDF(canvases, charName);
+      }).catch(function(err) {
+        console.error('Canvas generation failed:', err);
+        alert('Failed to generate PDF. Please try again.');
+      });
     });
   });
 
