@@ -2051,95 +2051,13 @@
         html2canvas(back, { scale: 2, useCORS: true })
       ]);
 
-      // Create a simple format selection menu
-      var formatMenu = document.createElement('div');
-      formatMenu.style.position = 'fixed';
-      formatMenu.style.top = '50%';
-      formatMenu.style.left = '50%';
-      formatMenu.style.transform = 'translate(-50%, -50%)';
-      formatMenu.style.backgroundColor = '#222';
-      formatMenu.style.border = '2px solid #d4a574';
-      formatMenu.style.borderRadius = '8px';
-      formatMenu.style.padding = '20px';
-      formatMenu.style.zIndex = '10000';
-      formatMenu.style.minWidth = '200px';
-      formatMenu.style.boxShadow = '0 0 20px rgba(0,0,0,0.8)';
-
-      var title = document.createElement('div');
-      title.textContent = 'Save As:';
-      title.style.color = '#d4a574';
-      title.style.marginBottom = '12px';
-      title.style.fontWeight = 'bold';
-      formatMenu.appendChild(title);
-
-      var formats = ['PDF', 'HTML', 'JPG', 'PNG', 'DOCX'];
-      formats.forEach(function(format) {
-        var btn = document.createElement('button');
-        btn.textContent = format;
-        btn.style.display = 'block';
-        btn.style.width = '100%';
-        btn.style.padding = '10px';
-        btn.style.marginBottom = '8px';
-        btn.style.backgroundColor = '#333';
-        btn.style.color = '#fff';
-        btn.style.border = '1px solid #555';
-        btn.style.borderRadius = '4px';
-        btn.style.cursor = 'pointer';
-        btn.style.fontFamily = 'inherit';
-        btn.style.fontSize = '13px';
-        btn.onmouseover = function() { this.style.backgroundColor = '#444'; };
-        btn.onmouseout = function() { this.style.backgroundColor = '#333'; };
-        btn.onclick = function() {
-          document.body.removeChild(formatMenu);
-          downloadFormat(format.toLowerCase(), canvases);
-        };
-        formatMenu.appendChild(btn);
-      });
-
-      var cancelBtn = document.createElement('button');
-      cancelBtn.textContent = 'Cancel';
-      cancelBtn.style.display = 'block';
-      cancelBtn.style.width = '100%';
-      cancelBtn.style.padding = '10px';
-      cancelBtn.style.backgroundColor = '#555';
-      cancelBtn.style.color = '#fff';
-      cancelBtn.style.border = '1px solid #777';
-      cancelBtn.style.borderRadius = '4px';
-      cancelBtn.style.cursor = 'pointer';
-      cancelBtn.style.fontFamily = 'inherit';
-      cancelBtn.style.fontSize = '13px';
-      cancelBtn.onmouseover = function() { this.style.backgroundColor = '#666'; };
-      cancelBtn.onmouseout = function() { this.style.backgroundColor = '#555'; };
-      cancelBtn.onclick = function() { document.body.removeChild(formatMenu); };
-      formatMenu.appendChild(cancelBtn);
-
-      document.body.appendChild(formatMenu);
+      downloadAsPDF(canvases);
 
     } catch(err) {
       console.error('Download error:', err);
       alert('Failed to prepare download.');
     }
   });
-
-  function downloadFormat(format, canvases) {
-    switch(format) {
-      case 'pdf':
-        downloadAsPDF(canvases);
-        break;
-      case 'html':
-        downloadAsHTML();
-        break;
-      case 'jpg':
-        downloadAsImage(canvases, 'image/jpeg', 'jpg');
-        break;
-      case 'png':
-        downloadAsImage(canvases, 'image/png', 'png');
-        break;
-      case 'docx':
-        downloadAsDocx(canvases);
-        break;
-    }
-  }
 
   function downloadAsPDF(canvases) {
     var jsPDF = window.jspdf.jsPDF;
