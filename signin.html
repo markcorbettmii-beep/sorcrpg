@@ -68,6 +68,8 @@
             <h1>Welcome to Essentia</h1>
             <p>Sign in to continue your adventure</p>
 
+            <!-- Required root element for Amazon SDK -->
+            <div id="amazon-root" style="display:none;"></div>
 
             <div class="oauth-section show" id="oauthSection">
                 <!-- Official Google Sign-In -->
@@ -76,11 +78,11 @@
 
                 <div class="oauth-divider">or</div>
 
-                <!-- Amazon Login -->
-                <button class="oauth-btn oauth-amazon" onclick="handleAmazonLogin()">
-                    <span style="font-size:20px;color:#FF9900;font-weight:bold;">a</span>
+                <!-- Official Amazon Sign-In -->
+                <a href="#" id="LoginWithAmazon" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGV4dCB4PSI2IiB5PSIxOCIgZm9udC1zaXplPSIyMCIgZmlsbD0iI0ZGOTkwMCIgZm9udC13ZWlnaHQ9ImJvbGQiPmE8L3RleHQ+PC9zdmc+" alt="Amazon" style="width:20px;height:20px;margin-right:8px;" />
                     Continue with Amazon
-                </button>
+                </a>
 
                 <!-- Official Apple Sign-In -->
                 <div id="appleid-signin" style="width:100%;display:flex;justify-content:center;" data-color="black" data-border="true" data-type="sign-in"></div>
@@ -379,9 +381,50 @@
             }).requestCode();
         };
 
-        window.handleAmazonLogin = function() {
-            showStatus('Amazon login coming soon...', 'error');
+        window.onAmazonLoginReady = function() {
+            amazon.Login.setClientId('YOUR_AMAZON_CLIENT_ID');
         };
+
+        window.handleAmazonSignIn = async function(response) {
+            try {
+                if (response.error) {
+                    showStatus('Amazon sign in error: ' + response.error, 'error');
+                    return;
+                }
+                const res = await fetch(API_URL + '/api/auth/amazon-signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: response.access_token })
+                });
+                const data = await res.json();
+                if (data.success && data.authKey) {
+                    localStorage.setItem('sorc_user', JSON.stringify({
+                        ...data.user,
+                        authKey: data.authKey
+                    }));
+                    window.location.href = 'index.html';
+                } else {
+                    showStatus(data.error || 'Sign in failed', 'error');
+                }
+            } catch (e) {
+                showStatus('Connection error', 'error');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginButton = document.getElementById('LoginWithAmazon');
+            if (loginButton) {
+                loginButton.onclick = function(e) {
+                    e.preventDefault();
+                    if (window.amazon && window.amazon.Login) {
+                        var options = { scope: 'profile' };
+                        amazon.Login.authorize(options, window.handleAmazonSignIn);
+                    } else {
+                        showStatus('Amazon SDK not loaded', 'error');
+                    }
+                };
+            }
+        });
 
         window.handleAppleSignIn = async function(response) {
             try {
@@ -418,6 +461,23 @@
 
   <!-- Official Apple Sign-In SDK -->
   <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async defer></script>
+
+  <!-- Official Amazon Sign-In SDK -->
+  <script>
+    window.onAmazonLoginReady = function() {
+      if (window.amazon && window.amazon.Login) {
+        amazon.Login.setClientId('YOUR_AMAZON_CLIENT_ID');
+      }
+    };
+    (function(d) {
+      var a = d.createElement('script');
+      a.type = 'text/javascript';
+      a.async = true;
+      a.id = 'amazon-login-sdk';
+      a.src = 'https://sdk.amazonservices.com/js/Alexa.js';
+      d.getElementById('amazon-root').appendChild(a);
+    })(document);
+  </script>
 
   <script>
     // Initialize Apple Sign-In when SDK loads
