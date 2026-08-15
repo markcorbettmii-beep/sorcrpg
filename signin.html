@@ -70,19 +70,21 @@
 
 
             <div class="oauth-section show" id="oauthSection">
-                <button class="oauth-btn oauth-google" onclick="handleGoogleLogin()">
-                    <span style="font-size:20px;background:linear-gradient(135deg, #4285F4 0%, #EA4335 50%, #FBBC05 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:bold;">G</span>
-                    Continue with Google
-                </button>
+                <!-- Official Google Sign-In -->
+                <div id="g_id_onload" data-client_id="303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com" data-callback="handleGoogleSignIn" style="display:none;"></div>
+                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="light" style="width:100%;display:flex;justify-content:center;"></div>
+
                 <div class="oauth-divider">or</div>
+
+                <!-- Amazon Login -->
                 <button class="oauth-btn oauth-amazon" onclick="handleAmazonLogin()">
                     <span style="font-size:20px;color:#FF9900;font-weight:bold;">a</span>
                     Continue with Amazon
                 </button>
-                <button class="oauth-btn oauth-apple" onclick="handleAppleLogin()">
-                    <span style="font-size:20px;">🍎</span>
-                    Continue with Apple
-                </button>
+
+                <!-- Official Apple Sign-In -->
+                <div id="appleid-signin" style="width:100%;display:flex;justify-content:center;" data-color="black" data-border="true" data-type="sign-in"></div>
+
                 <div class="signup-link-text">
                     New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); });">Delve in now</a>
                 </div>
@@ -341,6 +343,28 @@
         };
 
 
+        window.handleGoogleSignIn = async function(response) {
+            try {
+                const res = await fetch(API_URL + '/api/auth/google-signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                const data = await res.json();
+                if (data.success && data.authKey) {
+                    localStorage.setItem('sorc_user', JSON.stringify({
+                        ...data.user,
+                        authKey: data.authKey
+                    }));
+                    window.location.href = 'index.html';
+                } else {
+                    showStatus(data.error || 'Sign in failed', 'error');
+                }
+            } catch (e) {
+                showStatus('Connection error', 'error');
+            }
+        };
+
         window.handleGoogleLogin = function() {
             window.google.accounts.oauth2.initCodeClient({
                 client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
@@ -359,11 +383,58 @@
             showStatus('Amazon login coming soon...', 'error');
         };
 
+        window.handleAppleSignIn = async function(response) {
+            try {
+                if (response.authorization && response.authorization.id_token) {
+                    const res = await fetch(API_URL + '/api/auth/apple-signin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ credential: response.authorization.id_token })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.authKey) {
+                        localStorage.setItem('sorc_user', JSON.stringify({
+                            ...data.user,
+                            authKey: data.authKey
+                        }));
+                        window.location.href = 'index.html';
+                    } else {
+                        showStatus(data.error || 'Sign in failed', 'error');
+                    }
+                }
+            } catch (e) {
+                showStatus('Connection error', 'error');
+            }
+        };
+
         window.handleAppleLogin = function() {
             showStatus('Apple login coming soon...', 'error');
         };
     </script>
   <script src="verify-kid.js"></script>
+
+  <!-- Official Google Sign-In SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Official Apple Sign-In SDK -->
+  <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async defer></script>
+
+  <script>
+    // Initialize Apple Sign-In when SDK loads
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.AppleID) {
+        AppleID.auth.init({
+          clientId: 'com.sorcrpg.signin',
+          teamId: 'YOUR_TEAM_ID',
+          bundleId: 'com.sorcrpg.signin',
+          redirectUri: 'https://sorcrpg.com/signin.html',
+          scope: 'email',
+          usePopup: true
+        });
+      }
+    });
+  </script>
+
   <script type="module" src="main.js?v=25"></script>
   <div id="footer"></div>
 </body>
