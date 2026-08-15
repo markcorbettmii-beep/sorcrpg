@@ -331,15 +331,14 @@ function showRoleBadge(user) {
   var safeId = escapeHtml(String(user.id || ''));
   var isAdminUser = OWNER_EMAILS.includes(user.email) || ADMIN_EMAILS.includes(user.email);
 
+  var isLawful = document.body.classList.contains('lawful-mode');
   var avatarHtml = '';
   if (user.avatar) {
     var avatarPath = getAvatarPath(user.avatar);
     var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
     var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
-    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:' + avatarBg + ';border:3px solid ' + avatarBorder + ';vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
+    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
-
-  var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
   var linkColor = isLawful ? '#b9aa00' : '#c93f35';
   var shadowColor = isLawful ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
@@ -555,7 +554,7 @@ function showLoggedOutBadge() {
   // Default avatar icon (user circle) - mirror main login avatar colors
   var avatarBg = isLawful ? '#2196f3' : '#c93f35';
   var avatarBorder = isLawful ? '#b9aa00' : '#9c27b0';
-  var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:3px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
+  var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + '<a href="#" style="text-decoration:underline;">Name AD</a>' +
     ' · <a href="#" style="text-decoration:underline;">Profile</a> · <a href="#" style="text-decoration:underline;">Lobbies</a> · <a href="#" style="text-decoration:underline;">Inbox</a> · <a href="#" style="text-decoration:underline;">Fellowships</a> · <a href="#" style="text-decoration:underline;">Forums</a> · <a href="#" style="text-decoration:underline;">Content</a>' +
