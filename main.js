@@ -556,7 +556,7 @@ function showLoggedOutBadge() {
   var avatarBorder = isLawful ? '#b9aa00' : '#9c27b0';
   var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
-  existing.innerHTML = defaultAvatar + '<a href="/signin.html" style="text-decoration:underline;"><strong>Badge Login</strong></a>';
+  existing.innerHTML = defaultAvatar + '<a href="/signin.html" style="color:' + linkColor + ';text-decoration:underline;"><strong>Badge Login</strong></a>';
 }
 
 // ========== AUTH STATE ==========
