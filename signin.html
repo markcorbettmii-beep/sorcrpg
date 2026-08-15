@@ -119,13 +119,13 @@
                     <input type="password" id="passwordInput" class="signin-input" placeholder="Password" autocomplete="current-password" />
                     <button class="toggle-pw" onclick="togglePassword('passwordInput', this)" type="button">👁</button>
                 </div>
-                <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
+                <button class="signin-btn signin-btn-primary" id="signinBtn">Sign In</button>
 
                 <div class="signin-divider">or create account</div>
 
                 <input type="email" id="signupEmail" class="signin-input" placeholder="Email address" autocomplete="email" />
                 <div class="password-wrapper">
-                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (min 6 characters)" autocomplete="new-password" />
+                    <input type="password" id="signupPassword" class="signin-input" placeholder="Password (8-64 chars, 1 uppercase, 1 lowercase, 1 number)" autocomplete="new-password" />
                     <button class="toggle-pw" onclick="togglePassword('signupPassword', this)" type="button">👁</button>
                 </div>
                 <div class="password-wrapper">
@@ -247,7 +247,8 @@
                         lastUnverifiedEmail = email;
                         showStatus(data.error + ' <a href="javascript:void(0)" onclick="handleResendVerification()" style="color:#b9aa00;text-decoration:underline;">Resend verification email</a>', 'error');
                     } else if (res.status === 401 && data.error && data.error.includes('No password')) {
-                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendResetFromSignin(\'' + email.replace(/'/g, '') + '\')" style="color:#b9aa00;text-decoration:underline;">Send me a reset link</a>', 'error');
+                        var encodedEmail = email.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendResetFromSignin(\'' + encodedEmail.replace(/'/g, '&#39;') + '\')" style="color:#b9aa00;text-decoration:underline;">Send me a reset link</a>', 'error');
                     } else {
                         showStatus(data.error || 'Sign in failed.', 'error');
                     }
@@ -273,7 +274,10 @@
 
             if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
             if (!username) { showStatus('Please choose a first name.', 'error'); return; }
-            if (password.length < 6) { showStatus('Password must be at least 6 characters.', 'error'); return; }
+            if (password.length < 8 || password.length > 64) { showStatus('Password must be 8-64 characters.', 'error'); return; }
+            if (!/[A-Z]/.test(password)) { showStatus('Password must contain at least one uppercase letter.', 'error'); return; }
+            if (!/[a-z]/.test(password)) { showStatus('Password must contain at least one lowercase letter.', 'error'); return; }
+            if (!/[0-9]/.test(password)) { showStatus('Password must contain at least one number.', 'error'); return; }
             if (password !== confirmPassword) { showStatus('Passwords do not match.', 'error'); return; }
 
             var usernameError = isValidUsername(username);
@@ -353,6 +357,14 @@
                 showStatus('Connection error. Please try again.', 'error');
             });
         };
+
+        // Event listener for Sign In button (refactored from onclick)
+        document.addEventListener('DOMContentLoaded', function() {
+            var signinBtn = document.getElementById('signinBtn');
+            if (signinBtn) {
+                signinBtn.addEventListener('click', handleSignIn);
+            }
+        });
 
         window.handleGoogleLogin = function() {
             checkKIDVerification(function() {

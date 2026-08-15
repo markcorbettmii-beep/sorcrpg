@@ -39,6 +39,8 @@ interface Env {
   AVATARS: R2Bucket;
   FORUM_MEDIA: R2Bucket;
   RESEND_API_KEY: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
 }
 
 interface Variables {
@@ -137,7 +139,10 @@ app.post('/api/auth/register', async (c) => {
   if (email.length > 254) return c.json({ error: 'Email address too long.' }, 400);
   if (username.length > 30) return c.json({ error: 'Username too long (max 30 characters).' }, 400);
   if (firstName && firstName.length > 50) return c.json({ error: 'First name too long (max 50 characters).' }, 400);
-  if (!password || password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400);
+  if (!password || password.length < 8 || password.length > 64) return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  if (!/[A-Z]/.test(password)) return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  if (!/[a-z]/.test(password)) return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
   const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').bind(email, username).first();
   if (existingUser) return c.json({ error: 'Email or username already exists' }, 400);
@@ -208,7 +213,10 @@ app.post('/api/auth/forgot-password', async (c) => {
 app.post('/api/auth/reset-password', async (c) => {
   const { token, password } = await c.req.json();
   if (!token || !password) return c.json({ error: 'Token and password required' }, 400);
-  if (password.length < 6) return c.json({ error: 'Password must be at least 6 characters' }, 400);
+  if (password.length < 8 || password.length > 64) return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  if (!/[A-Z]/.test(password)) return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  if (!/[a-z]/.test(password)) return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE reset_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired reset link' }, 400);
   if (new Date(user.reset_token_expires_at) < new Date()) return c.json({ error: 'Reset link has expired. Please request a new one.' }, 400);
@@ -2821,8 +2829,6 @@ async function rotateGeneratedCodes(db: D1Database) {
 
 // ─── GOOGLE OAUTH 2.0 HANDLER ─────────────────────────────────────────────────
 
-const GOOGLE_CLIENT_ID = '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = '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';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
 
@@ -2841,8 +2847,8 @@ app.get('/auth/google/callback', async (c) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET,
+        client_id: c.env.GOOGLE_CLIENT_ID,
+        client_secret: c.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
         grant_type: 'authorization_code',
       }),

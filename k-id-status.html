@@ -260,10 +260,18 @@
       yearSelect.appendChild(option);
     }
 
-    // Get return URL from query parameters
+    // Get return URL from query parameters (whitelist validation)
     function getReturnUrl() {
       var params = new URLSearchParams(window.location.search);
-      return params.get('return') || '/';
+      var returnUrl = params.get('return') || '/';
+
+      // Only allow relative URLs starting with /
+      if (returnUrl.startsWith('/')) {
+        return returnUrl;
+      }
+
+      // Fallback to home if URL is invalid
+      return '/';
     }
 
     // Check if already verified
