@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K-ID Status - SORC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+
+    body.lawful-mode {
+      background: #ffffff;
+      color: #d4a574;
+    }
+
+    body.evil-mode {
+      background: #000000;
+      color: #ff4444;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 40px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .lawful-mode .container {
+      background: rgba(212, 165, 116, 0.05);
+      border: 2px solid #d4a574;
+    }
+
+    .evil-mode .container {
+      background: rgba(255, 68, 68, 0.05);
+      border: 2px solid #ff4444;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .sorc-logo {
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .lawful-mode select,
+    .lawful-mode input {
+      background: rgba(212, 165, 116, 0.1);
+      color: #d4a574;
+      border-color: #d4a574;
+    }
+
+    .lawful-mode select:focus,
+    .lawful-mode input:focus {
+      background: rgba(212, 165, 116, 0.2);
+      outline: none;
+      box-shadow: 0 0 10px rgba(212, 165, 116, 0.3);
+    }
+
+    .evil-mode select,
+    .evil-mode input {
+      background: rgba(255, 68, 68, 0.1);
+      color: #ff4444;
+      border-color: #ff4444;
+    }
+
+    .evil-mode select:focus,
+    .evil-mode input:focus {
+      background: rgba(255, 68, 68, 0.2);
+      outline: none;
+      box-shadow: 0 0 10px rgba(255, 68, 68, 0.3);
+    }
+
+    select option {
+      background: #1a1a1a;
+      color: #d4a574;
+    }
+
+    .evil-mode select option {
+      background: #330000;
+      color: #ff4444;
+    }
+
+    .date-fields {
+      display: flex;
+      gap: 10px;
+    }
+
+    .date-fields select {
+      flex: 1;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .lawful-mode button {
+      background: #d4a574;
+      color: #1a1a1a;
+    }
+
+    .lawful-mode button:hover {
+      background: #e5b88f;
+      box-shadow: 0 4px 15px rgba(212, 165, 116, 0.3);
+    }
+
+    .evil-mode button {
+      background: #ff4444;
+      color: #1a1a1a;
+    }
+
+    .evil-mode button:hover {
+      background: #ff6666;
+      box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+    }
+
+    .error {
+      color: #ff6666;
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .success {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+      text-align: center;
+    }
+
+    .lawful-mode .success {
+      background: rgba(212, 165, 116, 0.2);
+      color: #d4a574;
+      border: 1px solid #d4a574;
+    }
+
+    .evil-mode .success {
+      background: rgba(255, 68, 68, 0.2);
+      color: #ff4444;
+      border: 1px solid #ff4444;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      font-size: 14px;
+      opacity: 0.7;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body class="lawful-mode">
+  <div class="container">
+    <div class="logo-section">
+      <img id="logo" src="sorc-letters-lawful.jpg" alt="SORC" class="sorc-logo" />
+      <h1>K-ID Status</h1>
+    </div>
+
+    <div class="subtitle">
+      We collect your location and date of birth solely to verify your age and comply with regional laws that protect young adventurers. Your information is encrypted and securely stored.
+    </div>
+
+    <div id="success" class="success">
+      Your K-ID has been verified. Welcome to SORC.
+    </div>
+
+    <form id="kidForm">
+      <div class="form-group">
+        <label for="location">Location</label>
+        <select id="location" name="location" required>
+          <option value="">Select a location</option>
+          <option value="United States">United States</option>
+          <option value="Canada">Canada</option>
+          <option value="United Kingdom">United Kingdom</option>
+          <option value="Australia">Australia</option>
+          <option value="New Zealand">New Zealand</option>
+          <option value="European Union">European Union</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Date of Birth</label>
+        <div class="date-fields">
+          <select id="month" name="month" required>
+            <option value="">Month</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+          <select id="day" name="day" required>
+            <option value="">Day</option>
+            <option value="01">1</option>
+            <option value="02">2</option>
+            <option value="03">3</option>
+            <option value="04">4</option>
+            <option value="05">5</option>
+            <option value="06">6</option>
+            <option value="07">7</option>
+            <option value="08">8</option>
+            <option value="09">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+          </select>
+          <select id="year" name="year" required>
+            <option value="">Year</option>
+            <!-- Years populated by JavaScript -->
+          </select>
+        </div>
+        <div id="ageError" class="error">You must be at least 13 years old to access SORC.</div>
+      </div>
+
+      <button type="submit">Submit</button>
+      <div class="loading" id="loading">Verifying...</div>
+    </form>
+  </div>
+
+  <script>
+    // Populate year dropdown (1950 to current year)
+    var yearSelect = document.getElementById('year');
+    var currentYear = new Date().getFullYear();
+    for (var year = currentYear; year >= 1950; year--) {
+      var option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearSelect.appendChild(option);
+    }
+
+    // Detect mode preference from localStorage or body class
+    function detectMode() {
+      var mode = localStorage.getItem('sorcMode') || 'lawful-mode';
+      document.body.className = mode;
+      var logo = document.getElementById('logo');
+      if (mode === 'evil-mode') {
+        logo.src = 'images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png';
+      } else {
+        logo.src = 'sorc-letters-lawful.jpg';
+      }
+    }
+
+    detectMode();
+
+    // Check if already verified
+    function checkVerification() {
+      if (document.cookie.indexOf('kidVerified=true') > -1) {
+        document.getElementById('success').style.display = 'block';
+        document.getElementById('kidForm').style.display = 'none';
+      }
+    }
+
+    checkVerification();
+
+    // Form submission
+    document.getElementById('kidForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      var location = document.getElementById('location').value;
+      var month = document.getElementById('month').value;
+      var day = document.getElementById('day').value;
+      var year = document.getElementById('year').value;
+
+      if (!location || !month || !day || !year) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      // Check if age is at least 13
+      var birthDate = new Date(year, month - 1, day);
+      var today = new Date();
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      var ageError = document.getElementById('ageError');
+      if (age < 13) {
+        ageError.style.display = 'block';
+        return;
+      } else {
+        ageError.style.display = 'none';
+      }
+
+      // Show loading
+      document.getElementById('loading').style.display = 'block';
+
+      // Submit to backend (you'll need to create a Worker endpoint)
+      fetch('/api/verify-kid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: location,
+          birthDate: year + '-' + month + '-' + day,
+          timestamp: new Date().toISOString()
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        if (data.success) {
+          // Set cookie for 1 year
+          var expiryDate = new Date();
+          expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+          document.cookie = 'kidVerified=true; expires=' + expiryDate.toUTCString() + '; path=/';
+
+          document.getElementById('success').style.display = 'block';
+          document.getElementById('kidForm').style.display = 'none';
+        } else {
+          alert('Verification failed. Please try again.');
+        }
+      })
+      .catch(error => {
+        document.getElementById('loading').style.display = 'none';
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+      });
+    });
+  </script>
+</body>
+</html>
