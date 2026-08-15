@@ -3,20 +3,10 @@
 
 function checkKIDVerification(downloadCallback) {
   // Check if kidVerified cookie exists
-  function hasCookie(name) {
-    var nameEQ = name + "=";
-    var cookies = document.cookie.split(';');
-    for (var i = 0; i < cookies.length; i++) {
-      var cookie = cookies[i].trim();
-      if (cookie.indexOf(nameEQ) === 0) {
-        return true;
-      }
-    }
-    return false;
-  }
+  var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
 
   // If cookie exists, proceed with download
-  if (hasCookie('kidVerified')) {
+  if (kidVerified) {
     downloadCallback();
     return;
   }
