@@ -550,16 +550,16 @@ function showLoggedOutBadge() {
   if (!existing) return;
   var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#b9aa00' : '#c93f35';
-  var shadowColor = isLawful ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
+  var linkColor = isLawful ? '#ffffff' : '#c93f35';
+  var shadowColor = isLawful ? 'none' : 'rgba(0,0,0,0.5)';
   // Default avatar icon (user circle)
   var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
   var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
   var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:3px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
-  existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;color:' + linkColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
-  existing.innerHTML = defaultAvatar + '<span style="color:' + linkColor + ';">Name AD</span>' +
-    ' · <span style="color:' + linkColor + ';">Profile</span> · <span style="color:' + linkColor + ';">Lobbies</span> · <span style="color:' + linkColor + ';">Inbox</span> · <span style="color:' + linkColor + ';">Fellowships</span> · <span style="color:' + linkColor + ';">Forums</span> · <span style="color:' + linkColor + ';">Content</span>' +
-    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;text-shadow:1px 1px 0 ' + shadowColor + ';"><strong>Badge Login</strong></button>';
+  existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
+  existing.innerHTML = defaultAvatar + '<a href="#" style="text-decoration:underline;">Name AD</a>' +
+    ' · <a href="#" style="text-decoration:underline;">Profile</a> · <a href="#" style="text-decoration:underline;">Lobbies</a> · <a href="#" style="text-decoration:underline;">Inbox</a> · <a href="#" style="text-decoration:underline;">Fellowships</a> · <a href="#" style="text-decoration:underline;">Forums</a> · <a href="#" style="text-decoration:underline;">Content</a>' +
+    ' · <a href="/signin.html" style="text-decoration:underline;"><strong>Badge Login</strong></a>';
 }
 
 // ========== AUTH STATE ==========
