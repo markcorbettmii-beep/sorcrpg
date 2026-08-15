@@ -1735,7 +1735,17 @@
 <p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
 
 <div class="action-bar">
-  <button id="downloadBtn">Download</button>
+  <div style="position: relative; display: inline-block;">
+    <button id="downloadBtn">Save As</button>
+    <div id="downloadMenu" style="display: none; position: absolute; top: 100%; left: 0; background: #222; border: 1px solid #666; z-index: 1000; min-width: 120px;">
+      <div style="padding: 8px 0;">
+        <a href="#" data-format="pdf" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">PDF</a>
+        <a href="#" data-format="html" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">HTML</a>
+        <a href="#" data-format="jpg" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">JPG</a>
+        <a href="#" data-format="png" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">PNG</a>
+        <a href="#" data-format="docx" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">DOCX</a>
+      </div>
+    </div>
   </div>
   <div class="print-group">
     <button class="ptab active" data-side="front">Front</button>
@@ -1798,28 +1808,66 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Download button - standard browser downloads with format options
-  var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-
-  document.getElementById('downloadBtn').addEventListener('click', async function() {
-    var front = document.getElementById('front');
-    var back = document.getElementById('back');
-
-    try {
-      var canvases = await Promise.all([
-        html2canvas(front, { scale: 2, useCORS: true }),
-        html2canvas(back, { scale: 2, useCORS: true })
-      ]);
-
-      downloadAsPDF(canvases);
-
-    } catch(err) {
-      console.error('Download error:', err);
-      alert('Failed to prepare download.');
-    }
+  // Download button - toggle menu
+  document.getElementById('downloadBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    var menu = document.getElementById('downloadMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
   });
 
-  function downloadAsPDF(canvases) {
+  // Close menu when clicking elsewhere
+  document.addEventListener('click', function() {
+    document.getElementById('downloadMenu').style.display = 'none';
+  });
+
+  // Format selection handlers
+  var charName = document.querySelector('h1')?.textContent || 'character-sheet';
+
+  document.querySelectorAll('#downloadMenu a').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var format = this.getAttribute('data-format');
+      document.getElementById('downloadMenu').style.display = 'none';
+
+      var front = document.getElementById('front');
+      var back = document.getElementById('back');
+
+      Promise.all([
+        html2canvas(front, { scale: 2, useCORS: true }),
+        html2canvas(back, { scale: 2, useCORS: true })
+      ]).then(function(canvases) {
+        handleDownload(format, canvases, charName);
+      }).catch(function(err) {
+        console.error('Canvas generation failed:', err);
+        alert('Failed to generate file. Downloading HTML instead.');
+        downloadAsHTML(charName);
+      });
+    });
+  });
+
+  // Download handlers for each format
+  function handleDownload(format, canvases, name) {
+    switch(format) {
+      case 'pdf':
+        downloadAsPDF(canvases, name);
+        break;
+      case 'html':
+        downloadAsHTML(name);
+        break;
+      case 'jpg':
+        downloadAsImage(canvases, name, 'image/jpeg', 'jpg');
+        break;
+      case 'png':
+        downloadAsImage(canvases, name, 'image/png', 'png');
+        break;
+      case 'docx':
+        downloadAsDocx(canvases, name);
+        break;
+    }
+  }
+
+  function downloadAsPDF(canvases, name) {
     var jsPDF = window.jspdf.jsPDF;
     var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
 
@@ -1829,37 +1877,24 @@
       pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
     });
 
-    pdf.save(charName + '-sheet.pdf');
+    pdf.save(name + '-sheet.pdf');
   }
 
-
-  function downloadAsPDF(canvases) {
-    var jsPDF = window.jspdf.jsPDF;
-    var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-
-    canvases.forEach(function(canvas, index) {
-      if (index > 0) pdf.addPage();
-      var imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-    });
-
-    pdf.save(charName + '-sheet.pdf');
-  }
-
-  function downloadAsHTML() {
+  function downloadAsHTML(name) {
     var html = document.documentElement.outerHTML;
     var blob = new Blob([html], { type: 'text/html' });
     var url = URL.createObjectURL(blob);
     var link = document.createElement('a');
     link.href = url;
-    link.download = charName + '.html';
+    link.download = name + '.html';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
 
-  function downloadAsImage(canvases, mimeType, ext) {
+  function downloadAsImage(canvases, name, mimeType, ext) {
+    // For image formats, create a composite of both pages
     var tempCanvas = document.createElement('canvas');
     var ctx = tempCanvas.getContext('2d');
 
@@ -1877,7 +1912,7 @@
       var url = URL.createObjectURL(blob);
       var link = document.createElement('a');
       link.href = url;
-      link.download = charName + '-sheet.' + ext;
+      link.download = name + '-sheet.' + ext;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1885,11 +1920,19 @@
     }, mimeType);
   }
 
-  function downloadAsDocx(canvases) {
+  function downloadAsDocx(canvases, name) {
     try {
       var docx = window.docx;
       if (!docx) {
-        downloadAsPDF(canvases);
+        alert('DOCX library not loaded. Downloading as PDF instead.');
+        var jsPDF = window.jspdf.jsPDF;
+        var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+        canvases.forEach(function(canvas, index) {
+          if (index > 0) pdf.addPage();
+          var imgData = canvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+        });
+        pdf.save(name + '-sheet.pdf');
         return;
       }
 
@@ -1915,7 +1958,7 @@
         var url = URL.createObjectURL(blob);
         var link = document.createElement('a');
         link.href = url;
-        link.download = charName + '-sheet.docx';
+        link.download = name + '-sheet.docx';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1923,7 +1966,8 @@
       });
     } catch(err) {
       console.error('DOCX export failed:', err);
-      downloadAsPDF(canvases);
+      alert('Failed to create DOCX. Downloading as PDF instead.');
+      downloadAsPDF(canvases, name);
     }
   }
 
