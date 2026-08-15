@@ -322,6 +322,10 @@ function showRoleBadge(user) {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
 
+  // Remove any leftover logged-out avatar span
+  var oldAvatar = existing.querySelector('.badge-avatar-default');
+  if (oldAvatar) oldAvatar.remove();
+
   var role = user.role || 'CIVILIAN';
   if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
   else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
