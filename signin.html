@@ -60,6 +60,9 @@
         .signup-link-text a { color: #b9aa00; text-decoration: underline; }
         body.lawful-mode .signup-link-text { color: #666; }
         body.lawful-mode .signup-link-text a { color: #2196f3; }
+        /* Apple fallback button */
+        .oauth-apple { background: #000; color: #fff; }
+        .oauth-apple:hover { background: #333; }
     </style>
 </head>
 <body>
@@ -93,6 +96,12 @@
                 <!-- Official Apple Sign-In -->
                 <div id="appleid-signin" style="width:100%;display:flex;justify-content:center;" data-color="black" data-border="true" data-type="sign-in"></div>
 
+                <!-- Fallback Apple Button if SDK doesn't render -->
+                <a href="#" id="LoginWithApple" class="oauth-btn oauth-apple" style="text-decoration:none;display:none;align-items:center;justify-content:center;">
+                    <span style="font-size:20px;margin-right:8px;">🍎</span>
+                    Sign in with Apple
+                </a>
+
                 <div class="signup-link-text">
                     New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); });">Delve in now</a>
                 </div>
@@ -100,6 +109,32 @@
 
             <div id="signupForm" style="display:none;">
                 <h2 style="color:#c93f35;margin-bottom:1.5rem;">Create Your Account</h2>
+
+                <!-- OAuth Signup Options -->
+                <div style="margin-bottom:1.5rem;">
+                    <p style="color:#888;font-size:0.85rem;margin-bottom:1rem;">Sign up with:</p>
+
+                    <!-- Google Sign-Up -->
+                    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="light" style="width:100%;display:flex;justify-content:center;margin-bottom:0.5rem;"></div>
+
+                    <!-- Amazon Sign-Up -->
+                    <a href="#" id="LoginWithAmazonSignup" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGV4dCB4PSI2IiB5PSIxOCIgZm9udC1zaXplPSIyMCIgZmlsbD0iI0ZGOTkwMCIgZm9udC13ZWlnaHQ9ImJvbGQiPmE8L3RleHQ+PC9zdmc+" alt="Amazon" style="width:20px;height:20px;margin-right:8px;" />
+                        Continue with Amazon
+                    </a>
+
+                    <!-- Apple Sign-Up -->
+                    <div id="appleid-signin-signup" style="width:100%;display:flex;justify-content:center;margin-bottom:0.5rem;" data-color="black" data-border="true" data-type="sign-up"></div>
+
+                    <!-- Fallback Apple Button for signup -->
+                    <a href="#" id="LoginWithAppleSignup" class="oauth-btn oauth-apple" style="text-decoration:none;display:none;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <span style="font-size:20px;margin-right:8px;">🍎</span>
+                        Sign up with Apple
+                    </a>
+
+                    <div style="text-align:center;margin:1rem 0;color:#666;font-size:0.85rem;">or</div>
+                </div>
+
                 <div class="form-group">
                     <label for="signupEmail">Email</label>
                     <input type="email" id="signupEmail" class="signin-input" placeholder="your@email.com" />
@@ -521,6 +556,12 @@
           scope: 'email',
           usePopup: true
         });
+      } else {
+        // Show fallback Apple button if SDK doesn't load
+        var fallbackApple = document.getElementById('LoginWithApple');
+        if (fallbackApple) {
+          fallbackApple.style.display = 'flex';
+        }
       }
     });
 
