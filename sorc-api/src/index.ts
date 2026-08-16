@@ -5,6 +5,8 @@ interface Env {
   sorc_db: D1Database;
   AVATARS: R2Bucket;
   FORUM_MEDIA: R2Bucket;
+  RESEND_API_KEY: string;
+  GOOGLE_CLIENT_SECRET: string;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -210,6 +212,93 @@ app.post('/api/auth/signin', async (c) => {
   const authKey = crypto.randomUUID();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
+});
+
+app.get('/auth/google/callback', async (c) => {
+  const code = c.req.query('code');
+  const state = c.req.query('state');
+
+  if (!code) {
+    return c.html(`<html><body><h1>Error</h1><p>Authorization code missing</p></body></html>`, 400);
+  }
+
+  try {
+    // Exchange authorization code for access token
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        code,
+        client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+        client_secret: c.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const error = await tokenResponse.text();
+      return c.html(`<html><body><h1>Error</h1><p>Failed to exchange authorization code: ${error}</p></body></html>`, 400);
+    }
+
+    const tokenData = await tokenResponse.json() as any;
+    if (!tokenData.access_token) {
+      return c.html(`<html><body><h1>Error</h1><p>Failed to get access token</p></body></html>`, 400);
+    }
+
+    // Get user info from Google
+    const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      return c.html(`<html><body><h1>Error</h1><p>Failed to get user info from Google</p></body></html>`, 400);
+    }
+
+    const googleUser = await userResponse.json() as any;
+    if (!googleUser.email) {
+      return c.html(`<html><body><h1>Error</h1><p>Failed to get user email from Google</p></body></html>`, 400);
+    }
+
+    // Check if user exists
+    let user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ?').bind(googleUser.email).first() as any;
+    let authKey: string;
+
+    if (!user) {
+      // Create new user from Google OAuth
+      authKey = crypto.randomUUID();
+      const userId = Math.floor(Math.random() * 90000) + 10000;
+      const now = new Date().toISOString();
+      const uuid = crypto.randomUUID();
+      const username = googleUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+
+      try {
+        await c.env.sorc_db.prepare(`
+          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verified, password_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
+      } catch (error: any) {
+        return c.html(`<html><body><h1>Error</h1><p>Failed to create account: ${error.message}</p></body></html>`, 500);
+      }
+    } else {
+      // User exists, generate new auth key
+      authKey = crypto.randomUUID();
+      try {
+        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+      } catch (error: any) {
+        return c.html(`<html><body><h1>Error</h1><p>Failed to authenticate: ${error.message}</p></body></html>`, 500);
+      }
+    }
+
+    // Redirect to signin with auth key, frontend will store it and redirect to home
+    return c.redirect(`https://sorcrpg.com/signin?authKey=${authKey}`);
+  } catch (error: any) {
+    return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
+  }
 });
 
 app.get('/api/forum/categories', async (c) => {
