@@ -50,6 +50,12 @@
         .oauth-btn:hover { background: #ebebeb; }
         body.lawful-mode .oauth-btn { background: #f5f5f5; color: #000; }
         body.lawful-mode .oauth-btn:hover { background: #ebebeb; }
+        /* OAuth SDK button containers - ensure they render on mobile */
+        .g_id_signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; min-height: 50px !important; }
+        #appleid-signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; min-height: 50px !important; }
+        /* Ensure SDK iframes are responsive */
+        .g_id_signin iframe, #appleid-signin iframe { max-width: 100% !important; width: 100% !important; }
+        #g_id_onload { display: none !important; }
         .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #888; }
         .signup-link-text a { color: #b9aa00; text-decoration: underline; }
         body.lawful-mode .signup-link-text { color: #666; }
@@ -490,8 +496,22 @@
   </script>
 
   <script>
-    // Initialize Apple Sign-In when SDK loads
+    // Initialize OAuth SDKs when they load
     document.addEventListener('DOMContentLoaded', function() {
+      // Force Google Sign-In to render if not already rendered
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.renderButton(
+          document.querySelector('.g_id_signin'),
+          {
+            type: 'standard',
+            size: 'large',
+            theme: 'light',
+            width: '100'
+          }
+        );
+      }
+
+      // Initialize Apple Sign-In when SDK loads
       if (window.AppleID) {
         AppleID.auth.init({
           clientId: 'com.sorcrpg.signin',
@@ -503,6 +523,23 @@
         });
       }
     });
+
+    // Also try to render Google button after a short delay for slower connections
+    setTimeout(function() {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            {
+              type: 'standard',
+              size: 'large',
+              theme: 'light',
+              width: '100'
+            }
+          );
+        } catch(e) {}
+      }
+    }, 1000);
   </script>
 
   <script type="module" src="main.js?v=25"></script>
