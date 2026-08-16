@@ -7,43 +7,63 @@
     <link rel="stylesheet" href="styles.css?v=9" />
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #f5f5f0; color: #2c2c2c; }
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; }
         .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
-        .signin-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-card { background: #1a1a1a; border: 1px solid #333; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
         .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
         .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
-        .signin-card p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .signin-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ccc; background: #f5f5f0; color: #2c2c2c; font-size: 1rem; box-sizing: border-box; }
+        .signin-card p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .signin-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; font-size: 1rem; box-sizing: border-box; }
         .signin-input:focus { outline: none; border-color: #c93f35; }
         .password-wrapper { position: relative; margin-bottom: 12px; }
         .password-wrapper .signin-input { margin-bottom: 0; padding-right: 44px; }
-        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #666; cursor: pointer; font-size: 1rem; padding: 0; }
-        .toggle-pw:hover { color: #333; }
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #888; cursor: pointer; font-size: 1rem; padding: 0; }
+        .toggle-pw:hover { color: #e0cfc0; }
         .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
         .signin-btn-primary { background: #c93f35; color: #fff; }
-        .signin-btn-primary:hover { background: #b93530; }
+        .signin-btn-primary:hover { background: #c93f35; }
         .signin-btn-resend { background: none; border: 1px solid #b9aa00; color: #b9aa00; padding: 8px; font-size: 0.85rem; margin-bottom: 12px; width: 100%; border-radius: 8px; cursor: pointer; }
-        .signin-divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: #999; font-size: 0.85rem; }
-        .signin-divider::before, .signin-divider::after { content: ''; flex: 1; height: 1px; background: #ddd; }
-        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #666; }
-        .signin-links a { color: #2196f3; text-decoration: none; }
+        .signin-divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: #555; font-size: 0.85rem; }
+        .signin-divider::before, .signin-divider::after { content: ''; flex: 1; height: 1px; background: #333; }
+        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #888; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
         .signin-links a:hover { text-decoration: underline; }
         .account-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; }
-        .account-type-btn { padding: 0.4rem 0.8rem; border: 2px solid #ccc; border-radius: 8px; background: #f5f5f0; color: #2c2c2c; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .account-type-btn { padding: 0.4rem 0.8rem; border: 2px solid #444; border-radius: 8px; background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
         .account-type-btn.active { border-color: #c93f35; background: #c93f35; color: #fff; }
         .account-type-btn:hover { border-color: #c93f35; }
-        .account-info { background: #fff; border: 1px solid #e0e0e0; color: #2c2c2c; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6; text-align: left; display: none; }
-        .account-info.coming-soon { border-color: #b9aa00; background: #fffbe6; color: #b9aa00; }
+        .account-info { background: #1a1a2a; border: 1px solid #444; color: #e0cfc0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6; text-align: left; display: none; }
+        .account-info.coming-soon { border-color: #b9aa00; background: #2a1a00; color: #b9aa00; }
         .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
-        .status-msg.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
-        .status-msg.error { background: #ffebee; border: 1px solid #c93f35; color: #c93f35; }
+        .status-msg.success { background: #1a2a1a; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #2a1a1a; border: 1px solid #c93f35; color: #c93f35; }
+        body.lawful-mode { background: #f5f5f0; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #e0e0e0; }
+        body.lawful-mode .signin-input { background: #f5f5f0; color: #2c2c2c; border-color: #ccc; }
+        body.lawful-mode .account-type-btn { background: #f5f5f0; color: #2c2c2c; }
+        body.lawful-mode .account-info { background: #fff; }
         .oauth-section { display: none; text-align: center; margin: 1.5rem 0; }
         .oauth-section.show { display: block; }
-        .oauth-btn { width: 100%; height: 40px; padding: 0; margin: 8px 0; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: transparent; }
-        .oauth-btn:hover { opacity: 0.9; }
-        .oauth-btn img { width: 100%; height: 100%; object-fit: contain; margin: 0; padding: 0; display: block; }
-        .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #666; }
-        .signup-link-text a { color: #2196f3; text-decoration: underline; }
+        .oauth-divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: #666; font-size: 0.9rem; }
+        .oauth-divider::before, .oauth-divider::after { content: ''; flex: 1; height: 1px; background: #ddd; }
+        .oauth-btn { width: 100%; height: 40px; padding: 0 12px; margin: 8px 0; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.2s; background: #f5f5f5; color: #000; line-height: 1; }
+        .oauth-amazon { justify-content: flex-start; }
+        .oauth-amazon img { margin-right: 8px; }
+        .oauth-btn:hover { background: #ebebeb; }
+        body.lawful-mode .oauth-btn { background: #f5f5f5; color: #000; }
+        body.lawful-mode .oauth-btn:hover { background: #ebebeb; }
+        /* OAuth SDK button containers - ensure they render on mobile */
+        .g_id_signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; height: 40px !important; padding: 0 !important; border-radius: 8px !important; background: transparent !important; }
+        .g_id_signin button { background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important; }
+        .g_id_signin button:focus { outline: none !important; box-shadow: none !important; background: transparent !important; }
+        .g_id_signin button:active { outline: none !important; box-shadow: none !important; background: transparent !important; }
+        /* Ensure SDK iframes are responsive */
+        .g_id_signin iframe { max-width: 100% !important; width: 100% !important; }
+        #g_id_onload { display: none; }
+        .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #888; }
+        .signup-link-text a { color: #b9aa00; text-decoration: underline; }
+        body.lawful-mode .signup-link-text { color: #666; }
+        body.lawful-mode .signup-link-text a { color: #2196f3; }
     </style>
 </head>
 <body>
@@ -63,18 +83,20 @@
 
             <div class="oauth-section show" id="oauthSection">
                 <!-- Official Google Sign-In -->
-                <a href="#" id="LoginWithGoogle" class="oauth-btn oauth-google" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
-                    <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
-                </a>
+                <div id="g_id_onload" data-client_id="303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com" data-callback="handleGoogleSignIn" style="display:none;"></div>
+                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="light" style="width:100%;display:flex;justify-content:center;"></div>
+
+                <div class="oauth-divider">or</div>
 
                 <!-- Official Amazon Sign-In -->
                 <a href="#" id="LoginWithAmazon" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
-                    <img src="images/am-signin_20260816_003757_0000.png" alt="Amazon" style="width:200px;height:40px;" />
+                    <img src="images/am-signin_20260816_092224_0000.png" alt="Amazon" style="width:200px;height:40px;" />
                 </a>
 
                 <!-- Official Apple Sign-In -->
                 <a href="#" id="LoginWithApple" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
-                    <img src="images/app-signin_20260816_002957_0000.png" alt="Apple" style="width:200px;height:40px;" />
+                    <img src="images/apple-touch-icon-zailister.png" alt="Apple" style="width:20px;height:20px;margin-right:8px;" />
+                    Sign in with Apple
                 </a>
 
                 <div class="signup-link-text">
@@ -90,18 +112,17 @@
                     <p style="color:#888;font-size:0.85rem;margin-bottom:1rem;">Sign up with:</p>
 
                     <!-- Google Sign-Up -->
-                    <a href="#" id="LoginWithGoogleSignup" class="oauth-btn oauth-google" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
-                        <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
-                    </a>
+                    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="light" style="width:100%;display:flex;justify-content:center;margin-bottom:0.5rem;"></div>
 
                     <!-- Amazon Sign-Up -->
                     <a href="#" id="LoginWithAmazonSignup" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
-                        <img src="images/am-signin_20260816_003757_0000.png" alt="Amazon" style="width:200px;height:40px;" />
+                        <img src="images/am-signin_20260816_092224_0000.png" alt="Amazon" style="width:200px;height:40px;" />
                     </a>
 
                     <!-- Apple Sign-Up -->
                     <a href="#" id="LoginWithAppleSignup" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
-                        <img src="images/app-signin_20260816_002957_0000.png" alt="Apple" style="width:200px;height:40px;" />
+                        <img src="images/apple-touch-icon-zailister.png" alt="Apple" style="width:20px;height:20px;margin-right:8px;" />
+                        Sign up with Apple
                     </a>
 
                     <div style="text-align:center;margin:1rem 0;color:#666;font-size:0.85rem;">or</div>
@@ -142,9 +163,8 @@
         var lastUnverifiedEmail = null;
 
         (function() {
-            // Signin page always uses light mode - no mode switching
-            // var savedTheme = localStorage.getItem('themeSelected') || 'evil';
-            // if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
 
             // If already logged in, go home
             var saved = localStorage.getItem('sorc_user');
@@ -360,15 +380,7 @@
         };
 
         // Check if returning from K-ID verification
-        (function() {
-            var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
-            if (kidVerified) {
-                // Show signup form after page loads
-                document.addEventListener('DOMContentLoaded', function() {
-                    showSignupForm();
-                }, { once: true });
-            }
-        })();
+        // (Don't auto-show signup - let user choose by clicking "Delve in now")
 
         window.handleGoogleSignIn = async function(response) {
             try {
@@ -437,6 +449,19 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Check for authKey from OAuth redirect
+            var urlParams = new URLSearchParams(window.location.search);
+            var authKey = urlParams.get('authKey');
+            if (authKey) {
+                // Store auth key and redirect to home
+                localStorage.setItem('sorc_authKey', authKey);
+                // Clear the URL parameter
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Redirect to home
+                window.location.href = 'index.html';
+                return;
+            }
+
             // Google button click handler
             var googleButton = document.getElementById('LoginWithGoogle');
             if (googleButton) {
@@ -521,14 +546,47 @@
   </script>
 
   <script>
-    // Initialize OAuth SDKs when they load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Google button is now a custom image button, no SDK rendering needed
-    });
-
-    // Google button is now a custom image button
+    // Initialize Google OAuth when SDK loads
+    function initGoogleAuth() {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        setTimeout(initGoogleAuth, 100);
+        return;
       }
-    }, 1000);
+
+      // Initialize the code client for redirect flow
+      const codeClient = window.google.accounts.oauth2.initCodeClient({
+        client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+        scope: 'openid email profile',
+        ux_mode: 'redirect',
+        redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
+      });
+
+      window.googleCodeClient = codeClient;
+
+      // Set up click handlers on all Google button elements
+      var buttons = document.querySelectorAll('.g_id_signin');
+      buttons.forEach(function(button) {
+        button.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.googleCodeClient) {
+            try {
+              window.googleCodeClient.requestCode();
+            } catch(err) {
+              console.error('Google auth error:', err);
+            }
+          }
+          return false;
+        };
+      });
+    }
+
+    // Start initialization immediately
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGoogleAuth);
+    } else {
+      initGoogleAuth();
+    }
   </script>
 
   <script type="module" src="main.js?v=25"></script>
