@@ -33,6 +33,9 @@
         .placeholder-text { font-size: 0.75rem; color: #999; margin-top: 0.25rem; }
         .signin-section { display: none; }
         .signin-section.show { display: block; }
+        .form-group { margin-bottom: 12px; }
+        .signin-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        .signin-input::placeholder { color: #999999; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -53,6 +56,12 @@
             <div id="verifySection" class="verify-section">
                 <h2>Verify Your Email</h2>
                 <p>Before you can sign in, please verify your email address. This helps us keep your account secure.</p>
+                <div style="margin-bottom:1.5rem;">
+                    <div class="form-group">
+                        <label for="emailInput" style="display:block;font-size:16px;font-weight:400;margin-bottom:12px;color:#333333;">Email (example)</label>
+                        <input type="email" id="emailInput" class="signin-input" placeholder="(corbett@sorcrpg.com)" />
+                    </div>
+                </div>
                 <button id="verifyBtn" class="verify-btn" onclick="handleSendVerification()">Verify Email</button>
                 <button id="confirmBtn" class="verify-btn" onclick="handleConfirmVerification()" style="display:none;background:#4caf50;">I've Verified My Email</button>
             </div>
@@ -112,14 +121,20 @@
         }
 
         window.handleSendVerification = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) {
+                showStatus('Please enter your email address.', 'error');
+                return;
+            }
+
             var verifyBtn = document.getElementById('verifyBtn');
             var confirmBtn = document.getElementById('confirmBtn');
             verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Email sent...';
+            verifyBtn.textContent = 'Sending...';
 
             // Simulate sending verification email
             setTimeout(function() {
-                showStatus('✅ Verification email sent! Check your inbox and spam folder for the verification link.', 'success');
+                showStatus('✅ Verification email sent to ' + email + '! Check your inbox and spam folder for the verification link.', 'success');
                 verifyBtn.style.display = 'none';
                 confirmBtn.style.display = 'block';
             }, 1000);
