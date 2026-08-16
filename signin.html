@@ -344,6 +344,16 @@
             document.getElementById('oauthSection').style.display = 'block';
         };
 
+        // Check if returning from K-ID verification
+        (function() {
+            var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
+            if (kidVerified) {
+                // Show signup form after page loads
+                document.addEventListener('DOMContentLoaded', function() {
+                    showSignupForm();
+                }, { once: true });
+            }
+        })();
 
         window.handleGoogleSignIn = async function(response) {
             try {
