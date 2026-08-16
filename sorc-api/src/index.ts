@@ -87,14 +87,24 @@ app.post('/api/auth/register', async (c) => {
   const usernameExists = await c.env.sorc_db.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
   if (usernameExists) return c.json({ error: 'Username already taken' }, 400);
 
-  const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
+  const authKey = crypto.randomUUID();
   const verificationToken = crypto.randomUUID();
   const userId = Math.floor(Math.random() * 90000) + 10000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
 
   try {
-    await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false).run();
+    const { password } = await c.req.json() as any;
+    if (!password || password.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
+
+    // Hash password using crypto (basic approach for now)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + email);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false, passwordHash).run();
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?').bind(email).first();
     return c.json({ success: true, user: newUser, authKey, verificationToken });
   } catch (error: any) {
@@ -112,12 +122,26 @@ app.post('/api/auth/verify-email', async (c) => {
 });
 
 app.post('/api/auth/signin', async (c) => {
-  const { email, username } = await c.req.json();
+  const { email, username, password } = await c.req.json();
   if (!email && !username) return c.json({ error: 'Email or username required' }, 400);
+  if (!password) return c.json({ error: 'Password required' }, 400);
+
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
   if (!user.verified) return c.json({ error: 'Please verify your email before signing in' }, 401);
-  const authKey = btoa(`${user.email}:${Date.now()}:${Math.random()}`);
+
+  // Hash password and compare
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + user.email);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  if (passwordHash !== user.password_hash) {
+    return c.json({ error: 'Invalid credentials' }, 401);
+  }
+
+  const authKey = crypto.randomUUID();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
