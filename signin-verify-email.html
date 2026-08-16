@@ -53,7 +53,8 @@
             <div id="verifySection" class="verify-section">
                 <h2>Verify Your Email</h2>
                 <p>Before you can sign in, please verify your email address. This helps us keep your account secure.</p>
-                <button class="verify-btn" onclick="handleEmailVerification()">Verify Email</button>
+                <button id="verifyBtn" class="verify-btn" onclick="handleSendVerification()">Verify Email</button>
+                <button id="confirmBtn" class="verify-btn" onclick="handleConfirmVerification()" style="display:none;background:#4caf50;">I've Verified My Email</button>
             </div>
 
             <!-- Sign In Section (disabled until email verified) -->
@@ -110,12 +111,26 @@
             el.style.display = 'block';
         }
 
-        window.handleEmailVerification = function() {
-            var verifyBtn = event.target;
+        window.handleSendVerification = function() {
+            var verifyBtn = document.getElementById('verifyBtn');
+            var confirmBtn = document.getElementById('confirmBtn');
             verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Verifying...';
+            verifyBtn.textContent = 'Email sent...';
 
-            // Simulate verification delay
+            // Simulate sending verification email
+            setTimeout(function() {
+                showStatus('✅ Verification email sent! Check your inbox and spam folder for the verification link.', 'success');
+                verifyBtn.style.display = 'none';
+                confirmBtn.style.display = 'block';
+            }, 1000);
+        };
+
+        window.handleConfirmVerification = function() {
+            var confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Verifying...';
+
+            // After they confirm they've verified
             setTimeout(function() {
                 showStatus('✅ Email verified! Redirecting to sign in...', 'success');
 
