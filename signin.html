@@ -46,10 +46,17 @@
         .oauth-section.show { display: block; }
         .oauth-divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: #666; font-size: 0.9rem; }
         .oauth-divider::before, .oauth-divider::after { content: ''; flex: 1; height: 1px; background: #ddd; }
-        .oauth-btn { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 24px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.2s; background: #f5f5f5; color: #000; }
+        .oauth-btn { width: 100%; height: 40px; padding: 0 12px; margin: 8px 0; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.2s; background: #f5f5f5; color: #000; line-height: 1; }
+        .oauth-amazon { justify-content: flex-start; }
+        .oauth-amazon img { margin-right: 8px; }
         .oauth-btn:hover { background: #ebebeb; }
         body.lawful-mode .oauth-btn { background: #f5f5f5; color: #000; }
         body.lawful-mode .oauth-btn:hover { background: #ebebeb; }
+        /* OAuth SDK button containers - ensure they render on mobile */
+        .g_id_signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; height: 40px !important; padding: 0 !important; border-radius: 8px !important; }
+        /* Ensure SDK iframes are responsive */
+        .g_id_signin iframe { max-width: 100% !important; width: 100% !important; }
+        #g_id_onload { display: none !important; }
         .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #888; }
         .signup-link-text a { color: #b9aa00; text-decoration: underline; }
         body.lawful-mode .signup-link-text { color: #666; }
@@ -85,7 +92,10 @@
                 </a>
 
                 <!-- Official Apple Sign-In -->
-                <div id="appleid-signin" style="width:100%;display:flex;justify-content:center;" data-color="black" data-border="true" data-type="sign-in"></div>
+                <a href="#" id="LoginWithApple" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
+                    <img src="images/apple-touch-icon-zailister.png" alt="Apple" style="width:20px;height:20px;margin-right:8px;" />
+                    Sign in with Apple
+                </a>
 
                 <div class="signup-link-text">
                     New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); });">Delve in now</a>
@@ -94,6 +104,29 @@
 
             <div id="signupForm" style="display:none;">
                 <h2 style="color:#c93f35;margin-bottom:1.5rem;">Create Your Account</h2>
+
+                <!-- OAuth Signup Options -->
+                <div style="margin-bottom:1.5rem;">
+                    <p style="color:#888;font-size:0.85rem;margin-bottom:1rem;">Sign up with:</p>
+
+                    <!-- Google Sign-Up -->
+                    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="light" style="width:100%;display:flex;justify-content:center;margin-bottom:0.5rem;"></div>
+
+                    <!-- Amazon Sign-Up -->
+                    <a href="#" id="LoginWithAmazonSignup" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGV4dCB4PSI2IiB5PSIxOCIgZm9udC1zaXplPSIyMCIgZmlsbD0iI0ZGOTkwMCIgZm9udC13ZWlnaHQ9ImJvbGQiPmE8L3RleHQ+PC9zdmc+" alt="Amazon" style="width:20px;height:20px;margin-right:8px;" />
+                        Continue with Amazon
+                    </a>
+
+                    <!-- Apple Sign-Up -->
+                    <a href="#" id="LoginWithAppleSignup" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <img src="images/apple-touch-icon-zailister.png" alt="Apple" style="width:20px;height:20px;margin-right:8px;" />
+                        Sign up with Apple
+                    </a>
+
+                    <div style="text-align:center;margin:1rem 0;color:#666;font-size:0.85rem;">or</div>
+                </div>
+
                 <div class="form-group">
                     <label for="signupEmail">Email</label>
                     <input type="email" id="signupEmail" class="signin-input" placeholder="your@email.com" />
@@ -344,6 +377,16 @@
             document.getElementById('oauthSection').style.display = 'block';
         };
 
+        // Check if returning from K-ID verification
+        (function() {
+            var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
+            if (kidVerified) {
+                // Show signup form after page loads
+                document.addEventListener('DOMContentLoaded', function() {
+                    showSignupForm();
+                }, { once: true });
+            }
+        })();
 
         window.handleGoogleSignIn = async function(response) {
             try {
@@ -459,8 +502,6 @@
   <!-- Official Google Sign-In SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-  <!-- Official Apple Sign-In SDK -->
-  <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async defer></script>
 
   <!-- Official Amazon Sign-In SDK -->
   <script>
@@ -480,19 +521,40 @@
   </script>
 
   <script>
-    // Initialize Apple Sign-In when SDK loads
+    // Initialize OAuth SDKs when they load
     document.addEventListener('DOMContentLoaded', function() {
-      if (window.AppleID) {
-        AppleID.auth.init({
-          clientId: 'com.sorcrpg.signin',
-          teamId: 'YOUR_TEAM_ID',
-          bundleId: 'com.sorcrpg.signin',
-          redirectUri: 'https://sorcrpg.com/signin.html',
-          scope: 'email',
-          usePopup: true
-        });
+      // Force Google Sign-In to render if not already rendered
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.renderButton(
+          document.querySelector('.g_id_signin'),
+          {
+            type: 'standard',
+            size: 'large',
+            theme: 'light',
+            width: '100'
+          }
+        );
       }
+
+      // Apple button is now a standard HTML button
     });
+
+    // Also try to render Google button after a short delay for slower connections
+    setTimeout(function() {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.renderButton(
+            document.querySelector('.g_id_signin'),
+            {
+              type: 'standard',
+              size: 'large',
+              theme: 'light',
+              width: '100'
+            }
+          );
+        } catch(e) {}
+      }
+    }, 1000);
   </script>
 
   <script type="module" src="main.js?v=25"></script>
