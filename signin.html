@@ -52,9 +52,8 @@
         body.lawful-mode .oauth-btn:hover { background: #ebebeb; }
         /* OAuth SDK button containers - ensure they render on mobile */
         .g_id_signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; min-height: 50px !important; padding: 14px !important; border-radius: 24px !important; }
-        #appleid-signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; min-height: 50px !important; padding: 14px !important; border-radius: 24px !important; }
         /* Ensure SDK iframes are responsive */
-        .g_id_signin iframe, #appleid-signin iframe { max-width: 100% !important; width: 100% !important; }
+        .g_id_signin iframe { max-width: 100% !important; width: 100% !important; }
         #g_id_onload { display: none !important; }
         .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #888; }
         .signup-link-text a { color: #b9aa00; text-decoration: underline; }
@@ -94,10 +93,7 @@
                 </a>
 
                 <!-- Official Apple Sign-In -->
-                <div id="appleid-signin" style="width:100%;display:flex;justify-content:center;" data-color="black" data-border="true" data-type="sign-in"></div>
-
-                <!-- Fallback Apple Button if SDK doesn't render -->
-                <a href="#" id="LoginWithApple" class="oauth-btn oauth-apple" style="text-decoration:none;display:none;align-items:center;justify-content:center;">
+                <a href="#" id="LoginWithApple" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
                     <span style="font-size:20px;margin-right:8px;">🍎</span>
                     Sign in with Apple
                 </a>
@@ -124,10 +120,7 @@
                     </a>
 
                     <!-- Apple Sign-Up -->
-                    <div id="appleid-signin-signup" style="width:100%;display:flex;justify-content:center;margin-bottom:0.5rem;" data-color="black" data-border="true" data-type="sign-up"></div>
-
-                    <!-- Fallback Apple Button for signup -->
-                    <a href="#" id="LoginWithAppleSignup" class="oauth-btn oauth-apple" style="text-decoration:none;display:none;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                    <a href="#" id="LoginWithAppleSignup" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
                         <span style="font-size:20px;margin-right:8px;">🍎</span>
                         Sign up with Apple
                     </a>
@@ -510,8 +503,6 @@
   <!-- Official Google Sign-In SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-  <!-- Official Apple Sign-In SDK -->
-  <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async defer></script>
 
   <!-- Official Amazon Sign-In SDK -->
   <script>
@@ -546,23 +537,7 @@
         );
       }
 
-      // Initialize Apple Sign-In when SDK loads
-      if (window.AppleID) {
-        AppleID.auth.init({
-          clientId: 'com.sorcrpg.signin',
-          teamId: 'YOUR_TEAM_ID',
-          bundleId: 'com.sorcrpg.signin',
-          redirectUri: 'https://sorcrpg.com/signin.html',
-          scope: 'email',
-          usePopup: true
-        });
-      } else {
-        // Show fallback Apple button if SDK doesn't load
-        var fallbackApple = document.getElementById('LoginWithApple');
-        if (fallbackApple) {
-          fallbackApple.style.display = 'flex';
-        }
-      }
+      // Apple button is now a standard HTML button
     });
 
     // Also try to render Google button after a short delay for slower connections
