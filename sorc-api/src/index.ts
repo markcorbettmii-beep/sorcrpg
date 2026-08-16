@@ -67,8 +67,9 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 app.post('/api/auth/register', async (c) => {
-  const { email, username, firstName } = await c.req.json();
+  const { email, username, firstName, password } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
+  if (!password || password.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
 
   const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, verified FROM users WHERE email = ?').bind(email).first() as any;
@@ -94,8 +95,6 @@ app.post('/api/auth/register', async (c) => {
   const uuid = crypto.randomUUID();
 
   try {
-    const { password } = await c.req.json() as any;
-    if (!password || password.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
 
     // Hash password using crypto (basic approach for now)
     const encoder = new TextEncoder();
