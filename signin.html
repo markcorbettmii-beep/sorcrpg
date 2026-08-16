@@ -56,7 +56,7 @@
         .g_id_signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; height: 40px !important; padding: 0 !important; border-radius: 8px !important; }
         /* Ensure SDK iframes are responsive */
         .g_id_signin iframe { max-width: 100% !important; width: 100% !important; }
-        #g_id_onload { display: none !important; }
+        #g_id_onload { display: none; }
         .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #888; }
         .signup-link-text a { color: #b9aa00; text-decoration: underline; }
         body.lawful-mode .signup-link-text { color: #666; }
@@ -545,40 +545,69 @@
   </script>
 
   <script>
-    // Initialize OAuth SDKs when they load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Force Google Sign-In to render if not already rendered
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        window.google.accounts.id.renderButton(
-          document.querySelector('.g_id_signin'),
-          {
-            type: 'standard',
-            size: 'large',
-            theme: 'light',
-            width: '100'
-          }
-        );
-      }
+    // Initialize Google OAuth when SDK loads
+    window.onload = function() {
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+        // Initialize the code client for redirect flow
+        const codeClient = window.google.accounts.oauth2.initCodeClient({
+          client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+          scope: 'openid email profile',
+          ux_mode: 'redirect',
+          redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
+        });
 
-      // Apple button is now a standard HTML button
-    });
+        // Attach to global scope for button clicks
+        window.googleCodeClient = codeClient;
 
-    // Also try to render Google button after a short delay for slower connections
-    setTimeout(function() {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        try {
-          window.google.accounts.id.renderButton(
-            document.querySelector('.g_id_signin'),
-            {
-              type: 'standard',
-              size: 'large',
-              theme: 'light',
-              width: '100'
+        // Find all Google button elements and set up click handlers
+        var buttons = document.querySelectorAll('.g_id_signin');
+        buttons.forEach(function(button) {
+          button.style.display = 'flex';
+          button.style.justifyContent = 'center';
+          button.style.cursor = 'pointer';
+          button.textContent = 'Sign in with Google';
+          button.style.padding = '10px 20px';
+          button.style.backgroundColor = '#4285F4';
+          button.style.color = 'white';
+          button.style.border = 'none';
+          button.style.borderRadius = '4px';
+          button.style.fontSize = '14px';
+          button.style.fontWeight = 'bold';
+
+          button.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.googleCodeClient) {
+              window.googleCodeClient.requestCode();
             }
-          );
-        } catch(e) {}
+          };
+        });
       }
-    }, 1000);
+    };
+
+    // Fallback if SDK doesn't load via onload
+    setTimeout(function() {
+      if (window.google && window.google.accounts && window.google.accounts.oauth2 && !window.googleCodeClient) {
+        const codeClient = window.google.accounts.oauth2.initCodeClient({
+          client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+          scope: 'openid email profile',
+          ux_mode: 'redirect',
+          redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
+        });
+        window.googleCodeClient = codeClient;
+
+        var buttons = document.querySelectorAll('.g_id_signin');
+        buttons.forEach(function(button) {
+          button.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.googleCodeClient) {
+              window.googleCodeClient.requestCode();
+            }
+          };
+        });
+      }
+    }, 2000);
   </script>
 
   <script type="module" src="main.js?v=25"></script>
