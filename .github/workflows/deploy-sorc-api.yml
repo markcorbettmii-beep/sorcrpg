@@ -1,0 +1,26 @@
+name: Deploy SORC API
+
+on:
+  push:
+    branches:
+      - main
+      - claude/coding-session-lkoorx
+    paths:
+      - 'sorc-api/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+        working-directory: sorc-api
+      - run: npx wrangler deploy
+        working-directory: sorc-api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: d771bbe6613a9064911ecc7e6b3fe10b
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

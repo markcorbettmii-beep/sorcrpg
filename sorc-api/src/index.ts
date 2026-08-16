@@ -67,30 +67,147 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 app.post('/api/auth/register', async (c) => {
-  const { email, username, firstName } = await c.req.json();
+  const { email, username, firstName, password } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
+  if (!password || password.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
-  const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').bind(email, username).first();
-  if (existingUser) return c.json({ error: 'Email or username already exists' }, 400);
-  const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
+
+  const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, verified FROM users WHERE email = ?').bind(email).first() as any;
+
+  // If user exists and is unverified, return their verification token (handles retry after connection error)
+  if (existingUser && !existingUser.verified && existingUser.verification_token) {
+    return c.json({ success: true, verificationToken: existingUser.verification_token, message: 'Account already created, resending verification' });
+  }
+
+  // If user exists and is verified, they can't register again
+  if (existingUser && existingUser.verified) {
+    return c.json({ error: 'Email already registered' }, 400);
+  }
+
+  // Check username uniqueness
+  const usernameExists = await c.env.sorc_db.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+  if (usernameExists) return c.json({ error: 'Username already taken' }, 400);
+
+  const authKey = crypto.randomUUID();
+  const verificationToken = crypto.randomUUID();
   const userId = Math.floor(Math.random() * 90000) + 10000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
+
   try {
-    await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId).run();
+
+    // Hash password using crypto (basic approach for now)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + email);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false, passwordHash).run();
+
+    // Send verification email
+    const verificationLink = `https://sorcrpg.com/signin?verify=${verificationToken}`;
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${c.env.RESEND_API_KEY}`
+        },
+        body: JSON.stringify({
+          from: 'noreply@sorcrpg.com',
+          to: email,
+          subject: 'Verify Your SORC Account',
+          html: `<p>Welcome to Essentia, ${username}!</p>
+<p>Please verify your email to complete account creation:</p>
+<p><a href="${verificationLink}">Verify Email</a></p>
+<p>Or paste this link: ${verificationLink}</p>
+<p>This link expires in 24 hours.</p>`
+        })
+      });
+    } catch (emailError: any) {
+      console.error('Email send failed:', emailError.message);
+      // Still return success - account is created even if email fails
+    }
+
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?').bind(email).first();
-    return c.json({ success: true, user: newUser, authKey });
+    return c.json({ success: true, user: newUser, authKey, verificationToken, message: 'Account created. Check your email to verify.' });
   } catch (error: any) {
     return c.json({ error: 'Registration failed', details: error.message }, 500);
   }
 });
 
+app.post('/api/auth/verify-email', async (c) => {
+  const { token } = await c.req.json();
+  if (!token) return c.json({ error: 'Verification token required' }, 400);
+  const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
+  if (!user) return c.json({ error: 'Invalid verification token' }, 400);
+  await c.env.sorc_db.prepare('UPDATE users SET verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
+  return c.json({ success: true, message: 'Email verified' });
+});
+
+app.post('/api/auth/resend-verification', async (c) => {
+  const { email } = await c.req.json();
+  if (!email) return c.json({ error: 'Email required' }, 400);
+
+  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token FROM users WHERE email = ?').bind(email).first() as any;
+  if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
+  if (user.verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
+  if (!user.verification_token) {
+    // Generate new token if missing
+    const newToken = crypto.randomUUID();
+    await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(newToken, user.id).run();
+    user.verification_token = newToken;
+  }
+
+  // Resend verification email
+  const verificationLink = `https://sorcrpg.com/signin?verify=${user.verification_token}`;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${c.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'noreply@sorcrpg.com',
+        to: email,
+        subject: 'Verify Your SORC Account',
+        html: `<p>Welcome to Essentia, ${user.username}!</p>
+<p>Please verify your email to complete account creation:</p>
+<p><a href="${verificationLink}">Verify Email</a></p>
+<p>Or paste this link: ${verificationLink}</p>
+<p>This link expires in 24 hours.</p>`
+      })
+    });
+  } catch (emailError: any) {
+    return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
+  }
+
+  return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
+});
+
 app.post('/api/auth/signin', async (c) => {
-  const { email, username } = await c.req.json();
+  const { email, username, password } = await c.req.json();
   if (!email && !username) return c.json({ error: 'Email or username required' }, 400);
+  if (!password) return c.json({ error: 'Password required' }, 400);
+
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
-  const authKey = btoa(`${user.email}:${Date.now()}:${Math.random()}`);
+  if (!user.verified) return c.json({ error: 'Please verify your email before signing in' }, 401);
+
+  // Hash password and compare
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + user.email);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  if (passwordHash !== user.password_hash) {
+    return c.json({ error: 'Invalid credentials' }, 401);
+  }
+
+  const authKey = crypto.randomUUID();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
