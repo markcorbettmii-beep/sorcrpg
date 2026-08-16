@@ -549,68 +549,46 @@
 
   <script>
     // Initialize Google OAuth when SDK loads
-    window.onload = function() {
-      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
-        // Initialize the code client for redirect flow
-        const codeClient = window.google.accounts.oauth2.initCodeClient({
-          client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
-          scope: 'openid email profile',
-          ux_mode: 'redirect',
-          redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
-        });
-
-        // Attach to global scope for button clicks
-        window.googleCodeClient = codeClient;
-
-        // Find all Google button elements and set up click handlers
-        var buttons = document.querySelectorAll('.g_id_signin');
-        buttons.forEach(function(button) {
-          button.style.display = 'flex';
-          button.style.justifyContent = 'center';
-          button.style.cursor = 'pointer';
-          button.textContent = 'Sign in with Google';
-          button.style.padding = '10px 20px';
-          button.style.backgroundColor = '#4285F4';
-          button.style.color = 'white';
-          button.style.border = 'none';
-          button.style.borderRadius = '4px';
-          button.style.fontSize = '14px';
-          button.style.fontWeight = 'bold';
-
-          button.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (window.googleCodeClient) {
-              window.googleCodeClient.requestCode();
-            }
-          };
-        });
+    function initGoogleAuth() {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        setTimeout(initGoogleAuth, 100);
+        return;
       }
-    };
 
-    // Fallback if SDK doesn't load via onload
-    setTimeout(function() {
-      if (window.google && window.google.accounts && window.google.accounts.oauth2 && !window.googleCodeClient) {
-        const codeClient = window.google.accounts.oauth2.initCodeClient({
-          client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
-          scope: 'openid email profile',
-          ux_mode: 'redirect',
-          redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
-        });
-        window.googleCodeClient = codeClient;
+      // Initialize the code client for redirect flow
+      const codeClient = window.google.accounts.oauth2.initCodeClient({
+        client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+        scope: 'openid email profile',
+        ux_mode: 'redirect',
+        redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
+      });
 
-        var buttons = document.querySelectorAll('.g_id_signin');
-        buttons.forEach(function(button) {
-          button.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (window.googleCodeClient) {
+      window.googleCodeClient = codeClient;
+
+      // Set up click handlers on all Google button elements
+      var buttons = document.querySelectorAll('.g_id_signin');
+      buttons.forEach(function(button) {
+        button.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.googleCodeClient) {
+            try {
               window.googleCodeClient.requestCode();
+            } catch(err) {
+              console.error('Google auth error:', err);
             }
-          };
-        });
-      }
-    }, 2000);
+          }
+          return false;
+        };
+      });
+    }
+
+    // Start initialization immediately
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGoogleAuth);
+    } else {
+      initGoogleAuth();
+    }
   </script>
 
   <script type="module" src="main.js?v=25"></script>
