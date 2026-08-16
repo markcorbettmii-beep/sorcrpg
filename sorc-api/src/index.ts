@@ -104,8 +104,34 @@ app.post('/api/auth/register', async (c) => {
     const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
     await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false, passwordHash).run();
+
+    // Send verification email
+    const verificationLink = `https://sorcrpg.com/signin?verify=${verificationToken}`;
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${c.env.RESEND_API_KEY}`
+        },
+        body: JSON.stringify({
+          from: 'noreply@sorcrpg.com',
+          to: email,
+          subject: 'Verify Your SORC Account',
+          html: `<p>Welcome to Essentia, ${username}!</p>
+<p>Please verify your email to complete account creation:</p>
+<p><a href="${verificationLink}">Verify Email</a></p>
+<p>Or paste this link: ${verificationLink}</p>
+<p>This link expires in 24 hours.</p>`
+        })
+      });
+    } catch (emailError: any) {
+      console.error('Email send failed:', emailError.message);
+      // Still return success - account is created even if email fails
+    }
+
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?').bind(email).first();
-    return c.json({ success: true, user: newUser, authKey, verificationToken });
+    return c.json({ success: true, user: newUser, authKey, verificationToken, message: 'Account created. Check your email to verify.' });
   } catch (error: any) {
     return c.json({ error: 'Registration failed', details: error.message }, 500);
   }
@@ -118,6 +144,47 @@ app.post('/api/auth/verify-email', async (c) => {
   if (!user) return c.json({ error: 'Invalid verification token' }, 400);
   await c.env.sorc_db.prepare('UPDATE users SET verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
   return c.json({ success: true, message: 'Email verified' });
+});
+
+app.post('/api/auth/resend-verification', async (c) => {
+  const { email } = await c.req.json();
+  if (!email) return c.json({ error: 'Email required' }, 400);
+
+  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token FROM users WHERE email = ?').bind(email).first() as any;
+  if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
+  if (user.verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
+  if (!user.verification_token) {
+    // Generate new token if missing
+    const newToken = crypto.randomUUID();
+    await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(newToken, user.id).run();
+    user.verification_token = newToken;
+  }
+
+  // Resend verification email
+  const verificationLink = `https://sorcrpg.com/signin?verify=${user.verification_token}`;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${c.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'noreply@sorcrpg.com',
+        to: email,
+        subject: 'Verify Your SORC Account',
+        html: `<p>Welcome to Essentia, ${user.username}!</p>
+<p>Please verify your email to complete account creation:</p>
+<p><a href="${verificationLink}">Verify Email</a></p>
+<p>Or paste this link: ${verificationLink}</p>
+<p>This link expires in 24 hours.</p>`
+      })
+    });
+  } catch (emailError: any) {
+    return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
+  }
+
+  return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
 });
 
 app.post('/api/auth/signin', async (c) => {
