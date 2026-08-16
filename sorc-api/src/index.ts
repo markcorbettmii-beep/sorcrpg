@@ -70,13 +70,29 @@ app.post('/api/auth/register', async (c) => {
   const { email, username, firstName } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
-  const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ? OR username = ?').bind(email, username).first();
-  if (existingUser) return c.json({ error: 'Email or username already exists' }, 400);
+
+  const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, verified FROM users WHERE email = ?').bind(email).first() as any;
+
+  // If user exists and is unverified, return their verification token (handles retry after connection error)
+  if (existingUser && !existingUser.verified && existingUser.verification_token) {
+    return c.json({ success: true, verificationToken: existingUser.verification_token, message: 'Account already created, resending verification' });
+  }
+
+  // If user exists and is verified, they can't register again
+  if (existingUser && existingUser.verified) {
+    return c.json({ error: 'Email already registered' }, 400);
+  }
+
+  // Check username uniqueness
+  const usernameExists = await c.env.sorc_db.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+  if (usernameExists) return c.json({ error: 'Username already taken' }, 400);
+
   const authKey = btoa(`${email}:${Date.now()}:${Math.random()}`);
   const verificationToken = crypto.randomUUID();
   const userId = Math.floor(Math.random() * 90000) + 10000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
+
   try {
     await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false).run();
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?').bind(email).first();

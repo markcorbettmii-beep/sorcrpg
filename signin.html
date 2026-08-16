@@ -313,21 +313,7 @@
                 document.getElementById('resendBtn').style.display = 'block';
 
             } catch(e) {
-                // Connection error - account may have been created anyway, try to resend verification
-                lastUnverifiedEmail = email;
-                try {
-                    var checkRes = await fetch(API_URL + '/api/auth/resend-verification', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    });
-                    var checkData = await checkRes.json();
-                    if (checkData.success) {
-                        showStatus('✅ Account created! Verification email sent. Check your inbox and spam folder.', 'success');
-                        document.getElementById('resendBtn').style.display = 'block';
-                        return;
-                    }
-                } catch(e2) {}
+                // Connection error - account may have been created anyway
                 showStatus('Connection error. Please try again.', 'error');
             }
         };
