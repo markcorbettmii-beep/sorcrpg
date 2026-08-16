@@ -101,7 +101,7 @@
                 </a>
 
                 <div class="signup-link-text">
-                    New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() {}, '/signin-verify-email.html');">Delve in now</a>
+                    New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); });">Delve in now</a>
                 </div>
             </div>
 
@@ -315,10 +315,12 @@
                     return;
                 }
 
-                // Don't log them in-show verification message
+                // Account created - redirect to email verification page
                 lastUnverifiedEmail = email;
-                showStatus('✅ Profile created! Please check your email to verify your account before signing in. Check your spam folder if you don\'t see it.', 'success');
-                document.getElementById('resendBtn').style.display = 'block';
+                localStorage.setItem('signupEmail', email);
+                setTimeout(function() {
+                    window.location.href = 'signin-verify-email.html';
+                }, 1500);
 
             } catch(e) {
                 // Connection error - account may have been created anyway
