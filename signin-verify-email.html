@@ -11,31 +11,21 @@
         .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
         .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
         .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
-        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .status-msg { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; text-align: center; }
-        .status-msg.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
-        .status-msg.info { background: #e3f2fd; border: 1px solid #2196f3; color: #1565c0; }
-        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
-        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
-        .verify-section { background: #f5f5f5; border: 2px solid #2196f3; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
-        .verify-section h2 { color: #1565c0; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .verify-section { background: #f5f5f5; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .verify-section h2 { color: #2e7d32; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; }
         .verify-section p { color: #555; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
-        .verify-btn { width: 100%; padding: 12px; background: #2196f3; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
-        .verify-btn:hover { background: #1976d2; }
-        .verify-btn:disabled { background: #b0bec5; cursor: not-allowed; }
+        .verify-section .highlight { color: #c93f35; font-weight: bold; }
+        .status-msg { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
+        .status-msg.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
         .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: #2c2c2c; font-size: 0.85rem; }
         .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #ffffffccc; }
         .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #2c2c2c; }
         .signin-links a { color: #b9aa00; text-decoration: none; }
         .signin-links a:hover { text-decoration: underline; }
-        .oauth-btn { width: 100%; height: 40px; padding: 0 12px; margin: 8px 0; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: not-allowed; display: flex; align-items: center; justify-content: center; gap: 12px; background: #e0e0e0; color: #666; line-height: 1; opacity: 0.6; }
-        .oauth-btn img { opacity: 0.6; }
-        .placeholder-text { font-size: 0.75rem; color: #999; margin-top: 0.25rem; }
-        .signin-section { display: none; }
-        .signin-section.show { display: block; }
-        .form-group { margin-bottom: 12px; }
-        .signin-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        .signin-input::placeholder { color: #999999; opacity: 0.7; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+        .email-icon { font-size: 2rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -48,47 +38,26 @@
         <div class="signin-card">
             <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
             <h1>Welcome to Essentia</h1>
-            <p>Complete verification to continue</p>
+            <p>Account created! Check your email to sign in</p>
 
             <div id="statusMsg" class="status-msg"></div>
 
             <!-- Email Verification Section -->
-            <div id="verifySection" class="verify-section">
-                <h2>Verify Your Email</h2>
-                <p>Before you can sign in, please verify your email address. This helps us keep your account secure.</p>
-                <div style="margin-bottom:1.5rem;">
-                    <div class="form-group">
-                        <label for="emailInput" style="display:block;font-size:16px;font-weight:400;margin-bottom:12px;color:#333333;">Email (example)</label>
-                        <input type="email" id="emailInput" class="signin-input" placeholder="(corbett@sorcrpg.com)" />
-                    </div>
-                </div>
-                <button id="verifyBtn" class="verify-btn" onclick="handleSendVerification()">Verify Email</button>
-                <button id="confirmBtn" class="verify-btn" onclick="handleConfirmVerification()" style="display:none;background:#4caf50;">I've Verified My Email</button>
+            <div class="verify-section">
+                <div class="email-icon">📧</div>
+                <h2>Check Your Email</h2>
+                <p>We've sent a verification link to your email address. Click the link to verify your account and proceed to sign in.</p>
+                <p style="margin-bottom:0;"><span class="highlight">Check your spam folder if you don't see it.</span></p>
             </div>
 
-            <!-- Sign In Section (disabled until email verified) -->
-            <div id="signinSection" class="signin-section">
-                <div class="divider">Sign in with</div>
+            <div class="divider">Already verified?</div>
 
-                <!-- Placeholder OAuth Buttons -->
-                <a href="#" class="oauth-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
-                    <img src="images/am-sign-in_20260816_154651_0000.png" alt="Amazon" style="width:200px;height:40px;" />
-                    <div class="placeholder-text">(Coming soon)</div>
-                </a>
-
-                <a href="#" class="oauth-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
-                    <img src="images/app-signin_20260816_002957_0000.png" alt="Apple" style="width:200px;height:40px;" />
-                    <div class="placeholder-text">(Coming soon)</div>
-                </a>
-
-                <a href="#" class="oauth-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
-                    <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
-                    <div class="placeholder-text">(Coming soon)</div>
-                </a>
+            <div class="signin-links" style="margin-top:1.5rem;">
+                <a href="signin-verified.html">Go to sign in</a>
             </div>
 
-            <div class="signin-links">
-                <a href="index.html">Back to site</a>
+            <div class="signin-links" style="margin-top:1rem;">
+                <a href="signin.html">Back to site</a>
             </div>
         </div>
     </div>
@@ -112,58 +81,10 @@
                 } catch(e) {}
             }
 
-            // Pre-fill email if coming from signup
-            var signupEmail = localStorage.getItem('signupEmail');
-            if (signupEmail) {
-                document.getElementById('emailInput').value = signupEmail;
-                localStorage.removeItem('signupEmail');
-            }
         })();
-
-        function showStatus(msg, type) {
-            var el = document.getElementById('statusMsg');
-            el.innerHTML = msg;
-            el.className = 'status-msg ' + type;
-            el.style.display = 'block';
-        }
-
-        window.handleSendVerification = function() {
-            var email = document.getElementById('emailInput').value.trim();
-            if (!email) {
-                showStatus('Please enter your email address.', 'error');
-                return;
-            }
-
-            var verifyBtn = document.getElementById('verifyBtn');
-            var confirmBtn = document.getElementById('confirmBtn');
-            verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Sending...';
-
-            // Simulate sending verification email
-            setTimeout(function() {
-                showStatus('✅ Verification email sent to ' + email + '! Check your inbox and spam folder for the verification link.', 'success');
-                verifyBtn.style.display = 'none';
-                confirmBtn.style.display = 'block';
-            }, 1000);
-        };
-
-        window.handleConfirmVerification = function() {
-            var confirmBtn = document.getElementById('confirmBtn');
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Verifying...';
-
-            // After they confirm they've verified
-            setTimeout(function() {
-                showStatus('✅ Email verified! Redirecting to sign in...', 'success');
-
-                // After a short delay, redirect to the signin page with working buttons
-                setTimeout(function() {
-                    window.location.href = 'signin-verified.html';
-                }, 1500);
-            }, 1000);
-        };
     </script>
 
   <script type="module" src="main.js?v=25"></script>
-  <div id="footer"></div></body>
+  <div id="footer"></div>
+</body>
 </html>
