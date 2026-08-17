@@ -48,6 +48,9 @@
                 <h2>Check Your Email</h2>
                 <p>We've sent a verification link to your email address. Click the link to verify your account and proceed to sign in.</p>
                 <p style="margin-bottom:0;"><span class="highlight">Check your spam folder if you don't see it.</span></p>
+                <p style="margin-top:1rem; margin-bottom:0;">
+                    <a href="#" onclick="resendVerificationEmail(); return false;" style="color: #b9aa00; text-decoration: none; font-weight: bold;">Resend Verification Email</a>
+                </p>
             </div>
 
             <div class="divider">Already verified?</div>
@@ -82,6 +85,42 @@
             }
 
         })();
+
+        function resendVerificationEmail() {
+            var saved = localStorage.getItem('sorc_user');
+            if (!saved) {
+                alert('Session expired. Please sign up again.');
+                return;
+            }
+            try {
+                var u = JSON.parse(saved);
+                var statusEl = document.getElementById('statusMsg');
+                statusEl.innerHTML = 'Sending...';
+                statusEl.className = 'status-msg';
+                statusEl.style.display = 'block';
+
+                fetch(API_URL + '/api/auth/resend-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: u.email })
+                }).then(function(res) {
+                    return res.json();
+                }).then(function(data) {
+                    if (data.success) {
+                        statusEl.innerHTML = '✅ Verification email sent! Check your inbox.';
+                        statusEl.className = 'status-msg success';
+                    } else {
+                        statusEl.innerHTML = '❌ ' + (data.error || 'Failed to resend email');
+                        statusEl.className = 'status-msg';
+                    }
+                }).catch(function(e) {
+                    statusEl.innerHTML = '❌ Connection error. Please try again.';
+                    statusEl.className = 'status-msg';
+                });
+            } catch(e) {
+                alert('Error: Could not resend verification');
+            }
+        }
     </script>
 
   <script type="module" src="main.js?v=25"></script>
