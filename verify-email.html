@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Verified | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .status-msg { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
+        .status-msg.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
+        .status-msg.error { background: #ffebee; border: 1px solid #c93f35; color: #c93f35; }
+        .verify-btn { width: 100%; padding: 12px; background: #4caf50; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        .verify-btn:hover { background: #45a049; }
+        .verify-btn:disabled { background: #b0bec5; cursor: not-allowed; }
+        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #2c2c2c; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+    </style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Email Verification</h1>
+
+            <div id="statusMsg" class="status-msg" style="display:none;"></div>
+            <div id="content"></div>
+
+            <div class="signin-links" style="margin-top:2rem;">
+                <a href="signin.html">Back to sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+        })();
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
+
+        function showContent(html) {
+            document.getElementById('content').innerHTML = html;
+        }
+
+        window.verifyEmail = async function() {
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+
+            if (!token) {
+                showStatus('❌ Invalid verification link. No token provided.', 'error');
+                return;
+            }
+
+            var btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showStatus('❌ ' + (data.error || 'Verification failed. Link may have expired.'), 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Try Again';
+                    return;
+                }
+
+                showStatus('✅ Email verified! Redirecting to sign in...', 'success');
+
+                setTimeout(function() {
+                    window.location.href = 'signin-verified.html';
+                }, 1500);
+            } catch(e) {
+                showStatus('❌ Connection error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Try Again';
+            }
+        };
+
+        // Check for token on page load
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+
+            if (!token) {
+                showContent('<p style="margin-bottom:1.5rem;">Invalid verification link.</p>');
+                return;
+            }
+
+            showContent('<p style="margin-bottom:1.5rem;">Verifying your email...</p><button class="verify-btn" onclick="verifyEmail()">Confirm Verification</button>');
+        })();
+    </script>
+
+  <div id="footer"></div>
+</body>
+</html>
