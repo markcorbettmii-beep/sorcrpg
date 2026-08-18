@@ -289,11 +289,13 @@
         document.getElementById('kidForm').style.display = 'none';
 
         // Check if this is an existing user coming from OAuth callback
-        if (returnPage === '/auth/google/login-after-kid' && email) {
+        if ((returnPage === '/auth/google/login-after-kid' || returnPage === 'https://api.sorcrpg.com/auth/google/login-after-kid') && email) {
           // Existing user who already verified K-ID
           // Redirect to backend login endpoint that handles auth and redirect
           setTimeout(function() {
-            window.location.href = returnPage + '?email=' + encodeURIComponent(email);
+            // If it's a relative path, make it absolute; otherwise use as-is
+            var redirectUrl = returnPage.startsWith('http') ? returnPage : 'https://api.sorcrpg.com' + returnPage;
+            window.location.href = redirectUrl + '?email=' + encodeURIComponent(email);
           }, 1500);
         } else if (returnPage === 'signin-google-callback.html' && email) {
           // Auto-login existing user after K-ID verification (alternate flow)
@@ -396,11 +398,13 @@
       document.getElementById('kidForm').style.display = 'none';
 
       // Check if this is an existing user coming from OAuth callback
-      if (returnPage === '/auth/google/login-after-kid' && email) {
+      if ((returnPage === '/auth/google/login-after-kid' || returnPage === 'https://api.sorcrpg.com/auth/google/login-after-kid') && email) {
         // Existing user who just verified K-ID
         // Redirect to backend login endpoint that handles auth and redirect
         setTimeout(function() {
-          window.location.href = returnPage + '?email=' + encodeURIComponent(email);
+          // If it's a relative path, make it absolute; otherwise use as-is
+          var redirectUrl = returnPage.startsWith('http') ? returnPage : 'https://api.sorcrpg.com' + returnPage;
+          window.location.href = redirectUrl + '?email=' + encodeURIComponent(email);
         }, 1500);
       } else if (returnPage === 'signin-google-callback.html' && email) {
         // Auto-login existing user after K-ID verification (alternate flow)
