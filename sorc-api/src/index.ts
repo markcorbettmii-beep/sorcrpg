@@ -438,7 +438,7 @@ app.get('/auth/google/callback', async (c) => {
       if (existingUser) {
         // Existing user who hasn't verified K-ID yet
         // After K-ID verification, send them to login endpoint (not account chooser)
-        kidUrl.searchParams.append('return', '/auth/google/login-after-kid');
+        kidUrl.searchParams.append('return', 'https://api.sorcrpg.com/auth/google/login-after-kid');
         kidUrl.searchParams.append('forceVerification', 'true');
       } else {
         // New user - after K-ID verification, show registration form
@@ -447,7 +447,7 @@ app.get('/auth/google/callback', async (c) => {
       return c.redirect(kidUrl.toString());
     } else {
       // User already verified K-ID, auto-login and redirect home
-      return c.redirect(`https://sorcrpg.com/auth/google/login-after-kid?email=${encodeURIComponent(googleUser.email)}`);
+      return c.redirect(`https://api.sorcrpg.com/auth/google/login-after-kid?email=${encodeURIComponent(googleUser.email)}`);
     }
   } catch (error: any) {
     return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
