@@ -87,7 +87,7 @@ app.post('/api/auth/register', async (c) => {
   if (usernameExists) return c.json({ error: 'Username already taken' }, 400);
 
   const authKey = crypto.randomUUID();
-  const verificationToken = crypto.randomUUID();
+  const verificationToken = 'verify_' + crypto.randomUUID();
   const userId = Math.floor(Math.random() * 90000) + 10000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
@@ -155,8 +155,10 @@ app.post('/api/auth/register', async (c) => {
 app.post('/api/auth/verify-email', async (c) => {
   const { token } = await c.req.json();
   if (!token) return c.json({ error: 'Verification token required' }, 400);
+  // Reject reset tokens (which start with "reset_")
+  if (token.startsWith('reset_')) return c.json({ error: 'Invalid verification token - this is a password reset link, not a verification link' }, 400);
   const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
-  if (!user) return c.json({ error: 'Invalid verification token' }, 400);
+  if (!user) return c.json({ error: 'Invalid or expired verification token' }, 400);
   await c.env.sorc_db.prepare('UPDATE users SET verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
   return c.json({ success: true, message: 'Email verified' });
 });
@@ -168,9 +170,10 @@ app.post('/api/auth/resend-verification', async (c) => {
   const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token FROM users WHERE email = ?').bind(email).first() as any;
   if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
   if (user.verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
-  if (!user.verification_token) {
-    // Generate new token if missing
-    const newToken = crypto.randomUUID();
+
+  // If no verification token or if token is a reset token, generate a new verification token
+  if (!user.verification_token || user.verification_token.startsWith('reset_')) {
+    const newToken = 'verify_' + crypto.randomUUID();
     await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(newToken, user.id).run();
     user.verification_token = newToken;
   }
@@ -244,8 +247,8 @@ app.post('/api/auth/forgot-password', async (c) => {
     return c.json({ success: true, message: 'If that email is registered, a password reset link has been sent' });
   }
 
-  // Generate password reset token
-  const resetToken = crypto.randomUUID();
+  // Generate password reset token (prefixed with "reset_" to distinguish from verification_token)
+  const resetToken = 'reset_' + crypto.randomUUID();
   await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(resetToken, user.id).run();
 
   // Send password reset email
@@ -288,6 +291,11 @@ app.post('/api/auth/reset-password', async (c) => {
   if (!/[A-Z]/.test(password)) return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
   if (!/[a-z]/.test(password)) return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
   if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
+
+  // Check for reset token (prefixed with "reset_")
+  if (!token.startsWith('reset_')) {
+    return c.json({ error: 'Invalid reset link' }, 400);
+  }
 
   const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired reset link' }, 400);
