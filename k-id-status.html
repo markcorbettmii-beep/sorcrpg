@@ -288,9 +288,15 @@
         document.getElementById('success').style.display = 'block';
         document.getElementById('kidForm').style.display = 'none';
 
-        // Check if this is an existing user (return page is signin-google-callback.html)
-        if (returnPage === 'signin-google-callback.html' && email) {
-          // Auto-login existing user after K-ID verification
+        // Check if this is an existing user coming from OAuth callback
+        if (returnPage === '/auth/google/login-after-kid' && email) {
+          // Existing user who already verified K-ID
+          // Redirect to backend login endpoint that handles auth and redirect
+          setTimeout(function() {
+            window.location.href = returnPage + '?email=' + encodeURIComponent(email);
+          }, 1500);
+        } else if (returnPage === 'signin-google-callback.html' && email) {
+          // Auto-login existing user after K-ID verification (alternate flow)
           setTimeout(function() {
             fetch('/api/auth/google-login', {
               method: 'POST',
@@ -389,9 +395,15 @@
       document.getElementById('success').style.display = 'block';
       document.getElementById('kidForm').style.display = 'none';
 
-      // Check if this is an existing user (return page is signin-google-callback.html)
-      if (returnPage === 'signin-google-callback.html' && email) {
-        // Auto-login existing user after K-ID verification
+      // Check if this is an existing user coming from OAuth callback
+      if (returnPage === '/auth/google/login-after-kid' && email) {
+        // Existing user who just verified K-ID
+        // Redirect to backend login endpoint that handles auth and redirect
+        setTimeout(function() {
+          window.location.href = returnPage + '?email=' + encodeURIComponent(email);
+        }, 1500);
+      } else if (returnPage === 'signin-google-callback.html' && email) {
+        // Auto-login existing user after K-ID verification (alternate flow)
         setTimeout(function() {
           fetch('/api/auth/google-login', {
             method: 'POST',
