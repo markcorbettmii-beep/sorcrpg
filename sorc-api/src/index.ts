@@ -1,3 +1,4 @@
+// Force redeploy to ensure RESEND_API_KEY secrets are set
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
