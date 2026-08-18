@@ -173,8 +173,9 @@ app.post('/api/auth/resend-verification', async (c) => {
 
   // Resend verification email
   const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
+  console.log('RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
   try {
-    await fetch('https://api.resend.com/emails', {
+    const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -191,7 +192,15 @@ app.post('/api/auth/resend-verification', async (c) => {
 <p>This link expires in 24 hours.</p>`
       })
     });
+    const emailData = await emailRes.json();
+    if (!emailRes.ok) {
+      console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
+      return c.json({ error: 'Failed to send email', details: JSON.stringify(emailData) }, 500);
+    } else {
+      console.log('Email sent successfully:', emailData);
+    }
   } catch (emailError: any) {
+    console.error('Email send failed:', emailError.message);
     return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
   }
 
