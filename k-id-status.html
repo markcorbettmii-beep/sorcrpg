@@ -278,14 +278,50 @@
     function checkVerification() {
       var params = new URLSearchParams(window.location.search);
       var forceVerification = params.get('forceVerification');
+      var returnPage = params.get('return');
+      var email = params.get('email');
 
       if (!forceVerification && document.cookie.indexOf('kidVerified=true') > -1) {
         document.getElementById('success').style.display = 'block';
         document.getElementById('kidForm').style.display = 'none';
-        // Redirect to return URL or home after a short delay
-        setTimeout(function() {
-          window.location.href = getReturnUrl();
-        }, 1500);
+
+        // Check if this is an existing user (return page is signin-google-callback.html)
+        if (returnPage === 'signin-google-callback.html' && email) {
+          // Auto-login existing user after K-ID verification
+          setTimeout(function() {
+            fetch('/api/auth/google-login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email: email }),
+            })
+              .then(function(response) {
+                return response.json();
+              })
+              .then(function(data) {
+                if (data.authKey) {
+                  // Store auth key and email
+                  sessionStorage.setItem('sorcAuthKey', data.authKey);
+                  sessionStorage.setItem('sorcAuthEmail', email);
+                  // Redirect to home
+                  window.location.href = '/';
+                } else {
+                  throw new Error('No auth key received');
+                }
+              })
+              .catch(function(error) {
+                console.error('Login failed:', error);
+                // Fallback to showing account chooser if login fails
+                window.location.href = getReturnUrl();
+              });
+          }, 1500);
+        } else {
+          // New user or fallback - redirect to return URL after a short delay
+          setTimeout(function() {
+            window.location.href = getReturnUrl();
+          }, 1500);
+        }
       }
     }
 
@@ -328,9 +364,10 @@
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
       document.cookie = 'kidVerified=true; expires=' + expiryDate.toUTCString() + '; path=/';
 
-      // Get email from URL params
+      // Get email and return page from URL params
       var params = new URLSearchParams(window.location.search);
       var email = params.get('email');
+      var returnPage = params.get('return');
 
       // Mark user as K-ID verified in database (if email is provided)
       if (email) {
@@ -349,10 +386,43 @@
       document.getElementById('success').style.display = 'block';
       document.getElementById('kidForm').style.display = 'none';
 
-      // Redirect to return URL after a short delay
-      setTimeout(function() {
-        window.location.href = getReturnUrl();
-      }, 1500);
+      // Check if this is an existing user (return page is signin-google-callback.html)
+      if (returnPage === 'signin-google-callback.html' && email) {
+        // Auto-login existing user after K-ID verification
+        setTimeout(function() {
+          fetch('/api/auth/google-login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: email }),
+          })
+            .then(function(response) {
+              return response.json();
+            })
+            .then(function(data) {
+              if (data.authKey) {
+                // Store auth key and email
+                sessionStorage.setItem('sorcAuthKey', data.authKey);
+                sessionStorage.setItem('sorcAuthEmail', email);
+                // Redirect to home
+                window.location.href = '/';
+              } else {
+                throw new Error('No auth key received');
+              }
+            })
+            .catch(function(error) {
+              console.error('Login failed:', error);
+              // Fallback to showing account chooser if login fails
+              window.location.href = getReturnUrl();
+            });
+        }, 1500);
+      } else {
+        // New user - redirect to registration form after a short delay
+        setTimeout(function() {
+          window.location.href = getReturnUrl();
+        }, 1500);
+      }
     });
   </script>
 </body>
