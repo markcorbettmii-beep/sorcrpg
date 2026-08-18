@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
+// Force workflow redeploy to ensure all secrets are properly deployed to Worker
+
 interface Env {
   sorc_db: D1Database;
   RESEND_API_KEY: string;
