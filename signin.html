@@ -571,8 +571,7 @@
     </script>
   <script src="verify-kid.js"></script>
 
-  <!-- Official Google Sign-In SDK -->
-  <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleAuth()"></script>
+  <!-- Official Google Sign-In SDK - loaded dynamically -->
 
 
   <!-- Official Amazon Sign-In SDK -->
@@ -593,15 +592,36 @@
   </script>
 
   <script>
+    // Load Google OAuth script dynamically
+    function loadGoogleScript() {
+      console.log('loadGoogleScript: Starting to load Google OAuth script');
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+
+      script.onload = function() {
+        console.log('loadGoogleScript: Script loaded, initializing...');
+        initGoogleAuth();
+      };
+
+      script.onerror = function() {
+        console.error('loadGoogleScript: Failed to load Google script');
+        window.googleLoadError = true;
+      };
+
+      document.head.appendChild(script);
+    }
+
     // Initialize Google OAuth when SDK loads
     function initGoogleAuth() {
-      console.log('initGoogleAuth called, window.google:', !!window.google);
+      console.log('initGoogleAuth: Called, window.google:', !!window.google);
       if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-        console.log('Google API not ready yet, retrying...');
+        console.log('initGoogleAuth: Google API not ready yet, retrying...');
         setTimeout(initGoogleAuth, 50);
         return;
       }
-      console.log('Google API ready, initializing code client');
+      console.log('initGoogleAuth: Google API ready, creating code client');
 
       // Initialize the code client for redirect flow
       const codeClient = window.google.accounts.oauth2.initCodeClient({
@@ -613,31 +633,14 @@
 
       window.googleCodeClient = codeClient;
       window.googleApiReady = true;
-      console.log('Google API is ready');
-
-      // Set up click handlers on all Google button elements
-      var buttons = document.querySelectorAll('.g_id_signin');
-      buttons.forEach(function(button) {
-        button.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (window.googleCodeClient) {
-            try {
-              window.googleCodeClient.requestCode();
-            } catch(err) {
-              console.error('Google auth error:', err);
-            }
-          }
-          return false;
-        };
-      });
+      console.log('initGoogleAuth: Google API is ready');
     }
 
-    // Start initialization immediately
+    // Load script when DOM is ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initGoogleAuth);
+      document.addEventListener('DOMContentLoaded', loadGoogleScript);
     } else {
-      initGoogleAuth();
+      loadGoogleScript();
     }
   </script>
 
