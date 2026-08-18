@@ -162,6 +162,7 @@
     <script>
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
+        var googleApiReady = false;
 
         (function() {
             var savedTheme = localStorage.getItem('themeSelected') || 'evil';
@@ -420,28 +421,19 @@
         };
 
         window.handleGoogleLogin = function() {
+            if (!googleApiReady) {
+                alert('Google Sign-In is still loading. Please try again in a moment.');
+                return;
+            }
             try {
-                if (!window.google) {
-                    alert('Google API not loaded. Please wait and try again.');
-                    return;
+                if (window.googleCodeClient) {
+                    window.googleCodeClient.requestCode();
+                } else {
+                    showStatus('Google Sign-In not available. Please refresh the page.', 'error');
                 }
-                if (!window.google.accounts || !window.google.accounts.oauth2) {
-                    alert('Google OAuth not available. Please refresh the page.');
-                    return;
-                }
-                window.google.accounts.oauth2.initCodeClient({
-                    client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
-                    scope: 'openid email profile',
-                    ux_mode: 'redirect',
-                    redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
-                    callback: function(response) {
-                        if (response.code) {
-                            window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
-                        }
-                    }
-                }).requestCode();
             } catch (error) {
-                alert('Error initiating Google sign-in: ' + error.message);
+                console.error('Google login error:', error);
+                showStatus('An error occurred. Please try again.', 'error');
             }
         };
 
@@ -589,6 +581,8 @@
       });
 
       window.googleCodeClient = codeClient;
+      window.googleApiReady = true;
+      console.log('Google API is ready');
 
       // Set up click handlers on all Google button elements
       var buttons = document.querySelectorAll('.g_id_signin');
