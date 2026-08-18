@@ -393,6 +393,7 @@ app.get('/auth/google/callback', async (c) => {
 
     // Check if user exists
     let user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ?').bind(googleUser.email).first() as any;
+    let authKey: string;
 
     if (!user) {
       // Create new user from Google OAuth
