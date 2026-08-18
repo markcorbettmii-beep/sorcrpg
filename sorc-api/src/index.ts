@@ -344,6 +344,23 @@ app.post('/api/auth/reset-password', async (c) => {
   return c.json({ success: true, message: 'Password reset successful. You can now sign in with your new password.' });
 });
 
+// Google OAuth: Initiate login flow (backend-only, no frontend SDK)
+app.get('/auth/google/login', async (c) => {
+  const state = crypto.randomUUID();
+
+  // For now, we store state in response; in production, store in session/db
+  // State is used to prevent CSRF attacks
+
+  const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  googleAuthUrl.searchParams.append('client_id', '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com');
+  googleAuthUrl.searchParams.append('redirect_uri', 'https://api.sorcrpg.com/auth/google/callback');
+  googleAuthUrl.searchParams.append('response_type', 'code');
+  googleAuthUrl.searchParams.append('scope', 'openid email profile');
+  googleAuthUrl.searchParams.append('state', state);
+
+  return c.redirect(googleAuthUrl.toString());
+});
+
 app.get('/auth/google/callback', async (c) => {
   const code = c.req.query('code');
   const state = c.req.query('state');

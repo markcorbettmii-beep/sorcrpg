@@ -83,8 +83,6 @@
             <!-- Required root element for Amazon SDK -->
             <div id="amazon-root" style="display:none;"></div>
 
-            <div id="debugPanel" style="background:#f0f0f0;color:#000;padding:10px;margin-bottom:10px;border-radius:5px;font-size:11px;max-height:150px;overflow-y:auto;display:none;white-space:pre-wrap;word-break:break-word;"></div>
-
             <div class="oauth-section show" id="oauthSection">
                 <!-- Official Amazon Sign-In -->
                 <a href="#" id="LoginWithAmazon" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
@@ -96,11 +94,10 @@
                     <img src="images/app-signin_20260816_002957_0000.png" alt="Apple" style="width:200px;height:40px;" />
                 </a>
 
-                <!-- Official Google Sign-In -->
-                <div id="g_id_onload" data-client_id="303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com" data-callback="handleGoogleSignIn" style="display:none;"></div>
-                <button id="LoginWithGoogle" class="oauth-btn oauth-google" type="button" style="display:flex;align-items:center;justify-content:center;">
+                <!-- Official Google Sign-In - Backend OAuth Flow -->
+                <a href="https://api.sorcrpg.com/auth/google/login" id="LoginWithGoogle" class="oauth-btn oauth-google" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
                     <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
-                </button>
+                </a>
                 <div style="text-align:center;margin-top:8px;">
                     <a href="javascript:window.handleGoogleLogin()" style="color:#b9aa00;text-decoration:underline;font-size:0.9rem;">Sign in with Google (Test Link)</a>
                 </div>
@@ -129,9 +126,9 @@
                     </a>
 
                     <!-- Google Sign-Up -->
-                    <button id="LoginWithGoogleSignup" class="oauth-btn oauth-google" type="button" style="display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                    <a href="https://api.sorcrpg.com/auth/google/login" id="LoginWithGoogleSignup" class="oauth-btn oauth-google" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
                         <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
-                    </button>
+                    </a>
                 </div>
 
                 <div class="form-group">
@@ -173,7 +170,6 @@
     <script>
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
-        var googleApiReady = false;
 
         (function() {
             var savedTheme = localStorage.getItem('themeSelected') || 'evil';
@@ -437,30 +433,7 @@
             }
         };
 
-        window.handleGoogleLogin = function(retryCount) {
-            retryCount = retryCount || 0;
-            if (!googleApiReady) {
-                if (retryCount < 5) {
-                    setTimeout(function() {
-                        window.handleGoogleLogin(retryCount + 1);
-                    }, 200);
-                    return;
-                } else {
-                    alert('Google Sign-In failed to load. Please refresh the page and try again.');
-                    return;
-                }
-            }
-            try {
-                if (window.googleCodeClient) {
-                    window.googleCodeClient.requestCode();
-                } else {
-                    showStatus('Google Sign-In not available. Please refresh the page.', 'error');
-                }
-            } catch (error) {
-                console.error('Google login error:', error);
-                showStatus('An error occurred. Please try again.', 'error');
-            }
-        };
+        // Google OAuth is now handled server-side - no need for client-side handlers
 
         window.onAmazonLoginReady = function() {
             amazon.Login.setClientId('YOUR_AMAZON_CLIENT_ID');
@@ -506,28 +479,7 @@
                 return;
             }
 
-            // Google button click handler
-            var googleButton = document.getElementById('LoginWithGoogle');
-            if (googleButton) {
-                console.log('Google button found, attaching handler');
-                googleButton.onclick = function(e) {
-                    console.log('Google button clicked');
-                    e.preventDefault();
-                    alert('Google button handler firing');
-                    window.handleGoogleLogin();
-                };
-            } else {
-                console.log('Google button NOT found');
-            }
-
-            // Google signup button click handler
-            var googleSignupButton = document.getElementById('LoginWithGoogleSignup');
-            if (googleSignupButton) {
-                googleSignupButton.onclick = function(e) {
-                    e.preventDefault();
-                    window.handleGoogleLogin();
-                };
-            }
+            // Google buttons are now links to backend OAuth flow - no client-side handlers needed
 
             var loginButton = document.getElementById('LoginWithAmazon');
             if (loginButton) {
@@ -593,75 +545,6 @@
     })(document);
   </script>
 
-  <script>
-    var debugLogs = [];
-    function addDebugLog(msg) {
-      debugLogs.push('[' + new Date().toLocaleTimeString() + '] ' + msg);
-      var panel = document.getElementById('debugPanel');
-      if (panel) {
-        panel.textContent = debugLogs.join('\n');
-        panel.style.display = 'block';
-      }
-      console.log(msg);
-    }
-
-    // Load Google OAuth script dynamically
-    function loadGoogleScript() {
-      addDebugLog('1. Starting Google script load...');
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-
-      script.onload = function() {
-        addDebugLog('2. Script loaded successfully');
-        initGoogleAuth();
-      };
-
-      script.onerror = function() {
-        addDebugLog('ERROR: Failed to load Google script from accounts.google.com');
-        window.googleLoadError = true;
-      };
-
-      addDebugLog('1.5 Appending script to head...');
-      document.head.appendChild(script);
-    }
-
-    // Initialize Google OAuth when SDK loads
-    function initGoogleAuth() {
-      addDebugLog('3. initGoogleAuth called');
-      addDebugLog('3.1 window.google exists? ' + !!window.google);
-      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-        addDebugLog('3.2 Google API not ready, retrying in 50ms...');
-        setTimeout(initGoogleAuth, 50);
-        return;
-      }
-      addDebugLog('4. Google API is ready! Creating code client...');
-
-      try {
-        const codeClient = window.google.accounts.oauth2.initCodeClient({
-          client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
-          scope: 'openid email profile',
-          ux_mode: 'redirect',
-          redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
-        });
-
-        window.googleCodeClient = codeClient;
-        window.googleApiReady = true;
-        addDebugLog('5. SUCCESS! Google OAuth is ready');
-      } catch(e) {
-        addDebugLog('ERROR creating code client: ' + e.message);
-      }
-    }
-
-    // Load script when DOM is ready
-    addDebugLog('0. Page loaded, waiting for DOM...');
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', loadGoogleScript);
-    } else {
-      loadGoogleScript();
-    }
-  </script>
 
   <script type="module" src="main.js?v=25"></script>
   <div id="footer"></div>
