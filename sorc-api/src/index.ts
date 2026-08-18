@@ -174,13 +174,21 @@ app.post('/api/auth/verify-email', async (c) => {
 });
 
 app.post('/api/auth/resend-verification', async (c) => {
-  const { email } = await c.req.json();
-  if (!email) return c.json({ error: 'Email required' }, 400);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
+  try {
+    console.log('=== RESEND VERIFICATION REQUEST ===');
+    console.log('RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
+    console.log('RESEND_API_KEY length:', (c.env.RESEND_API_KEY || '').length);
 
-  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
-  if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
-  if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
+    const { email } = await c.req.json();
+    console.log('Email received:', email);
+    if (!email) return c.json({ error: 'Email required' }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
+
+    console.log('Looking up user for email:', email);
+    const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
+    console.log('User lookup result:', user ? 'Found' : 'Not found');
+    if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
+    if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
 
   // If no verification token or if token is a reset token, generate a new verification token
   if (!user.verification_token || user.verification_token.startsWith('reset_')) {
@@ -189,9 +197,11 @@ app.post('/api/auth/resend-verification', async (c) => {
     user.verification_token = newToken;
   }
 
-  // Resend verification email
-  const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
-  try {
+    // Resend verification email
+    const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
+    console.log('Attempting to send email to Resend API...');
+    console.log('Using API key:', c.env.RESEND_API_KEY ? 'YES (length: ' + (c.env.RESEND_API_KEY || '').length + ')' : 'NO');
+
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -209,18 +219,27 @@ app.post('/api/auth/resend-verification', async (c) => {
 <p>This link expires in 24 hours.</p>`
       })
     });
+
+    console.log('Resend API response status:', emailRes.status);
     const emailData = await emailRes.json();
+    console.log('Resend API response data:', JSON.stringify(emailData));
+
     if (!emailRes.ok) {
       console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
       return c.json({ error: 'Failed to send verification email', details: emailData }, 500);
     }
-    console.log('Resend verification email sent:', emailData);
+    console.log('✅ Resend verification email sent successfully');
+    return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
   } catch (emailError: any) {
     console.error('Email send failed:', emailError.message);
     return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
   }
-
-  return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
+  } catch (error: any) {
+    console.error('=== RESEND VERIFICATION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    return c.json({ error: 'Internal server error', details: error.message }, 500);
+  }
 });
 
 app.post('/api/auth/signin', async (c) => {
