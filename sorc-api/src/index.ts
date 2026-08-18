@@ -430,39 +430,19 @@ app.get('/auth/google/callback', async (c) => {
 
 // Google Sign-In: Register new user (called from signin-google-register.html)
 app.post('/api/auth/google-register', async (c) => {
-  const { email, username, password, confirmPassword } = await c.req.json();
+  const { email, username, newsletter } = await c.req.json();
 
   // Validate inputs
-  if (!email || !username || !password || !confirmPassword) {
-    return c.json({ error: 'Email, username, and password required' }, 400);
-  }
-
-  if (password !== confirmPassword) {
-    return c.json({ error: 'Passwords do not match' }, 400);
-  }
-
-  if (password.length < 8 || password.length > 64) {
-    return c.json({ error: 'Password must be 8-64 characters' }, 400);
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
-  }
-
-  if (!/[a-z]/.test(password)) {
-    return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
-  }
-
-  if (!/[0-9]/.test(password)) {
-    return c.json({ error: 'Password must contain at least one number' }, 400);
+  if (!email || !username) {
+    return c.json({ error: 'Email and username required' }, 400);
   }
 
   if (username.length < 3 || username.length > 30) {
     return c.json({ error: 'Username must be 3-30 characters' }, 400);
   }
 
-  if (!/^[a-zA-Z0-9-]+$/.test(username)) {
-    return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    return c.json({ error: 'Usernames may only contain letters, numbers, and underscores.' }, 400);
   }
 
   try {
@@ -478,9 +458,10 @@ app.post('/api/auth/google-register', async (c) => {
       return c.json({ error: 'Username already taken' }, 400);
     }
 
-    // Hash password
+    // Generate password hash for Google Sign-In user (not used for auth, just for database)
+    // This hash is based on their email and Google identifier
     const encoder = new TextEncoder();
-    const data = encoder.encode(password + email);
+    const data = encoder.encode('GOOGLE_SIGNIN:' + email);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');

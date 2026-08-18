@@ -117,36 +117,6 @@
       cursor: not-allowed;
     }
 
-    .password-requirements {
-      font-size: 12px;
-      color: #5f6368;
-      margin-top: 8px;
-      line-height: 1.5;
-    }
-
-    .requirement {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 4px;
-    }
-
-    .requirement-icon {
-      width: 16px;
-      height: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    }
-
-    .requirement.met .requirement-icon {
-      color: #34a853;
-    }
-
-    .requirement.unmet .requirement-icon {
-      color: #dadce0;
-    }
 
     .error-message {
       color: #d33b27;
@@ -243,68 +213,33 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="header-title">
-        <div class="google-g">G</div>
-        <span class="sign-in-text">Sign in with Google</span>
+      <div class="crown-logo" style="text-align: center; margin-bottom: 20px;">
+        <img src="images/crn-signin-log_20260818_093501_0000.png" alt="SORC Crown Logo" style="max-width: 80px; max-height: 80px; display: inline-block;" />
       </div>
-      <h1>Create Your Account</h1>
-      <p class="subtitle">Join the Noble Forces of SORC and begin your adventure in Essentia</p>
+      <h1 style="font-size: 28px; margin-bottom: 5px;">Sign in to SORC Beyond</h1>
+      <p class="subtitle">Complete your profile to enter Essentia</p>
     </div>
 
     <form id="registerForm">
       <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" disabled />
-        <small style="color: #5f6368; font-size: 12px; margin-top: 4px; display: block;">This email was verified by Google and cannot be changed</small>
-      </div>
-
-      <div class="form-group">
-        <label for="username">Username</label>
+        <label for="username">Select Username</label>
         <input type="text" id="username" name="username" placeholder="Choose a unique username" required />
         <small class="error-message" id="usernameError"></small>
-        <small style="color: #5f6368; font-size: 12px; margin-top: 4px; display: block;">3-30 characters, letters, numbers, and hyphens only</small>
+        <small style="color: #5f6368; font-size: 12px; margin-top: 4px; display: block;">Usernames may only contain letters, numbers, and underscores.</small>
       </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Create a strong password" required />
-        <small class="error-message" id="passwordError"></small>
-        <div class="password-requirements">
-          <div class="requirement unmet" id="req-length">
-            <span class="requirement-icon">✓</span>
-            <span>At least 8 characters</span>
-          </div>
-          <div class="requirement unmet" id="req-uppercase">
-            <span class="requirement-icon">✓</span>
-            <span>At least one uppercase letter</span>
-          </div>
-          <div class="requirement unmet" id="req-lowercase">
-            <span class="requirement-icon">✓</span>
-            <span>At least one lowercase letter</span>
-          </div>
-          <div class="requirement unmet" id="req-number">
-            <span class="requirement-icon">✓</span>
-            <span>At least one number</span>
-          </div>
-        </div>
+      <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 20px;">
+        <input type="checkbox" id="newsletter" name="newsletter" style="width: auto; padding: 0; margin: 0; cursor: pointer;" checked />
+        <label for="newsletter" style="margin: 0; text-transform: none; font-weight: 400; font-size: 14px;">Yes, sign me up to receive emails with the latest SORC news, special offers, tips for playing, and more!</label>
       </div>
 
-      <div class="form-group">
-        <label for="confirmPassword">Confirm Password</label>
-        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required />
-        <small class="error-message" id="confirmError"></small>
-      </div>
-
-      <button type="submit" id="submitBtn">Create Account</button>
+      <button type="submit" id="submitBtn">CREATE MY ACCOUNT</button>
       <div class="loading" id="loading">
         <span class="spinner"></span>
         Creating your account...
       </div>
     </form>
 
-    <div class="footer">
-      <p>By creating an account, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
-    </div>
   </div>
 
   <script>
@@ -325,47 +260,16 @@
       }
     }
 
-    // Validate password requirements
-    function validatePassword(password) {
-      const requirements = {
-        length: password.length >= 8,
-        uppercase: /[A-Z]/.test(password),
-        lowercase: /[a-z]/.test(password),
-        number: /[0-9]/.test(password),
-      };
-
-      // Update visual indicators
-      document.getElementById('req-length').classList.toggle('met', requirements.length);
-      document.getElementById('req-length').classList.toggle('unmet', !requirements.length);
-
-      document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
-      document.getElementById('req-uppercase').classList.toggle('unmet', !requirements.uppercase);
-
-      document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
-      document.getElementById('req-lowercase').classList.toggle('unmet', !requirements.lowercase);
-
-      document.getElementById('req-number').classList.toggle('met', requirements.number);
-      document.getElementById('req-number').classList.toggle('unmet', !requirements.number);
-
-      return Object.values(requirements).every(req => req);
-    }
-
     // Validate username format
     function validateUsername(username) {
       if (username.length < 3 || username.length > 30) {
         return 'Username must be 3-30 characters';
       }
-      if (!/^[a-zA-Z0-9-]+$/.test(username)) {
-        return 'Username can only contain letters, numbers, and hyphens';
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        return 'Usernames may only contain letters, numbers, and underscores.';
       }
       return null;
     }
-
-    // Real-time password validation
-    document.getElementById('password').addEventListener('input', function() {
-      validatePassword(this.value);
-      document.getElementById('passwordError').style.display = 'none';
-    });
 
     // Real-time username validation
     document.getElementById('username').addEventListener('input', function() {
@@ -385,32 +289,15 @@
 
       const email = document.getElementById('email').value;
       const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
+      const newsletter = document.getElementById('newsletter').checked;
 
-      // Validate all fields
+      // Validate username
       const usernameError = validateUsername(username);
       if (usernameError) {
         document.getElementById('usernameError').textContent = usernameError;
         document.getElementById('usernameError').style.display = 'block';
         return;
       }
-
-      if (!validatePassword(password)) {
-        document.getElementById('passwordError').textContent = 'Password does not meet all requirements';
-        document.getElementById('passwordError').style.display = 'block';
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        document.getElementById('confirmError').textContent = 'Passwords do not match';
-        document.getElementById('confirmError').style.display = 'block';
-        return;
-      }
-
-      // Clear errors
-      document.getElementById('passwordError').style.display = 'none';
-      document.getElementById('confirmError').style.display = 'none';
 
       // Show loading state
       document.getElementById('loading').style.display = 'block';
@@ -425,8 +312,7 @@
           body: JSON.stringify({
             email,
             username,
-            password,
-            confirmPassword,
+            newsletter,
           }),
         });
 
@@ -445,8 +331,8 @@
           throw new Error('No auth key received');
         }
       } catch (error: any) {
-        document.getElementById('passwordError').textContent = error.message;
-        document.getElementById('passwordError').style.display = 'block';
+        document.getElementById('usernameError').textContent = error.message;
+        document.getElementById('usernameError').style.display = 'block';
         document.getElementById('loading').style.display = 'none';
         document.getElementById('submitBtn').disabled = false;
       }
