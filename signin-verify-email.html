@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Verify Email | Slayers of Rings § Crowns</title>
+    <title>Verify Your Email | Slayers of Rings § Crowns</title>
     <link rel="stylesheet" href="styles.css?v=9" />
     <style>
         body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
@@ -12,20 +12,26 @@
         .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
         .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
         .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
-        .verify-section { background: #f5f5f5; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
-        .verify-section h2 { color: #2e7d32; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; }
-        .verify-section p { color: #555; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
-        .verify-section .highlight { color: #c93f35; font-weight: bold; }
-        .status-msg { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
-        .status-msg.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
-        .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: #2c2c2c; font-size: 0.85rem; }
-        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #ffffffccc; }
-        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #2c2c2c; }
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        .form-group label { display: block; color: #2c2c2c; font-weight: bold; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .signin-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ffffffccc; background: #f5f5f5; color: #2c2c2c; font-size: 1rem; box-sizing: border-box; }
+        .signin-input:focus { outline: none; border-color: #c93f35; }
+        .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
+        .signin-btn-primary { background: #c93f35; color: #fff; }
+        .signin-btn-primary:hover { background: #a83228; }
+        .signin-btn-secondary { background: none; border: 1px solid #b9aa00; color: #b9aa00; }
+        .signin-btn-secondary:hover { background: #f5f5f5; }
+        .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
+        .status-msg.success { background: #ffffff; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #ffffff; border: 1px solid #c93f35; color: #c93f35; }
+        .signin-links { margin-top: 1.5rem; font-size: 0.85rem; text-align: center; }
         .signin-links a { color: #b9aa00; text-decoration: none; }
         .signin-links a:hover { text-decoration: underline; }
+        .info-box { background: #f5f5f5; border-left: 4px solid #c93f35; padding: 1rem; margin: 1.5rem 0; text-align: left; border-radius: 4px; }
+        .info-box p { color: #2c2c2c; margin: 0; font-size: 0.9rem; }
         body.lawful-mode { background: #ffffff; color: #2c2c2c; }
         body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
-        .email-icon { font-size: 2rem; margin-bottom: 1rem; }
+        body.lawful-mode .signin-input { background: #ffffff; color: #2c2c2c; border-color: #ffffff; }
     </style>
 </head>
 <body>
@@ -37,33 +43,25 @@
     <div class="signin-wrapper">
         <div class="signin-card">
             <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
-            <h1>Welcome to Essentia</h1>
-            <p>Account created! Check your email to sign in</p>
+            <h1>Verify Your Email</h1>
+            <p>Your account has been created! Check your email for a verification link.</p>
 
+            <div class="info-box">
+                <p>📧 <strong>Didn't receive an email?</strong></p>
+                <p style="margin-top: 0.5rem;">Check your spam or junk folder. If it's still not there, you can resend it below.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="emailInput">Email address</label>
+                <input type="email" id="emailInput" class="signin-input" placeholder="your@email.com" />
+            </div>
+
+            <button class="signin-btn signin-btn-primary" onclick="handleResendVerification()">Resend Verification Email</button>
+            <button class="signin-btn signin-btn-secondary" onclick="window.location.href='signin.html'">Back to Sign In</button>
             <div id="statusMsg" class="status-msg"></div>
 
-            <!-- Email Verification Section -->
-            <div class="verify-section">
-                <div class="email-icon">📧</div>
-                <h2>Check Your Email</h2>
-                <p>We've sent a verification link to your email address. Click the link to verify your account and proceed to sign in.</p>
-                <p style="margin-bottom:0;"><span class="highlight">Check your spam folder if you don't see it.</span></p>
-            </div>
-
-            <div class="divider">Didn't receive email?</div>
-
-            <div class="signin-links" style="margin-top:1.5rem;">
-                <a href="javascript:void(0)" onclick="handleResendVerification()">Resend verification email</a>
-            </div>
-
-            <div class="divider">Already verified?</div>
-
-            <div class="signin-links" style="margin-top:1.5rem;">
-                <a href="signin-verified.html">Go to sign in</a>
-            </div>
-
-            <div class="signin-links" style="margin-top:1rem;">
-                <a href="signin.html">Back to site</a>
+            <div class="signin-links">
+                <a href="index.html">Back to site</a>
             </div>
         </div>
     </div>
@@ -72,7 +70,7 @@
         var API_URL = 'https://api.sorcrpg.com';
 
         (function() {
-            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            var savedTheme = localStorage.getItem('themeSelected') || 'lawful';
             if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
 
             // If already logged in, go home
@@ -87,6 +85,11 @@
                 } catch(e) {}
             }
 
+            // Pre-fill email from signup
+            var signupEmail = localStorage.getItem('signupEmail');
+            if (signupEmail) {
+                document.getElementById('emailInput').value = signupEmail;
+            }
         })();
 
         function showStatus(msg, type) {
@@ -97,8 +100,12 @@
         }
 
         window.handleResendVerification = async function() {
-            var email = localStorage.getItem('signupEmail') || (JSON.parse(localStorage.getItem('sorc_user') || '{}').email);
-            if (!email) { showStatus('❌ Could not find email. Please sign up again.', 'error'); return; }
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) { showStatus('Please enter your email.', 'error'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showStatus('Please enter a valid email address.', 'error'); return; }
+
+            showStatus('Sending verification email...', 'success');
+
             try {
                 var res = await fetch(API_URL + '/api/auth/resend-verification', {
                     method: 'POST',
@@ -106,18 +113,20 @@
                     body: JSON.stringify({ email })
                 });
                 var data = await res.json();
-                if (data.success) {
-                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
-                } else {
-                    showStatus('❌ ' + (data.error || 'Could not resend email.'), 'error');
+
+                if (!res.ok || !data.success) {
+                    showStatus(data.error || 'Failed to resend verification email.', 'error');
+                    return;
                 }
+
+                showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
             } catch(e) {
-                showStatus('❌ Connection error. Please try again.', 'error');
+                showStatus('Connection error. Please try again.', 'error');
             }
         };
     </script>
 
-  <script type="module" src="main.js?v=25"></script>
-  <div id="footer"></div>
+    <script type="module" src="main.js?v=25"></script>
+    <div id="footer"></div>
 </body>
 </html>

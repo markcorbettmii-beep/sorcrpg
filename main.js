@@ -322,10 +322,7 @@ function showRoleBadge(user) {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
 
-  // Remove any leftover logged-out avatar span
-  var oldAvatar = existing.querySelector('.badge-avatar-default');
-  if (oldAvatar) oldAvatar.remove();
-
+  var isLawful = document.body.classList.contains('lawful-mode');
   var role = user.role || 'CIVILIAN';
   if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
   else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
@@ -335,36 +332,34 @@ function showRoleBadge(user) {
   var safeId = escapeHtml(String(user.id || ''));
   var isAdminUser = OWNER_EMAILS.includes(user.email) || ADMIN_EMAILS.includes(user.email);
 
-  var isLawful = document.body.classList.contains('lawful-mode');
   var avatarHtml = '';
   if (user.avatar) {
     var avatarPath = getAvatarPath(user.avatar);
     var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
     var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
-    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
+    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:' + avatarBg + ';border:3px solid ' + avatarBorder + ';vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
+
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#ffffff' : '#c93f35';
-  var shadowColor = isLawful ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
-  existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + bgColor + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
+  existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + bgColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
 
   var adminLink = isAdminUser
-    ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
+    ? ' <a href="/admin.html" style="text-decoration:underline;text-shadow:none;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
     : '';
 
   var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
   var lobbiesHref = hasAssessed ? '/lobbies.html' : '/assess.html';
 
   existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;color:' + linkColor + ' !important;background:transparent !important;">' + abbr + '</span>' +
-    ' · <a href="/profile.html" style="color:' + linkColor + ';text-decoration:underline;">Profile</a>' +
-    ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
-    ' · <a id="badgeInboxLink" href="/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
-    ' · <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
-    ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
-    ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
+    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;background:transparent !important;text-shadow:none;">' + abbr + '</span>' +
+    ' · <a href="/profile.html" style="text-decoration:underline;text-shadow:none;">Profile</a>' +
+    ' · <a href="' + lobbiesHref + '" style="text-decoration:underline;text-shadow:none;">Lobbies</a>' +
+    ' · <a id="badgeInboxLink" href="/inbox.html" style="text-decoration:underline;text-shadow:none;">Inbox</a>' +
+    ' · <a id="badgeFellowshipsLink" href="/fellowships.html" style="text-decoration:underline;text-shadow:none;">Fellowships</a>' +
+    ' · <a href="/forum.html" style="text-decoration:underline;text-shadow:none;">Forums</a>' +
+    ' · <a href="/content.html" style="text-decoration:underline;text-shadow:none;">Content</a>' +
     adminLink +
-    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Logout</strong></button>';
+    ' · <button onclick="sorcSignOut()" style="background:none;border:none;cursor:pointer;font-size:0.85rem;text-decoration:underline;text-shadow:none;"><strong>Logout</strong></button>';
 
   var roleTag = existing.querySelector('.role-tag');
   if (roleTag) {
@@ -551,21 +546,16 @@ window.sorcUpdateNotifications = function() {
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
   if (!existing) return;
-  // Hide badge on signin page
-  if (window.location.pathname.includes('signin')) {
-    existing.style.display = 'none';
-    return;
-  }
   var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#ffffff' : '#c93f35';
-  var shadowColor = isLawful ? 'none' : 'rgba(0,0,0,0.5)';
-  // Default avatar icon (user circle) - mirror main login avatar colors
+  // Default avatar icon (user circle)
   var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
   var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
-  var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
+  var defaultAvatar = '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:3px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
-  existing.innerHTML = defaultAvatar + 'User · Lobbies† · Inbox · <a href="/signin.html" style="color:' + linkColor + ' !important;text-decoration:underline;">Login</a> (†Assess into role) · Fellowships · Forums · Content';
+  existing.innerHTML = defaultAvatar + '<span>Name AD</span>' +
+    ' · <span>Profile</span> · <span>Lobbies</span> · <span>Inbox</span> · <span>Fellowships</span> · <span>Forums</span> · <span>Content</span>' +
+    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;cursor:pointer;font-size:0.85rem;text-decoration:none;"><strong>Login</strong></button>';
 }
 
 // ========== AUTH STATE ==========
