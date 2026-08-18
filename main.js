@@ -555,7 +555,7 @@ function showLoggedOutBadge() {
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + '<span>Name AD</span>' +
     ' · <span>Profile</span> · <span>Lobbies</span> · <span>Inbox</span> · <span>Fellowships</span> · <span>Forums</span> · <span>Content</span>' +
-    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;cursor:pointer;font-size:0.85rem;text-decoration:none;"><strong>Login</strong></button>';
+    ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;cursor:pointer;font-size:0.85rem;text-decoration:none;"><strong>Login or Signup</strong></button>';
 }
 
 // ========== AUTH STATE ==========
