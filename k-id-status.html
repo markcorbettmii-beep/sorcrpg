@@ -260,10 +260,18 @@
       yearSelect.appendChild(option);
     }
 
-    // Get return URL from query parameters
+    // Get return URL from query parameters, preserving email
     function getReturnUrl() {
       var params = new URLSearchParams(window.location.search);
-      return params.get('return') || '/';
+      var returnPage = params.get('return') || '/';
+      var email = params.get('email');
+
+      // If email parameter exists and return page is provided, append email to the return URL
+      if (email && returnPage && returnPage !== '/') {
+        var separator = returnPage.includes('?') ? '&' : '?';
+        return returnPage + separator + 'email=' + encodeURIComponent(email);
+      }
+      return returnPage;
     }
 
     // Check if already verified
