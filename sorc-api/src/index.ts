@@ -78,10 +78,10 @@ app.post('/api/auth/register', async (c) => {
   if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
 
-  const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, verified, username FROM users WHERE email = ?').bind(email).first() as any;
+  const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, email_verified, username FROM users WHERE email = ?').bind(email).first() as any;
 
   // If user exists and is verified, they can't register again
-  if (existingUser && existingUser.verified) {
+  if (existingUser && existingUser.email_verified) {
     return c.json({ error: 'Email already registered' }, 400);
   }
 
@@ -110,7 +110,7 @@ app.post('/api/auth/register', async (c) => {
 
     // If user doesn't exist, create them
     if (!existingUser) {
-      await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false, passwordHash).run();
+      await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, email_verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false, passwordHash).run();
       userToUse = { id: uuid, username, email };
     } else {
       // Update existing unverified user's password
@@ -164,7 +164,7 @@ app.post('/api/auth/verify-email', async (c) => {
   if (token.startsWith('reset_')) return c.json({ error: 'Invalid verification token - this is a password reset link, not a verification link' }, 400);
   const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired verification token' }, 400);
-  await c.env.sorc_db.prepare('UPDATE users SET verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
+  await c.env.sorc_db.prepare('UPDATE users SET email_verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
   return c.json({ success: true, message: 'Email verified' });
 });
 
@@ -172,9 +172,9 @@ app.post('/api/auth/resend-verification', async (c) => {
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
 
-  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token FROM users WHERE email = ?').bind(email).first() as any;
+  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
   if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
-  if (user.verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
+  if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
 
   // If no verification token or if token is a reset token, generate a new verification token
   if (!user.verification_token || user.verification_token.startsWith('reset_')) {
@@ -224,7 +224,7 @@ app.post('/api/auth/signin', async (c) => {
 
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
-  if (!user.verified) return c.json({ success: false, unverified: true, error: 'Please verify your email before signing in' }, 401);
+  if (!user.email_verified) return c.json({ success: false, unverified: true, error: 'Please verify your email before signing in' }, 401);
 
   // Hash password and compare
   const encoder = new TextEncoder();
@@ -382,7 +382,7 @@ app.get('/auth/google/callback', async (c) => {
 
       try {
         await c.env.sorc_db.prepare(`
-          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verified, password_hash)
+          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
       } catch (error: any) {
