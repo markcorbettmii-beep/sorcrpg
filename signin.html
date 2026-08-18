@@ -572,7 +572,7 @@
   <script src="verify-kid.js"></script>
 
   <!-- Official Google Sign-In SDK -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleAuth()"></script>
 
 
   <!-- Official Amazon Sign-In SDK -->
@@ -595,10 +595,13 @@
   <script>
     // Initialize Google OAuth when SDK loads
     function initGoogleAuth() {
+      console.log('initGoogleAuth called, window.google:', !!window.google);
       if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-        setTimeout(initGoogleAuth, 100);
+        console.log('Google API not ready yet, retrying...');
+        setTimeout(initGoogleAuth, 50);
         return;
       }
+      console.log('Google API ready, initializing code client');
 
       // Initialize the code client for redirect flow
       const codeClient = window.google.accounts.oauth2.initCodeClient({
