@@ -302,19 +302,36 @@
 
     // Handle account selection
     function selectAccount(email) {
-      // In a real implementation, this would:
-      // 1. Send the email to the backend
-      // 2. Create/update the session
-      // 3. Redirect to the main app
-
-      // For now, show a success message and redirect
+      // Send login request to backend
       const returnUrl = new URLSearchParams(window.location.search).get('return') || '/';
 
-      // Store the authenticated email in sessionStorage or localStorage
-      sessionStorage.setItem('sorcAuthEmail', email);
-
-      // Redirect to return URL or home
-      window.location.href = returnUrl;
+      fetch('/api/auth/google-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Login failed');
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.authKey) {
+            // Store auth key and email
+            sessionStorage.setItem('sorcAuthKey', data.authKey);
+            sessionStorage.setItem('sorcAuthEmail', email);
+            // Redirect to return URL or home
+            window.location.href = returnUrl;
+          } else {
+            throw new Error('No auth key received');
+          }
+        })
+        .catch(error => {
+          alert('Login failed: ' + error.message);
+        });
     }
 
     // Handle "Use another account"

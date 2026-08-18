@@ -417,7 +417,7 @@
       document.getElementById('submitBtn').disabled = true;
 
       try {
-        const response = await fetch('/api/auth/register', {
+        const response = await fetch('/api/auth/google-register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -436,9 +436,14 @@
           throw new Error(data.error || 'Registration failed');
         }
 
-        // Success - show message and redirect
-        alert('Account created successfully! Redirecting to sign in...');
-        window.location.href = '/signin.html?email=' + encodeURIComponent(email);
+        // Success - store auth key and redirect to home
+        if (data.authKey) {
+          sessionStorage.setItem('sorcAuthKey', data.authKey);
+          sessionStorage.setItem('sorcAuthEmail', email);
+          window.location.href = '/';
+        } else {
+          throw new Error('No auth key received');
+        }
       } catch (error: any) {
         document.getElementById('passwordError').textContent = error.message;
         document.getElementById('passwordError').style.display = 'block';

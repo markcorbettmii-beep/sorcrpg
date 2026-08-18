@@ -408,6 +408,109 @@ app.get('/auth/google/callback', async (c) => {
   }
 });
 
+// Google Sign-In: Register new user (called from signin-google-register.html)
+app.post('/api/auth/google-register', async (c) => {
+  const { email, username, password, confirmPassword } = await c.req.json();
+
+  // Validate inputs
+  if (!email || !username || !password || !confirmPassword) {
+    return c.json({ error: 'Email, username, and password required' }, 400);
+  }
+
+  if (password !== confirmPassword) {
+    return c.json({ error: 'Passwords do not match' }, 400);
+  }
+
+  if (password.length < 8 || password.length > 64) {
+    return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  }
+
+  if (!/[0-9]/.test(password)) {
+    return c.json({ error: 'Password must contain at least one number' }, 400);
+  }
+
+  if (username.length < 3 || username.length > 30) {
+    return c.json({ error: 'Username must be 3-30 characters' }, 400);
+  }
+
+  if (!/^[a-zA-Z0-9-]+$/.test(username)) {
+    return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+  }
+
+  try {
+    // Check if email already exists
+    const existingEmail = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
+    if (existingEmail) {
+      return c.json({ error: 'Email already registered' }, 400);
+    }
+
+    // Check if username already exists
+    const existingUsername = await c.env.sorc_db.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+    if (existingUsername) {
+      return c.json({ error: 'Username already taken' }, 400);
+    }
+
+    // Hash password
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + email);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Create new user
+    const authKey = crypto.randomUUID();
+    const userId = Math.floor(Math.random() * 90000) + 10000;
+    const now = new Date().toISOString();
+    const uuid = crypto.randomUUID();
+
+    await c.env.sorc_db.prepare(`
+      INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(uuid, email, authKey, username, username, '', 'CIVILIAN', now, now, now, userId, true, passwordHash).run();
+
+    const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, created_at FROM users WHERE id = ?').bind(uuid).first();
+    return c.json({ success: true, user: newUser, authKey, message: 'Account created successfully' });
+  } catch (error: any) {
+    return c.json({ error: 'Registration failed', details: error.message }, 500);
+  }
+});
+
+// Google Sign-In: Login existing user (called from signin-google-callback.html)
+app.post('/api/auth/google-login', async (c) => {
+  const { email } = await c.req.json();
+
+  if (!email) {
+    return c.json({ error: 'Email required' }, 400);
+  }
+
+  try {
+    // Find user by email
+    const user = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role FROM users WHERE email = ?').bind(email).first() as any;
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Generate new auth key
+    const authKey = crypto.randomUUID();
+
+    // Update user's auth key
+    await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+
+    return c.json({ success: true, user, authKey, message: 'Login successful' });
+  } catch (error: any) {
+    return c.json({ error: 'Login failed', details: error.message }, 500);
+  }
+});
+
 app.get('/api/forum/categories', async (c) => {
   try {
     const categories: any[] = [
