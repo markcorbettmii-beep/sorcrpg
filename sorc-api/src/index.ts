@@ -1,4 +1,3 @@
-// Force redeploy with improved error checking for secrets
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
@@ -69,9 +68,17 @@ const authMiddleware = async (c: any, next: any) => {
 
 // Trigger deployment with fixed wrangler secret put syntax
 app.post('/api/auth/register', async (c) => {
-  const { email, username, firstName, password } = await c.req.json();
+  const { email, username, firstName, password, confirmPassword } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
-  if (!password || password.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
+  if (email.length > 254) return c.json({ error: 'Email address too long (max 254 characters)' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
+  if (!password || !confirmPassword) return c.json({ error: 'Password required' }, 400);
+  if (password !== confirmPassword) return c.json({ error: 'Passwords do not match' }, 400);
+  if (password.length < 8 || password.length > 64) return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  if (!/[A-Z]/.test(password)) return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  if (!/[a-z]/.test(password)) return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
+  if (username.length < 3 || username.length > 30) return c.json({ error: 'Username must be 3-30 characters' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
 
   const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, email_verified, username FROM users WHERE email = ?').bind(email).first() as any;
@@ -158,6 +165,8 @@ app.post('/api/auth/verify-email', async (c) => {
   if (!token) return c.json({ error: 'Verification token required' }, 400);
   // Reject reset tokens (which start with "reset_")
   if (token.startsWith('reset_')) return c.json({ error: 'Invalid verification token - this is a password reset link, not a verification link' }, 400);
+  // TODO: Add verification_token_created_at column to enforce 24-hour expiration
+  // Currently tokens never expire - SECURITY RISK
   const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired verification token' }, 400);
   await c.env.sorc_db.prepare('UPDATE users SET email_verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
@@ -167,11 +176,9 @@ app.post('/api/auth/verify-email', async (c) => {
 app.post('/api/auth/resend-verification', async (c) => {
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
 
-  console.log('RESEND_VERIFICATION: email received:', email);
-  console.log('RESEND_VERIFICATION: RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
-
-  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token FROM users WHERE email = ?').bind(email).first() as any;
+  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
   if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
   if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
 
@@ -184,8 +191,6 @@ app.post('/api/auth/resend-verification', async (c) => {
 
   // Resend verification email
   const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
-  console.log('RESEND_VERIFICATION: sending email to', email, 'with token:', user.verification_token);
-
   try {
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -206,12 +211,12 @@ app.post('/api/auth/resend-verification', async (c) => {
     });
     const emailData = await emailRes.json();
     if (!emailRes.ok) {
-      console.error('RESEND_VERIFICATION: Resend API error:', emailRes.status, JSON.stringify(emailData));
+      console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
       return c.json({ error: 'Failed to send verification email', details: emailData }, 500);
     }
-    console.log('RESEND_VERIFICATION: email sent successfully:', emailData);
+    console.log('Resend verification email sent:', emailData);
   } catch (emailError: any) {
-    console.error('RESEND_VERIFICATION: Email send failed:', emailError.message);
+    console.error('Email send failed:', emailError.message);
     return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
   }
 
@@ -221,6 +226,7 @@ app.post('/api/auth/resend-verification', async (c) => {
 app.post('/api/auth/signin', async (c) => {
   const { email, username, password } = await c.req.json();
   if (!email && !username) return c.json({ error: 'Email or username required' }, 400);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
   if (!password) return c.json({ error: 'Password required' }, 400);
 
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
@@ -246,6 +252,7 @@ app.post('/api/auth/signin', async (c) => {
 app.post('/api/auth/forgot-password', async (c) => {
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
 
   const user = await c.env.sorc_db.prepare('SELECT id, email, username FROM users WHERE email = ?').bind(email).first() as any;
   if (!user) {
