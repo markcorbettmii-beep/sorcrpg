@@ -328,9 +328,15 @@
               });
           }, 1500);
         } else {
-          // New user or fallback - redirect to return URL after a short delay
+          // Existing user with verified K-ID - redirect to account chooser
           setTimeout(function() {
-            window.location.href = getReturnUrl();
+            if (email) {
+              // Redirect to account chooser for existing users
+              window.location.href = '/signin-google-callback.html?email=' + encodeURIComponent(email);
+            } else {
+              // Fallback for non-OAuth flow
+              window.location.href = getReturnUrl();
+            }
           }, 1500);
         }
       }
