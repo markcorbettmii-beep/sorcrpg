@@ -18,12 +18,24 @@ jobs:
           node-version: '22'
       - run: npm install
         working-directory: sorc-api
-      - run: echo "${{ secrets.RESEND_API_KEY }}" | npx wrangler secret put RESEND_API_KEY
+      - name: Deploy RESEND_API_KEY secret
+        run: |
+          if [ -z "${{ secrets.RESEND_API_KEY }}" ]; then
+            echo "ERROR: RESEND_API_KEY secret is not set in GitHub Actions"
+            exit 1
+          fi
+          echo "${{ secrets.RESEND_API_KEY }}" | npx wrangler secret put RESEND_API_KEY
         working-directory: sorc-api
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: d771bbe6613a9064911ecc7e6b3fe10b
-      - run: echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET
+      - name: Deploy GOOGLE_CLIENT_SECRET secret
+        run: |
+          if [ -z "${{ secrets.GOOGLE_CLIENT_SECRET }}" ]; then
+            echo "ERROR: GOOGLE_CLIENT_SECRET secret is not set in GitHub Actions"
+            exit 1
+          fi
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET
         working-directory: sorc-api
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
