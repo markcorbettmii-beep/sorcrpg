@@ -1,7 +1,7 @@
 // K-ID Verification Script
 // Include this script on pages that have downloads to verify age via K-ID
 
-function checkKIDVerification(downloadCallback) {
+function checkKIDVerification(downloadCallback, returnUrl) {
   // Check if kidVerified cookie exists
   var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
 
@@ -12,8 +12,9 @@ function checkKIDVerification(downloadCallback) {
   }
 
   // If no cookie, redirect to K-ID verification page
-  var returnUrl = window.location.pathname + window.location.search;
-  window.location.href = '/k-id-status.html?return=' + encodeURIComponent(returnUrl);
+  var defaultReturnUrl = window.location.pathname + window.location.search;
+  var finalReturnUrl = returnUrl || defaultReturnUrl;
+  window.location.href = '/k-id-status.html?return=' + encodeURIComponent(finalReturnUrl);
 }
 
 // Export for use in other scripts
