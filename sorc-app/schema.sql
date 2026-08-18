@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS users (
   banned BOOLEAN DEFAULT FALSE,
   ban_reason TEXT DEFAULT '',
   suspended_until TIMESTAMP,
+  kid_verified BOOLEAN DEFAULT FALSE,
+  kid_verified_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

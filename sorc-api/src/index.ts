@@ -411,18 +411,33 @@ app.get('/auth/google/callback', async (c) => {
       return c.html(`<html><body><h1>Error</h1><p>Failed to get user email from Google</p></body></html>`, 400);
     }
 
-    // Check if user exists in database
-    const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ?').bind(googleUser.email).first() as any;
+    // Check if user exists in database and their K-ID verification status
+    const existingUser = await c.env.sorc_db.prepare('SELECT id, kid_verified FROM users WHERE email = ?').bind(googleUser.email).first() as any;
 
     // Determine which page to return to after K-ID verification
     const returnPage = existingUser ? 'signin-google-callback.html' : 'signin-google-register.html';
 
-    // Redirect to K-ID verification with return parameter and email
-    const kidUrl = new URL('https://sorcrpg.com/k-id-status.html');
-    kidUrl.searchParams.append('return', returnPage);
-    kidUrl.searchParams.append('email', googleUser.email);
+    // Check if K-ID verification is needed
+    // - New users: always need K-ID verification
+    // - Existing users: only if they haven't verified K-ID yet (existing users before K-ID was added)
+    const needsKidVerification = !existingUser || !existingUser.kid_verified;
 
-    return c.redirect(kidUrl.toString());
+    if (needsKidVerification) {
+      // Redirect to K-ID verification with return parameter and email
+      const kidUrl = new URL('https://sorcrpg.com/k-id-status.html');
+      kidUrl.searchParams.append('return', returnPage);
+      kidUrl.searchParams.append('email', googleUser.email);
+      if (existingUser) {
+        // Existing user who hasn't verified K-ID yet - force form (don't skip with cookie)
+        kidUrl.searchParams.append('forceVerification', 'true');
+      }
+      return c.redirect(kidUrl.toString());
+    } else {
+      // User already verified K-ID, redirect directly to account page
+      const accountUrl = new URL('https://sorcrpg.com/' + returnPage);
+      accountUrl.searchParams.append('email', googleUser.email);
+      return c.redirect(accountUrl.toString());
+    }
   } catch (error: any) {
     return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
   }
@@ -509,6 +524,32 @@ app.post('/api/auth/google-login', async (c) => {
     return c.json({ success: true, user, authKey, message: 'Login successful' });
   } catch (error: any) {
     return c.json({ error: 'Login failed', details: error.message }, 500);
+  }
+});
+
+// K-ID Verification: Mark user as K-ID verified
+app.post('/api/auth/kid-verify', async (c) => {
+  const { email } = await c.req.json();
+
+  if (!email) {
+    return c.json({ error: 'Email required' }, 400);
+  }
+
+  try {
+    const now = new Date().toISOString();
+
+    // Update user's K-ID verification status
+    const result = await c.env.sorc_db.prepare(
+      'UPDATE users SET kid_verified = true, kid_verified_at = ? WHERE email = ?'
+    ).bind(now, email).run();
+
+    if (!result.success) {
+      throw new Error('Failed to update K-ID verification status');
+    }
+
+    return c.json({ success: true, message: 'K-ID verification completed' });
+  } catch (error: any) {
+    return c.json({ error: 'K-ID verification failed', details: error.message }, 500);
   }
 });
 

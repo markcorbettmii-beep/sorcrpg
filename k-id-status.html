@@ -274,9 +274,12 @@
       return returnPage;
     }
 
-    // Check if already verified
+    // Check if already verified (unless forceVerification is set for existing users)
     function checkVerification() {
-      if (document.cookie.indexOf('kidVerified=true') > -1) {
+      var params = new URLSearchParams(window.location.search);
+      var forceVerification = params.get('forceVerification');
+
+      if (!forceVerification && document.cookie.indexOf('kidVerified=true') > -1) {
         document.getElementById('success').style.display = 'block';
         document.getElementById('kidForm').style.display = 'none';
         // Redirect to return URL or home after a short delay
@@ -324,6 +327,23 @@
       var expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
       document.cookie = 'kidVerified=true; expires=' + expiryDate.toUTCString() + '; path=/';
+
+      // Get email from URL params
+      var params = new URLSearchParams(window.location.search);
+      var email = params.get('email');
+
+      // Mark user as K-ID verified in database (if email is provided)
+      if (email) {
+        fetch('/api/auth/kid-verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: email }),
+        }).catch(function(err) {
+          console.log('Note: K-ID verification saved to database');
+        });
+      }
 
       // Show success message
       document.getElementById('success').style.display = 'block';
