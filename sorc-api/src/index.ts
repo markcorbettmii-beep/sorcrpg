@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
-// Force workflow redeploy - fixed secret deployment
-// This ensures RESEND_API_KEY and GOOGLE_CLIENT_SECRET are properly bound using working-directory
+// Force workflow redeploy - fixed package-lock.json sync issue
+// npm packages are now in sync, deployment should succeed
 
 interface Env {
   sorc_db: D1Database;
