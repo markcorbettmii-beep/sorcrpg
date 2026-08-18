@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account - SORC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #ffffff;
+      color: #202124;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 40px 30px;
+    }
+
+    .header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .google-g {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #4285F4, #34A853, #FBBC04, #EA4335);
+      border-radius: 50%;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .sign-in-text {
+      font-size: 14px;
+      color: #5f6368;
+      font-weight: 500;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 400;
+      color: #202124;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #5f6368;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #202124;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      background: #f9fafb;
+      color: #202124;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #1f71e6;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    input:disabled {
+      background: #f1f3f4;
+      color: #80868b;
+      cursor: not-allowed;
+    }
+
+    .password-requirements {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .requirement {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .requirement-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .requirement.met .requirement-icon {
+      color: #34a853;
+    }
+
+    .requirement.unmet .requirement-icon {
+      color: #dadce0;
+    }
+
+    .error-message {
+      color: #d33b27;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    .success-message {
+      color: #34a853;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      margin-top: 20px;
+      font-size: 15px;
+      font-weight: 500;
+      border: none;
+      border-radius: 4px;
+      background: #1f71e6;
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    button:hover:not(:disabled) {
+      background: #1765cc;
+      box-shadow: 0 2px 6px rgba(31, 113, 230, 0.3);
+    }
+
+    button:disabled {
+      background: #dadce0;
+      color: #80868b;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #5f6368;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #dadce0;
+      border-top-color: #1f71e6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #5f6368;
+    }
+
+    .footer a {
+      color: #1f71e6;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-row .form-group {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-title">
+        <div class="google-g">G</div>
+        <span class="sign-in-text">Sign in with Google</span>
+      </div>
+      <h1>Create Your Account</h1>
+      <p class="subtitle">Join the Noble Forces of SORC and begin your adventure in Essentia</p>
+    </div>
+
+    <form id="registerForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" disabled />
+        <small style="color: #5f6368; font-size: 12px; margin-top: 4px; display: block;">This email was verified by Google and cannot be changed</small>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Choose a unique username" required />
+        <small class="error-message" id="usernameError"></small>
+        <small style="color: #5f6368; font-size: 12px; margin-top: 4px; display: block;">3-30 characters, letters, numbers, and hyphens only</small>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Create a strong password" required />
+        <small class="error-message" id="passwordError"></small>
+        <div class="password-requirements">
+          <div class="requirement unmet" id="req-length">
+            <span class="requirement-icon">✓</span>
+            <span>At least 8 characters</span>
+          </div>
+          <div class="requirement unmet" id="req-uppercase">
+            <span class="requirement-icon">✓</span>
+            <span>At least one uppercase letter</span>
+          </div>
+          <div class="requirement unmet" id="req-lowercase">
+            <span class="requirement-icon">✓</span>
+            <span>At least one lowercase letter</span>
+          </div>
+          <div class="requirement unmet" id="req-number">
+            <span class="requirement-icon">✓</span>
+            <span>At least one number</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required />
+        <small class="error-message" id="confirmError"></small>
+      </div>
+
+      <button type="submit" id="submitBtn">Create Account</button>
+      <div class="loading" id="loading">
+        <span class="spinner"></span>
+        Creating your account...
+      </div>
+    </form>
+
+    <div class="footer">
+      <p>By creating an account, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></p>
+    </div>
+  </div>
+
+  <script>
+    // Get email from URL query parameters
+    function getEmailFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('email') || null;
+    }
+
+    // Initialize form with email
+    function initializeForm() {
+      const email = getEmailFromUrl();
+      if (email) {
+        document.getElementById('email').value = email;
+      } else {
+        // If no email in URL, redirect back to sign-in
+        window.location.href = '/signin.html';
+      }
+    }
+
+    // Validate password requirements
+    function validatePassword(password) {
+      const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+      };
+
+      // Update visual indicators
+      document.getElementById('req-length').classList.toggle('met', requirements.length);
+      document.getElementById('req-length').classList.toggle('unmet', !requirements.length);
+
+      document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
+      document.getElementById('req-uppercase').classList.toggle('unmet', !requirements.uppercase);
+
+      document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
+      document.getElementById('req-lowercase').classList.toggle('unmet', !requirements.lowercase);
+
+      document.getElementById('req-number').classList.toggle('met', requirements.number);
+      document.getElementById('req-number').classList.toggle('unmet', !requirements.number);
+
+      return Object.values(requirements).every(req => req);
+    }
+
+    // Validate username format
+    function validateUsername(username) {
+      if (username.length < 3 || username.length > 30) {
+        return 'Username must be 3-30 characters';
+      }
+      if (!/^[a-zA-Z0-9-]+$/.test(username)) {
+        return 'Username can only contain letters, numbers, and hyphens';
+      }
+      return null;
+    }
+
+    // Real-time password validation
+    document.getElementById('password').addEventListener('input', function() {
+      validatePassword(this.value);
+      document.getElementById('passwordError').style.display = 'none';
+    });
+
+    // Real-time username validation
+    document.getElementById('username').addEventListener('input', function() {
+      const error = validateUsername(this.value);
+      const errorEl = document.getElementById('usernameError');
+      if (error && this.value) {
+        errorEl.textContent = error;
+        errorEl.style.display = 'block';
+      } else {
+        errorEl.style.display = 'none';
+      }
+    });
+
+    // Form submission
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Validate all fields
+      const usernameError = validateUsername(username);
+      if (usernameError) {
+        document.getElementById('usernameError').textContent = usernameError;
+        document.getElementById('usernameError').style.display = 'block';
+        return;
+      }
+
+      if (!validatePassword(password)) {
+        document.getElementById('passwordError').textContent = 'Password does not meet all requirements';
+        document.getElementById('passwordError').style.display = 'block';
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        document.getElementById('confirmError').textContent = 'Passwords do not match';
+        document.getElementById('confirmError').style.display = 'block';
+        return;
+      }
+
+      // Clear errors
+      document.getElementById('passwordError').style.display = 'none';
+      document.getElementById('confirmError').style.display = 'none';
+
+      // Show loading state
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('submitBtn').disabled = true;
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            username,
+            password,
+            confirmPassword,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        // Success - show message and redirect
+        alert('Account created successfully! Redirecting to sign in...');
+        window.location.href = '/signin.html?email=' + encodeURIComponent(email);
+      } catch (error: any) {
+        document.getElementById('passwordError').textContent = error.message;
+        document.getElementById('passwordError').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+      }
+    });
+
+    // Initialize
+    initializeForm();
+  </script>
+</body>
+</html>

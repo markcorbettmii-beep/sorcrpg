@@ -391,38 +391,18 @@ app.get('/auth/google/callback', async (c) => {
       return c.html(`<html><body><h1>Error</h1><p>Failed to get user email from Google</p></body></html>`, 400);
     }
 
-    // Check if user exists
-    let user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ?').bind(googleUser.email).first() as any;
-    let authKey: string;
+    // Check if user exists in database
+    const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ?').bind(googleUser.email).first() as any;
 
-    if (!user) {
-      // Create new user from Google OAuth
-      authKey = crypto.randomUUID();
-      const userId = Math.floor(Math.random() * 90000) + 10000;
-      const now = new Date().toISOString();
-      const uuid = crypto.randomUUID();
-      const username = googleUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+    // Determine which page to return to after K-ID verification
+    const returnPage = existingUser ? 'signin-google-callback.html' : 'signin-google-register.html';
 
-      try {
-        await c.env.sorc_db.prepare(`
-          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
-      } catch (error: any) {
-        return c.html(`<html><body><h1>Error</h1><p>Failed to create account: ${error.message}</p></body></html>`, 500);
-      }
-    } else {
-      // User exists, generate new auth key
-      authKey = crypto.randomUUID();
-      try {
-        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
-      } catch (error: any) {
-        return c.html(`<html><body><h1>Error</h1><p>Failed to authenticate: ${error.message}</p></body></html>`, 500);
-      }
-    }
+    // Redirect to K-ID verification with return parameter and email
+    const kidUrl = new URL('https://sorcrpg.com/k-id-status.html');
+    kidUrl.searchParams.append('return', returnPage);
+    kidUrl.searchParams.append('email', googleUser.email);
 
-    // Redirect to signin with auth key, frontend will store it and redirect to home
-    return c.redirect(`https://sorcrpg.com/signin?authKey=${authKey}`);
+    return c.redirect(kidUrl.toString());
   } catch (error: any) {
     return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
   }
