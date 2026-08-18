@@ -50,9 +50,11 @@
                 <p style="margin-bottom:0;"><span class="highlight">Check your spam folder if you don't see it.</span></p>
             </div>
 
-            <p style="margin-top:1.5rem; margin-bottom:1.5rem; text-align:center;">
-                <a href="#" onclick="resendVerificationEmail(); return false;" style="color: #b9aa00; text-decoration: none;">Resend Verification Email</a>
-            </p>
+            <div class="divider">Didn't receive email?</div>
+
+            <div class="signin-links" style="margin-top:1.5rem;">
+                <a href="javascript:void(0)" onclick="handleResendVerification()">Resend verification email</a>
+            </div>
 
             <div class="divider">Already verified?</div>
 
@@ -87,41 +89,32 @@
 
         })();
 
-        function resendVerificationEmail() {
-            var saved = localStorage.getItem('sorc_user');
-            if (!saved) {
-                alert('Session expired. Please sign up again.');
-                return;
-            }
-            try {
-                var u = JSON.parse(saved);
-                var statusEl = document.getElementById('statusMsg');
-                statusEl.innerHTML = 'Sending...';
-                statusEl.className = 'status-msg';
-                statusEl.style.display = 'block';
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
 
-                fetch(API_URL + '/api/auth/resend-verification', {
+        window.handleResendVerification = async function() {
+            var email = localStorage.getItem('signupEmail') || (JSON.parse(localStorage.getItem('sorc_user') || '{}').email);
+            if (!email) { showStatus('❌ Could not find email. Please sign up again.', 'error'); return; }
+            try {
+                var res = await fetch(API_URL + '/api/auth/resend-verification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: u.email })
-                }).then(function(res) {
-                    return res.json();
-                }).then(function(data) {
-                    if (data.success) {
-                        statusEl.innerHTML = '✅ Verification email sent! Check your inbox.';
-                        statusEl.className = 'status-msg success';
-                    } else {
-                        statusEl.innerHTML = '❌ ' + (data.error || 'Failed to resend email');
-                        statusEl.className = 'status-msg';
-                    }
-                }).catch(function(e) {
-                    statusEl.innerHTML = '❌ Connection error. Please try again.';
-                    statusEl.className = 'status-msg';
+                    body: JSON.stringify({ email })
                 });
+                var data = await res.json();
+                if (data.success) {
+                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                } else {
+                    showStatus('❌ ' + (data.error || 'Could not resend email.'), 'error');
+                }
             } catch(e) {
-                alert('Error: Could not resend verification');
+                showStatus('❌ Connection error. Please try again.', 'error');
             }
-        }
+        };
     </script>
 
   <script type="module" src="main.js?v=25"></script>
