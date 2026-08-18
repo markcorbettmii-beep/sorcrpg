@@ -425,29 +425,29 @@ app.get('/auth/google/callback', async (c) => {
       }
     }
 
-    // Determine which page to return to after K-ID verification
-    const returnPage = existingUser ? 'signin-google-callback.html' : 'signin-google-register.html';
-
     // Check if K-ID verification is needed
     // - New users: always need K-ID verification
     // - Existing users: only if they haven't verified K-ID yet (existing users before K-ID was added)
     const needsKidVerification = !existingUser || !existingUser.kid_verified;
 
     if (needsKidVerification) {
-      // Redirect to K-ID verification with return parameter and email
+      // Redirect to K-ID verification
       const kidUrl = new URL('https://sorcrpg.com/k-id-status.html');
-      kidUrl.searchParams.append('return', returnPage);
       kidUrl.searchParams.append('email', googleUser.email);
+
       if (existingUser) {
-        // Existing user who hasn't verified K-ID yet - force form (don't skip with cookie)
+        // Existing user who hasn't verified K-ID yet
+        // After K-ID verification, send them to login endpoint (not account chooser)
+        kidUrl.searchParams.append('return', '/auth/google/login-after-kid');
         kidUrl.searchParams.append('forceVerification', 'true');
+      } else {
+        // New user - after K-ID verification, show registration form
+        kidUrl.searchParams.append('return', 'signin-google-register.html');
       }
       return c.redirect(kidUrl.toString());
     } else {
-      // User already verified K-ID, redirect directly to account page
-      const accountUrl = new URL('https://sorcrpg.com/' + returnPage);
-      accountUrl.searchParams.append('email', googleUser.email);
-      return c.redirect(accountUrl.toString());
+      // User already verified K-ID, auto-login and redirect home
+      return c.redirect(`https://sorcrpg.com/auth/google/login-after-kid?email=${encodeURIComponent(googleUser.email)}`);
     }
   } catch (error: any) {
     return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
@@ -507,6 +507,49 @@ app.post('/api/auth/google-register', async (c) => {
     return c.json({ success: true, user: newUser, authKey, message: 'Account created successfully' });
   } catch (error: any) {
     return c.json({ error: 'Registration failed', details: error.message }, 500);
+  }
+});
+
+// Google Sign-In: Login existing user after K-ID verification (no UI page, just login + redirect)
+app.get('/auth/google/login-after-kid', async (c) => {
+  const email = c.req.query('email');
+
+  if (!email) {
+    return c.html(`<html><body><h1>Error</h1><p>Email required</p></body></html>`, 400);
+  }
+
+  try {
+    // Find user by email
+    const user = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role FROM users WHERE email = ?').bind(email).first() as any;
+
+    if (!user) {
+      return c.html(`<html><body><h1>Error</h1><p>User not found</p></body></html>`, 404);
+    }
+
+    // Generate new auth key
+    const authKey = crypto.randomUUID();
+
+    // Update user's auth key
+    await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+
+    // Return HTML that stores auth key in sessionStorage and redirects home
+    return c.html(`
+      <html>
+        <head>
+          <title>Logging in...</title>
+        </head>
+        <body>
+          <script>
+            sessionStorage.setItem('sorcAuthKey', '${authKey}');
+            sessionStorage.setItem('sorcAuthEmail', '${email}');
+            window.location.href = '/';
+          </script>
+          <p>Logging in...</p>
+        </body>
+      </html>
+    `, 200);
+  } catch (error: any) {
+    return c.html(`<html><body><h1>Error</h1><p>Login failed: ${error.message}</p></body></html>`, 500);
   }
 });
 
