@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        .form-group label { display: block; color: #2c2c2c; font-weight: bold; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .signin-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ffffffccc; background: #f5f5f5; color: #2c2c2c; font-size: 1rem; box-sizing: border-box; }
+        .signin-input:focus { outline: none; border-color: #c93f35; }
+        .password-wrapper { position: relative; }
+        .password-wrapper .signin-input { margin-bottom: 0; padding-right: 44px; }
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #2c2c2c; cursor: pointer; font-size: 1rem; padding: 0; }
+        .toggle-pw:hover { color: #e0cfc0; }
+        .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
+        .signin-btn-primary { background: #c93f35; color: #fff; }
+        .signin-btn-primary:hover { background: #a83228; }
+        .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
+        .status-msg.success { background: #ffffff; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #ffffff; border: 1px solid #c93f35; color: #c93f35; }
+        .signin-links { margin-top: 1.5rem; font-size: 0.85rem; text-align: center; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+        body.lawful-mode .signin-input { background: #ffffff; color: #2c2c2c; border-color: #ffffff; }
+    </style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Sign In</h1>
+            <p>Enter your credentials to continue</p>
+
+            <div class="form-group">
+                <label for="emailInput">Email</label>
+                <input type="email" id="emailInput" class="signin-input" placeholder="your@email.com" />
+            </div>
+            <div class="form-group">
+                <label for="passwordInput">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="passwordInput" class="signin-input" placeholder="Enter your password" />
+                    <button class="toggle-pw" type="button" onclick="togglePassword('passwordInput', this)">👁</button>
+                </div>
+            </div>
+
+            <button class="signin-btn signin-btn-primary" onclick="handleSignIn()">Sign In</button>
+            <div id="statusMsg" class="status-msg"></div>
+
+            <div class="signin-links">
+                <a href="javascript:void(0)" onclick="showForgotPassword()">Forgot password?</a> &nbsp;·&nbsp;
+                <a href="signin.html">Back to sign in options</a> &nbsp;·&nbsp;
+                <a href="index.html">Back to site</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+        })();
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
+
+        window.togglePassword = function(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+            else { input.type = 'password'; btn.textContent = '👁'; }
+        };
+
+        window.handleSignIn = async function() {
+            var email = document.getElementById('emailInput').value.trim();
+            var password = document.getElementById('passwordInput').value;
+            if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
+
+            showStatus('Signing in...', 'success');
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    if (data.unverified) {
+                        localStorage.setItem('signupEmail', email);
+                        localStorage.setItem('sorc_user', JSON.stringify({ email }));
+                        showStatus(data.error + ' <a href="javascript:void(0)" onclick="window.location.href=\'signin-verify-email.html\';" style="color:#b9aa00;text-decoration:underline;">Go to verification page</a>', 'error');
+                    } else if (res.status === 401 && data.error && data.error.includes('No password')) {
+                        var encodedEmail = email.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendReset(\'' + encodedEmail.replace(/'/g, '&#39;') + '\')" style="color:#b9aa00;text-decoration:underline;">Send me a reset link</a>', 'error');
+                    } else {
+                        showStatus(data.error || 'Sign in failed.', 'error');
+                    }
+                    return;
+                }
+
+                localStorage.setItem('sorc_user', JSON.stringify({
+                    ...data.user,
+                    authKey: data.authKey
+                }));
+
+                window.location.href = 'index.html';
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.showForgotPassword = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) { showStatus('Please enter your email first.', 'error'); return; }
+            showStatus('Sending reset email...', 'success');
+            fetch(API_URL + '/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            }).then(function() {
+                showStatus('If that email is registered, a password reset link has been sent. Check your inbox.', 'success');
+            }).catch(function() {
+                showStatus('Connection error. Please try again.', 'error');
+            });
+        };
+
+        window.sendReset = async function(email) {
+            showStatus('Sending reset link...', 'success');
+            try {
+                await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showStatus('Reset link sent to ' + email + '. Check your inbox.', 'success');
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+    </script>
+
+    <script type="module" src="main.js?v=25"></script>
+    <div id="footer"></div>
+</body>
+</html>
