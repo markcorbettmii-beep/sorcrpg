@@ -234,6 +234,77 @@ app.post('/api/auth/signin', async (c) => {
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
 
+app.post('/api/auth/forgot-password', async (c) => {
+  const { email } = await c.req.json();
+  if (!email) return c.json({ error: 'Email required' }, 400);
+
+  const user = await c.env.sorc_db.prepare('SELECT id, email, username FROM users WHERE email = ?').bind(email).first() as any;
+  if (!user) {
+    // For security, don't reveal if email exists - just return success
+    return c.json({ success: true, message: 'If that email is registered, a password reset link has been sent' });
+  }
+
+  // Generate password reset token
+  const resetToken = crypto.randomUUID();
+  await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(resetToken, user.id).run();
+
+  // Send password reset email
+  const resetLink = `https://sorcrpg.com/reset-password.html?token=${resetToken}`;
+  try {
+    const emailRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${c.env.RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'noreply@sorcrpg.com',
+        to: email,
+        subject: 'Reset Your SORC Account Password',
+        html: `<p>Hi ${user.username},</p>
+<p>We received a request to reset your password. Click the link below to set a new password:</p>
+<p><a href="${resetLink}">Reset Password</a></p>
+<p>Or paste this link: ${resetLink}</p>
+<p>This link expires in 24 hours.</p>
+<p>If you didn't request this, you can ignore this email.</p>`
+      })
+    });
+    const emailData = await emailRes.json();
+    if (!emailRes.ok) {
+      console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
+    }
+  } catch (emailError: any) {
+    console.error('Email send failed:', emailError.message);
+  }
+
+  return c.json({ success: true, message: 'If that email is registered, a password reset link has been sent' });
+});
+
+app.post('/api/auth/reset-password', async (c) => {
+  const { token, password, confirmPassword } = await c.req.json();
+  if (!token || !password || !confirmPassword) return c.json({ error: 'Token and new password required' }, 400);
+  if (password !== confirmPassword) return c.json({ error: 'Passwords do not match' }, 400);
+  if (password.length < 8 || password.length > 64) return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  if (!/[A-Z]/.test(password)) return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  if (!/[a-z]/.test(password)) return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
+
+  const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
+  if (!user) return c.json({ error: 'Invalid or expired reset link' }, 400);
+
+  // Hash new password
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + user.email);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  // Update password and clear reset token
+  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, verification_token = NULL WHERE id = ?').bind(passwordHash, user.id).run();
+
+  return c.json({ success: true, message: 'Password reset successful. You can now sign in with your new password.' });
+});
+
 app.get('/auth/google/callback', async (c) => {
   const code = c.req.query('code');
   const state = c.req.query('state');
