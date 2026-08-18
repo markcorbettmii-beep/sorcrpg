@@ -66,7 +66,7 @@ const authMiddleware = async (c: any, next: any) => {
   await next();
 };
 
-// Trigger deployment with fixed wrangler secret put syntax
+// Force redeploy - ensure RESEND_API_KEY and GOOGLE_CLIENT_SECRET are deployed to Worker
 app.post('/api/auth/register', async (c) => {
   const { email, username, firstName, password, confirmPassword } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
