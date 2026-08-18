@@ -101,6 +101,14 @@
                 var data = await res.json();
 
                 if (!res.ok || !data.success) {
+                    // If account is already verified, redirect to sign in
+                    if (data.error && data.error.includes('already verified')) {
+                        showStatus('Your account is already verified! Redirecting to sign in...', 'success');
+                        setTimeout(function() {
+                            window.location.href = '/signin.html';
+                        }, 1500);
+                        return;
+                    }
                     showStatus(data.error || 'Failed to resend verification email.', 'error');
                     return;
                 }
