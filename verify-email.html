@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Email | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .status-msg { padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.95rem; }
+        .status-msg.success { background: #ffffff; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #ffffff; border: 1px solid #c93f35; color: #c93f35; }
+        .status-msg.loading { background: #ffffff; border: 1px solid #2196f3; color: #2196f3; }
+        .signin-links { margin-top: 1.5rem; font-size: 0.85rem; text-align: center; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #2196f3; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Verify Your Email</h1>
+            <p>Please wait while we verify your email address...</p>
+
+            <div id="statusMsg" class="status-msg loading">
+                <span class="spinner"></span> Verifying...
+            </div>
+
+            <div id="successMsg" style="display: none;">
+                <div class="status-msg success">
+                    ✅ Email verified! Your account is ready.
+                </div>
+                <div class="signin-links">
+                    <a href="signin.html">Sign in to your account</a> &nbsp;·&nbsp;
+                    <a href="index.html">Back to site</a>
+                </div>
+            </div>
+
+            <div id="errorMsg" style="display: none;">
+                <div class="status-msg error" id="errorText"></div>
+                <div class="signin-links">
+                    <a href="resend-verification.html">Request a new verification link</a> &nbsp;·&nbsp;
+                    <a href="signin.html">Back to sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // Extract token from URL
+            var params = new URLSearchParams(window.location.search);
+            var token = params.get('token');
+
+            if (!token) {
+                document.getElementById('statusMsg').style.display = 'none';
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorText').innerHTML = 'No verification token provided. Please check your email for the verification link.';
+                return;
+            }
+
+            // Verify the email
+            verifyEmail(token);
+        })();
+
+        async function verifyEmail(token) {
+            try {
+                var res = await fetch(API_URL + '/api/auth/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    document.getElementById('statusMsg').style.display = 'none';
+                    document.getElementById('errorMsg').style.display = 'block';
+                    document.getElementById('errorText').innerHTML = data.error || 'Email verification failed. Please try requesting a new verification link.';
+                    return;
+                }
+
+                // Success!
+                document.getElementById('statusMsg').style.display = 'none';
+                document.getElementById('successMsg').style.display = 'block';
+
+                // Redirect to signin after 2 seconds
+                setTimeout(function() {
+                    window.location.href = 'signin.html?verified=true';
+                }, 2000);
+
+            } catch(e) {
+                document.getElementById('statusMsg').style.display = 'none';
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorText').innerHTML = 'Connection error. Please try again or request a new verification link.';
+            }
+        }
+    </script>
+
+    <script type="module" src="main.js?v=25"></script>
+    <div id="footer"></div>
+</body>
+</html>
