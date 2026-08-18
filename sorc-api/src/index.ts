@@ -523,7 +523,61 @@ app.get('/auth/google/login-after-kid', async (c) => {
     const user = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role FROM users WHERE email = ?').bind(email).first() as any;
 
     if (!user) {
-      return c.html(`<html><body><h1>Error</h1><p>User not found</p></body></html>`, 404);
+      return c.html(`
+        <html>
+          <head>
+            <title>Account Not Found - SORC</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+                background: #f5f5f5;
+              }
+              .container {
+                text-align: center;
+                background: white;
+                padding: 40px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 500px;
+              }
+              h1 {
+                color: #333;
+                margin-bottom: 10px;
+              }
+              p {
+                color: #666;
+                line-height: 1.6;
+                margin-bottom: 20px;
+              }
+              .signup-link {
+                display: inline-block;
+                background: #2196f3;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-weight: 500;
+              }
+              .signup-link:hover {
+                background: #1976d2;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Account Not Found</h1>
+              <p>We couldn't find an account associated with this email address (${email}).</p>
+              <p>Would you like to create a new account with SORC?</p>
+              <a href="/signin.html" class="signup-link">Sign Up Now</a>
+            </div>
+          </body>
+        </html>
+      `, 404);
     }
 
     // Generate new auth key
