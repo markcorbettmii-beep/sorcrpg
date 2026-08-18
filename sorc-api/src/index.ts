@@ -352,7 +352,7 @@ app.get('/auth/google/login', async (c) => {
   // State is used to prevent CSRF attacks
 
   const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-  googleAuthUrl.searchParams.append('client_id', '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com');
+  googleAuthUrl.searchParams.append('client_id', '303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com');
   googleAuthUrl.searchParams.append('redirect_uri', 'https://api.sorcrpg.com/auth/google/callback');
   googleAuthUrl.searchParams.append('response_type', 'code');
   googleAuthUrl.searchParams.append('scope', 'openid email profile');
@@ -378,7 +378,7 @@ app.get('/auth/google/callback', async (c) => {
       },
       body: JSON.stringify({
         code,
-        client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+        client_id: '303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com',
         client_secret: c.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
         grant_type: 'authorization_code',
