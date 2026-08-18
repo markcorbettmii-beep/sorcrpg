@@ -230,10 +230,6 @@ app.post('/api/auth/resend-verification', async (c) => {
     }
     console.log('✅ Resend verification email sent successfully');
     return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
-  } catch (emailError: any) {
-    console.error('Email send failed:', emailError.message);
-    return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
-  }
   } catch (error: any) {
     console.error('=== RESEND VERIFICATION ERROR ===');
     console.error('Error message:', error.message);
