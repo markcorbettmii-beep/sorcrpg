@@ -177,17 +177,21 @@ app.post('/api/auth/verify-email', async (c) => {
 });
 
 app.post('/api/auth/resend-verification', async (c) => {
-  // DEBUG: Log if secrets are accessible
-  console.log('RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
-  console.log('RESEND_API_KEY length:', (c.env.RESEND_API_KEY || '').length);
+  try {
+    console.log('=== RESEND VERIFICATION REQUEST ===');
+    console.log('RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
+    console.log('RESEND_API_KEY length:', (c.env.RESEND_API_KEY || '').length);
 
-  const { email } = await c.req.json();
-  if (!email) return c.json({ error: 'Email required' }, 400);
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
+    const { email } = await c.req.json();
+    console.log('Email received:', email);
+    if (!email) return c.json({ error: 'Email required' }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
 
-  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
-  if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
-  if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
+    console.log('Looking up user for email:', email);
+    const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
+    console.log('User lookup result:', user ? 'Found' : 'Not found');
+    if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
+    if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
 
   // If no verification token or if token is a reset token, generate a new verification token
   if (!user.verification_token || user.verification_token.startsWith('reset_')) {
@@ -196,9 +200,11 @@ app.post('/api/auth/resend-verification', async (c) => {
     user.verification_token = newToken;
   }
 
-  // Resend verification email
-  const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
-  try {
+    // Resend verification email
+    const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
+    console.log('Attempting to send email to Resend API...');
+    console.log('Using API key:', c.env.RESEND_API_KEY ? 'YES (length: ' + (c.env.RESEND_API_KEY || '').length + ')' : 'NO');
+
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -216,18 +222,23 @@ app.post('/api/auth/resend-verification', async (c) => {
 <p>This link expires in 24 hours.</p>`
       })
     });
+
+    console.log('Resend API response status:', emailRes.status);
     const emailData = await emailRes.json();
+    console.log('Resend API response data:', JSON.stringify(emailData));
+
     if (!emailRes.ok) {
       console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
       return c.json({ error: 'Failed to send verification email', details: emailData }, 500);
     }
-    console.log('Resend verification email sent:', emailData);
-  } catch (emailError: any) {
-    console.error('Email send failed:', emailError.message);
-    return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
+    console.log('✅ Resend verification email sent successfully');
+    return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
+  } catch (error: any) {
+    console.error('=== RESEND VERIFICATION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    return c.json({ error: 'Internal server error', details: error.message }, 500);
   }
-
-  return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
 });
 
 app.post('/api/auth/signin', async (c) => {
@@ -383,40 +394,123 @@ app.get('/auth/google/callback', async (c) => {
       return c.html(`<html><body><h1>Error</h1><p>Failed to get user email from Google</p></body></html>`, 400);
     }
 
-    // Check if user exists
-    let user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ?').bind(googleUser.email).first() as any;
-    let authKey: string;
+    // Check if user exists in database
+    const existingUser = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ?').bind(googleUser.email).first() as any;
 
-    if (!user) {
-      // Create new user from Google OAuth
-      authKey = crypto.randomUUID();
-      const userId = Math.floor(Math.random() * 90000) + 10000;
-      const now = new Date().toISOString();
-      const uuid = crypto.randomUUID();
-      const username = googleUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+    // Determine which page to return to after K-ID verification
+    const returnPage = existingUser ? 'signin-google-callback.html' : 'signin-google-register.html';
 
-      try {
-        await c.env.sorc_db.prepare(`
-          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
-      } catch (error: any) {
-        return c.html(`<html><body><h1>Error</h1><p>Failed to create account: ${error.message}</p></body></html>`, 500);
-      }
-    } else {
-      // User exists, generate new auth key
-      authKey = crypto.randomUUID();
-      try {
-        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
-      } catch (error: any) {
-        return c.html(`<html><body><h1>Error</h1><p>Failed to authenticate: ${error.message}</p></body></html>`, 500);
-      }
-    }
+    // Redirect to K-ID verification with return parameter and email
+    const kidUrl = new URL('https://sorcrpg.com/k-id-status.html');
+    kidUrl.searchParams.append('return', returnPage);
+    kidUrl.searchParams.append('email', googleUser.email);
 
-    // Redirect to signin with auth key, frontend will store it and redirect to home
-    return c.redirect(`https://sorcrpg.com/signin?authKey=${authKey}`);
+    return c.redirect(kidUrl.toString());
   } catch (error: any) {
     return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
+  }
+});
+
+// Google Sign-In: Register new user (called from signin-google-register.html)
+app.post('/api/auth/google-register', async (c) => {
+  const { email, username, password, confirmPassword } = await c.req.json();
+
+  // Validate inputs
+  if (!email || !username || !password || !confirmPassword) {
+    return c.json({ error: 'Email, username, and password required' }, 400);
+  }
+
+  if (password !== confirmPassword) {
+    return c.json({ error: 'Passwords do not match' }, 400);
+  }
+
+  if (password.length < 8 || password.length > 64) {
+    return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  }
+
+  if (!/[0-9]/.test(password)) {
+    return c.json({ error: 'Password must contain at least one number' }, 400);
+  }
+
+  if (username.length < 3 || username.length > 30) {
+    return c.json({ error: 'Username must be 3-30 characters' }, 400);
+  }
+
+  if (!/^[a-zA-Z0-9-]+$/.test(username)) {
+    return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+  }
+
+  try {
+    // Check if email already exists
+    const existingEmail = await c.env.sorc_db.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
+    if (existingEmail) {
+      return c.json({ error: 'Email already registered' }, 400);
+    }
+
+    // Check if username already exists
+    const existingUsername = await c.env.sorc_db.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
+    if (existingUsername) {
+      return c.json({ error: 'Username already taken' }, 400);
+    }
+
+    // Hash password
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + email);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Create new user
+    const authKey = crypto.randomUUID();
+    const userId = Math.floor(Math.random() * 90000) + 10000;
+    const now = new Date().toISOString();
+    const uuid = crypto.randomUUID();
+
+    await c.env.sorc_db.prepare(`
+      INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(uuid, email, authKey, username, username, '', 'CIVILIAN', now, now, now, userId, true, passwordHash).run();
+
+    const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, created_at FROM users WHERE id = ?').bind(uuid).first();
+    return c.json({ success: true, user: newUser, authKey, message: 'Account created successfully' });
+  } catch (error: any) {
+    return c.json({ error: 'Registration failed', details: error.message }, 500);
+  }
+});
+
+// Google Sign-In: Login existing user (called from signin-google-callback.html)
+app.post('/api/auth/google-login', async (c) => {
+  const { email } = await c.req.json();
+
+  if (!email) {
+    return c.json({ error: 'Email required' }, 400);
+  }
+
+  try {
+    // Find user by email
+    const user = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role FROM users WHERE email = ?').bind(email).first() as any;
+
+    if (!user) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    // Generate new auth key
+    const authKey = crypto.randomUUID();
+
+    // Update user's auth key
+    await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+
+    return c.json({ success: true, user, authKey, message: 'Login successful' });
+  } catch (error: any) {
+    return c.json({ error: 'Login failed', details: error.message }, 500);
   }
 });
 
