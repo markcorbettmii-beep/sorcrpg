@@ -109,8 +109,9 @@ app.post('/api/auth/register', async (c) => {
 
     // Send verification email
     const verificationLink = `https://sorcrpg.com/verify-email.html?token=${verificationToken}`;
+    console.log('RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
     try {
-      await fetch('https://api.resend.com/emails', {
+      const emailRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,6 +128,12 @@ app.post('/api/auth/register', async (c) => {
 <p>This link expires in 24 hours.</p>`
         })
       });
+      const emailData = await emailRes.json();
+      if (!emailRes.ok) {
+        console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
+      } else {
+        console.log('Email sent successfully:', emailData);
+      }
     } catch (emailError: any) {
       console.error('Email send failed:', emailError.message);
       // Still return success - account is created even if email fails
