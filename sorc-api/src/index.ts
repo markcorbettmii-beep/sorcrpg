@@ -168,6 +168,9 @@ app.post('/api/auth/resend-verification', async (c) => {
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
 
+  console.log('RESEND_VERIFICATION: email received:', email);
+  console.log('RESEND_VERIFICATION: RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
+
   const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token FROM users WHERE email = ?').bind(email).first() as any;
   if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
   if (user.verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
@@ -181,6 +184,8 @@ app.post('/api/auth/resend-verification', async (c) => {
 
   // Resend verification email
   const verificationLink = `https://sorcrpg.com/verify-email.html?token=${user.verification_token}`;
+  console.log('RESEND_VERIFICATION: sending email to', email, 'with token:', user.verification_token);
+
   try {
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -201,12 +206,12 @@ app.post('/api/auth/resend-verification', async (c) => {
     });
     const emailData = await emailRes.json();
     if (!emailRes.ok) {
-      console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
+      console.error('RESEND_VERIFICATION: Resend API error:', emailRes.status, JSON.stringify(emailData));
       return c.json({ error: 'Failed to send verification email', details: emailData }, 500);
     }
-    console.log('Resend verification email sent:', emailData);
+    console.log('RESEND_VERIFICATION: email sent successfully:', emailData);
   } catch (emailError: any) {
-    console.error('Email send failed:', emailError.message);
+    console.error('RESEND_VERIFICATION: Email send failed:', emailError.message);
     return c.json({ error: 'Failed to send email', details: emailError.message }, 500);
   }
 
