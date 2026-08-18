@@ -83,6 +83,8 @@
             <!-- Required root element for Amazon SDK -->
             <div id="amazon-root" style="display:none;"></div>
 
+            <div id="debugPanel" style="background:#f0f0f0;color:#000;padding:10px;margin-bottom:10px;border-radius:5px;font-size:11px;max-height:150px;overflow-y:auto;display:none;white-space:pre-wrap;word-break:break-word;"></div>
+
             <div class="oauth-section show" id="oauthSection">
                 <!-- Official Amazon Sign-In -->
                 <a href="#" id="LoginWithAmazon" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
@@ -592,51 +594,68 @@
   </script>
 
   <script>
+    var debugLogs = [];
+    function addDebugLog(msg) {
+      debugLogs.push('[' + new Date().toLocaleTimeString() + '] ' + msg);
+      var panel = document.getElementById('debugPanel');
+      if (panel) {
+        panel.textContent = debugLogs.join('\n');
+        panel.style.display = 'block';
+      }
+      console.log(msg);
+    }
+
     // Load Google OAuth script dynamically
     function loadGoogleScript() {
-      console.log('loadGoogleScript: Starting to load Google OAuth script');
+      addDebugLog('1. Starting Google script load...');
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
       script.async = true;
       script.defer = true;
 
       script.onload = function() {
-        console.log('loadGoogleScript: Script loaded, initializing...');
+        addDebugLog('2. Script loaded successfully');
         initGoogleAuth();
       };
 
       script.onerror = function() {
-        console.error('loadGoogleScript: Failed to load Google script');
+        addDebugLog('ERROR: Failed to load Google script from accounts.google.com');
         window.googleLoadError = true;
       };
 
+      addDebugLog('1.5 Appending script to head...');
       document.head.appendChild(script);
     }
 
     // Initialize Google OAuth when SDK loads
     function initGoogleAuth() {
-      console.log('initGoogleAuth: Called, window.google:', !!window.google);
+      addDebugLog('3. initGoogleAuth called');
+      addDebugLog('3.1 window.google exists? ' + !!window.google);
       if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-        console.log('initGoogleAuth: Google API not ready yet, retrying...');
+        addDebugLog('3.2 Google API not ready, retrying in 50ms...');
         setTimeout(initGoogleAuth, 50);
         return;
       }
-      console.log('initGoogleAuth: Google API ready, creating code client');
+      addDebugLog('4. Google API is ready! Creating code client...');
 
-      // Initialize the code client for redirect flow
-      const codeClient = window.google.accounts.oauth2.initCodeClient({
-        client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
-        scope: 'openid email profile',
-        ux_mode: 'redirect',
-        redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
-      });
+      try {
+        const codeClient = window.google.accounts.oauth2.initCodeClient({
+          client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+          scope: 'openid email profile',
+          ux_mode: 'redirect',
+          redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
+        });
 
-      window.googleCodeClient = codeClient;
-      window.googleApiReady = true;
-      console.log('initGoogleAuth: Google API is ready');
+        window.googleCodeClient = codeClient;
+        window.googleApiReady = true;
+        addDebugLog('5. SUCCESS! Google OAuth is ready');
+      } catch(e) {
+        addDebugLog('ERROR creating code client: ' + e.message);
+      }
     }
 
     // Load script when DOM is ready
+    addDebugLog('0. Page loaded, waiting for DOM...');
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', loadGoogleScript);
     } else {
