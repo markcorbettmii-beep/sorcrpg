@@ -177,6 +177,10 @@ app.post('/api/auth/verify-email', async (c) => {
 });
 
 app.post('/api/auth/resend-verification', async (c) => {
+  // DEBUG: Log if secrets are accessible
+  console.log('RESEND_API_KEY exists:', !!c.env.RESEND_API_KEY);
+  console.log('RESEND_API_KEY length:', (c.env.RESEND_API_KEY || '').length);
+
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
