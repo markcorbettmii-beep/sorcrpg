@@ -260,10 +260,12 @@
                     return;
                 }
 
-                // Don't log them in-show verification message
+                // Store email and redirect to verification page
                 lastUnverifiedEmail = email;
-                showStatus('✅ Profile created! Please check your email to verify your account before signing in. Check your spam folder if you don\'t see it.', 'success');
-                document.getElementById('resendBtn').style.display = 'block';
+                localStorage.setItem('signupEmail', email);
+                setTimeout(function() {
+                    window.location.href = 'signin-verify-email.html';
+                }, 1500);
 
             } catch(e) {
                 showStatus('Connection error. Please try again.', 'error');

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Your Email | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .form-group { margin-bottom: 1rem; text-align: left; }
+        .form-group label { display: block; color: #2c2c2c; font-weight: bold; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .signin-input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ffffffccc; background: #f5f5f5; color: #2c2c2c; font-size: 1rem; box-sizing: border-box; }
+        .signin-input:focus { outline: none; border-color: #c93f35; }
+        .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
+        .signin-btn-primary { background: #c93f35; color: #fff; }
+        .signin-btn-primary:hover { background: #a83228; }
+        .signin-btn-secondary { background: none; border: 1px solid #b9aa00; color: #b9aa00; }
+        .signin-btn-secondary:hover { background: #f5f5f5; }
+        .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
+        .status-msg.success { background: #ffffff; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #ffffff; border: 1px solid #c93f35; color: #c93f35; }
+        .signin-links { margin-top: 1.5rem; font-size: 0.85rem; text-align: center; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        .info-box { background: #f5f5f5; border-left: 4px solid #c93f35; padding: 1rem; margin: 1.5rem 0; text-align: left; border-radius: 4px; }
+        .info-box p { color: #2c2c2c; margin: 0; font-size: 0.9rem; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+        body.lawful-mode .signin-input { background: #ffffff; color: #2c2c2c; border-color: #ffffff; }
+    </style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Verify Your Email</h1>
+            <p>Your account has been created! Check your email for a verification link.</p>
+
+            <div class="info-box">
+                <p>📧 <strong>Didn't receive an email?</strong></p>
+                <p style="margin-top: 0.5rem;">Check your spam or junk folder. If it's still not there, you can resend it below.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="emailInput">Email address</label>
+                <input type="email" id="emailInput" class="signin-input" placeholder="your@email.com" />
+            </div>
+
+            <button class="signin-btn signin-btn-primary" onclick="handleResendVerification()">Resend Verification Email</button>
+            <button class="signin-btn signin-btn-secondary" onclick="window.location.href='signin.html'">Back to Sign In</button>
+            <div id="statusMsg" class="status-msg"></div>
+
+            <div class="signin-links">
+                <a href="index.html">Back to site</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // Pre-fill email from signup
+            var signupEmail = localStorage.getItem('signupEmail');
+            if (signupEmail) {
+                document.getElementById('emailInput').value = signupEmail;
+            }
+        })();
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
+
+        window.handleResendVerification = async function() {
+            var email = document.getElementById('emailInput').value.trim();
+            if (!email) { showStatus('Please enter your email.', 'error'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showStatus('Please enter a valid email address.', 'error'); return; }
+
+            showStatus('Sending verification email...', 'success');
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/resend-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showStatus(data.error || 'Failed to resend verification email.', 'error');
+                    return;
+                }
+
+                showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+    </script>
+
+    <script type="module" src="main.js?v=25"></script>
+    <div id="footer"></div>
+</body>
+</html>
