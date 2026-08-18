@@ -68,9 +68,14 @@ const authMiddleware = async (c: any, next: any) => {
 
 // Trigger deployment with fixed wrangler secret put syntax
 app.post('/api/auth/register', async (c) => {
-  const { email, username, firstName, password } = await c.req.json();
+  const { email, username, firstName, password, confirmPassword } = await c.req.json();
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
-  if (!password || password.length < 8) return c.json({ error: 'Password must be at least 8 characters' }, 400);
+  if (!password || !confirmPassword) return c.json({ error: 'Password required' }, 400);
+  if (password !== confirmPassword) return c.json({ error: 'Passwords do not match' }, 400);
+  if (password.length < 8 || password.length > 64) return c.json({ error: 'Password must be 8-64 characters' }, 400);
+  if (!/[A-Z]/.test(password)) return c.json({ error: 'Password must contain at least one uppercase letter' }, 400);
+  if (!/[a-z]/.test(password)) return c.json({ error: 'Password must contain at least one lowercase letter' }, 400);
+  if (!/[0-9]/.test(password)) return c.json({ error: 'Password must contain at least one number' }, 400);
   if (!/^[a-zA-Z0-9-]+$/.test(username)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
 
   const existingUser = await c.env.sorc_db.prepare('SELECT id, verification_token, verified, username FROM users WHERE email = ?').bind(email).first() as any;
