@@ -31,7 +31,7 @@ function sorcSyncHtmlBg(isLawful) {
   document.documentElement.style.background = isLawful ? '#f5f5f0' : '#0a0a0a';
 }
 (function() {
-  var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+  var savedTheme = localStorage.getItem('themeSelected') || 'lawful';
   if (savedTheme === 'lawful') {
     document.body.classList.add('lawful-mode');
   }
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var lawfulBtn = document.querySelector('.theme-toggle-btn.lawful') || document.getElementById('theme-lawful');
   if (evilBtn && lawfulBtn) {
     function updateButtonStates() {
-      var currentTheme = localStorage.getItem('themeSelected') || 'evil';
+      var currentTheme = localStorage.getItem('themeSelected') || 'lawful';
       if (currentTheme === 'evil') {
         evilBtn.classList.add('active');
         lawfulBtn.classList.remove('active');
