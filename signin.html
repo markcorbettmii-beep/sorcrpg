@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In | Slayers of Rings § Crowns</title>
     <link rel="stylesheet" href="styles.css?v=9" />
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="window.googleScriptLoaded = true; alert('✅ Google Script Loaded Successfully');" onerror="alert('❌ Google Script Failed to Load\n\nURL: accounts.google.com/gsi/client\n\nCheck: Network connection, DNS, or Cloudflare blocking');"></script>
     <style>
         body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
         .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
@@ -163,6 +163,19 @@
     <script>
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
+
+        // Alert when page loads to check Google script status
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (window.googleScriptLoaded) {
+                    alert('✅ Page Fully Loaded\n\nGoogle SDK: LOADED\n\nwindow.google available');
+                } else if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+                    alert('✅ Page Fully Loaded\n\nGoogle SDK: LOADED\n\nwindow.google.accounts.oauth2 available');
+                } else {
+                    alert('⚠️ Page Loaded\n\nGoogle SDK: NOT YET LOADED\n\nThe script tag may still be loading or blocked');
+                }
+            }, 500);
+        });
 
         (function() {
             var savedTheme = localStorage.getItem('themeSelected') || 'evil';
