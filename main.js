@@ -562,9 +562,39 @@ function showLoggedOutBadge() {
     ' · <button onclick="window.location.href=\'/signin.html\'" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;text-shadow:1px 1px 0 ' + shadowColor + ';"><strong>Badge Login</strong></button>';
 }
 
-// ========== AUTH STATE ==========
-document.addEventListener('DOMContentLoaded', function() {
+// ========== RESTORE USER SESSION ==========
+async function restoreUserSession() {
+  var authKey = localStorage.getItem('authKey');
+  if (!authKey) return false;
+
   try {
+    var res = await fetch(SORC_API + '/api/auth/me', {
+      headers: { 'X-Auth-Key': authKey }
+    });
+    var data = await res.json();
+
+    if (data.success && data.user) {
+      // Update user data in localStorage with fresh data from server
+      localStorage.setItem('sorc_user', JSON.stringify(data.user));
+      return true;
+    } else {
+      // Auth key invalid, log out
+      localStorage.removeItem('authKey');
+      localStorage.removeItem('sorc_user');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to restore session:', error);
+    return false;
+  }
+}
+
+// ========== AUTH STATE ==========
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    // First, try to restore user session from server
+    await restoreUserSession();
+
     var saved = localStorage.getItem('sorc_user');
     if (saved) {
       var user = JSON.parse(saved);
@@ -585,6 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   } catch(e) {
     localStorage.removeItem('sorc_user');
+    localStorage.removeItem('authKey');
     showLoggedOutBadge();
     if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
   }
