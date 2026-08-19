@@ -163,19 +163,20 @@ app.post('/api/auth/register', async (c) => {
       const emailData = await emailRes.json();
       if (!emailRes.ok) {
         console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
-        return c.json({ error: 'Failed to send verification email', details: emailData }, 500);
+        return c.json({ error: 'Failed to send verification email. Please try again.' }, 500);
       } else {
         console.log('Email sent successfully:', emailData);
       }
     } catch (emailError: any) {
       console.error('Email send failed:', emailError.message);
-      return c.json({ error: 'Failed to send verification email', details: emailError.message }, 500);
+      return c.json({ error: 'Failed to send verification email. Please try again.' }, 500);
     }
 
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE email = ?').bind(email).first();
     return c.json({ success: true, user: newUser, authKey, verificationToken: tokenToUse, message: 'Account created. Check your email to verify.' });
   } catch (error: any) {
-    return c.json({ error: 'Registration failed', details: error.message }, 500);
+    console.error('Registration error:', error.message);
+    return c.json({ error: 'Registration failed. Please try again.' }, 500);
   }
 });
 
@@ -245,7 +246,7 @@ app.post('/api/auth/resend-verification', async (c) => {
 
     if (!emailRes.ok) {
       console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
-      return c.json({ error: 'Failed to send verification email', details: emailData }, 500);
+      return c.json({ error: 'Failed to send verification email. Please try again.' }, 500);
     }
     console.log('✅ Resend verification email sent successfully');
     return c.json({ success: true, message: 'Verification email sent. Check your inbox.' });
@@ -253,7 +254,7 @@ app.post('/api/auth/resend-verification', async (c) => {
     console.error('=== RESEND VERIFICATION ERROR ===');
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    return c.json({ error: 'Internal server error', details: error.message }, 500);
+    return c.json({ error: 'Internal server error. Please try again.' }, 500);
   }
 });
 
@@ -311,7 +312,7 @@ app.post('/api/auth/forgot-password', async (c) => {
         from: 'noreply@sorcrpg.com',
         to: email,
         subject: 'Reset Your SORC Account Password',
-        html: `<p>Hi ${user.username},</p>
+        html: `<p>Hi ${escapeHtml(user.username)},</p>
 <p>We received a request to reset your password. Click the link below to set a new password:</p>
 <p><a href="${resetLink}">Reset Password</a></p>
 <p>Or paste this link: ${resetLink}</p>
@@ -403,7 +404,7 @@ app.get('/auth/google/callback', async (c) => {
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
-      return c.html(`<html><body><h1>Error</h1><p>Failed to exchange authorization code: ${error}</p></body></html>`, 400);
+      return c.html(`<html><body><h1>Error</h1><p>Failed to exchange authorization code. Please try again.</p></body></html>`, 400);
     }
 
     const tokenData = await tokenResponse.json() as any;
@@ -466,7 +467,8 @@ app.get('/auth/google/callback', async (c) => {
       return c.redirect(`https://api.sorcrpg.com/auth/google/login-after-kid?email=${encodeURIComponent(googleUser.email)}`);
     }
   } catch (error: any) {
-    return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
+    console.error('Google OAuth callback error:', error.message);
+    return c.html(`<html><body><h1>Error</h1><p>Authentication failed. Please try again.</p></body></html>`, 500);
   }
 });
 
@@ -522,7 +524,8 @@ app.post('/api/auth/google-register', async (c) => {
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, created_at FROM users WHERE id = ?').bind(uuid).first();
     return c.json({ success: true, user: newUser, authKey, message: 'Account created successfully' });
   } catch (error: any) {
-    return c.json({ error: 'Registration failed', details: error.message }, 500);
+    console.error('Google registration error:', error.message);
+    return c.json({ error: 'Registration failed. Please try again.' }, 500);
   }
 });
 
@@ -587,7 +590,7 @@ app.get('/auth/google/login-after-kid', async (c) => {
           <body>
             <div class="container">
               <h1>Account Not Found</h1>
-              <p>We couldn't find an account associated with this email address (${email}).</p>
+              <p>We couldn't find an account associated with the email you provided.</p>
               <p>Would you like to create a new account with SORC?</p>
               <a href="/signin.html" class="signup-link">Sign Up Now</a>
             </div>
@@ -610,8 +613,8 @@ app.get('/auth/google/login-after-kid', async (c) => {
         </head>
         <body>
           <script>
-            sessionStorage.setItem('sorcAuthKey', '${authKey}');
-            sessionStorage.setItem('sorcAuthEmail', '${email}');
+            sessionStorage.setItem('sorcAuthKey', '${escapeJs(authKey)}');
+            sessionStorage.setItem('sorcAuthEmail', '${escapeJs(email)}');
             window.location.href = 'https://sorcrpg.com/';
           </script>
           <p>Logging in...</p>
@@ -619,7 +622,8 @@ app.get('/auth/google/login-after-kid', async (c) => {
       </html>
     `, 200);
   } catch (error: any) {
-    return c.html(`<html><body><h1>Error</h1><p>Login failed: ${error.message}</p></body></html>`, 500);
+    console.error('Login after K-ID error:', error.message);
+    return c.html(`<html><body><h1>Error</h1><p>Login failed. Please try again.</p></body></html>`, 500);
   }
 });
 
@@ -647,7 +651,8 @@ app.post('/api/auth/google-login', async (c) => {
 
     return c.json({ success: true, user, authKey, message: 'Login successful' });
   } catch (error: any) {
-    return c.json({ error: 'Login failed', details: error.message }, 500);
+    console.error('Google login error:', error.message);
+    return c.json({ error: 'Login failed. Please try again.' }, 500);
   }
 });
 
@@ -684,7 +689,8 @@ app.post('/api/auth/kid-verify', async (c) => {
 
     return c.json({ success: true, message: 'K-ID verification completed' });
   } catch (error: any) {
-    return c.json({ error: 'K-ID verification failed', details: error.message }, 500);
+    console.error('K-ID verification error:', error.message);
+    return c.json({ error: 'K-ID verification failed. Please try again.' }, 500);
   }
 });
 
@@ -707,7 +713,8 @@ app.get('/api/forum/categories', async (c) => {
     }
     return c.json({ categories });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load categories', details: error.message }, 500);
+    console.error('Failed to load forum categories:', error.message);
+    return c.json({ error: 'Failed to load categories' }, 500);
   }
 });
 
@@ -721,7 +728,8 @@ app.get('/api/forum/category/:categoryId', authMiddleware, async (c) => {
     const totalThreads = await c.env.sorc_db.prepare('SELECT COUNT(*) as count FROM threads WHERE category_id = ?').bind(categoryId).first() as any;
     return c.json({ threads: threads.results, total: totalThreads.count, page, totalPages: Math.ceil(totalThreads.count / limit) });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load threads', details: error.message }, 500);
+    console.error('Failed to load threads:', error.message);
+    return c.json({ error: 'Failed to load threads. Please try again.' }, 500);
   }
 });
 
@@ -734,7 +742,8 @@ app.get('/api/forum/thread/:threadId', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare('UPDATE threads SET views = views + 1 WHERE id = ?').bind(threadId).run();
     return c.json({ thread, posts: posts.results });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load thread', details: error.message }, 500);
+    console.error('Failed to load thread:', error.message);
+    return c.json({ error: 'Failed to load thread. Please try again.' }, 500);
   }
 });
 
@@ -751,7 +760,8 @@ app.post('/api/forum/thread', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, threadId });
   } catch (error: any) {
-    return c.json({ error: 'Failed to create thread', details: error.message }, 500);
+    console.error('Failed to create thread:', error.message);
+    return c.json({ error: 'Failed to create thread. Please try again.' }, 500);
   }
 });
 
@@ -767,7 +777,8 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, postId });
   } catch (error: any) {
-    return c.json({ error: 'Failed to create post', details: error.message }, 500);
+    console.error('Failed to create post:', error.message);
+    return c.json({ error: 'Failed to create post. Please try again.' }, 500);
   }
 });
 
@@ -785,7 +796,8 @@ app.get('/api/fellowships', authMiddleware, async (c) => {
     ).bind(user.id, user.id, user.id).all();
     return c.json({ fellows: rows.results });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load fellows', details: error.message }, 500);
+    console.error('Failed to load fellows:', error.message);
+    return c.json({ error: 'Failed to load fellows. Please try again.' }, 500);
   }
 });
 
@@ -800,7 +812,8 @@ app.get('/api/fellowships/requests/incoming', authMiddleware, async (c) => {
     ).bind(user.id).all();
     return c.json({ requests: rows.results });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load requests', details: error.message }, 500);
+    console.error('Failed to load requests:', error.message);
+    return c.json({ error: 'Failed to load requests. Please try again.' }, 500);
   }
 });
 
@@ -815,7 +828,8 @@ app.get('/api/fellowships/requests/outgoing', authMiddleware, async (c) => {
     ).bind(user.id).all();
     return c.json({ requests: rows.results });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load requests', details: error.message }, 500);
+    console.error('Failed to load requests:', error.message);
+    return c.json({ error: 'Failed to load requests. Please try again.' }, 500);
   }
 });
 
@@ -838,7 +852,8 @@ app.post('/api/fellowships/request', authMiddleware, async (c) => {
     ).bind(id, user.id, user.display_name || user.username, receiverUid, receiver.display_name || receiver.username, now).run();
     return c.json({ success: true, id });
   } catch (error: any) {
-    return c.json({ error: 'Failed to send request', details: error.message }, 500);
+    console.error('Failed to send request:', error.message);
+    return c.json({ error: 'Failed to send request. Please try again.' }, 500);
   }
 });
 
@@ -853,7 +868,8 @@ app.post('/api/fellowships/:id/accept', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare(`UPDATE fellowships SET status = 'accepted', accepted_at = ? WHERE id = ?`).bind(new Date().toISOString(), fellowshipId).run();
     return c.json({ success: true });
   } catch (error: any) {
-    return c.json({ error: 'Failed to accept', details: error.message }, 500);
+    console.error('Failed to accept fellowship request:', error.message);
+    return c.json({ error: 'Failed to accept request. Please try again.' }, 500);
   }
 });
 
@@ -867,7 +883,8 @@ app.post('/api/fellowships/:id/decline', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare('DELETE FROM fellowships WHERE id = ?').bind(fellowshipId).run();
     return c.json({ success: true });
   } catch (error: any) {
-    return c.json({ error: 'Failed to decline', details: error.message }, 500);
+    console.error('Failed to decline fellowship request:', error.message);
+    return c.json({ error: 'Failed to decline request. Please try again.' }, 500);
   }
 });
 
@@ -881,7 +898,8 @@ app.delete('/api/fellowships/:id', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare('DELETE FROM fellowships WHERE id = ?').bind(fellowshipId).run();
     return c.json({ success: true });
   } catch (error: any) {
-    return c.json({ error: 'Failed to remove', details: error.message }, 500);
+    console.error('Failed to remove fellowship:', error.message);
+    return c.json({ error: 'Failed to remove fellowship. Please try again.' }, 500);
   }
 });
 
@@ -897,7 +915,8 @@ app.get('/api/conversations', authMiddleware, async (c) => {
     ).bind(user.id, user.id).all();
     return c.json({ conversations: rows.results });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load conversations', details: error.message }, 500);
+    console.error('Failed to load conversations:', error.message);
+    return c.json({ error: 'Failed to load conversations. Please try again.' }, 500);
   }
 });
 
@@ -913,7 +932,8 @@ app.get('/api/conversations/:id', authMiddleware, async (c) => {
     ).bind(convId).all();
     return c.json({ conversation: conv, messages: messages.results });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load conversation', details: error.message }, 500);
+    console.error('Failed to load conversation:', error.message);
+    return c.json({ error: 'Failed to load conversation. Please try again.' }, 500);
   }
 });
 
@@ -945,7 +965,8 @@ app.post('/api/conversations', authMiddleware, async (c) => {
     ).bind(msgId, conv.id, user.id, user.display_name || user.username, body, now).run();
     return c.json({ success: true, conversationId: conv.id, messageId: msgId });
   } catch (error: any) {
-    return c.json({ error: 'Failed to send message', details: error.message }, 500);
+    console.error('Failed to send message:', error.message);
+    return c.json({ error: 'Failed to send message. Please try again.' }, 500);
   }
 });
 
@@ -966,7 +987,8 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare('UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?').bind(body.slice(0, 80), now, convId).run();
     return c.json({ success: true, messageId: msgId });
   } catch (error: any) {
-    return c.json({ error: 'Failed to send message', details: error.message }, 500);
+    console.error('Failed to send message:', error.message);
+    return c.json({ error: 'Failed to send message. Please try again.' }, 500);
   }
 });
 
@@ -977,7 +999,8 @@ app.get('/api/profile/:userId', async (c) => {
     if (!user) return c.json({ error: 'User not found' }, 404);
     return c.json({ user });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load profile', details: error.message }, 500);
+    console.error('Failed to load profile:', error.message);
+    return c.json({ error: 'Failed to load profile. Please try again.' }, 500);
   }
 });
 
@@ -999,7 +1022,8 @@ app.put('/api/profile', authMiddleware, async (c) => {
     const updatedUser = await c.env.sorc_db.prepare('SELECT * FROM users WHERE id = ?').bind(user.id).first();
     return c.json({ success: true, user: updatedUser });
   } catch (error: any) {
-    return c.json({ error: 'Failed to update profile', details: error.message }, 500);
+    console.error('Failed to update profile:', error.message);
+    return c.json({ error: 'Failed to update profile. Please try again.' }, 500);
   }
 });
 
