@@ -656,6 +656,28 @@ Stack: ${error.stack ? error.stack.substring(0, 300) : 'N/A'}</code>
   }
 });
 
+// Handle post-K-ID verification redirect from Google OAuth
+// This endpoint receives user data after K-ID age verification is complete
+app.post('/auth/google/login-after-kid', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { user, authKey } = body;
+
+    if (!user || !authKey) {
+      return c.json({ error: 'Missing user data or auth key' }, 400);
+    }
+
+    return c.json({
+      success: true,
+      user,
+      authKey
+    });
+  } catch (error: any) {
+    console.error('POST /auth/google/login-after-kid error:', error);
+    return c.json({ error: 'Invalid request' }, 400);
+  }
+});
+
 app.get('/api/forum/categories', async (c) => {
   try {
     const categories: any[] = [
