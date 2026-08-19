@@ -159,42 +159,10 @@
         </div>
     </div>
 
-    <style>
-        .debug-error-box { display: none; position: fixed; bottom: 20px; left: 20px; right: 20px; max-width: 600px; background: #8a8a8a; border-radius: 6px; padding: 1rem; z-index: 10000; color: white; }
-        .debug-error-box.show { display: block; }
-        .debug-error-box h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
-        .debug-error-box .error-code { background: #5a5a5a; padding: 0.75rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; margin: 0.75rem 0; overflow-y: auto; max-height: 200px; border-left: 3px solid #fff; }
-        .debug-error-box button { background: #c93f35; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; margin-top: 0.75rem; }
-        .debug-error-box button:hover { background: #a83229; }
-    </style>
-
-    <div id="debugErrorBox" class="debug-error-box">
-        <h3>⚠️ <span id="errorStep">Error</span></h3>
-        <div class="error-code" id="errorCode"></div>
-        <button id="errorOkBtn" onclick="window.continueFromError()">OK</button>
-    </div>
 
     <script>
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
-        var errorSteps = [];
-        var currentErrorIndex = 0;
-        var errorRetryFn = null;
-
-        window.showDebugError = function(step, errorCode, retryFn) {
-            document.getElementById('errorStep').textContent = step;
-            document.getElementById('errorCode').textContent = errorCode;
-            document.getElementById('debugErrorBox').classList.add('show');
-            errorRetryFn = retryFn;
-            console.error('[' + step + ']', errorCode);
-        };
-
-        window.continueFromError = function() {
-            document.getElementById('debugErrorBox').classList.remove('show');
-            if (errorRetryFn) {
-                errorRetryFn();
-            }
-        };
 
         (function() {
             var savedTheme = localStorage.getItem('themeSelected') || 'evil';
@@ -472,15 +440,14 @@
         };
 
         window.handleGoogleLogin = function() {
-            // Step 1: Check if SDK loaded
+            // Check if SDK loaded
             if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-                window.showDebugError('Step 1: SDK Check', 'GOOGLE_SDK_NOT_LOADED\n\nThe accounts.google.com/gsi/client script did not load.\n\nTry: Refresh page or check internet connection', function() {
-                    window.handleGoogleLogin(); // Retry
-                });
+                alert('ERROR: Google SDK not loaded\n\nThe accounts.google.com/gsi/client script did not load.\n\nTry: Refresh page or check internet connection');
                 return;
             }
 
-            // Step 2: Initialize OAuth client
+            alert('Step 1: SDK loaded, initializing OAuth client...');
+
             try {
                 window.google.accounts.oauth2.initCodeClient({
                     client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
@@ -489,22 +456,16 @@
                     redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
                     callback: function(response) {
                         if (response.code) {
-                            // Step 3: Redirect to backend callback
-                            console.log('Step 3: Redirecting to backend with auth code');
+                            alert('Step 2: Auth code received, redirecting to backend...');
                             window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
                         } else if (response.error) {
-                            // Step 2b: OAuth denied or error
-                            window.showDebugError('Step 2b: User Action', 'GOOGLE_USER_DENIED\n\nError: ' + response.error + '\n\nDescription: ' + (response.error_description || 'User denied permissions or cancelled'), function() {
-                                // Retry
-                            });
+                            alert('ERROR: Google OAuth denied\n\nError: ' + response.error + '\n\nDescription: ' + (response.error_description || 'User denied permissions or cancelled'));
                         }
                     }
                 }).requestCode();
-                console.log('Step 2: OAuth client initialized, requesting code from Google');
+                alert('Step 1b: Requesting code from Google...');
             } catch (e) {
-                window.showDebugError('Step 2: Init Error', 'GOOGLE_INIT_EXCEPTION\n\n' + e.toString(), function() {
-                    window.handleGoogleLogin(); // Retry
-                });
+                alert('ERROR: Google Login Exception\n\n' + e.toString());
             }
         };
 
