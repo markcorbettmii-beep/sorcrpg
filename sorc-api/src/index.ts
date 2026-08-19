@@ -596,7 +596,7 @@ app.get('/auth/google/login-after-kid', async (c) => {
           <script>
             sessionStorage.setItem('sorcAuthKey', '${authKey}');
             sessionStorage.setItem('sorcAuthEmail', '${email}');
-            window.location.href = '/';
+            window.location.href = 'https://sorcrpg.com/';
           </script>
           <p>Logging in...</p>
         </body>
