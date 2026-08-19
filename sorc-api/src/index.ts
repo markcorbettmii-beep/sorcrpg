@@ -1027,4 +1027,16 @@ app.put('/api/profile', authMiddleware, async (c) => {
   }
 });
 
+app.get('/api/me', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const userData = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ?`).bind(user.id).first();
+    if (!userData) return c.json({ error: 'User not found' }, 404);
+    return c.json({ user: userData });
+  } catch (error: any) {
+    console.error('Failed to load current user:', error.message);
+    return c.json({ error: 'Failed to load user data. Please try again.' }, 500);
+  }
+});
+
 export default app;
