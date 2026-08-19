@@ -269,6 +269,43 @@ app.post('/api/auth/signin', async (c) => {
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
 
+app.get('/api/auth/me', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    // Get user profile
+    const userProfile = await c.env.sorc_db.prepare(
+      `SELECT id, email, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ?`
+    ).bind(user.id).first() as any;
+
+    if (!userProfile) return c.json({ error: 'User not found' }, 404);
+
+    // Get fellowship counts
+    const fellowshipCount = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as count FROM fellowships WHERE (sender_uid = ? OR receiver_uid = ?) AND status = 'accepted'`
+    ).bind(user.id, user.id).first() as any;
+
+    const incomingCount = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as count FROM fellowships WHERE receiver_uid = ? AND status = 'pending'`
+    ).bind(user.id).first() as any;
+
+    const outgoingCount = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as count FROM fellowships WHERE sender_uid = ? AND status = 'pending'`
+    ).bind(user.id).first() as any;
+
+    return c.json({
+      success: true,
+      user: {
+        ...userProfile,
+        fellowshipCount: fellowshipCount?.count || 0,
+        incomingRequestCount: incomingCount?.count || 0,
+        outgoingRequestCount: outgoingCount?.count || 0
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load user data', details: error.message }, 500);
+  }
+});
+
 app.post('/api/auth/forgot-password', async (c) => {
   const { email } = await c.req.json();
   if (!email) return c.json({ error: 'Email required' }, 400);
