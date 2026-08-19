@@ -464,17 +464,21 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Check for authKey from OAuth redirect
+            // Check for user data from OAuth redirect (after K-ID verification)
             var urlParams = new URLSearchParams(window.location.search);
-            var authKey = urlParams.get('authKey');
-            if (authKey) {
-                // Store auth key and redirect to home
-                localStorage.setItem('sorc_authKey', authKey);
-                // Clear the URL parameter
-                window.history.replaceState({}, document.title, window.location.pathname);
-                // Redirect to home
-                window.location.href = 'index.html';
-                return;
+            var userData = urlParams.get('user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                    // Clear the URL parameter
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    // Redirect to home
+                    window.location.href = 'index.html';
+                    return;
+                } catch (e) {
+                    console.error('Failed to parse user data:', e);
+                }
             }
 
             // Google button click handler

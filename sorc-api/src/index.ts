@@ -393,6 +393,7 @@ app.get('/auth/google/callback', async (c) => {
           INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
+        user = { id: uuid, email: googleUser.email, username, display_name: googleUser.name || googleUser.email, role: 'CIVILIAN', community_points: 0, created_at: now };
       } catch (error: any) {
         return c.html(`<html><body><h1>Error</h1><p>Failed to create account: ${error.message}</p></body></html>`, 500);
       }
@@ -406,8 +407,19 @@ app.get('/auth/google/callback', async (c) => {
       }
     }
 
-    // Redirect to signin with auth key, frontend will store it and redirect to home
-    return c.redirect(`https://sorcrpg.com/signin?authKey=${authKey}`);
+    // Build return URL with user data and auth key
+    const userData = JSON.stringify({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      display_name: user.display_name,
+      role: user.role,
+      community_points: user.community_points || 0,
+      created_at: user.created_at,
+      authKey: authKey
+    });
+    const returnUrl = `https://sorcrpg.com/signin.html?user=${encodeURIComponent(userData)}`;
+    return c.redirect(`https://sorcrpg.com/k-id-status.html?return=${encodeURIComponent(returnUrl)}`);
   } catch (error: any) {
     return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
   }
