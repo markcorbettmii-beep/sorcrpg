@@ -70,15 +70,17 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 // Role-based access control helpers
-// Role hierarchy: VISITOR (unregistered) < USER (CIVILIAN/PC/GM) < ADMIN (AD/OWN) < MASTER
+// Role hierarchy: VISITOR (unregistered) < USER (CIVILIAN/PC/GM) < ADMIN/OWNER (privileged)
+// Existing roles: CIVILIAN (default), ADMIN, OWNER, MASTER
+// User-specified mapping: CIV=CIVILIAN, PC=CIVILIAN, GM=CIVILIAN, AD=ADMIN, OWN=OWNER
 const ROLE_LEVELS = {
   'VISITOR': 0,      // Unregistered/anonymous
   'CIVILIAN': 1,     // Regular user
-  'PC': 1,           // Player character (same perms as user)
-  'GM': 1,           // Game master (same perms as user)
-  'AD': 2,           // Administrator
-  'OWN': 2,          // Owner (same perms as admin)
-  'MASTER': 3        // Super admin
+  'PC': 1,           // Player character (user level)
+  'GM': 1,           // Game master (user level)
+  'ADMIN': 2,        // Administrator
+  'OWNER': 3,        // Owner (super admin)
+  'MASTER': 3        // Master (treated as owner level)
 };
 
 function getRoleLevel(role?: string): number {
@@ -91,11 +93,7 @@ function isUser(role?: string): boolean {
 }
 
 function isAdmin(role?: string): boolean {
-  return role === 'AD' || role === 'OWN' || role === 'MASTER';
-}
-
-function isMaster(role?: string): boolean {
-  return role === 'MASTER';
+  return role === 'ADMIN' || role === 'OWNER' || role === 'MASTER';
 }
 
 function hasPermission(userRole: string | undefined, minimumLevel: number): boolean {
