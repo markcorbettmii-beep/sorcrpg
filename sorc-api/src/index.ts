@@ -4,6 +4,22 @@ import { cors } from 'hono/cors';
 // Force workflow redeploy - fixed package-lock.json sync issue
 // npm packages are now in sync, deployment should succeed
 
+// HTML/JS escape utilities (Bug fix: XSS prevention)
+function escapeHtml(text: string): string {
+  const map: { [key: string]: string } = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
+function escapeJs(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+}
+
 interface Env {
   sorc_db: D1Database;
   RESEND_API_KEY: string;
@@ -137,7 +153,7 @@ app.post('/api/auth/register', async (c) => {
           from: 'noreply@sorcrpg.com',
           to: email,
           subject: 'Verify Your SORC Account',
-          html: `<p>Welcome to Essentia, ${userToUse.username}!</p>
+          html: `<p>Welcome to Essentia, ${escapeHtml(userToUse.username)}!</p>
 <p>Please verify your email to complete account creation:</p>
 <p><a href="${verificationLink}">Verify Email</a></p>
 <p>Or paste this link: ${verificationLink}</p>
@@ -215,7 +231,7 @@ app.post('/api/auth/resend-verification', async (c) => {
         from: 'noreply@sorcrpg.com',
         to: email,
         subject: 'Verify Your SORC Account',
-        html: `<p>Welcome to Essentia, ${user.username}!</p>
+        html: `<p>Welcome to Essentia, ${escapeHtml(user.username)}!</p>
 <p>Please verify your email to complete account creation:</p>
 <p><a href="${verificationLink}">Verify Email</a></p>
 <p>Or paste this link: ${verificationLink}</p>
