@@ -339,9 +339,9 @@ app.get('/auth/google/callback', async (c) => {
       <head><title>Google OAuth Error</title>
       <style>
         body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-        .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-        h1 { color: #c93f35; margin-top: 0; }
-        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+        .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+        h1 { color: #333333; margin-top: 0; }
+        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
         p { line-height: 1.6; }
       </style>
       </head>
@@ -367,9 +367,9 @@ URI: ${errorUri}</code>
       <head><title>Google OAuth Error</title>
       <style>
         body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-        .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-        h1 { color: #c93f35; margin-top: 0; }
-        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+        .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+        h1 { color: #333333; margin-top: 0; }
+        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
         p { line-height: 1.6; }
       </style>
       </head>
@@ -415,9 +415,9 @@ Possible causes:
         <head><title>Google OAuth Error</title>
         <style>
           body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-          h1 { color: #c93f35; margin-top: 0; }
-          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.9rem; }
+          .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+          h1 { color: #333333; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.9rem; }
           p { line-height: 1.6; }
         </style>
         </head>
@@ -442,9 +442,9 @@ Response: ${error.substring(0, 500)}</code>
         <head><title>Google OAuth Error</title>
         <style>
           body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-          h1 { color: #c93f35; margin-top: 0; }
-          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+          .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+          h1 { color: #333333; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
           p { line-height: 1.6; }
         </style>
         </head>
@@ -474,9 +474,9 @@ Google OAuth returned: ${JSON.stringify(tokenData).substring(0, 500)}</code>
         <head><title>Google OAuth Error</title>
         <style>
           body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-          h1 { color: #c93f35; margin-top: 0; }
-          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+          .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+          h1 { color: #333333; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
           p { line-height: 1.6; }
         </style>
         </head>
@@ -502,9 +502,9 @@ Access Token Present: ${!!tokenData.access_token}</code>
         <head><title>Google OAuth Error</title>
         <style>
           body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-          h1 { color: #c93f35; margin-top: 0; }
-          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+          .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+          h1 { color: #333333; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
           p { line-height: 1.6; }
         </style>
         </head>
@@ -547,9 +547,9 @@ Solution: Make sure your Google account has a public email address.</code>
           <head><title>Database Error</title>
           <style>
             body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-            .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-            h1 { color: #c93f35; margin-top: 0; }
-            code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.85rem; }
+            .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+            h1 { color: #333333; margin-top: 0; }
+            code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.85rem; }
             p { line-height: 1.6; }
           </style>
           </head>
@@ -583,9 +583,9 @@ This usually means:
           <head><title>Database Error</title>
           <style>
             body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-            .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-            h1 { color: #c93f35; margin-top: 0; }
-            code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+            .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+            h1 { color: #333333; margin-top: 0; }
+            code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
             p { line-height: 1.6; }
           </style>
           </head>
@@ -635,9 +635,9 @@ This usually means:
       <head><title>OAuth Error</title>
       <style>
         body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
-        .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
-        h1 { color: #c93f35; margin-top: 0; }
-        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.85rem; word-break: break-all; }
+        .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
+        h1 { color: #333333; margin-top: 0; }
+        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #d0d0d0; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.85rem; word-break: break-all; }
         p { line-height: 1.6; }
       </style>
       </head>
