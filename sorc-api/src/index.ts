@@ -546,15 +546,303 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   const { threadId, body } = await c.req.json();
   const user = c.get('user') as any;
   if (!body) return c.json({ error: 'Body required' }, 400);
+  if (body.length > 5000) return c.json({ error: 'Post too long (max 5000 chars)' }, 400);
   try {
     const postId = crypto.randomUUID();
     const now = new Date().toISOString();
-    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, body, user.id, user.display_name || user.username, user.role, now).run();
+    await c.env.sorc_db.prepare(`INSERT INTO posts (id, thread_id, body, author_uid, author_name, author_role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(postId, threadId, escapeHtml(body), user.id, user.display_name || user.username, user.role, now).run();
     await c.env.sorc_db.prepare(`UPDATE threads SET reply_count = reply_count + 1, last_reply_at = ?, last_reply_by = ? WHERE id = ?`).bind(now, user.display_name || user.username, threadId).run();
     await c.env.sorc_db.prepare('UPDATE users SET post_count = post_count + 1 WHERE id = ?').bind(user.id).run();
     return c.json({ success: true, postId });
   } catch (error: any) {
     return c.json({ error: 'Failed to create post', details: error.message }, 500);
+  }
+});
+
+// ===== THREAD EDIT/DELETE =====
+app.put('/api/forum/thread/:threadId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const threadId = c.req.param('threadId');
+  const { title, body } = await c.req.json();
+
+  if (!title || !body) return c.json({ error: 'Title and body required' }, 400);
+  if (title.length > 200) return c.json({ error: 'Title too long (max 200 chars)' }, 400);
+  if (body.length > 5000) return c.json({ error: 'Body too long (max 5000 chars)' }, 400);
+
+  try {
+    const thread = await c.env.sorc_db.prepare(`SELECT * FROM threads WHERE id = ?`).bind(threadId).first() as any;
+    if (!thread) return c.json({ error: 'Thread not found' }, 404);
+
+    // Only author, mods, admins can edit
+    if (thread.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `UPDATE threads SET title = ?, edited = TRUE, updated_at = ? WHERE id = ?`
+    ).bind(escapeHtml(title), now, threadId).run();
+
+    // Update the first post (thread body)
+    await c.env.sorc_db.prepare(
+      `UPDATE posts SET body = ?, edited = TRUE, updated_at = ? WHERE thread_id = ? ORDER BY created_at ASC LIMIT 1`
+    ).bind(escapeHtml(body), now, threadId).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to edit thread:', error.message);
+    return c.json({ error: 'Failed to edit thread. Please try again.' }, 500);
+  }
+});
+
+app.delete('/api/forum/thread/:threadId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const threadId = c.req.param('threadId');
+
+  try {
+    const thread = await c.env.sorc_db.prepare(`SELECT * FROM threads WHERE id = ?`).bind(threadId).first() as any;
+    if (!thread) return c.json({ error: 'Thread not found' }, 404);
+
+    // Only author, mods, admins can delete
+    if (thread.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    // Get post count to decrement user's post_count
+    const postCount = await c.env.sorc_db.prepare(`SELECT COUNT(*) as count FROM posts WHERE thread_id = ?`).bind(threadId).first() as any;
+
+    // Delete all posts in thread (cascade)
+    await c.env.sorc_db.prepare(`DELETE FROM posts WHERE thread_id = ?`).bind(threadId).run();
+
+    // Delete thread
+    await c.env.sorc_db.prepare(`DELETE FROM threads WHERE id = ?`).bind(threadId).run();
+
+    // Decrement author's post count
+    if (postCount.count > 0) {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET post_count = MAX(0, post_count - ?) WHERE id = ?`
+      ).bind(postCount.count, thread.author_uid).run();
+    }
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to delete thread:', error.message);
+    return c.json({ error: 'Failed to delete thread. Please try again.' }, 500);
+  }
+});
+
+// ===== POST EDIT/DELETE =====
+app.put('/api/forum/post/:postId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const postId = c.req.param('postId');
+  const { body } = await c.req.json();
+
+  if (!body) return c.json({ error: 'Body required' }, 400);
+  if (body.length > 5000) return c.json({ error: 'Post too long (max 5000 chars)' }, 400);
+
+  try {
+    const post = await c.env.sorc_db.prepare(`SELECT * FROM posts WHERE id = ?`).bind(postId).first() as any;
+    if (!post) return c.json({ error: 'Post not found' }, 404);
+
+    // Only author, mods, admins can edit
+    if (post.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `UPDATE posts SET body = ?, edited = TRUE, updated_at = ? WHERE id = ?`
+    ).bind(escapeHtml(body), now, postId).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to edit post:', error.message);
+    return c.json({ error: 'Failed to edit post. Please try again.' }, 500);
+  }
+});
+
+app.delete('/api/forum/post/:postId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const postId = c.req.param('postId');
+
+  try {
+    const post = await c.env.sorc_db.prepare(`SELECT * FROM posts WHERE id = ?`).bind(postId).first() as any;
+    if (!post) return c.json({ error: 'Post not found' }, 404);
+
+    // Only author, mods, admins can delete
+    if (post.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    // Delete post
+    await c.env.sorc_db.prepare(`DELETE FROM posts WHERE id = ?`).bind(postId).run();
+
+    // Decrement thread's reply count
+    await c.env.sorc_db.prepare(`UPDATE threads SET reply_count = MAX(0, reply_count - 1) WHERE id = ?`).bind(post.thread_id).run();
+
+    // Decrement author's post count
+    await c.env.sorc_db.prepare(`UPDATE users SET post_count = MAX(0, post_count - 1) WHERE id = ?`).bind(post.author_uid).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to delete post:', error.message);
+    return c.json({ error: 'Failed to delete post. Please try again.' }, 500);
+  }
+});
+
+// ===== THREAD MODERATION =====
+app.patch('/api/forum/thread/:threadId/lock', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const threadId = c.req.param('threadId');
+
+  // Only mods/admins can lock
+  if (user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+    return c.json({ error: 'Not authorized' }, 403);
+  }
+
+  try {
+    const thread = await c.env.sorc_db.prepare(`SELECT locked FROM threads WHERE id = ?`).bind(threadId).first() as any;
+    if (!thread) return c.json({ error: 'Thread not found' }, 404);
+
+    const newState = !thread.locked;
+    await c.env.sorc_db.prepare(
+      `UPDATE threads SET locked = ?, updated_at = ? WHERE id = ?`
+    ).bind(newState, new Date().toISOString(), threadId).run();
+
+    return c.json({ success: true, locked: newState });
+  } catch (error: any) {
+    console.error('Failed to toggle lock:', error.message);
+    return c.json({ error: 'Failed to toggle lock. Please try again.' }, 500);
+  }
+});
+
+app.patch('/api/forum/thread/:threadId/pin', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const threadId = c.req.param('threadId');
+
+  // Only mods/admins can pin
+  if (user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+    return c.json({ error: 'Not authorized' }, 403);
+  }
+
+  try {
+    const thread = await c.env.sorc_db.prepare(`SELECT pinned FROM threads WHERE id = ?`).bind(threadId).first() as any;
+    if (!thread) return c.json({ error: 'Thread not found' }, 404);
+
+    const newState = !thread.pinned;
+    await c.env.sorc_db.prepare(
+      `UPDATE threads SET pinned = ?, updated_at = ? WHERE id = ?`
+    ).bind(newState, new Date().toISOString(), threadId).run();
+
+    return c.json({ success: true, pinned: newState });
+  } catch (error: any) {
+    console.error('Failed to toggle pin:', error.message);
+    return c.json({ error: 'Failed to toggle pin. Please try again.' }, 500);
+  }
+});
+
+// ===== LIKES =====
+app.patch('/api/forum/thread/:threadId/like', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const threadId = c.req.param('threadId');
+
+  try {
+    const thread = await c.env.sorc_db.prepare(`SELECT liked_by FROM threads WHERE id = ?`).bind(threadId).first() as any;
+    if (!thread) return c.json({ error: 'Thread not found' }, 404);
+
+    let likedBy: string[] = [];
+    try {
+      likedBy = JSON.parse(thread.liked_by || '[]');
+    } catch (e) {}
+
+    const likeIndex = likedBy.indexOf(user.id);
+    let action = 'liked';
+
+    if (likeIndex > -1) {
+      likedBy.splice(likeIndex, 1);
+      action = 'unliked';
+    } else {
+      likedBy.push(user.id);
+    }
+
+    await c.env.sorc_db.prepare(
+      `UPDATE threads SET liked_by = ?, like_count = ?, updated_at = ? WHERE id = ?`
+    ).bind(JSON.stringify(likedBy), likedBy.length, new Date().toISOString(), threadId).run();
+
+    return c.json({ success: true, action, like_count: likedBy.length });
+  } catch (error: any) {
+    console.error('Failed to like thread:', error.message);
+    return c.json({ error: 'Failed to like thread. Please try again.' }, 500);
+  }
+});
+
+app.patch('/api/forum/post/:postId/like', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const postId = c.req.param('postId');
+
+  try {
+    const post = await c.env.sorc_db.prepare(`SELECT liked_by FROM posts WHERE id = ?`).bind(postId).first() as any;
+    if (!post) return c.json({ error: 'Post not found' }, 404);
+
+    let likedBy: string[] = [];
+    try {
+      likedBy = JSON.parse(post.liked_by || '[]');
+    } catch (e) {}
+
+    const likeIndex = likedBy.indexOf(user.id);
+    let action = 'liked';
+
+    if (likeIndex > -1) {
+      likedBy.splice(likeIndex, 1);
+      action = 'unliked';
+    } else {
+      likedBy.push(user.id);
+    }
+
+    await c.env.sorc_db.prepare(
+      `UPDATE posts SET liked_by = ?, like_count = ?, updated_at = ? WHERE id = ?`
+    ).bind(JSON.stringify(likedBy), likedBy.length, new Date().toISOString(), postId).run();
+
+    return c.json({ success: true, action, like_count: likedBy.length });
+  } catch (error: any) {
+    console.error('Failed to like post:', error.message);
+    return c.json({ error: 'Failed to like post. Please try again.' }, 500);
+  }
+});
+
+// ===== SEARCH =====
+app.get('/api/forum/search', authMiddleware, async (c) => {
+  const query = c.req.query('q');
+  const categoryId = c.req.query('category');
+
+  if (!query || query.length < 2) {
+    return c.json({ error: 'Query must be at least 2 characters' }, 400);
+  }
+
+  if (query.length > 100) {
+    return c.json({ error: 'Query too long (max 100 chars)' }, 400);
+  }
+
+  try {
+    let sql = `SELECT t.id, t.title, t.category_id, t.created_at, t.reply_count, t.views, COUNT(p.id) as post_count
+               FROM threads t
+               LEFT JOIN posts p ON t.id = p.thread_id
+               WHERE (LOWER(t.title) LIKE ? OR LOWER(t.body) LIKE ?)`;
+    let params: any[] = ['%' + query.toLowerCase() + '%', '%' + query.toLowerCase() + '%'];
+
+    if (categoryId) {
+      sql += ` AND t.category_id = ?`;
+      params.push(categoryId);
+    }
+
+    sql += ` GROUP BY t.id ORDER BY t.created_at DESC LIMIT 50`;
+
+    const results = await c.env.sorc_db.prepare(sql).bind(...params).all() as any;
+
+    return c.json({ success: true, results: results.results || [], query });
+  } catch (error: any) {
+    console.error('Failed to search:', error.message);
+    return c.json({ error: 'Failed to search. Please try again.' }, 500);
   }
 });
 
