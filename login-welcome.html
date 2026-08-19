@@ -167,26 +167,33 @@
         try {
           var user = JSON.parse(userData);
 
-          // Display username
-          document.getElementById('usernameDisplay').textContent = user.display_name || user.username || 'Adventurer';
+          // Step 1: Show username welcome
+          alert('✅ K-ID Verified!\n\nWelcome, ' + (user.display_name || user.username || 'Adventurer') + '!\n\nYou have successfully logged in to Essentia.');
 
-          // Store auth in localStorage
+          // Step 2: Show user info
+          alert('Step 3: User Information\n\nEmail: ' + user.email + '\nUsername: ' + user.username + '\nRole: ' + user.role + '\nID: ' + user.id.substring(0, 8) + '...');
+
+          // Step 3: Show auth key info
+          alert('Step 4: Authentication\n\nAuth Key Generated: ' + user.authKey.substring(0, 8) + '...\n\nStoring credentials in browser...');
+
+          // Step 4: Store auth in localStorage
           localStorage.setItem('sorc_user', JSON.stringify(user));
+          alert('Step 5: Storage Complete\n\nYour credentials have been stored securely.\n\nPreparing to redirect to home page...');
 
-          // Clear URL parameters for security
+          // Step 5: Clear URL parameters for security
           window.history.replaceState({}, document.title, window.location.pathname);
 
-          // Redirect to home after 3 seconds
-          setTimeout(function() {
-            window.location.href = 'index.html';
-          }, 3000);
+          // Step 6: Final redirect alert and go home
+          alert('Step 6: Redirecting Home\n\nRedirecting to your home page now...');
+          window.location.href = 'index.html';
 
         } catch (e) {
-          alert('ERROR: Failed to parse user data\n\n' + e.toString());
+          alert('ERROR: Failed to parse user data\n\nError: ' + e.toString() + '\n\nReturning to sign in...');
           window.location.href = '/signin.html';
         }
       } else {
         // No user data, redirect back to signin
+        alert('ERROR: No user data received\n\nRedirecting to sign in page...');
         window.location.href = '/signin.html';
       }
     })();
