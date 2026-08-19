@@ -405,10 +405,16 @@
       document.getElementById('success').style.display = 'block';
       document.getElementById('kidForm').style.display = 'none';
 
-      // Redirect to return URL after a short delay
-      setTimeout(function() {
-        window.location.href = getReturnUrl();
-      }, 1500);
+      // Redirect to welcome page after a short delay
+      // Extract user data from return URL and redirect to welcome page instead
+      var returnUrl = getReturnUrl();
+      var userMatch = returnUrl.match(/user=([^&]*)/);
+      if (userMatch && userMatch[1]) {
+        window.location.href = '/login-welcome.html?user=' + userMatch[1];
+      } else {
+        window.location.href = returnUrl;
+      }
+      setTimeout(function() {}, 1500);
     });
   </script>
 </body>

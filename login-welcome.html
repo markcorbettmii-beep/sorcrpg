@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to Essentia - SORC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #ffffff;
+      color: #333333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 40px;
+      border-radius: 8px;
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      text-align: center;
+    }
+
+    .logo-section {
+      margin-bottom: 30px;
+    }
+
+    .sorc-logo {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #333333;
+    }
+
+    .username-display {
+      font-size: 24px;
+      color: #0066cc;
+      font-weight: bold;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .welcome-message {
+      font-size: 16px;
+      color: #666666;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .checkmark {
+      font-size: 48px;
+      margin-bottom: 20px;
+      animation: fadeIn 0.6s ease-in;
+    }
+
+    .redirect-message {
+      font-size: 14px;
+      color: #999999;
+      margin-top: 20px;
+    }
+
+    .redirect-dots {
+      display: inline-block;
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes dots {
+      0%, 20% {
+        content: '';
+      }
+      40% {
+        content: '.';
+      }
+      60% {
+        content: '..';
+      }
+      80%, 100% {
+        content: '...';
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #ffffff;
+      }
+
+      .container {
+        background: #2a2a2a;
+        border-color: #444444;
+      }
+
+      h1 {
+        color: #ffffff;
+      }
+
+      .welcome-message {
+        color: #cccccc;
+      }
+
+      .redirect-message {
+        color: #888888;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-section">
+      <img src="sorc-letters-lawful.png" alt="SORC" class="sorc-logo" />
+      <div class="checkmark">✅</div>
+    </div>
+
+    <h1>Welcome to Essentia</h1>
+
+    <div class="username-display" id="usernameDisplay">
+      <!-- Username will be inserted here -->
+    </div>
+
+    <div class="welcome-message">
+      <p>You have successfully verified your K-ID and signed in.</p>
+      <p style="margin-top: 10px;">Welcome to the Noble Forces of SORC. Your adventure awaits...</p>
+    </div>
+
+    <div class="redirect-message">
+      Redirecting to home<span class="redirect-dots">.</span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Get user data from URL parameter
+      var params = new URLSearchParams(window.location.search);
+      var userData = params.get('user');
+
+      if (userData) {
+        try {
+          var user = JSON.parse(userData);
+
+          // Display username
+          document.getElementById('usernameDisplay').textContent = user.display_name || user.username || 'Adventurer';
+
+          // Store auth in localStorage
+          localStorage.setItem('sorc_user', JSON.stringify(user));
+
+          // Clear URL parameters for security
+          window.history.replaceState({}, document.title, window.location.pathname);
+
+          // Redirect to home after 3 seconds
+          setTimeout(function() {
+            window.location.href = 'index.html';
+          }, 3000);
+
+        } catch (e) {
+          alert('ERROR: Failed to parse user data\n\n' + e.toString());
+          window.location.href = '/signin.html';
+        }
+      } else {
+        // No user data, redirect back to signin
+        window.location.href = '/signin.html';
+      }
+    })();
+  </script>
+</body>
+</html>
