@@ -70,17 +70,16 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 // Role-based access control helpers
-// Role hierarchy: VISITOR (unregistered) < USER (CIVILIAN/PC/GM) < ADMIN/OWNER (privileged)
-// Existing roles: CIVILIAN (default), ADMIN, OWNER, MASTER
-// User-specified mapping: CIV=CIVILIAN, PC=CIVILIAN, GM=CIVILIAN, AD=ADMIN, OWN=OWNER
+// Role hierarchy: VISITOR (unregistered) < USER (CIVILIAN/PLAYER/MASTER) < ADMIN < OWNER (privileged)
+// Actual DB roles: CIVILIAN (default), PLAYER (PC badge), MASTER (GM badge), ADMIN, OWNER
+// User-specified mapping: CIV=CIVILIAN, PC=PLAYER, GM=MASTER, AD=ADMIN, OWN=OWNER
 const ROLE_LEVELS = {
   'VISITOR': 0,      // Unregistered/anonymous
-  'CIVILIAN': 1,     // Regular user
-  'PC': 1,           // Player character (user level)
-  'GM': 1,           // Game master (user level)
-  'ADMIN': 2,        // Administrator
-  'OWNER': 3,        // Owner (super admin)
-  'MASTER': 3        // Master (treated as owner level)
+  'CIVILIAN': 1,     // Regular user ([CIV])
+  'PLAYER': 1,       // Player character ([PC])
+  'MASTER': 1,       // Master/GM (user level, [GM])
+  'ADMIN': 2,        // Administrator ([AD])
+  'OWNER': 3         // Owner (super admin, [OWN])
 };
 
 function getRoleLevel(role?: string): number {
@@ -89,11 +88,11 @@ function getRoleLevel(role?: string): number {
 }
 
 function isUser(role?: string): boolean {
-  return role === 'CIVILIAN' || role === 'PC' || role === 'GM';
+  return role === 'CIVILIAN' || role === 'PLAYER' || role === 'MASTER';
 }
 
 function isAdmin(role?: string): boolean {
-  return role === 'ADMIN' || role === 'OWNER' || role === 'MASTER';
+  return role === 'ADMIN' || role === 'OWNER';
 }
 
 function hasPermission(userRole: string | undefined, minimumLevel: number): boolean {
