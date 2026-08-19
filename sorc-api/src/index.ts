@@ -69,6 +69,39 @@ const authMiddleware = async (c: any, next: any) => {
   await next();
 };
 
+// Role-based access control helpers
+// Role hierarchy: VISITOR (unregistered) < USER (CIVILIAN/PC/GM) < ADMIN (AD/OWN) < MASTER
+const ROLE_LEVELS = {
+  'VISITOR': 0,      // Unregistered/anonymous
+  'CIVILIAN': 1,     // Regular user
+  'PC': 1,           // Player character (same perms as user)
+  'GM': 1,           // Game master (same perms as user)
+  'AD': 2,           // Administrator
+  'OWN': 2,          // Owner (same perms as admin)
+  'MASTER': 3        // Super admin
+};
+
+function getRoleLevel(role?: string): number {
+  if (!role) return ROLE_LEVELS.VISITOR;
+  return ROLE_LEVELS[role as keyof typeof ROLE_LEVELS] ?? ROLE_LEVELS.VISITOR;
+}
+
+function isUser(role?: string): boolean {
+  return role === 'CIVILIAN' || role === 'PC' || role === 'GM';
+}
+
+function isAdmin(role?: string): boolean {
+  return role === 'AD' || role === 'OWN' || role === 'MASTER';
+}
+
+function isMaster(role?: string): boolean {
+  return role === 'MASTER';
+}
+
+function hasPermission(userRole: string | undefined, minimumLevel: number): boolean {
+  return getRoleLevel(userRole) >= minimumLevel;
+}
+
 // Force redeploy - ensure RESEND_API_KEY and GOOGLE_CLIENT_SECRET are deployed to Worker
 app.post('/api/auth/register', async (c) => {
   const { email, username, firstName, password, confirmPassword } = await c.req.json();
@@ -573,8 +606,8 @@ app.put('/api/forum/thread/:threadId', authMiddleware, async (c) => {
     const thread = await c.env.sorc_db.prepare(`SELECT * FROM threads WHERE id = ?`).bind(threadId).first() as any;
     if (!thread) return c.json({ error: 'Thread not found' }, 404);
 
-    // Only author, mods, admins can edit
-    if (thread.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+    // Only author or admins can edit
+    if (thread.author_uid !== user.id && !isAdmin(user.role)) {
       return c.json({ error: 'Not authorized' }, 403);
     }
 
@@ -603,8 +636,8 @@ app.delete('/api/forum/thread/:threadId', authMiddleware, async (c) => {
     const thread = await c.env.sorc_db.prepare(`SELECT * FROM threads WHERE id = ?`).bind(threadId).first() as any;
     if (!thread) return c.json({ error: 'Thread not found' }, 404);
 
-    // Only author, mods, admins can delete
-    if (thread.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+    // Only author or admins can delete
+    if (thread.author_uid !== user.id && !isAdmin(user.role)) {
       return c.json({ error: 'Not authorized' }, 403);
     }
 
@@ -644,8 +677,8 @@ app.put('/api/forum/post/:postId', authMiddleware, async (c) => {
     const post = await c.env.sorc_db.prepare(`SELECT * FROM posts WHERE id = ?`).bind(postId).first() as any;
     if (!post) return c.json({ error: 'Post not found' }, 404);
 
-    // Only author, mods, admins can edit
-    if (post.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+    // Only author or admins can edit
+    if (post.author_uid !== user.id && !isAdmin(user.role)) {
       return c.json({ error: 'Not authorized' }, 403);
     }
 
@@ -669,8 +702,8 @@ app.delete('/api/forum/post/:postId', authMiddleware, async (c) => {
     const post = await c.env.sorc_db.prepare(`SELECT * FROM posts WHERE id = ?`).bind(postId).first() as any;
     if (!post) return c.json({ error: 'Post not found' }, 404);
 
-    // Only author, mods, admins can delete
-    if (post.author_uid !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+    // Only author or admins can delete
+    if (post.author_uid !== user.id && !isAdmin(user.role)) {
       return c.json({ error: 'Not authorized' }, 403);
     }
 
@@ -695,8 +728,8 @@ app.patch('/api/forum/thread/:threadId/lock', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const threadId = c.req.param('threadId');
 
-  // Only mods/admins can lock
-  if (user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+  // Only admins can lock
+  if (!isAdmin(user.role)) {
     return c.json({ error: 'Not authorized' }, 403);
   }
 
@@ -720,8 +753,8 @@ app.patch('/api/forum/thread/:threadId/pin', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const threadId = c.req.param('threadId');
 
-  // Only mods/admins can pin
-  if (user.role !== 'ADMIN' && user.role !== 'OWNER' && user.role !== 'MASTER') {
+  // Only admins can pin
+  if (!isAdmin(user.role)) {
     return c.json({ error: 'Not authorized' }, 403);
   }
 
@@ -811,7 +844,7 @@ app.patch('/api/forum/post/:postId/like', authMiddleware, async (c) => {
 });
 
 // ===== SEARCH =====
-app.get('/api/forum/search', authMiddleware, async (c) => {
+app.get('/api/forum/search', async (c) => {
   const query = c.req.query('q');
   const categoryId = c.req.query('category');
 
@@ -1123,7 +1156,7 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
 
   try {
     // Validate box set code for non-admins
-    if (user.role !== 'ADMIN' && user.role !== 'OWNER' && box_set_code) {
+    if (!isAdmin(user.role) && box_set_code) {
       const code = await c.env.sorc_db.prepare(
         `SELECT * FROM box_set_codes WHERE code = ?`
       ).bind(box_set_code).first() as any;
@@ -1612,7 +1645,7 @@ app.get('/api/users/lookup', authMiddleware, async (c) => {
 // ===== BOX SET CODES =====
 app.post('/api/box-codes/generate', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  if (user.role !== 'ADMIN' && user.role !== 'OWNER') {
+  if (!isAdmin(user.role)) {
     return c.json({ error: 'Only admins can generate box set codes' }, 403);
   }
 
@@ -1634,7 +1667,7 @@ app.post('/api/box-codes/generate', authMiddleware, async (c) => {
 // ===== GM CODES =====
 app.post('/api/gm-codes/generate', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  if (user.role !== 'ADMIN' && user.role !== 'OWNER') {
+  if (!isAdmin(user.role)) {
     return c.json({ error: 'Only admins can generate GM codes' }, 403);
   }
 
