@@ -401,7 +401,7 @@ Possible causes:
       },
       body: JSON.stringify({
         code,
-        client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+        client_id: '303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com',
         client_secret: c.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
         grant_type: 'authorization_code',
