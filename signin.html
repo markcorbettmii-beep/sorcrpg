@@ -439,32 +439,56 @@
         };
 
         window.handleGoogleLogin = function() {
-            // Check if SDK loaded
-            if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
-                alert('ERROR: Google SDK not loaded\n\nThe accounts.google.com/gsi/client script did not load.\n\nTry: Refresh page or check internet connection');
+            alert('DEBUG: handleGoogleLogin called');
+            alert('Checking if Google SDK object exists...');
+
+            // Check if SDK loaded - detailed checks
+            if (!window.google) {
+                alert('ERROR: window.google not found\n\nThe Google SDK script did not load.\n\nwindow.google = ' + typeof window.google);
+                alert('Checking: accounts object...');
                 return;
             }
 
-            alert('Step 1: SDK loaded, initializing OAuth client...');
+            alert('✓ window.google exists\n\nChecking: google.accounts...');
+
+            if (!window.google.accounts) {
+                alert('ERROR: google.accounts not found\n\nThe OAuth module failed to initialize.\n\ngoogle.accounts = ' + typeof window.google.accounts);
+                return;
+            }
+
+            alert('✓ google.accounts exists\n\nChecking: google.accounts.oauth2...');
+
+            if (!window.google.accounts.oauth2) {
+                alert('ERROR: google.accounts.oauth2 not found\n\nThe OAuth 2.0 module is not available.\n\noauth2 = ' + typeof window.google.accounts.oauth2);
+                return;
+            }
+
+            alert('✓ google.accounts.oauth2 exists\n\nStep 1: SDK fully loaded, initializing OAuth client...');
 
             try {
-                window.google.accounts.oauth2.initCodeClient({
+                alert('Step 1a: Creating OAuth code client...');
+
+                var codeClient = window.google.accounts.oauth2.initCodeClient({
                     client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
                     scope: 'openid email profile',
                     ux_mode: 'redirect',
                     redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
                     callback: function(response) {
                         if (response.code) {
-                            alert('Step 2: Auth code received, redirecting to backend...');
+                            alert('Step 2: Auth code received\n\nCode: ' + response.code.substring(0, 20) + '...\n\nRedirecting to backend...');
                             window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
                         } else if (response.error) {
-                            alert('ERROR: Google OAuth denied\n\nError: ' + response.error + '\n\nDescription: ' + (response.error_description || 'User denied permissions or cancelled'));
+                            alert('ERROR: Google OAuth Denied\n\nError: ' + response.error + '\n\nDescription: ' + (response.error_description || 'User cancelled or denied permissions'));
                         }
                     }
-                }).requestCode();
-                alert('Step 1b: Requesting code from Google...');
+                });
+
+                alert('✓ OAuth client created\n\nStep 1b: Requesting authorization code from Google...');
+                codeClient.requestCode();
+
             } catch (e) {
-                alert('ERROR: Google Login Exception\n\n' + e.toString());
+                alert('ERROR: Exception during OAuth init\n\nError: ' + e.toString() + '\n\nStack available in console');
+                alert('Exception details:\n\nMessage: ' + e.message + '\n\nName: ' + e.name);
             }
         };
 
