@@ -23,6 +23,57 @@
       color: #333333;
     }
 
+    .error-box {
+      display: none;
+      background: #ffebee;
+      border: 2px solid #c93f35;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #c93f35;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .error-box.show {
+      display: block;
+    }
+
+    .error-box h3 {
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .error-box code {
+      display: block;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      overflow-x: auto;
+      border-left: 3px solid #c93f35;
+      word-break: break-all;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .error-box button {
+      background: #c93f35;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+
+    .error-box button:hover {
+      background: #a83229;
+    }
+
     .container {
       width: 100%;
       max-width: 500px;
@@ -156,6 +207,13 @@
 </head>
 <body>
   <div class="container">
+    <div id="errorBox" class="error-box">
+      <h3>⚠️ Error Detected</h3>
+      <p id="errorMessage"></p>
+      <code id="errorDetails"></code>
+      <button onclick="document.getElementById('errorBox').classList.remove('show')">OK</button>
+    </div>
+
     <div class="logo-section">
       <img src="sorc-letters-lawful.png" alt="SORC" class="sorc-logo" />
       <h1>K-ID Status</h1>
@@ -250,6 +308,14 @@
   </div>
 
   <script>
+    window.showKIDError = function(message, details) {
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorDetails').textContent = details || '';
+      document.getElementById('errorBox').classList.add('show');
+      document.getElementById('kidForm').style.display = 'none';
+      console.error('K-ID Error:', message, details);
+    };
+
     // Populate year dropdown (1950 to current year)
     var yearSelect = document.getElementById('year');
     var currentYear = new Date().getFullYear();
@@ -265,6 +331,11 @@
       var params = new URLSearchParams(window.location.search);
       var returnUrl = params.get('return') || '/';
 
+      if (!returnUrl) {
+        window.showKIDError('No return URL provided', 'KID_NO_RETURN_URL\n\nNo return URL was found in the K-ID verification request.\nThe OAuth flow may not have started correctly.');
+        return '/';
+      }
+
       // Only allow relative URLs starting with / or full URLs to sorcrpg.com
       if (returnUrl.startsWith('/')) {
         return returnUrl;
@@ -274,7 +345,8 @@
         return returnUrl;
       }
 
-      // Fallback to home if URL is invalid
+      // Show error if URL is invalid
+      window.showKIDError('Invalid return URL', 'KID_INVALID_RETURN_URL\n\nReturn URL does not match allowed domains.\n\nReceived: ' + returnUrl);
       return '/';
     }
 

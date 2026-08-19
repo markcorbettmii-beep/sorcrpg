@@ -329,9 +329,67 @@ app.post('/api/auth/reset-password', async (c) => {
 app.get('/auth/google/callback', async (c) => {
   const code = c.req.query('code');
   const state = c.req.query('state');
+  const error = c.req.query('error');
+
+  if (error) {
+    const errorDescription = c.req.query('error_description') || 'No description provided';
+    const errorUri = c.req.query('error_uri') || 'No URI provided';
+    return c.html(`
+      <html>
+      <head><title>Google OAuth Error</title>
+      <style>
+        body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+        .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+        h1 { color: #c93f35; margin-top: 0; }
+        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+        p { line-height: 1.6; }
+      </style>
+      </head>
+      <body>
+        <div class="error-box">
+          <h1>⚠️ Google Sign-In Error</h1>
+          <p><strong>Error Code:</strong> ${error}</p>
+          <p><strong>Description:</strong> ${errorDescription}</p>
+          <code>GOOGLE_OAUTH_ERROR
+Error: ${error}
+Description: ${errorDescription}
+URI: ${errorUri}</code>
+          <p><a href="/signin.html">← Back to Sign In</a></p>
+        </div>
+      </body>
+      </html>
+    `, 400);
+  }
 
   if (!code) {
-    return c.html(`<html><body><h1>Error</h1><p>Authorization code missing</p></body></html>`, 400);
+    return c.html(`
+      <html>
+      <head><title>Google OAuth Error</title>
+      <style>
+        body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+        .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+        h1 { color: #c93f35; margin-top: 0; }
+        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+        p { line-height: 1.6; }
+      </style>
+      </head>
+      <body>
+        <div class="error-box">
+          <h1>⚠️ Google Sign-In Error</h1>
+          <p><strong>Issue:</strong> Authorization code missing from Google</p>
+          <code>GOOGLE_OAUTH_ERROR
+Code: Missing authorization code
+Status: The redirect from Google did not include an authorization code
+
+Possible causes:
+- Google OAuth configuration is incorrect
+- Redirect URI mismatch
+- User denied permissions</code>
+          <p><a href="/signin.html">← Back to Sign In</a></p>
+        </div>
+      </body>
+      </html>
+    `, 400);
   }
 
   try {
@@ -352,12 +410,55 @@ app.get('/auth/google/callback', async (c) => {
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
-      return c.html(`<html><body><h1>Error</h1><p>Failed to exchange authorization code: ${error}</p></body></html>`, 400);
+      return c.html(`
+        <html>
+        <head><title>Google OAuth Error</title>
+        <style>
+          body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+          h1 { color: #c93f35; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.9rem; }
+          p { line-height: 1.6; }
+        </style>
+        </head>
+        <body>
+          <div class="error-box">
+            <h1>⚠️ Token Exchange Failed</h1>
+            <p><strong>Status:</strong> ${tokenResponse.status}</p>
+            <code>GOOGLE_TOKEN_EXCHANGE_ERROR
+Status: ${tokenResponse.status}
+Response: ${error.substring(0, 500)}</code>
+            <p><a href="/signin.html">← Back to Sign In</a></p>
+          </div>
+        </body>
+        </html>
+      `, 400);
     }
 
     const tokenData = await tokenResponse.json() as any;
     if (!tokenData.access_token) {
-      return c.html(`<html><body><h1>Error</h1><p>Failed to get access token</p></body></html>`, 400);
+      return c.html(`
+        <html>
+        <head><title>Google OAuth Error</title>
+        <style>
+          body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+          h1 { color: #c93f35; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+          p { line-height: 1.6; }
+        </style>
+        </head>
+        <body>
+          <div class="error-box">
+            <h1>⚠️ No Access Token Received</h1>
+            <p><strong>Issue:</strong> Google did not provide an access token</p>
+            <code>GOOGLE_NO_ACCESS_TOKEN
+Google OAuth returned: ${JSON.stringify(tokenData).substring(0, 500)}</code>
+            <p><a href="/signin.html">← Back to Sign In</a></p>
+          </div>
+        </body>
+        </html>
+      `, 400);
     }
 
     // Get user info from Google
@@ -368,12 +469,58 @@ app.get('/auth/google/callback', async (c) => {
     });
 
     if (!userResponse.ok) {
-      return c.html(`<html><body><h1>Error</h1><p>Failed to get user info from Google</p></body></html>`, 400);
+      return c.html(`
+        <html>
+        <head><title>Google OAuth Error</title>
+        <style>
+          body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+          h1 { color: #c93f35; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+          p { line-height: 1.6; }
+        </style>
+        </head>
+        <body>
+          <div class="error-box">
+            <h1>⚠️ Failed to Get User Info</h1>
+            <p><strong>Status:</strong> ${userResponse.status}</p>
+            <code>GOOGLE_USERINFO_ERROR
+Status: ${userResponse.status}
+Endpoint: https://www.googleapis.com/oauth2/v2/userinfo
+Access Token Present: ${!!tokenData.access_token}</code>
+            <p><a href="/signin.html">← Back to Sign In</a></p>
+          </div>
+        </body>
+        </html>
+      `, 400);
     }
 
     const googleUser = await userResponse.json() as any;
     if (!googleUser.email) {
-      return c.html(`<html><body><h1>Error</h1><p>Failed to get user email from Google</p></body></html>`, 400);
+      return c.html(`
+        <html>
+        <head><title>Google OAuth Error</title>
+        <style>
+          body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+          .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+          h1 { color: #c93f35; margin-top: 0; }
+          code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+          p { line-height: 1.6; }
+        </style>
+        </head>
+        <body>
+          <div class="error-box">
+            <h1>⚠️ No Email in Google Profile</h1>
+            <p><strong>Issue:</strong> Your Google account does not have a public email</p>
+            <code>GOOGLE_NO_EMAIL
+Google User Info: ${JSON.stringify(googleUser).substring(0, 500)}
+
+Solution: Make sure your Google account has a public email address.</code>
+            <p><a href="/signin.html">← Back to Sign In</a></p>
+          </div>
+        </body>
+        </html>
+      `, 400);
     }
 
     // Check if user exists
@@ -395,7 +542,35 @@ app.get('/auth/google/callback', async (c) => {
         `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
         user = { id: uuid, email: googleUser.email, username, display_name: googleUser.name || googleUser.email, role: 'CIVILIAN', community_points: 0, created_at: now };
       } catch (error: any) {
-        return c.html(`<html><body><h1>Error</h1><p>Failed to create account: ${error.message}</p></body></html>`, 500);
+        return c.html(`
+          <html>
+          <head><title>Database Error</title>
+          <style>
+            body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+            .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+            h1 { color: #c93f35; margin-top: 0; }
+            code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.85rem; }
+            p { line-height: 1.6; }
+          </style>
+          </head>
+          <body>
+            <div class="error-box">
+              <h1>⚠️ Failed to Create Account</h1>
+              <p><strong>Email:</strong> ${googleUser.email}</p>
+              <code>DATABASE_INSERT_ERROR
+Error: ${error.message}
+Email: ${googleUser.email}
+Username: ${username}
+
+This usually means:
+- Email already exists
+- Database connection issue
+- Server misconfiguration</code>
+              <p><a href="/signin.html">← Back to Sign In</a></p>
+            </div>
+          </body>
+          </html>
+        `, 500);
       }
     } else {
       // User exists, generate new auth key
@@ -403,7 +578,33 @@ app.get('/auth/google/callback', async (c) => {
       try {
         await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
       } catch (error: any) {
-        return c.html(`<html><body><h1>Error</h1><p>Failed to authenticate: ${error.message}</p></body></html>`, 500);
+        return c.html(`
+          <html>
+          <head><title>Database Error</title>
+          <style>
+            body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+            .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+            h1 { color: #c93f35; margin-top: 0; }
+            code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; }
+            p { line-height: 1.6; }
+          </style>
+          </head>
+          <body>
+            <div class="error-box">
+              <h1>⚠️ Failed to Authenticate</h1>
+              <p><strong>Error:</strong> Could not update authentication token</p>
+              <code>DATABASE_UPDATE_ERROR
+Error: ${error.message}
+
+This usually means:
+- Database connection issue
+- User record was deleted
+- Server misconfiguration</code>
+              <p><a href="/signin.html">← Back to Sign In</a></p>
+            </div>
+          </body>
+          </html>
+        `, 500);
       }
     }
 
@@ -419,9 +620,39 @@ app.get('/auth/google/callback', async (c) => {
       authKey: authKey
     });
     const returnUrl = `https://sorcrpg.com/signin.html?user=${encodeURIComponent(userData)}`;
-    return c.redirect(`https://sorcrpg.com/k-id-status.html?return=${encodeURIComponent(returnUrl)}`);
+    const kidUrl = `https://sorcrpg.com/k-id-status.html?return=${encodeURIComponent(returnUrl)}`;
+
+    console.log('OAuth success - redirecting to K-ID verification');
+    console.log('User email:', user.email);
+    console.log('Auth key generated:', !!authKey);
+    console.log('K-ID URL length:', kidUrl.length);
+
+    return c.redirect(kidUrl);
   } catch (error: any) {
-    return c.html(`<html><body><h1>Error</h1><p>Authentication failed: ${error.message}</p></body></html>`, 500);
+    console.error('OAuth callback error:', error);
+    return c.html(`
+      <html>
+      <head><title>OAuth Error</title>
+      <style>
+        body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+        .error-box { background: #ffebee; border: 2px solid #c93f35; border-radius: 8px; padding: 20px; max-width: 600px; color: #c93f35; }
+        h1 { color: #c93f35; margin-top: 0; }
+        code { background: #f5f5f5; padding: 15px; display: block; border-left: 3px solid #c93f35; border-radius: 4px; overflow-x: auto; margin: 15px 0; font-family: monospace; font-size: 0.85rem; word-break: break-all; }
+        p { line-height: 1.6; }
+      </style>
+      </head>
+      <body>
+        <div class="error-box">
+          <h1>⚠️ Unexpected Error</h1>
+          <p><strong>Details:</strong> An unexpected error occurred during authentication</p>
+          <code>UNEXPECTED_OAUTH_ERROR
+Error: ${error.message}
+Stack: ${error.stack ? error.stack.substring(0, 300) : 'N/A'}</code>
+          <p><a href="/signin.html">← Back to Sign In</a></p>
+        </div>
+      </body>
+      </html>
+    `, 500);
   }
 });
 

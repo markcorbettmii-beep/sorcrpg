@@ -159,9 +159,36 @@
         </div>
     </div>
 
+    <style>
+        .error-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; }
+        .error-modal-overlay.show { display: flex; justify-content: center; align-items: center; }
+        .error-modal { background: #fff; border-radius: 8px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .error-modal h2 { color: #c93f35; margin-bottom: 1rem; font-size: 1.3rem; }
+        .error-modal .error-code { background: #f5f5f5; padding: 1rem; border-radius: 4px; border-left: 4px solid #c93f35; font-family: monospace; font-size: 0.9rem; margin: 1rem 0; word-break: break-all; max-height: 300px; overflow-y: auto; }
+        .error-modal .error-msg { color: #333; line-height: 1.6; margin: 1rem 0; }
+        .error-modal button { background: #c93f35; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 1rem; }
+        .error-modal button:hover { background: #a83229; }
+    </style>
+
+    <div id="errorModalOverlay" class="error-modal-overlay">
+        <div class="error-modal">
+            <h2>⚠️ Error</h2>
+            <div class="error-msg" id="errorMessage"></div>
+            <div class="error-code" id="errorCode"></div>
+            <button onclick="document.getElementById('errorModalOverlay').classList.remove('show')">OK</button>
+        </div>
+    </div>
+
     <script>
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
+
+        window.showErrorModal = function(message, code) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorCode').textContent = code || '';
+            document.getElementById('errorModalOverlay').classList.add('show');
+            console.error('Error:', message, code);
+        };
 
         (function() {
             var savedTheme = localStorage.getItem('themeSelected') || 'evil';
@@ -204,6 +231,20 @@
             if (params.get('signup') === 'true') {
                 document.getElementById('oauthSection').style.display = 'none';
                 document.getElementById('signupForm').style.display = 'block';
+            }
+
+            // Check for user data from OAuth/K-ID flow
+            var userData = params.get('user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    window.location.href = 'index.html';
+                    return;
+                } catch (e) {
+                    window.showErrorModal('Failed to parse user data from OAuth callback', 'OAUTH_USER_PARSE_ERROR\n\n' + userData.substring(0, 200) + '...\n\n' + e.toString());
+                }
             }
         })();
 
@@ -420,17 +461,28 @@
         };
 
         window.handleGoogleLogin = function() {
-            window.google.accounts.oauth2.initCodeClient({
-                client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
-                scope: 'openid email profile',
-                ux_mode: 'redirect',
-                redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
-                callback: function(response) {
-                    if (response.code) {
-                        window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
-                    }
+            try {
+                if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+                    window.showErrorModal('Google Sign-In SDK not loaded', 'GOOGLE_SDK_NOT_LOADED\n\nThe Google authentication library failed to load.\nPlease refresh the page and try again.');
+                    return;
                 }
-            }).requestCode();
+
+                window.google.accounts.oauth2.initCodeClient({
+                    client_id: '303646936307-jn1gtlgiabv9tk345m5dvk0f99nk2apf.apps.googleusercontent.com',
+                    scope: 'openid email profile',
+                    ux_mode: 'redirect',
+                    redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
+                    callback: function(response) {
+                        if (response.code) {
+                            window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
+                        } else if (response.error) {
+                            window.showErrorModal('Google Sign-In failed', 'GOOGLE_OAUTH_ERROR\n\nError: ' + response.error + '\n\nDescription: ' + (response.error_description || 'No details available'));
+                        }
+                    }
+                }).requestCode();
+            } catch (e) {
+                window.showErrorModal('Error initiating Google Sign-In', 'GOOGLE_LOGIN_EXCEPTION\n\n' + e.toString());
+            }
         };
 
         window.onAmazonLoginReady = function() {
