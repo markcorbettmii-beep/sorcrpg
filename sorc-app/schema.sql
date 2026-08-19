@@ -193,3 +193,145 @@ CREATE TABLE IF NOT EXISTS lobby_dms (
 CREATE INDEX IF NOT EXISTS idx_lobby_dms_lobby ON lobby_dms(lobby_id);
 CREATE INDEX IF NOT EXISTS idx_lobby_dms_participant ON lobby_dms(lobby_id, recipient_uid);
 CREATE INDEX IF NOT EXISTS idx_lobby_dms_sender ON lobby_dms(lobby_id, sender_uid);
+
+-- ===== LOBBIES (Campaign Lobbies) =====
+CREATE TABLE IF NOT EXISTS lobbies (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  creator_uid TEXT NOT NULL,
+  creator_name TEXT NOT NULL,
+  lobby_code TEXT UNIQUE NOT NULL,
+  is_private BOOLEAN DEFAULT FALSE,
+  status TEXT DEFAULT 'active',
+  member_count INTEGER DEFAULT 1,
+  max_members INTEGER DEFAULT 20,
+  module TEXT,
+  theme TEXT DEFAULT 'default',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (creator_uid) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_lobbies_creator ON lobbies(creator_uid);
+CREATE INDEX idx_lobbies_code ON lobbies(lobby_code);
+CREATE INDEX idx_lobbies_status ON lobbies(status);
+CREATE INDEX idx_lobbies_is_private ON lobbies(is_private);
+CREATE INDEX idx_lobbies_created ON lobbies(created_at);
+
+-- ===== ROOMS (Campaign Rooms within Lobbies) =====
+CREATE TABLE IF NOT EXISTS rooms (
+  id TEXT PRIMARY KEY,
+  lobby_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  gm_uid TEXT NOT NULL,
+  gm_name TEXT NOT NULL,
+  is_hidden BOOLEAN DEFAULT FALSE,
+  spectate_enabled BOOLEAN DEFAULT TRUE,
+  member_count INTEGER DEFAULT 1,
+  max_players INTEGER DEFAULT 20,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (lobby_id) REFERENCES lobbies(id) ON DELETE CASCADE,
+  FOREIGN KEY (gm_uid) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_rooms_lobby ON rooms(lobby_id);
+CREATE INDEX idx_rooms_gm ON rooms(gm_uid);
+CREATE INDEX idx_rooms_created ON rooms(created_at);
+
+-- ===== ROOM MEMBERS =====
+CREATE TABLE IF NOT EXISTS room_members (
+  id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  username TEXT NOT NULL,
+  display_name TEXT,
+  role TEXT DEFAULT 'PLAYER',
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(room_id, user_id)
+);
+CREATE INDEX idx_room_members_room ON room_members(room_id);
+CREATE INDEX idx_room_members_user ON room_members(user_id);
+
+-- ===== ROOM MESSAGES (Chat) =====
+CREATE TABLE IF NOT EXISTS room_messages (
+  id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL,
+  sender_id TEXT NOT NULL,
+  sender_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_room_messages_room ON room_messages(room_id);
+CREATE INDEX idx_room_messages_sender ON room_messages(sender_id);
+CREATE INDEX idx_room_messages_created ON room_messages(created_at);
+
+-- ===== ROOM ROLLS (Dice Rolls) =====
+CREATE TABLE IF NOT EXISTS room_rolls (
+  id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL,
+  player_id TEXT NOT NULL,
+  player_name TEXT NOT NULL,
+  die_type TEXT NOT NULL,
+  result1 INTEGER,
+  result2 INTEGER,
+  total INTEGER,
+  roll_purpose TEXT,
+  rolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+  FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_room_rolls_room ON room_rolls(room_id);
+CREATE INDEX idx_room_rolls_player ON room_rolls(player_id);
+CREATE INDEX idx_room_rolls_created ON room_rolls(rolled_at);
+
+-- ===== ROOM REQUESTS (Join/Spectate Requests) =====
+CREATE TABLE IF NOT EXISTS room_requests (
+  id TEXT PRIMARY KEY,
+  room_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  username TEXT NOT NULL,
+  request_type TEXT DEFAULT 'join',
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(room_id, user_id, request_type)
+);
+CREATE INDEX idx_room_requests_room ON room_requests(room_id);
+CREATE INDEX idx_room_requests_user ON room_requests(user_id);
+CREATE INDEX idx_room_requests_status ON room_requests(status);
+
+-- ===== BOX SET CODES (Physical Product Codes) =====
+CREATE TABLE IF NOT EXISTS box_set_codes (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  used_count INTEGER DEFAULT 0,
+  max_uses INTEGER DEFAULT 10,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TIMESTAMP,
+  created_by_uid TEXT,
+  FOREIGN KEY (created_by_uid) REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX idx_box_set_codes_code ON box_set_codes(code);
+CREATE INDEX idx_box_set_codes_created ON box_set_codes(created_at);
+
+-- ===== GM CODES (One-time GM Upgrade Codes) =====
+CREATE TABLE IF NOT EXISTS gm_codes (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  generated_by_uid TEXT NOT NULL,
+  redeemed_by_uid TEXT,
+  redeemed_at TIMESTAMP,
+  expires_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (generated_by_uid) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (redeemed_by_uid) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_gm_codes_code ON gm_codes(code);
+CREATE INDEX idx_gm_codes_generated_by ON gm_codes(generated_by_uid);
+CREATE INDEX idx_gm_codes_redeemed_by ON gm_codes(redeemed_by_uid);
+CREATE INDEX idx_gm_codes_expires ON gm_codes(expires_at);

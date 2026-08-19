@@ -827,4 +827,543 @@ app.post('/api/auth/test-email', async (c) => {
   }
 });
 
+// ===== LOBBIES =====
+app.post('/api/lobbies', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { name, is_private, box_set_code } = await c.req.json();
+  if (!name) return c.json({ error: 'Lobby name required' }, 400);
+
+  try {
+    // Validate box set code for non-admins
+    if (user.role !== 'ADMIN' && user.role !== 'OWNER' && box_set_code) {
+      const code = await c.env.sorc_db.prepare(
+        `SELECT * FROM box_set_codes WHERE code = ?`
+      ).bind(box_set_code).first() as any;
+
+      if (!code) return c.json({ error: 'Invalid box set code' }, 400);
+      if (code.used_count >= (code.max_uses || 1000)) {
+        return c.json({ error: 'Box set code limit reached' }, 400);
+      }
+
+      // Increment usage
+      await c.env.sorc_db.prepare(
+        `UPDATE box_set_codes SET used_count = used_count + 1, last_used_at = ? WHERE id = ?`
+      ).bind(new Date().toISOString(), code.id).run();
+    }
+
+    const lobbyId = crypto.randomUUID();
+    const lobbyCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const now = new Date().toISOString();
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobbies (id, name, creator_uid, creator_name, lobby_code, is_private, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(lobbyId, escapeHtml(name), user.id, user.display_name || user.username, lobbyCode, is_private || false, now, now).run();
+
+    return c.json({ success: true, lobby_id: lobbyId, lobby_code: lobbyCode });
+  } catch (error: any) {
+    console.error('Failed to create lobby:', error.message);
+    return c.json({ error: 'Failed to create lobby. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/lobbies', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const lobbies = await c.env.sorc_db.prepare(
+      `SELECT id, name, creator_uid, creator_name, lobby_code, is_private, status, member_count, max_members, module, created_at
+       FROM lobbies
+       WHERE status = 'active' AND (is_private = FALSE OR creator_uid = ?)
+       ORDER BY created_at DESC`
+    ).bind(user.id).all() as any;
+
+    return c.json({ success: true, lobbies: lobbies.results || [] });
+  } catch (error: any) {
+    console.error('Failed to load lobbies:', error.message);
+    return c.json({ error: 'Failed to load lobbies. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/lobbies/:lobbyId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('lobbyId');
+
+  try {
+    const lobby = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobbies WHERE id = ?`
+    ).bind(lobbyId).first() as any;
+
+    if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+
+    // Check membership
+    const member = await c.env.sorc_db.prepare(
+      `SELECT user_id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobbyId, user.id).first();
+
+    const is_member = !!member || lobby.creator_uid === user.id;
+
+    // Don't expose private lobbies to non-members
+    if (lobby.is_private && !is_member) {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    return c.json({ success: true, lobby, is_member });
+  } catch (error: any) {
+    console.error('Failed to load lobby:', error.message);
+    return c.json({ error: 'Failed to load lobby. Please try again.' }, 500);
+  }
+});
+
+app.post('/api/lobbies/join', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { lobby_code, lobby_id } = await c.req.json();
+
+  if (!lobby_code && !lobby_id) {
+    return c.json({ error: 'Lobby code or ID required' }, 400);
+  }
+
+  try {
+    let lobby: any;
+    if (lobby_code) {
+      lobby = await c.env.sorc_db.prepare(
+        `SELECT * FROM lobbies WHERE lobby_code = ?`
+      ).bind(lobby_code).first();
+    } else {
+      lobby = await c.env.sorc_db.prepare(
+        `SELECT * FROM lobbies WHERE id = ?`
+      ).bind(lobby_id).first();
+    }
+
+    if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+    if (lobby.status !== 'active') return c.json({ error: 'Lobby is not active' }, 400);
+
+    // Check if already member
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT user_id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobby.id, user.id).first();
+
+    if (existing) {
+      return c.json({ success: true, lobby_id: lobby.id, error: 'Already a member' });
+    }
+
+    // Add to lobby
+    const memberId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_members (id, lobby_id, user_id, username, display_name)
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(memberId, lobby.id, user.id, user.username, user.display_name || user.username).run();
+
+    // Increment member count
+    await c.env.sorc_db.prepare(
+      `UPDATE lobbies SET member_count = member_count + 1 WHERE id = ?`
+    ).bind(lobby.id).run();
+
+    return c.json({ success: true, lobby_id: lobby.id });
+  } catch (error: any) {
+    console.error('Failed to join lobby:', error.message);
+    return c.json({ error: 'Failed to join lobby. Please try again.' }, 500);
+  }
+});
+
+// ===== ROOMS =====
+app.post('/api/rooms', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { lobby_id, name } = await c.req.json();
+
+  if (!lobby_id || !name) return c.json({ error: 'Lobby ID and room name required' }, 400);
+
+  try {
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobby_id).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+    if (lobby.creator_uid !== user.id) return c.json({ error: 'Only lobby creator can launch rooms' }, 403);
+
+    const roomId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO rooms (id, lobby_id, name, gm_uid, gm_name, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(roomId, lobby_id, escapeHtml(name), user.id, user.display_name || user.username, now, now).run();
+
+    // Add GM as room member
+    const memberId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO room_members (id, room_id, user_id, username, display_name, role)
+       VALUES (?, ?, ?, ?, ?, 'GM')`
+    ).bind(memberId, roomId, user.id, user.username, user.display_name || user.username).run();
+
+    return c.json({ success: true, room_id: roomId });
+  } catch (error: any) {
+    console.error('Failed to create room:', error.message);
+    return c.json({ error: 'Failed to create room. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/rooms/:roomId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+
+  try {
+    const room = await c.env.sorc_db.prepare(`SELECT * FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+
+    // Check membership
+    const member = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+    ).bind(roomId, user.id).first() as any;
+
+    if (!member && room.gm_uid !== user.id) {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    // Get members
+    const members = await c.env.sorc_db.prepare(
+      `SELECT id, user_id, username, display_name, role, joined_at FROM room_members WHERE room_id = ? ORDER BY joined_at ASC`
+    ).bind(roomId).all() as any;
+
+    return c.json({ success: true, room, members: members.results || [], user_role: member?.role || 'GM' });
+  } catch (error: any) {
+    console.error('Failed to load room:', error.message);
+    return c.json({ error: 'Failed to load room. Please try again.' }, 500);
+  }
+});
+
+app.post('/api/rooms/:roomId/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+  const { body } = await c.req.json();
+
+  if (!body || body.trim().length === 0) return c.json({ error: 'Message required' }, 400);
+  if (body.length > 2000) return c.json({ error: 'Message too long (max 2000 chars)' }, 400);
+
+  try {
+    // Check room membership
+    const member = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+    ).bind(roomId, user.id).first();
+
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (!member && room.gm_uid !== user.id) return c.json({ error: 'Not a room member' }, 403);
+
+    const msgId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO room_messages (id, room_id, sender_id, sender_name, body, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(msgId, roomId, user.id, user.display_name || user.username, escapeHtml(body), new Date().toISOString()).run();
+
+    return c.json({ success: true, message_id: msgId });
+  } catch (error: any) {
+    console.error('Failed to post message:', error.message);
+    return c.json({ error: 'Failed to post message. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/rooms/:roomId/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+
+  try {
+    // Check access
+    const member = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+    ).bind(roomId, user.id).first();
+
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (!member && room.gm_uid !== user.id) return c.json({ error: 'Not authorized' }, 403);
+
+    const messages = await c.env.sorc_db.prepare(
+      `SELECT id, sender_id, sender_name, body, created_at FROM room_messages WHERE room_id = ? ORDER BY created_at ASC`
+    ).bind(roomId).all() as any;
+
+    return c.json({ success: true, messages: messages.results || [] });
+  } catch (error: any) {
+    console.error('Failed to load messages:', error.message);
+    return c.json({ error: 'Failed to load messages. Please try again.' }, 500);
+  }
+});
+
+app.delete('/api/rooms/:roomId/messages/:msgId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { roomId, msgId } = c.req.param();
+
+  try {
+    const msg = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_messages WHERE id = ?`
+    ).bind(msgId).first() as any;
+
+    if (!msg) return c.json({ error: 'Message not found' }, 404);
+
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+
+    // Only message author or GM can delete
+    if (msg.sender_id !== user.id && room.gm_uid !== user.id) {
+      return c.json({ error: 'Not authorized' }, 403);
+    }
+
+    await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE id = ?`).bind(msgId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to delete message:', error.message);
+    return c.json({ error: 'Failed to delete message. Please try again.' }, 500);
+  }
+});
+
+app.post('/api/rooms/:roomId/rolls', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+  const { die_type, result1, result2, total, roll_purpose } = await c.req.json();
+
+  if (!die_type || !total) return c.json({ error: 'Die type and total required' }, 400);
+
+  try {
+    // Check membership
+    const member = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+    ).bind(roomId, user.id).first();
+
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (!member && room.gm_uid !== user.id) return c.json({ error: 'Not a room member' }, 403);
+
+    const rollId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO room_rolls (id, room_id, player_id, player_name, die_type, result1, result2, total, roll_purpose, rolled_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(rollId, roomId, user.id, user.display_name || user.username, die_type, result1 || null, result2 || null, total, escapeHtml(roll_purpose || ''), new Date().toISOString()).run();
+
+    return c.json({ success: true, roll_id: rollId });
+  } catch (error: any) {
+    console.error('Failed to post roll:', error.message);
+    return c.json({ error: 'Failed to post roll. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/rooms/:roomId/rolls', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+
+  try {
+    // Check access
+    const member = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+    ).bind(roomId, user.id).first();
+
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (!member && room.gm_uid !== user.id) return c.json({ error: 'Not authorized' }, 403);
+
+    const rolls = await c.env.sorc_db.prepare(
+      `SELECT id, player_id, player_name, die_type, result1, result2, total, roll_purpose, rolled_at
+       FROM room_rolls WHERE room_id = ? ORDER BY rolled_at DESC LIMIT 50`
+    ).bind(roomId).all() as any;
+
+    return c.json({ success: true, rolls: rolls.results || [] });
+  } catch (error: any) {
+    console.error('Failed to load rolls:', error.message);
+    return c.json({ error: 'Failed to load rolls. Please try again.' }, 500);
+  }
+});
+
+app.patch('/api/rooms/:roomId/spectate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+
+  try {
+    const room = await c.env.sorc_db.prepare(`SELECT * FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (room.gm_uid !== user.id) return c.json({ error: 'Only GM can toggle spectate mode' }, 403);
+
+    const newState = !room.spectate_enabled;
+    await c.env.sorc_db.prepare(
+      `UPDATE rooms SET spectate_enabled = ?, updated_at = ? WHERE id = ?`
+    ).bind(newState, new Date().toISOString(), roomId).run();
+
+    return c.json({ success: true, spectate_enabled: newState });
+  } catch (error: any) {
+    console.error('Failed to toggle spectate:', error.message);
+    return c.json({ error: 'Failed to toggle spectate. Please try again.' }, 500);
+  }
+});
+
+app.patch('/api/rooms/:roomId/visibility', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+
+  try {
+    const room = await c.env.sorc_db.prepare(`SELECT * FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (room.gm_uid !== user.id) return c.json({ error: 'Only GM can toggle visibility' }, 403);
+
+    const newState = !room.is_hidden;
+    await c.env.sorc_db.prepare(
+      `UPDATE rooms SET is_hidden = ?, updated_at = ? WHERE id = ?`
+    ).bind(newState, new Date().toISOString(), roomId).run();
+
+    return c.json({ success: true, is_hidden: newState });
+  } catch (error: any) {
+    console.error('Failed to toggle visibility:', error.message);
+    return c.json({ error: 'Failed to toggle visibility. Please try again.' }, 500);
+  }
+});
+
+app.post('/api/rooms/:roomId/invite/:userId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { roomId, userId } = c.req.param();
+
+  try {
+    const room = await c.env.sorc_db.prepare(`SELECT * FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (room.gm_uid !== user.id) return c.json({ error: 'Only GM can invite' }, 403);
+
+    const targetUser = await c.env.sorc_db.prepare(`SELECT * FROM users WHERE id = ?`).bind(userId).first() as any;
+    if (!targetUser) return c.json({ error: 'User not found' }, 404);
+
+    // Check if already invited
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT id FROM room_requests WHERE room_id = ? AND user_id = ?`
+    ).bind(roomId, userId).first();
+
+    if (existing) return c.json({ error: 'Already invited' }, 409);
+
+    const reqId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO room_requests (id, room_id, user_id, username, request_type, status)
+       VALUES (?, ?, ?, ?, 'join', 'pending')`
+    ).bind(reqId, roomId, userId, targetUser.username).run();
+
+    return c.json({ success: true, request_id: reqId });
+  } catch (error: any) {
+    console.error('Failed to send invite:', error.message);
+    return c.json({ error: 'Failed to send invite. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/rooms/:roomId/requests', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('roomId');
+
+  try {
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (room.gm_uid !== user.id) return c.json({ error: 'Only GM can view requests' }, 403);
+
+    const requests = await c.env.sorc_db.prepare(
+      `SELECT id, user_id, username, request_type, status, created_at FROM room_requests
+       WHERE room_id = ? AND status = 'pending' ORDER BY created_at ASC`
+    ).bind(roomId).all() as any;
+
+    return c.json({ success: true, requests: requests.results || [] });
+  } catch (error: any) {
+    console.error('Failed to load requests:', error.message);
+    return c.json({ error: 'Failed to load requests. Please try again.' }, 500);
+  }
+});
+
+app.post('/api/rooms/:roomId/requests/:reqId/:action', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { roomId, reqId, action } = c.req.param();
+
+  if (!['accept', 'decline'].includes(action)) {
+    return c.json({ error: 'Invalid action' }, 400);
+  }
+
+  try {
+    const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM rooms WHERE id = ?`).bind(roomId).first() as any;
+    if (!room) return c.json({ error: 'Room not found' }, 404);
+    if (room.gm_uid !== user.id) return c.json({ error: 'Only GM can respond to requests' }, 403);
+
+    const req = await c.env.sorc_db.prepare(
+      `SELECT * FROM room_requests WHERE id = ?`
+    ).bind(reqId).first() as any;
+
+    if (!req) return c.json({ error: 'Request not found' }, 404);
+
+    if (action === 'accept') {
+      const memberId = crypto.randomUUID();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO room_members (id, room_id, user_id, username, display_name, role)
+         VALUES (?, ?, ?, ?, ?, 'PLAYER')`
+      ).bind(memberId, roomId, req.user_id, req.username, req.username).run();
+
+      await c.env.sorc_db.prepare(
+        `UPDATE rooms SET member_count = member_count + 1 WHERE id = ?`
+      ).bind(roomId).run();
+    }
+
+    await c.env.sorc_db.prepare(
+      `DELETE FROM room_requests WHERE id = ?`
+    ).bind(reqId).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('Failed to respond to request:', error.message);
+    return c.json({ error: 'Failed to respond to request. Please try again.' }, 500);
+  }
+});
+
+app.get('/api/users/lookup', authMiddleware, async (c) => {
+  const username = c.req.query('username');
+  if (!username) return c.json({ error: 'Username required' }, 400);
+
+  try {
+    const user = await c.env.sorc_db.prepare(
+      `SELECT id, username, display_name, avatar FROM users WHERE username = ? OR display_name = ?`
+    ).bind(username, username).first();
+
+    if (!user) return c.json({ error: 'User not found' }, 404);
+    return c.json({ success: true, user });
+  } catch (error: any) {
+    console.error('Failed to lookup user:', error.message);
+    return c.json({ error: 'Failed to lookup user. Please try again.' }, 500);
+  }
+});
+
+// ===== BOX SET CODES =====
+app.post('/api/box-codes/generate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (user.role !== 'ADMIN' && user.role !== 'OWNER') {
+    return c.json({ error: 'Only admins can generate box set codes' }, 403);
+  }
+
+  try {
+    const codeId = crypto.randomUUID();
+    const code = 'BSC-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO box_set_codes (id, code, created_by_uid) VALUES (?, ?, ?)`
+    ).bind(codeId, code, user.id).run();
+
+    return c.json({ success: true, code });
+  } catch (error: any) {
+    console.error('Failed to generate box code:', error.message);
+    return c.json({ error: 'Failed to generate code. Please try again.' }, 500);
+  }
+});
+
+// ===== GM CODES =====
+app.post('/api/gm-codes/generate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (user.role !== 'ADMIN' && user.role !== 'OWNER') {
+    return c.json({ error: 'Only admins can generate GM codes' }, 403);
+  }
+
+  try {
+    const codeId = crypto.randomUUID();
+    const code = 'GM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(); // 90 days
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO gm_codes (id, code, generated_by_uid, expires_at) VALUES (?, ?, ?, ?)`
+    ).bind(codeId, code, user.id, expiresAt).run();
+
+    return c.json({ success: true, code });
+  } catch (error: any) {
+    console.error('Failed to generate GM code:', error.message);
+    return c.json({ error: 'Failed to generate code. Please try again.' }, 500);
+  }
+});
+
 export default app;
