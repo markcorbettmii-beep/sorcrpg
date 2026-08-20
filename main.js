@@ -344,7 +344,7 @@ function showRoleBadge(user) {
     avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
   }
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#ffffff' : '#c93f35';
+  var linkColor = isLawful ? '#ffffff' : '#000000';
   var shadowColor = isLawful ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
   existing.style.cssText = 'display:inline-flex !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + bgColor + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;flex-wrap:wrap !important;margin:0.5rem 0 1rem 0 !important;';
 
@@ -558,7 +558,7 @@ function showLoggedOutBadge() {
   }
   var isLawful = document.body.classList.contains('lawful-mode');
   var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#ffffff' : '#c93f35';
+  var linkColor = isLawful ? '#ffffff' : '#000000';
   var shadowColor = isLawful ? 'none' : 'rgba(0,0,0,0.5)';
   // Default avatar icon (user circle) - mirror main login avatar colors
   var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
