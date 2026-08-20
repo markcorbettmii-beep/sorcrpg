@@ -2744,12 +2744,26 @@
   document.getElementById('jpegBtn').addEventListener('click', function() {
     var charName = document.querySelector('[data-field="charname"] .pencil')?.textContent || 'Character';
 
+    // Ensure both faces are visible for rendering
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay = back.style.display;
+    front.style.display = 'block';
+    back.style.display = 'block';
+
     // Generate canvases for both front and back
     renderCleanCanvases(front, back).then(function(canvases) {
       downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
+      // Restore previous display state
+      setTimeout(function() {
+        front.style.display = prevFrontDisplay;
+        back.style.display = prevBackDisplay;
+      }, 100);
     }).catch(function(err) {
       console.error('Canvas generation failed:', err);
       alert('Failed to generate JPEG. Please try again.');
+      // Restore previous display state on error
+      front.style.display = prevFrontDisplay;
+      back.style.display = prevBackDisplay;
     });
   });
 
