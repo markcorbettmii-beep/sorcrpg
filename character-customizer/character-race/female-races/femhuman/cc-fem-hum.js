@@ -1050,3 +1050,8 @@ if (canvasEl) {
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
+
+// Ensure character renders properly on initial load with retry for slow image loading
+setTimeout(() => {
+  renderCharacter();
+}, 100);
