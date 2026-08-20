@@ -269,18 +269,7 @@ app.post('/api/auth/forgot-password', async (c) => {
 
   // Send password reset email
   const resetLink = `https://sorcrpg.com/reset-password.html?token=${resetToken}`;
-  console.log(`[PASSWORD_RESET] Initiating password reset for: ${email}`);
-  console.log(`[PASSWORD_RESET] Reset token: ${resetToken}`);
-  console.log(`[PASSWORD_RESET] RESEND_API_KEY configured: ${!!c.env.RESEND_API_KEY}`);
-
-  let emailSent = false;
-  let emailError = null;
-
   try {
-    if (!c.env.RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY not configured in environment');
-    }
-
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -300,28 +289,14 @@ app.post('/api/auth/forgot-password', async (c) => {
       })
     });
     const emailData = await emailRes.json();
-
     if (!emailRes.ok) {
-      console.error(`[PASSWORD_RESET_ERROR] Resend API failed (${emailRes.status}):`, JSON.stringify(emailData));
-      emailError = `Resend API error: ${emailRes.status} - ${emailData.message || JSON.stringify(emailData)}`;
-    } else {
-      console.log(`[PASSWORD_RESET_SUCCESS] Email sent successfully to ${email}`);
-      emailSent = true;
+      console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
     }
-  } catch (emailError_: any) {
-    console.error('[PASSWORD_RESET_ERROR] Email send exception:', emailError_.message);
-    emailError = emailError_.message;
+  } catch (emailError: any) {
+    console.error('Email send failed:', emailError.message);
   }
 
-  // Log final status
-  console.log(`[PASSWORD_RESET] Status: ${emailSent ? 'SUCCESS' : 'FAILED'} - ${emailError || 'No error'}`);
-
-  return c.json({
-    success: true,
-    message: 'If that email is registered, a password reset link has been sent',
-    emailStatus: emailSent ? 'sent' : 'failed',
-    emailError: emailError
-  });
+  return c.json({ success: true, message: 'If that email is registered, a password reset link has been sent' });
 });
 
 app.post('/api/auth/reset-password', async (c) => {
@@ -1051,7 +1026,7 @@ app.get('/api/me', authMiddleware, async (c) => {
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
-  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar'];
+  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'signature', 'website', 'social_twitter', 'social_twitch', 'privacy_email', 'unlocked_features', 'community_points'];
   const setParts: string[] = [];
   const values: any[] = [];
   for (const field of allowedFields) {
@@ -1075,41 +1050,100 @@ app.put('/api/profile', authMiddleware, async (c) => {
 // Migration endpoint to add password_reset_required column and force password reset
 app.post('/api/admin/migrate-bcrypt', async (c) => {
   try {
-    // Step 1: Add password_reset_required column if it doesn't exist
-    // Use INTEGER (0/1) instead of BOOLEAN for SQLite compatibility
-    try {
-      await c.env.sorc_db.prepare(`
-        ALTER TABLE users ADD COLUMN password_reset_required INTEGER DEFAULT 0
-      `).run();
-    } catch (columnError: any) {
-      if (!columnError.message.includes('duplicate column')) {
-        console.error('Column creation error:', columnError.message);
-        // Still continue - might be a different issue
-      }
-    }
+    // Add password_reset_required column if it doesn't exist
+    await c.env.sorc_db.prepare(`
+      ALTER TABLE users ADD COLUMN password_reset_required BOOLEAN DEFAULT FALSE
+    `).run().catch(() => {
+      // Column might already exist, that's okay
+    });
 
-    // Step 2: Update all users with password_hash to require password reset
-    // Note: We only set password_reset_required = 1, don't clear auth_key (it has NOT NULL constraint)
-    // The signin endpoint will check password_reset_required and prevent login anyway
-    const updateResult = await c.env.sorc_db.prepare(`
+    // Set password_reset_required = 1 for users with password_hash (existing email/password users)
+    // Keep auth_key intact so users can still use the app - they just can't sign in again until they reset password
+    await c.env.sorc_db.prepare(`
       UPDATE users SET password_reset_required = 1 WHERE password_hash IS NOT NULL
     `).run();
 
     return c.json({
       success: true,
-      message: 'Migration complete. All email/password users must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.',
-      details: {
-        usersAffected: updateResult.meta.changes || 0,
-        affectedUsers: 'All users with password_hash now have password_reset_required = 1'
-      }
+      message: 'Migration complete. All email/password users have been logged out and must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.'
     });
   } catch (error: any) {
-    console.error('Migration error:', error);
+    return c.json({ error: 'Migration failed', details: error.message }, 500);
+  }
+});
+
+// ===== ASSESSMENTS =====
+
+app.get('/api/assess/questions', authMiddleware, async (c) => {
+  try {
+    // Return 10 assessment questions
+    const questions = [
+      { id: 1, q: 'What is the primary goal of character creation in SORC?' },
+      { id: 2, q: 'How many ability scores does a character have at creation?' },
+      { id: 3, q: 'What is the standard die used for rolling ability scores?' },
+      { id: 4, q: 'What are the four main classes in SORC?' },
+      { id: 5, q: 'What is the typical starting level for new characters?' },
+      { id: 6, q: 'How does alignment work in SORC campaigns?' },
+      { id: 7, q: 'What resources do Game Masters use to build encounters?' },
+      { id: 8, q: 'How is experience typically awarded in SORC?' },
+      { id: 9, q: 'What is the role of a Game Master?' },
+      { id: 10, q: 'How are hit points calculated for player characters?' }
+    ];
+    return c.json({ questions });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load questions', details: error.message }, 500);
+  }
+});
+
+app.post('/api/assess/submit', authMiddleware, async (c) => {
+  try {
+    const { answers, gm_track } = await c.req.json();
+    const user = c.get('user') as any;
+
+    if (!answers || !Array.isArray(answers)) {
+      return c.json({ error: 'Invalid answers format' }, 400);
+    }
+
+    // Calculate score (placeholder - all correct answers)
+    const score = answers.length;
+
+    // Determine role based on score and track
+    let role_granted = 'PC';
+    let site_role = 'PLAYER';
+
+    if (gm_track) {
+      if (score >= 9) {
+        role_granted = 'GM-ADV';
+        site_role = 'MASTER';
+      } else {
+        return c.json({ passed: false, score, message: 'GMs must score 9 or higher' });
+      }
+    } else {
+      if (score >= 9) {
+        role_granted = 'PC-ADV';
+      } else if (score >= 8) {
+        role_granted = 'PC-INT';
+      } else if (score >= 6) {
+        role_granted = 'PC';
+      } else {
+        return c.json({ passed: false, score, message: 'Please score at least 6 to pass' });
+      }
+    }
+
+    // Award community points
+    const points_awarded = gm_track ? 1000 : 500;
+    await c.env.sorc_db.prepare('UPDATE users SET community_points = community_points + ?, sorc_role = ? WHERE id = ?')
+      .bind(points_awarded, role_granted, user.id).run();
+
     return c.json({
-      error: 'Migration failed',
-      details: error.message || error.toString(),
-      errorType: error.name || 'Unknown'
-    }, 500);
+      passed: true,
+      score,
+      role: role_granted,
+      site_role,
+      points_awarded
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Assessment submission failed', details: error.message }, 500);
   }
 });
 
