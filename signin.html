@@ -328,6 +328,15 @@
         };
 
         window.handleSignUp = async function() {
+            // Check K-ID verification first
+            if (!document.cookie.includes('kidVerified=true')) {
+                alert('K-ID Age Verification Required\n\nYou must verify your age before creating an account.');
+                showStatus('Please verify your age to create an account.', 'error');
+                // Redirect to K-ID verification with return URL to signup
+                window.location.href = '/k-id-status.html?return=' + encodeURIComponent(window.location.pathname + '?signup=true');
+                return;
+            }
+
             var email = document.getElementById('signupEmail').value.trim();
             var password = document.getElementById('signupPassword').value;
             var confirmPassword = document.getElementById('signupConfirmPassword').value;
@@ -362,7 +371,7 @@
                 var res = await fetch(API_URL + '/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, confirmPassword, username, firstName: username, accountType: 'CIVILIAN' })
+                    body: JSON.stringify({ email, password, confirmPassword, username, firstName: username, accountType: 'CIVILIAN', kidVerified: true })
                 });
                 var data = await res.json();
 

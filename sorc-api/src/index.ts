@@ -68,7 +68,8 @@ const authMiddleware = async (c: any, next: any) => {
 
 // Trigger deployment with fixed wrangler secret put syntax
 app.post('/api/auth/register', async (c) => {
-  const { email, username, firstName, password, confirmPassword } = await c.req.json();
+  const { email, username, firstName, password, confirmPassword, kidVerified } = await c.req.json();
+  if (!kidVerified) return c.json({ error: 'K-ID age verification is required to create an account' }, 400);
   if (!email || !username) return c.json({ error: 'Email and username required' }, 400);
   if (email.length > 254) return c.json({ error: 'Email address too long (max 254 characters)' }, 400);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
