@@ -351,10 +351,16 @@
     };
 
     document.addEventListener('DOMContentLoaded', async function() {
+        console.log('[PROFILE] DOMContentLoaded fired');
         var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {
+            console.log('[PROFILE] Error parsing sorc_user from localStorage:', e);
+        }
+
+        console.log('[PROFILE] saved user:', saved ? saved.username : 'null');
 
         if (!saved || !saved.authKey) {
+            console.log('[PROFILE] No auth key found');
             document.getElementById('profileApp').innerHTML =
                 '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
             return;
@@ -362,17 +368,24 @@
 
         // Always fetch fresh data from server so role/points stay current
         try {
+            console.log('[PROFILE] Fetching fresh data from /api/me');
             var freshRes = await fetch(API_URL + '/api/me', {
                 headers: { 'X-Auth-Key': saved.authKey }
             });
+            console.log('[PROFILE] /api/me response status:', freshRes.status);
             var freshData = await freshRes.json();
+            console.log('[PROFILE] /api/me response:', freshData);
             if (freshData.user) {
+                console.log('[PROFILE] Updating saved user with fresh data');
                 saved = Object.assign(saved, freshData.user);
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
             }
-        } catch(e) {}
+        } catch(e) {
+            console.log('[PROFILE] Error fetching fresh data:', e);
+        }
 
         var user = saved;
+        console.log('[PROFILE] Starting to render profile for user:', user.username);
         var role = user.role || 'CIVILIAN';
         if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
         else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
@@ -384,6 +397,8 @@
 
         var unlockedFeatures = user.unlocked_features || [];
         if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
+
+        console.log('[PROFILE] Rendering profile - role:', role, 'displayName:', displayName, 'communityPoints:', communityPoints);
 
         if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
             communityPoints = 10000;
@@ -428,6 +443,8 @@
             '</div>';
         }
 
+        console.log('[PROFILE] About to render profile HTML');
+        try {
         document.getElementById('profileApp').innerHTML =
             '<div class="profile-container">' +
                 '<div class="profile-card">' +
@@ -582,6 +599,13 @@
             '</div>' +
             '<div id="adminInviteNotice"></div>' +
             '<div id="gmInviteNotice"></div>';
+
+        console.log('[PROFILE] Profile HTML rendered successfully');
+        } catch(renderError) {
+            console.log('[PROFILE] Error rendering profile:', renderError);
+            document.getElementById('profileApp').innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>Could not load profile. Please reload the page or <a href="signin.html">sign in again</a></p></div>';
+            return;
+        }
 
         checkAdminInvitation(user);
         checkGmInvitation(user);
