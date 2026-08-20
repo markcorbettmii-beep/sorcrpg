@@ -509,18 +509,20 @@ async function checkNotifications(user) {
       if (inboxLink) {
         var isLawfulInbox = document.body.classList.contains('lawful-mode');
         var notifBg = '#fff';
-        var notifColor = isLawfulInbox ? '#2196f3' : '#9c27b0';
+        var notifColor = isLawfulInbox ? '#2196f3' : '#000000';
+        var textDecor = isLawfulInbox ? 'none' : 'underline';
         inboxLink.innerHTML = unread > 0
-          ? 'Inbox <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + unread + '</span>'
+          ? 'Inbox <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:' + textDecor + ' !important;">' + unread + '</span>'
           : 'Inbox';
       }
       var fellowLink = badgeEl.querySelector('#badgeFellowshipsLink');
       if (fellowLink) {
         var isLawfulBadge = document.body.classList.contains('lawful-mode');
         var notifBg = '#fff';
-        var notifColor = isLawfulBadge ? '#2196f3' : '#9c27b0';
+        var notifColor = isLawfulBadge ? '#2196f3' : '#000000';
+        var textDecor = isLawfulBadge ? 'none' : 'underline';
         fellowLink.innerHTML = fellowBadge > 0
-          ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
+          ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:' + textDecor + ' !important;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
       var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
