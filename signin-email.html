@@ -105,8 +105,16 @@
         window.handleSignIn = async function() {
             var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
-            if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
 
+            alert('Step 1: Email signin initiated. Email: ' + email);
+
+            if (!email || !password) {
+                alert('ERROR: Email or password missing');
+                showStatus('Please enter your email and password.', 'error');
+                return;
+            }
+
+            alert('Step 2: Sending signin request to server...');
             showStatus('Signing in...', 'success');
 
             try {
@@ -117,7 +125,11 @@
                 });
                 var data = await res.json();
 
+                alert('Step 3: Server response received. Status: ' + res.status + ', Success: ' + data.success);
+
                 if (!res.ok || !data.success) {
+                    alert('Step 4: Signin failed. Error: ' + data.error);
+
                     if (data.unverified) {
                         localStorage.setItem('signupEmail', email);
                         localStorage.setItem('sorc_user', JSON.stringify({ email }));
@@ -131,6 +143,7 @@
                     return;
                 }
 
+                alert('Step 5: Signin successful! Saving user data and redirecting...');
                 localStorage.setItem('sorc_user', JSON.stringify({
                     ...data.user,
                     authKey: data.authKey
@@ -138,6 +151,7 @@
 
                 window.location.href = 'index.html';
             } catch(e) {
+                alert('ERROR: Connection error - ' + e.message);
                 showStatus('Connection error. Please try again.', 'error');
             }
         };
