@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="verify-kid.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2436,6 +2437,39 @@
     }
   }
 
+  function generateQRCode(text, size) {
+    return new Promise(function(resolve, reject) {
+      try {
+        var qrCanvas = document.createElement('canvas');
+        qrCanvas.id = 'qr-temp-' + Date.now();
+        qrCanvas.style.display = 'none';
+        document.body.appendChild(qrCanvas);
+
+        var qr = new QRCode(qrCanvas.id, {
+          text: text,
+          width: size || 200,
+          height: size || 200,
+          correctLevel: QRCode.CorrectLevel.H
+        });
+
+        setTimeout(function() {
+          var canvas = qrCanvas.querySelector('canvas');
+          if (canvas) {
+            var ctx = canvas.getContext('2d');
+            var imageData = canvas.toDataURL('image/png');
+            document.body.removeChild(qrCanvas);
+            resolve(imageData);
+          } else {
+            document.body.removeChild(qrCanvas);
+            reject('QR canvas not found');
+          }
+        }, 100);
+      } catch(err) {
+        reject(err);
+      }
+    });
+  }
+
   function generatePDFBlob(canvases, name) {
     try {
       if (!window.jspdf || !window.jspdf.jsPDF) {
@@ -2469,6 +2503,37 @@
           if (i > 0) pdf.addPage();
           var imgData = canvases[i].toDataURL('image/png');
           pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+
+          // Add invisible QR code to each page (bottom right corner)
+          // QR encodes: character name + timestamp for verification
+          var qrData = name + '|' + timestamp;
+          try {
+            // Create invisible QR code (will be scannable but not visible)
+            var qrCanvas = document.createElement('canvas');
+            qrCanvas.id = 'qr-pdf-' + i + '-' + Date.now();
+            qrCanvas.style.display = 'none';
+            document.body.appendChild(qrCanvas);
+
+            var qr = new QRCode(qrCanvas.id, {
+              text: qrData,
+              width: 100,
+              height: 100,
+              correctLevel: QRCode.CorrectLevel.H
+            });
+
+            setTimeout(function() {
+              var qrCanvasEl = document.getElementById(qrCanvas.id);
+              if (qrCanvasEl && qrCanvasEl.querySelector('canvas')) {
+                var qrImg = qrCanvasEl.querySelector('canvas').toDataURL('image/png');
+                // Add QR code at bottom right, very small and with minimal opacity
+                pdf.setGState(pdf.GD_ALPHA_STATE_STD_CA).setGState({ opacity: 0.02 });
+                pdf.addImage(qrImg, 'PNG', 185, 280, 20, 20);
+                document.body.removeChild(qrCanvasEl);
+              }
+            }, 50);
+          } catch(qrErr) {
+            console.warn('Failed to add QR code:', qrErr);
+          }
         } catch(imgErr) {
           console.error('Failed to add image ' + i + ':', imgErr);
           throw imgErr;
