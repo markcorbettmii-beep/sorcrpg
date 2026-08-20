@@ -2376,6 +2376,17 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
+  // Front/Back navigation buttons
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      // Also flip the sheet to show the selected side
+      if (tab.dataset.side === 'front' && flipped) doFlip();
+      if (tab.dataset.side === 'back'  && !flipped) doFlip();
+    });
+  });
 </script>
 <script>
   // Load portrait from character customizer if present
