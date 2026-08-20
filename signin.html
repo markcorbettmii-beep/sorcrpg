@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sign In | Slayers of Rings § Crowns</title>
     <link rel="stylesheet" href="styles.css?v=9" />
-    <script src="https://accounts.google.com/gsi/client" async defer onload="window.googleScriptLoaded = true; alert('✅ Google Script Loaded Successfully');" onerror="alert('❌ Google Script Failed to Load\n\nURL: accounts.google.com/gsi/client\n\nCheck: Network connection, DNS, or Cloudflare blocking');"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer onload="window.googleScriptLoaded = true;"></script>
     <style>
         body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
         .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
@@ -174,11 +174,8 @@
         window.addEventListener('load', function() {
             setTimeout(function() {
                 if (window.googleScriptLoaded) {
-                    alert('✅ Page Fully Loaded\n\nGoogle SDK: LOADED\n\nwindow.google available');
                 } else if (window.google && window.google.accounts && window.google.accounts.oauth2) {
-                    alert('✅ Page Fully Loaded\n\nGoogle SDK: LOADED\n\nwindow.google.accounts.oauth2 available');
                 } else {
-                    alert('⚠️ Page Loaded\n\nGoogle SDK: NOT YET LOADED\n\nThe script tag may still be loading or blocked');
                 }
             }, 500);
         });
@@ -239,7 +236,6 @@
                     window.location.href = 'index.html';
                     return;
                 } catch (e) {
-                    alert('ERROR: Parse User Data\n\nFAILED_TO_PARSE_OAUTH_USER_DATA\n\nFailed to parse user data:\n' + e.toString() + '\n\nData: ' + userData.substring(0, 150));
                     window.location.href = '/signin.html';
                 }
             }
@@ -330,7 +326,6 @@
         window.handleSignUp = async function() {
             // Check K-ID verification first
             if (!document.cookie.includes('kidVerified=true')) {
-                alert('K-ID Age Verification Required\n\nYou must verify your age before creating an account.');
                 showStatus('Please verify your age to create an account.', 'error');
                 // Redirect to K-ID verification with return URL to signup
                 window.location.href = '/k-id-status.html?return=' + encodeURIComponent(window.location.pathname + '?signup=true');
@@ -342,30 +337,25 @@
             var confirmPassword = document.getElementById('signupConfirmPassword').value;
             var username = document.getElementById('signupUsername').value.trim();
 
-            alert('Step 1: Signup initiated. Email: ' + email + ', Password length: ' + password.length + ', Username: ' + username);
 
             if (!email || !password) {
-                alert('ERROR: Email or password missing. Email: ' + !!email + ', Password: ' + !!password);
                 showStatus('Please enter an email and password.', 'error');
                 return;
             }
             if (!username) { showStatus('Please choose a first name.', 'error'); return; }
 
-            alert('Step 2: Validating password requirements...');
             if (password.length < 8 || password.length > 64) { showStatus('Password must be 8-64 characters.', 'error'); return; }
             if (!/[A-Z]/.test(password)) { showStatus('Password must contain at least one uppercase letter.', 'error'); return; }
             if (!/[a-z]/.test(password)) { showStatus('Password must contain at least one lowercase letter.', 'error'); return; }
             if (!/[0-9]/.test(password)) { showStatus('Password must contain at least one number.', 'error'); return; }
             if (password !== confirmPassword) { showStatus('Passwords do not match.', 'error'); return; }
 
-            alert('Step 3: Password validation passed. Creating account...');
 
             var usernameError = isValidUsername(username);
             if (usernameError) { showStatus(usernameError, 'error'); return; }
 
             showStatus('Creating your profile...', 'success');
 
-            alert('Step 4: Sending registration request to server...');
 
             try {
                 var res = await fetch(API_URL + '/api/auth/register', {
@@ -375,15 +365,12 @@
                 });
                 var data = await res.json();
 
-                alert('Step 5: Server response received. Status: ' + res.status + ', Success: ' + data.success);
 
                 if (!res.ok || !data.success) {
-                    alert('ERROR: Registration failed. Error: ' + (data.error || 'Unknown error'));
                     showStatus(data.error || 'Registration failed.', 'error');
                     return;
                 }
 
-                alert('Step 6: Account created! Redirecting to verification page...');
                 // Account created - redirect to email verification page
                 lastUnverifiedEmail = email;
                 localStorage.setItem('signupEmail', email);
@@ -393,7 +380,6 @@
 
             } catch(e) {
                 // Connection error - account may have been created anyway
-                alert('ERROR: Connection error - ' + e.message);
                 showStatus('Connection error. Please try again.', 'error');
             }
         };
@@ -484,34 +470,24 @@
         };
 
         window.handleGoogleLogin = function() {
-            alert('DEBUG: handleGoogleLogin called');
-            alert('Checking if Google SDK object exists...');
 
             // Check if SDK loaded - detailed checks
             if (!window.google) {
-                alert('ERROR: window.google not found\n\nThe Google SDK script did not load.\n\nwindow.google = ' + typeof window.google);
-                alert('Checking: accounts object...');
                 return;
             }
 
-            alert('✓ window.google exists\n\nChecking: google.accounts...');
 
             if (!window.google.accounts) {
-                alert('ERROR: google.accounts not found\n\nThe OAuth module failed to initialize.\n\ngoogle.accounts = ' + typeof window.google.accounts);
                 return;
             }
 
-            alert('✓ google.accounts exists\n\nChecking: google.accounts.oauth2...');
 
             if (!window.google.accounts.oauth2) {
-                alert('ERROR: google.accounts.oauth2 not found\n\nThe OAuth 2.0 module is not available.\n\noauth2 = ' + typeof window.google.accounts.oauth2);
                 return;
             }
 
-            alert('✓ google.accounts.oauth2 exists\n\nStep 1: SDK fully loaded, initializing OAuth client...');
 
             try {
-                alert('Step 1a: Creating OAuth code client...');
 
                 var codeClient = window.google.accounts.oauth2.initCodeClient({
                     client_id: '303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com',
@@ -520,20 +496,15 @@
                     redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
                     callback: function(response) {
                         if (response.code) {
-                            alert('Step 2: Auth code received\n\nCode: ' + response.code.substring(0, 20) + '...\n\nRedirecting to backend...');
                             window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
                         } else if (response.error) {
-                            alert('ERROR: Google OAuth Denied\n\nError: ' + response.error + '\n\nDescription: ' + (response.error_description || 'User cancelled or denied permissions'));
                         }
                     }
                 });
 
-                alert('✓ OAuth client created\n\nStep 1b: Requesting authorization code from Google...');
                 codeClient.requestCode();
 
             } catch (e) {
-                alert('ERROR: Exception during OAuth init\n\nError: ' + e.toString() + '\n\nStack available in console');
-                alert('Exception details:\n\nMessage: ' + e.message + '\n\nName: ' + e.name);
             }
         };
 
