@@ -269,7 +269,18 @@ app.post('/api/auth/forgot-password', async (c) => {
 
   // Send password reset email
   const resetLink = `https://sorcrpg.com/reset-password.html?token=${resetToken}`;
+  console.log(`[PASSWORD_RESET] Initiating password reset for: ${email}`);
+  console.log(`[PASSWORD_RESET] Reset token: ${resetToken}`);
+  console.log(`[PASSWORD_RESET] RESEND_API_KEY configured: ${!!c.env.RESEND_API_KEY}`);
+
+  let emailSent = false;
+  let emailError = null;
+
   try {
+    if (!c.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY not configured in environment');
+    }
+
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -289,14 +300,28 @@ app.post('/api/auth/forgot-password', async (c) => {
       })
     });
     const emailData = await emailRes.json();
+
     if (!emailRes.ok) {
-      console.error('Resend API error:', emailRes.status, JSON.stringify(emailData));
+      console.error(`[PASSWORD_RESET_ERROR] Resend API failed (${emailRes.status}):`, JSON.stringify(emailData));
+      emailError = `Resend API error: ${emailRes.status} - ${emailData.message || JSON.stringify(emailData)}`;
+    } else {
+      console.log(`[PASSWORD_RESET_SUCCESS] Email sent successfully to ${email}`);
+      emailSent = true;
     }
-  } catch (emailError: any) {
-    console.error('Email send failed:', emailError.message);
+  } catch (emailError_: any) {
+    console.error('[PASSWORD_RESET_ERROR] Email send exception:', emailError_.message);
+    emailError = emailError_.message;
   }
 
-  return c.json({ success: true, message: 'If that email is registered, a password reset link has been sent' });
+  // Log final status
+  console.log(`[PASSWORD_RESET] Status: ${emailSent ? 'SUCCESS' : 'FAILED'} - ${emailError || 'No error'}`);
+
+  return c.json({
+    success: true,
+    message: 'If that email is registered, a password reset link has been sent',
+    emailStatus: emailSent ? 'sent' : 'failed',
+    emailError: emailError
+  });
 });
 
 app.post('/api/auth/reset-password', async (c) => {

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Diagnostic Tool</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 50px auto; padding: 20px; background: #f5f5f0; }
+        .container { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ccc; }
+        h1 { color: #c93f35; margin-bottom: 20px; }
+        .status { padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 0.95rem; }
+        .status.info { background: #e3f2fd; border: 1px solid #2196f3; color: #1565c0; }
+        .status.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
+        .status.error { background: #ffebee; border: 1px solid #c93f35; color: #c93f35; }
+        .status.warning { background: #fff3e0; border: 1px solid #ff9800; color: #e65100; }
+        button { background: #c93f35; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-top: 20px; }
+        button:hover { background: #a83228; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .section { margin: 30px 0; padding: 20px; background: #f9f9f9; border-left: 4px solid #c93f35; border-radius: 4px; }
+        code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        .log { background: #222; color: #0f0; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.85rem; max-height: 300px; overflow-y: auto; margin: 10px 0; }
+        .log-line { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Email Diagnostic Tool</h1>
+
+        <div class="status info">
+            <strong>Purpose:</strong> Debug why password reset emails aren't being sent
+        </div>
+
+        <div class="section">
+            <h2>Step 1: Check API Configuration</h2>
+            <div id="apiStatus"></div>
+            <button onclick="checkAPIConfig()">Check Configuration</button>
+        </div>
+
+        <div class="section">
+            <h2>Step 2: Test Forgot-Password Endpoint</h2>
+            <label for="testEmail">Test Email Address:</label>
+            <input type="email" id="testEmail" placeholder="test@example.com" value="blahbity33@gmail.com" />
+            <button onclick="testForgotPassword()">Send Test Reset Email</button>
+            <div id="forgotPasswordStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>Step 3: Check Backend Logs</h2>
+            <p>Look for email sending logs in your server console</p>
+            <div class="log" id="logOutput">
+                <div class="log-line">Logs will appear here...</div>
+            </div>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div class="section">
+            <h2>Debugging Checklist</h2>
+            <ul>
+                <li>✓ Check if <code>RESEND_API_KEY</code> environment variable is set</li>
+                <li>✓ Verify the API key is valid (not expired)</li>
+                <li>✓ Check if sending email domain is authorized (noreply@sorcrpg.com)</li>
+                <li>✓ Verify test recipient email is correct</li>
+                <li>✓ Check spam folder for emails</li>
+                <li>✓ Review Resend.com dashboard for failed emails</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Common Issues</h2>
+            <ul>
+                <li><strong>Email not sent:</strong> Check that RESEND_API_KEY is configured in environment</li>
+                <li><strong>Email in spam:</strong> Check email routing and sender reputation</li>
+                <li><strong>Invalid domain:</strong> Domain must be authorized in Resend dashboard</li>
+                <li><strong>API limit reached:</strong> Check if monthly email limit exceeded</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.sorcrpg.com';
+        let logs = [];
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push({ message, type, time: timestamp });
+            updateLogDisplay();
+        }
+
+        function updateLogDisplay() {
+            const logOutput = document.getElementById('logOutput');
+            logOutput.innerHTML = logs.map(log =>
+                `<div class="log-line"><span style="color: ${log.type === 'error' ? '#f44' : log.type === 'success' ? '#4f4' : '#fff'}">[${log.time}]</span> ${log.message}`
+            ).join('');
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLogs() {
+            logs = [];
+            updateLogDisplay();
+        }
+
+        async function checkAPIConfig() {
+            const statusDiv = document.getElementById('apiStatus');
+            addLog('Checking API configuration...');
+
+            try {
+                // Try a test call that will fail but shows if API is responding
+                const res = await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test@test.com' })
+                });
+
+                if (res.ok) {
+                    addLog('✓ API responding correctly', 'success');
+                    statusDiv.innerHTML = '<div class="status success">✓ API is responding</div>';
+                } else {
+                    addLog('API responded with status: ' + res.status, 'info');
+                    statusDiv.innerHTML = '<div class="status info">API responding (status: ' + res.status + ')</div>';
+                }
+            } catch (e) {
+                addLog('✗ API connection failed: ' + e.message, 'error');
+                statusDiv.innerHTML = '<div class="status error">✗ API connection error: ' + e.message + '</div>';
+            }
+        }
+
+        async function testForgotPassword() {
+            const email = document.getElementById('testEmail').value.trim();
+            const statusDiv = document.getElementById('forgotPasswordStatus');
+
+            if (!email) {
+                statusDiv.innerHTML = '<div class="status error">Please enter an email address</div>';
+                return;
+            }
+
+            addLog('Requesting password reset for: ' + email);
+            statusDiv.innerHTML = '<div class="status info">Sending test email...</div>';
+
+            try {
+                const res = await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    addLog('✓ Forgot-password endpoint returned success', 'success');
+                    addLog('Message: ' + data.message, 'info');
+                    addLog('Email status: ' + (data.emailStatus || 'unknown'), data.emailStatus === 'sent' ? 'success' : 'warning');
+                    if (data.emailError) {
+                        addLog('Email error: ' + data.emailError, 'error');
+                    }
+
+                    let html = '<div class="status ' + (data.emailStatus === 'sent' ? 'success' : 'warning') + '">' +
+                        (data.emailStatus === 'sent' ? '✓' : '⚠') + ' Request processed<br><br>' +
+                        '<strong>Server message:</strong> ' + data.message + '<br>' +
+                        '<strong>Email status:</strong> ' + (data.emailStatus || 'unknown');
+
+                    if (data.emailError) {
+                        html += '<br><strong style="color: red;">Error:</strong> ' + data.emailError;
+                    }
+
+                    html += '<br><br><strong>Next steps:</strong><br>' +
+                        '1. Check your email inbox (including spam folder)<br>' +
+                        '2. If email didn\'t arrive and status shows "failed", check server logs<br>' +
+                        '3. Verify RESEND_API_KEY is configured correctly</div>';
+
+                    statusDiv.innerHTML = html;
+                } else {
+                    addLog('✗ Request failed: ' + (data.error || 'Unknown error'), 'error');
+                    statusDiv.innerHTML = '<div class="status error">✗ Request failed<br><strong>Error:</strong> ' + (data.error || 'Unknown error') + '</div>';
+                }
+            } catch (e) {
+                addLog('✗ Connection error: ' + e.message, 'error');
+                statusDiv.innerHTML = '<div class="status error">✗ Connection error: ' + e.message + '</div>';
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', function() {
+            addLog('Diagnostic tool loaded');
+            addLog('API URL: ' + API_URL);
+        });
+    </script>
+</body>
+</html>
