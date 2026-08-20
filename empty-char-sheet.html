@@ -6,6 +6,7 @@
   <title>Character Sheet - SORC</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
   <script src="verify-kid.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2361,6 +2362,8 @@
     <button class="ptab active" data-side="front">Front</button>
     <button class="ptab" data-side="back">Back</button>
   </div>
+  <button id="printBtn">Print</button>
+  <button id="downloadPdfBtn">Download PDF</button>
   <button id="clearRestoreBtn">Clear/Restore</button>
 </div>
 
@@ -2428,6 +2431,25 @@
       if (tab.dataset.side === 'front' && flipped) doFlip();
       if (tab.dataset.side === 'back'  && !flipped) doFlip();
     });
+  });
+
+  // Print button handler
+  document.getElementById('printBtn').addEventListener('click', function() {
+    window.print();
+  });
+
+  // Download PDF button handler
+  document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+    var element = document.querySelector('.flipper');
+    var opt = {
+      margin: 0,
+      filename: 'character-sheet.pdf',
+      image: { type: 'png', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+      jsPDF: { unit: 'px', format: [816, 2112], orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    html2pdf().set(opt).from(element).save();
   });
 </script>
 <script>
