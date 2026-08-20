@@ -140,15 +140,12 @@
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!saved || !saved.authKey) { msgEl.className = 'msg error'; msgEl.textContent = 'Not logged in.'; return; }
         try {
-            alert('DEBUG: saveAvatar - API URL: ' + API_URL + ', authKey: ' + (saved.authKey ? saved.authKey.substring(0, 8) + '...' : 'NONE') + ', avatar: ' + selectedAvatar);
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
                 body: JSON.stringify({ avatar: selectedAvatar })
             });
-            alert('DEBUG: saveAvatar - response status: ' + res.status + ', ok: ' + res.ok);
             var data = await res.json();
-            alert('DEBUG: saveAvatar - response: ' + JSON.stringify(data).substring(0, 200));
             if (data.success) {
                 saved.avatar = selectedAvatar;
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
@@ -208,15 +205,12 @@
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!saved || !saved.authKey) return;
         try {
-            alert('DEBUG: saveBio - API URL: ' + API_URL + ', authKey: ' + (saved.authKey ? saved.authKey.substring(0, 8) + '...' : 'NONE') + ', bio length: ' + bio.length);
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
                 body: JSON.stringify({ bio: bio })
             });
-            alert('DEBUG: saveBio - response status: ' + res.status + ', ok: ' + res.ok);
             var data = await res.json();
-            alert('DEBUG: saveBio - response: ' + JSON.stringify(data).substring(0, 200));
             msgEl.className = data.success ? 'msg success' : 'msg error';
             msgEl.textContent = data.success ? '✅ Bio saved!' : (data.error || 'Failed.');
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
@@ -241,15 +235,12 @@
         if (!saved || !saved.authKey) return;
         applyPrivacyToggleVisual(isPublic);
         try {
-            alert('DEBUG: saveEmailPrivacy - API URL: ' + API_URL + ', authKey: ' + (saved.authKey ? saved.authKey.substring(0, 8) + '...' : 'NONE') + ', privacy_email: ' + (isPublic ? 0 : 1));
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
                 body: JSON.stringify({ privacy_email: isPublic ? 0 : 1 })
             });
-            alert('DEBUG: saveEmailPrivacy - response status: ' + res.status + ', ok: ' + res.ok);
             var data = await res.json();
-            alert('DEBUG: saveEmailPrivacy - response: ' + JSON.stringify(data).substring(0, 200));
             if (data.success) {
                 saved.privacy_email = isPublic ? 0 : 1;
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
@@ -360,19 +351,15 @@
     };
 
     document.addEventListener('DOMContentLoaded', async function() {
-        alert('Step 1: Profile DOMContentLoaded fired');
         console.log('[PROFILE] DOMContentLoaded fired');
         var saved = null;
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {
-            alert('Step 2: ERROR parsing localStorage: ' + e);
             console.log('[PROFILE] Error parsing sorc_user from localStorage:', e);
         }
 
-        alert('Step 3: Loaded user from localStorage: ' + (saved ? saved.username : 'null'));
         console.log('[PROFILE] saved user:', saved ? saved.username : 'null');
 
         if (!saved || !saved.authKey) {
-            alert('Step 4: No auth key found - showing login screen');
             console.log('[PROFILE] No auth key found');
             document.getElementById('profileApp').innerHTML =
                 '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
@@ -381,29 +368,23 @@
 
         // Always fetch fresh data from server so role/points stay current
         try {
-            alert('Step 5: Fetching fresh data from /api/me');
             console.log('[PROFILE] Fetching fresh data from /api/me');
             var freshRes = await fetch(API_URL + '/api/me', {
                 headers: { 'X-Auth-Key': saved.authKey }
             });
-            alert('Step 6: /api/me response status: ' + freshRes.status);
             console.log('[PROFILE] /api/me response status:', freshRes.status);
             var freshData = await freshRes.json();
-            alert('Step 7: /api/me response received: ' + JSON.stringify(freshData).substring(0, 100) + '...');
             console.log('[PROFILE] /api/me response:', freshData);
             if (freshData.user) {
-                alert('Step 8: Updating saved user with fresh data');
                 console.log('[PROFILE] Updating saved user with fresh data');
                 saved = Object.assign(saved, freshData.user);
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
             }
         } catch(e) {
-            alert('Step ERROR: Exception during /api/me fetch: ' + e.message);
             console.log('[PROFILE] Error fetching fresh data:', e);
         }
 
         var user = saved;
-        alert('Step 9: Starting to render profile for user: ' + user.username);
         console.log('[PROFILE] Starting to render profile for user:', user.username);
         var role = user.role || 'CIVILIAN';
         if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
@@ -417,7 +398,6 @@
         var unlockedFeatures = user.unlocked_features || [];
         if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
 
-        alert('Step 10: Profile data ready - role: ' + role + ', name: ' + displayName + ', CP: ' + communityPoints);
         console.log('[PROFILE] Rendering profile - role:', role, 'displayName:', displayName, 'communityPoints:', communityPoints);
 
         if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
@@ -464,10 +444,9 @@
             '</div>';
         }
 
-        alert('Step 11: About to render profile HTML');
         console.log('[PROFILE] About to render profile HTML');
         try {
-        alert('Step 12: Rendering profile card and sections...');
+        console.log('[PROFILE] Rendering profile card and sections...');
         document.getElementById('profileApp').innerHTML =
             '<div class="profile-container">' +
                 '<div class="profile-card">' +
@@ -623,10 +602,8 @@
             '<div id="adminInviteNotice"></div>' +
             '<div id="gmInviteNotice"></div>';
 
-        alert('Step 13: SUCCESS - Profile HTML rendered successfully!');
         console.log('[PROFILE] Profile HTML rendered successfully');
         } catch(renderError) {
-            alert('Step ERROR: Exception during profile rendering: ' + renderError.message);
             console.log('[PROFILE] Error rendering profile:', renderError);
             document.getElementById('profileApp').innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>Could not load profile. Error: ' + renderError.message + '</p><p><a href="signin.html">Sign in again</a></p></div>';
             return;
