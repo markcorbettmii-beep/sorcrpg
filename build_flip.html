@@ -54,7 +54,6 @@
       .print-group { height: 22px; }
       .print-group .ptab { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
       #printBtn { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
-      #jpegBtn { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
     }
 
     /* ── SCALE WRAPPER ── */
@@ -891,22 +890,6 @@
 
     #printBtn:active { background: #2a3a10; }
 
-    #jpegBtn {
-      background: #3a4a18;
-      color: #f2ece0;
-      border: 1px solid #5a6a28;
-      border-radius: 16px;
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 6px 14px;
-      cursor: pointer;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    #jpegBtn:active { background: #2a3a10; }
 
     /* ── CLASS / LEVEL / RANK ROW ── */
     .clr-row {
@@ -2363,7 +2346,6 @@
   </div>
   <button id="clearRestoreBtn">Clear/Restore</button>
   <button id="printBtn">Print</button>
-  <button id="jpegBtn">JPEG</button>
 </div>
 
 <script>
@@ -2744,32 +2726,6 @@
       front.style.display = prevFrontDisplay;
       back.style.display  = prevBackDisplay;
     }, 500);
-  });
-
-  document.getElementById('jpegBtn').addEventListener('click', function() {
-    var charName = document.querySelector('[data-field="charname"] .pencil')?.textContent || 'Character';
-
-    // Ensure both faces are visible for rendering
-    var prevFrontDisplay = front.style.display;
-    var prevBackDisplay = back.style.display;
-    front.style.display = 'block';
-    back.style.display = 'block';
-
-    // Generate canvases for both front and back
-    renderCleanCanvases(front, back).then(function(canvases) {
-      downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
-      // Restore previous display state
-      setTimeout(function() {
-        front.style.display = prevFrontDisplay;
-        back.style.display = prevBackDisplay;
-      }, 100);
-    }).catch(function(err) {
-      console.error('Canvas generation failed:', err);
-      alert('Failed to generate JPEG. Please try again.');
-      // Restore previous display state on error
-      front.style.display = prevFrontDisplay;
-      back.style.display = prevBackDisplay;
-    });
   });
 
 </script>
