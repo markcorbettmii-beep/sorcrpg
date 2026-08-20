@@ -246,7 +246,7 @@ app.post('/api/auth/signin', async (c) => {
   const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
   if (passwordHash !== user.password_hash) {
-    return c.json({ error: 'This account is associated with Google Sign-In. Please use "Sign in with Google" to access your account.' }, 401);
+    return c.json({ error: 'Invalid credentials' }, 401);
   }
 
   const authKey = crypto.randomUUID();
