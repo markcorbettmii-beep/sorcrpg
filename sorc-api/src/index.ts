@@ -233,9 +233,9 @@ app.post('/api/auth/signin', async (c) => {
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
   if (!user.email_verified) return c.json({ success: false, unverified: true, error: 'Please verify your email before signing in' }, 401);
 
-  // Check if account is Google Sign-In only (no password set)
+  // Check if account uses OAuth provider sign-in only (no password set)
   if (!user.password_hash) {
-    return c.json({ error: 'This account is associated with Google Sign-In. Please use "Sign in with Google" to access your account.' }, 401);
+    return c.json({ error: 'This account does not support email/password sign-in. Please use Sign in with Google, Amazon, or Apple.' }, 401);
   }
 
   // Hash password and compare
