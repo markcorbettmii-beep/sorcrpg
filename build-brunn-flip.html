@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Brunn - SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="verify-kid.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,7 +50,6 @@
       .action-bar button { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
       .print-group { height: 22px; }
       .print-group .ptab { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
-      #printBtn { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
     }
 
     /* ── SCALE WRAPPER ── */
@@ -874,23 +869,6 @@
 
     .print-group .ptab:active { background: #2a3a10; color: #f2ece0; }
 
-    #printBtn {
-      background: #3a4a18;
-      color: #f2ece0;
-      border: 1px solid #5a6a28;
-      border-radius: 16px;
-      font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      padding: 6px 14px;
-      cursor: pointer;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    #printBtn:active { background: #2a3a10; }
-
 
     /* ── CLASS / LEVEL / RANK ROW ── */
     .clr-row {
@@ -950,12 +928,47 @@
 
     /* ── PRINT ── */
     @media print {
-      body, html {
-        margin: 0;
-        padding: 0;
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
       }
-      .action-bar, .flip-indicator, .embedHint {
-        display: none !important;
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      /* Let the flipper flow normally so faces stack vertically */
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
       }
     }
     /* Character sheet link colors - rare rank blue */
@@ -986,7 +999,7 @@
     </defs></svg>
 
     <!-- ══════════════ FRONT ══════════════ -->
-    <div class="face" id="front">
+    <div class="face front" id="front">
       <div class="wm"></div>
       <div class="border-frame"></div>
       <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
@@ -2307,7 +2320,6 @@
     <button class="ptab" data-side="back">Back</button>
   </div>
   <button id="clearRestoreBtn">Clear/Restore</button>
-  <button id="printBtn">Print</button>
 </div>
 
 <script>
@@ -2363,407 +2375,6 @@
   scaleToFit();
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
-
-  // Download button - download JPEG directly (same as JPEG button)
-
-  // Helper function to render clean canvases without artifacts
-  function renderCleanCanvases(frontEl, backEl) {
-    // Clear any selections or focus that might interfere with rendering
-    if (window.getSelection) {
-      window.getSelection().removeAllRanges();
-    }
-
-    // Render with optimized html2canvas options
-    return Promise.all([
-      html2canvas(frontEl, {
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: '#f5f1e8',
-        removeContainer: false,
-        type: 'canvas'
-      }),
-      html2canvas(backEl, {
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: '#f5f1e8',
-        removeContainer: false,
-        type: 'canvas'
-      })
-    ]);
-  }
-
-  // Download handlers for each format
-  function handleDownload(format, canvases, name) {
-    switch(format) {
-      case 'pdf':
-        downloadAsPDF(canvases, name);
-        break;
-      case 'html':
-        downloadAsHTML(name);
-        break;
-      case 'jpg':
-        downloadAsImage(canvases, name, 'image/jpeg', 'jpg');
-        break;
-      case 'png':
-        downloadAsImage(canvases, name, 'image/png', 'png');
-        break;
-      case 'docx':
-        downloadAsDocx(canvases, name);
-        break;
-    }
-  }
-
-  function downloadAsPDF(canvasesOrName, name) {
-    // Handle both single parameter (legacy K-ID callback) and two parameters (from format selector)
-    if (typeof canvasesOrName === 'string') {
-      // Only name provided - generate canvases first
-      var charName = canvasesOrName;
-      var front = document.getElementById('front');
-      var back = document.getElementById('back');
-
-      renderCleanCanvases(front, back).then(function(canvases) {
-        generatePDFBlob(canvases, charName);
-      }).catch(function(err) {
-        console.error('Canvas generation failed:', err);
-        alert('Failed to generate PDF. Please try again.');
-      });
-    } else {
-      // Canvases provided - use them directly
-      generatePDFBlob(canvasesOrName, name);
-    }
-  }
-
-  function generateQRCode(text, size) {
-    return new Promise(function(resolve, reject) {
-      try {
-        var qrCanvas = document.createElement('canvas');
-        qrCanvas.id = 'qr-temp-' + Date.now();
-        qrCanvas.style.display = 'none';
-        document.body.appendChild(qrCanvas);
-
-        var qr = new QRCode(qrCanvas.id, {
-          text: text,
-          width: size || 200,
-          height: size || 200,
-          correctLevel: QRCode.CorrectLevel.H
-        });
-
-        setTimeout(function() {
-          var canvas = qrCanvas.querySelector('canvas');
-          if (canvas) {
-            var ctx = canvas.getContext('2d');
-            var imageData = canvas.toDataURL('image/png');
-            document.body.removeChild(qrCanvas);
-            resolve(imageData);
-          } else {
-            document.body.removeChild(qrCanvas);
-            reject('QR canvas not found');
-          }
-        }, 100);
-      } catch(err) {
-        reject(err);
-      }
-    });
-  }
-
-  function generatePDFBlob(canvases, name) {
-    try {
-      if (!window.jspdf || !window.jspdf.jsPDF) {
-        throw new Error('jsPDF library not loaded');
-      }
-
-      var jsPDF = window.jspdf.jsPDF;
-      var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-
-      // Add steganographic metadata (hidden character data in PDF)
-      var timestamp = new Date().toISOString();
-      var charData = {
-        name: name,
-        created: timestamp,
-        type: 'SORC-CHARACTER-SHEET',
-        version: '1.0'
-      };
-      pdf.setProperties({
-        title: 'SORC Character Sheet: ' + name,
-        subject: 'Character Sheet - ' + name,
-        author: 'SORC',
-        keywords: 'SORC,Character,' + name,
-        creator: 'SORC Character System',
-        producer: charData.type + ':' + timestamp
-      });
-
-      // Add images to PDF with error handling for each - limit to 2 pages (front and back only)
-      var maxPages = Math.min(canvases.length, 2);
-      for (var i = 0; i < maxPages; i++) {
-        try {
-          if (i > 0) pdf.addPage();
-          var imgData = canvases[i].toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-
-          // Add transparent QR code to front page only (bottom right corner)
-          if (i === 0) {
-            var qrData = 'https://sorcrpg.com/verify?char=' + encodeURIComponent(name) + '&ts=' + encodeURIComponent(timestamp);
-            try {
-              // Create transparent QR code (visible and scannable)
-              var qrCanvas = document.createElement('canvas');
-              qrCanvas.id = 'qr-pdf-' + i + '-' + Date.now();
-              qrCanvas.style.display = 'none';
-              document.body.appendChild(qrCanvas);
-
-              var qr = new QRCode(qrCanvas.id, {
-                text: qrData,
-                width: 100,
-                height: 100,
-                correctLevel: QRCode.CorrectLevel.H
-              });
-
-              setTimeout(function() {
-                var qrCanvasEl = document.getElementById(qrCanvas.id);
-                if (qrCanvasEl && qrCanvasEl.querySelector('canvas')) {
-                  var qrImg = qrCanvasEl.querySelector('canvas').toDataURL('image/png');
-                  // Add transparent QR code at bottom right (visible, will print)
-                  pdf.setGState(pdf.GD_ALPHA_STATE_STD_CA).setGState({ opacity: 0.35 });
-                  pdf.addImage(qrImg, 'PNG', 170, 270, 35, 35);
-                  document.body.removeChild(qrCanvasEl);
-                }
-              }, 50);
-            } catch(qrErr) {
-              console.warn('Failed to add QR code:', qrErr);
-            }
-          }
-        } catch(imgErr) {
-          console.error('Failed to add image ' + i + ':', imgErr);
-          throw imgErr;
-        }
-      }
-
-      // Generate PDF and download
-      try {
-        // Try output('blob') first for newer jsPDF versions
-        if (typeof pdf.output === 'function') {
-          try {
-            var blobOutput = pdf.output('blob');
-            if (blobOutput instanceof Promise) {
-              blobOutput.then(function(blob) {
-                downloadBlobFile(blob, name + '-sheet.pdf');
-              }).catch(function(promiseErr) {
-                console.error('Promise resolution failed:', promiseErr);
-                // Fallback: use datauri string approach
-                dataUriToBlob(pdf.output('datauristring'), name + '-sheet.pdf');
-              });
-              return;
-            } else if (blobOutput instanceof Blob) {
-              downloadBlobFile(blobOutput, name + '-sheet.pdf');
-              return;
-            }
-          } catch(blobErr) {
-            console.warn('output(blob) failed, trying datauristring:', blobErr);
-          }
-
-          // Fallback: convert data URI to blob
-          var dataUri = pdf.output('datauristring');
-          dataUriToBlob(dataUri, name + '-sheet.pdf');
-        }
-      } catch(err) {
-        console.error('PDF output generation failed:', err);
-        // Last resort: use pdf.save()
-        pdf.save(name + '-sheet.pdf');
-      }
-    } catch(err) {
-      console.error('PDF generation failed:', err);
-      alert('Failed to generate PDF. Please try again.');
-    }
-  }
-
-  function downloadBlobFile(blob, filename) {
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  function dataUriToBlob(dataUri, filename) {
-    try {
-      var arr = dataUri.split(',');
-      var mime = arr[0].match(/:(.*?);/)[1];
-      var bstr = atob(arr[1]);
-      var n = bstr.length;
-      var u8arr = new Uint8Array(n);
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-      }
-      var blob = new Blob([u8arr], { type: mime });
-      downloadBlobFile(blob, filename);
-    } catch (err) {
-      console.error('Data URI to blob conversion failed:', err);
-      // If all else fails, show error
-      alert('Failed to generate PDF. Please try again.');
-    }
-  }
-
-  function downloadAsHTML(name) {
-    var html = document.documentElement.outerHTML;
-    var blob = new Blob([html], { type: 'text/html' });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    link.download = name + '.html';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadAsImage(canvases, name, mimeType, ext) {
-    try {
-      // Handle case where we might have only 1 or 2 canvases
-      if (!canvases || canvases.length === 0) {
-        throw new Error('No canvases provided for download');
-      }
-
-      var tempCanvas = document.createElement('canvas');
-      var ctx = tempCanvas.getContext('2d');
-
-      if (!ctx) {
-        throw new Error('Failed to get canvas context');
-      }
-
-      // Calculate dimensions based on number of canvases
-      var totalHeight;
-      if (canvases.length === 1) {
-        totalHeight = canvases[0].height;
-        tempCanvas.width = canvases[0].width;
-      } else {
-        totalHeight = canvases[0].height + canvases[1].height + 20;
-        tempCanvas.width = canvases[0].width;
-      }
-      tempCanvas.height = totalHeight;
-
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-      // Draw all canvases
-      var yOffset = 0;
-      for (var i = 0; i < canvases.length; i++) {
-        ctx.drawImage(canvases[i], 0, yOffset);
-        yOffset += canvases[i].height + (i < canvases.length - 1 ? 20 : 0);
-      }
-
-      tempCanvas.toBlob(function(blob) {
-        if (!blob) {
-          console.error('toBlob failed - blob is null');
-          alert('Failed to create image file. Please try again.');
-          return;
-        }
-
-        try {
-          var url = URL.createObjectURL(blob);
-          var link = document.createElement('a');
-          link.href = url;
-          link.download = name + '-sheet.' + ext;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        } catch(downloadErr) {
-          console.error('Download failed:', downloadErr);
-          alert('Failed to download file. Please try again.');
-        }
-      }, mimeType);
-    } catch(err) {
-      console.error('Image download error:', err);
-      alert('Failed to generate JPEG: ' + err.message);
-    }
-  }
-
-  function downloadAsDocx(canvases, name) {
-    try {
-      var docx = window.docx;
-      if (!docx) {
-        alert('DOCX library not loaded. Downloading as PDF instead.');
-        var jsPDF = window.jspdf.jsPDF;
-        var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-        canvases.forEach(function(canvas, index) {
-          if (index > 0) pdf.addPage();
-          var imgData = canvas.toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-        });
-        pdf.save(name + '-sheet.pdf');
-        return;
-      }
-
-      var sections = [];
-      canvases.forEach(function(canvas, index) {
-        var imgData = canvas.toDataURL('image/png');
-        sections.push(new docx.Paragraph({
-          children: [
-            new docx.ImageRun({
-              data: imgData,
-              transformation: { width: 600, height: 800 }
-            })
-          ]
-        }));
-        if (index === 0) {
-          sections.push(new docx.Paragraph({ text: '' }));
-          sections.push(new docx.PageBreak());
-        }
-      });
-
-      var doc = new docx.Document({ sections: [{ children: sections }] });
-      docx.Packer.toBlob(doc).then(function(blob) {
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = url;
-        link.download = name + '-sheet.docx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      });
-    } catch(err) {
-      console.error('DOCX export failed:', err);
-      alert('Failed to create DOCX. Downloading as PDF instead.');
-      downloadAsPDF(canvases, name);
-    }
-  }
-
-  // Print tabs
-  var printSide = 'front';
-  var ptabs = document.querySelectorAll('.ptab');
-  ptabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      ptabs.forEach(function(t) { t.classList.remove('active'); });
-      tab.classList.add('active');
-      printSide = tab.dataset.side;
-      // Also flip the sheet to show the selected side
-      if (tab.dataset.side === 'front' && flipped) doFlip();
-      if (tab.dataset.side === 'back'  && !flipped) doFlip();
-    });
-  });
-
-
-  document.getElementById('printBtn').addEventListener('click', function() {
-    // Always show both front and back for printing (one sheet, both sides)
-    var prevFrontDisplay = front.style.display;
-    var prevBackDisplay = back.style.display;
-    front.style.display = 'block';
-    back.style.display = 'block';
-
-    window.print();
-
-    setTimeout(function() {
-      front.style.display = prevFrontDisplay;
-      back.style.display = prevBackDisplay;
-    }, 500);
-  });
 
 </script>
 <script>
