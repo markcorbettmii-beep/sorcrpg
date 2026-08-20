@@ -2410,15 +2410,25 @@
   // Download button - toggle menu
   document.getElementById('downloadBtn').addEventListener('click', function(e) {
     e.stopPropagation();
+    // Store pending download action before verification redirect
+    sessionStorage.setItem('pendingDownload', 'true');
     checkKIDVerification(function() {
-      var front = document.getElementById('front');
-      var back = document.getElementById('back');
       var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-
       // Use browser print dialog for PDF generation (avoids html2canvas issues)
       downloadAsPDF(charName);
+      sessionStorage.removeItem('pendingDownload');
     });
   });
+
+  // Check for pending download after K-ID verification redirect
+  if (sessionStorage.getItem('pendingDownload') === 'true') {
+    var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
+    if (kidVerified) {
+      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
+      downloadAsPDF(charName);
+      sessionStorage.removeItem('pendingDownload');
+    }
+  }
 
   // Close menu when clicking elsewhere
   document.addEventListener('click', function() {
