@@ -509,7 +509,7 @@ async function checkNotifications(user) {
       if (inboxLink) {
         var isLawfulInbox = document.body.classList.contains('lawful-mode');
         var notifBg = '#fff';
-        var notifColor = isLawfulInbox ? '#2196f3' : '#000000';
+        var notifColor = isLawfulInbox ? '#fff' : '#000000';
         inboxLink.innerHTML = unread > 0
           ? 'Inbox <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + unread + '</span>'
           : 'Inbox';
@@ -518,7 +518,7 @@ async function checkNotifications(user) {
       if (fellowLink) {
         var isLawfulBadge = document.body.classList.contains('lawful-mode');
         var notifBg = '#fff';
-        var notifColor = isLawfulBadge ? '#2196f3' : '#000000';
+        var notifColor = isLawfulBadge ? '#fff' : '#000000';
         fellowLink.innerHTML = fellowBadge > 0
           ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
           : 'Fellowships';
