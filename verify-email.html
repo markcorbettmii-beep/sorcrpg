@@ -80,14 +80,21 @@
             var params = new URLSearchParams(window.location.search);
             var token = params.get('token');
 
+            alert('Step 1: Checking verification token...');
+
             if (!token) {
+                alert('ERROR: No token provided in URL');
                 showStatus('❌ Invalid verification link. No token provided.', 'error');
                 return;
             }
 
+            alert('Step 2: Token found: ' + token.substring(0, 20) + '...');
+
             var btn = event.target;
             btn.disabled = true;
             btn.textContent = 'Verifying...';
+
+            alert('Step 3: Sending verification request to server...');
 
             try {
                 var res = await fetch(API_URL + '/api/auth/verify-email', {
@@ -97,19 +104,24 @@
                 });
                 var data = await res.json();
 
+                alert('Step 4: Server response received. Status: ' + res.status + ', Success: ' + data.success);
+
                 if (!res.ok || !data.success) {
+                    alert('ERROR: Verification failed. Response: ' + JSON.stringify(data));
                     showStatus('❌ ' + (data.error || 'Verification failed. Link may have expired.'), 'error');
                     btn.disabled = false;
                     btn.textContent = 'Try Again';
                     return;
                 }
 
+                alert('Step 5: Email verified successfully! Redirecting...');
                 showStatus('✅ Email verified! Redirecting to sign in...', 'success');
 
                 setTimeout(function() {
                     window.location.href = 'signin-verified.html';
                 }, 1500);
             } catch(e) {
+                alert('ERROR: Connection error - ' + e.message);
                 showStatus('❌ Connection error. Please try again.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'Try Again';
@@ -121,11 +133,15 @@
             var params = new URLSearchParams(window.location.search);
             var token = params.get('token');
 
+            alert('Email Verification Page Loaded. Checking for token in URL...');
+
             if (!token) {
+                alert('ERROR: No token found in URL query parameters');
                 showContent('<p style="margin-bottom:1.5rem;">Invalid verification link.</p>');
                 return;
             }
 
+            alert('Token found! Ready to verify. Click "Confirm Verification" to proceed.');
             showContent('<p style="margin-bottom:1.5rem;">Verifying your email...</p><button class="verify-btn" onclick="verifyEmail()">Confirm Verification</button>');
         })();
     </script>
