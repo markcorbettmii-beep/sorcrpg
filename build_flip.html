@@ -2508,28 +2508,55 @@
 
   function generatePDFBlob(canvases, name) {
     try {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        throw new Error('jsPDF library not loaded');
+      }
+
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
 
+      // Add images to PDF with error handling for each
       canvases.forEach(function(canvas, index) {
-        if (index > 0) pdf.addPage();
-        var imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+        try {
+          if (index > 0) pdf.addPage();
+          var imgData = canvas.toDataURL('image/png');
+          pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+        } catch(imgErr) {
+          console.error('Failed to add image ' + index + ':', imgErr);
+          throw imgErr;
+        }
       });
 
-      // Use direct download API instead of pdf.save() for more location options
-      var blobOutput = pdf.output('blob');
+      // Generate PDF and download
+      try {
+        // Try output('blob') first for newer jsPDF versions
+        if (typeof pdf.output === 'function') {
+          try {
+            var blobOutput = pdf.output('blob');
+            if (blobOutput instanceof Promise) {
+              blobOutput.then(function(blob) {
+                downloadBlobFile(blob, name + '-sheet.pdf');
+              }).catch(function(promiseErr) {
+                console.error('Promise resolution failed:', promiseErr);
+                // Fallback: use datauri string approach
+                dataUriToBlob(pdf.output('datauristring'), name + '-sheet.pdf');
+              });
+              return;
+            } else if (blobOutput instanceof Blob) {
+              downloadBlobFile(blobOutput, name + '-sheet.pdf');
+              return;
+            }
+          } catch(blobErr) {
+            console.warn('output(blob) failed, trying datauristring:', blobErr);
+          }
 
-      // Handle both Promise-based and callback-based jsPDF versions
-      if (blobOutput instanceof Promise) {
-        blobOutput.then(function(blob) {
-          downloadBlobFile(blob, name + '-sheet.pdf');
-        });
-      } else if (blobOutput instanceof Blob) {
-        downloadBlobFile(blobOutput, name + '-sheet.pdf');
-      } else {
-        // Fallback for older jsPDF versions
-        console.warn('jsPDF output format not recognized, trying alternative method');
+          // Fallback: convert data URI to blob
+          var dataUri = pdf.output('datauristring');
+          dataUriToBlob(dataUri, name + '-sheet.pdf');
+        }
+      } catch(err) {
+        console.error('PDF output generation failed:', err);
+        // Last resort: use pdf.save()
         pdf.save(name + '-sheet.pdf');
       }
     } catch(err) {
@@ -2547,6 +2574,25 @@
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  function dataUriToBlob(dataUri, filename) {
+    try {
+      var arr = dataUri.split(',');
+      var mime = arr[0].match(/:(.*?);/)[1];
+      var bstr = atob(arr[1]);
+      var n = bstr.length;
+      var u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      var blob = new Blob([u8arr], { type: mime });
+      downloadBlobFile(blob, filename);
+    } catch (err) {
+      console.error('Data URI to blob conversion failed:', err);
+      // If all else fails, show error
+      alert('Failed to generate PDF. Please try again.');
+    }
   }
 
   function downloadAsHTML(name) {
