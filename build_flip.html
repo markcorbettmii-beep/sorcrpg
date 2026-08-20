@@ -2335,15 +2335,11 @@
 <p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
 
 <div class="action-bar">
-  <div style="position: relative; display: inline-block;">
-    <button id="downloadBtn">Download</button>
-  </div>
   <div class="print-group">
     <button class="ptab active" data-side="front">Front</button>
     <button class="ptab" data-side="back">Back</button>
   </div>
   <button id="clearRestoreBtn">Clear/Restore</button>
-  <button id="jpegBtn">JPEG</button>
   <button id="printBtn">Print</button>
 </div>
 
@@ -2402,49 +2398,6 @@
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
   // Download button - download JPEG directly (same as JPEG button)
-  document.getElementById('downloadBtn').addEventListener('click', function(e) {
-    e.stopPropagation();
-    var prevFrontDisplay = front.style.display;
-    var prevBackDisplay  = back.style.display;
-
-    // Determine which pages to capture based on side selection
-    var pagesToCapture = [];
-    if (printSide === 'front') {
-      front.style.display = 'block';
-      back.style.display  = 'none';
-      pagesToCapture.push(front);
-    } else if (printSide === 'back') {
-      front.style.display = 'none';
-      back.style.display  = 'block';
-      pagesToCapture.push(back);
-    } else {
-      front.style.display = 'block';
-      back.style.display  = 'block';
-      pagesToCapture.push(front, back);
-    }
-
-    // Generate JPEG with selected pages and provide system file picker
-    Promise.all(
-      pagesToCapture.map(page =>
-        html2canvas(page, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      )
-    ).then(function(canvases) {
-      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-      downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
-
-      // Restore display state
-      setTimeout(function() {
-        front.style.display = prevFrontDisplay;
-        back.style.display  = prevBackDisplay;
-      }, 500);
-    }).catch(function(err) {
-      console.error('Canvas generation failed for Download:', err);
-      alert('Failed to generate JPEG. Please try again.');
-      // Restore display state on error
-      front.style.display = prevFrontDisplay;
-      back.style.display  = prevBackDisplay;
-    });
-  });
 
   // Download handlers for each format
   function handleDownload(format, canvases, name) {
@@ -2719,48 +2672,6 @@
     });
   });
 
-  document.getElementById('jpegBtn').addEventListener('click', function() {
-    var prevFrontDisplay = front.style.display;
-    var prevBackDisplay  = back.style.display;
-
-    // Determine which pages to capture based on side selection
-    var pagesToCapture = [];
-    if (printSide === 'front') {
-      front.style.display = 'block';
-      back.style.display  = 'none';
-      pagesToCapture.push(front);
-    } else if (printSide === 'back') {
-      front.style.display = 'none';
-      back.style.display  = 'block';
-      pagesToCapture.push(back);
-    } else {
-      front.style.display = 'block';
-      back.style.display  = 'block';
-      pagesToCapture.push(front, back);
-    }
-
-    // Generate JPEG with selected pages and provide system file picker
-    Promise.all(
-      pagesToCapture.map(page =>
-        html2canvas(page, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      )
-    ).then(function(canvases) {
-      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-      downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
-
-      // Restore display state
-      setTimeout(function() {
-        front.style.display = prevFrontDisplay;
-        back.style.display  = prevBackDisplay;
-      }, 500);
-    }).catch(function(err) {
-      console.error('Canvas generation failed for JPEG:', err);
-      alert('Failed to generate JPEG. Please try again.');
-      // Restore display state on error
-      front.style.display = prevFrontDisplay;
-      back.style.display  = prevBackDisplay;
-    });
-  });
 
   document.getElementById('printBtn').addEventListener('click', function() {
     var prevFrontDisplay = front.style.display;
