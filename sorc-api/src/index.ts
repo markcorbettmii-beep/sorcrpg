@@ -1026,7 +1026,7 @@ app.get('/api/me', authMiddleware, async (c) => {
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
-  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar'];
+  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'signature', 'website', 'social_twitter', 'social_twitch', 'privacy_email', 'unlocked_features', 'community_points'];
   const setParts: string[] = [];
   const values: any[] = [];
   for (const field of allowedFields) {

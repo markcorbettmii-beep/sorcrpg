@@ -140,12 +140,15 @@
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!saved || !saved.authKey) { msgEl.className = 'msg error'; msgEl.textContent = 'Not logged in.'; return; }
         try {
+            alert('DEBUG: saveAvatar - API URL: ' + API_URL + ', authKey: ' + (saved.authKey ? saved.authKey.substring(0, 8) + '...' : 'NONE') + ', avatar: ' + selectedAvatar);
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
                 body: JSON.stringify({ avatar: selectedAvatar })
             });
+            alert('DEBUG: saveAvatar - response status: ' + res.status + ', ok: ' + res.ok);
             var data = await res.json();
+            alert('DEBUG: saveAvatar - response: ' + JSON.stringify(data).substring(0, 200));
             if (data.success) {
                 saved.avatar = selectedAvatar;
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
@@ -205,12 +208,15 @@
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!saved || !saved.authKey) return;
         try {
+            alert('DEBUG: saveBio - API URL: ' + API_URL + ', authKey: ' + (saved.authKey ? saved.authKey.substring(0, 8) + '...' : 'NONE') + ', bio length: ' + bio.length);
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
                 body: JSON.stringify({ bio: bio })
             });
+            alert('DEBUG: saveBio - response status: ' + res.status + ', ok: ' + res.ok);
             var data = await res.json();
+            alert('DEBUG: saveBio - response: ' + JSON.stringify(data).substring(0, 200));
             msgEl.className = data.success ? 'msg success' : 'msg error';
             msgEl.textContent = data.success ? '✅ Bio saved!' : (data.error || 'Failed.');
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
@@ -235,12 +241,15 @@
         if (!saved || !saved.authKey) return;
         applyPrivacyToggleVisual(isPublic);
         try {
+            alert('DEBUG: saveEmailPrivacy - API URL: ' + API_URL + ', authKey: ' + (saved.authKey ? saved.authKey.substring(0, 8) + '...' : 'NONE') + ', privacy_email: ' + (isPublic ? 0 : 1));
             var res = await fetch(API_URL + '/api/profile', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
                 body: JSON.stringify({ privacy_email: isPublic ? 0 : 1 })
             });
+            alert('DEBUG: saveEmailPrivacy - response status: ' + res.status + ', ok: ' + res.ok);
             var data = await res.json();
+            alert('DEBUG: saveEmailPrivacy - response: ' + JSON.stringify(data).substring(0, 200));
             if (data.success) {
                 saved.privacy_email = isPublic ? 0 : 1;
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
@@ -438,19 +447,20 @@
             upgradeSection = '<div class="upgrade-section">' +
                 '<h3>Upgrade Your Account</h3>' +
                 '<button class="upgrade-btn" onclick="toggleInfo(\'pc-info\')">▶ Upgrade to PLAYER</button>' +
-                '<div class="upgrade-info" id="pc-info">To upgrade to PLAYER you must pass a SORC Player Assessment. Assessments are currently under development. Upon upgrading you will receive <b>500 community points</b>.</div>' +
-                '<button class="upgrade-btn" onclick="toggleInfo(\'gm-info\')">▶ Upgrade to MASTER</button>' +
-                '<div class="upgrade-info" id="gm-info">To upgrade to MASTER you must pass a SORC Master Assessment AND redeem an official Master Code. Upon upgrading you will receive <b>1,000 community points</b>.</div>' +
+                '<div class="upgrade-info" id="pc-info"><a href="/assess.html" style="color:#b9aa00;text-decoration:underline;">Take the PC Assessment</a> to unlock PLAYER status and access <a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Lobbies</a>. Upon upgrading you will receive <b>500 community points</b>.</div>' +
+                '<button class="upgrade-btn" onclick="toggleInfo(\'gm-info\')">▶ Upgrade to MASTER (GM)</button>' +
+                '<div class="upgrade-info" id="gm-info"><a href="/assess.html" style="color:#b9aa00;text-decoration:underline;">Take the GM Assessment</a> to unlock MASTER status. GM Codex under development. Upon upgrading you will receive <b>1,000 community points</b>.</div>' +
             '</div>';
         } else if (role === 'PLAYER') {
             upgradeSection = '<div class="upgrade-section">' +
                 '<h3>&#128081; Upgrade to MASTER (GM)</h3>' +
-                '<p style="color:#888;font-size:0.82rem;margin:0 0 0.75rem 0;">If an admin has issued you a GM code, enter it below to upgrade your account to Game Master status and unlock lobby hosting.</p>' +
+                '<p style="color:#888;font-size:0.82rem;margin:0 0 0.75rem 0;"><a href="/assess.html" style="color:#b9aa00;text-decoration:underline;">Take the GM Assessment</a> to unlock Game Master status. GM Codex under development. If approved, redeem your GM code below to complete the upgrade.</p>' +
                 '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
                     '<input type="text" id="gmCodeInput" placeholder="Enter GM code..." maxlength="20" style="flex:1;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:#e0cfc0;font-size:0.88rem;" />' +
                     '<button onclick="redeemGmCode()" style="padding:8px 18px;background:#b9aa00;color:#111;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.88rem;">Redeem</button>' +
                 '</div>' +
                 '<div id="gmCodeMsg" style="min-height:1.2em;font-size:0.8rem;margin-top:0.4rem;"></div>' +
+                '<p style="color:#888;font-size:0.82rem;margin:0.75rem 0 0 0;"><a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Access Lobbies</a> (PLAYER only)</p>' +
             '</div>';
         }
 
