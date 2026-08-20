@@ -104,15 +104,11 @@
             var email = document.getElementById('emailInput').value.trim();
             var password = document.getElementById('passwordInput').value;
 
-            alert('Step 1: Email signin initiated. Email: ' + email);
-
             if (!email || !password) {
-                alert('ERROR: Email or password missing');
                 showStatus('Please enter your email and password.', 'error');
                 return;
             }
 
-            alert('Step 2: Sending signin request to server...');
             showStatus('Signing in...', 'success');
 
             try {
@@ -123,15 +119,13 @@
                 });
                 var data = await res.json();
 
-                alert('Step 3: Server response received. Status: ' + res.status + ', Success: ' + data.success);
-
                 if (!res.ok || !data.success) {
-                    alert('Step 4: Signin failed. Error: ' + data.error);
-
                     if (data.unverified) {
                         localStorage.setItem('signupEmail', email);
                         localStorage.setItem('sorc_user', JSON.stringify({ email }));
                         showStatus(data.error + ' <a href="javascript:void(0)" onclick="window.location.href=\'signin-verify-email.html\';" style="color:#b9aa00;text-decoration:underline;">Go to verification page</a>', 'error');
+                    } else if (data.passwordResetRequired) {
+                        showStatus('Password reset required. <a href="javascript:void(0)" onclick="showForgotPassword()" style="color:#b9aa00;text-decoration:underline;">Click here to reset your password</a>', 'error');
                     } else if (res.status === 401 && data.error && data.error.includes('No password')) {
                         var encodedEmail = email.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
                         showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendReset(\'' + encodedEmail.replace(/'/g, '&#39;') + '\')" style="color:#b9aa00;text-decoration:underline;">Send me a reset link</a>', 'error');
@@ -141,7 +135,6 @@
                     return;
                 }
 
-                alert('Step 5: Signin successful! Saving user data and redirecting...');
                 localStorage.setItem('sorc_user', JSON.stringify({
                     ...data.user,
                     authKey: data.authKey
@@ -149,7 +142,6 @@
 
                 window.location.href = 'index.html';
             } catch(e) {
-                alert('ERROR: Connection error - ' + e.message);
                 showStatus('Connection error. Please try again.', 'error');
             }
         };
