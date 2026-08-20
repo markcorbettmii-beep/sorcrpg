@@ -2593,30 +2593,65 @@
   }
 
   function downloadAsImage(canvases, name, mimeType, ext) {
-    // For image formats, create a composite of both pages
-    var tempCanvas = document.createElement('canvas');
-    var ctx = tempCanvas.getContext('2d');
+    try {
+      // Handle case where we might have only 1 or 2 canvases
+      if (!canvases || canvases.length === 0) {
+        throw new Error('No canvases provided for download');
+      }
 
-    var totalHeight = canvases[0].height + canvases[1].height + 20;
-    tempCanvas.width = canvases[0].width;
-    tempCanvas.height = totalHeight;
+      var tempCanvas = document.createElement('canvas');
+      var ctx = tempCanvas.getContext('2d');
 
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
 
-    ctx.drawImage(canvases[0], 0, 0);
-    ctx.drawImage(canvases[1], 0, canvases[0].height + 20);
+      // Calculate dimensions based on number of canvases
+      var totalHeight;
+      if (canvases.length === 1) {
+        totalHeight = canvases[0].height;
+        tempCanvas.width = canvases[0].width;
+      } else {
+        totalHeight = canvases[0].height + canvases[1].height + 20;
+        tempCanvas.width = canvases[0].width;
+      }
+      tempCanvas.height = totalHeight;
 
-    tempCanvas.toBlob(function(blob) {
-      var url = URL.createObjectURL(blob);
-      var link = document.createElement('a');
-      link.href = url;
-      link.download = name + '-sheet.' + ext;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, mimeType);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+      // Draw all canvases
+      var yOffset = 0;
+      for (var i = 0; i < canvases.length; i++) {
+        ctx.drawImage(canvases[i], 0, yOffset);
+        yOffset += canvases[i].height + (i < canvases.length - 1 ? 20 : 0);
+      }
+
+      tempCanvas.toBlob(function(blob) {
+        if (!blob) {
+          console.error('toBlob failed - blob is null');
+          alert('Failed to create image file. Please try again.');
+          return;
+        }
+
+        try {
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = url;
+          link.download = name + '-sheet.' + ext;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch(downloadErr) {
+          console.error('Download failed:', downloadErr);
+          alert('Failed to download file. Please try again.');
+        }
+      }, mimeType);
+    } catch(err) {
+      console.error('Image download error:', err);
+      alert('Failed to generate JPEG: ' + err.message);
+    }
   }
 
   function downloadAsDocx(canvases, name) {
