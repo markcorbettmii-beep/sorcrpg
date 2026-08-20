@@ -2344,6 +2344,7 @@
   </div>
   <button id="clearRestoreBtn">Clear/Restore</button>
   <button id="jpegBtn">JPEG</button>
+  <button id="printBtn">Print</button>
 </div>
 
 <script>
@@ -2724,6 +2725,28 @@
       front.style.display = prevFrontDisplay;
       back.style.display  = prevBackDisplay;
     });
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
+    if (printSide === 'front') {
+      front.style.display = 'block';
+      back.style.display  = 'none';
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
+    }
+
+    window.print();
+
+    setTimeout(function() {
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
+    }, 500);
   });
 
 </script>
