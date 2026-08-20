@@ -2445,6 +2445,23 @@
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
 
+      // Add steganographic metadata (hidden character data in PDF)
+      var timestamp = new Date().toISOString();
+      var charData = {
+        name: name,
+        created: timestamp,
+        type: 'SORC-CHARACTER-SHEET',
+        version: '1.0'
+      };
+      pdf.setProperties({
+        title: 'SORC Character Sheet: ' + name,
+        subject: 'Character Sheet - ' + name,
+        author: 'SORC',
+        keywords: 'SORC,Character,' + name,
+        creator: 'SORC Character System',
+        producer: charData.type + ':' + timestamp
+      });
+
       // Add images to PDF with error handling for each - limit to 2 pages (front and back only)
       var maxPages = Math.min(canvases.length, 2);
       for (var i = 0; i < maxPages; i++) {
