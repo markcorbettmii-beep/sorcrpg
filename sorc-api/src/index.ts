@@ -598,10 +598,12 @@ This usually means:
         `, 500);
       }
     } else {
-      // User exists, generate new auth key
+      // User exists, generate new auth key and sync avatar from Google
       authKey = crypto.randomUUID();
       try {
-        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ?, avatar = ?, display_name = ? WHERE id = ?').bind(authKey, googleUser.picture || user.avatar || null, googleUser.name || user.display_name, user.id).run();
+        // Refresh user data with updated avatar and display_name from Google
+        user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE id = ?').bind(user.id).first() as any;
       } catch (error: any) {
         return c.html(`
           <html>
