@@ -2504,35 +2504,36 @@
           var imgData = canvases[i].toDataURL('image/png');
           pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
 
-          // Add transparent QR code to each page (bottom right corner)
-          // QR links to character sheet download/verification
-          var qrData = 'https://sorcrpg.com/verify?char=' + encodeURIComponent(name) + '&ts=' + encodeURIComponent(timestamp);
-          try {
-            // Create transparent QR code (visible and scannable)
-            var qrCanvas = document.createElement('canvas');
-            qrCanvas.id = 'qr-pdf-' + i + '-' + Date.now();
-            qrCanvas.style.display = 'none';
-            document.body.appendChild(qrCanvas);
+          // Add transparent QR code to front page only (bottom right corner)
+          if (i === 0) {
+            var qrData = 'https://sorcrpg.com/verify?char=' + encodeURIComponent(name) + '&ts=' + encodeURIComponent(timestamp);
+            try {
+              // Create transparent QR code (visible and scannable)
+              var qrCanvas = document.createElement('canvas');
+              qrCanvas.id = 'qr-pdf-' + i + '-' + Date.now();
+              qrCanvas.style.display = 'none';
+              document.body.appendChild(qrCanvas);
 
-            var qr = new QRCode(qrCanvas.id, {
-              text: qrData,
-              width: 100,
-              height: 100,
-              correctLevel: QRCode.CorrectLevel.H
-            });
+              var qr = new QRCode(qrCanvas.id, {
+                text: qrData,
+                width: 100,
+                height: 100,
+                correctLevel: QRCode.CorrectLevel.H
+              });
 
-            setTimeout(function() {
-              var qrCanvasEl = document.getElementById(qrCanvas.id);
-              if (qrCanvasEl && qrCanvasEl.querySelector('canvas')) {
-                var qrImg = qrCanvasEl.querySelector('canvas').toDataURL('image/png');
-                // Add transparent QR code at bottom right (visible, will print)
-                pdf.setGState(pdf.GD_ALPHA_STATE_STD_CA).setGState({ opacity: 0.35 });
-                pdf.addImage(qrImg, 'PNG', 170, 270, 35, 35);
-                document.body.removeChild(qrCanvasEl);
-              }
-            }, 50);
-          } catch(qrErr) {
-            console.warn('Failed to add QR code:', qrErr);
+              setTimeout(function() {
+                var qrCanvasEl = document.getElementById(qrCanvas.id);
+                if (qrCanvasEl && qrCanvasEl.querySelector('canvas')) {
+                  var qrImg = qrCanvasEl.querySelector('canvas').toDataURL('image/png');
+                  // Add transparent QR code at bottom right (visible, will print)
+                  pdf.setGState(pdf.GD_ALPHA_STATE_STD_CA).setGState({ opacity: 0.35 });
+                  pdf.addImage(qrImg, 'PNG', 170, 270, 35, 35);
+                  document.body.removeChild(qrCanvasEl);
+                }
+              }, 50);
+            } catch(qrErr) {
+              console.warn('Failed to add QR code:', qrErr);
+            }
           }
         } catch(imgErr) {
           console.error('Failed to add image ' + i + ':', imgErr);
