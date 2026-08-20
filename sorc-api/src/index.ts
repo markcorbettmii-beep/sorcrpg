@@ -1051,8 +1051,9 @@ app.put('/api/profile', authMiddleware, async (c) => {
 app.post('/api/admin/migrate-bcrypt', async (c) => {
   try {
     // Add password_reset_required column if it doesn't exist
+    // Use INTEGER (0/1) instead of BOOLEAN for SQLite compatibility
     await c.env.sorc_db.prepare(`
-      ALTER TABLE users ADD COLUMN password_reset_required BOOLEAN DEFAULT FALSE
+      ALTER TABLE users ADD COLUMN password_reset_required INTEGER DEFAULT 0
     `).run().catch(() => {
       // Column might already exist, that's okay
     });
