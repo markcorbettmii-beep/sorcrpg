@@ -2418,6 +2418,36 @@
 
   // Download button - download JPEG directly (same as JPEG button)
 
+  // Helper function to render clean canvases without artifacts
+  function renderCleanCanvases(frontEl, backEl) {
+    // Clear any selections or focus that might interfere with rendering
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges();
+    }
+
+    // Render with optimized html2canvas options
+    return Promise.all([
+      html2canvas(frontEl, {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#f5f1e8',
+        removeContainer: false,
+        type: 'canvas'
+      }),
+      html2canvas(backEl, {
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#f5f1e8',
+        removeContainer: false,
+        type: 'canvas'
+      })
+    ]);
+  }
+
   // Download handlers for each format
   function handleDownload(format, canvases, name) {
     switch(format) {
@@ -2447,10 +2477,7 @@
       var front = document.getElementById('front');
       var back = document.getElementById('back');
 
-      Promise.all([
-        html2canvas(front, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' }),
-        html2canvas(back, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      ]).then(function(canvases) {
+      renderCleanCanvases(front, back).then(function(canvases) {
         generatePDFBlob(canvases, charName);
       }).catch(function(err) {
         console.error('Canvas generation failed:', err);
@@ -2718,10 +2745,7 @@
     var charName = document.querySelector('[data-field="charname"] .pencil')?.textContent || 'Character';
 
     // Generate canvases for both front and back
-    Promise.all([
-      html2canvas(front, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' }),
-      html2canvas(back, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-    ]).then(function(canvases) {
+    renderCleanCanvases(front, back).then(function(canvases) {
       downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
     }).catch(function(err) {
       console.error('Canvas generation failed:', err);
