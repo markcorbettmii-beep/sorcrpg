@@ -1050,26 +1050,38 @@ app.put('/api/profile', authMiddleware, async (c) => {
 // Migration endpoint to add password_reset_required column and force password reset
 app.post('/api/admin/migrate-bcrypt', async (c) => {
   try {
-    // Add password_reset_required column if it doesn't exist
+    // Step 1: Add password_reset_required column if it doesn't exist
     // Use INTEGER (0/1) instead of BOOLEAN for SQLite compatibility
-    await c.env.sorc_db.prepare(`
-      ALTER TABLE users ADD COLUMN password_reset_required INTEGER DEFAULT 0
-    `).run().catch(() => {
-      // Column might already exist, that's okay
-    });
+    try {
+      await c.env.sorc_db.prepare(`
+        ALTER TABLE users ADD COLUMN password_reset_required INTEGER DEFAULT 0
+      `).run();
+    } catch (columnError: any) {
+      if (!columnError.message.includes('duplicate column')) {
+        console.error('Column creation error:', columnError.message);
+        // Still continue - might be a different issue
+      }
+    }
 
-    // Set password_reset_required = 1 AND invalidate all auth_keys for users with password_hash (existing email/password users)
-    // This forces password reset AND logs out all users
-    await c.env.sorc_db.prepare(`
+    // Step 2: Update all users with password_hash to require password reset
+    const updateResult = await c.env.sorc_db.prepare(`
       UPDATE users SET password_reset_required = 1, auth_key = NULL WHERE password_hash IS NOT NULL
     `).run();
 
     return c.json({
       success: true,
-      message: 'Migration complete. All email/password users have been logged out and must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.'
+      message: 'Migration complete. All email/password users have been logged out and must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.',
+      details: {
+        columnsAffected: updateResult.meta.changes || 0
+      }
     });
   } catch (error: any) {
-    return c.json({ error: 'Migration failed', details: error.message }, 500);
+    console.error('Migration error:', error);
+    return c.json({
+      error: 'Migration failed',
+      details: error.message || error.toString(),
+      errorType: error.name || 'Unknown'
+    }, 500);
   }
 });
 

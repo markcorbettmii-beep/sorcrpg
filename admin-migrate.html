@@ -120,6 +120,7 @@
                 if (res.ok && data.success) {
                     step2Div.innerHTML = '<div class="status success">✅ Migration completed successfully!<br><br>' +
                         '<strong>Result:</strong> ' + data.message + '<br><br>' +
+                        (data.details && data.details.columnsAffected ? '<strong>Users affected:</strong> ' + data.details.columnsAffected + '<br><br>' : '') +
                         '<strong>Next Steps:</strong><br>' +
                         '1. All existing email/password users now have password_reset_required = 1<br>' +
                         '2. All auth_keys have been cleared (users logged out)<br>' +
@@ -127,8 +128,13 @@
                         '4. Users can click the link to reset their password</div>';
                     migrateBtn.textContent = 'Migration Complete ✓';
                 } else {
+                    var errorMsg = data.error || 'Unknown error';
+                    var errorDetails = data.details || '';
                     step2Div.innerHTML = '<div class="status error">❌ Migration failed<br><br>' +
-                        '<strong>Error:</strong> ' + (data.message || data.error || 'Unknown error') + '</div>';
+                        '<strong>Error:</strong> ' + errorMsg + '<br>' +
+                        (errorDetails ? '<strong>Details:</strong> ' + errorDetails + '<br>' : '') +
+                        (data.errorType ? '<strong>Type:</strong> ' + data.errorType : '') +
+                        '<br><br><em>Check browser console and server logs for more info</em></div>';
                     migrateBtn.disabled = false;
                     migrateBtn.textContent = 'Retry Migration';
                 }
