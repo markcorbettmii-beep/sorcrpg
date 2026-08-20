@@ -2676,44 +2676,23 @@
   document.getElementById('printBtn').addEventListener('click', function() {
     var prevFrontDisplay = front.style.display;
     var prevBackDisplay  = back.style.display;
-
-    // Determine which pages to capture based on side selection
-    var pagesToCapture = [];
     if (printSide === 'front') {
       front.style.display = 'block';
       back.style.display  = 'none';
-      pagesToCapture.push(front);
     } else if (printSide === 'back') {
       front.style.display = 'none';
       back.style.display  = 'block';
-      pagesToCapture.push(back);
     } else {
       front.style.display = 'block';
       back.style.display  = 'block';
-      pagesToCapture.push(front, back);
     }
 
-    // Generate JPEG with selected pages and provide system file picker
-    Promise.all(
-      pagesToCapture.map(page =>
-        html2canvas(page, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      )
-    ).then(function(canvases) {
-      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-      downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
+    window.print();
 
-      // Restore display state
-      setTimeout(function() {
-        front.style.display = prevFrontDisplay;
-        back.style.display  = prevBackDisplay;
-      }, 500);
-    }).catch(function(err) {
-      console.error('Canvas generation failed for Print:', err);
-      alert('Failed to generate JPEG. Please try again.');
-      // Restore display state on error
+    setTimeout(function() {
       front.style.display = prevFrontDisplay;
       back.style.display  = prevBackDisplay;
-    });
+    }, 500);
   });
 
 </script>
