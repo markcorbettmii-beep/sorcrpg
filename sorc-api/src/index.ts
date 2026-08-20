@@ -246,7 +246,7 @@ app.post('/api/auth/signin', async (c) => {
 
   const authKey = crypto.randomUUID();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
-  return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, avatar: user.avatar || null, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
+  return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
 
 app.post('/api/auth/forgot-password', async (c) => {
@@ -558,10 +558,10 @@ Solution: Make sure your Google account has a public email address.</code>
 
       try {
         await c.env.sorc_db.prepare(`
-          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, avatar, join_date, created_at, updated_at, user_id, email_verified, password_hash)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', googleUser.picture || null, now, now, now, userId, true, '').run();
-        user = { id: uuid, email: googleUser.email, username, display_name: googleUser.name || googleUser.email, avatar: googleUser.picture || null, role: 'CIVILIAN', community_points: 0, created_at: now };
+          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
+        user = { id: uuid, email: googleUser.email, username, display_name: googleUser.name || googleUser.email, role: 'CIVILIAN', community_points: 0, created_at: now };
       } catch (error: any) {
         return c.html(`
           <html>
@@ -645,7 +645,6 @@ This usually means:
       email: user.email,
       username: user.username,
       display_name: user.display_name,
-      avatar: user.avatar || null,
       role: user.role,
       community_points: user.community_points || 0,
       created_at: user.created_at,
