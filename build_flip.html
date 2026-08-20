@@ -1005,8 +1005,7 @@
         break-after: page;
       }
       .face.back {
-        page-break-before: always;
-        break-before: page;
+        /* No page break - this is the last page */
       }
     }
     /* Character sheet link colors - rare rank blue */
@@ -2498,17 +2497,18 @@
       var jsPDF = window.jspdf.jsPDF;
       var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
 
-      // Add images to PDF with error handling for each
-      canvases.forEach(function(canvas, index) {
+      // Add images to PDF with error handling for each - limit to 2 pages (front and back only)
+      var maxPages = Math.min(canvases.length, 2);
+      for (var i = 0; i < maxPages; i++) {
         try {
-          if (index > 0) pdf.addPage();
-          var imgData = canvas.toDataURL('image/png');
+          if (i > 0) pdf.addPage();
+          var imgData = canvases[i].toDataURL('image/png');
           pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
         } catch(imgErr) {
-          console.error('Failed to add image ' + index + ':', imgErr);
+          console.error('Failed to add image ' + i + ':', imgErr);
           throw imgErr;
         }
-      });
+      }
 
       // Generate PDF and download
       try {
