@@ -1057,10 +1057,10 @@ app.post('/api/admin/migrate-bcrypt', async (c) => {
       // Column might already exist, that's okay
     });
 
-    // Set password_reset_required = 1 AND invalidate all auth_keys for users with password_hash (existing email/password users)
-    // This forces password reset AND logs out all users
+    // Set password_reset_required = 1 for users with password_hash (existing email/password users)
+    // Keep auth_key intact so users can still use the app - they just can't sign in again until they reset password
     await c.env.sorc_db.prepare(`
-      UPDATE users SET password_reset_required = 1, auth_key = NULL WHERE password_hash IS NOT NULL
+      UPDATE users SET password_reset_required = 1 WHERE password_hash IS NOT NULL
     `).run();
 
     return c.json({
@@ -1069,6 +1069,81 @@ app.post('/api/admin/migrate-bcrypt', async (c) => {
     });
   } catch (error: any) {
     return c.json({ error: 'Migration failed', details: error.message }, 500);
+  }
+});
+
+// ===== ASSESSMENTS =====
+
+app.get('/api/assess/questions', authMiddleware, async (c) => {
+  try {
+    // Return 10 assessment questions
+    const questions = [
+      { id: 1, q: 'What is the primary goal of character creation in SORC?' },
+      { id: 2, q: 'How many ability scores does a character have at creation?' },
+      { id: 3, q: 'What is the standard die used for rolling ability scores?' },
+      { id: 4, q: 'What are the four main classes in SORC?' },
+      { id: 5, q: 'What is the typical starting level for new characters?' },
+      { id: 6, q: 'How does alignment work in SORC campaigns?' },
+      { id: 7, q: 'What resources do Game Masters use to build encounters?' },
+      { id: 8, q: 'How is experience typically awarded in SORC?' },
+      { id: 9, q: 'What is the role of a Game Master?' },
+      { id: 10, q: 'How are hit points calculated for player characters?' }
+    ];
+    return c.json({ questions });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load questions', details: error.message }, 500);
+  }
+});
+
+app.post('/api/assess/submit', authMiddleware, async (c) => {
+  try {
+    const { answers, gm_track } = await c.req.json();
+    const user = c.get('user') as any;
+
+    if (!answers || !Array.isArray(answers)) {
+      return c.json({ error: 'Invalid answers format' }, 400);
+    }
+
+    // Calculate score (placeholder - all correct answers)
+    const score = answers.length;
+
+    // Determine role based on score and track
+    let role_granted = 'PC';
+    let site_role = 'PLAYER';
+
+    if (gm_track) {
+      if (score >= 9) {
+        role_granted = 'GM-ADV';
+        site_role = 'MASTER';
+      } else {
+        return c.json({ passed: false, score, message: 'GMs must score 9 or higher' });
+      }
+    } else {
+      if (score >= 9) {
+        role_granted = 'PC-ADV';
+      } else if (score >= 8) {
+        role_granted = 'PC-INT';
+      } else if (score >= 6) {
+        role_granted = 'PC';
+      } else {
+        return c.json({ passed: false, score, message: 'Please score at least 6 to pass' });
+      }
+    }
+
+    // Award community points
+    const points_awarded = gm_track ? 1000 : 500;
+    await c.env.sorc_db.prepare('UPDATE users SET community_points = community_points + ?, sorc_role = ? WHERE id = ?')
+      .bind(points_awarded, role_granted, user.id).run();
+
+    return c.json({
+      passed: true,
+      score,
+      role: role_granted,
+      site_role,
+      points_awarded
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Assessment submission failed', details: error.message }, 500);
   }
 });
 
