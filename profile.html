@@ -359,6 +359,39 @@
         window.location.href = 'index.html';
     };
 
+    window.saveAllChanges = async function() {
+        var msgEl = document.getElementById('saveAllMsg');
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!saved || !saved.authKey) { msgEl.className = 'msg error'; msgEl.textContent = 'Not logged in.'; return; }
+
+        msgEl.className = 'msg'; msgEl.textContent = 'Saving all changes...';
+
+        try {
+            // Collect all current values from form fields
+            var displayName = (document.getElementById('nameInput') || {}).value || saved.display_name;
+            var bio = (document.getElementById('bioInput') || {}).value || saved.bio;
+            var avatar = saved.avatar; // avatar is already selected
+
+            var updates = { display_name: displayName, bio: bio, avatar: avatar };
+
+            var res = await fetch(API_URL + '/api/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
+                body: JSON.stringify(updates)
+            });
+            var data = await res.json();
+            if (data.success) {
+                msgEl.className = 'msg success'; msgEl.textContent = '✅ All changes saved!';
+                setTimeout(function() { msgEl.textContent = ''; }, 3000);
+            } else {
+                msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed to save.';
+            }
+        } catch(e) {
+            msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.';
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', async function() {
         alert('Step 1: Profile DOMContentLoaded fired');
         console.log('[PROFILE] DOMContentLoaded fired');
@@ -614,6 +647,11 @@
                 '</div>' +
 
                 upgradeSection +
+
+                '<div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #333;">' +
+                    '<button class="btn btn-gold" onclick="saveAllChanges()" style="width:100%;margin-bottom:1rem;font-weight:bold;font-size:1rem;">💾 Save All Changes</button>' +
+                    '<div id="saveAllMsg" class="msg" style="text-align:center;margin-bottom:1rem;"></div>' +
+                '</div>' +
 
                 '<div style="margin-top:1rem;display:flex;gap:1rem;flex-wrap:wrap;">' +
                     '<a href="character-customizer/creation-overview.html" class="btn btn-gold" style="text-decoration:none;">Character Sheet</a>' +
