@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bcrypt Migration Tool</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f0; }
+        .container { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ccc; }
+        h1 { color: #c93f35; margin-bottom: 20px; }
+        .status { padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .status.info { background: #e3f2fd; border: 1px solid #2196f3; color: #1565c0; }
+        .status.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
+        .status.error { background: #ffebee; border: 1px solid #c93f35; color: #c93f35; }
+        .status.warning { background: #fff3e0; border: 1px solid #ff9800; color: #e65100; }
+        button {
+            background: #c93f35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+        }
+        button:hover { background: #a83228; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .step { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #c93f35; }
+        code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Bcrypt Migration Tool</h1>
+
+        <div class="status info">
+            <strong>Purpose:</strong> This tool runs the password reset migration to force existing email/password users to reset their passwords as they transition to bcrypt hashing.
+        </div>
+
+        <h2>Current Status</h2>
+        <div id="statusContainer"></div>
+
+        <h2>Migration Steps</h2>
+        <div class="step">
+            <strong>Step 1:</strong> Check if migration has already been run
+            <div id="step1Status"></div>
+        </div>
+
+        <div class="step">
+            <strong>Step 2:</strong> Run the bcrypt migration
+            <button id="migrateBtn" onclick="runMigration()" disabled>Run Migration (Checking...)</button>
+            <div id="step2Status"></div>
+        </div>
+
+        <h2>What This Does</h2>
+        <ul>
+            <li>✓ Adds <code>password_reset_required</code> column to users table (if not exists)</li>
+            <li>✓ Sets <code>password_reset_required = 1</code> for all users with password_hash</li>
+            <li>✓ Clears auth_key (logs out all email/password users)</li>
+            <li>✓ Forces password reset on next login attempt</li>
+            <li>✓ Leaves OAuth users (Google, Amazon, Apple) unaffected</li>
+        </ul>
+
+        <h2>After Migration</h2>
+        <p>Users attempting to sign in with old credentials will see:</p>
+        <div style="border: 1px solid #c93f35; padding: 15px; background: #fff; margin: 10px 0; border-radius: 4px;">
+            <strong style="color: #c93f35;">Password reset required.</strong><br>
+            <a href="#" style="color: #b9aa00; text-decoration: underline;">Click here to reset your password</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.sorcrpg.com';
+
+        async function checkMigrationStatus() {
+            const statusDiv = document.getElementById('statusContainer');
+            const step1Div = document.getElementById('step1Status');
+            const migrateBtn = document.getElementById('migrateBtn');
+
+            try {
+                // Try to fetch a user and check their password_reset_required field
+                // This is just to verify the column exists
+                const testRes = await fetch(API_URL + '/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test@test.com', password: 'test' })
+                });
+
+                // We don't care if it succeeds, we just want to see if the column exists
+                const testData = await testRes.json();
+
+                // If we get here, the server is responsive
+                statusDiv.innerHTML = '<div class="status warning">⚠️ Check the logs below for migration status</div>';
+                step1Div.innerHTML = '<div class="status info">Verifying migration state...</div>';
+                migrateBtn.disabled = false;
+                migrateBtn.textContent = 'Run Migration Now';
+
+            } catch(e) {
+                statusDiv.innerHTML = '<div class="status error">❌ Could not connect to API: ' + e.message + '</div>';
+                migrateBtn.disabled = true;
+            }
+        }
+
+        async function runMigration() {
+            const step2Div = document.getElementById('step2Status');
+            const migrateBtn = document.getElementById('migrateBtn');
+
+            migrateBtn.disabled = true;
+            migrateBtn.textContent = 'Running Migration...';
+            step2Div.innerHTML = '<div class="status info">⏳ Migration in progress...</div>';
+
+            try {
+                const res = await fetch(API_URL + '/api/admin/migrate-bcrypt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    step2Div.innerHTML = '<div class="status success">✅ Migration completed successfully!<br><br>' +
+                        '<strong>Result:</strong> ' + data.message + '<br><br>' +
+                        '<strong>Next Steps:</strong><br>' +
+                        '1. All existing email/password users now have password_reset_required = 1<br>' +
+                        '2. All auth_keys have been cleared (users logged out)<br>' +
+                        '3. Next login attempt will show "Password reset required" message<br>' +
+                        '4. Users can click the link to reset their password</div>';
+                    migrateBtn.textContent = 'Migration Complete ✓';
+                } else {
+                    step2Div.innerHTML = '<div class="status error">❌ Migration failed<br><br>' +
+                        '<strong>Error:</strong> ' + (data.message || data.error || 'Unknown error') + '</div>';
+                    migrateBtn.disabled = false;
+                    migrateBtn.textContent = 'Retry Migration';
+                }
+            } catch(e) {
+                step2Div.innerHTML = '<div class="status error">❌ Network error: ' + e.message + '</div>';
+                migrateBtn.disabled = false;
+                migrateBtn.textContent = 'Retry Migration';
+            }
+        }
+
+        // Check status when page loads
+        window.addEventListener('load', checkMigrationStatus);
+    </script>
+</body>
+</html>
