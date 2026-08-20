@@ -337,6 +337,9 @@ app.get('/auth/google/callback', async (c) => {
     return c.html(`
       <html>
       <head><title>Google OAuth Error</title>
+      <script>
+        alert('❌ SIGN-IN FAILED\\n\\nError: ${error}\\n\\nDescription: ${errorDescription}\\n\\nTap OK to return to Sign In');
+      </script>
       <style>
         body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
         .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
@@ -345,7 +348,7 @@ app.get('/auth/google/callback', async (c) => {
         p { line-height: 1.6; }
       </style>
       </head>
-      <body>
+      <body onload="window.location.href = '/signin.html';">
         <div class="error-box">
           <h1>⚠️ Google Sign-In Error</h1>
           <p><strong>Error Code:</strong> ${error}</p>
@@ -356,10 +359,6 @@ Description: ${errorDescription}
 URI: ${errorUri}</code>
           <p><a href="/signin.html">← Back to Sign In</a></p>
         </div>
-        <script>
-          alert('❌ SIGN-IN FAILED\\n\\nError: ${error}\\n\\nDescription: ${errorDescription}\\n\\nTap OK to return to Sign In');
-          window.location.href = '/signin.html';
-        </script>
       </body>
       </html>
     `, 400);
@@ -369,6 +368,9 @@ URI: ${errorUri}</code>
     return c.html(`
       <html>
       <head><title>Google OAuth Error</title>
+      <script>
+        alert('❌ SIGN-IN FAILED\\n\\nMissing authorization code from Google\\n\\nPossible causes:\\n- Redirect URI mismatch\\n- User denied permissions\\n\\nTap OK to return to Sign In');
+      </script>
       <style>
         body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
         .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
@@ -377,7 +379,7 @@ URI: ${errorUri}</code>
         p { line-height: 1.6; }
       </style>
       </head>
-      <body>
+      <body onload="window.location.href = '/signin.html';">
         <div class="error-box">
           <h1>⚠️ Google Sign-In Error</h1>
           <p><strong>Issue:</strong> Authorization code missing from Google</p>
@@ -391,10 +393,6 @@ Possible causes:
 - User denied permissions</code>
           <p><a href="/signin.html">← Back to Sign In</a></p>
         </div>
-        <script>
-          alert('❌ SIGN-IN FAILED\\n\\nMissing authorization code from Google\\n\\nPossible causes:\\n- Redirect URI mismatch\\n- User denied permissions\\n\\nTap OK to return to Sign In');
-          window.location.href = '/signin.html';
-        </script>
       </body>
       </html>
     `, 400);
@@ -421,6 +419,9 @@ Possible causes:
       return c.html(`
         <html>
         <head><title>Google OAuth Error</title>
+        <script>
+          alert('❌ SIGN-IN FAILED\\n\\nToken Exchange Error\\n\\nStatus: ${tokenResponse.status}\\n\\nTap OK to return to Sign In');
+        </script>
         <style>
           body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
           .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
@@ -429,7 +430,7 @@ Possible causes:
           p { line-height: 1.6; }
         </style>
         </head>
-        <body>
+        <body onload="window.location.href = '/signin.html';">
           <div class="error-box">
             <h1>⚠️ Token Exchange Failed</h1>
             <p><strong>Status:</strong> ${tokenResponse.status}</p>
@@ -438,10 +439,6 @@ Status: ${tokenResponse.status}
 Response: ${error.substring(0, 500)}</code>
             <p><a href="/signin.html">← Back to Sign In</a></p>
           </div>
-          <script>
-            alert('❌ SIGN-IN FAILED\\n\\nToken Exchange Error\\n\\nStatus: ${tokenResponse.status}\\n\\nTap OK to return to Sign In');
-            window.location.href = '/signin.html';
-          </script>
         </body>
         </html>
       `, 400);
@@ -452,6 +449,9 @@ Response: ${error.substring(0, 500)}</code>
       return c.html(`
         <html>
         <head><title>Google OAuth Error</title>
+        <script>
+          alert('❌ SIGN-IN FAILED\\n\\nNo Access Token from Google\\n\\nTap OK to return to Sign In');
+        </script>
         <style>
           body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
           .error-box { background: #f8f8f8; border: 2px solid #d0d0d0; border-radius: 8px; padding: 20px; max-width: 600px; color: #333333; }
@@ -460,7 +460,7 @@ Response: ${error.substring(0, 500)}</code>
           p { line-height: 1.6; }
         </style>
         </head>
-        <body>
+        <body onload="window.location.href = '/signin.html';">
           <div class="error-box">
             <h1>⚠️ No Access Token Received</h1>
             <p><strong>Issue:</strong> Google did not provide an access token</p>
@@ -468,10 +468,6 @@ Response: ${error.substring(0, 500)}</code>
 Google OAuth returned: ${JSON.stringify(tokenData).substring(0, 500)}</code>
             <p><a href="/signin.html">← Back to Sign In</a></p>
           </div>
-          <script>
-            alert('❌ SIGN-IN FAILED\\n\\nNo Access Token from Google\\n\\nTap OK to return to Sign In');
-            window.location.href = '/signin.html';
-          </script>
         </body>
         </html>
       `, 400);
