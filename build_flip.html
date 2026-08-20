@@ -2504,11 +2504,11 @@
           var imgData = canvases[i].toDataURL('image/png');
           pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
 
-          // Add invisible QR code to each page (bottom right corner)
-          // QR encodes: character name + timestamp for verification
-          var qrData = name + '|' + timestamp;
+          // Add transparent QR code to each page (bottom right corner)
+          // QR links to character sheet download/verification
+          var qrData = 'https://sorcrpg.com/verify?char=' + encodeURIComponent(name) + '&ts=' + encodeURIComponent(timestamp);
           try {
-            // Create invisible QR code (will be scannable but not visible)
+            // Create transparent QR code (visible and scannable)
             var qrCanvas = document.createElement('canvas');
             qrCanvas.id = 'qr-pdf-' + i + '-' + Date.now();
             qrCanvas.style.display = 'none';
@@ -2525,9 +2525,9 @@
               var qrCanvasEl = document.getElementById(qrCanvas.id);
               if (qrCanvasEl && qrCanvasEl.querySelector('canvas')) {
                 var qrImg = qrCanvasEl.querySelector('canvas').toDataURL('image/png');
-                // Add QR code at bottom right, very small and with minimal opacity
-                pdf.setGState(pdf.GD_ALPHA_STATE_STD_CA).setGState({ opacity: 0.02 });
-                pdf.addImage(qrImg, 'PNG', 185, 280, 20, 20);
+                // Add transparent QR code at bottom right (visible, will print)
+                pdf.setGState(pdf.GD_ALPHA_STATE_STD_CA).setGState({ opacity: 0.35 });
+                pdf.addImage(qrImg, 'PNG', 170, 270, 35, 35);
                 document.body.removeChild(qrCanvasEl);
               }
             }, 50);
