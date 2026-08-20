@@ -2337,14 +2337,6 @@
 <div class="action-bar">
   <div style="position: relative; display: inline-block;">
     <button id="downloadBtn">Download</button>
-    <div id="downloadMenu" style="display: none; position: absolute; top: 100%; left: 0; background: #222; border: 1px solid #666; z-index: 1000; min-width: 120px;">
-      <div style="padding: 8px 0;">
-        <a href="#" data-format="jpg" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">JPEG</a>
-        <a href="#" data-format="pdf" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">PDF</a>
-        <a href="#" data-format="html" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">HTML</a>
-        <a href="#" data-format="docx" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">DOCX</a>
-      </div>
-    </div>
   </div>
   <div class="print-group">
     <button class="ptab active" data-side="front">Front</button>
@@ -2408,52 +2400,48 @@
   window.addEventListener('resize', scaleToFit);
   window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
 
-  // Download button - toggle menu
+  // Download button - download JPEG directly (same as JPEG button)
   document.getElementById('downloadBtn').addEventListener('click', function(e) {
     e.stopPropagation();
-    var menu = document.getElementById('downloadMenu');
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-  });
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
 
-  // Check for pending download after K-ID verification redirect
-  if (sessionStorage.getItem('pendingDownload') === 'true') {
-    var kidVerified = document.cookie.split('; ').find(row => row.startsWith('kidVerified='));
-    if (kidVerified) {
-      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-      downloadAsPDF(charName);
-      sessionStorage.removeItem('pendingDownload');
+    // Determine which pages to capture based on side selection
+    var pagesToCapture = [];
+    if (printSide === 'front') {
+      front.style.display = 'block';
+      back.style.display  = 'none';
+      pagesToCapture.push(front);
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+      pagesToCapture.push(back);
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
+      pagesToCapture.push(front, back);
     }
-  }
 
-  // Close menu when clicking elsewhere
-  document.addEventListener('click', function() {
-    document.getElementById('downloadMenu').style.display = 'none';
-  });
+    // Generate JPEG with selected pages and provide system file picker
+    Promise.all(
+      pagesToCapture.map(page =>
+        html2canvas(page, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
+      )
+    ).then(function(canvases) {
+      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
+      downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
 
-  // Format selection handlers
-  var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-
-  document.querySelectorAll('#downloadMenu a').forEach(function(link) {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      var format = this.getAttribute('data-format');
-      document.getElementById('downloadMenu').style.display = 'none';
-
-      var front = document.getElementById('front');
-      var back = document.getElementById('back');
-
-      // Generate canvases for all formats including PDF
-      Promise.all([
-        html2canvas(front, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' }),
-        html2canvas(back, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      ]).then(function(canvases) {
-        handleDownload(format, canvases, charName);
-      }).catch(function(err) {
-        console.error('Canvas generation failed:', err);
-        alert('Failed to generate file. Downloading HTML instead.');
-        downloadAsHTML(charName);
-      });
+      // Restore display state
+      setTimeout(function() {
+        front.style.display = prevFrontDisplay;
+        back.style.display  = prevBackDisplay;
+      }, 500);
+    }).catch(function(err) {
+      console.error('Canvas generation failed for Download:', err);
+      alert('Failed to generate JPEG. Please try again.');
+      // Restore display state on error
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
     });
   });
 
