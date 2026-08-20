@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_verified BOOLEAN DEFAULT FALSE,
   verification_token TEXT,
   password_hash TEXT,
+  password_reset_required BOOLEAN DEFAULT FALSE,
   unlocked_features TEXT DEFAULT '[]',
   admin_invited BOOLEAN DEFAULT FALSE,
   banned BOOLEAN DEFAULT FALSE,

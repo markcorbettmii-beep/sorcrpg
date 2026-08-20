@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import * as bcrypt from 'bcryptjs';
 
 interface Env {
   sorc_db: D1Database;
@@ -102,12 +103,8 @@ app.post('/api/auth/register', async (c) => {
   const uuid = crypto.randomUUID();
 
   try {
-    // Hash password using crypto (basic approach for now)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password + email);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // Hash password using bcrypt (12 rounds = ~250ms per hash, resistant to brute force)
+    const passwordHash = await bcrypt.hash(password, 12);
 
     let userToUse = existingUser;
     let tokenToUse = existingUser?.verification_token || verificationToken;
@@ -239,14 +236,14 @@ app.post('/api/auth/signin', async (c) => {
     return c.json({ error: 'This account does not support email/password sign-in. Please use Sign in with Google, Amazon, or Apple.' }, 401);
   }
 
-  // Hash password and compare
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + user.email);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  // Check if password reset is required (security migration from SHA-256 to bcrypt)
+  if (user.password_reset_required) {
+    return c.json({ success: false, passwordResetRequired: true, error: 'Password reset required. Please use the password reset link to create a new password.' }, 401);
+  }
 
-  if (passwordHash !== user.password_hash) {
+  // Verify password using bcrypt
+  const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+  if (!isPasswordValid) {
     return c.json({ error: 'Invalid credentials' }, 401);
   }
 
@@ -319,15 +316,11 @@ app.post('/api/auth/reset-password', async (c) => {
   const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired reset link' }, 400);
 
-  // Hash new password
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + user.email);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  // Hash new password using bcrypt
+  const passwordHash = await bcrypt.hash(password, 12);
 
-  // Update password and clear reset token
-  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, verification_token = NULL WHERE id = ?').bind(passwordHash, user.id).run();
+  // Update password, clear reset token, and clear password_reset_required flag
+  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, verification_token = NULL, password_reset_required = 0 WHERE id = ?').bind(passwordHash, user.id).run();
 
   return c.json({ success: true, message: 'Password reset successful. You can now sign in with your new password.' });
 });
@@ -1049,6 +1042,33 @@ app.put('/api/profile', authMiddleware, async (c) => {
     return c.json({ success: true, user: updatedUser });
   } catch (error: any) {
     return c.json({ error: 'Failed to update profile', details: error.message }, 500);
+  }
+});
+
+// ===== MIGRATIONS =====
+
+// Migration endpoint to add password_reset_required column and force password reset
+app.post('/api/admin/migrate-bcrypt', async (c) => {
+  try {
+    // Add password_reset_required column if it doesn't exist
+    await c.env.sorc_db.prepare(`
+      ALTER TABLE users ADD COLUMN password_reset_required BOOLEAN DEFAULT FALSE
+    `).run().catch(() => {
+      // Column might already exist, that's okay
+    });
+
+    // Set password_reset_required = 1 AND invalidate all auth_keys for users with password_hash (existing email/password users)
+    // This forces password reset AND logs out all users
+    await c.env.sorc_db.prepare(`
+      UPDATE users SET password_reset_required = 1, auth_key = NULL WHERE password_hash IS NOT NULL
+    `).run();
+
+    return c.json({
+      success: true,
+      message: 'Migration complete. All email/password users have been logged out and must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.'
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Migration failed', details: error.message }, 500);
   }
 });
 
