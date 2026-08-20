@@ -1064,15 +1064,18 @@ app.post('/api/admin/migrate-bcrypt', async (c) => {
     }
 
     // Step 2: Update all users with password_hash to require password reset
+    // Note: We only set password_reset_required = 1, don't clear auth_key (it has NOT NULL constraint)
+    // The signin endpoint will check password_reset_required and prevent login anyway
     const updateResult = await c.env.sorc_db.prepare(`
-      UPDATE users SET password_reset_required = 1, auth_key = NULL WHERE password_hash IS NOT NULL
+      UPDATE users SET password_reset_required = 1 WHERE password_hash IS NOT NULL
     `).run();
 
     return c.json({
       success: true,
-      message: 'Migration complete. All email/password users have been logged out and must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.',
+      message: 'Migration complete. All email/password users must reset their password on next login. OAuth users (Google, Amazon, Apple) are unaffected.',
       details: {
-        columnsAffected: updateResult.meta.changes || 0
+        usersAffected: updateResult.meta.changes || 0,
+        affectedUsers: 'All users with password_hash now have password_reset_required = 1'
       }
     });
   } catch (error: any) {
