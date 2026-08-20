@@ -2339,6 +2339,7 @@
     <button id="downloadBtn">Download</button>
     <div id="downloadMenu" style="display: none; position: absolute; top: 100%; left: 0; background: #222; border: 1px solid #666; z-index: 1000; min-width: 120px;">
       <div style="padding: 8px 0;">
+        <a href="#" data-format="jpg" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">JPEG</a>
         <a href="#" data-format="pdf" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">PDF</a>
         <a href="#" data-format="html" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">HTML</a>
         <a href="#" data-format="docx" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">DOCX</a>
@@ -2350,7 +2351,7 @@
     <button class="ptab" data-side="back">Back</button>
   </div>
   <button id="clearRestoreBtn">Clear/Restore</button>
-  <button id="printBtn">Print</button>
+  <button id="printBtn">JPEG</button>
 </div>
 
 <script>
@@ -2698,7 +2699,7 @@
     var prevFrontDisplay = front.style.display;
     var prevBackDisplay  = back.style.display;
 
-    // Determine which pages to capture based on print side selection
+    // Determine which pages to capture based on side selection
     var pagesToCapture = [];
     if (printSide === 'front') {
       front.style.display = 'block';
@@ -2714,14 +2715,14 @@
       pagesToCapture.push(front, back);
     }
 
-    // Generate PDF with selected pages and provide system file picker
+    // Generate JPEG with selected pages and provide system file picker
     Promise.all(
       pagesToCapture.map(page =>
         html2canvas(page, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
       )
     ).then(function(canvases) {
       var charName = document.querySelector('h1')?.textContent || 'character-sheet';
-      generatePDFBlob(canvases, charName);
+      downloadAsImage(canvases, charName, 'image/jpeg', 'jpg');
 
       // Restore display state
       setTimeout(function() {
@@ -2729,8 +2730,8 @@
         back.style.display  = prevBackDisplay;
       }, 500);
     }).catch(function(err) {
-      console.error('Canvas generation failed for print:', err);
-      alert('Failed to generate print PDF. Please try again.');
+      console.error('Canvas generation failed for JPEG:', err);
+      alert('Failed to generate JPEG. Please try again.');
       // Restore display state on error
       front.style.display = prevFrontDisplay;
       back.style.display  = prevBackDisplay;
