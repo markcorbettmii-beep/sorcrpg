@@ -643,8 +643,17 @@ This usually means:
       email: user.email,
       username: user.username,
       display_name: user.display_name,
+      first_name: user.first_name || null,
+      surname: user.surname || null,
+      prefix: user.prefix || null,
+      suffix: user.suffix || null,
+      avatar: user.avatar || null,
+      bio: user.bio || null,
       role: user.role,
       community_points: user.community_points || 0,
+      post_count: user.post_count || 0,
+      titles: user.titles || null,
+      join_date: user.join_date,
       created_at: user.created_at,
       authKey: authKey
     });
