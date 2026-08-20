@@ -83,7 +83,7 @@
     </ul>
     <div id="profileApp"><div style="text-align:center;padding:3rem;color:#555;">Loading...</div></div>
     <div id="footer"></div>
-    <script type="module" src="main.js?v=25"></script>
+    <script src="main.js?v=25"></script>
     <script>
     var API_URL = 'https://api.sorcrpg.com';
     var OWNER_EMAILS = ['corbett@sorcrpg.com'];
@@ -325,6 +325,7 @@
         if (!saved || !saved.authKey) return;
 
         var cp = saved.community_points || 0;
+        if (cp < cost) { alert('Not enough Community Points. Need ' + cost + ' CP.'); return; }
 
         try {
             var res = await fetch(API_URL + '/api/unlock', {
@@ -339,7 +340,9 @@
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
                 location.reload();
             } else {
+                alert(data.error || 'Could not unlock. Please try again.');
             }
+        } catch(e) { alert('Could not connect. Please try again.'); }
     };
 
     window.doSignOut = function() {
@@ -348,15 +351,19 @@
     };
 
     document.addEventListener('DOMContentLoaded', async function() {
+        alert('Step 1: Profile DOMContentLoaded fired');
         console.log('[PROFILE] DOMContentLoaded fired');
         var saved = null;
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {
+            alert('Step 2: ERROR parsing localStorage: ' + e);
             console.log('[PROFILE] Error parsing sorc_user from localStorage:', e);
         }
 
+        alert('Step 3: Loaded user from localStorage: ' + (saved ? saved.username : 'null'));
         console.log('[PROFILE] saved user:', saved ? saved.username : 'null');
 
         if (!saved || !saved.authKey) {
+            alert('Step 4: No auth key found - showing login screen');
             console.log('[PROFILE] No auth key found');
             document.getElementById('profileApp').innerHTML =
                 '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
@@ -365,23 +372,29 @@
 
         // Always fetch fresh data from server so role/points stay current
         try {
+            alert('Step 5: Fetching fresh data from /api/me');
             console.log('[PROFILE] Fetching fresh data from /api/me');
             var freshRes = await fetch(API_URL + '/api/me', {
                 headers: { 'X-Auth-Key': saved.authKey }
             });
+            alert('Step 6: /api/me response status: ' + freshRes.status);
             console.log('[PROFILE] /api/me response status:', freshRes.status);
             var freshData = await freshRes.json();
+            alert('Step 7: /api/me response received: ' + JSON.stringify(freshData).substring(0, 100) + '...');
             console.log('[PROFILE] /api/me response:', freshData);
             if (freshData.user) {
+                alert('Step 8: Updating saved user with fresh data');
                 console.log('[PROFILE] Updating saved user with fresh data');
                 saved = Object.assign(saved, freshData.user);
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
             }
         } catch(e) {
+            alert('Step ERROR: Exception during /api/me fetch: ' + e.message);
             console.log('[PROFILE] Error fetching fresh data:', e);
         }
 
         var user = saved;
+        alert('Step 9: Starting to render profile for user: ' + user.username);
         console.log('[PROFILE] Starting to render profile for user:', user.username);
         var role = user.role || 'CIVILIAN';
         if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
@@ -395,6 +408,7 @@
         var unlockedFeatures = user.unlocked_features || [];
         if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
 
+        alert('Step 10: Profile data ready - role: ' + role + ', name: ' + displayName + ', CP: ' + communityPoints);
         console.log('[PROFILE] Rendering profile - role:', role, 'displayName:', displayName, 'communityPoints:', communityPoints);
 
         if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
@@ -440,8 +454,10 @@
             '</div>';
         }
 
+        alert('Step 11: About to render profile HTML');
         console.log('[PROFILE] About to render profile HTML');
         try {
+        alert('Step 12: Rendering profile card and sections...');
         document.getElementById('profileApp').innerHTML =
             '<div class="profile-container">' +
                 '<div class="profile-card">' +
@@ -597,10 +613,12 @@
             '<div id="adminInviteNotice"></div>' +
             '<div id="gmInviteNotice"></div>';
 
+        alert('Step 13: SUCCESS - Profile HTML rendered successfully!');
         console.log('[PROFILE] Profile HTML rendered successfully');
         } catch(renderError) {
+            alert('Step ERROR: Exception during profile rendering: ' + renderError.message);
             console.log('[PROFILE] Error rendering profile:', renderError);
-            document.getElementById('profileApp').innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>Could not load profile. Please reload the page or <a href="signin.html">sign in again</a></p></div>';
+            document.getElementById('profileApp').innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>Could not load profile. Error: ' + renderError.message + '</p><p><a href="signin.html">Sign in again</a></p></div>';
             return;
         }
 
