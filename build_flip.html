@@ -2415,15 +2415,8 @@
       var back = document.getElementById('back');
       var charName = document.querySelector('h1')?.textContent || 'character-sheet';
 
-      Promise.all([
-        html2canvas(front, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' }),
-        html2canvas(back, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      ]).then(function(canvases) {
-        downloadAsPDF(canvases, charName);
-      }).catch(function(err) {
-        console.error('Canvas generation failed:', err);
-        alert('Failed to generate PDF. Please try again.');
-      });
+      // Use browser print dialog for PDF generation (avoids html2canvas issues)
+      downloadAsPDF(charName);
     });
   });
 
@@ -2445,16 +2438,21 @@
       var front = document.getElementById('front');
       var back = document.getElementById('back');
 
-      Promise.all([
-        html2canvas(front, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' }),
-        html2canvas(back, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
-      ]).then(function(canvases) {
-        handleDownload(format, canvases, charName);
-      }).catch(function(err) {
-        console.error('Canvas generation failed:', err);
-        alert('Failed to generate file. Downloading HTML instead.');
-        downloadAsHTML(charName);
-      });
+      // Handle PDF with print dialog, others with canvas
+      if (format === 'pdf') {
+        downloadAsPDF(charName);
+      } else {
+        Promise.all([
+          html2canvas(front, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' }),
+          html2canvas(back, { scale: 1.5, useCORS: true, logging: false, allowTaint: true, backgroundColor: '#f5f1e8' })
+        ]).then(function(canvases) {
+          handleDownload(format, canvases, charName);
+        }).catch(function(err) {
+          console.error('Canvas generation failed:', err);
+          alert('Failed to generate file. Downloading HTML instead.');
+          downloadAsHTML(charName);
+        });
+      }
     });
   });
 
@@ -2479,17 +2477,10 @@
     }
   }
 
-  function downloadAsPDF(canvases, name) {
-    var jsPDF = window.jspdf.jsPDF;
-    var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-
-    canvases.forEach(function(canvas, index) {
-      if (index > 0) pdf.addPage();
-      var imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-    });
-
-    pdf.save(name + '-sheet.pdf');
+  function downloadAsPDF(name) {
+    // Use browser's native print dialog for PDF generation
+    // This avoids html2canvas compatibility issues and produces better quality
+    window.print();
   }
 
   function downloadAsHTML(name) {
