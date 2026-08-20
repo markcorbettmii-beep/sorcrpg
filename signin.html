@@ -139,11 +139,17 @@
                 </div>
                 <div class="form-group">
                     <label for="signupPassword">Password</label>
-                    <input type="password" id="signupPassword" class="signin-input" placeholder="8-64 chars, 1 upper, 1 lower, 1 number" />
+                    <div class="password-wrapper">
+                        <input type="password" id="signupPassword" class="signin-input" placeholder="8-64 chars, 1 upper, 1 lower, 1 number" />
+                        <button class="toggle-pw" type="button" onclick="togglePassword('signupPassword', this)">👁</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="signupConfirmPassword">Confirm Password</label>
-                    <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" />
+                    <div class="password-wrapper">
+                        <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" />
+                        <button class="toggle-pw" type="button" onclick="togglePassword('signupConfirmPassword', this)">👁</button>
+                    </div>
                 </div>
                 <button class="signin-btn signin-btn-primary" onclick="handleSignUp()">Create Account</button>
                 <div id="statusMsg" class="status-msg"></div>
@@ -327,18 +333,30 @@
             var confirmPassword = document.getElementById('signupConfirmPassword').value;
             var username = document.getElementById('signupUsername').value.trim();
 
-            if (!email || !password) { showStatus('Please enter an email and password.', 'error'); return; }
+            alert('Step 1: Signup initiated. Email: ' + email + ', Password length: ' + password.length + ', Username: ' + username);
+
+            if (!email || !password) {
+                alert('ERROR: Email or password missing. Email: ' + !!email + ', Password: ' + !!password);
+                showStatus('Please enter an email and password.', 'error');
+                return;
+            }
             if (!username) { showStatus('Please choose a first name.', 'error'); return; }
+
+            alert('Step 2: Validating password requirements...');
             if (password.length < 8 || password.length > 64) { showStatus('Password must be 8-64 characters.', 'error'); return; }
             if (!/[A-Z]/.test(password)) { showStatus('Password must contain at least one uppercase letter.', 'error'); return; }
             if (!/[a-z]/.test(password)) { showStatus('Password must contain at least one lowercase letter.', 'error'); return; }
             if (!/[0-9]/.test(password)) { showStatus('Password must contain at least one number.', 'error'); return; }
             if (password !== confirmPassword) { showStatus('Passwords do not match.', 'error'); return; }
 
+            alert('Step 3: Password validation passed. Creating account...');
+
             var usernameError = isValidUsername(username);
             if (usernameError) { showStatus(usernameError, 'error'); return; }
 
             showStatus('Creating your profile...', 'success');
+
+            alert('Step 4: Sending registration request to server...');
 
             try {
                 var res = await fetch(API_URL + '/api/auth/register', {
@@ -348,11 +366,15 @@
                 });
                 var data = await res.json();
 
+                alert('Step 5: Server response received. Status: ' + res.status + ', Success: ' + data.success);
+
                 if (!res.ok || !data.success) {
+                    alert('ERROR: Registration failed. Error: ' + (data.error || 'Unknown error'));
                     showStatus(data.error || 'Registration failed.', 'error');
                     return;
                 }
 
+                alert('Step 6: Account created! Redirecting to verification page...');
                 // Account created - redirect to email verification page
                 lastUnverifiedEmail = email;
                 localStorage.setItem('signupEmail', email);
@@ -362,6 +384,7 @@
 
             } catch(e) {
                 // Connection error - account may have been created anyway
+                alert('ERROR: Connection error - ' + e.message);
                 showStatus('Connection error. Please try again.', 'error');
             }
         };
