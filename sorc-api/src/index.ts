@@ -416,6 +416,7 @@ Possible causes:
 
     if (!tokenResponse.ok) {
       const error = await tokenResponse.text();
+      console.error('Token exchange failed - Error response:', error);
       return c.html(`
         <html>
         <head><title>Google OAuth Error</title>
