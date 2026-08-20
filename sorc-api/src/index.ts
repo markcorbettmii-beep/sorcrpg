@@ -1004,6 +1004,17 @@ app.get('/api/profile/:userId', async (c) => {
   }
 });
 
+app.get('/api/me', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    const fullUser = await c.env.sorc_db.prepare('SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ?').bind(user.id).first();
+    if (!fullUser) return c.json({ error: 'User not found' }, 404);
+    return c.json({ user: fullUser });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load profile', details: error.message }, 500);
+  }
+});
+
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
