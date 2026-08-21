@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thorin - SORC Character Sheet</title>
+  <title>Brunn - SORC Character Sheet</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -37,7 +37,23 @@
     }
     /* Mobile: clip overflow so scaled-down layout box doesn't add dead scroll space */
     @media (max-width: 815px) {
-      .sheet-viewport { overflow: hidden; }
+      .sheet-viewport { overflow: hidden; padding-bottom: 50px; }
+      /* Ensure cursor visibility in all fields on mobile */
+      .pencil { min-height: 1.1em; line-height: 1.3; }
+      .sfield { height: auto; min-height: 16px; padding: 1px 2px; overflow: visible; }
+      .sfield .pencil { height: auto; line-height: 1.3; padding: 0px 2px; font-size: 0.62rem; }
+      .afield { height: auto; min-height: 18px; }
+      .afield .pencil { height: auto; line-height: 1.3; }
+      .srow { align-items: center; gap: 4px; }
+      .clr-row { margin: 2px 0 !important; padding: 1px 0 !important; flex-wrap: nowrap !important; gap: 2px !important; }
+      .clr-lbl { font-size: 0.48rem !important; white-space: nowrap !important; }
+      .clr-item { align-items: center !important; padding: 1px 1px !important; flex: 1 !important; min-width: 0 !important; }
+      .clr-item .pencil { min-height: 0.85em !important; line-height: 1 !important; display: inline-block !important; font-size: 0.50rem !important; width: 100% !important; }
+      .action-bar { height: 28px; padding: 2px 4px; gap: 3px; display: flex; align-items: center; }
+      .action-bar button { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
+      .print-group { height: 22px; }
+      .print-group .ptab { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
+      #printBtn { height: 22px !important; padding: 1px 6px !important; font-size: 0.46rem !important; display: flex; align-items: center; }
     }
 
     /* ── SCALE WRAPPER ── */
@@ -52,12 +68,12 @@
 
     /* ── FLIP INDICATOR (outside the sheet) ── */
     .flip-indicator {
-      height: 30px;
+      height: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Cinzel', serif;
-      font-size: 0.6rem;
+      font-size: 0.35rem;
       font-weight: 700;
       color: #fff;
       letter-spacing: 0.16em;
@@ -92,10 +108,6 @@
 
     .face.back { display: none; }
 
-    .face.back .inner {
-      padding-top: 24px;
-    }
-
     /* ── BORDER ── */
     .border-frame {
       position: absolute;
@@ -106,13 +118,13 @@
     .border-frame::before {
       content: '';
       position: absolute;
-      inset: 0px;
+      inset: 7px;
       border: 2.5px solid #3a4a18;
     }
     .border-frame::after {
       content: '';
       position: absolute;
-      inset: 6px;
+      inset: 13px;
       border: 1px solid #3a4a18;
     }
 
@@ -137,14 +149,14 @@
     .inner {
       position: relative;
       z-index: 1;
-      padding: 14px 42px 2px;
+      padding: 4px 42px 14px;
       height: 100%;
       display: flex;
       flex-direction: column;
     }
 
     /* ── TITLE ── */
-    .title-block { text-align: center; margin-bottom: 1px; }
+    .title-block { text-align: center; margin-bottom: 4px; }
 
     .title-block h1 {
       font-family: 'Cinzel Decorative', Cinzel, serif;
@@ -183,32 +195,14 @@
     .cols {
       display: grid;
       grid-template-columns: 1fr 1.12fr 1fr;
-      gap: 0;
+      gap: 10px;
       margin-top: 3px;
       align-content: start;
       overflow: hidden;
-    margin-top: 10px;
-    }
-
-    .cols > div:nth-child(1) {
-      
-      padding-right: 8px;
-    margin-top: 0px;
-    }
-
-    .cols > div:nth-child(2) {
-      
-      padding-left: 8px;
-      padding-right: 8px;
-    margin-top: 8px;
-    }
-
-    .cols > div:nth-child(3) {
-      padding-left: 8px;
     }
 
     /* ── SECTION ── */
-    .sec { margin-bottom: 1px; }
+    .sec { margin-bottom: 8px; }
 
     .sec-title {
       font-family: 'Cinzel', serif;
@@ -219,8 +213,8 @@
       text-transform: uppercase;
       text-align: center;
       border-bottom: 1px solid #4a5a20;
-      padding-bottom: 0.5px;
-      margin-bottom: 1px;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
     }
 
     /* ── FILL-IN FIELDS ── */
@@ -254,7 +248,7 @@
       outline: none;
       display: block;
     }
-    .field { margin-bottom: 0.5px; }
+    .field { margin-bottom: 5px; }
 
     .field-lbl {
       font-family: Arial, sans-serif;
@@ -270,7 +264,7 @@
       width: 100%;
       height: 1px;
       background: #6a7a48;
-      margin-bottom: 0px;
+      margin-bottom: 2px;
     }
 
     /* ── CENTER COLUMN ── */
@@ -278,7 +272,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5px;
+      gap: 8px;
     }
 
     .portrait {
@@ -340,7 +334,7 @@
 
     /* ── CARDS (full-width row below the 3 columns) ── */
     .cards-wrap {
-      margin-top: 0px;
+      margin-top: 8px;
     }
 
     .cards-head {
@@ -351,12 +345,12 @@
       letter-spacing: 0.2em;
       text-transform: uppercase;
       text-align: center;
-      margin-bottom: 1px;
+      margin-bottom: 8px;
     }
 
     .cards-main-row {
       display: flex;
-      gap: 0.5px;
+      gap: 8px;
       align-items: stretch;
     }
 
@@ -378,11 +372,11 @@
       text-transform: uppercase;
       text-align: center;
       border-bottom: 1px solid #4a5a20;
-      padding-bottom: 0.5px;
-      margin-bottom: 0px;
+      padding-bottom: 3px;
+      margin-bottom: 5px;
     }
 
-    .cards-side .fline { margin-bottom: 1px; }
+    .cards-side .fline { margin-bottom: 7px; }
 
     .cards-grid {
       display: grid;
@@ -430,7 +424,7 @@
     }
 
     .cf {
-      margin-bottom: 1px;
+      margin-bottom: 4px;
     }
 
     .cl {
@@ -464,15 +458,15 @@
       text-transform: uppercase;
       text-align: center;
       border-bottom: 1px solid #4a5a20;
-      padding-bottom: 0.5px;
-      margin-bottom: 1px;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
     }
 
     /* ATTRIBUTES */
     .attr-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.5px;
+      gap: 4px;
     }
 
     .abox {
@@ -482,7 +476,7 @@
       flex-direction: column;
       align-items: center;
       padding: 3px 2px 3px;
-      gap: 0.5px;
+      gap: 2px;
     }
 
     .abox.wide { grid-column: span 2; }
@@ -591,14 +585,14 @@
     .vit-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 0.5px;
+      gap: 4px;
     }
 
     .vbox {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5px;
+      gap: 2px;
     }
 
     .vname {
@@ -630,7 +624,7 @@
 
     .cond-wrap {
       flex-shrink: 0;
-      margin-top: -25px;
+      margin-top: auto;
       padding-top: 0;
     }
 
@@ -682,7 +676,7 @@
       font-weight: 700;
       border-top: 1px solid #4a5a20;
       padding-top: 5px;
-      padding-bottom: 0.5px;
+      padding-bottom: 1px;
     }
     .itype-hdr:first-child td {
       border-top: none;
@@ -703,7 +697,7 @@
     .citem {
       display: flex;
       align-items: center;
-      gap: 0.5px;
+      gap: 4px;
       font-family: Arial, sans-serif;
       font-size: 0.57rem;
       color: #222;
@@ -714,7 +708,7 @@
     }
     .citem-boxes {
       display: flex;
-      gap: 0.5px;
+      gap: 2px;
       flex-shrink: 0;
     }
 
@@ -734,7 +728,7 @@
     }
 
     /* JOURNAL LINES */
-    .jline-item { margin-bottom: 1px; }
+    .jline-item { margin-bottom: 7px; }
 
     .jline-lbl {
       font-family: Arial, sans-serif;
@@ -747,7 +741,7 @@
     .jline {
       width: 100%;
       min-height: 14px;
-      margin-bottom: 0px;
+      margin-bottom: 5px;
       border: none;
       border-bottom: 1px solid #6a7a48;
       font-family: Arial, sans-serif;
@@ -845,7 +839,7 @@
       font-size: 0.55rem;
       font-weight: 700;
       letter-spacing: 0.08em;
-      padding: 2px 10px;
+      padding: 6px 10px;
       cursor: pointer;
       text-transform: uppercase;
       white-space: nowrap;
@@ -882,7 +876,7 @@
     .clr-row {
       display: flex;
       gap: 12px;
-      margin-bottom: 0px;
+      margin-bottom: 6px;
     }
     .clr-item {
       flex: 1;
@@ -913,11 +907,9 @@
     
     /* REPOSITORY */
     .repo-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; margin-top: 4px; }
-    .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 2px; border-bottom: 1px solid #4a5a20; border-right: 1px solid #4a5a20; text-align: left; }
-    .repo-tbl th:last-child { border-right: none; }
-    .repo-tbl td { padding: 2px 2px; color: #2e3d0f; border-bottom: 1px dotted #ccc; border-right: 1px solid #ddd; vertical-align: middle; }
-    .repo-tbl td:last-child { border-right: none; }
-    .repo-pts { display: inline-flex; gap: 0.5px; vertical-align: middle; }
+    .repo-tbl th { font-family: 'Cinzel', serif; font-size: 0.42rem; color: #2e3d0f; padding: 2px 3px; border-bottom: 1px solid #4a5a20; text-align: left; }
+    .repo-tbl td { padding: 2px 3px; color: #2e3d0f; border-bottom: 1px dotted #ccc; vertical-align: middle; }
+    .repo-pts { display: inline-flex; gap: 2px; vertical-align: middle; }
     .repo-pt { width: 8px; height: 8px; border: 1px solid #4a5a20; background: #f5f0e4; flex-shrink: 0; }
     .repo-pt-rem { border: 1.5px solid #22cc44 !important; }
     .rem-lbl { font-size: 0.36rem; color: #22aa44; font-weight: 700; margin-left: 2px; display: inline-block; vertical-align: middle; }
@@ -926,10 +918,10 @@
     .repo-field[contenteditable] { font-family: Arial, sans-serif; font-size: 8px; line-height: 12px; text-align: center; outline: none; cursor: text; overflow: hidden; }
     .repo-field { width: 22px; height: 12px; border: 1px solid #4a5a20; background: #f5f0e4; display: inline-block; vertical-align: middle; }
     /* TALENT TREES */
-    .talent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5px; margin-top: 4px; }
+    .talent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
     .talent-tree { border: 1px solid #4a5a20; background: #e8e0cc; padding: 4px; }
-    .talent-tree-name { width: 100%; height: 12px; border-bottom: 1px solid #4a5a20; margin-bottom: 0px; }
-    .talent-slot { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; margin-bottom: 1px; display: flex; align-items: center; gap: 3px; }
+    .talent-tree-name { width: 100%; height: 12px; border-bottom: 1px solid #4a5a20; margin-bottom: 5px; }
+    .talent-slot { font-family: Arial, sans-serif; font-size: 0.44rem; color: #555; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; }
     .talent-slot-line { flex: 1; height: 1px; background: #aaa; }
     /* PROFESSIONS */
     .prof-list { font-family: Arial, sans-serif; font-size: 0.44rem; color: #444; line-height: 1.5; margin-top: 3px; }
@@ -942,6 +934,43 @@
         height: auto !important;
         background: white !important;
       }
+      .action-bar, .flip-indicator { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      /* Let the flipper flow normally so faces stack vertically */
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
     /* Character sheet link colors - rare rank blue */
     a {
       color: #2196f3 !important;
@@ -954,6 +983,15 @@
     }
     a:active {
       color: #2196f3 !important;
+    }
+    .cal-page {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .cal-page[data-page="2"],
+    .cal-page[data-page="3"] {
+      display: none;
     }
   </style>
 </head>
@@ -990,19 +1028,30 @@
           <!-- BACK LEFT: Basic Info + Details -->
           <div>
             <div class="sec">
-              <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-creation">Basic Info.</a></p>
-              <div class="field"><span class="field-lbl">Name &amp; UID</span><input type="text" class="fline" value="Thorin" /></div>
-              <div class="field"><span class="field-lbl">Nickname(s)</span><input type="text" class="fline" value="Ironbeard" /></div>
-              <div class="field"><span class="field-lbl">Gender</span><input type="text" class="fline" value="Male" /></div>
-              <div class="field"><span class="field-lbl">Species</span><input type="text" class="fline" value="Humanoid" /></div>
-              <div class="field"><span class="field-lbl">Race†</span><input type="text" class="fline" value="Dwarf" /></div>
-              <div class="field"><span class="field-lbl">Culture†</span><input type="text" class="fline" value="Stonekeep Dwarves" /></div>
-              <div class="field"><span class="field-lbl">Age</span><input type="text" class="fline" value="52" /></div>
-              <div class="field"><span class="field-lbl">Place of Birth</span><input type="text" class="fline" value="Stonekeep Mountains, Essentia" /></div>
-              <div class="field"><span class="field-lbl">Occupation / Role</span><input type="text" class="fline" value="Blacksmith / Armorsmith" /></div>
-              <div class="field"><span class="field-lbl">Planet / World</span><input type="text" class="fline" /></div>
-              <div class="field"><span class="field-lbl">Languages</span><input type="text" class="fline" value="Dwarvish, Common" /></div>
-              <div class="small-note">† see back of sheet for details</div>
+              <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-creation">Profile</a></p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 3px;">
+                <!-- Left Column -->
+                <div>
+                  <div class="field"><span class="field-lbl">Name &amp; UID</span><input type="text" class="fline" value="Brunn" /></div>
+                  <div class="field"><span class="field-lbl">Favorite Class</span><input type="text" class="fline" value="" /></div>
+                  <div class="field"><span class="field-lbl">Growth</span><input type="text" class="fline" value="" /></div>
+                  <div class="field"><span class="field-lbl">Level</span><input type="text" class="fline" value="" /></div>
+                  <div class="field"><span class="field-lbl">Rank</span><input type="text" class="fline" value="" /></div>
+                  <div class="field"><span class="field-lbl">Race†</span><input type="text" class="fline" value="Dwarf" /></div>
+                  <div class="field"><span class="field-lbl">Age</span><input type="text" class="fline" value="52" /></div>
+                  <div class="field"><span class="field-lbl">Occupation / Role</span><input type="text" class="fline" value="Blacksmith / Armorsmith" /></div>
+                </div>
+                <!-- Right Column -->
+                <div>
+                  <div class="field"><span class="field-lbl">Nickname(s)</span><input type="text" class="fline" value="Forgeborn" /></div>
+                  <div class="field"><span class="field-lbl">Gender</span><input type="text" class="fline" value="Male" /></div>
+                  <div class="field"><span class="field-lbl">Species</span><input type="text" class="fline" value="Humanoid" /></div>
+                  <div class="field"><span class="field-lbl">Culture†</span><input type="text" class="fline" value="Stonekeep Dwarves" /></div>
+                  <div class="field"><span class="field-lbl">Place of Birth</span><input type="text" class="fline" value="Stonekeep Mountains, Essentia" /></div>
+                  <div class="field"><span class="field-lbl">Languages</span><input type="text" class="fline" value="Dwarvish, Common" /></div>
+                </div>
+              </div>
+              <div class="small-note" style="margin-bottom:0;margin-top:4px;">† see back of sheet for details</div>
             </div>
 
                         <div style="height: 12px;"></div><div class="sec">
@@ -1027,27 +1076,26 @@
 
             <div style="width:100%;margin-top:10px;">
               <div class="sec">
-                <div style="font-size: 0.55rem; color: #666; margin-top: 0px; line-height: 1.5; text-align: center;"><p style="margin:0;"><strong><a href="content/essentia_core/rules_ref_004.html#gear-equipment" target="rules" style="text-decoration:underline;color:#0066cc;">EQUIPMENT &amp; ITEMS</a></strong></p></div>
-                <div style="font-size: 0.55rem; color: #666; line-height: 1.5;" contenteditable="true"><strong>Loot:</strong> †Dented Iron Flask (1 GP, 1 lb, holds 1 pint)<br><strong>Armaments:</strong> Magic Hammer 1H (15 GP, 3 lbs) | Medium Shield (10 GP, 6 lbs) | Light Armor (10 GP, 10 lbs)<br><strong>Gear:</strong> Blacksmith's Kit (15 GP, 12 lbs) | Backpack (2 GP, 5 lbs) | Rope 50ft (1 GP, 10 lbs) | Lantern (5 GP, 2 lbs) | Bedroll (1 GP, 7 lbs) | Tinderbox (0.5 GP, 1 lb) | Oil Flask (0.1 GP, 1 lb) | Flask (0.02 GP, 1 lb) | Belt Pouch (5 Silver, 1 lb) = 45.12 GP<br><strong>Free:</strong> Starting Attire (2 lbs) + Rations 7 days (14 lbs)<br><strong>TOTAL WEIGHT:</strong> 78 lbs / 160 lbs capacity = <strong>LIGHT LOAD (48.75%)</strong> → full speed, no penalties. Remaining capacity: 82 lbs (Burdened at 94%+)</div>
+                <div style="font-size: 0.55rem; color: #666; margin-top: 8px; line-height: 1.5; text-align: center;"><p style="margin:0;"><strong><a href="content/essentia_core/rules_ref_004.html#gear-equipment" target="rules" style="text-decoration:underline;color:#0066cc;">EQUIPMENT &amp; ITEMS</a></strong></p></div>
+                <div style="font-size: 0.55rem; color: #666; line-height: 1.5;" contenteditable="true"><strong>Loot:</strong> †Bag of Dirt (found, discarded)<br><strong>Armaments:</strong> Magic Hammer 1H (15 GP, 3 lbs) | Medium Shield (10 GP, 6 lbs) | Light Armor (10 GP, 10 lbs)<br><strong>Gear:</strong> Blacksmith's Kit (15 GP, 12 lbs) | Backpack (2 GP, 5 lbs) | Rope 50ft (1 GP, 10 lbs) | Lantern (5 GP, 2 lbs) | Bedroll (1 GP, 7 lbs) | Tinderbox (0.5 GP, 1 lb) | Oil Flask (0.1 GP, 1 lb) | Flask (0.02 GP, 1 lb) | Belt Pouch (5 Silver, 1 lb) = 45.12 GP<br><strong>Free:</strong> Starting Attire (2 lbs) + Rations 7 days (14 lbs)<br><strong>TOTAL WEIGHT:</strong> 78 lbs / 160 lbs capacity = <strong>LIGHT LOAD (48.75%)</strong> → full speed, no penalties. Remaining capacity: 82 lbs (Burdened at 94%+)</div>
               </div>
               <div class="sec">
                 <p class="sec-title" style="margin-top:12px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#currency-system">Currency</a></p>
-                <div class="srow"><span>Copper (CP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
-                <div class="srow"><span>Silver (SP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
-                <div class="srow"><span>Gold (GP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">2.29</span></div></div>
-                <div class="srow"><span>Electrum (EP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
-                <div class="srow"><span>Platinum (PP)</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
-                <div class="srow"><span>Remaining Currency</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
+                <div class="srow"><span>Copper (CP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">50</span></div></div>
+                <div class="srow"><span>Silver (SP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">23</span></div></div>
+                <div class="srow"><span>Gold (GP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">45</span></div></div>
+                <div class="srow"><span>Electrum (EP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">0</span></div></div>
+                <div class="srow"><span>Platinum (PP)</span><div class="sfield wide"><span class="pencil" contenteditable="true">0</span></div></div>
+                <div class="srow"><span>Remaining Currency</span><div class="sfield wide"><span class="pencil" contenteditable="true">118 CP total in starting treasury</span></div></div>
               </div>
               <div class="sec">
-
                 <p class="sec-title" style="margin-top:12px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#transactions">Transactions</a></p>
                 <div class="srow"><span>Description</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
                 <div class="srow"><span>Amount</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
                 <div class="srow"><span>Date</span><div class="sfield wide"><span class="pencil" contenteditable="true"></span></div></div>
               </div>
               <div class="sec">
-                <p class="sec-title" style="margin-top:10px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression">Progression Tracker</a></p>
+                <p class="sec-title" style="margin-top:18px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression">Progression Tracker</a></p>
                 <div style="position:relative;border:1px solid #4a5a20;margin-top:5px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(90,122,40,0.3);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
@@ -1072,10 +1120,11 @@
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f2e5a;">RP to next Rank <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
                 </div>
+                <div style="font-size:0.50rem;color:#666;padding:3px 0;text-align:center;">† see back of sheet for details</div>
                 <div style="position:relative;border:1px solid #a09010;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(220,200,30,0.2);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #a09010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#4a3d00;">Companion†</span></div>
+                    <div style="border-right:1px solid #a09010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#4a3d00;">Companion</span></div>
                     <div style="border-right:1px solid #a09010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#4a3d00;">Current Mood</span></div>
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#4a3d00;">Mood Threshold <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
@@ -1083,7 +1132,7 @@
                 <div style="position:relative;border:1px solid #8a5010;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(200,120,30,0.18);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #8a5010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;"><a target="rules" href="content/essentia_core/rules_ref_005.html#wayfarer" style="color:#5a3000;">Anim. Wayfarer†</a></span></div>
+                    <div style="border-right:1px solid #8a5010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;"><a target="rules" href="content/essentia_core/rules_ref_005.html#wayfarer" style="color:#5a3000;">Anim. Wayfarer</a></span></div>
                     <div style="border-right:1px solid #8a5010;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;">Wayfarer Level</span></div>
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#5a3000;">Cooldown</span></div>
                   </div>
@@ -1091,7 +1140,7 @@
                 <div style="position:relative;border:1px solid #5a4a30;margin-top:3px;overflow:hidden;">
                   <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg, rgba(212,175,55,0.45) 0%, rgba(212,175,55,0.28) 32%, rgba(150,150,150,0.28) 50%, rgba(140,60,180,0.28) 68%, rgba(140,60,180,0.45) 100%);"></div>
                   <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;z-index:1;">
-                    <div style="border-right:1px solid #5a4a30;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#4a3800;">Alignment <span style="font-size:0.30rem;color:#888;">(see above)</span></span></div>
+                    <div style="border-right:1px solid #5a4a30;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#4a3800;">Alignment</span></div>
                     <div style="border-right:1px solid #5a4a30;padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#333;">Current Alignment</span></div>
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#2e0f40;">Drift <span style="font-size:0.30rem;color:#666;">(see rules)</span></span></div>
                   </div>
@@ -1111,32 +1160,8 @@
                     <div style="padding:2px 3px;"><span style="font-family:Arial,sans-serif;font-size:0.34rem;color:#0f3d33;"><span class="pencil" contenteditable="true" style="display:inline-block;font-size:0.30rem;width:14px;min-width:0;min-height:0;border-bottom:1px solid #999;"></span>% <span style="font-size:0.30rem;color:#888;">(see rules)</span></span></div>
                   </div>
                 </div>
-                <div style="font-size:0.50rem;color:#666;padding:3px 0;margin-bottom:6px;text-align:center;">† see back of sheet for details</div>
               </div>
             </div>
-
-              <div style="margin-top:8px;padding:6px;border-top:1px solid #d4a574;font-size:0.65rem;">
-                <div style="display:flex;align-items:flex-end;gap:2px;margin-top:2px;">
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.65rem;color:#666;">,</div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.55rem;color:#999;">†</div>
-                </div>
-              </div>
-
           </div>
 
           <!-- BACK RIGHT: Lore + Relations + Journal Notes -->
@@ -1147,83 +1172,80 @@
               <div class="field"><span class="field-lbl">Standings <span style="font-size:0.5rem;color:#888;">(See Journal)</span></span><input type="text" class="fline" value="Stonekeep Dwarves: Respected" /></div>
               <div class="field"><span class="field-lbl">Titles and Reputation</span><input type="text" class="fline" value="Forgeborn" /></div>
               <div class="field"><span class="field-lbl">Legacy</span><input type="text" class="fline" /></div>
-              <div style="margin-left: 12px;">
-                <div class="field"><span class="field-lbl">Achievements and Trophies</span><input type="text" class="fline" /></div>
-              </div>
+              <div class="field"><span class="field-lbl">Achievements and Trophies</span><input type="text" class="fline" /></div>
             </div>
 
-            <div class="sec" style="margin-top:8px;">
-              <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_004.html#home-and-family">Relations</a></p>
-              <div class="field"><span class="field-lbl">Family</span><input type="text" class="fline" /></div>
-              <div class="field"><span class="field-lbl">Enemies</span><input type="text" class="fline" /></div>
-              <div class="field"><span class="field-lbl">Affiliations</span><input type="text" class="fline" /></div>
-            </div>
-
-<div class="sec" style="margin-top:4px;">
+            <div class="sec" style="margin-top:4px;">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#journal">Journal</a><br><span class="lore-note" style="font-family:Arial,sans-serif;font-size:0.42rem;letter-spacing:0;text-transform:none;font-weight:400;text-align:left;">Refer to Journal Booklet for extensive records.</span></p>
+              <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:0.44rem;margin-top:3px;">
+                <tbody>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;height:15px;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;height:15px;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;height:15px;">&nbsp;</td></tr>
+                  <tr><td style="padding:2px 4px;border:1px solid #ccc;height:15px;">&nbsp;</td></tr>
+                </tbody>
+              </table>
               <p class="lore-item" style="margin-bottom:6px;">◆ <strong>Background:</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">A dwarf born to the craft, Brunn has dedicated his life to perfecting the art of blacksmithing and armorcraft. Forged in the heat of the forge, he seeks to create the finest weapons and armor to protect those he holds dear.</span></p>
               <p class="lore-item" style="margin-bottom:6px;">◆ <strong>Mission Statement:</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">Establish a legendary forge and create the finest armor and weapons in all the lands to protect kingdoms and earn lasting renown.)</span></p>
-              <p class="lore-item" style="margin-bottom:6px;">◆ <strong>First Quest Note:</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">Thorin recovered a dented iron flask from the ground.</span></p>
+              <p class="lore-item" style="margin-bottom:6px;">◆ <strong>First Quest Note:</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">Brunn looted a bag of dirt and threw it away. GM exposed weakness with title "Wasteful".</span></p>
               <p class="lore-item" style="margin-bottom:6px;">◆ <strong>First Quest (Level 1):</strong> <span contenteditable="true" style="font-weight:normal;font-style:normal;">Brunn's first task was to retrieve mining tools stolen from the Stonekeep dwarves' workshop. A simple task that tested his growing skills, tracking thieves through the mountain passes, negotiating with local merchants, and recovering the stolen goods. Upon completion, Brunn earned his first level and was able to select his Class Tier Abilities as a Barbarian, choosing to focus on Spell-Drawn techniques to complement his natural strength and combat prowess.</span></p>
-              <p class="lore-item" style="margin-top:10px;margin-bottom:4px;">◆ <strong>Quest Logs</strong></p>
+              <p class="lore-item" style="margin-top:10px;margin-bottom:4px;">◆ <strong>Quest Logs</strong> <span class="lore-note">(active)</span></p>
               <table class="repo-tbl" style="width:100%;margin-bottom:4px;">
                 <thead>
                   <tr>
                     <th style="white-space:nowrap;">Quest Name</th>
                     <th>Type</th>
-                    <th>Objectives</th>
-                    <th>Status (Active/Done)</th>
-                    <th>Reward/Loot</th>
+                    <th>Status</th>
+                    <th>Objective</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td>Initiation</td><td>Exploration</td><td>Complete</td><td>Done</td><td>Dented Iron Flask†</td></tr>
-                  <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
+                  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
                 </tbody>
               </table>
-
-              <div style="margin-top:6px;margin-bottom:6px;">
-                <p class="lore-item" style="margin-top:4px;margin-bottom:4px;">◆ <strong>Quest Notes</strong></p>
-                <div style="border-bottom:1px solid #999;height:10px;margin-bottom:3px;"></div>
-                <div style="border-bottom:1px solid #999;height:10px;margin-bottom:3px;"></div>
-                <div style="border-bottom:1px solid #999;height:10px;margin-bottom:3px;"></div>
+              <div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;">
+                <div>
+                  <p style="font-size:0.55rem;text-align:center;margin:0 0 2px 0;"><strong><a href="talents.html" style="text-decoration:underline;color:#0066cc;">Talent Trees</a></strong></p>
+                  <table class="repo-tbl" style="width:100%;font-size:0.48rem;line-height:1.2;border-collapse:collapse;">
+                    <thead>
+                      <tr>
+                        <th style="padding:0 2px;text-align:left;white-space:nowrap;border:1px solid #ddd;">🗝️ Tree</th>
+                        <th style="padding:0 2px;text-align:left;white-space:nowrap;border:1px solid #ddd;">Talent</th>
+                        <th style="padding:0 2px;text-align:center;width:30px;border:1px solid #ddd;">SCR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true">Patriarch</td><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true">Authority's Shield</td><td style="padding:0 2px;border:1px solid #ddd;text-align:center;" contenteditable="true">1</td></tr>
+                      <tr><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;text-align:center;" contenteditable="true"></td></tr>
+                      <tr><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;text-align:center;" contenteditable="true"></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <p style="font-size:0.55rem;text-align:center;margin:0 0 2px 0;"><strong><a href="professions.html" style="text-decoration:underline;color:#0066cc;">Profession Trees</a></strong></p>
+                  <table class="repo-tbl" style="width:100%;font-size:0.48rem;line-height:1.2;border-collapse:collapse;">
+                    <thead>
+                      <tr>
+                        <th style="padding:0 2px;text-align:left;white-space:nowrap;border:1px solid #ddd;">🗝️ Tree</th>
+                        <th style="padding:0 2px;text-align:left;white-space:nowrap;border:1px solid #ddd;">Skill</th>
+                        <th style="padding:0 2px;text-align:center;width:30px;border:1px solid #ddd;">SCR</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true">Blacksmith</td><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true">Armorsmith</td><td style="padding:0 2px;border:1px solid #ddd;text-align:center;" contenteditable="true">1</td></tr>
+                      <tr><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;text-align:center;" contenteditable="true"></td></tr>
+                      <tr><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;" contenteditable="true"></td><td style="padding:0 2px;border:1px solid #ddd;text-align:center;" contenteditable="true"></td></tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-
-              <table class="repo-tbl" style="margin-top:6px;width:100%;">
-                <thead>
-                  <tr>
-                    <th colspan="4" style="text-align:center;border-right:1px solid #bbb;"><a href="talents.html" style="text-decoration:underline;color:#0066cc;">Talent Trees</a></th>
-                    <th colspan="4" style="text-align:center;"><a href="professions.html" style="text-decoration:underline;color:#0066cc;">Profession Trees</a></th>
-                  </tr>
-                  <tr>
-                    <th style="white-space:nowrap;">🗝️ Tree</th>
-                    <th style="white-space:nowrap;">Talent</th>
-                    <th style="white-space:nowrap;">Score</th>
-                    <th style="border-right:1px solid #bbb;">🗝️ Prof.</th>
-                    <th style="white-space:nowrap;">🗝️ Tree</th>
-                    <th style="white-space:nowrap;">Skill</th>
-                    <th style="white-space:nowrap;">Score</th>
-                    <th>🗝️ Profic.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>Patriarch</td><td>Authority's Shield</td><td>1</td><td style="border-right:1px solid #bbb;">Novice</td><td>Blacksmith</td><td>Basic Armor Smith</td><td>1</td><td>Novice</td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                  <tr><td>&nbsp;</td><td></td><td>&nbsp;</td><td style="border-right:1px solid #bbb;"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td></td></tr>
-                </tbody>
-              </table>
             </div>
 
-            <div class="sec" style="margin-top:2px;">
+            <div class="sec" style="margin-top:8px;">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_005.html#wayfarer">Animated Wayfarer</a></p>
               <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:0.44rem;">
                 <thead>
@@ -1267,6 +1289,616 @@
             </div>
           </div>
 
+            <div class="sec">
+              <p class="sec-title"><a target="rules" href="content/essentia_core/into-essentia.html#seasons">Essentia Calendar</a></p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.7rem;">
+                <!-- Spring -->
+                <div style="border: 1px solid #d4a574; border-radius: 4px; padding: 6px; background: #e8f5e9;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <strong style="color: #2e7d32;">Spring</strong>
+                    <div style="font-size: 0.5rem; letter-spacing: 1px; line-height: 0.8; font-family: monospace;">
+                      
+                      <div>__,___ EA†</div>
+                    </div>
+                  </div>
+                  <div class="cal-page" data-season="Spr" data-page="1">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">1</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">2</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">3</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">4</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">5</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">6</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">7</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">8</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">9</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">10</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">11</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">12</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">13</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">14</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">15</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">16</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">17</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">18</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">19</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">20</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">21</span>
+                  </div>
+                  <div class="cal-page" data-season="Spr" data-page="2">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">22</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">23</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">24</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">25</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">26</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">27</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">28</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">29</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">30</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">31</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">32</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">33</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">34</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">35</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">36</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">37</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">38</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">39</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">40</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">41</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">42</span>
+                  </div>
+                  <div class="cal-page" data-season="Spr" data-page="3">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">43</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">44</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">45</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">46</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">47</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">48</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">49</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">50</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">51</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">52</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">53</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">54</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">55</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">56</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">57</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">58</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">59</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">60</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">61</span>
+                  </div>
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px;">
+                    <button onclick="calendarPageSwitch('Spr', -1)" data-season="Spr" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">⬅</button>
+                    <span style="font-size: 0.5rem; color: #666; min-width: 30px; text-align: center;"><span class="cal-page-ind" data-season="Spr">1-21</span></span>
+                    <button onclick="calendarPageSwitch('Spr', 1)" data-season="Spr" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">➡</button>
+                  </div>
+                  <div style="text-align: center; font-size: 0.6rem; color: #666; margin-top: 2px;">Days 1-61</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; font-size: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #4da6ff; border-radius: 1px;"></span>
+                      <span>First day marker (Day 1)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ffd700;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Lawful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ff4444;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Evil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #b77fbf;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Ambivalent</span>
+                    </div>
+                  </div>
+                </div><!-- Summer -->
+                <div style="border: 1px solid #d4a574; border-radius: 4px; padding: 6px; background: #fff3e0;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <strong style="color: #e65100;">Summer</strong>
+                    <div style="font-size: 0.5rem; letter-spacing: 1px; line-height: 0.8; font-family: monospace;">
+                      
+                      <div>__,___ EA†</div>
+                    </div>
+                  </div>
+                  <div class="cal-page" data-season="Sum" data-page="1">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">1</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Spr"]').value = 'Spr ' + this.textContent + ''">2</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">3</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">4</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">5</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">6</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">7</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">8</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">9</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">10</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">11</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">12</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">13</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">14</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">15</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">16</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">17</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">18</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">19</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">20</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">21</span>
+                  </div>
+                  <div class="cal-page" data-season="Sum" data-page="2">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">22</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">23</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">24</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">25</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">26</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">27</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">28</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">29</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">30</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">31</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">32</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">33</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">34</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">35</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">36</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">37</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">38</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">39</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">40</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">41</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">42</span>
+                  </div>
+                  <div class="cal-page" data-season="Sum" data-page="3">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">43</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">44</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">45</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">46</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">47</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">48</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">49</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">50</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">51</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">52</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">53</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">54</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">55</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">56</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">57</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">58</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">59</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">60</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">61</span>
+                  </div>
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px;">
+                    <button onclick="calendarPageSwitch('Sum', -1)" data-season="Sum" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">⬅</button>
+                    <span style="font-size: 0.5rem; color: #666; min-width: 30px; text-align: center;"><span class="cal-page-ind" data-season="Sum">1-21</span></span>
+                    <button onclick="calendarPageSwitch('Sum', 1)" data-season="Sum" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">➡</button>
+                  </div>
+                  <div style="text-align: center; font-size: 0.6rem; color: #666; margin-top: 2px;">Days 1-61</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; font-size: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #4da6ff; border-radius: 1px;"></span>
+                      <span>First day marker (Day 1)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ffd700;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Lawful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ff4444;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Evil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #b77fbf;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Ambivalent</span>
+                    </div>
+                  </div>
+                </div><!-- Autumn -->
+                <div style="border: 1px solid #d4a574; border-radius: 4px; padding: 6px; background: #fce4ec;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <strong style="color: #c2185b;">Autumn</strong>
+                    <div style="font-size: 0.5rem; letter-spacing: 1px; line-height: 0.8; font-family: monospace;">
+                      
+                      <div>__,___ EA†</div>
+                    </div>
+                  </div>
+                  <div class="cal-page" data-season="Aut" data-page="1">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">1</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">2</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">3</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">4</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">5</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">6</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">7</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">8</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">9</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">10</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">11</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">12</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">13</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">14</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">15</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">16</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">17</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">18</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">19</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">20</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">21</span>
+                  </div>
+                  <div class="cal-page" data-season="Aut" data-page="2">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">22</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sum"]').value = 'Sum ' + this.textContent + ''">23</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">24</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">25</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">26</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">27</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">28</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">29</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">30</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">31</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">32</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">33</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">34</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">35</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">36</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">37</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">38</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">39</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">40</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">41</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">42</span>
+                  </div>
+                  <div class="cal-page" data-season="Aut" data-page="3">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">43</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">44</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">45</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">46</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">47</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">48</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">49</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">50</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">51</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">52</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">53</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">54</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">55</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">56</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">57</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">58</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">59</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">60</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Aut"]').value = 'Aut ' + this.textContent + ''">61</span>
+                  </div>
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px;">
+                    <button onclick="calendarPageSwitch('Aut', -1)" data-season="Aut" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">⬅</button>
+                    <span style="font-size: 0.5rem; color: #666; min-width: 30px; text-align: center;"><span class="cal-page-ind" data-season="Aut">1-21</span></span>
+                    <button onclick="calendarPageSwitch('Aut', 1)" data-season="Aut" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">➡</button>
+                  </div>
+                  <div style="text-align: center; font-size: 0.6rem; color: #666; margin-top: 2px;">Days 1-61</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; font-size: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #4da6ff; border-radius: 1px;"></span>
+                      <span>First day marker (Day 1)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ffd700;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Lawful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ff4444;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Evil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #b77fbf;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Ambivalent</span>
+                    </div>
+                  </div>
+                </div><!-- Winter -->
+                <div style="border: 1px solid #d4a574; border-radius: 4px; padding: 6px; background: #e1f5fe;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <strong style="color: #0277bd;">Winter</strong>
+                    <div style="font-size: 0.5rem; letter-spacing: 1px; line-height: 0.8; font-family: monospace;">
+                      
+                      <div>__,___ EA†</div>
+                    </div>
+                  </div>
+                  <div class="cal-page" data-season="Win" data-page="1">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">1</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">2</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">3</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">4</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">5</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">6</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">7</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">8</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">9</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">10</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">11</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">12</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">13</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">14</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">15</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">16</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">17</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">18</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">19</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">20</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">21</span>
+                  </div>
+                  <div class="cal-page" data-season="Win" data-page="2">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">22</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">23</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">24</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">25</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">26</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">27</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">28</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">29</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">30</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">31</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">32</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">33</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">34</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">35</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">36</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">37</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">38</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">39</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">40</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">41</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">42</span>
+                  </div>
+                  <div class="cal-page" data-season="Win" data-page="3">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">43</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">44</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">45</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">46</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">47</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">48</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">49</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">50</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">51</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">52</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">53</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">54</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">55</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">56</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">57</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">58</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">59</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">60</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Win"]').value = 'Win ' + this.textContent + ''">61</span>
+                  </div>
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px;">
+                    <button onclick="calendarPageSwitch('Win', -1)" data-season="Win" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">⬅</button>
+                    <span style="font-size: 0.5rem; color: #666; min-width: 30px; text-align: center;"><span class="cal-page-ind" data-season="Win">1-21</span></span>
+                    <button onclick="calendarPageSwitch('Win', 1)" data-season="Win" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">➡</button>
+                  </div>
+                  <div style="text-align: center; font-size: 0.6rem; color: #666; margin-top: 2px;">Days 1-61</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; font-size: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #4da6ff; border-radius: 1px;"></span>
+                      <span>First day marker (Day 1)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ffd700;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Lawful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ff4444;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Evil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #b77fbf;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Ambivalent</span>
+                    </div>
+                  </div>
+                </div><!-- Solstice -->
+                <div style="border: 1px solid #d4a574; border-radius: 4px; padding: 6px; background: #f3e5f5;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <strong style="color: #6a1b9a;">Solstice</strong>
+                    <div style="font-size: 0.5rem; letter-spacing: 1px; line-height: 0.8; font-family: monospace;">
+                      
+                      <div>__,___ EA†</div>
+                    </div>
+                  </div>
+                  <div class="cal-page" data-season="Sol" data-page="1">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">1</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">2</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">3</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">4</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">5</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">6</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">7</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">8</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">9</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">10</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">11</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">12</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">13</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">14</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">15</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">16</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">17</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">18</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">19</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">20</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">21</span>
+                  </div>
+                  <div class="cal-page" data-season="Sol" data-page="2">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">22</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">23</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">24</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">25</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">26</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">27</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">28</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">29</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">30</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">31</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">32</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">33</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">34</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">35</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">36</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">37</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">38</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">39</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">40</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">41</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">42</span>
+                  </div>
+                  <div class="cal-page" data-season="Sol" data-page="3">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">43</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">44</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">45</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">46</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">47</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">48</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">49</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">50</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">51</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">52</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">53</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">54</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">55</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">56</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">57</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">58</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">59</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">60</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Sol"]').value = 'Sol ' + this.textContent + ''">61</span>
+                  </div>
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px;">
+                    <button onclick="calendarPageSwitch('Sol', -1)" data-season="Sol" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">⬅</button>
+                    <span style="font-size: 0.5rem; color: #666; min-width: 30px; text-align: center;"><span class="cal-page-ind" data-season="Sol">1-21</span></span>
+                    <button onclick="calendarPageSwitch('Sol', 1)" data-season="Sol" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">➡</button>
+                  </div>
+                  <div style="text-align: center; font-size: 0.6rem; color: #666; margin-top: 2px;">Days 1-61</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; font-size: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #4da6ff; border-radius: 1px;"></span>
+                      <span>First day marker (Day 1)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ffd700;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Lawful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ff4444;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Evil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #b77fbf;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Ambivalent</span>
+                    </div>
+                  </div>
+                </div><!-- Veil -->
+                <div style="border: 1px solid #d4a574; border-radius: 4px; padding: 6px; background: #e0f2f1;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <strong style="color: #00695c;">Veil</strong>
+                    <div style="font-size: 0.5rem; letter-spacing: 1px; line-height: 0.8; font-family: monospace;">
+                      
+                      <div>__,___ EA†</div>
+                    </div>
+                  </div>
+                  <div class="cal-page" data-season="Vei" data-page="1" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">1</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">2</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">3</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">4</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">5</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">6</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">7</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">8</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">9</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">10</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">11</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">12</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">13</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">14</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">15</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">16</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">17</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">18</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">19</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">20</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">21</span>
+                  </div>
+                  <div class="cal-page" data-season="Vei" data-page="2">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">22</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">23</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">24</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">25</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">26</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">27</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">28</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">29</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">30</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">31</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">32</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">33</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">34</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">35</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">36</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">37</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">38</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">39</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">40</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">41</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">42</span>
+                  </div>
+                  <div class="cal-page" data-season="Vei" data-page="3">
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">43</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">44</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">45</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">46</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">47</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">48</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">49</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">50</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">51</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">52</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">53</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">54</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">55</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">56</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">57</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">58</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">59</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">60</span>
+                    <span style="text-align: center; cursor: pointer; padding: 2px; border-radius: 2px; background: #fff;" onclick="document.querySelector('input[value*="Vei"]').value = 'Vei ' + this.textContent + ''">61</span>
+                  </div>
+                  <div style="display: flex; justify-content: center; align-items: center; gap: 2px; margin-top: 4px;">
+                    <button onclick="calendarPageSwitch('Vei', -1)" data-season="Vei" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">⬅</button>
+                    <span style="font-size: 0.5rem; color: #666; min-width: 30px; text-align: center;"><span class="cal-page-ind" data-season="Vei">1-21</span></span>
+                    <button onclick="calendarPageSwitch('Vei', 1)" data-season="Vei" style="padding: 1px 2px; font-size: 0.5rem; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 2px; min-width: 14px;">➡</button>
+                  </div>
+                  <div style="text-align: center; font-size: 0.6rem; color: #666; margin-top: 2px;">Days 1-61</div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; font-size: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #4da6ff; border-radius: 1px;"></span>
+                      <span>First day marker (Day 1)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ffd700;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Lawful</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #ff4444;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Evil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 3px;">
+                      <span style="width: 10px; height: 10px; background: #b77fbf;color: white; border-radius: 1px;"></span>
+                      <span>Eventful day for Ambivalent</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>              </div>
+              <div style="font-size: 0.42rem; color: #555; line-height: 1.2; margin-top: 4px; text-align: left;">†10,023 Eons of Adoria (EA - or years) is the during the Age of Reflection.  This Eon may change depending on module, or even quests that go back in time (i.e. age of Prophecy), or forward into the future (Age of Waning  - Tawdry Dwarf).  Notable days regarding culture or government may vary depending on any given module's timeline. Refer to Tomes of Essentia for further details.</div>
+              <div style="font-size: 0.42rem; color: #555; line-height: 1.2; margin-top: 2px; text-align: left;">Squares represent days of interest.</div>
+            </div>
+
 
           </div>
 
@@ -1291,13 +1923,6 @@
         </div>
         <hr class="rule" />
 
-        <!-- CHARACTER LEVEL / CLASS ABILITIES / RANK -->
-        <div class="clr-row">
-          <div class="clr-item" style="flex-direction:column;align-items:flex-start;"><span class="clr-lbl"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression" style="color:inherit;">Main Class Abil. (LVL)</a></span><span class="pencil" contenteditable="true" style="min-height:1.5em;width:100%;"></span></div>
-          <div class="clr-item"><span class="clr-lbl"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression" style="color:inherit;">Growth</a> <span style="font-size:0.75em;opacity:0.7;">(76 years before retirement at age 128)</span></span><span class="pencil" contenteditable="true">0</span></div>
-          <div class="clr-item"><span class="clr-lbl"><a target="rules" href="content/essentia_core/rules_ref_002.html#character-progression" style="color:inherit;">Rank</a></span><span class="pencil" contenteditable="true">0</span></div>
-          <div class="clr-item"><span class="clr-lbl">RP</span><span class="pencil" contenteditable="true">0</span></div>
-        </div>
 
         <div class="cols">
 
@@ -1315,29 +1940,6 @@
               </div>
             </div>
 
-              <div style="margin-top:8px;padding:6px;border-top:1px solid #d4a574;font-size:0.65rem;">
-                <div style="display:flex;align-items:flex-end;gap:2px;margin-top:2px;">
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.65rem;color:#666;">,</div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.55rem;color:#999;">†</div>
-                </div>
-              </div>
-
-
             <div class="sec">
               <p class="sec-title"><a target="rules" href="content/essentia_core/rules_ref_002.html#vitality">Vitality (Innate Base + Mods)</a></p>
               <div class="vit-grid">
@@ -1347,29 +1949,6 @@
                 <div class="vbox"><span class="vname">End.</span><div class="vfield"><span class="pencil" contenteditable="true">35</span></div></div>
               </div>
             </div>
-
-              <div style="margin-top:8px;padding:6px;border-top:1px solid #d4a574;font-size:0.65rem;">
-                <div style="display:flex;align-items:flex-end;gap:2px;margin-top:2px;">
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.65rem;color:#666;">,</div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.55rem;color:#999;">†</div>
-                </div>
-              </div>
-
 
             <div class="sec" style="margin-top:8px;">
               <p class="sec-title" style="margin-bottom:14px;"><a target="rules" href="content/essentia_core/rules_ref_002.html#playable-races">Race Bonuses / Penalties</a></p>
@@ -1391,45 +1970,22 @@
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px;">
                 <div>
-                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
-                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
-                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Barbarian</span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Shaman</span></div>
+                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Warrior</span></div>
                 </div>
                 <div>
-                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
-                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
-                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Berserker</span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Spiritwalker</span></div>
+                  <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Duelist</span></div>
                 </div>
                 <div>
-                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
+                  <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;">Fury</span></div>
                   <div style="border-bottom:1px solid #4a5a20;margin-bottom:5px;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
                   <div style="border-bottom:1px solid #4a5a20;"><span class="pencil" contenteditable="true" style="display:block;min-height:0.9rem;"></span></div>
                 </div>
               </div>
             </div>
-
-              <div style="margin-top:8px;padding:6px;border-top:1px solid #d4a574;font-size:0.65rem;">
-                <div style="display:flex;align-items:flex-end;gap:2px;margin-top:2px;">
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.65rem;color:#666;">,</div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="position:relative;width:16px;">
-                    <input type="text" maxlength="1" style="width:100%;border:none;border-bottom:1px solid #999;padding:0;font-size:0.65rem;text-align:center;height:14px;" />
-                  </div>
-                  <div style="font-size:0.55rem;color:#999;">†</div>
-                </div>
-              </div>
-
 
           </div>
 
@@ -1444,7 +2000,7 @@
                 <li><span>Constitution</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Courage</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Craftsmanship</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
-                <li><span>Deceit</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
+                <li><span>Deceit</span><div class="tfield"><span class="pencil" contenteditable="true">0</span></div></li>
                 <li><span>Defense</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
                 <li><span>Dexterity</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Focus</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
@@ -1453,15 +2009,15 @@
                 <li><span>Knowledge</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
                 <li><span>Luck</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Piety</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
-                <li><span>Resistance</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
+                <li><span>Resistance</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
                 <li><span>Strength</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Toughness</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Vigilance</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
                 <li><span>Willpower</span><div class="tfield"><span class="pencil" contenteditable="true">2</span></div></li>
-                <li><span>Wit</span><div class="tfield"><span class="pencil" contenteditable="true"></span></div></li>
+                <li><span>Wit</span><div class="tfield"><span class="pencil" contenteditable="true">1</span></div></li>
               </ul>
               <p class="small-note">Trait SCR capped at 40. Cannot exceed aligned ATT SCR.</p>
-              <p style="font-size: 0.55rem; color: #666; margin-top: 0px; line-height: 1.4;">
+              <p style="font-size: 0.55rem; color: #666; margin-top: 8px; line-height: 1.4;">
                 <strong>Innate Adjustments (Orcus):</strong><br>
                 Strength: 2 (purchased) + 2 (innate) = 4 | Agility: 2 + 0 = 2 | Charisma: 1 - 2 = -1<br>
                 Constitution: 2 + 2 = 4 | Cognition: 2 + 0 = 2 | Courage: 2 + 0 = 2<br>
@@ -1490,15 +2046,15 @@
               <p class="frm">AS + all defensive modifiers (Defense, Agility, Resistance, etc.)</p>
               <div class="srow"><span>Speed (ft)</span><div class="sfield"><span class="pencil" contenteditable="true">30</span></div></div>
               <p class="frm">Base SPD (race/size) + Speed trait + equip. + tactics/spells</p>
-              <div class="srow"><span>Initiative (INIT)</span><div class="sfield"><span class="pencil" contenteditable="true"></span></div></div>
+              <div class="srow"><span>Initiative (INIT)</span><div class="sfield"><span class="pencil" contenteditable="true">35</span></div></div>
               <p class="frm">Base Speed + Agility + Intuition + Luck</p>
 
               <p style="font-family:Arial,sans-serif;font-size:0.6rem;color:#222;margin-top:6px;margin-bottom:2px;">Abilities</p>
               <p class="frm">&#9670; Class (Tier LVL 1)</p>
               <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">Barbarian - Tier (Levels 1-3)</span></div>
               <p class="frm">&#9670; Nature Drawn</p>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
-              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">a. Cleave - Split damage across two targets; +1 to hit vs. injured foes</span></div>
+              <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">b. Rage Slam - +3 to Hit and Damage, single target; Disarm check if hits</span></div>
               <p class="frm">&#9670; Spell Drawn</p>
               <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true">a. Ancestor's Ward - calls spectral ancestor's shield for temporary PROTS bonus</span></div>
               <div style="border-bottom:1px solid #aaa;margin:5px 0;"><span class="pencil" contenteditable="true"></span></div>
@@ -1528,16 +2084,16 @@
               <table class="item-card-tbl">
                 <tbody>
                   <tr class="itype-hdr"><td>Consumable</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Healing Potion (1d6 Life) x3</td><td>&#9670; Ration Pack x10</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Ale (dwarvish, 1pt)</td><td>&#9670; Waterskin (full)</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Whetstone</td><td>&#9670; Torch x5</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Rope (50ft hemp)</td><td>&#9670; Bedroll</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Lockpicks (basic set)</td><td>&#9670; Writing kit</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Tinderbox</td><td>&#9670; Soap</td></tr>
                   <tr class="itype-hdr"><td>Material</td><td></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
-                  <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Longsword (Masterwork, +1 to hit)</td><td>&#9670; Shield (Dwarven Steel)</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Full Plate Armor (well-maintained)</td><td>&#9670; Gauntlets (reinforced)</td></tr>
+                  <tr class="itype-bullet"><td>&#9670; Dagger (backup)</td><td>&#9670; Boots (heavy, grip)</td></tr>
                   <tr class="itype-hdr"><td>Scroll</td><td></td></tr>
                   <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
                   <tr class="itype-bullet"><td>&#9670; <span class="pencil" contenteditable="true"></span></td><td>&#9670; <span class="pencil" contenteditable="true"></span></td></tr>
@@ -1590,11 +2146,13 @@
       <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td>&#9670; Value <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td>&#9670; Enhance. <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Sheathed 2 - <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true"></span></td><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true"></span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td>&#9670; Value <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td>&#9670; Enhance. <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; DMG Mods <span class="pencil" contenteditable="true"></span></td><td></td></tr>
+      <tr class="itype-hdr"><td colspan="2">Sheathed 3 (0 drawn) - <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; Hit <span class="pencil" contenteditable="true"></span></td><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; DMG <span class="pencil" contenteditable="true"></span></td><td>&#9670; Maint. <span class="pencil" contenteditable="true"></span></td></tr>
       <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td><td>&#9670; Value <span class="pencil" contenteditable="true"></span></td></tr>
@@ -1709,8 +2267,23 @@
                   </div>
                   <!-- GOLIATH -->
                   <div>
-                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Goliath</div>
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Goliath†</div>
+                    <table class="item-card-tbl" style="width:100%;margin:0;">
+                      <tbody>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
                         <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
                 <!-- Column 2: Small, Large, Behemoth -->
@@ -1757,20 +2330,27 @@
                   </div>
                   <!-- BEHEMOTH -->
                   <div>
-                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Behemoth</div>
+                    <div style="font-family:'Cinzel', serif;font-size:0.48rem;font-weight:700;color:#2e3d0f;letter-spacing:0.06em;text-transform:uppercase;border-bottom:1px solid #4a5a20;margin-bottom:6px;padding-bottom:4px;">Behemoth†</div>
                     <table class="item-card-tbl" style="width:100%;margin:0;">
                       <tbody>
                         <tr class="itype-bullet-lbl"><td>&#9670; Name <span class="pencil" contenteditable="true"></span></td></tr>
                         <tr class="itype-bullet-lbl"><td>&#9670; Nickname <span class="pencil" contenteditable="true"></span></td></tr>
                         <tr class="itype-bullet-lbl"><td>&#9670; Rank <span class="pencil" contenteditable="true"></span></td></tr>
                         <tr class="itype-bullet-lbl"><td>&#9670; Type <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Abilities <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Perf. Tier <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Life <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mood/Stance <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Mount Status <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Gear <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Presence Bonus <span class="pencil" contenteditable="true"></span></td></tr>
+                        <tr class="itype-bullet-lbl"><td>&#9670; Summon Device <span class="pencil" contenteditable="true"></span></td></tr>
                       </tbody>
                     </table>
-                    <p style="font-family:Arial,sans-serif;font-size:0.38rem;color:#555;font-style:italic;margin-top:4px;">See Companion Card for full details.</p>
                   </div>
                 </div>
               </div>
-              <div style="font-size:0.5rem;color:#666;text-align:center;.*Shared Slot (see rules)</div>
+              <div style="font-size:0.85rem;color:#666;text-align:center;">†Shared Slot (see rules)</div>
             </div>
             </div>
           <p class="sec-title" style="text-align:left;border:none;margin-bottom:4px;margin-top:14px;"><a target="rules" href="content/essentia_core/rules_ref_004.html#active-conditions">Active Conditions</a> <span style="font-family:Arial,sans-serif;font-size:0.48rem;font-weight:400;text-transform:none;letter-spacing:0;">(duration in box)</span></p>
@@ -1805,8 +2385,6 @@
       <div style="padding: 8px 0;">
         <a href="#" data-format="pdf" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">PDF</a>
         <a href="#" data-format="html" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">HTML</a>
-        <a href="#" data-format="jpg" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">JPG</a>
-        <a href="#" data-format="png" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">PNG</a>
         <a href="#" data-format="docx" style="display: block; padding: 8px 12px; color: #fff; text-decoration: none; cursor: pointer; font-family: inherit; font-size: 13px;" onmouseover="this.style.backgroundColor='#333'" onmouseout="this.style.backgroundColor='transparent'">DOCX</a>
       </div>
     </div>
@@ -1876,8 +2454,19 @@
   document.getElementById('downloadBtn').addEventListener('click', function(e) {
     e.stopPropagation();
     checkKIDVerification(function() {
-      var menu = document.getElementById('downloadMenu');
-      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+      var front = document.getElementById('front');
+      var back = document.getElementById('back');
+      var charName = document.querySelector('h1')?.textContent || 'character-sheet';
+
+      Promise.all([
+        html2canvas(front, { scale: 2, useCORS: true }),
+        html2canvas(back, { scale: 2, useCORS: true })
+      ]).then(function(canvases) {
+        downloadAsPDF(canvases, charName);
+      }).catch(function(err) {
+        console.error('Canvas generation failed:', err);
+        alert('Failed to generate PDF. Please try again.');
+      });
     });
   });
 
