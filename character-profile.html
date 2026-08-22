@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Character Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --color-dark-bg: #0a0a0a;
+      --color-dark-card: rgba(120,80,200,0.06);
+      --color-dark-border: rgba(160,140,200,0.15);
+      --color-gold: #c5a042;
+      --color-text: #ffffff;
+      --color-focus-border: rgba(160,100,220,0.6);
+      --color-focus-bg: rgba(120,80,200,0.15);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --color-dark-bg: #f5f5f5;
+        --color-dark-card: rgba(200,180,120,0.08);
+        --color-dark-border: rgba(0,0,0,0.12);
+        --color-gold: #8b7500;
+        --color-text: #2c2c2c;
+      }
+    }
+
+    body {
+      background: var(--color-dark-bg);
+      color: var(--color-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+    }
+
+    main {
+      padding: 2rem;
+      margin: 0 auto;
+      max-width: 900px;
+      border: 3px solid var(--color-gold);
+      border-radius: 8px;
+      position: relative;
+      background: linear-gradient(135deg, rgba(197,160,66,0.05) 0%, transparent 100%);
+      box-shadow:
+        0 0 20px rgba(197,160,66,0.3),
+        inset 0 0 20px rgba(197,160,66,0.1),
+        inset 3px 3px 0px rgba(197,160,66,0.2),
+        inset -3px -3px 0px rgba(197,160,66,0.15);
+    }
+
+    main::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+      border: 1px dashed var(--color-gold);
+      border-radius: 12px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    header {
+      margin-bottom: 3rem;
+      border-bottom: 2px solid var(--color-focus-border);
+      padding-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--color-gold);
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      opacity: 0.75;
+      letter-spacing: 0.5px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2.5rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--color-focus-border);
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--color-gold);
+    }
+
+    .section-status {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      background: rgba(160,100,220,0.2);
+      color: var(--color-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-status.dev {
+      background: rgba(220,100,100,0.2);
+      color: #ff6b6b;
+    }
+
+    .profile-section {
+      background: var(--color-dark-card);
+      border: 1px solid var(--color-dark-border);
+      padding: 1.5rem;
+      border-radius: 6px;
+      margin-bottom: 2rem;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .profile-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-field label {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: var(--color-gold);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      opacity: 0.9;
+    }
+
+    .profile-field input,
+    .profile-field select,
+    .profile-field textarea {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--color-dark-border);
+      color: var(--color-text);
+      padding: 0.6rem 0.8rem;
+      border-radius: 3px;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+
+    .profile-field input:focus,
+    .profile-field select:focus,
+    .profile-field textarea:focus {
+      outline: none;
+      border-color: var(--color-focus-border);
+      background: var(--color-focus-bg);
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .placeholder-section {
+      background: rgba(100,100,100,0.1);
+      border: 2px dashed var(--color-dark-border);
+      padding: 2rem;
+      border-radius: 6px;
+      text-align: center;
+      color: var(--color-text);
+      opacity: 0.6;
+      margin-bottom: 2rem;
+    }
+
+    .placeholder-section p {
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .export-section {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 2px solid var(--color-focus-border);
+      text-align: center;
+    }
+
+    .btn-export {
+      display: inline-block;
+      padding: 0.8rem 1.5rem;
+      background: var(--color-focus-border);
+      color: var(--color-text);
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin: 0 0.5rem;
+    }
+
+    .btn-export:hover {
+      background: rgba(160,100,220,0.8);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>SORC Character Profile</h1>
+      <p class="subtitle">Comprehensive character reference sheet for Essentia Core RPG</p>
+    </header>
+
+    <!-- SECTION 1: CHARACTER IDENTITY -->
+    <div class="section-header">
+      <span class="section-title">Section 1: Character Identity</span>
+      <span class="section-status">Active</span>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-grid">
+        <!-- 1. Name & UID -->
+        <div class="profile-field">
+          <label for="name">Name</label>
+          <input type="text" id="name" placeholder="Character name">
+        </div>
+        <div class="profile-field">
+          <label for="uid">UID</label>
+          <input type="text" id="uid" placeholder="Unique ID" maxlength="5">
+        </div>
+
+        <!-- 2. Nickname(s) -->
+        <div class="profile-field full-width">
+          <label for="nicknames">Nickname(s)</label>
+          <input type="text" id="nicknames" placeholder="e.g., The Brave, Shadowstep, Ironheart">
+        </div>
+
+        <!-- 3. Gender -->
+        <div class="profile-field">
+          <label for="gender">Gender</label>
+          <select id="gender">
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="non-binary">Non-binary</option>
+            <option value="other">Other</option>
+            <option value="ukn">Unknown (UKN)</option>
+          </select>
+        </div>
+
+        <!-- 4. Age -->
+        <div class="profile-field">
+          <label for="age">Age</label>
+          <input type="number" id="age" placeholder="Character age" min="1" max="200">
+        </div>
+
+        <!-- 5. Race -->
+        <div class="profile-field">
+          <label for="race">Race</label>
+          <input type="text" id="race" placeholder="e.g., Dwarf, Elf, Human">
+        </div>
+
+        <!-- 6. Species -->
+        <div class="profile-field">
+          <label for="species">Species</label>
+          <input type="text" id="species" placeholder="e.g., Humanoid, Reptilian, Fae">
+        </div>
+
+        <!-- 7. Level -->
+        <div class="profile-field">
+          <label for="level">Level</label>
+          <input type="number" id="level" placeholder="LVL" min="0" max="30">
+        </div>
+
+        <!-- 8. Rank -->
+        <div class="profile-field">
+          <label for="rank">Rank</label>
+          <input type="text" id="rank" placeholder="Novice, Apprentice, etc.">
+        </div>
+
+        <!-- 9. Growth -->
+        <div class="profile-field">
+          <label for="growth">Growth</label>
+          <input type="number" id="growth" placeholder="Growth milestone" min="0" max="20">
+        </div>
+
+        <!-- 10. Favorite Class(es) -->
+        <div class="profile-field full-width">
+          <label for="favoriteClasses">Favorite Class(es)</label>
+          <input type="text" id="favoriteClasses" placeholder="e.g., Warrior, Cleric; Thief, Ranger">
+        </div>
+
+        <!-- 11. Culture -->
+        <div class="profile-field">
+          <label for="culture">Culture</label>
+          <input type="text" id="culture" placeholder="Cultural background">
+        </div>
+
+        <!-- 12. Place of Birth -->
+        <div class="profile-field">
+          <label for="birthplace">Place of Birth</label>
+          <input type="text" id="birthplace" placeholder="Hometown or birthplace">
+        </div>
+
+        <!-- 13. Languages -->
+        <div class="profile-field full-width">
+          <label for="languages">Languages</label>
+          <input type="text" id="languages" placeholder="e.g., Common, Dwarvish, Elvish">
+        </div>
+
+        <!-- 14. Occupation / Role -->
+        <div class="profile-field full-width">
+          <label for="occupation">Occupation / Role</label>
+          <input type="text" id="occupation" placeholder="Profession or adventuring role">
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2 PLACEHOLDER -->
+    <div class="section-header">
+      <span class="section-title">Section 2: TBD</span>
+      <span class="section-status dev">In Development</span>
+    </div>
+    <div class="placeholder-section">
+      <p>⚙️ Section 2 coming soon...</p>
+    </div>
+
+    <!-- SECTION 3 PLACEHOLDER -->
+    <div class="section-header">
+      <span class="section-title">Section 3: TBD</span>
+      <span class="section-status dev">In Development</span>
+    </div>
+    <div class="placeholder-section">
+      <p>⚙️ Section 3 coming soon...</p>
+    </div>
+
+    <!-- SECTION 4 PLACEHOLDER -->
+    <div class="section-header">
+      <span class="section-title">Section 4: TBD</span>
+      <span class="section-status dev">In Development</span>
+    </div>
+    <div class="placeholder-section">
+      <p>⚙️ Section 4 coming soon...</p>
+    </div>
+
+    <!-- SECTION 5 PLACEHOLDER -->
+    <div class="section-header">
+      <span class="section-title">Section 5: TBD</span>
+      <span class="section-status dev">In Development</span>
+    </div>
+    <div class="placeholder-section">
+      <p>⚙️ Section 5 coming soon...</p>
+    </div>
+
+    <div class="export-section">
+      <p style="margin-bottom: 1.5rem; opacity: 0.75;">More sections in development</p>
+      <button class="btn-export" onclick="alert('Export feature coming soon')">Export Profile</button>
+      <button class="btn-export" onclick="alert('Print feature coming soon')">Print Profile</button>
+    </div>
+  </main>
+</body>
+</html>
