@@ -40,7 +40,7 @@
       width: 768px;
       height: 1104px;
       margin: 1rem auto;
-      background: #f2ece0;
+      background: transparent;
       border: 2px solid #999;
       border-radius: 4px;
       position: relative;
@@ -84,21 +84,20 @@
     }
 
     header {
-      margin-bottom: 0;
-      border-bottom: none;
-      padding-bottom: 0;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-focus-border);
+      padding-bottom: 0.4rem;
     }
 
     .title-image {
       width: 250px;
       height: 140px;
-      margin-bottom: 0;
+      margin-bottom: 0.3rem;
       display: block;
       border-radius: 2px;
       margin-left: auto;
       margin-right: auto;
       object-fit: contain;
-      background: transparent;
     }
 
     h1 {
@@ -205,7 +204,7 @@
     }
 
     .placeholder-section {
-      background: rgba(100,100,100,0.1);
+      background: transparent;
       border: 2px dashed var(--color-dark-border);
       padding: 2rem 1rem;
       border-radius: 6px;
@@ -225,44 +224,81 @@
 
     .dual-section-layout {
       display: grid;
-      grid-template-columns: 1fr 160px 1fr;
+      grid-template-columns: 0.8fr 1fr 0.8fr;
       gap: 0.3rem;
       align-items: flex-start;
       margin-bottom: 0.3rem;
     }
 
+    .header-with-sections {
+      position: relative;
+      display: grid;
+      grid-template-columns: 0.8fr 1fr 0.8fr;
+      gap: 0.3rem;
+      align-items: flex-start;
+      margin-bottom: 0.3rem;
+      margin-top: 0;
+    }
+
+    .header-center {
+      grid-column: 2;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+      border-bottom: none !important;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-center img {
+      margin: 0;
+      margin-bottom: 0.2rem;
+    }
+
+    .header-center h1,
+    .header-center .subtitle {
+      margin: 0;
+      padding: 0;
+    }
+
+    .left-section {
+      grid-column: 1;
+      position: relative;
+      z-index: 10;
+      margin-top: 0;
+    }
+
+    .right-section {
+      grid-column: 3;
+      position: relative;
+      z-index: 10;
+      margin-top: 0;
+    }
+
     .section-column {
       display: flex;
       flex-direction: column;
-      background: transparent;
     }
 
     .portrait-box {
       width: 160px;
-      display: flex;
-      flex-direction: column;
+      height: 210px;
       border: 1.5px solid #4a5a20;
+      background: #e5ddc8;
+      display: none;
+      align-items: center;
+      justify-content: center;
       border-radius: 3px;
-      overflow: hidden;
     }
 
-    .portrait-box .portrait-label {
+    .portrait-box span {
       font-size: 0.6rem;
       color: #999;
       letter-spacing: 0.5px;
       text-transform: uppercase;
       opacity: 0.7;
       text-align: center;
-      padding: 0.4rem;
-      background: #e5ddc8;
-      border-bottom: 1px solid #4a5a20;
-    }
-
-    .portrait-box img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      background: #e5ddc8;
+      padding: 0.5rem;
     }
 
     /* Action Bar */
@@ -277,7 +313,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f2ece0;
+      background: transparent;
       border-top: 1px solid #ccc;
       flex-wrap: wrap;
       z-index: 100;
@@ -343,14 +379,13 @@
     .download-menu {
       display: none;
       position: absolute;
-      bottom: calc(100% + 5px);
-      right: 0;
-      background: #1a1a1a;
-      border: 1px solid #4a5a20;
+      top: -120px;
+      left: 0;
+      background: rgba(10,10,10,0.95);
+      border: 1px solid var(--color-focus-border);
       z-index: 1000;
-      min-width: 140px;
+      min-width: 120px;
       border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
     }
 
     .download-menu.active {
@@ -359,16 +394,15 @@
 
     .download-menu a {
       display: block;
-      padding: 10px 14px;
-      color: #c5a042;
+      padding: 8px 12px;
+      color: var(--color-gold);
       text-decoration: none;
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      border-bottom: 1px solid rgba(197,160,66,0.1);
-      transition: all 0.2s ease;
+      border-bottom: 1px solid rgba(160,100,220,0.2);
     }
 
     .download-menu a:last-child {
@@ -376,8 +410,7 @@
     }
 
     .download-menu a:hover {
-      background: rgba(197,160,66,0.15);
-      padding-left: 16px;
+      background: rgba(160,100,220,0.3);
     }
 
     .page.hidden {
@@ -410,14 +443,9 @@
     <div class="page-content">
       <div class="page-label">Front</div>
 
-      <header>
-        <img src="images/sorc-char-sht-ban_20260822_113255_0000.png" alt="SORC Character Sheet Title" class="title-image">
-        <p class="subtitle">Essentia Core RPG</p>
-      </header>
-
-      <div class="dual-section-layout">
-        <!-- LEFT COLUMN: Section 1 Profile -->
-        <div class="section-column">
+      <div class="header-with-sections">
+        <!-- LEFT SECTION: Section 1 Profile -->
+        <div class="section-column left-section">
           <div class="section-header" style="margin-top: 0;">
             <span class="section-title">Section 1: Profile</span>
           </div>
@@ -428,7 +456,8 @@
               <input type="text" id="name" placeholder="Character name">
             </div>
             <div class="profile-field">
-              <label>UID - <a href="#" id="uidLink" style="color: #b9aa00; text-decoration: none; cursor: pointer;">SORC Beyond</a></label>
+              <label for="uid">UID</label>
+              <input type="text" id="uid" placeholder="Unique ID" maxlength="5">
             </div>
 
             <!-- 2. Nickname(s) -->
@@ -482,14 +511,15 @@
           </div>
         </div>
 
-        <!-- CENTER: Portrait -->
-        <div class="portrait-box">
-          <div class="portrait-label">Photo or Portrait</div>
-          <img src="images/sorc-char-sheet_20260529_230132_0000.png" alt="Character Portrait">
-        </div>
+        <!-- CENTER: Header with Image -->
+        <header class="header-center">
+          <img src="images/20260822_092259_0000.png" alt="SORC Character Sheet Title" class="title-image">
+          <h1>Character Sheet</h1>
+          <p class="subtitle">Essentia Core RPG</p>
+        </header>
 
-        <!-- RIGHT COLUMN: Section 2 Progression -->
-        <div class="section-column">
+        <!-- RIGHT SECTION: Section 2 Progression -->
+        <div class="section-column right-section">
           <div class="section-header" style="margin-top: 0;">
             <span class="section-title">Section 2: Progress</span>
           </div>
@@ -553,6 +583,7 @@
       <div class="page-label">Back</div>
 
       <header>
+        <img src="images/20260822_092259_0000.png" alt="SORC Character Sheet Title" class="title-image">
         <h1>Character Sheet</h1>
         <p class="subtitle">Essentia Core RPG</p>
       </header>
@@ -589,10 +620,9 @@
     <div class="print-group">
       <button class="ptab active" data-side="front">Front</button>
       <button class="ptab" data-side="back">Back</button>
-      <button class="ptab" data-side="both">Both (vert)</button>
+      <button class="ptab" data-side="both">Both</button>
     </div>
     <button id="printBtn">Print</button>
-    <a href="character-sheet.pdf" download="character-sheet.pdf" style="display: inline-block; height: 32px; padding: 6px 14px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: #4a5a20; color: #ffffff; border: none; border-radius: 3px; cursor: pointer; text-decoration: none; line-height: 20px;">Download PDF</a>
   </div>
 
   <script>
@@ -629,17 +659,6 @@
     // Print button
     document.getElementById('printBtn').addEventListener('click', function() {
       window.print();
-    });
-
-    // UID link handler
-    document.getElementById('uidLink').addEventListener('click', function(e) {
-      e.preventDefault();
-      const authKey = localStorage.getItem('authKey');
-      if (!authKey) {
-        window.location.href = 'signin.html';
-      } else {
-        window.location.href = 'profile.html';
-      }
     });
   </script>
 
