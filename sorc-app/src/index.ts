@@ -2928,10 +2928,5 @@ app.get('/auth/google/callback', async (c) => {
   }
 });
 
-export default {
-  fetch: app.fetch,
-  async scheduled(_event: any, env: Env, _ctx: any) {
-    await rotateGeneratedCodes(env.sorc_db);
-  },
-};
+export default app;
 
