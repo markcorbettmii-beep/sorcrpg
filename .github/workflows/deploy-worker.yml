@@ -22,7 +22,9 @@ jobs:
         working-directory: sorc-app
       - name: Copy root HTML files to public
         run: |
-          cp *.html sorc-app/public/ 2>/dev/null || true
+          for f in *.html; do
+            [[ "$f" != "brunn_build.html" && "$f" != "build-brunn-flip.html" ]] && cp "$f" sorc-app/public/
+          done 2>/dev/null || true
       - run: npx wrangler deploy
         working-directory: sorc-app
         env:
