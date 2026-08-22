@@ -2929,7 +2929,43 @@ app.get('/auth/google/callback', async (c) => {
 });
 
 export default {
-  fetch: app.fetch,
+  fetch: async (request: Request, env: any, ctx: any) => {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // Try API routes first
+    const response = await app.fetch(request, env, ctx);
+
+    // If API didn't handle it and it looks like a file, try assets
+    if (response.status === 404 && /\.\w+$/.test(pathname)) {
+      try {
+        const asset = await env.ASSETS.get(pathname.startsWith('/') ? pathname.slice(1) : pathname);
+        if (asset) {
+          const headers: Record<string, string> = {
+            'Cache-Control': 'public, max-age=3600',
+          };
+          const ext = pathname.split('.').pop()?.toLowerCase();
+          const mimeTypes: Record<string, string> = {
+            'html': 'text/html; charset=utf-8',
+            'css': 'text/css',
+            'js': 'application/javascript',
+            'json': 'application/json',
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'svg': 'image/svg+xml',
+          };
+          if (ext && mimeTypes[ext]) {
+            headers['Content-Type'] = mimeTypes[ext];
+          }
+          return new Response(asset, { headers });
+        }
+      } catch (e) {}
+    }
+
+    return response;
+  },
   async scheduled(_event: any, env: Env, _ctx: any) {
     await rotateGeneratedCodes(env.sorc_db);
   },
