@@ -1074,77 +1074,228 @@ app.post('/api/admin/migrate-bcrypt', async (c) => {
 
 // ===== ASSESSMENTS =====
 
-app.get('/api/assess/questions', authMiddleware, async (c) => {
+async function checkRateLimit(db: D1Database, key: string, maxAttempts: number, windowSeconds: number): Promise<boolean> {
+  const now = Math.floor(Date.now() / 1000);
+  const windowStart = now - windowSeconds;
   try {
-    // Return 10 assessment questions
-    const questions = [
-      { id: 1, q: 'What is the primary goal of character creation in SORC?' },
-      { id: 2, q: 'How many ability scores does a character have at creation?' },
-      { id: 3, q: 'What is the standard die used for rolling ability scores?' },
-      { id: 4, q: 'What are the four main classes in SORC?' },
-      { id: 5, q: 'What is the typical starting level for new characters?' },
-      { id: 6, q: 'How does alignment work in SORC campaigns?' },
-      { id: 7, q: 'What resources do Game Masters use to build encounters?' },
-      { id: 8, q: 'How is experience typically awarded in SORC?' },
-      { id: 9, q: 'What is the role of a Game Master?' },
-      { id: 10, q: 'How are hit points calculated for player characters?' }
-    ];
-    return c.json({ questions });
-  } catch (error: any) {
-    return c.json({ error: 'Failed to load questions', details: error.message }, 500);
+    await db.prepare('DELETE FROM rate_limits WHERE key = ? AND created_at < ?').bind(key, windowStart).run();
+    const row = await db.prepare('SELECT COUNT(*) as count FROM rate_limits WHERE key = ?').bind(key).first() as any;
+    if ((row?.count || 0) >= maxAttempts) return false;
+    await db.prepare('INSERT INTO rate_limits (key, created_at) VALUES (?, ?)').bind(key, now).run();
+    return true;
+  } catch {
+    return false; // deny on DB error — don't fail open
   }
+}
+
+function isPrivileged(user: any): boolean {
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+  return user.role === 'ADMIN' || user.role === 'OWNER'
+    || OWNER_EMAILS.includes(user.email)
+    || ADMIN_EMAILS.includes(user.email);
+}
+
+const ASSESSMENT_QUESTIONS = [
+  // PAGE 1 - Dice, Box Set, Action Resolution
+  { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, page: 1 },
+  { q: "What does rolling 00 on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, page: 1 },
+  { q: "When using the D100+D100 system, what is the minimum possible total result?", options: ["1", "2", "10", "0"], answer: 1, page: 1 },
+  { q: "What is the maximum possible result when using the D100+D100 system?", options: ["100", "150", "200", "198"], answer: 2, page: 1 },
+  { q: "Which two dice combine to form a d100 roll in SORC?", options: ["Two D6s", "Two D10s (tens and ones)", "D20 and D6", "D12 and D8"], answer: 1, page: 1 },
+  { q: "When rolling d100, your tens die shows 4 and your ones die shows 0. What is your result?", options: ["4", "400", "40", "100"], answer: 2, page: 1 },
+  { q: "When rolling d100, the tens die shows 1 and the ones die shows 0. What is your result?", options: ["1", "100", "10", "01"], answer: 2, page: 1 },
+  { q: "When rolling d100, the tens die shows 0 and the ones die shows 5. What is your result?", options: ["50", "0", "15", "5"], answer: 3, page: 1 },
+  { q: "What is the maximum possible result on a single d100 roll?", options: ["99", "10", "50", "100"], answer: 3, page: 1 },
+  { q: "What is the minimum possible result on a single d100 roll?", options: ["0", "1", "10", "5"], answer: 1, page: 1 },
+  { q: "Which die combination is used for Divine and Legendary item drops in SORC?", options: ["1D6", "1D4", "D100 + D100", "2D6"], answer: 2, page: 1 },
+  { q: "The D4 is primarily used for which type of roll?", options: ["Damage", "Initiative", "Luck", "Loot"], answer: 2, page: 1 },
+  { q: "How many D10 dice are included in the SORC box set?", options: ["4", "6", "8", "10"], answer: 2, page: 1 },
+  { q: "How many D6 dice are included in the SORC box set?", options: ["4", "6", "8", "12"], answer: 1, page: 1 },
+  { q: "What does DIFS stand for in SORC?", options: ["Defense Index Factor Score", "Damage Infliction Scale", "Difficulty Score", "Dice Influence Factor"], answer: 2, page: 1 },
+  { q: "In SORC, a D100 action roll must do what to the DIFS to succeed?", options: ["Fall below it", "Equal exactly", "Meet or exceed it", "Exceed it by at least 5"], answer: 2, page: 1 },
+  { q: "What is the rarest item drop rank in SORC?", options: ["Legendary", "Unique", "Divine", "Elite"], answer: 2, page: 1 },
+  // PAGE 2 - Races & Character Creation
+  { q: "Which color token represents Life (HP)?", options: ["Blue", "Red", "Yellow", "Green"], answer: 1, page: 2 },
+  { q: "How many playable races and sub-races are available in SORC?", options: ["20", "30", "40", "50"], answer: 2, page: 2 },
+  { q: "How many size categories do SORC races fall into?", options: ["2", "3", "4", "5"], answer: 1, page: 2 },
+  { q: "What is the height range for Goliath size races?", options: ["5-7 ft", "7-9 ft", "9-11 ft", "3-5 ft"], answer: 1, page: 2 },
+  { q: "What is the height range for Small size races?", options: ["3-4 ft", "2-4 ft", "3-5 ft", "4-6 ft"], answer: 2, page: 2 },
+  { q: "In SORC, does a Human's culture (Omne, Nordkin, etc.) affect their base stats?", options: ["Yes, significantly", "Yes, slightly", "No, all humans share the same base stats", "Only in combat"], answer: 2, page: 2 },
+  // PAGE 3 - Classes & Abilities
+  { q: "What is the maximum number of abilities a character can learn?", options: ["40", "50", "59", "75"], answer: 2, page: 3 },
+  { q: "How many main class trees exist in SORC?", options: ["8", "12", "16", "20"], answer: 2, page: 3 },
+  { q: "How many paths does each main class tree have?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
+  { q: "At what class level do Path Abilities become available?", options: ["Level 1", "Level 4", "Level 10", "Level 21"], answer: 1, page: 3 },
+  { q: "At what class level do Branch Abilities unlock?", options: ["Level 10", "Level 15", "Level 21", "Level 30"], answer: 2, page: 3 },
+  { q: "Which classes are restricted from using edged weapons?", options: ["Warlocks and Paladins", "Monks and Clerics", "Bards and Druids", "Rangers and Rogues"], answer: 1, page: 3 },
+  { q: "Which class cannot use holy weapons?", options: ["Paladin", "Cleric", "Warlock", "Monk"], answer: 2, page: 3 },
+  // PAGE 4 - Cards, Currency, Ranks
+  { q: "What is the correct rank order from lowest to highest for ranks 1, 2, and 3?", options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Master, Pauper", "Commoner, Peasant, Pauper"], answer: 1, page: 4 },
+  { q: "What rank comes directly after Commoner (rank 3) in SORC?", options: ["Hero", "Peasant", "Adventurer", "Elite"], answer: 2, page: 4 },
+  { q: "What is the highest rank a character can achieve in SORC?", options: ["Elite", "Hero", "Master", "Legend"], answer: 3, page: 4 },
+  { q: "How many total ranks exist in the SORC rank system?", options: ["5", "6", "7", "8"], answer: 3, page: 4 },
+  { q: "What rank comes directly after Hero (rank 5) in SORC?", options: ["Master", "Adventurer", "Legend", "Elite"], answer: 3, page: 4 },
+  { q: "Can characters use items of a rank above their own?", options: ["Yes, with a penalty", "Yes, if given by the GM", "No, never", "Only in emergencies"], answer: 2, page: 4 },
+  { q: "How many Silver coins equal one Gold coin in SORC?", options: ["10", "25", "50", "100"], answer: 2, page: 4 },
+  { q: "How many Silver coins equal one Platinum coin in SORC?", options: ["50", "100", "200", "500"], answer: 1, page: 4 },
+  { q: "What card rank is included in a module of levels 1-5?", options: ["Rare", "Uncommon", "Common", "Heroic"], answer: 2, page: 4 },
+  { q: "What bonus does a Rare rank armor provide to the base Armor Score?", options: ["+3", "+5", "+8", "+10"], answer: 1, page: 4 },
+  // PAGE 5 - Attributes, Vitality, Traits, Combat, Movement
+  { q: "How many Attributes exist in SORC?", options: ["5", "6", "7", "8"], answer: 2, page: 5 },
+  { q: "What is the maximum score any single Attribute can reach?", options: ["20", "25", "30", "50"], answer: 2, page: 5 },
+  { q: "What does PROTS stand for in SORC?", options: ["Power Rating Over Target Score", "Protection Score", "Primary Roll Threshold", "Passive Resistance Stat"], answer: 1, page: 5 },
+  { q: "What roll result counts as a Critical Hit in SORC?", options: ["Natural 1", "Natural 99", "Natural 100", "Any roll of 95+"], answer: 2, page: 5 },
+  { q: "How much damage does a Critical Hit deal?", options: ["1.5x damage", "2x damage dice", "3x damage dice", "Instant incapacitation"], answer: 1, page: 5 },
+  { q: "Which Traits are used in the Initiative formula?", options: ["Strength, Defense, Courage", "Agility, Vigilance, Luck", "Dexterity, Wit, Spirit", "Toughness, Constitution, Willpower"], answer: 1, page: 5 },
+  { q: "How many real-time seconds does each combat turn represent in SORC?", options: ["3", "6", "10", "12"], answer: 1, page: 5 },
+  { q: "How much time does each player have per turn before it is forfeited?", options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"], answer: 2, page: 5 },
+  { q: "What is the base movement speed for Standard size races?", options: ["25 ft", "30 ft", "35 ft", "40 ft"], answer: 1, page: 5 },
+  { q: "What is the base movement speed for Goliath size races?", options: ["30 ft", "35 ft", "40 ft", "50 ft"], answer: 2, page: 5 },
+  { q: "Which Trait determines how fast Life, Mana, Stamina, and Endurance regenerate?", options: ["Apex", "Spirit", "Willpower", "Focus"], answer: 1, page: 5 },
+  { q: "Which Trait sets the maximum cap (Extent) for each Vitality resource?", options: ["Spirit", "Apex", "Capacity", "Knowledge"], answer: 1, page: 5 },
+  { q: "What color chips represent Mana in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 1, page: 5 },
+  { q: "What color chips represent Stamina in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 2, page: 5 },
+  { q: "In SORC's armor system, when does an attack successfully hit?", options: ["When the roll is lower than PROTS", "When the roll equals zero", "When the roll equals or exceeds PROTS", "When the roll is a natural 1"], answer: 2, page: 5 },
+  { q: "What does the abbreviation 'AS' stand for in SORC?", options: ["Attack Speed", "Armor Set", "Action Score", "Armor Score"], answer: 3, page: 5 },
+  { q: "What is the base Armor Score (AS) of Heavy (Plate) armor?", options: ["25", "35", "40", "45"], answer: 3, page: 5 },
+  { q: "What does LST stand for in SORC combat?", options: ["Long-range Stealth Training", "Limb-Specific Targeting", "Light Strike Technique", "Luck Saving Throw"], answer: 1, page: 5 },
+  { q: "The maximum load a character can carry is determined by which formula?", options: ["STR x 10 lbs", "STR x 15 lbs", "STR x 20 lbs", "STR x 25 lbs"], answer: 1, page: 5 },
+];
+
+const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function calcSorcRole(score: number, gmTrack: boolean): string {
+  if (score < 6) return 'FAIL';
+  if (gmTrack && score >= 9) return 'GM-ADV';
+  if (score >= 9) return 'PC-ADV';
+  if (score === 8) return 'PC-INT';
+  return 'PC-BEG';
+}
+
+app.get('/api/assess', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const result = await c.env.sorc_db.prepare(
+    `SELECT * FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first() as any;
+  let expired = false;
+  let expires_at: string | null = null;
+  if (result) {
+    const takenMs = new Date(result.taken_at).getTime();
+    expires_at = new Date(takenMs + ASSESSMENT_EXPIRY_MS).toISOString();
+    expired = Date.now() > takenMs + ASSESSMENT_EXPIRY_MS;
+  }
+  return c.json({ assessment: result || null, expired, expires_at, needs_reassess: !!(user.needs_reassess) });
+});
+
+app.get('/api/assess/questions', authMiddleware, async (c) => {
+  const pool = ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i }));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const questions = pool.slice(0, 10).map(q => ({
+    id: q.id,
+    q: q.q,
+    options: q.options,
+    page: q.page
+  }));
+  return c.json({ questions });
 });
 
 app.post('/api/assess/submit', authMiddleware, async (c) => {
-  try {
-    const { answers, gm_track } = await c.req.json();
-    const user = c.get('user') as any;
+  const user = c.get('user') as any;
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const allowed = await checkRateLimit(c.env.sorc_db, `assess:${user.id}:${ip}`, 5, 3600);
+  if (!allowed) return c.json({ error: 'Too many assessment attempts. Please try again later.' }, 429);
 
-    if (!answers || !Array.isArray(answers)) {
-      return c.json({ error: 'Invalid answers format' }, 400);
-    }
-
-    // Calculate score (placeholder - all correct answers)
-    const score = answers.length;
-
-    // Determine role based on score and track
-    let role_granted = 'PC';
-    let site_role = 'PLAYER';
-
-    if (gm_track) {
-      if (score >= 9) {
-        role_granted = 'GM-ADV';
-        site_role = 'MASTER';
-      } else {
-        return c.json({ passed: false, score, message: 'GMs must score 9 or higher' });
-      }
-    } else {
-      if (score >= 9) {
-        role_granted = 'PC-ADV';
-      } else if (score >= 8) {
-        role_granted = 'PC-INT';
-      } else if (score >= 6) {
-        role_granted = 'PC';
-      } else {
-        return c.json({ passed: false, score, message: 'Please score at least 6 to pass' });
-      }
-    }
-
-    // Award community points
-    const points_awarded = gm_track ? 1000 : 500;
-    await c.env.sorc_db.prepare('UPDATE users SET community_points = community_points + ?, sorc_role = ? WHERE id = ?')
-      .bind(points_awarded, role_granted, user.id).run();
-
-    return c.json({
-      passed: true,
-      score,
-      role: role_granted,
-      site_role,
-      points_awarded
-    });
-  } catch (error: any) {
-    return c.json({ error: 'Assessment submission failed', details: error.message }, 500);
+  const existing = await c.env.sorc_db.prepare(
+    `SELECT id FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first();
+  /* Allow overwrite when flagged for reassessment (expiry or incompetence) */
+  if (existing && !user.needs_reassess) return c.json({ error: 'Already assessed. Use reassess to retake.' }, 400);
+  if (existing && user.needs_reassess) {
+    await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
   }
+
+  const { answers, gm_track } = await c.req.json() as any;
+  if (!Array.isArray(answers) || answers.length !== 10) {
+    return c.json({ error: 'Must answer all 10 questions.' }, 400);
+  }
+
+  let score = 0;
+  for (const entry of answers) {
+    const qId = typeof entry === 'object' ? entry.id : null;
+    const chosen = typeof entry === 'object' ? entry.answer : entry;
+    if (qId !== null && qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
+      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) score++;
+    }
+  }
+
+  const role = calcSorcRole(score, !!gm_track);
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
+
+  if (role === 'FAIL') {
+    /* FAIL downgrades to Civilian everywhere — record it and update user */
+    try {
+      await c.env.sorc_db.prepare(
+        `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(id, user.id, score, 'FAIL', gm_track ? 1 : 0, now).run();
+      if (!isPrivileged(user)) {
+        await c.env.sorc_db.prepare(
+          `UPDATE users SET role = 'CIVILIAN', sorc_role = NULL, needs_reassess = 0, updated_at = ? WHERE id = ?`
+        ).bind(now, user.id).run();
+      }
+    } catch(_) {}
+    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
+  }
+
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(id, user.id, score, role, gm_track ? 1 : 0, now).run();
+
+    // Update both the site role (PLAYER/MASTER) and the sorc_role (PC-BEG/INT/ADV/GM-ADV)
+    // Award community points only on first-ever assessment (assessment_rewarded = 0)
+    const fullUser = await c.env.sorc_db.prepare(`SELECT assessment_rewarded, needs_reassess FROM users WHERE id = ?`).bind(user.id).first() as any;
+    const firstTime = !fullUser?.assessment_rewarded;
+    const pointsAwarded = firstTime ? (siteRole === 'MASTER' ? 200 : 100) : 0;
+
+    const preserveRole = isPrivileged(user);
+    if (preserveRole) {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
+         community_points = community_points + ?, updated_at = ? WHERE id = ?`
+      ).bind(role, pointsAwarded, now, user.id).run();
+    } else {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET role = ?, sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
+         community_points = community_points + ?, updated_at = ? WHERE id = ?`
+      ).bind(siteRole, role, pointsAwarded, now, user.id).run();
+    }
+
+    return c.json({ score, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/assess', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
+  if (isPrivileged(user)) {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET sorc_role = NULL, needs_reassess = 0, updated_at = ? WHERE id = ?`
+    ).bind(now, user.id).run();
+  } else {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET sorc_role = NULL, role = 'CIVILIAN', needs_reassess = 0, updated_at = ? WHERE id = ?`
+    ).bind(now, user.id).run();
+  }
+  return c.json({ success: true });
 });
 
 export default app;
