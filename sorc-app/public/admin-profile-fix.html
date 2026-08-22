@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Fix Tool</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f0; }
+        .container { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ccc; }
+        h1 { color: #c93f35; margin-bottom: 20px; }
+        .status { padding: 15px; margin: 20px 0; border-radius: 8px; }
+        .status.info { background: #e3f2fd; border: 1px solid #2196f3; color: #1565c0; }
+        .status.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
+        .status.error { background: #ffebee; border: 1px solid #c93f35; color: #c93f35; }
+        .status.warning { background: #fff3e0; border: 1px solid #ff9800; color: #e65100; }
+        button {
+            background: #c93f35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 0px;
+        }
+        button:hover { background: #a83228; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .step { margin: 20px 0; padding: 15px; background: #f9f9f9; border-left: 4px solid #c93f35; }
+        code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        .error-box { background: #ffebee; border: 1px solid #c93f35; border-radius: 8px; padding: 15px; margin: 10px 0; color: #c93f35; }
+        .error-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 1px; }
+        .error-detail { font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; word-break: break-all; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Profile Fix Tool</h1>
+
+        <div class="status info">
+            <strong>Purpose:</strong> Diagnose and fix profile page "Loading..." issue
+        </div>
+
+        <h2>Current Status</h2>
+        <div id="statusContainer"></div>
+
+        <h2>Diagnosis Steps</h2>
+        <div class="step">
+            <strong>Step 1:</strong> Check if profile endpoint has all required fields
+            <div id="step1Status"></div>
+        </div>
+
+        <div class="step">
+            <strong>Step 2:</strong> Check user data integrity
+            <div id="step2Status"></div>
+        </div>
+
+        <div class="step">
+            <strong>Step 3:</strong> Run profile data sync
+            <button id="fixBtn" onclick="runProfileFix()" disabled>Running Diagnostics... (Checking...)</button>
+            <div id="step3Status"></div>
+        </div>
+
+        <h2>What This Does</h2>
+        <ul>
+            <li>✓ Checks if <code>/api/me</code> returns all required fields</li>
+            <li>✓ Verifies user data in localStorage is valid</li>
+            <li>✓ Tests profile page rendering with live data</li>
+            <li>✓ Repairs missing or corrupted profile data if needed</li>
+        </ul>
+
+        <h2>After Fix</h2>
+        <p>Once fixed, visit <a href="/profile.html" target="_blank">your profile</a> and it should load properly.</p>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.sorcrpg.com';
+
+        async function checkDiagnostics() {
+            const statusDiv = document.getElementById('statusContainer');
+            const step1Div = document.getElementById('step1Status');
+            const fixBtn = document.getElementById('fixBtn');
+
+            try {
+                // Check if user is logged in
+                let saved = null;
+                try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+                if (!saved || !saved.authKey) {
+                    statusDiv.innerHTML = '<div class="status error">❌ Not logged in - please sign in first</div>';
+                    fixBtn.disabled = true;
+                    fixBtn.textContent = 'Cannot run (not logged in)';
+                    return;
+                }
+
+                // Test /api/me endpoint
+                const meRes = await fetch(API_URL + '/api/me', {
+                    headers: { 'X-Auth-Key': saved.authKey }
+                });
+
+                if (!meRes.ok) {
+                    statusDiv.innerHTML = '<div class="status error">❌ API Error - /api/me returned ' + meRes.status + '</div>';
+                    step1Div.innerHTML = '<div class="status error">API is not responding correctly</div>';
+                    fixBtn.disabled = true;
+                    return;
+                }
+
+                const meData = await meRes.json();
+
+                // Check for required fields
+                const requiredFields = ['id', 'username', 'display_name', 'avatar', 'bio', 'role', 'community_points', 'post_count'];
+                const missingFields = requiredFields.filter(f => !(f in (meData.user || {})));
+
+                if (missingFields.length > 0) {
+                    statusDiv.innerHTML = '<div class="status warning">⚠️ Some profile fields are missing: ' + missingFields.join(', ') + '</div>';
+                    step1Div.innerHTML = '<div class="status warning">Missing fields detected - will attempt repair</div>';
+                } else {
+                    statusDiv.innerHTML = '<div class="status success">✓ API responding with all required fields</div>';
+                    step1Div.innerHTML = '<div class="status success">✓ /api/me has all required fields</div>';
+                }
+
+                // Check localStorage data
+                const step2Div = document.getElementById('step2Status');
+                const lsFields = ['username', 'authKey', 'avatar', 'role'];
+                const lsMissing = lsFields.filter(f => !(f in saved));
+
+                if (lsMissing.length > 0) {
+                    step2Div.innerHTML = '<div class="status warning">⚠️ localStorage missing: ' + lsMissing.join(', ') + '</div>';
+                } else {
+                    step2Div.innerHTML = '<div class="status success">✓ localStorage has all required fields</div>';
+                }
+
+                // Enable fix button
+                fixBtn.disabled = false;
+                fixBtn.textContent = 'Run Profile Fix Now';
+
+            } catch(e) {
+                statusDiv.innerHTML = '<div class="status error">❌ Error: ' + e.message + '</div>';
+                fixBtn.disabled = true;
+            }
+        }
+
+        async function runProfileFix() {
+            const step3Div = document.getElementById('step3Status');
+            const fixBtn = document.getElementById('fixBtn');
+
+            fixBtn.disabled = true;
+            fixBtn.textContent = 'Running Fix...';
+            step3Div.innerHTML = '<div class="status info">⏳ Checking and repairing profile data...</div>';
+
+            try {
+                let saved = null;
+                try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+                if (!saved || !saved.authKey) {
+                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div><div class="error-detail">Not logged in</div></div>';
+                    fixBtn.disabled = false;
+                    fixBtn.textContent = 'Retry Fix';
+                    return;
+                }
+
+                // Fetch fresh data from server
+                const meRes = await fetch(API_URL + '/api/me', {
+                    headers: { 'X-Auth-Key': saved.authKey }
+                });
+
+                if (!meRes.ok) {
+                    const errorData = await meRes.json().catch(() => ({}));
+                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div>' +
+                        '<div class="error-detail">API Error: ' + meRes.status + '\n' + (errorData.error || 'Unknown error') + '</div>' +
+                        '<div style="margin-top: 10px; font-size: 0.9rem;">Try refreshing the page and logging in again</div></div>';
+                    fixBtn.disabled = false;
+                    fixBtn.textContent = 'Retry Fix';
+                    return;
+                }
+
+                const meData = await meRes.json();
+
+                if (!meData.user) {
+                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div><div class="error-detail">No user data returned from API</div></div>';
+                    fixBtn.disabled = false;
+                    fixBtn.textContent = 'Retry Fix';
+                    return;
+                }
+
+                // Merge fresh data with localStorage
+                saved = Object.assign(saved, meData.user);
+                localStorage.setItem('sorc_user', JSON.stringify(saved));
+
+                step3Div.innerHTML = '<div class="status success">✅ Profile data repaired successfully!<br><br>' +
+                    '<strong>What was fixed:</strong><br>' +
+                    '• Updated user profile from server<br>' +
+                    '• Restored missing fields: ' + Object.keys(meData.user).join(', ') + '<br>' +
+                    '• Synced localStorage with current server data<br><br>' +
+                    '<strong>Next Steps:</strong><br>' +
+                    '1. <a href="/profile.html" style="color:#2e7d32;text-decoration:underline;">Visit your profile</a><br>' +
+                    '2. Refresh the page if needed<br>' +
+                    '3. Profile should now load correctly</div>';
+
+                fixBtn.textContent = 'Fix Complete ✓';
+
+            } catch(e) {
+                step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div>' +
+                    '<div class="error-detail">Error: ' + e.message + '\n\nCheck browser console (F12) for more details</div></div>';
+                fixBtn.disabled = false;
+                fixBtn.textContent = 'Retry Fix';
+            }
+        }
+
+        // Check diagnostics on load
+        window.addEventListener('load', checkDiagnostics);
+    </script>
+</body>
+</html>

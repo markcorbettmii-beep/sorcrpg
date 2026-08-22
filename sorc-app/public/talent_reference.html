@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORC Talent Tree Sheet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    @media (max-width: 815px) {
+      .sheet-viewport { overflow: hidden; }
+    }
+
+    .scale-wrap {
+      width: 816px;
+      height: 1056px;
+      transform-origin: top center;
+      flex-shrink: 0;
+    }
+
+    .flipper {
+      width: 816px;
+      height: 1056px;
+      position: relative;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      background: #eef0e6;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .face.back { display: none; }
+
+    .border-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .border-frame::before {
+      content: '';
+      position: absolute;
+      inset: 0px;
+      border: 2.5px solid #1f3a4a;
+    }
+    .border-frame::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid #1f3a4a;
+    }
+
+    .corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      z-index: 12;
+      pointer-events: none;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    .wm {
+      position: absolute; inset: 0; z-index: 60; pointer-events: none;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .wm::after {
+      content: 'BETA';
+      font-family: 'Cinzel', serif; font-weight: 900; font-size: 26rem;
+      color: #1f3a4a; opacity: 0.15; letter-spacing: 0.15em;
+      transform: rotate(-52deg); white-space: nowrap;
+    }
+
+    .inner {
+      position: relative;
+      z-index: 1;
+      padding: 14px 30px 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title-block { text-align: center; margin-bottom: 1px; }
+
+    .title-block h1 {
+      font-family: 'Cinzel Decorative', Cinzel, serif;
+      font-size: 1.6rem;
+      color: #1f3a4a;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      line-height: 1.15;
+    }
+
+    .title-block h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.74rem;
+      color: #1f3a4a;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      margin-top: 4px;
+    }
+
+    .title-block .sub {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      color: #444;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .rule {
+      border: none;
+      border-top: 1.5px solid #2c5470;
+      margin: 4px 0;
+      opacity: 0.4;
+    }
+
+    .sec { margin-bottom: 1px; }
+
+    .sec-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #1f3a4a;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-align: center;
+      border-bottom: 1px solid #2c5470;
+      padding-bottom: 0.5px;
+      margin-bottom: 0px;
+    }
+
+    .field { margin-bottom: 0.5px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+
+    .field-lbl {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      color: #444;
+      display: block;
+      margin-bottom: 1px;
+    }
+
+    input.fline {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      width: 100%;
+      font-family: Arial, sans-serif;
+      font-size: 0.68rem;
+      color: #3d3d3d;
+      height: auto;
+      padding: 0 1px;
+      outline: none;
+      display: block;
+    }
+
+    .small-note {
+      font-family: Arial, sans-serif;
+      font-size: 0.46rem;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .lore-item {
+      font-family: Arial, sans-serif;
+      font-size: 0.56rem;
+      font-weight: bold;
+      color: #222;
+      margin: 0 0 5px 0;
+      line-height: 1.3;
+    }
+
+    /* ── TALENT TRACKER TABLE ── */
+    .talent-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.58rem; }
+    .talent-tbl th {
+      font-family: 'Cinzel', serif; font-size: 0.48rem; font-weight: 700; color: #eef0e6;
+      background: #1f3a4a; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 4px 5px; text-align: left; border: 1px solid #1f3a4a;
+    }
+    .talent-tbl td {
+      padding: 4px 5px; border: 1px solid #2c5470; color: #222; vertical-align: middle;
+    }
+    .talent-tbl td[contenteditable] { font-family: Arial, sans-serif; outline: none; cursor: text; background: #f7f5ea; }
+    .talent-tbl tr:nth-child(even) td { background: #f0eee0; }
+    .talent-tbl tr:nth-child(even) td[contenteditable] { background: #eceadc; }
+
+    /* ── PROFICIENCY TIER TABLE ── */
+    .tier-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.54rem; }
+    .tier-tbl th {
+      font-family: 'Cinzel', serif; font-size: 0.46rem; font-weight: 700; color: #eef0e6;
+      background: #2c5470; padding: 3px 5px; text-align: center; border: 1px solid #1f3a4a;
+    }
+    .tier-tbl td { border: 1px solid #2c5470; padding: 3px 5px; text-align: center; color: #222; }
+    .tier-tbl td.tier-name { text-align: left; font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.48rem; color: #1f3a4a; background: #e2ddc8; }
+    .tier-tbl td[contenteditable] { outline: none; cursor: text; background: #f7f5ea; }
+
+    /* ── TREE REFERENCE LIST (back) ── */
+    .tree-ref { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.5rem; }
+    .tree-ref th {
+      font-family: 'Cinzel', serif; font-size: 0.44rem; font-weight: 700; color: #eef0e6;
+      background: #1f3a4a; letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 3px 5px; text-align: left; border: 1px solid #1f3a4a;
+    }
+    .tree-ref td { border: 1px solid #2c5470; padding: 3px 5px; color: #222; vertical-align: top; }
+    .tree-ref td.tname { font-weight: 700; font-family: 'Cinzel', serif; font-size: 0.5rem; color: #1f3a4a; background: #e2ddc8; white-space: nowrap; }
+    .tree-ref tr:nth-child(even) td:not(.tname) { background: #f7f5ea; }
+
+    /* ── ACTION BAR ── */
+    .action-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 52px;
+      background: #1a1a1a;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 200;
+      padding: 0 12px;
+    }
+
+    .action-bar button {
+      background: #1f3a4a;
+      color: #eef0e6;
+      border: 1px solid #2c5470;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .action-bar button:active { background: #16293450; }
+
+    .print-group {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid #2c5470;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .print-group .ptab {
+      background: #2a2a2a;
+      color: #888;
+      border: none;
+      border-radius: 0;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 10px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .print-group .ptab:last-of-type { border-right: none; }
+
+    .print-group .ptab.active {
+      background: #1f3a4a;
+      color: #eef0e6;
+    }
+
+    .print-group .ptab:active { background: #162934; color: #eef0e6; }
+
+    #printBtn {
+      background: #1f3a4a;
+      color: #eef0e6;
+      border: 1px solid #2c5470;
+      border-radius: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    #printBtn:active { background: #162934; }
+
+    /* ── PRINT ── */
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+      .action-bar { display: none !important; }
+      .sheet-viewport {
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .scale-wrap {
+        transform: none !important;
+        width: 8.5in !important;
+        height: auto !important;
+        margin: 0 !important;
+      }
+      .flipper {
+        width: 8.5in !important;
+        height: auto !important;
+        position: static !important;
+        overflow: visible !important;
+      }
+      .face {
+        position: relative !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        overflow: hidden !important;
+      }
+      .face.front {
+        page-break-after: always;
+        break-after: page;
+      }
+      .face.back {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+  
+
+    /* ─── Lawful Mode (Light Theme) ─── */
+    body.lawful-mode {
+      background: #f5f5f0;
+      color: #2c2c2c;
+    }
+    body.lawful-mode header { background: #ffffff; }
+    body.lawful-mode nav { background: #ffffff; }
+    body.lawful-mode main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode .content-main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode h1, body.lawful-mode h2, body.lawful-mode h3, body.lawful-mode h4, body.lawful-mode h5 { color: #2c2c2c; }
+    body.lawful-mode p { color: #2c2c2c; }
+    body.lawful-mode .Profession-entry, body.lawful-mode .talent-entry, body.lawful-mode .skill-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+      color: #2c2c2c;
+    }
+    body.lawful-mode .talent-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+    }
+    body.lawful-mode .note { 
+      background: rgba(185,170,0,0.1); 
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+    body.lawful-mode .callout {
+      background: rgba(185,170,0,0.1);
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+</style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span>
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+
+
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#1f3a4a" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#1f3a4a" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#1f3a4a"/><line x1="7" y1="20" x2="0" y2="20" stroke="#1f3a4a" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#1f3a4a" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#1f3a4a" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#1f3a4a" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ FRONT ══════════════ -->
+    <div class="face" id="front">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Talent Tree Sheet</h2>
+          <p class="sub">One sheet per Talent Tree a character has aligned with</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="field-row" style="margin-top:4px;">
+          <div class="field"><span class="field-lbl">Character Name</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Talent Tree</span><input type="text" class="fline" /></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><span class="field-lbl">Aligned Attribute (ATT)</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Kit / Backpack Carried</span><input type="text" class="fline" /></div>
+        </div>
+
+        <div class="sec" style="margin-top:8px;">
+          <p class="sec-title">Talents Learned in This Tree</p>
+          <table class="talent-tbl" id="talentTbl">
+            <thead><tr><th style="width:38%;">Talent Name</th><th style="width:10%;">Score</th><th style="width:26%;">Proficiency (Cost)</th><th style="width:26%;">Next Prof. (Cost)</th></tr></thead>
+            <tbody id="talentBody"></tbody>
+          </table>
+          <p class="small-note" style="margin-top:4px;">A talent's score can never exceed the Tree's aligned Attribute Score. Proficiency (Cost) is the REM cost per point at the talent's current tier; Next Prof. (Cost) is what that same point will cost once the tier above opens, see the Proficiency Tier Tracker below for the full cost table.</p>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Proficiency Tier Tracker</p>
+          <table class="tier-tbl">
+            <thead><tr><th>Tier</th><th>Open Cost</th><th>Per Talent</th><th>Opened? (&#10003;/date)</th><th>Tier Total Score</th></tr></thead>
+            <tbody>
+              <tr><td class="tier-name">Novice</td><td>2 REM</td><td>2 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Apprentice</td><td>3 REM</td><td>2 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Journeyman</td><td>4 REM</td><td>2 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Master</td><td>5 REM</td><td>3 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="tier-name">Grandmaster</td><td>6 REM</td><td>4 REM</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+          <p class="small-note" style="margin-top:4px;">Tiers unlock in order, no skipping. Advancement thresholds (total tier score needed to open the next one): Novice&rarr;Apprentice 10, Apprentice&rarr;Journeyman 25, Journeyman&rarr;Master 45, Master&rarr;Grandmaster 80. Individual talent cap: 45. Accumulated cap per tier: 79.</p>
+        </div>
+
+      </div>
+    </div><!-- /front -->
+
+
+    <!-- ══════════════ BACK ══════════════ -->
+    <div class="face back" id="back">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Talent Tree Sheet</h2>
+          <p class="sub">How Talent Trees Work &amp; Full Tree Reference</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:4px;">
+          <p class="sec-title">How Talent Trees Work</p>
+          <p class="lore-item" style="font-weight:normal;">A Talent Tree is a themed bundle of individual talents, not a single thing a character "has." Opening a tree and raising a talent inside it are two separate purchases: REM Points first open the tree's current Proficiency Tier, unlocking every talent available at that tier for purchase, further REM Points then raise the score of whichever individual talents a character actually wants, one at a time. Opening a tier doesn't hand over everything inside it, talents left unraised sit at 0, purchasable, not owned. Each Talent Tree grants specialized gear, a Kit or Backpack, that a character must carry to effectively use whichever talents they've actually learned. See Talents (TST), Basic Rules pg. 2.</p>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Talent Trees Reference (see Basic Rules pg. 7 for the full glossary)</p>
+          <table class="tree-ref">
+            <thead><tr><th style="width:20%;">Tree</th><th style="width:12%;">ATT</th><th style="width:68%;">Focus</th></tr></thead>
+            <tbody>
+              <tr><td class="tname">Bounty Hunter</td><td>TBA</td><td>Focuses on tracking, combat, and intimidation.</td></tr>
+              <tr><td class="tname">Crypt Raider</td><td>TBA</td><td>Explores ancient dungeons and tombs, navigating traps, puzzles, and artifacts.</td></tr>
+              <tr><td class="tname">Hacker</td><td>TBA</td><td>Manipulates security systems and deciphers complex codes and mechanisms.</td></tr>
+              <tr><td class="tname">Mole</td><td>TBA</td><td>Specializes in stealth, spying, and infiltration.</td></tr>
+              <tr><td class="tname">Olympiad</td><td>TBA</td><td>Focuses on athletic and physical feats, Leap, Acrobatics, Sprint, Lift.</td></tr>
+              <tr><td class="tname">Performer</td><td>TBA</td><td>Sings, juggles, tells stories, or otherwise holds a crowd, Crowd Work, Bluff, Storytelling.</td></tr>
+              <tr><td class="tname">Scout</td><td>TBA</td><td>Emphasizes exploration and survival, Track, Forage, Guardian's Watch.</td></tr>
+              <tr><td class="tname">Tactician</td><td>TBA</td><td>Specializes in strategic and leadership abilities.</td></tr>
+              <tr><td class="tname">Theologist</td><td>TBA</td><td>Centers on faith, protection, and healing.</td></tr>
+              <tr><td class="tname">Thief</td><td>TBA</td><td>Navigates confined spaces, picks locks, and pockets items with precision, Guile, Sneak, Hide, Pickpocket.</td></tr>
+              <tr><td class="tname">Trader</td><td>TBA</td><td>Relates to negotiation, commerce, and social influence.</td></tr>
+              <tr><td class="tname">Traveler</td><td>TBA</td><td>Features talents for movement, adaptation, and survival.</td></tr>
+            </tbody>
+          </table>
+          <p class="small-note" style="margin-top:5px;">ATT alignment per Tree is not yet formalized in the rules, marked TBA until published. Additional Talent Trees release with each module and its expansions.</p>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Race vs. Class Bonuses</p>
+          <p class="lore-item" style="font-weight:normal;">A Race's favored Talent Tree grants +1 to talent rolls within that tree. A Class's favorite Talent Tree instead waives the cost to open that tree, a different mechanism, not a bigger or smaller version of the same bonus.</p>
+        </div>
+
+      </div>
+    </div><!-- /back -->
+
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
+</div><!-- /sheet-viewport -->
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
+
+<div class="action-bar">
+  <button id="saveJpegBtn">View / Save</button>
+  <div class="print-group">
+    <button class="ptab active" data-side="front">Front</button>
+    <button class="ptab" data-side="back">Back</button>
+  </div>
+  <button id="printBtn">Print</button>
+</div>
+
+<script>
+  // Build 12 blank talent rows
+  (function() {
+    var body = document.getElementById('talentBody');
+    var rows = '';
+    for (var i = 0; i < 12; i++) {
+      rows += '<tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>';
+    }
+    body.innerHTML = rows;
+  })();
+
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var ab = document.querySelector('.action-bar');
+    if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
+  }
+
+  var flipper    = document.getElementById('flipper');
+  var front      = document.getElementById('front');
+  var back       = document.getElementById('back');
+  var saving    = false;
+  var flipped   = false;
+
+  function doFlip() {
+    if (saving) return;
+    flipped = !flipped;
+    if (flipped) {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      back.style.display  = 'none';
+      front.style.display = 'block';
+    }
+  }
+
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 28;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+
+  function openImageWindowWithFlip(win, frontUrl, backUrl, initialSide) {
+    if (!win) return;
+    var html = '<!DOCTYPE html><html><head><title>SORC Talent Tree Sheet</title>' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"></head>' +
+      '<body style="margin:0;background:#111;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:70px;">' +
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span>
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+      '<img id="sheetImg" style="max-width:100%;height:auto;display:block;" alt="Talent Tree Sheet">' +
+      '<div style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:12px;padding:12px;background:#1a1a1a;border-top:1px solid #2a2a2a;">' +
+      '<button id="frontBtn" style="background:#1f3a4a;color:#eef0e6;border:1px solid #2c5470;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Front</button>' +
+      '<button id="backBtn" style="background:#1f3a4a;color:#eef0e6;border:1px solid #2c5470;border-radius:16px;font-family:Georgia,serif;font-weight:700;letter-spacing:0.08em;padding:6px 16px;cursor:pointer;text-transform:uppercase;">Back</button>' +
+      '</div>' +
+      '<scr' + 'ipt>' +
+      'var frontUrl = ' + JSON.stringify(frontUrl) + ';' +
+      'var backUrl = ' + JSON.stringify(backUrl) + ';' +
+      'var img = document.getElementById("sheetImg");' +
+      'var frontBtn = document.getElementById("frontBtn");' +
+      'var backBtn = document.getElementById("backBtn");' +
+      'function setActive(side){' +
+      '  img.src = side === "back" ? backUrl : frontUrl;' +
+      '  frontBtn.style.opacity = side === "back" ? "0.55" : "1";' +
+      '  backBtn.style.opacity = side === "back" ? "1" : "0.55";' +
+      '}' +
+      'frontBtn.addEventListener("click", function(){ setActive("front"); });' +
+      'backBtn.addEventListener("click", function(){ setActive("back"); });' +
+      'setActive(' + JSON.stringify(initialSide) + ');' +
+      '</scr' + 'ipt>' +
+      '</body></html>';
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function captureFaceDataUrl(faceEl) {
+    return new Promise(function(resolve, reject) {
+      var clone = faceEl.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.style.cssText = 'position:fixed;left:-9999px;top:0;width:816px;height:1056px;display:block;visibility:visible;transform:none;overflow:hidden;';
+      clone.querySelectorAll('input.fline').forEach(function(inp) {
+        var div = document.createElement('div');
+        div.textContent = inp.value;
+        div.className = 'fline';
+        div.style.cssText = 'background:transparent;border:none;border-bottom:1px solid #aaa;width:100%;font-family:Arial, sans-serif;font-size:0.68rem;color:#3d3d3d;height:auto;padding:0 1px;display:block;min-height:1em;';
+        inp.parentNode.replaceChild(div, inp);
+      });
+      document.body.appendChild(clone);
+
+      setTimeout(function() {
+        html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#eef0e6',
+          width: 816,
+          height: 1056,
+          logging: false
+        }).then(function(canvas) {
+          document.body.removeChild(clone);
+          resolve(canvas.toDataURL('image/jpeg', 0.93));
+        }).catch(function(err) {
+          if (document.body.contains(clone)) document.body.removeChild(clone);
+          reject(err);
+        });
+      }, 100);
+    });
+  }
+
+  var saveFlippedSnap;
+  document.getElementById('saveJpegBtn').addEventListener('touchstart', function() {
+    saveFlippedSnap = flipped;
+    saving = true;
+  }, { passive: true });
+  document.getElementById('saveJpegBtn').addEventListener('click', function() {
+    saving = true;
+    var snap = (typeof saveFlippedSnap !== 'undefined') ? saveFlippedSnap : flipped;
+    saveFlippedSnap = undefined;
+    var btn = this;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    var winRef = window.open('', '_blank');
+    Promise.all([captureFaceDataUrl(front), captureFaceDataUrl(back)]).then(function(urls) {
+      openImageWindowWithFlip(winRef, urls[0], urls[1], snap ? 'back' : 'front');
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    }).catch(function() {
+      if (winRef) winRef.close();
+      btn.textContent = 'View / Save';
+      btn.disabled = false;
+      saving = false;
+    });
+  });
+
+  var printSide = 'front';
+  var ptabs = document.querySelectorAll('.ptab');
+  ptabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      ptabs.forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      printSide = tab.dataset.side;
+      if (tab.dataset.side === 'front' && flipped) doFlip();
+      if (tab.dataset.side === 'back'  && !flipped) doFlip();
+    });
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    var prevFrontDisplay = front.style.display;
+    var prevBackDisplay  = back.style.display;
+    if (printSide === 'front') {
+      front.style.display = 'block';
+      back.style.display  = 'none';
+    } else if (printSide === 'back') {
+      front.style.display = 'none';
+      back.style.display  = 'block';
+    } else {
+      front.style.display = 'block';
+      back.style.display  = 'block';
+    }
+
+    window.print();
+
+    setTimeout(function() {
+      front.style.display = prevFrontDisplay;
+      back.style.display  = prevBackDisplay;
+    }, 500);
+  });
+</script>
+</body>
+</html>

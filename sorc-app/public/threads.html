@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Threads | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; }
+        .threads-hero { background: linear-gradient(135deg, #1a0505, #2a0808, #111); padding: 1.5rem 2rem; border-bottom: 2px solid #c93f35; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .threads-hero a { color: #b9aa00; text-decoration: none; font-size: 0.85rem; }
+        .threads-hero a:hover { text-decoration: underline; }
+        .threads-hero h1 { color: #e0cfc0; font-size: 1.4rem; margin: 0; flex: 1; }
+        .threads-container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
+        .threads-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .new-thread-btn { background: #c93f35; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .new-thread-btn:hover { background: #c93f35; }
+        .new-thread-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+        .thread-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s; display: flex; gap: 1rem; align-items: flex-start; }
+        .thread-card:hover { border-color: #c93f35; }
+        .thread-card.pinned { border-left: 3px solid #b9aa00; }
+        .thread-card.locked { opacity: 0.7; }
+        .thread-icon { font-size: 1.2rem; padding-top: 2px; flex-shrink: 0; }
+        .thread-info { flex: 1; min-width: 0; }
+        .thread-title { font-weight: bold; color: #e0cfc0; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .pin-badge { font-size: 0.7rem; background: #2a2000; color: #b9aa00; padding: 1px 6px; border-radius: 4px; }
+        .lock-badge { font-size: 0.7rem; background: #222; color: #555; padding: 1px 6px; border-radius: 4px; }
+        .thread-meta { font-size: 0.75rem; color: #555; margin-top: 3px; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+        .thread-stats { text-align: right; font-size: 0.75rem; color: #555; flex-shrink: 0; min-width: 80px; }
+        .thread-stats b { color: #888; display: block; }
+        .thread-view { display: none; }
+        .thread-view.active { display: block; }
+        .threads-list.hidden { display: none; }
+        .thread-header { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+        .thread-header h2 { color: #e0cfc0; font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .thread-header-meta { font-size: 0.8rem; color: #555; display: flex; gap: 1rem; flex-wrap: wrap; }
+        .post-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; }
+        .post-card.op { border-left: 3px solid #c93f35; }
+        .post-author-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .post-avatar { width: 36px; height: 36px; border-radius: 50%; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #888; border: 2px solid #333; flex-shrink: 0; overflow: hidden; }
+        .post-author-info { flex: 1; }
+        .post-author-name { font-weight: bold; color: #e0cfc0; font-size: 0.9rem; }
+        .post-author-role { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-left: 4px; }
+        .post-timestamp { font-size: 0.75rem; color: #444; margin-top: 2px; }
+        .post-body { font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+        .post-body a { color: #b9aa00; text-decoration: underline; }
+        .post-body .hashtag { color: #b9aa00; font-weight: bold; text-decoration: none; background: none; border: none; padding: 0; margin: 0; cursor: pointer; font-size: inherit; font-family: inherit; }
+        .post-body .mention { color: #9889e0; font-weight: bold; text-decoration: none; }
+        .post-body .mention.group { color: #ff6b6b; }
+        .quote-block { background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.85rem; color: #777; }
+        .post-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap; }
+        .post-action-btn { background: none; border: 1px solid #333; color: #666; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; transition: all 0.2s; }
+        .post-action-btn:hover { border-color: #c93f35; color: #e0cfc0; }
+        .post-action-btn.liked { border-color: #c93f35; color: #c93f35; }
+        .post-action-btn.admin-btn { border-color: #b9aa00; color: #b9aa00; }
+        .post-action-btn.danger-btn { border-color: #c93f35; color: #c93f35; }
+        .reply-form { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.25rem 1.5rem; margin-top: 1rem; }
+        .reply-form h3 { color: #b9aa00; font-size: 0.9rem; margin-bottom: 0.75rem; }
+        .reply-form textarea { width: 100%; min-height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; box-sizing: border-box; resize: vertical; font-family: sans-serif; }
+        .reply-form textarea:focus { outline: none; border-color: #c93f35; }
+        .quote-preview { background: #222; border-left: 3px solid #555; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; border-radius: 4px; font-size: 0.8rem; color: #666; display: none; }
+        .quote-preview.active { display: block; }
+        .reply-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; justify-content: flex-end; flex-wrap: wrap; }
+        .post-toolbar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+        .toolbar-btn { background: #2a2a2a; border: 1px solid #333; color: #aaa; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .toolbar-btn:hover { border-color: #b9aa00; color: #b9aa00; }
+        .toolbar-hint { font-size: 0.72rem; color: #444; }
+        .char-counter { font-size: 0.72rem; color: #555; margin-left: auto; }
+        .char-counter.warning { color: #b9aa00; }
+        .char-counter.over { color: #c93f35; font-weight: bold; }
+        .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .btn-red { background: #c93f35; color: #fff; }
+        .btn-red:hover { background: #c93f35; }
+        .btn-grey { background: #333; color: #888; }
+        .btn-grey:hover { background: #444; }
+        .msg { font-size: 0.85rem; margin-top: 0.5rem; }
+        .msg.success { color: #4caf50; }
+        .msg.error { color: #c93f35; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 99999; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #1a1a1a; border: 1px solid #333; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; }
+        .modal h2 { color: #c93f35; margin-bottom: 1rem; font-size: 1.1rem; }
+        .modal textarea, .modal input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.9rem; box-sizing: border-box; margin-bottom: 0.75rem; font-family: sans-serif; }
+        .modal-btns { display: flex; gap: 0.75rem; justify-content: flex-end; }
+        .admin-thread-bar { background: #1a1a00; border: 1px solid #b9aa00; border-radius: 8px; padding: 0.75rem 1.25rem; margin-bottom: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+        .admin-thread-bar span { color: #b9aa00; font-size: 0.85rem; font-weight: bold; }
+        .locked-notice { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 0.75rem 1.25rem; margin-top: 1rem; text-align: center; color: #555; font-size: 0.85rem; }
+        .pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+        .page-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #888; cursor: pointer; font-size: 0.85rem; }
+        .page-btn.active { background: #c93f35; color: #fff; border-color: #c93f35; }
+        .page-btn:hover { border-color: #c93f35; }
+    
+        body.lawful-mode .modal { background: #ffffff; border-color: #e0e0e0; }
+        body.lawful-mode .post-card { background: #ffffff; border-color: #e0e0e0; }
+        body.lawful-mode .page-btn { background: #f9f5f1; border-color: #ccc; color: #555; }
+        body.lawful-mode .thread-header { background: #ffffff; border-color: #e0e0e0; }
+        body.lawful-mode .reply-form { background: #ffffff; border-color: #e0e0e0; }
+        body.lawful-mode .locked-notice { background: #f9f5f1; border-color: #ccc; }
+        body.lawful-mode .thread-card { background: #ffffff; border-color: #e0e0e0; }
+    
+        body.lawful-mode .admin-thread-bar { background: #fdf3e0; }
+        body.lawful-mode .btn-grey { background: #eee; color: #888; }
+        body.lawful-mode .lock-badge { background: #eee; color: #888; }
+        body.lawful-mode .new-thread-btn:disabled { background: #eee; color: #999; }
+        body.lawful-mode .pin-badge { background: #fdf3e0; color: #8a6800; }
+        body.lawful-mode .post-avatar { background: #e6e0d0; border-color: #ccc; color: #888; }
+        body.lawful-mode .quote-block { background: #f0ede6; border-left-color: #aaa; color: #555; }
+        body.lawful-mode .quote-preview { background: #f0ede6; border-left-color: #aaa; color: #555; }
+        body.lawful-mode .toolbar-btn { background: #f9f5f1; border-color: #ccc; color: #555; }
+    </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+    <script>(function(){var t=localStorage.getItem('themeSelected')||'evil';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
+    <div class="threads-hero">
+        <a href="forum.html">← Forums</a>
+        <h1 id="categoryTitle">Loading...</h1>
+    </div>
+
+    <div class="threads-container">
+        <div class="threads-list" id="threadsList">
+            <div class="threads-toolbar">
+                <button class="new-thread-btn" id="newThreadBtn" onclick="openNewThread()">+ New Thread</button>
+                <span id="threadCount" style="font-size:0.8rem;color:#555;"></span>
+            </div>
+            <div id="threadsContainer"></div>
+            <div class="pagination" id="threadPagination"></div>
+        </div>
+
+        <div class="thread-view" id="threadView">
+            <div style="margin-bottom:1rem;">
+                <button class="btn btn-grey" onclick="backToThreads()" style="font-size:0.85rem;padding:6px 14px;">← Back to threads</button>
+            </div>
+            <div id="adminThreadBar" class="admin-thread-bar" style="display:none;">
+                <span>⚙️ Admin Tools:</span>
+                <button class="post-action-btn admin-btn" id="pinBtn" onclick="togglePin()">📌 Pin</button>
+                <button class="post-action-btn admin-btn" id="lockBtn" onclick="toggleLock()">🔒 Lock</button>
+                <button class="post-action-btn danger-btn" onclick="deleteThread()">🗑 Delete Thread</button>
+            </div>
+            <div id="threadContent"></div>
+            <div id="replyFormContainer"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>Edit Post</h2>
+            <div class="post-toolbar">
+                <button class="toolbar-btn" onclick="insertLink('editBody')">🔗 Add Link</button>
+                <span class="toolbar-hint">[text](url)</span>
+                <span class="char-counter" id="editCharCount">0 / 10,000</span>
+            </div>
+            <textarea id="editBody" rows="6" oninput="updateCharCount('editBody','editCharCount')"></textarea>
+            <div id="editMsg" class="msg"></div>
+            <div class="modal-btns">
+                <button class="btn btn-grey" onclick="closeEdit()">Cancel</button>
+                <button class="btn btn-red" onclick="submitEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Thread Modal -->
+    <div class="modal-overlay" id="newThreadModal">
+        <div class="modal">
+            <h2>New Thread</h2>
+            <input type="text" id="threadTitle" placeholder="Thread title" maxlength="100" />
+            <div class="post-toolbar">
+                <button class="toolbar-btn" onclick="insertLink('threadBody')">🔗 Add Link</button>
+                <span class="toolbar-hint">[text](url) · 1 per post</span>
+                <span class="char-counter" id="threadBodyCount">0 / 10,000</span>
+            </div>
+            <textarea id="threadBody" placeholder="What's on your mind, adventurer?" rows="6" oninput="updateCharCount('threadBody','threadBodyCount')"></textarea>
+            <div id="newThreadMsg" class="msg"></div>
+            <div class="modal-btns">
+                <button class="btn btn-grey" onclick="closeNewThread()">Cancel</button>
+                <button class="btn btn-red" onclick="submitThread()">Post Thread</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer"></div>
+    <script type="module" src="main.js?v=25"></script>
+    <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var OWNER_EMAILS = ['corbett@sorcrpg.com'];
+    var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+    var READONLY_CATEGORIES = ['announcements', 'conduct'];
+    var ADMIN_ONLY_CATEGORIES = ['announcements', 'conduct'];
+    var THREADS_PER_PAGE = 20;
+    var MAX_CHARS = 10000;
+    var MAX_LINKS = 1;
+
+    var currentUser = null;
+    var categoryId = null;
+    var categoryName = null;
+    var currentThread = null;
+    var currentThreadData = null;
+    var currentPage = 1;
+    var quotedPost = null;
+    var editingPostId = null;
+    var allThreads = [];
+
+    function isAdminOrOwner(email) { return email && (OWNER_EMAILS.includes(email) || ADMIN_EMAILS.includes(email)); }
+    function canPost() {
+        if (!currentUser) return false;
+        if (ADMIN_ONLY_CATEGORIES.includes(categoryId)) return currentUser.role === 'ADMIN' || currentUser.role === 'OWNER';
+        return true;
+    }
+    function canModerate() { return currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER'); }
+    function escapeHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escapeAttr(str) { return String(str).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+    function timeAgo(ts) {
+        if (!ts) return '';
+        var d = new Date(ts);
+        var s = Math.floor((new Date() - d) / 1000);
+        if (s < 60) return 'Just now';
+        if (s < 3600) return Math.floor(s/60) + 'm ago';
+        if (s < 86400) return Math.floor(s/3600) + 'h ago';
+        if (s < 604800) return Math.floor(s/86400) + 'd ago';
+        return d.toLocaleDateString();
+    }
+    function getRoleColor(role) {
+        if (role === 'OWNER') return 'background:#b9aa00;color:#222;';
+        if (role === 'ADMIN') return 'background:#c93f35;color:#fff;';
+        if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
+        if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
+        return 'background:#333;color:#e0cfc0;';
+    }
+    function getRoleAbbr(role) {
+        if (role === 'OWNER') return '[OWN]';
+        if (role === 'ADMIN') return '[AD]';
+        if (role === 'MASTER') return '[GM]';
+        if (role === 'PLAYER') return '[PC]';
+        return '[CIV]';
+    }
+    function countLinks(text) { var m = text.match(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g); return m ? m.length : 0; }
+    function renderPostBody(text) {
+        var escaped = escapeHtml(text);
+        // Render markdown links first
+        var withLinks = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, function(m, t, u) {
+            return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + t + '</a>';
+        });
+        // Render hashtags and @mentions (split by whitespace to avoid breaking links)
+        var parts = withLinks.split(/(\s+)/);
+        var rendered = parts.map(function(part) {
+            if (!part || /^\s+$/.test(part)) return part;
+            // Hashtags (clickable)
+            if (/^#[a-zA-Z0-9_]+$/.test(part)) {
+                return '<button class="hashtag" onclick="showHashtagContent(\'' + escapeAttr(part) + '\'); return false;">' + part + '</button>';
+            }
+            // @mentions
+            if (part === '@everyone' || part === '@members') {
+                return '<span class="mention group">' + part + '</span>';
+            }
+            if (/^@[a-zA-Z0-9_]+$/.test(part)) {
+                return '<span class="mention">' + part + '</span>';
+            }
+            return part;
+        }).join('');
+        return rendered;
+    }
+    function validatePost(body, msgEl) {
+        if (!body) { msgEl.className = 'msg error'; msgEl.textContent = 'Please write something.'; return false; }
+        if (body.length > MAX_CHARS) { msgEl.className = 'msg error'; msgEl.textContent = 'Post exceeds limit.'; return false; }
+        if (countLinks(body) > MAX_LINKS) { msgEl.className = 'msg error'; msgEl.textContent = 'Only 1 link per post.'; return false; }
+        // Check if post uses hashtags or @mentions (only allow admins/owners)
+        if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'OWNER')) {
+            var hasHashtag = /#[a-zA-Z0-9_]+/.test(body);
+            var hasMention = /@(?:everyone|members|[a-zA-Z0-9_]+)/.test(body);
+            if (hasHashtag || hasMention) {
+                msgEl.className = 'msg error';
+                msgEl.textContent = 'Only admins can use hashtags and @mentions.';
+                return false;
+            }
+        }
+        return true;
+    }
+    window.insertLink = function(textareaId) {
+        var ta = document.getElementById(textareaId);
+        if (!ta || countLinks(ta.value) >= MAX_LINKS) { alert('Only 1 link per post.'); return; }
+        var linkText = prompt('Link text:'); if (!linkText) return;
+        var url = prompt('URL (https://):'); if (!url || !/^https?:\/\/.+/.test(url)) { alert('Invalid URL'); return; }
+        var md = '[' + linkText + '](' + url + ')';
+        ta.value = ta.value.substring(0, ta.selectionStart) + md + ta.value.substring(ta.selectionEnd);
+        var counterId = textareaId === 'replyBody' ? 'replyCharCount' : textareaId === 'threadBody' ? 'threadBodyCount' : 'editCharCount';
+        updateCharCount(textareaId, counterId);
+    };
+    window.updateCharCount = function(textareaId, counterId) {
+        var ta = document.getElementById(textareaId); var counter = document.getElementById(counterId);
+        if (!ta || !counter) return;
+        var len = ta.value.length;
+        counter.textContent = len.toLocaleString() + ' / ' + MAX_CHARS.toLocaleString();
+        counter.className = 'char-counter' + (len > MAX_CHARS ? ' over' : len > 9000 ? ' warning' : '');
+    };
+
+    var params = new URLSearchParams(window.location.search);
+    categoryId = params.get('cat');
+    categoryName = decodeURIComponent(params.get('name') || '');
+    var threadParam = params.get('thread');
+
+    if (!categoryId) { window.location.replace('forum.html'); }
+
+    document.getElementById('categoryTitle').textContent = categoryName || 'Forum';
+    document.title = (categoryName || 'Forum') + ' | SORC Forums';
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.threadId) { openThread(e.state.threadId); }
+        else { backToThreads(); }
+    });
+
+    async function loadThreads(page) {
+        currentPage = page || 1;
+        var container = document.getElementById('threadsContainer');
+        container.innerHTML = '<p style="color:#555;padding:1rem;">Loading threads...</p>';
+        if (!canPost()) document.getElementById('newThreadBtn').disabled = true;
+        if (READONLY_CATEGORIES.includes(categoryId) && !canModerate()) document.getElementById('newThreadBtn').style.display = 'none';
+        try {
+            var headers = {};
+            if (currentUser && currentUser.authKey) headers['X-Auth-Key'] = currentUser.authKey;
+            var res = await fetch(API_URL + '/api/forum/category/' + categoryId + '?page=' + currentPage, { headers });
+            var data = await res.json();
+            allThreads = data.threads || [];
+            document.getElementById('threadCount').textContent = (data.total || 0) + ' thread' + ((data.total || 0) !== 1 ? 's' : '');
+            if (allThreads.length === 0) { container.innerHTML = '<div style="text-align:center;padding:3rem;color:#444;">No threads yet. Be the first to post!</div>'; return; }
+            container.innerHTML = allThreads.map(function(t) {
+                var role = t.author_role || 'CIVILIAN';
+                var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
+                return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">' 
+                    + '<div class="thread-icon">' + (t.pinned ? '📌' : t.locked ? '🔒' : '💬') + '</div>'
+                    + '<div class="thread-info">'
+                        + '<div class="thread-title">' + escapeHtml(t.title) + (t.pinned ? '<span class="pin-badge">Pinned</span>' : '') + (t.locked ? '<span class="lock-badge">Locked</span>' : '') + '</div>'
+                        + '<div class="thread-meta">' + roleTag + ' <span>' + escapeHtml(t.author_name || 'Unknown') + '</span><span>·</span><span>' + timeAgo(t.created_at) + '</span><span>·</span><span>👁 ' + (t.views || 0) + '</span></div>'
+                    + '</div>'
+                    + '<div class="thread-stats"><b>' + (t.reply_count || 0) + ' replies</b><span style="font-size:0.7rem;color:#444;">Last: ' + timeAgo(t.last_reply_at) + '</span></div>'
+                + '</div>';
+            }).join('');
+            if (data.totalPages > 1) {
+                var paginationHtml = '';
+                for (var i = 1; i <= data.totalPages; i++) {
+                    paginationHtml += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="loadThreads(' + i + ')">' + i + '</button>';
+                }
+                document.getElementById('threadPagination').innerHTML = paginationHtml;
+            }
+        } catch(e) {
+            container.innerHTML = '<p style="color:#c93f35;">Could not load threads. <a href="signin.html" style="color:#b9aa00;">Sign in</a> to view.</p>';
+        }
+    }
+
+    window.openThread = async function(threadId) {
+        currentThread = threadId;
+        document.getElementById('threadsList').classList.add('hidden');
+        document.getElementById('threadView').classList.add('active');
+        history.pushState({ threadId }, '', 'threads.html?cat=' + categoryId + '&name=' + encodeURIComponent(categoryName) + '&thread=' + threadId);
+        await loadThreadContent(threadId);
+    };
+
+    async function loadThreadContent(threadId) {
+        document.getElementById('threadContent').innerHTML = '<p style="color:#555;">Loading...</p>';
+        try {
+            var headers = {};
+            if (currentUser && currentUser.authKey) headers['X-Auth-Key'] = currentUser.authKey;
+            var res = await fetch(API_URL + '/api/forum/thread/' + threadId, { headers });
+            var data = await res.json();
+            if (data.error) { document.getElementById('threadContent').innerHTML = '<p style="color:#c93f35;">' + escapeHtml(data.error) + '</p>'; return; }
+            var thread = data.thread;
+            var posts = data.posts || [];
+            currentThreadData = thread;
+
+            if (canModerate()) {
+                document.getElementById('adminThreadBar').style.display = 'flex';
+                document.getElementById('pinBtn').textContent = thread.pinned ? '📌 Unpin' : '📌 Pin';
+                document.getElementById('lockBtn').textContent = thread.locked ? '🔒 Unlock' : '🔒 Lock';
+            }
+
+            var myId = currentUser ? currentUser.id : null;
+            var allPosts = [Object.assign({ id: threadId, isOP: true }, thread)].concat(posts.map(function(p) { return Object.assign({ isOP: false }, p); }));
+
+            var html = allPosts.map(function(post) {
+                var isOwnPost = myId && post.author_uid === myId;
+                var role = post.author_role || 'CIVILIAN';
+                var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
+                var avatarHtml = post.avatar
+                    ? '<img src="images/avatars/' + escapeHtml(post.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
+                    : (post.author_name ? post.author_name.charAt(0).toUpperCase() : '?');
+                var quoteText = post.body ? escapeAttr(post.body.substring(0, 100) + (post.body.length > 100 ? '...' : '')) : '';
+                return '<div class="post-card ' + (post.isOP ? 'op' : '') + '" id="post-' + post.id + '">'
+                    + '<div class="post-author-row">'
+                        + '<div class="post-avatar">' + avatarHtml + '</div>'
+                        + '<div class="post-author-info">'
+                            + '<div class="post-author-name">' + escapeHtml(post.author_name || post.display_name || 'Unknown') + roleTag + '</div>'
+                            + '<div class="post-timestamp">' + timeAgo(post.created_at) + '</div>'
+                        + '</div>'
+                    + '</div>'
+                    + (post.quoted_text ? '<div class="quote-block">💬 <i>' + escapeHtml(post.quoted_author || '') + '</i>: ' + escapeHtml(post.quoted_text) + '</div>' : '')
+                    + '<div class="post-body">' + renderPostBody(post.body || '') + '</div>'
+                    + '<div class="post-actions">'
+                        + (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">💬 Quote</button>' : '')
+                        + (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '')
+                        + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '')
+                        + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" data-pid="' + post.id + '" onclick="modDeletePost(this.dataset.pid)">🛡 Remove</button>' : '')
+                        + (!isOwnPost && myId ? '<button class="post-action-btn" data-pid="' + post.id + '" onclick="reportPost(this.dataset.pid)">🚩 Report</button>' : '')
+                        + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\', \'x\')">𝕏 X</button>'
+                        + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\', \'youtube\')">▶ YouTube</button>'
+                    + '</div>'
+                + '</div>';
+            }).join('');
+
+            document.getElementById('threadContent').innerHTML =
+                '<div class="thread-header"><h2>' + escapeHtml(thread.title) + '</h2>'
+                + '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>'
+                + html;
+
+            if (myId && !thread.locked) {
+                document.getElementById('replyFormContainer').innerHTML =
+                    '<div class="reply-form"><h3>Post a Reply</h3>'
+                    + '<div class="quote-preview" id="quotePreview"></div>'
+                    + '<div class="post-toolbar"><button class="toolbar-btn" onclick="insertLink(\'replyBody\')">🔗 Add Link</button><span class="toolbar-hint">[text](url) · 1 per post</span><span class="char-counter" id="replyCharCount">0 / 10,000</span></div>'
+                    + '<textarea id="replyBody" placeholder="Write your reply..." oninput="updateCharCount(\'replyBody\',\'replyCharCount\')"></textarea>'
+                    + '<div id="replyMsg" class="msg"></div>'
+                    + '<div class="reply-actions"><button class="btn btn-grey" onclick="clearQuote()">Clear Quote</button><button class="btn btn-red" onclick="submitReply()">Post Reply</button></div>'
+                    + '</div>';
+            } else if (thread.locked) {
+                document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">🔒 This thread is locked.</div>';
+            } else {
+                document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice"><a href="signin.html" style="color:#b9aa00;">Sign in</a> to reply.</div>';
+            }
+        } catch(e) {
+            document.getElementById('threadContent').innerHTML = '<p style="color:#c93f35;">Could not load thread.</p>';
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.quote-btn');
+        if (!btn) return;
+        quotedPost = { postId: btn.getAttribute('data-postid'), authorName: btn.getAttribute('data-author'), text: btn.getAttribute('data-text') };
+        var preview = document.getElementById('quotePreview');
+        if (preview) { preview.innerHTML = '💬 Quoting <b>' + escapeHtml(quotedPost.authorName) + '</b>: ' + escapeHtml(quotedPost.text); preview.classList.add('active'); }
+        var replyBody = document.getElementById('replyBody');
+        if (replyBody) replyBody.focus();
+    });
+    window.clearQuote = function() {
+        quotedPost = null;
+        var preview = document.getElementById('quotePreview');
+        if (preview) { preview.innerHTML = ''; preview.classList.remove('active'); }
+    };
+
+    window.backToThreads = function() {
+        currentThread = null; currentThreadData = null; quotedPost = null;
+        document.getElementById('threadsList').classList.remove('hidden');
+        document.getElementById('threadView').classList.remove('active');
+        document.getElementById('adminThreadBar').style.display = 'none';
+        loadThreads(currentPage);
+    };
+
+    var _replySubmitting = false;
+    window.submitReply = async function() {
+        if (_replySubmitting) return;
+        var body = document.getElementById('replyBody').value.trim();
+        var msgEl = document.getElementById('replyMsg');
+        if (!validatePost(body, msgEl)) return;
+        _replySubmitting = true;
+        var btn = document.querySelector('.reply-actions .btn-red');
+        if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
+        try {
+            var payload = { threadId: currentThread, body };
+            if (quotedPost) { payload.quoted_text = quotedPost.text; payload.quoted_author = quotedPost.authorName; }
+            var res = await fetch(API_URL + '/api/forum/post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify(payload)
+            });
+            var data = await res.json();
+            if (data.success) {
+                quotedPost = null;
+                document.getElementById('replyBody').value = '';
+                clearQuote();
+                msgEl.className = 'msg success'; msgEl.textContent = '✅ Reply posted!';
+                setTimeout(function() { loadThreadContent(currentThread); }, 500);
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        finally { _replySubmitting = false; if (btn) { btn.disabled = false; btn.textContent = 'Post Reply'; } }
+    };
+
+    window.editPost = function(postId, isOP) {
+        editingPostId = { id: postId, isOP };
+        var postEl = document.getElementById('post-' + postId);
+        var bodyEl = postEl ? postEl.querySelector('.post-body') : null;
+        document.getElementById('editBody').value = bodyEl ? bodyEl.innerText : '';
+        document.getElementById('editModal').classList.add('active');
+        updateCharCount('editBody', 'editCharCount');
+    };
+    window.closeEdit = function() { document.getElementById('editModal').classList.remove('active'); editingPostId = null; };
+    window.submitEdit = async function() {
+        var body = document.getElementById('editBody').value.trim();
+        var msgEl = document.getElementById('editMsg');
+        if (!validatePost(body, msgEl)) return;
+        if (!editingPostId || !currentUser) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + editingPostId.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ body: body })
+            });
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
+            if (data.success) {
+                msgEl.className = 'msg success'; msgEl.textContent = '✅ Post updated!';
+                setTimeout(function() { closeEdit(); loadThreadContent(currentThread); }, 500);
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed (' + res.status + ').'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
+    };
+
+    window.deletePost = function(postId, isOP) {
+        var postEl = document.getElementById('post-' + postId);
+        if (!postEl) return;
+        var actions = postEl.querySelector('.post-actions');
+        if (!actions) return;
+        actions.innerHTML =
+            '<span style="font-size:0.82rem;color:#e0cfc0;margin-right:4px;">Delete this post?</span>'
+            + '<button class="post-action-btn danger-btn" onclick="confirmDeletePost(\'' + postId + '\',' + isOP + ')">Yes, Delete</button>'
+            + '<button class="post-action-btn" onclick="loadThreadContent(currentThread)">Cancel</button>';
+    };
+    window.confirmDeletePost = async function(postId, isOP) {
+        if (!currentUser) return;
+        var msgEl = document.getElementById('replyMsg');
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + postId, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
+            });
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
+            if (data.success) {
+                if (isOP) { backToThreads(); }
+                else { loadThreadContent(currentThread); }
+            } else {
+                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Could not delete post.'; }
+            }
+        } catch(e) {
+            if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error.'; }
+        }
+    };
+    window.reportPost = async function(postId) {
+        var reason = prompt('Reason for report:\n(harassment, spam, inappropriate content, other)');
+        if (!reason) return;
+        if (!currentUser) return;
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + postId + '/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ reason: reason })
+            });
+            var data = await res.json();
+            var msgEl = document.getElementById('replyMsg');
+            if (msgEl) {
+                msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
+                msgEl.textContent = data.success ? '✅ Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
+            }
+        } catch(e) {}
+    };
+
+    window.shareThread = function(threadId, threadTitle, platform) {
+        var threadUrl = window.location.origin + window.location.pathname + '?cat=' + encodeURIComponent(categoryId) + '&name=' + encodeURIComponent(categoryName) + '&thread=' + encodeURIComponent(threadId);
+        var text = threadTitle + ' - ' + window.location.origin;
+
+        if (platform === 'x') {
+            var xUrl = 'https://twitter.com/intent/tweet?url=' + encodeURIComponent(threadUrl) + '&text=' + encodeURIComponent(text) + '&hashtags=sorcrpg';
+            window.open(xUrl, 'x-share', 'width=600,height=400');
+        } else if (platform === 'youtube') {
+            var youtubeUrl = 'https://www.youtube.com/';
+            window.open(youtubeUrl, 'youtube-share', 'width=800,height=600');
+        }
+    };
+
+    window.showHashtagContent = function(hashtag) {
+        var allPostEls = document.querySelectorAll('.post-card');
+        var matchingPosts = [];
+        allPostEls.forEach(function(postEl) {
+            var bodyEl = postEl.querySelector('.post-body');
+            if (bodyEl && bodyEl.textContent.indexOf(hashtag) !== -1) {
+                var authorEl = postEl.querySelector('.post-author-name');
+                var timestampEl = postEl.querySelector('.post-timestamp');
+                var author = authorEl ? authorEl.textContent : 'Unknown';
+                var timestamp = timestampEl ? timestampEl.textContent : '';
+                var body = bodyEl.textContent.substring(0, 150) + (bodyEl.textContent.length > 150 ? '...' : '');
+                matchingPosts.push({
+                    element: postEl,
+                    author: author,
+                    timestamp: timestamp,
+                    preview: body
+                });
+            }
+        });
+        if (matchingPosts.length === 0) {
+            alert('No posts found with ' + hashtag);
+            return;
+        }
+        var html = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:2px solid #c93f35;border-radius:10px;padding:1.5rem;max-width:500px;max-height:70vh;overflow-y:auto;z-index:1000;box-shadow:0 0 30px rgba(0,0,0,0.8);">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid #333;padding-bottom:0.75rem;">'
+            + '<h3 style="margin:0;color:#e0cfc0;font-size:1.1rem;">Posts with ' + escapeHtml(hashtag) + ' (' + matchingPosts.length + ')</h3>'
+            + '<button onclick="this.closest(\'[data-hashtag-modal]\').remove();" style="background:#c93f35;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>'
+            + '</div>'
+            + matchingPosts.map(function(post) {
+                return '<div style="border-bottom:1px solid #222;padding:0.75rem 0;cursor:pointer;" onclick="this.closest(\'[data-hashtag-modal]\').remove();document.getElementById(\'post-\' + this.dataset.postid).scrollIntoView({behavior:\'smooth\'});document.getElementById(\'post-\' + this.dataset.postid).style.backgroundColor=\'#2a1a1a\';setTimeout(function(){document.getElementById(\'post-\' + arguments[0]).style.backgroundColor=\'\';},2000);" data-postid="' + post.element.id.replace('post-', '') + '">'
+                + '<div style="color:#b9aa00;font-size:0.85rem;">' + escapeHtml(post.author) + ' · ' + escapeHtml(post.timestamp) + '</div>'
+                + '<div style="color:#888;font-size:0.9rem;margin-top:4px;">' + escapeHtml(post.preview) + '</div>'
+                + '</div>';
+            }).join('')
+            + '</div>'
+            + '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;" onclick="this.nextElementSibling.remove();this.remove();"></div>';
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        wrapper.setAttribute('data-hashtag-modal', 'true');
+        document.body.appendChild(wrapper.firstChild);
+        document.body.appendChild(wrapper.lastChild);
+    };
+
+    window.modDeletePost = function(postId) {
+        var postEl = document.getElementById('post-' + postId);
+        if (!postEl) return;
+        var actions = postEl.querySelector('.post-actions');
+        if (!actions) return;
+        actions.innerHTML =
+            '<span style="font-size:0.82rem;color:#e0cfc0;margin-right:4px;">Remove this post?</span>'
+            + '<button class="post-action-btn danger-btn" data-pid="' + postId + '" onclick="confirmModDelete(this.dataset.pid)">Yes, Remove</button>'
+            + '<button class="post-action-btn" onclick="loadThreadContent(currentThread)">Cancel</button>';
+    };
+    window.confirmModDelete = async function(postId) {
+        if (!currentUser) return;
+        var msgEl = document.getElementById('replyMsg');
+        try {
+            var res = await fetch(API_URL + '/api/forum/posts/' + postId + '/mod', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
+            });
+            var data;
+            try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
+            if (data.success) { loadThreadContent(currentThread); }
+            else {
+                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Could not remove post.'; }
+            }
+        } catch(e) {
+            if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error.'; }
+        }
+    };
+
+    window.togglePin = async function() { alert('Pin/unpin coming soon.'); };
+    window.toggleLock = async function() { alert('Lock/unlock coming soon.'); };
+    window.deleteThread = async function() { if (!confirm('Delete this entire thread?')) return; alert('Thread deletion coming soon.'); };
+
+    window.openNewThread = function() {
+        if (!currentUser) { alert('Please sign in to post.'); return; }
+        document.getElementById('newThreadModal').classList.add('active');
+    };
+    window.closeNewThread = function() {
+        document.getElementById('newThreadModal').classList.remove('active');
+        document.getElementById('newThreadMsg').textContent = '';
+        document.getElementById('threadTitle').value = '';
+        document.getElementById('threadBody').value = '';
+    };
+    var _threadSubmitting = false;
+    window.submitThread = async function() {
+        if (_threadSubmitting) return;
+        var title = document.getElementById('threadTitle').value.trim();
+        var body = document.getElementById('threadBody').value.trim();
+        var msgEl = document.getElementById('newThreadMsg');
+        if (!title) { msgEl.className = 'msg error'; msgEl.textContent = 'Please enter a title.'; return; }
+        if (!validatePost(body, msgEl)) return;
+        _threadSubmitting = true;
+        var btn = document.querySelector('#newThreadModal .btn-red');
+        if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
+        try {
+            var res = await fetch(API_URL + '/api/forum/thread', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+                body: JSON.stringify({ categoryId, title, body })
+            });
+            var data = await res.json();
+            if (data.success) {
+                msgEl.className = 'msg success'; msgEl.textContent = '✅ Thread posted!';
+                setTimeout(function() { closeNewThread(); openThread(data.threadId); }, 800);
+            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
+        finally { _threadSubmitting = false; if (btn) { btn.disabled = false; btn.textContent = 'Post Thread'; } }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!currentUser || !currentUser.authKey) currentUser = null;
+        if (threadParam) { openThread(threadParam); }
+        else { loadThreads(1); }
+    });
+    </script>
+</body>
+</html>

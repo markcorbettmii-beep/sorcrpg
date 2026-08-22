@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <script src="https://accounts.google.com/gsi/client" async defer onload="window.googleScriptLoaded = true;"></script>
+    <style>
+        /* Hide header/nav on signin pages only */
+        header, nav, .header-container { display: none !important; }
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .signin-input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #ffffffccc; background: #f5f5f5; color: #fff; font-size: 1rem; box-sizing: border-box; }
+        .signin-input:focus { outline: none; border-color: #c93f35; }
+        .password-wrapper { position: relative; margin-bottom: 12px; }
+        .password-wrapper .signin-input { margin-bottom: 0; padding-right: 44px; }
+        .toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #2c2c2c; cursor: pointer; font-size: 1rem; padding: 0; }
+        .toggle-pw:hover { color: #e0cfc0; }
+        .signin-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; margin-bottom: 12px; transition: all 0.2s; }
+        .signin-btn-primary { background: #c93f35; color: #fff; }
+        .signin-btn-primary:hover { background: #c93f35; }
+        .signin-btn-resend { background: none; border: 1px solid #b9aa00; color: #b9aa00; padding: 8px; font-size: 0.85rem; margin-bottom: 12px; width: 100%; border-radius: 8px; cursor: pointer; }
+        .signin-divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: #2c2c2c; font-size: 0.85rem; }
+        .signin-divider::before, .signin-divider::after { content: ''; flex: 1; height: 1px; background: #ffffffccc; }
+        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #2c2c2c; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        .account-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; }
+        .account-type-btn { padding: 0.4rem 0.8rem; border: 2px solid #ffffffccc; border-radius: 8px; background: #f5f5f5; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .account-type-btn.active { border-color: #c93f35; background: #c93f35; color: #fff; }
+        .account-type-btn:hover { border-color: #c93f35; }
+        .account-info { background: #ffffff; border: 1px solid #ffffffccc; color: #e0cfc0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.85rem; line-height: 1.6; text-align: left; display: none; }
+        .account-info.coming-soon { border-color: #b9aa00; background: #ffffff; color: #b9aa00; }
+        .status-msg { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; display: none; }
+        .status-msg.success { background: #ffffff; border: 1px solid #4caf50; color: #4caf50; }
+        .status-msg.error { background: #ffffff; border: 1px solid #c93f35; color: #c93f35; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+        body.lawful-mode .signin-input { background: #ffffff; color: #2c2c2c; border-color: #ffffff; }
+        body.lawful-mode .account-type-btn { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .account-info { background: #fff; }
+        .oauth-section { display: none; text-align: center; margin: 1.5rem 0; }
+        .oauth-section.show { display: block; }
+        .oauth-divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: #000; font-size: 0.9rem; }
+        .oauth-divider::before, .oauth-divider::after { content: ''; flex: 1; height: 1px; background: #000; }
+        .oauth-btn { width: 100%; height: 40px; padding: 0 12px; margin: 8px 0; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.2s; background: #ffffff; color: #000; line-height: 1; }
+        .oauth-amazon { justify-content: center; }
+        .oauth-amazon img { margin-right: 8px; }
+        .oauth-btn:hover { background: #ffffff; }
+        body.lawful-mode .oauth-btn { background: #ffffff; color: #000; }
+        body.lawful-mode .oauth-btn:hover { background: #ffffff; }
+        /* OAuth SDK button containers - ensure they render on mobile */
+        .g_id_signin { width: 100% !important; display: flex !important; justify-content: center !important; margin: 8px 0 !important; height: 40px !important; padding: 0 !important; border-radius: 8px !important; background: transparent !important; }
+        .g_id_signin button { background: transparent !important; border: none !important; outline: none !important; box-shadow: none !important; }
+        .g_id_signin button:focus { outline: none !important; box-shadow: none !important; background: transparent !important; }
+        .g_id_signin button:active { outline: none !important; box-shadow: none !important; background: transparent !important; }
+        /* Ensure SDK iframes are responsive */
+        .g_id_signin iframe { max-width: 100% !important; width: 100% !important; }
+        #g_id_onload { display: none; }
+        .signup-link-text { margin-top: 1rem; font-size: 0.9rem; color: #2c2c2c; }
+        .signup-link-text a { color: #b9aa00; text-decoration: underline; }
+        body.lawful-mode .signup-link-text { color: #2c2c2c; }
+        body.lawful-mode .signup-link-text a { color: #2196f3; }
+        .oauth-btn:hover { background: #ffffff; }
+        body.lawful-mode .oauth-btn:hover { background: #ffffff; }
+    </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Welcome to Essentia</h1>
+            <p>Sign in to continue your adventure</p>
+
+            <!-- Required root element for Amazon SDK -->
+            <div id="amazon-root" style="display:none;"></div>
+
+            <div class="oauth-section show" id="oauthSection">
+                <!-- Official Amazon Sign-In -->
+                <a href="#" id="LoginWithAmazon" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
+                    <img src="images/am-sign-in_20260816_154651_0000.png" alt="Amazon" style="width:200px;height:40px;" />
+                </a>
+
+                <!-- Official Apple Sign-In -->
+                <a href="#" id="LoginWithApple" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
+                    <img src="images/app-signin_20260816_002957_0000.png" alt="Apple" style="width:200px;height:40px;" />
+                </a>
+
+                <!-- Official Google Sign-In -->
+                <div id="g_id_onload" data-client_id="303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com" data-callback="handleGoogleSignIn" style="display:none;"></div>
+                <a href="#" id="LoginWithGoogle" class="oauth-btn oauth-google" style="text-decoration:none;display:flex;align-items:center;justify-content:center;">
+                    <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
+                </a>
+
+                <div class="signup-link-text">
+                    <div style="margin-bottom: 0.5rem;"><a href="signin-email.html" style="color: #b9aa00; text-decoration: underline;">Sign In with email</a></div>
+                    <div>New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); }, '/signin.html?signup=true');">Delve in now</a></div>
+                </div>
+            </div>
+
+            <div id="signupForm" style="display:none;">
+                <h2 style="color:#c93f35;margin-bottom:1.5rem;">Create Your Account</h2>
+
+                <!-- OAuth Signup Options -->
+                <div style="margin-bottom:1.5rem;">
+                    <p style="color:#2c2c2c;font-size:0.85rem;margin-bottom:1rem;">Sign up with:</p>
+
+                    <!-- Amazon Sign-Up -->
+                    <a href="#" id="LoginWithAmazonSignup" class="oauth-btn oauth-amazon" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <img src="images/am-sign-in_20260816_154651_0000.png" alt="Amazon" style="width:200px;height:40px;" />
+                    </a>
+
+                    <!-- Apple Sign-Up -->
+                    <a href="#" id="LoginWithAppleSignup" class="oauth-btn oauth-apple" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <img src="images/app-signin_20260816_002957_0000.png" alt="Apple" style="width:200px;height:40px;" />
+                    </a>
+
+                    <!-- Google Sign-Up -->
+                    <a href="#" id="LoginWithGoogleSignup" class="oauth-btn oauth-google" style="text-decoration:none;display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;">
+                        <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
+                    </a>
+                </div>
+
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" class="signin-input" placeholder="your@email.com" />
+                </div>
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" class="signin-input" placeholder="Choose a name" />
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="signupPassword" class="signin-input" placeholder="8-64 chars, 1 upper, 1 lower, 1 number" />
+                        <button class="toggle-pw" type="button" onclick="togglePassword('signupPassword', this)">👁</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" />
+                        <button class="toggle-pw" type="button" onclick="togglePassword('signupConfirmPassword', this)">👁</button>
+                    </div>
+                </div>
+                <button class="signin-btn signin-btn-primary" onclick="handleSignUp()">Create Account</button>
+                <div id="statusMsg" class="status-msg"></div>
+                <div style="margin-top:1.5rem;text-align:center;">
+                    <a href="javascript:void(0)" onclick="hideSignupForm()" style="color:#b9aa00;text-decoration:underline;font-size:0.9rem;">Back to login</a>
+                </div>
+            </div>
+
+            <div class="signin-links">
+                <a href="/resend-verification.html">Forgot password?</a> &nbsp;·&nbsp;
+                <a href="index.html">Back to site</a>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+        var lastUnverifiedEmail = null;
+
+        // Alert when page loads to check Google script status
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (window.googleScriptLoaded) {
+                } else if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+                } else {
+                }
+            }, 500);
+        });
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // Show success message if redirected after verification
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('verified') === 'true') {
+                showStatus('✅ Email verified! You can now sign in.', 'success');
+            }
+            if (params.get('expired') === 'true') {
+                showStatus('Your session expired. Please sign in again.', 'error');
+            }
+            if (params.get('verify_error') === 'true') {
+                showStatus('That verification link is invalid or already used. Try signing in, or request a new verification email.', 'error');
+            }
+            if (params.get('reset') === 'true') {
+                showStatus('✅ Password updated! You can now sign in with your new password.', 'success');
+            }
+            // Hide "Delve in now" link after K-ID verification
+            if (params.get('kid_verified') === 'true') {
+                var signupLink = document.querySelector('.signup-link-text');
+                if (signupLink) {
+                    signupLink.style.display = 'none';
+                }
+            }
+            // Show signup form after K-ID verification
+            if (params.get('signup') === 'true') {
+                document.getElementById('oauthSection').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'block';
+            }
+
+            // Check for user data from OAuth/K-ID flow
+            var userData = params.get('user');
+            if (userData) {
+                try {
+                    console.log('Step 4: Parsing user data from OAuth callback');
+                    var user = JSON.parse(userData);
+                    console.log('Step 5: Storing auth in localStorage');
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    console.log('Step 6: Redirecting to home');
+                    window.location.href = 'index.html';
+                    return;
+                } catch (e) {
+                    window.location.href = '/signin.html';
+                }
+            }
+        })();
+
+        var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+        function containsBadWord(str) {
+            var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return badWords.some(function(word) { return lower.includes(word); });
+        }
+        function isValidUsername(username) {
+            if (username.length < 3) return 'Name must be at least 3 characters.';
+            if (username.length > 30) return 'Name must be 30 characters or less.';
+            if (!/^[a-zA-Z0-9-]+$/.test(username)) return 'Letters, numbers and hyphens only. No underscores or spaces.';
+            if (containsBadWord(username)) return 'Name contains inappropriate language.';
+            return null;
+        }
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
+
+        window.togglePassword = function(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+            else { input.type = 'password'; btn.textContent = '👁'; }
+        };
+
+        window.selectType = function(type, btn) {
+            document.querySelectorAll('.account-type-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            document.querySelectorAll('.account-info').forEach(function(el) { el.style.display = 'none'; });
+            if (type === 'civilian') {
+                document.getElementById('civilianInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'block';
+            } else if (type === 'Player') {
+                document.getElementById('PlayerInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'none';
+            } else if (type === 'master') {
+                document.getElementById('masterInfo').style.display = 'block';
+                document.getElementById('signinForm').style.display = 'none';
+            }
+        };
+
+        window.handleSignIn = async function() {
+            var email = document.getElementById('emailInput').value.trim();
+            var password = document.getElementById('passwordInput').value;
+            if (!email || !password) { showStatus('Please enter your email and password.', 'error'); return; }
+
+            showStatus('Signing in...', 'success');
+            document.getElementById('resendBtn').style.display = 'none';
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                var data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    if (data.unverified) {
+                        lastUnverifiedEmail = email;
+                        showStatus(data.error + ' <a href="javascript:void(0)" onclick="handleResendVerification()" style="color:#b9aa00;text-decoration:underline;">Resend verification email</a>', 'error');
+                    } else if (data.passwordResetRequired) {
+                        showStatus('Password reset required. <a href="javascript:void(0)" onclick="showForgotPassword()" style="color:#b9aa00;text-decoration:underline;">Click here to reset your password</a>', 'error');
+                    } else if (res.status === 401 && data.error && data.error.includes('No password')) {
+                        var encodedEmail = email.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                        showStatus('No password set for this account. <a href="javascript:void(0)" onclick="sendResetFromSignin(\'' + encodedEmail.replace(/'/g, '&#39;') + '\')" style="color:#b9aa00;text-decoration:underline;">Send me a reset link</a>', 'error');
+                    } else {
+                        showStatus(data.error || 'Sign in failed.', 'error');
+                    }
+                    return;
+                }
+
+                localStorage.setItem('sorc_user', JSON.stringify({
+                    ...data.user,
+                    authKey: data.authKey
+                }));
+
+                window.location.href = 'index.html';
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.handleSignUp = async function() {
+            // Check K-ID verification first
+            if (!document.cookie.includes('kidVerified=true')) {
+                showStatus('Please verify your age to create an account.', 'error');
+                // Redirect to K-ID verification with return URL to signup
+                window.location.href = '/k-id-status.html?return=' + encodeURIComponent(window.location.pathname + '?signup=true');
+                return;
+            }
+
+            var email = document.getElementById('signupEmail').value.trim();
+            var password = document.getElementById('signupPassword').value;
+            var confirmPassword = document.getElementById('signupConfirmPassword').value;
+            var username = document.getElementById('signupUsername').value.trim();
+
+
+            if (!email || !password) {
+                showStatus('Please enter an email and password.', 'error');
+                return;
+            }
+            if (!username) { showStatus('Please choose a first name.', 'error'); return; }
+
+            if (password.length < 8 || password.length > 64) { showStatus('Password must be 8-64 characters.', 'error'); return; }
+            if (!/[A-Z]/.test(password)) { showStatus('Password must contain at least one uppercase letter.', 'error'); return; }
+            if (!/[a-z]/.test(password)) { showStatus('Password must contain at least one lowercase letter.', 'error'); return; }
+            if (!/[0-9]/.test(password)) { showStatus('Password must contain at least one number.', 'error'); return; }
+            if (password !== confirmPassword) { showStatus('Passwords do not match.', 'error'); return; }
+
+
+            var usernameError = isValidUsername(username);
+            if (usernameError) { showStatus(usernameError, 'error'); return; }
+
+            showStatus('Creating your profile...', 'success');
+
+
+            try {
+                var res = await fetch(API_URL + '/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, confirmPassword, username, firstName: username, accountType: 'CIVILIAN', kidVerified: true })
+                });
+                var data = await res.json();
+
+
+                if (!res.ok || !data.success) {
+                    showStatus(data.error || 'Registration failed.', 'error');
+                    return;
+                }
+
+                // Account created - redirect to email verification page
+                lastUnverifiedEmail = email;
+                localStorage.setItem('signupEmail', email);
+                setTimeout(function() {
+                    window.location.href = 'signin-verify-email.html';
+                }, 1500);
+
+            } catch(e) {
+                // Connection error - account may have been created anyway
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.handleResendVerification = async function() {
+            var email = lastUnverifiedEmail || document.getElementById('emailInput').value.trim() || document.getElementById('signupEmail').value.trim();
+            if (!email) { showStatus('Please enter your email address.', 'error'); return; }
+            try {
+                var res = await fetch(API_URL + '/api/auth/resend-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                } else {
+                    showStatus(data.error || 'Could not resend email.', 'error');
+                }
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.sendResetFromSignin = async function(email) {
+            showStatus('Sending reset link...', 'success');
+            try {
+                await fetch(API_URL + '/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                showStatus('Reset link sent to ' + email + '. Check your inbox.', 'success');
+            } catch(e) {
+                showStatus('Connection error. Please try again.', 'error');
+            }
+        };
+
+        window.showForgotPassword = function() {
+            var email = document.getElementById('emailInput').value.trim();
+            var msg = email ? '' : 'Enter your email above, then click Forgot password.';
+            if (!email) { showStatus(msg, 'error'); return; }
+            showStatus('Sending reset email...', 'success');
+            fetch(window.SORC_API + '/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            }).then(function() {
+                showStatus('If that email is registered, a password reset link has been sent. Check your inbox.', 'success');
+            }).catch(function() {
+                showStatus('Connection error. Please try again.', 'error');
+            });
+        };
+
+        window.showSignupForm = function() {
+            document.getElementById('oauthSection').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+        };
+
+        window.hideSignupForm = function() {
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('oauthSection').style.display = 'block';
+        };
+
+        // Check if returning from K-ID verification
+        // (Don't auto-show signup - let user choose by clicking "Delve in now")
+
+        window.handleGoogleSignIn = async function(response) {
+            try {
+                const res = await fetch(API_URL + '/api/auth/google-signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                const data = await res.json();
+                if (data.success && data.authKey) {
+                    localStorage.setItem('sorc_user', JSON.stringify({
+                        ...data.user,
+                        authKey: data.authKey
+                    }));
+                    window.location.href = 'index.html';
+                } else {
+                    showStatus(data.error || 'Sign in failed', 'error');
+                }
+            } catch (e) {
+                showStatus('Connection error', 'error');
+            }
+        };
+
+        window.handleGoogleLogin = function() {
+
+            // Check if SDK loaded - detailed checks
+            if (!window.google) {
+                return;
+            }
+
+
+            if (!window.google.accounts) {
+                return;
+            }
+
+
+            if (!window.google.accounts.oauth2) {
+                return;
+            }
+
+
+            try {
+
+                var codeClient = window.google.accounts.oauth2.initCodeClient({
+                    client_id: '303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com',
+                    scope: 'openid email profile',
+                    ux_mode: 'redirect',
+                    redirect_uri: 'https://api.sorcrpg.com/auth/google/callback',
+                    callback: function(response) {
+                        if (response.code) {
+                            window.location.href = 'https://api.sorcrpg.com/auth/google/callback?code=' + response.code;
+                        } else if (response.error) {
+                        }
+                    }
+                });
+
+                codeClient.requestCode();
+
+            } catch (e) {
+            }
+        };
+
+        window.onAmazonLoginReady = function() {
+            amazon.Login.setClientId('YOUR_AMAZON_CLIENT_ID');
+        };
+
+        window.handleAmazonSignIn = async function(response) {
+            try {
+                if (response.error) {
+                    showStatus('Amazon sign in error: ' + response.error, 'error');
+                    return;
+                }
+                const res = await fetch(API_URL + '/api/auth/amazon-signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: response.access_token })
+                });
+                const data = await res.json();
+                if (data.success && data.authKey) {
+                    localStorage.setItem('sorc_user', JSON.stringify({
+                        ...data.user,
+                        authKey: data.authKey
+                    }));
+                    window.location.href = 'index.html';
+                } else {
+                    showStatus(data.error || 'Sign in failed', 'error');
+                }
+            } catch (e) {
+                showStatus('Connection error', 'error');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for user data from OAuth redirect (after K-ID verification)
+            var urlParams = new URLSearchParams(window.location.search);
+            var userData = urlParams.get('user');
+            if (userData) {
+                try {
+                    var user = JSON.parse(userData);
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                    // Clear the URL parameter
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    // Redirect to home
+                    window.location.href = 'index.html';
+                    return;
+                } catch (e) {
+                    console.error('Failed to parse user data:', e);
+                }
+            }
+
+            // Google button click handler
+            var googleButton = document.getElementById('LoginWithGoogle');
+            if (googleButton) {
+                googleButton.onclick = function(e) {
+                    e.preventDefault();
+                    window.handleGoogleLogin();
+                };
+            }
+
+            // Google signup button click handler
+            var googleSignupButton = document.getElementById('LoginWithGoogleSignup');
+            if (googleSignupButton) {
+                googleSignupButton.onclick = function(e) {
+                    e.preventDefault();
+                    window.handleGoogleLogin();
+                };
+            }
+
+            var loginButton = document.getElementById('LoginWithAmazon');
+            if (loginButton) {
+                loginButton.onclick = function(e) {
+                    e.preventDefault();
+                    if (window.amazon && window.amazon.Login) {
+                        var options = { scope: 'profile' };
+                        amazon.Login.authorize(options, window.handleAmazonSignIn);
+                    } else {
+                        showStatus('Amazon SDK not loaded', 'error');
+                    }
+                };
+            }
+        });
+
+        window.handleAppleSignIn = async function(response) {
+            try {
+                if (response.authorization && response.authorization.id_token) {
+                    const res = await fetch(API_URL + '/api/auth/apple-signin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ credential: response.authorization.id_token })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.authKey) {
+                        localStorage.setItem('sorc_user', JSON.stringify({
+                            ...data.user,
+                            authKey: data.authKey
+                        }));
+                        window.location.href = 'index.html';
+                    } else {
+                        showStatus(data.error || 'Sign in failed', 'error');
+                    }
+                }
+            } catch (e) {
+                showStatus('Connection error', 'error');
+            }
+        };
+
+        window.handleAppleLogin = function() {
+            showStatus('Apple login coming soon...', 'error');
+        };
+    </script>
+  <script src="verify-kid.js"></script>
+
+  <!-- Official Google Sign-In SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+
+  <!-- Official Amazon Sign-In SDK -->
+  <script>
+    window.onAmazonLoginReady = function() {
+      if (window.amazon && window.amazon.Login) {
+        amazon.Login.setClientId('YOUR_AMAZON_CLIENT_ID');
+      }
+    };
+    (function(d) {
+      var a = d.createElement('script');
+      a.type = 'text/javascript';
+      a.async = true;
+      a.id = 'amazon-login-sdk';
+      a.src = 'https://sdk.amazonservices.com/js/Alexa.js';
+      d.getElementById('amazon-root').appendChild(a);
+    })(document);
+  </script>
+
+  <script>
+    // Initialize Google OAuth when SDK loads
+    function initGoogleAuth() {
+      if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+        setTimeout(initGoogleAuth, 100);
+        return;
+      }
+
+      // Initialize the code client for redirect flow
+      const codeClient = window.google.accounts.oauth2.initCodeClient({
+        client_id: '303646936307-no909pqm07k8im730pirgjlo06mgp1tb.apps.googleusercontent.com',
+        scope: 'openid email profile',
+        ux_mode: 'redirect',
+        redirect_uri: 'https://api.sorcrpg.com/auth/google/callback'
+      });
+
+      window.googleCodeClient = codeClient;
+
+      // Set up click handlers on all Google button elements
+      var buttons = document.querySelectorAll('.g_id_signin');
+      buttons.forEach(function(button) {
+        button.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.googleCodeClient) {
+            try {
+              window.googleCodeClient.requestCode();
+            } catch(err) {
+              console.error('Google auth error:', err);
+            }
+          }
+          return false;
+        };
+      });
+    }
+
+    // Start initialization immediately
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGoogleAuth);
+    } else {
+      initGoogleAuth();
+    }
+  </script>
+
+  <script type="module" src="main.js?v=25"></script>
+  <div id="footer"></div>
+</body>
+</html>

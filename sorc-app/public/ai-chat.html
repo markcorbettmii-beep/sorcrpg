@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORC AI Chat</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .ai-container { max-width: 900px; margin: 2rem auto; padding: 1.5rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; }
+    .ai-container h1 { margin-bottom: 0.75rem; }
+    .ai-row { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    .ai-row label { font-weight: bold; display: block; margin-bottom: 0.35rem; }
+    .ai-row input, .ai-row textarea, .ai-row select { width: 100%; font: inherit; padding: 0.9rem 1rem; border-radius: 10px; border: 1px solid #555; background: rgba(0,0,0,0.8); color: #f1f1f1; }
+    .ai-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .ai-button { border: none; border-radius: 999px; padding: 0.85rem 1.4rem; font-weight: 700; cursor: pointer; background: #b9aa00; color: #121212; }
+    .ai-log { min-height: 12rem; padding: 1rem; border-radius: 14px; border: 1px solid #444; background: rgba(0,0,0,0.75); color: #e8e8e8; white-space: pre-wrap; overflow-y: auto; }
+    .ai-status { margin-top: 0.5rem; color: #b3b3b3; }
+    .note-box { background: rgba(185,170,0,0.08); border: 1px solid rgba(185,170,0,0.18); padding: 1rem; border-radius: 14px; color: #f8f0d4; }
+  
+
+    /* ─── Lawful Mode (Light Theme) ─── */
+    body.lawful-mode {
+      background: #f5f5f0;
+      color: #2c2c2c;
+    }
+    body.lawful-mode header { background: #ffffff; }
+    body.lawful-mode nav { background: #ffffff; }
+    body.lawful-mode main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode .content-main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode h1, body.lawful-mode h2, body.lawful-mode h3, body.lawful-mode h4, body.lawful-mode h5 { color: #2c2c2c; }
+    body.lawful-mode p { color: #2c2c2c; }
+    body.lawful-mode .Profession-entry, body.lawful-mode .talent-entry, body.lawful-mode .skill-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+      color: #2c2c2c;
+    }
+    body.lawful-mode .talent-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+    }
+    body.lawful-mode .note { 
+      background: rgba(185,170,0,0.1); 
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+    body.lawful-mode .callout {
+      background: rgba(185,170,0,0.1);
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+</style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+  <main class="ai-container">
+    <h1>SORC AI Chat</h1>
+    <div class="note-box">
+      <strong>How it works:</strong> this page talks to the worker backend at <code>https://api.sorcrpg.com/api/ai/chat</code>.
+      Your OpenAI secret stays on the server. The browser only sends a user auth key.
+    </div>
+
+    <section id="authSection" class="ai-row">
+      <div>
+        <label for="identityInput">Email or Username</label>
+        <input id="identityInput" type="text" placeholder="you@example.com or username" />
+      </div>
+      <div>
+        <label for="passwordInput">Password</label>
+        <input id="passwordInput" type="password" placeholder="password" />
+      </div>
+      <div class="ai-actions">
+        <button class="ai-button" id="signinButton">Sign In</button>
+        <button class="ai-button" id="registerButton">Register</button>
+        <button class="ai-button" id="clearAuthButton">Clear Auth</button>
+      </div>
+    </section>
+
+    <section id="chatSection" class="ai-row" style="display:none;">
+      <div>
+        <label for="modelSelect">Model</label>
+        <select id="modelSelect">
+          <option value="gpt-4o-mini">gpt-4o-mini</option>
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4o-realtime-preview">gpt-4o-realtime-preview</option>
+        </select>
+      </div>
+      <div>
+        <label for="promptInput">Prompt</label>
+        <textarea id="promptInput" rows="6" placeholder="Ask the AI anything..."></textarea>
+      </div>
+      <div class="ai-actions">
+        <button class="ai-button" id="sendButton">Send</button>
+        <button class="ai-button" id="clearLogButton">Clear Log</button>
+      </div>
+      <div>
+        <label>Response</label>
+        <div id="responseLog" class="ai-log">No response yet.</div>
+      </div>
+    </section>
+
+    <div class="ai-status" id="statusMessage">Not signed in.</div>
+  </main>
+
+  <script>
+    const API_BASE = 'https://api.sorcrpg.com';
+    const AUTH_STORAGE_KEY = 'sorc_ai_auth_key';
+
+    const signinButton = document.getElementById('signinButton');
+    const registerButton = document.getElementById('registerButton');
+    const clearAuthButton = document.getElementById('clearAuthButton');
+    const sendButton = document.getElementById('sendButton');
+    const clearLogButton = document.getElementById('clearLogButton');
+    const authSection = document.getElementById('authSection');
+    const chatSection = document.getElementById('chatSection');
+    const statusMessage = document.getElementById('statusMessage');
+    const responseLog = document.getElementById('responseLog');
+
+    function getStoredAuthKey() {
+      return localStorage.getItem(AUTH_STORAGE_KEY);
+    }
+
+    function setStoredAuthKey(key) {
+      if (key) {
+        localStorage.setItem(AUTH_STORAGE_KEY, key);
+      } else {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      }
+      updateUi();
+    }
+
+    function updateUi() {
+      const authKey = getStoredAuthKey();
+      if (authKey) {
+        statusMessage.textContent = 'Signed in. Auth key loaded.';
+        chatSection.style.display = 'grid';
+      } else {
+        statusMessage.textContent = 'Not signed in. Use Sign In or Register.';
+        chatSection.style.display = 'none';
+      }
+    }
+
+    async function fetchJson(url, options) {
+      const res = await fetch(url, options);
+      const data = await res.json().catch(() => ({ error: 'Invalid JSON response' }));
+      if (!res.ok) {
+        throw new Error(data.error || data.message || 'Request failed');
+      }
+      return data;
+    }
+
+    async function signin() {
+      const identity = document.getElementById('identityInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      if (!identity || !password) {
+        alert('Enter an email/username and password.');
+        return;
+      }
+      try {
+        const payload = identity.includes('@') ? { email: identity, password } : { username: identity, password };
+        const json = await fetchJson(`${API_BASE}/api/auth/signin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        setStoredAuthKey(json.authKey || json.auth_key);
+      } catch (err) {
+        alert('Sign in failed: ' + err.message);
+      }
+    }
+
+    async function register() {
+      const identity = document.getElementById('identityInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      if (!identity || !password) {
+        alert('Enter an email/username and password to register.');
+        return;
+      }
+      if (!identity.includes('@')) {
+        alert('For registration use an email address as the identity.');
+        return;
+      }
+      try {
+        const json = await fetchJson(`${API_BASE}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: identity, password, username: identity.split('@')[0], firstName: identity.split('@')[0] })
+        });
+        setStoredAuthKey(json.authKey || json.auth_key);
+      } catch (err) {
+        alert('Register failed: ' + err.message);
+      }
+    }
+
+    function clearAuth() {
+      setStoredAuthKey(null);
+    }
+
+    async function sendPrompt() {
+      const prompt = document.getElementById('promptInput').value.trim();
+      if (!prompt) {
+        alert('Enter a prompt to send to the AI.');
+        return;
+      }
+      const model = document.getElementById('modelSelect').value;
+      const authKey = getStoredAuthKey();
+      if (!authKey) {
+        alert('Sign in first.');
+        return;
+      }
+      responseLog.textContent = 'Sending prompt...';
+      try {
+        const body = {
+          messages: [
+            { role: 'system', content: 'You are a friendly game assistant for SORC.' },
+            { role: 'user', content: prompt }
+          ],
+          model,
+          max_tokens: 500,
+          temperature: 0.7
+        };
+        const json = await fetchJson(`${API_BASE}/api/ai/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Auth-Key': authKey
+          },
+          body: JSON.stringify(body)
+        });
+        if (json.choices && json.choices.length > 0) {
+          responseLog.textContent = json.choices.map(c => c.message?.content || JSON.stringify(c)).join('\n\n');
+        } else {
+          responseLog.textContent = JSON.stringify(json, null, 2);
+        }
+      } catch (err) {
+        responseLog.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    signinButton.addEventListener('click', signin);
+    registerButton.addEventListener('click', register);
+    clearAuthButton.addEventListener('click', clearAuth);
+    sendButton.addEventListener('click', sendPrompt);
+    clearLogButton.addEventListener('click', () => { responseLog.textContent = 'No response yet.'; });
+
+    updateUi();
+  </script>
+  <script type="module" src="main.js?v=25"></script>
+  <div id="footer"></div>
+</body>
+</html>
