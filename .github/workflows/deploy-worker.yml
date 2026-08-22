@@ -5,8 +5,10 @@ on:
     branches:
       - main
       - claude/coding-session-lkoorx
+      - claude/verification-email-issue-w3qskj
     paths:
       - 'sorc-app/**'
+      - '*.html'
 
 jobs:
   deploy:
@@ -18,6 +20,9 @@ jobs:
           node-version: '22'
       - run: npm install
         working-directory: sorc-app
+      - name: Copy root HTML files to public
+        run: |
+          cp *.html sorc-app/public/ 2>/dev/null || true
       - run: npx wrangler deploy
         working-directory: sorc-app
         env:
