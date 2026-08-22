@@ -338,6 +338,10 @@
       background: rgba(160,100,220,0.3);
     }
 
+    .page.hidden {
+      display: none;
+    }
+
     @media print {
       body {
         background: white;
@@ -347,9 +351,13 @@
         margin: 0;
         box-shadow: none;
         page-break-after: always;
+        display: block !important;
       }
       .page::before {
         display: none;
+      }
+      .action-bar {
+        display: none !important;
       }
     }
   </style>
@@ -541,17 +549,37 @@
   </div>
 
   <script>
+    // Page flipping
+    const pages = document.querySelectorAll('.page');
+    const ptabs = document.querySelectorAll('.ptab');
+
+    // Initialize - show front, hide back
+    if (pages.length >= 2) {
+      pages[1].classList.add('hidden');
+    }
+
+    // Print tabs - flip pages
+    ptabs.forEach((tab, index) => {
+      tab.addEventListener('click', function() {
+        ptabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        const side = this.dataset.side;
+        pages.forEach((page, pageIndex) => {
+          if (side === 'front' && pageIndex === 0) {
+            page.classList.remove('hidden');
+          } else if (side === 'back' && pageIndex === 1) {
+            page.classList.remove('hidden');
+          } else {
+            page.classList.add('hidden');
+          }
+        });
+      });
+    });
+
     // Print button
     document.getElementById('printBtn').addEventListener('click', function() {
       window.print();
-    });
-
-    // Print tabs
-    document.querySelectorAll('.ptab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-      });
     });
   </script>
 
