@@ -2933,17 +2933,12 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // Try API routes first
-    const response = await app.fetch(request, env, ctx);
-
-    // If API didn't handle it and it looks like a file, try assets
-    if (response.status === 404 && /\.\w+$/.test(pathname)) {
+    // Check for static files first
+    if (/\.\w+$/.test(pathname)) {
       try {
-        const asset = await env.ASSETS.get(pathname.startsWith('/') ? pathname.slice(1) : pathname);
+        const assetPath = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+        const asset = await env.ASSETS.get(assetPath);
         if (asset) {
-          const headers: Record<string, string> = {
-            'Cache-Control': 'public, max-age=3600',
-          };
           const ext = pathname.split('.').pop()?.toLowerCase();
           const mimeTypes: Record<string, string> = {
             'html': 'text/html; charset=utf-8',
@@ -2956,15 +2951,17 @@ export default {
             'gif': 'image/gif',
             'svg': 'image/svg+xml',
           };
-          if (ext && mimeTypes[ext]) {
-            headers['Content-Type'] = mimeTypes[ext];
-          }
-          return new Response(asset, { headers });
+          const headers: Record<string, string> = {
+            'Content-Type': mimeTypes[ext] || 'application/octet-stream',
+            'Cache-Control': 'public, max-age=3600',
+          };
+          return new Response(asset, { headers, status: 200 });
         }
       } catch (e) {}
     }
 
-    return response;
+    // Fall back to API routes
+    return app.fetch(request, env, ctx);
   },
   async scheduled(_event: any, env: Env, _ctx: any) {
     await rotateGeneratedCodes(env.sorc_db);
