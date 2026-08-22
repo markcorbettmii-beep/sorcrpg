@@ -38,7 +38,6 @@ interface Env {
   sorc_db: D1Database;
   AVATARS: R2Bucket;
   FORUM_MEDIA: R2Bucket;
-  ASSETS: any;
   RESEND_API_KEY: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
@@ -1019,35 +1018,6 @@ app.get('/api/forum/recent-visitors', async (c) => {
 });
 
 app.get('/api/health', (c) => c.json({ ok: true }));
-
-// ===== STATIC FILES =====
-app.get('/:path{.*\\.(html|css|js|json|png|jpg|jpeg|gif|svg|woff|woff2)$}', async (c) => {
-  const path = c.req.param('path');
-  const file = await c.env.ASSETS.get(path);
-  if (!file) return c.notFound();
-  const headers: Record<string, string> = {
-    'Cache-Control': 'public, max-age=3600',
-    'Access-Control-Allow-Origin': '*',
-  };
-  const ext = path.split('.').pop()?.toLowerCase();
-  const mimeTypes: Record<string, string> = {
-    'html': 'text/html; charset=utf-8',
-    'css': 'text/css',
-    'js': 'application/javascript',
-    'json': 'application/json',
-    'png': 'image/png',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'gif': 'image/gif',
-    'svg': 'image/svg+xml',
-    'woff': 'font/woff',
-    'woff2': 'font/woff2',
-  };
-  if (ext && mimeTypes[ext]) {
-    headers['Content-Type'] = mimeTypes[ext];
-  }
-  return c.body(await file.arrayBuffer(), { headers });
-});
 
 // ===== CONVERSATIONS / INBOX =====
 
