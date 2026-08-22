@@ -202,6 +202,122 @@
       letter-spacing: 0.5px;
     }
 
+    .portrait-box {
+      width: 100%;
+      max-width: 280px;
+      aspect-ratio: 3/4;
+      border: 2px solid var(--color-gold);
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .portrait-box span {
+      font-size: 0.75rem;
+      color: var(--color-gold);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
+    /* Action Bar */
+    .action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      padding: 8px 12px;
+      gap: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10,10,10,0.95);
+      border-top: 1px solid var(--color-focus-border);
+      flex-wrap: wrap;
+      z-index: 100;
+    }
+
+    .action-bar button {
+      height: 28px;
+      padding: 4px 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--color-focus-border);
+      color: var(--color-text);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .action-bar button:hover {
+      background: rgba(160,100,220,0.9);
+    }
+
+    .action-bar button:active {
+      background: rgba(160,100,220,0.7);
+    }
+
+    .print-group {
+      display: flex;
+      gap: 4px;
+    }
+
+    .ptab {
+      height: 28px !important;
+      padding: 4px 10px !important;
+      font-size: 0.75rem !important;
+      background: rgba(160,100,220,0.3) !important;
+    }
+
+    .ptab.active {
+      background: var(--color-focus-border) !important;
+    }
+
+    .download-menu {
+      display: none;
+      position: absolute;
+      top: -120px;
+      left: 0;
+      background: rgba(10,10,10,0.95);
+      border: 1px solid var(--color-focus-border);
+      z-index: 1000;
+      min-width: 120px;
+      border-radius: 4px;
+    }
+
+    .download-menu.active {
+      display: block;
+    }
+
+    .download-menu a {
+      display: block;
+      padding: 8px 12px;
+      color: var(--color-gold);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(160,100,220,0.2);
+    }
+
+    .download-menu a:last-child {
+      border-bottom: none;
+    }
+
+    .download-menu a:hover {
+      background: rgba(160,100,220,0.3);
+    }
+
     @media print {
       body {
         background: white;
@@ -232,6 +348,10 @@
       <div class="section-header">
         <span class="section-title">Section 1: Profile</span>
         <span class="section-status">Active</span>
+      </div>
+
+      <div class="portrait-box">
+        <span>Photo or Portrait</span>
       </div>
 
       <div class="profile-grid">
@@ -390,6 +510,54 @@
       </div>
     </div>
   </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div style="position: relative; display: inline-block;">
+      <button id="downloadBtn">Download</button>
+      <div id="downloadMenu" class="download-menu">
+        <a href="#" data-format="pdf" onclick="alert('PDF download feature coming soon'); return false;">PDF</a>
+        <a href="#" data-format="html" onclick="alert('HTML download feature coming soon'); return false;">HTML</a>
+        <a href="#" data-format="print" onclick="window.print(); return false;">Print</a>
+      </div>
+    </div>
+    <div class="print-group">
+      <button class="ptab active" data-side="front">Front</button>
+      <button class="ptab" data-side="back">Back</button>
+    </div>
+    <button id="printBtn">Print</button>
+  </div>
+
+  <script>
+    // Download menu toggle
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+      const menu = document.getElementById('downloadMenu');
+      menu.classList.toggle('active');
+    });
+
+    // Close menu when clicking elsewhere
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('downloadMenu');
+      const btn = document.getElementById('downloadBtn');
+      if (!e.target.closest('.action-bar')) {
+        menu.classList.remove('active');
+      }
+    });
+
+    // Print button
+    document.getElementById('printBtn').addEventListener('click', function() {
+      window.print();
+    });
+
+    // Print tabs
+    document.querySelectorAll('.ptab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        alert('Print side selection: ' + this.dataset.side);
+      });
+    });
+  </script>
 
 </body>
 </html>
