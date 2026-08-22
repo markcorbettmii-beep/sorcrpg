@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Character Sheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --color-dark-bg: #0a0a0a;
+      --color-dark-card: rgba(120,80,200,0.06);
+      --color-dark-border: rgba(160,140,200,0.15);
+      --color-gold: #c5a042;
+      --color-text: #ffffff;
+      --color-focus-border: rgba(160,100,220,0.6);
+      --color-focus-bg: rgba(120,80,200,0.15);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --color-dark-bg: #f5f5f5;
+        --color-dark-card: rgba(200,180,120,0.08);
+        --color-dark-border: rgba(0,0,0,0.12);
+        --color-gold: #8b7500;
+        --color-text: #2c2c2c;
+      }
+    }
+
+    body {
+      background: #f5f5f5;
+      color: #333;
+      font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+      line-height: 1.5;
+      padding: 1rem;
+    }
+
+    /* Print Page Container: 8" x 11.5" at 96 DPI = 768px x 1104px */
+    .page {
+      width: 768px;
+      height: 1104px;
+      margin: 1rem auto;
+      background: #f2ece0;
+      border: 2px solid #999;
+      border-radius: 4px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
+      page-break-after: always;
+    }
+
+    .page::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+      border: 1px dashed var(--color-gold);
+      border-radius: 12px;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .page-content {
+      position: relative;
+      z-index: 1;
+      padding: 1.5rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .page-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-gold);
+      opacity: 0.6;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid var(--color-focus-border);
+      padding-bottom: 0.5rem;
+    }
+
+    header {
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--color-focus-border);
+      padding-bottom: 1rem;
+    }
+
+    .title-image {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 0.75rem;
+      display: block;
+      border-radius: 2px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #2c2c2c;
+      margin-bottom: 0.2rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      letter-spacing: 0.5px;
+      color: #666;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.2rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-focus-border);
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #2c2c2c;
+      font-weight: 700;
+    }
+
+    .section-status {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 2px;
+      background: #e0e0e0;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+    }
+
+    .section-status.dev {
+      background: #ffe0e0;
+      color: #d32f2f;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .profile-field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-field label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #2c2c2c;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+      opacity: 0.9;
+    }
+
+    .profile-field input,
+    .profile-field select,
+    .profile-field textarea {
+      background: #ffffff;
+      border: 1px solid #ccc;
+      color: #2c2c2c;
+      padding: 0.4rem 0.5rem;
+      border-radius: 2px;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+
+    .profile-field input:focus,
+    .profile-field select:focus,
+    .profile-field textarea:focus {
+      outline: none;
+      border-color: #4a5a20;
+      background: #fffef8;
+      box-shadow: 0 0 4px rgba(74,90,32,0.2);
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .placeholder-section {
+      background: rgba(100,100,100,0.1);
+      border: 2px dashed var(--color-dark-border);
+      padding: 2rem 1rem;
+      border-radius: 6px;
+      text-align: center;
+      color: var(--color-text);
+      opacity: 0.6;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .placeholder-section p {
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+
+    .portrait-box {
+      width: 100%;
+      max-width: 280px;
+      aspect-ratio: 3/4;
+      border: 1.5px solid #4a5a20;
+      background: #e5ddc8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .portrait-box span {
+      font-size: 0.7rem;
+      color: #999;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    /* Action Bar */
+    .action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      padding: 8px 12px;
+      gap: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f2ece0;
+      border-top: 1px solid #ccc;
+      flex-wrap: wrap;
+      z-index: 100;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+
+    .action-bar button {
+      height: 32px;
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: #4a5a20;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .action-bar button:hover {
+      background: #3a4a10;
+    }
+
+    .action-bar button:active {
+      background: #2a3a00;
+    }
+
+    .print-group {
+      display: flex;
+      gap: 0;
+      border: 1px solid #999;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .ptab {
+      height: 32px !important;
+      padding: 6px 12px !important;
+      font-size: 0.7rem !important;
+      background: #e8e8e8 !important;
+      color: #333 !important;
+      border: none !important;
+      border-right: 1px solid #999 !important;
+      border-radius: 0 !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px !important;
+      text-transform: uppercase !important;
+    }
+
+    .ptab:last-child {
+      border-right: none !important;
+    }
+
+    .ptab.active {
+      background: #4a5a20 !important;
+      color: #ffffff !important;
+    }
+
+    .download-menu {
+      display: none;
+      position: absolute;
+      top: -120px;
+      left: 0;
+      background: rgba(10,10,10,0.95);
+      border: 1px solid var(--color-focus-border);
+      z-index: 1000;
+      min-width: 120px;
+      border-radius: 4px;
+    }
+
+    .download-menu.active {
+      display: block;
+    }
+
+    .download-menu a {
+      display: block;
+      padding: 8px 12px;
+      color: var(--color-gold);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(160,100,220,0.2);
+    }
+
+    .download-menu a:last-child {
+      border-bottom: none;
+    }
+
+    .download-menu a:hover {
+      background: rgba(160,100,220,0.3);
+    }
+
+    .page.hidden {
+      display: none;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        display: block !important;
+      }
+      .page::before {
+        display: none;
+      }
+      .action-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- FRONT PAGE -->
+  <div class="page">
+    <div class="page-content">
+      <div class="page-label">Front</div>
+
+      <header>
+        <img src="images/char-sheet-title-jpeg_20260821_213512_0000.png" alt="SORC Character Sheet Title" class="title-image">
+        <h1>Character Sheet</h1>
+        <p class="subtitle">Essentia Core RPG</p>
+      </header>
+
+      <div class="section-header">
+        <span class="section-title">Section 1: Profile</span>
+        <span class="section-status">Active</span>
+      </div>
+
+      <div class="portrait-box">
+        <span>Photo or Portrait</span>
+      </div>
+
+      <div class="profile-grid">
+        <!-- 1. Name & UID -->
+        <div class="profile-field">
+          <label for="name">Name</label>
+          <input type="text" id="name" placeholder="Character name">
+        </div>
+        <div class="profile-field">
+          <label for="uid">UID</label>
+          <input type="text" id="uid" placeholder="Unique ID" maxlength="5">
+        </div>
+
+        <!-- 2. Nickname(s) -->
+        <div class="profile-field full-width">
+          <label for="nicknames">Nickname(s)</label>
+          <input type="text" id="nicknames" placeholder="e.g., The Brave, Shadowstep, Ironheart">
+        </div>
+
+        <!-- 3. Gender -->
+        <div class="profile-field">
+          <label for="gender">Gender</label>
+          <select id="gender">
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="non-binary">Non-binary</option>
+            <option value="other">Other</option>
+            <option value="ukn">Unknown (UKN)</option>
+          </select>
+        </div>
+
+        <!-- 4. Age -->
+        <div class="profile-field">
+          <label for="age">Age</label>
+          <input type="number" id="age" placeholder="Character age" min="1" max="200">
+        </div>
+
+        <!-- 5. Race -->
+        <div class="profile-field">
+          <label for="race">Race</label>
+          <input type="text" id="race" placeholder="e.g., Dwarf, Elf, Human">
+        </div>
+
+        <!-- 6. Species -->
+        <div class="profile-field">
+          <label for="species">Species</label>
+          <input type="text" id="species" placeholder="e.g., Humanoid, Reptilian, Fae">
+        </div>
+
+        <!-- 7. Level -->
+        <div class="profile-field">
+          <label for="level">Level</label>
+          <input type="number" id="level" placeholder="LVL" min="0" max="30">
+        </div>
+
+        <!-- 8. Rank -->
+        <div class="profile-field">
+          <label for="rank">Rank</label>
+          <input type="text" id="rank" placeholder="Novice, Apprentice, etc.">
+        </div>
+
+        <!-- 9. Growth -->
+        <div class="profile-field">
+          <label for="growth">Growth</label>
+          <input type="number" id="growth" placeholder="Growth milestone" min="0" max="20">
+        </div>
+
+        <!-- 10. Favorite Class(es) -->
+        <div class="profile-field full-width">
+          <label for="favoriteClasses">Favorite Class(es)</label>
+          <input type="text" id="favoriteClasses" placeholder="e.g., Warrior, Cleric; Thief, Ranger">
+        </div>
+
+        <!-- 11. Culture -->
+        <div class="profile-field">
+          <label for="culture">Culture</label>
+          <input type="text" id="culture" placeholder="Cultural background">
+        </div>
+
+        <!-- 12. Place of Birth -->
+        <div class="profile-field">
+          <label for="birthplace">Place of Birth</label>
+          <input type="text" id="birthplace" placeholder="Hometown or birthplace">
+        </div>
+
+        <!-- 13. Languages -->
+        <div class="profile-field full-width">
+          <label for="languages">Languages</label>
+          <input type="text" id="languages" placeholder="e.g., Common, Dwarvish, Elvish">
+        </div>
+
+        <!-- 14. Profession Trees & Skills -->
+        <div class="profile-field full-width">
+          <label for="professionTrees">Profession Trees & Skills</label>
+          <input type="text" id="professionTrees" placeholder="e.g., Warrior Tree; Combat, Tactics">
+        </div>
+
+        <!-- 15. Talent Trees & Talents -->
+        <div class="profile-field full-width">
+          <label for="talentTrees">Talent Trees & Talents</label>
+          <input type="text" id="talentTrees" placeholder="e.g., Rogue Tree; Stealth, Pickpocket">
+        </div>
+
+        <!-- 16. Hobbies -->
+        <div class="profile-field full-width">
+          <label for="hobbies">Hobbies</label>
+          <input type="text" id="hobbies" placeholder="e.g., Fishing, Painting, Monster Hunting">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACK PAGE -->
+  <div class="page">
+    <div class="page-content">
+      <div class="page-label">Back</div>
+
+      <header>
+        <img src="images/char-sheet-title-jpeg_20260821_213512_0000.png" alt="SORC Character Sheet Title" class="title-image">
+        <h1>Character Sheet</h1>
+        <p class="subtitle">Essentia Core RPG</p>
+      </header>
+
+      <div class="section-header">
+        <span class="section-title">Section 2: Progression</span>
+        <span class="section-status dev">In Development</span>
+      </div>
+
+      <div class="placeholder-section">
+        <p>⚙️ Progression section coming soon...</p>
+      </div>
+
+      <div class="section-header">
+        <span class="section-title">Section 3: Background</span>
+        <span class="section-status dev">In Development</span>
+      </div>
+
+      <div class="profile-grid">
+        <div class="profile-field full-width">
+          <label for="missionStatement">Mission Statement</label>
+          <input type="text" id="missionStatement" placeholder="Your character's guiding mission or purpose">
+        </div>
+      </div>
+
+      <div class="placeholder-section">
+        <p>⚙️ Background section coming soon...</p>
+      </div>
+
+      <div class="section-header">
+        <span class="section-title">Section 4: Favorites</span>
+        <span class="section-status dev">In Development</span>
+      </div>
+
+      <div class="placeholder-section">
+        <p>⚙️ Favorites section coming soon...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <div class="print-group">
+      <button class="ptab active" data-side="front">Front</button>
+      <button class="ptab" data-side="back">Back</button>
+      <button class="ptab" data-side="both">Both</button>
+    </div>
+    <button id="printBtn">Print</button>
+  </div>
+
+  <script>
+    // Page flipping
+    const pages = document.querySelectorAll('.page');
+    const ptabs = document.querySelectorAll('.ptab');
+
+    // Initialize - show front, hide back
+    if (pages.length >= 2) {
+      pages[1].classList.add('hidden');
+    }
+
+    // Print tabs - flip pages
+    ptabs.forEach((tab, index) => {
+      tab.addEventListener('click', function() {
+        ptabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        const side = this.dataset.side;
+        pages.forEach((page, pageIndex) => {
+          if (side === 'front' && pageIndex === 0) {
+            page.classList.remove('hidden');
+          } else if (side === 'back' && pageIndex === 1) {
+            page.classList.remove('hidden');
+          } else if (side === 'both') {
+            page.classList.remove('hidden');
+          } else {
+            page.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    // Print button
+    document.getElementById('printBtn').addEventListener('click', function() {
+      window.print();
+    });
+  </script>
+
+</body>
+</html>
