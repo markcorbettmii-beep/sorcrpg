@@ -2928,43 +2928,5 @@ app.get('/auth/google/callback', async (c) => {
   }
 });
 
-export default {
-  fetch: async (request: Request, env: any, ctx: any) => {
-    const url = new URL(request.url);
-    const pathname = url.pathname;
-
-    // Check for static files first
-    if (/\.\w+$/.test(pathname)) {
-      try {
-        const assetPath = pathname.startsWith('/') ? pathname.slice(1) : pathname;
-        const asset = await env.ASSETS.get(assetPath);
-        if (asset) {
-          const ext = pathname.split('.').pop()?.toLowerCase();
-          const mimeTypes: Record<string, string> = {
-            'html': 'text/html; charset=utf-8',
-            'css': 'text/css',
-            'js': 'application/javascript',
-            'json': 'application/json',
-            'png': 'image/png',
-            'jpg': 'image/jpeg',
-            'jpeg': 'image/jpeg',
-            'gif': 'image/gif',
-            'svg': 'image/svg+xml',
-          };
-          const headers: Record<string, string> = {
-            'Content-Type': mimeTypes[ext] || 'application/octet-stream',
-            'Cache-Control': 'public, max-age=3600',
-          };
-          return new Response(asset, { headers, status: 200 });
-        }
-      } catch (e) {}
-    }
-
-    // Fall back to API routes
-    return app.fetch(request, env, ctx);
-  },
-  async scheduled(_event: any, env: Env, _ctx: any) {
-    await rotateGeneratedCodes(env.sorc_db);
-  },
-};
+export default app;
 
