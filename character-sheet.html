@@ -623,6 +623,31 @@
     document.getElementById('printBtn').addEventListener('click', function() {
       window.print();
     });
+
+    // Auto-fill UID from server
+    async function loadUserUID() {
+      try {
+        const authKey = localStorage.getItem('authKey');
+        if (!authKey) return; // User not logged in
+
+        const response = await fetch('/api/me', {
+          headers: { 'X-Auth-Key': authKey }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user && data.user.user_id) {
+            document.getElementById('uid').value = data.user.user_id;
+            document.getElementById('uid').readOnly = true;
+          }
+        }
+      } catch (error) {
+        console.log('Could not auto-fill UID');
+      }
+    }
+
+    // Load UID when page loads
+    loadUserUID();
   </script>
 
 </body>
