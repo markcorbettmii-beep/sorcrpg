@@ -582,6 +582,13 @@
       <button class="ptab" data-side="both">Both</button>
     </div>
     <button id="printBtn">Print</button>
+    <div style="position: relative;">
+      <button id="menuBtn" style="padding: 8px 12px; background: #4a5a20; color: white; border: 1px solid #4a5a20; border-radius: 4px; cursor: pointer; font-weight: bold;">⋮</button>
+      <div class="download-menu" id="downloadMenu">
+        <a onclick="window.print()">Print</a>
+        <a onclick="downloadPDF()">Download PDF</a>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -619,6 +626,35 @@
     document.getElementById('printBtn').addEventListener('click', function() {
       window.print();
     });
+
+    // Menu button toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const downloadMenu = document.getElementById('downloadMenu');
+
+    menuBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      downloadMenu.classList.toggle('active');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function() {
+      downloadMenu.classList.remove('active');
+    });
+
+    // Download PDF function
+    function downloadPDF() {
+      const element = document.body;
+      const opt = {
+        margin: 0,
+        filename: 'character-sheet.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'letter' }
+      };
+
+      // Simple fallback - use print to save as PDF
+      window.print();
+    }
   </script>
 
 </body>
