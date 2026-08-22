@@ -421,8 +421,7 @@
               <input type="text" id="name" placeholder="Character name">
             </div>
             <div class="profile-field">
-              <label for="uid">UID</label>
-              <input type="text" id="uid" placeholder="Unique ID" maxlength="5">
+              <label>UID - <a href="#" id="uidLink" style="color: #b9aa00; text-decoration: none; cursor: pointer;">SORC Beyond</a></label>
             </div>
 
             <!-- 2. Nickname(s) -->
@@ -624,30 +623,16 @@
       window.print();
     });
 
-    // Auto-fill UID from server
-    async function loadUserUID() {
-      try {
-        const authKey = localStorage.getItem('authKey');
-        if (!authKey) return; // User not logged in
-
-        const response = await fetch('/api/me', {
-          headers: { 'X-Auth-Key': authKey }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.user && data.user.user_id) {
-            document.getElementById('uid').value = data.user.user_id;
-            document.getElementById('uid').readOnly = true;
-          }
-        }
-      } catch (error) {
-        console.log('Could not auto-fill UID');
+    // UID link handler
+    document.getElementById('uidLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      const authKey = localStorage.getItem('authKey');
+      if (!authKey) {
+        window.location.href = 'signin.html';
+      } else {
+        window.location.href = 'profile.html';
       }
-    }
-
-    // Load UID when page loads
-    loadUserUID();
+    });
   </script>
 
 </body>
