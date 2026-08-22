@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Email | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        /* Hide header/nav on signin pages only */
+        header, nav, .header-container { display: none !important; }
+        body { font-family: sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; background: #ffffff; }
+        .signin-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem 1rem; }
+        .signin-card { background: #ffffff; border: 1px solid #ffffffccc; border-radius: 1rem; padding: 2.5rem 2rem; max-width: 420px; width: 100%; text-align: center; }
+        .signin-logo { max-width: 280px; width: 100%; margin-bottom: 1.5rem; }
+        .signin-card h1 { color: #c93f35; font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .signin-card p { color: #2c2c2c; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; }
+        .verify-section { background: #f5f5f5; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .verify-section h2 { color: #2e7d32; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; }
+        .verify-section p { color: #555; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.5; }
+        .verify-section .highlight { color: #c93f35; font-weight: bold; }
+        .status-msg { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; text-align: center; }
+        .status-msg.success { background: #e8f5e9; border: 1px solid #4caf50; color: #2e7d32; }
+        .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: #2c2c2c; font-size: 0.85rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #ffffffccc; }
+        .signin-links { margin-top: 1rem; font-size: 0.85rem; color: #2c2c2c; }
+        .signin-links a { color: #b9aa00; text-decoration: none; }
+        .signin-links a:hover { text-decoration: underline; }
+        body.lawful-mode { background: #ffffff; color: #2c2c2c; }
+        body.lawful-mode .signin-card { background: #fff; border-color: #ffffff; }
+        .email-icon { font-size: 2rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="signin-wrapper">
+        <div class="signin-card">
+            <img src="slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings & Crowns" class="signin-logo" />
+            <h1>Welcome to Essentia</h1>
+            <p>Account created! Check your email to sign in</p>
+
+            <div id="statusMsg" class="status-msg"></div>
+
+            <!-- Email Verification Section -->
+            <div class="verify-section">
+                <div class="email-icon">📧</div>
+                <h2>Check Your Email</h2>
+                <p>We've sent a verification link to your email address. Click the link to verify your account and proceed to sign in.</p>
+                <p style="margin-bottom:0;"><span class="highlight">Check your spam folder if you don't see it.</span></p>
+            </div>
+
+            <div class="divider">Didn't receive email?</div>
+
+            <div class="signin-links" style="margin-top:1.5rem;">
+                <a href="javascript:void(0)" onclick="handleResendVerification()">Resend verification email</a>
+            </div>
+
+            <div class="divider">Already verified?</div>
+
+            <div class="signin-links" style="margin-top:1.5rem;">
+                <a href="signin-verified.html">Go to sign in</a>
+            </div>
+
+            <div class="signin-links" style="margin-top:1rem;">
+                <a href="signin.html">Back to site</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+
+        (function() {
+            var savedTheme = localStorage.getItem('themeSelected') || 'evil';
+            if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
+
+            // If already logged in, go home
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) {
+                try {
+                    var u = JSON.parse(saved);
+                    if (u && u.authKey) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+        })();
+
+        function showStatus(msg, type) {
+            var el = document.getElementById('statusMsg');
+            el.innerHTML = msg;
+            el.className = 'status-msg ' + type;
+            el.style.display = 'block';
+        }
+
+        window.handleResendVerification = async function() {
+            var email = localStorage.getItem('signupEmail') || (JSON.parse(localStorage.getItem('sorc_user') || '{}').email);
+            if (!email) { showStatus('❌ Could not find email. Please sign up again.', 'error'); return; }
+            try {
+                var res = await fetch(API_URL + '/api/auth/resend-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                } else {
+                    showStatus('❌ ' + (data.error || 'Could not resend email.'), 'error');
+                }
+            } catch(e) {
+                showStatus('❌ Connection error. Please try again.', 'error');
+            }
+        };
+    </script>
+
+  <script type="module" src="main.js?v=25"></script>
+  <div id="footer"></div>
+</body>
+</html>

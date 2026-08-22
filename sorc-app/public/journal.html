@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SORC Journal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #111;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    body { display: flex; flex-direction: column; align-items: stretch; }
+
+    .sheet-viewport {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    @media (max-width: 815px) { .sheet-viewport { overflow: hidden; } }
+
+    .scale-wrap { width: 816px; height: 1056px; transform-origin: top center; flex-shrink: 0; }
+
+    .flipper { width: 816px; height: 1056px; position: relative; -webkit-user-select: none; user-select: none; }
+
+    .face {
+      position: absolute; inset: 0; background: #f2ece0; overflow: hidden;
+      display: none;
+    }
+    .face.active { display: block; }
+
+    .wm {
+      position: absolute; inset: 0; z-index: 60; pointer-events: none;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .wm::after {
+      content: 'BETA';
+      font-family: 'Cinzel', serif; font-weight: 900; font-size: 26rem;
+      color: #2e3d0f; opacity: 0.18; letter-spacing: 0.15em;
+      transform: rotate(-52deg); white-space: nowrap;
+    }
+
+    .border-frame { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+    .border-frame::before { content: ''; position: absolute; inset: 0px; border: 2.5px solid #3a4a18; }
+    .border-frame::after { content: ''; position: absolute; inset: 6px; border: 1px solid #3a4a18; }
+
+    .corner { position: absolute; width: 40px; height: 40px; z-index: 12; pointer-events: none; }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 0; left: 0; }
+    .corner.tr { top: 0; right: 0; transform: scaleX(-1); }
+    .corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
+    .corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
+
+    .inner { position: relative; z-index: 1; padding: 14px 30px 14px; height: 100%; display: flex; flex-direction: column; }
+
+    .title-block { text-align: center; margin-bottom: 1px; }
+    .title-block h1 { font-family: 'Cinzel Decorative', Cinzel, serif; font-size: 1.5rem; color: #2e3d0f; font-weight: 900; letter-spacing: 0.03em; line-height: 1.15; }
+    .title-block h2 { font-family: 'Cinzel', serif; font-size: 0.7rem; color: #2e3d0f; font-weight: 700; letter-spacing: 0.2em; margin-top: 4px; }
+    .title-block .cat { font-family: 'Cinzel', serif; font-size: 0.5rem; color: #6a7a1f; letter-spacing: 0.16em; margin-top: 3px; text-transform: uppercase; }
+    .title-block .sub { font-family: Arial, sans-serif; font-size: 0.54rem; color: #444; margin-top: 3px; font-style: italic; }
+    .page-num { position: absolute; top: 18px; right: 24px; font-family: 'Cinzel', serif; font-size: 0.56rem; color: #4a5a20; letter-spacing: 0.1em; z-index: 2; }
+
+    .rule { border: none; border-top: 1.5px solid #4a5a20; margin: 4px 0; opacity: 0.4; }
+
+    .sec { margin-bottom: 16px; }
+    .sec-title {
+      font-family: 'Cinzel', serif; font-size: 0.6rem; font-weight: 700; color: #2e3d0f;
+      letter-spacing: 0.14em; text-transform: uppercase; text-align: left;
+      border-bottom: 1px solid #4a5a20; padding-bottom: 0.5px; margin-bottom: 9px;
+    }
+
+    .field { margin-bottom: 11px; }
+    .field-lbl { font-family: Arial, sans-serif; font-size: 0.54rem; color: #444; display: block; margin-bottom: 1px; }
+    input.fline {
+      background: transparent; border: none; border-bottom: 1px solid #aaa; width: 100%;
+      font-family: Arial, sans-serif; font-size: 0.66rem; color: #3d3d3d; height: auto; padding: 0 1px; outline: none; display: block;
+    }
+
+    /* Ruled writing lines, generous pen-friendly spacing like an actual diary page. Border only, no fill, so typed or handwritten text stays visible and print ink stays light. */
+    .jline {
+      width: 100%; min-height: 20px; margin-bottom: 21px;
+      border: none; border-bottom: 1px solid #6a7a48;
+      font-family: Arial, sans-serif; font-size: 0.66rem; color: #3d3d3d;
+      padding: 0 1px; display: block;
+    }
+    .jline[contenteditable] { outline: none; cursor: text; }
+    .jline.short { width: 60%; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
+
+    .small-note { font-family: Arial, sans-serif; font-size: 0.46rem; color: #666; line-height: 1.55; margin-bottom: 1px; }
+
+    .log-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.48rem; }
+    .log-tbl th {
+      font-family: 'Cinzel', serif; font-size: 0.42rem; font-weight: 700; color: #f2ece0;
+      background: #2e3d0f; letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 4px 5px; text-align: left; border: 1px solid #2e3d0f;
+    }
+    .log-tbl td { border: 1px solid #ccc; padding: 6px 5px; color: #222; vertical-align: top; height: 19px; }
+    .log-tbl td[contenteditable] { outline: none; cursor: text; }
+    .log-tbl tr:nth-child(even) td { background: #faf6ea; }
+    .log-tbl td.rank-name { font-weight: bold; background: #efe8d4; }
+
+    .stance-tier {
+      font-family: 'Cinzel', serif; font-size: 0.4rem; font-weight: 700; color: #fff;
+      padding: 1px 4px; border-radius: 3px; display: inline-block; letter-spacing: 0.03em;
+    }
+
+    .map-box {
+      border: 1.5px solid #4a5a20; background: #e8e0cc; width: 100%; height: 190px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .map-box span { font-family: 'Cinzel', serif; font-size: 0.55rem; color: #999; letter-spacing: 0.14em; text-transform: uppercase; }
+
+    .sent-tbl { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 0.46rem; }
+    .sent-tbl th {
+      font-family: 'Cinzel', serif; font-size: 0.4rem; font-weight: 700; color: #f2ece0;
+      background: #4a5a20; padding: 4px 5px; text-align: center; border: 1px solid #2e3d0f;
+    }
+    .sent-tbl td { border: 1px solid #4a5a20; padding: 5px 5px; text-align: center; background: #f5f0e4; height: 18px; }
+    .sent-tbl td[contenteditable] { outline: none; cursor: text; }
+    .sent-tbl td.item-name { text-align: left; background: #e8e0cc; font-weight: bold; }
+
+    /* ── ACTION BAR ── */
+    .action-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 52px;
+      background: #1a1a1a; border-top: 1px solid #2a2a2a;
+      display: flex; align-items: center; justify-content: center; gap: 0.5px; z-index: 200; padding: 0 12px;
+      flex-wrap: wrap;
+    }
+    .action-bar button {
+      background: #3a4a18; color: #f2ece0; border: 1px solid #5a6a28; border-radius: 16px;
+      font-family: 'Cinzel', serif; font-size: 0.56rem; font-weight: 700; letter-spacing: 0.06em;
+      padding: 2px 10px; cursor: pointer; text-transform: uppercase; white-space: nowrap;
+    }
+    .action-bar button:active { background: #2a3a10; }
+    .action-bar button:disabled { opacity: 0.4; cursor: default; }
+    .page-indicator { font-family: 'Cinzel', serif; font-size: 0.54rem; color: #ccc; letter-spacing: 0.06em; padding: 0 2px; white-space: nowrap; }
+
+    @media print {
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body { overflow: visible !important; height: auto !important; background: white !important; }
+      .action-bar { display: none !important; }
+      .sheet-viewport { display: block !important; overflow: visible !important; height: auto !important; }
+      .scale-wrap { transform: none !important; width: 8.5in !important; height: auto !important; margin: 0 !important; }
+      .flipper { width: 8.5in !important; height: auto !important; position: static !important; overflow: visible !important; }
+      .face {
+        position: relative !important; width: 8.5in !important; height: 11in !important;
+        display: block !important; overflow: hidden !important;
+        page-break-after: always; break-after: page;
+      }
+      .face:last-child { page-break-after: auto; break-after: auto; }
+    }
+  
+
+    /* ─── Lawful Mode (Light Theme) ─── */
+    body.lawful-mode {
+      background: #f5f5f0;
+      color: #2c2c2c;
+    }
+    body.lawful-mode header { background: #ffffff; }
+    body.lawful-mode nav { background: #ffffff; }
+    body.lawful-mode main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode .content-main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode h1, body.lawful-mode h2, body.lawful-mode h3, body.lawful-mode h4, body.lawful-mode h5 { color: #2c2c2c; }
+    body.lawful-mode p { color: #2c2c2c; }
+    body.lawful-mode .Profession-entry, body.lawful-mode .talent-entry, body.lawful-mode .skill-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+      color: #2c2c2c;
+    }
+    body.lawful-mode .talent-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+    }
+    body.lawful-mode .note { 
+      background: rgba(185,170,0,0.1); 
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+    body.lawful-mode .callout {
+      background: rgba(185,170,0,0.1);
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+</style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+
+<div class="sheet-viewport">
+<div class="scale-wrap" id="scaleWrap">
+  <div class="flipper" id="flipper">
+
+    <svg style="display:none"><defs>
+      <g id="csym"><circle cx="20" cy="20" r="13" fill="none" stroke="#3a4a18" stroke-width="1.4"/><circle cx="20" cy="20" r="6.5" fill="none" stroke="#3a4a18" stroke-width="1"/><circle cx="20" cy="20" r="2.2" fill="#3a4a18"/><line x1="7" y1="20" x2="0" y2="20" stroke="#3a4a18" stroke-width="1.4"/><line x1="20" y1="7" x2="20" y2="0" stroke="#3a4a18" stroke-width="1.4"/><path d="M7,7 Q20,13 33,7" fill="none" stroke="#3a4a18" stroke-width="0.9"/><path d="M7,7 Q13,20 7,33" fill="none" stroke="#3a4a18" stroke-width="0.9"/></g>
+    </defs></svg>
+
+    <!-- ══════════════ PAGE 1: LORE, PT. 1: BACKGROUND & ALIGNMENT ══════════════ -->
+    <div class="face active" id="page1">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 1 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Lore</p>
+          <p class="sub">Pt. 1: Background &amp; Alignment</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="two-col" style="margin-top:6px;">
+          <div class="field"><span class="field-lbl">Character Name</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Starting Alignment (Lawful / Evil / Neutral)</span><input type="text" class="fline" /></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><span class="field-lbl">Current Alignment (see Progression Tracker)</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Drift Direction (Falling / Rising / Stable)</span><input type="text" class="fline" /></div>
+        </div>
+
+        <div class="sec" style="margin-top:8px;">
+          <p class="sec-title">Background, Full</p>
+          <p class="small-note">Origin, upbringing, how they entered the adventuring life, and anything that shaped who they became before Ch. Lvl 1.</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+
+        <div class="three-col">
+          <div class="sec">
+            <p class="sec-title">Race Notes</p>
+            <p class="small-note">Innate Aptitude/Inaptitude, culture, and anything race-specific worth remembering.</p>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+          </div>
+          <div class="sec">
+            <p class="sec-title">Home &amp; Family Log</p>
+            <p class="small-note">Properties and plots, rooms and storage (Closet, Armory, Trophy Room, Aquarium, Stable/Kennel, and more), and family members all run deep enough to warrant their own sheet, see the <a href="home-and-family.html" target="_blank">Home &amp; Family Sheet</a>. Quick reference only below.</p>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+          </div>
+          <div class="sec">
+            <p class="sec-title">Alignment Drift Log</p>
+            <p class="small-note">Boasted/Shamed Titles and choices that pushed alignment, dated.</p>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+            <div class="jline" contenteditable="true"></div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /page1 -->
+
+    <!-- ══════════════ PAGE 2: LORE, PT. 2: MISSION STATEMENT & NPCs ══════════════ -->
+    <div class="face" id="page2">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 2 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Lore</p>
+          <p class="sub">Pt. 2: Mission Statement &amp; NPCs of Interest</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Mission Statement, Full</p>
+          <p class="small-note">Goals, values, and purpose, must align with starting Alignment. Doesn't need to be completed, it defines the throughline.</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Outsider Influence</p>
+          <p class="small-note">NPCs judge a character by how well their actions live up to what's expected of them. Follow through consistently and the world reacts accordingly, praise from allies of the cause, hostility from its opponents, both sides of the coin. Come across as too neutral when a clear stance was expected, and Good-aligned and Evil-aligned NPCs alike may scoff, though it's rarely severe on its own. Drifting too far into either extreme draws sharper judgment. This feeds directly into Stance, see Prestige, pg. 5-6.</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Mission Statement Evolution Log</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:18%;">When (Lvl/Growth)</th><th>What Changed &amp; Why</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">NPCs of Interest &amp; Their Reactions</p>
+          <p class="small-note">Every background and Mission Statement ties a character to NPCs in the world, tracked here as the connection plays out. Full Stance/Standing tracking lives under Prestige, pg. 6.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:16%;">NPC Name</th><th style="width:24%;">Connection to Mission</th><th style="width:16%;">Current Stance</th><th>Reaction / Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /page2 -->
+
+    <!-- ══════════════ PAGE 3: LORE, PT. 3: QUEST LOGS & ITEMS ══════════════ -->
+    <div class="face" id="page3">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 3 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Lore</p>
+          <p class="sub">Pt. 3: Quest Logs &amp; Items</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Quest Logs &amp; Items</p>
+          <p class="small-note">Every quest taken on, completed, abandoned, or ongoing, with what it paid out.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:18%;">Quest Name</th><th style="width:12%;">Type</th><th style="width:12%;">Status</th><th style="width:26%;">Objective</th><th>Item(s) / Reward</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /page3 -->
+
+    <!-- ══════════════ PAGE 4: LORE, PT. 4: MAPS & SENTIMENTAL VALUE ══════════════ -->
+    <div class="face" id="page4">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 4 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Lore</p>
+          <p class="sub">Pt. 4: Maps &amp; Sentimental Value</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Maps, Locations &amp; Wayfarer Log</p>
+          <p class="small-note">Mark Spot, Find Secret, and Deep Down entries all belong here.</p>
+          <div class="map-box"><span>Map Sketch / Notes</span></div>
+          <table class="log-tbl" style="margin-top:8px;">
+            <thead><tr><th style="width:22%;">Location / Landmark</th><th style="width:16%;">Visited (Lvl/Growth)</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Sentimental Value</p>
+          <p class="small-note">One item accruing per type at a time (weapon, armor, accessory, symbol). Locks permanently if removed. Gifted items (Adored/Family/Companion) start their primary line at +1. Armor tracks Armor Score (AS) accrual instead of a damage line. Accessories track a single Trait accrual, noted in the Class/AS/Trait Line column.</p>
+          <table class="sent-tbl">
+            <thead><tr><th style="width:20%;">Item</th><th style="width:14%;">Type</th><th style="width:14%;">Readied Since (Lvl)</th><th style="width:14%;">Class/AS/Trait Line</th><th style="width:14%;">Path Line</th><th style="width:12%;">Branch Line</th><th style="width:12%;">Gifted +1?</th></tr></thead>
+            <tbody>
+              <tr><td class="item-name" contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="item-name" contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="item-name" contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="item-name" contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Favorite Abilities</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:22%;">Ability</th><th style="width:14%;">Class / Tree</th><th>Why It's a Favorite / Notable Moment</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Archives &amp; Personal Notes</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+      </div>
+    </div><!-- /page4 -->
+
+    <!-- ══════════════ PAGE 5: PRESTIGE, PT. 1: TITLES & REPUTATION ══════════════ -->
+    <div class="face" id="page5">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 5 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Prestige</p>
+          <p class="sub">Pt. 1: Titles &amp; Reputation</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Developing Prestige</p>
+          <p class="small-note">Prestige measures how the world sees a character, shaped by feats, downfalls, choices, and interactions, affecting how NPCs, creatures, and other Players respond.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:16%;">When (Lvl/Growth)</th><th style="width:14%;">Feat or Downfall</th><th>Effect on Prestige &amp; Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Titles Earned</p>
+          <p class="small-note">Only one Boasted (Hero slot) and one Shamed (always Exposed) Title can be highlighted at a time. Boasted Titles are prestigious honors earned through Heroic deeds. Shamed Titles are assigned by the GM and can dissipate through good deeds, or be replaced by a worse one through continued bad deeds. Boasting or exposing a Title can push alignment, mirror the relevant entries into the Alignment Drift Log, pg. 1.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:20%;">Title</th><th style="width:14%;">Boasted / Shamed</th><th style="width:12%;">Currently Highlighted?</th><th style="width:16%;">Date Earned (Lvl/Growth)</th><th>Effect / Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Reputation Notes</p>
+          <p class="small-note">Built from ongoing actions, witnessed or rumored. Standing per faction/NPC is tracked in full on the Stance/Standing Tracker, pg. 6, this is just the story behind the numbers.</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+      </div>
+    </div><!-- /page5 -->
+
+    <!-- ══════════════ PAGE 6: PRESTIGE, PT. 2: STANCE/STANDING & AFFILIATION ══════════════ -->
+    <div class="face" id="page6">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 6 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Prestige</p>
+          <p class="sub">Pt. 2: Stance/Standing &amp; Affiliation</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Stance / Standing Tracker</p>
+          <p class="small-note">Per faction and per named NPC. Tier runs Exalted, Cherished, Adored, Respected, Neutral, Tolerable, Disliked, Hated. "Stance" and "Standing" refer to the same scale, this sheet tracks it once per relationship. See Stance &amp; Alignment and Standing Tiers, Basic Rules pg. 2.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:22%;">Faction / NPC</th><th style="width:14%;">Tier</th><th style="width:12%;">Affiliated? (Y/N)</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Affiliation</p>
+          <p class="small-note">Formal faction membership, deeper access and obligations than simple Standing above. A betrayal has weight, standing with an affiliated faction is still tracked in the table above, not separately.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:20%;">Faction</th><th style="width:16%;">Date Joined (Lvl/Growth)</th><th style="width:26%;">Benefits &amp; Obligations</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /page6 -->
+
+    <!-- ══════════════ PAGE 7: PRESTIGE, PT. 3: LEGACY ══════════════ -->
+    <div class="face" id="page7">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 7 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Prestige</p>
+          <p class="sub">Pt. 3: Legacy</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Legacy Notes</p>
+          <p class="small-note">How will this character be remembered? Reaching Legend before retiring turns a legacy into monuments, statues, and songs written in the world itself. Become a legend or die a pauper, the choice is theirs. See Legacy, Basic Rules pg. 2, and Rank &amp; Retirement, pg. 8-9.</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+      </div>
+    </div><!-- /page7 -->
+
+    <!-- ══════════════ PAGE 8: RANK, PT. 1: RANK & ADVANCEMENT ══════════════ -->
+    <div class="face" id="page8">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 8 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Rank</p>
+          <p class="sub">Pt. 1: Rank &amp; Advancement</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Rank Tier Tracker</p>
+          <p class="small-note">Rank runs Pauper, Peasant, Commoner, Adventurer, Hero, Uber, Elite, Legend. Each tier needs a minimum Character Level and a minimum Growth (Age), met independently of each other and of Rank Points (RP).</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:16%;">Rank Tier</th><th style="width:20%;">Ch. Lvl Met (Date)</th><th style="width:20%;">Growth Met (Date)</th><th style="width:20%;">RP Threshold Met (Date)</th><th>Rank Achieved (Date)</th></tr></thead>
+            <tbody>
+              <tr><td class="rank-name" contenteditable="true">Pauper</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Peasant</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Commoner</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Adventurer</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Hero</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Uber</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Elite</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td class="rank-name" contenteditable="true">Legend</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Rank Points (RP) Log</p>
+          <p class="small-note">NPCs, Companions, and armaments carry matching ranks (Common through Divine); a character cannot access content or equip items above their own Rank.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:16%;">When (Lvl/Growth)</th><th>Achievement</th><th style="width:12%;">RP Gained</th><th style="width:14%;">Running Total</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /page8 -->
+
+    <!-- ══════════════ PAGE 9: RANK, PT. 2: GROWTH, RETIREMENT & BECOMING A LEGEND ══════════════ -->
+    <div class="face" id="page9">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 9 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Rank</p>
+          <p class="sub">Pt. 2: Growth, Retirement &amp; Becoming a Legend</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="two-col" style="margin-top:6px;">
+          <div class="field"><span class="field-lbl">Beginning Age (chosen at creation)</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Retirement Age (Beginning Age + 40)</span><input type="text" class="fline" /></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><span class="field-lbl">Race Lifespan (Mortal / Immortal)</span><input type="text" class="fline" /></div>
+          <div class="field"><span class="field-lbl">Current Growth (Eons of Adoria lived)</span><input type="text" class="fline" /></div>
+        </div>
+
+        <div class="sec" style="margin-top:8px;">
+          <p class="sec-title">Growth Log</p>
+          <p class="small-note">Growth is purely time-based, one year per Eon of Adoria lived while played, with an escalating wait between each Growth. It feeds Vitality (Life, Mana, Stamina, Endurance) and, separately, Innate Aptitude's yearly progression. See Growth, Basic Rules pg. 2.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:12%;">Growth #</th><th style="width:16%;">Age Reached</th><th style="width:28%;">Vitality / Innate Aptitude Gained</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Retirement &amp; Becoming a Legend</p>
+          <p class="small-note">Retirement removes a character from active play for good, there is no unretiring; a character retires at whatever Rank they've reached, nothing granted retroactively. A character who climbed all the way to Legend retires as one, monuments raised, statues carved, songs written. Immortal characters carry on afterward as living legend NPCs, encounterable but never again playable. Mortal characters pass on and live only in the world's memory, monuments, statues, songs, or stories other characters hear told of them. See Retirement, Basic Rules pg. 2.</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+      </div>
+    </div><!-- /page9 -->
+
+    <!-- ══════════════ PAGE 10: COMPANIONS ROSTER ══════════════ -->
+    <div class="face" id="page10">
+      <div class="wm"></div>
+      <div class="border-frame"></div>
+      <div class="corner tl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner tr"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner bl"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="corner br"><svg viewBox="0 0 40 40"><use href="#csym"/></svg></div>
+      <div class="page-num">Pg. 10 of 10</div>
+
+      <div class="inner">
+        <div class="title-block">
+          <h1>Slayers of Rings &amp; Crowns</h1>
+          <h2>Journal</h2>
+          <p class="cat">Category: Companions</p>
+          <p class="sub">Companions Roster</p>
+        </div>
+        <hr class="rule" />
+
+        <div class="sec" style="margin-top:6px;">
+          <p class="sec-title">Companions Roster</p>
+          <p class="small-note">Quick reference only, full detail (Mood, Upkeep, Gifting, Bond Quest progress) lives on each Companion's own Companion Sheet.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:20%;">Companion Name</th><th style="width:14%;">Type</th><th style="width:12%;">Rarity</th><th style="width:16%;">Bond Date (Lvl/Growth)</th><th style="width:16%;">Current Mood Tier</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Bond Quest Log</p>
+          <p class="small-note">Rare+ Companions unlock a Bond Quest once their Mood reaches Tranquil.</p>
+          <table class="log-tbl">
+            <thead><tr><th style="width:22%;">Companion</th><th style="width:26%;">Bond Quest</th><th style="width:16%;">Status</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+              <tr><td contenteditable="true">&nbsp;</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec">
+          <p class="sec-title">Favorite Companion Moments</p>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+          <div class="jline" contenteditable="true"></div>
+        </div>
+      </div>
+    </div><!-- /page10 -->
+
+  </div><!-- /flipper -->
+</div><!-- /scale-wrap -->
+</div><!-- /sheet-viewport -->
+<p id="embedHint" style="display:none;text-align:center;font-size:0.82rem;color:#fff;opacity:0.7;margin:6px 0 0;font-family:serif;">Click image for editing, saving and printing options.</p>
+
+<div class="action-bar">
+  <button id="prevBtn">&larr; Prev</button>
+  <span class="page-indicator" id="pageIndicator">Page 1 / 10</span>
+  <button id="nextBtn">Next &rarr;</button>
+  <button id="printBtn">Print All</button>
+</div>
+
+<script>
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    var ab = document.querySelector('.action-bar');
+    if (ab) ab.style.display = 'none';
+    var hint = document.getElementById('embedHint');
+    if (hint) hint.style.display = 'block';
+  }
+
+  var pages = ['page1', 'page2', 'page3', 'page4', 'page5', 'page6', 'page7', 'page8', 'page9', 'page10'];
+  var current = 0;
+
+  function showPage(idx) {
+    pages.forEach(function(id, i) {
+      document.getElementById(id).classList.toggle('active', i === idx);
+    });
+    document.getElementById('pageIndicator').textContent = 'Page ' + (idx + 1) + ' / ' + pages.length;
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === pages.length - 1;
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', function() {
+    if (current > 0) { current--; showPage(current); }
+  });
+  document.getElementById('nextBtn').addEventListener('click', function() {
+    if (current < pages.length - 1) { current++; showPage(current); }
+  });
+  showPage(0);
+
+  function scaleToFit() {
+    var wrap = document.getElementById('scaleWrap');
+    var vp = document.querySelector('.sheet-viewport');
+    var vw = vp.clientWidth  || window.innerWidth;
+    var vh = vp.clientHeight || (window.innerHeight - 76);
+    var wScale = (vw / 816) * 0.97;
+    var hScale = (vh / 1056) * 0.97;
+    var scale  = vw >= 816 ? Math.min(wScale, 1.0) : Math.min(wScale, hScale);
+    wrap.style.transform = 'scale(' + scale + ')';
+
+    if (wScale < hScale && window.parent !== window) {
+      var idealH = Math.ceil(1056 * scale) + 28;
+      try { window.parent.postMessage({ sorcSheetHeight: idealH }, '*'); } catch(e) {}
+    }
+  }
+
+  scaleToFit();
+  window.addEventListener('resize', scaleToFit);
+  window.addEventListener('orientationchange', function() { setTimeout(scaleToFit, 150); });
+
+  document.getElementById('printBtn').addEventListener('click', function() {
+    // Print media shows every .face at full size regardless of .active, see @media print
+    window.print();
+  });
+</script>
+</body>
+</html>

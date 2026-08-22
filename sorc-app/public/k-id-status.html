@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K-ID Status - SORC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #ffffff;
+      color: #333333;
+    }
+
+    .error-box {
+      display: none;
+      background: #ffebee;
+      border: 2px solid #c93f35;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: #c93f35;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .error-box.show {
+      display: block;
+    }
+
+    .error-box h3 {
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .error-box code {
+      display: block;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      overflow-x: auto;
+      border-left: 3px solid #c93f35;
+      word-break: break-all;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .error-box button {
+      background: #c93f35;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+
+    .error-box button:hover {
+      background: #a83229;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 40px;
+      border-radius: 8px;
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .sorc-logo {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 0px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #333333;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666666;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 1px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #333333;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      background: #ffffff;
+      color: #333333;
+      transition: all 0.3s ease;
+    }
+
+    select:focus,
+    input:focus {
+      outline: none;
+      border-color: #0066cc;
+      box-shadow: 0 0 8px rgba(0, 102, 204, 0.2);
+    }
+
+    select option {
+      background: #ffffff;
+      color: #333333;
+    }
+
+    .date-fields {
+      display: flex;
+      gap: 10px;
+    }
+
+    .date-fields select {
+      flex: 1;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      background: #0066cc;
+      color: #ffffff;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #0052a3;
+      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+
+    .error {
+      color: #cc0000;
+      font-size: 13px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .success {
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      display: none;
+      text-align: center;
+      background: #e6f2ff;
+      color: #0052a3;
+      border: 1px solid #0066cc;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      font-size: 14px;
+      color: #666666;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="errorBox" class="error-box">
+      <h3>⚠️ Error Detected</h3>
+      <p id="errorMessage"></p>
+      <code id="errorDetails"></code>
+      <button onclick="document.getElementById('errorBox').classList.remove('show')">OK</button>
+    </div>
+
+    <div class="logo-section">
+      <img src="sorc-letters-lawful.png" alt="SORC" class="sorc-logo" />
+      <h1>K-ID Status</h1>
+    </div>
+
+    <div class="subtitle">
+      The Noble Forces requires verification of age (in Eons - years) to access online records. Your birthdate and region determine which paths and content are available to you.
+    </div>
+
+    <div id="success" class="success">
+      Your K-ID has been verified. Redirecting...
+    </div>
+
+    <form id="kidForm" style="display: block;">
+      <div class="form-group">
+        <label for="location">Location</label>
+        <select id="location" name="location" required>
+          <option value="">Select a location</option>
+          <option value="United States">United States</option>
+          <option value="Canada">Canada</option>
+          <option value="United Kingdom">United Kingdom</option>
+          <option value="Australia">Australia</option>
+          <option value="New Zealand">New Zealand</option>
+          <option value="European Union">European Union</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Date of Birth</label>
+        <div class="date-fields">
+          <select id="month" name="month" required>
+            <option value="">Month</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+          <select id="day" name="day" required>
+            <option value="">Day</option>
+            <option value="01">1</option>
+            <option value="02">2</option>
+            <option value="03">3</option>
+            <option value="04">4</option>
+            <option value="05">5</option>
+            <option value="06">6</option>
+            <option value="07">7</option>
+            <option value="08">8</option>
+            <option value="09">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+          </select>
+          <select id="year" name="year" required>
+            <option value="">Year</option>
+            <!-- Years populated by JavaScript -->
+          </select>
+        </div>
+        <div id="ageError" class="error">You must be at least 13 years old to access SORC.</div>
+      </div>
+
+      <button type="submit">Submit</button>
+      <div class="loading" id="loading">Verifying...</div>
+    </form>
+  </div>
+
+  <script>
+    window.showKIDError = function(message, details) {
+      document.getElementById('errorMessage').textContent = message;
+      document.getElementById('errorDetails').textContent = details || '';
+      document.getElementById('errorBox').classList.add('show');
+      document.getElementById('kidForm').style.display = 'none';
+      console.error('K-ID Error:', message, details);
+    };
+
+    // Populate year dropdown (1950 to current year)
+    var yearSelect = document.getElementById('year');
+    var currentYear = new Date().getFullYear();
+    for (var year = currentYear; year >= 1950; year--) {
+      var option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      yearSelect.appendChild(option);
+    }
+
+    // Get return URL from query parameters (whitelist validation)
+    function getReturnUrl() {
+      var params = new URLSearchParams(window.location.search);
+      var returnUrl = params.get('return') || '/';
+
+      if (!returnUrl) {
+        window.showKIDError('No return URL provided', 'KID_NO_RETURN_URL\n\nNo return URL was found in the K-ID verification request.\nThe OAuth flow may not have started correctly.');
+        return '/';
+      }
+
+      // Only allow relative URLs starting with / or full URLs to sorcrpg.com
+      if (returnUrl.startsWith('/')) {
+        return returnUrl;
+      }
+
+      if (returnUrl.startsWith('https://sorcrpg.com/') || returnUrl.startsWith('http://localhost:')) {
+        return returnUrl;
+      }
+
+      // Show error if URL is invalid
+      window.showKIDError('Invalid return URL', 'KID_INVALID_RETURN_URL\n\nReturn URL does not match allowed domains.\n\nReceived: ' + returnUrl);
+      return '/';
+    }
+
+    // Check if already verified
+    function checkVerification() {
+      if (document.cookie.indexOf('kidVerified=true') > -1) {
+        document.getElementById('success').style.display = 'block';
+        document.getElementById('kidForm').style.display = 'none';
+        // Redirect to return URL or home after a short delay
+        setTimeout(function() {
+          window.location.href = getReturnUrl();
+        }, 1500);
+      }
+    }
+
+    checkVerification();
+
+    // Form submission
+    document.getElementById('kidForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      var location = document.getElementById('location').value;
+      var month = document.getElementById('month').value;
+      var day = document.getElementById('day').value;
+      var year = document.getElementById('year').value;
+
+      if (!location || !month || !day || !year) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      // Check if age is at least 13
+      var birthDate = new Date(year, month - 1, day);
+      var today = new Date();
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var monthDiff = today.getMonth() - birthDate.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+
+      var ageError = document.getElementById('ageError');
+      if (age < 13) {
+        ageError.style.display = 'block';
+        return;
+      } else {
+        ageError.style.display = 'none';
+      }
+
+      // Set cookie for 1 year
+      var expiryDate = new Date();
+      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      document.cookie = 'kidVerified=true; expires=' + expiryDate.toUTCString() + '; path=/';
+
+      // Show success message
+      document.getElementById('success').style.display = 'block';
+      document.getElementById('kidForm').style.display = 'none';
+
+      // Redirect to welcome page after a short delay
+      // Extract user data from return URL and redirect to welcome page instead
+      var returnUrl = getReturnUrl();
+      var userMatch = returnUrl.match(/user=([^&]*)/);
+      if (userMatch && userMatch[1]) {
+        window.location.href = '/login-welcome.html?user=' + userMatch[1];
+      } else {
+        window.location.href = returnUrl;
+      }
+      setTimeout(function() {}, 1500);
+    });
+  </script>
+</body>
+</html>

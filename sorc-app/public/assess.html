@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Role Assessment | Slayers of Rings § Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .assess-wrap { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .assess-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
+    .assess-sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .role-track { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+    .track-btn { flex: 1; padding: 0.9rem; border-radius: 10px; border: 2px solid #2a2a2a; background: #1a1a1a;
+      color: #888; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .track-btn:hover { border-color: #555; color: #e0cfc0; }
+    .track-btn.active.pc { border-color: #c93f35; color: #c93f35; background: #1a0505; }
+    .track-btn.active.gm { border-color: #b9aa00; color: #b9aa00; background: #1a1505; }
+    .track-note { font-size: 0.8rem; color: #555; margin-top: -1rem; margin-bottom: 1.5rem; }
+    .q-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+    .q-num { color: #555; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .q-text { color: #e0cfc0; font-size: 0.97rem; margin-bottom: 1rem; line-height: 1.5; }
+    .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    @media (max-width: 480px) { .q-options { grid-template-columns: 1fr; } }
+    .opt-btn { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
+      color: #aaa; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+    .opt-btn:hover { border-color: #555; color: #e0cfc0; }
+    .opt-btn.selected { border-color: #c93f35; color: #e0cfc0; background: #1a0505; }
+    .opt-btn.selected.gm-track { border-color: #b9aa00; background: #1a1505; }
+    .submit-row { margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .submit-btn { padding: 0.85rem 2rem; background: #c93f35; color: #fff; border: none; border-radius: 8px;
+      font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .submit-btn:hover { background: #c93f35; }
+    .submit-btn:disabled { background: #333; color: #555; cursor: default; }
+    .assess-msg { font-size: 0.88rem; color: #c93f35; }
+    .result-card { background: #1a1a1a; border: 2px solid #b9aa00; border-radius: 14px; padding: 2rem; text-align: center; }
+    .result-card h2 { color: #b9aa00; margin-bottom: 0.5rem; }
+    .result-role { font-size: 2rem; font-weight: bold; color: #e0cfc0; margin: 0.5rem 0; }
+    .result-score { color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+    .result-note { color: #aaa; font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .result-links { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .result-links a, .result-links button { padding: 0.7rem 1.4rem; border-radius: 8px; font-size: 0.9rem;
+      font-weight: bold; text-decoration: none; cursor: pointer; }
+    .btn-go { background: #c93f35; color: #fff; border: none; }
+    .btn-go:hover { background: #c93f35; }
+    .btn-reassess { background: none; border: 1px solid #444; color: #888; }
+    .btn-reassess:hover { border-color: #888; color: #e0cfc0; }
+    .already-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.5rem; }
+    .already-card h3 { color: #b9aa00; margin-bottom: 0.5rem; }
+    .scroll-qa { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 1rem 1.25rem;
+      max-height: 260px; overflow-y: auto; margin-bottom: 2rem; }
+    .scroll-qa-item { padding: 0.5rem 0; border-bottom: 1px solid #1e1e1e; }
+    .scroll-qa-item:last-child { border-bottom: none; }
+    .scroll-qa-q { color: #888; font-size: 0.8rem; }
+    .scroll-qa-a { color: #b9aa00; font-size: 0.82rem; font-weight: bold; }
+    body.lawful-mode .assess-wrap h1 { color: #c93f35; }
+    body.lawful-mode .q-card { background: #f5f5f0; border-color: #ddd; }
+    body.lawful-mode .q-text { color: #2c2c2c; }
+    body.lawful-mode .opt-btn { background: #fff; border-color: #ccc; color: #555; }
+    body.lawful-mode .opt-btn:hover { border-color: #888; color: #2c2c2c; }
+    body.lawful-mode .opt-btn.selected { border-color: #c93f35; background: #fff0f0; color: #2c2c2c; }
+    body.lawful-mode .result-card, body.lawful-mode .already-card { background: #fff; border-color: #ddd; }
+    body.lawful-mode .result-role { color: #2c2c2c; }
+    body.lawful-mode .scroll-qa { background: #f9f9f9; border-color: #e0e0e0; }
+    body.lawful-mode .track-btn { background: #fff; border-color: #ddd; color: #555; }
+  
+        body.lawful-mode .submit-btn:disabled { background: #eee; color: #999; }
+    </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a class="current-section" href="assess.html">Assessment</a></li>
+    </ul>
+
+    <div class="assess-wrap">
+      <h1>Role Assessment</h1>
+      <p class="assess-sub">Answer 10 questions drawn from the SORC Basic Rules to unlock lobby access. Score 6–7 for PC Beginner, 8 for PC Intermediate, 9–10 for PC Advanced. GMs must score 9 or higher.</p>
+      <div id="assessApp"><p style="color:#555;">Loading...</p></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'evil';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    var gmTrack = false;
+    var selectedAnswers = {};
+    var questions = [];
+
+    function roleLabel(r) {
+      switch(r) {
+        case 'PC-BEG': return 'PC · Beginner';
+        case 'PC-INT': return 'PC · Intermediate';
+        case 'PC-ADV': return 'PC · Advanced';
+        case 'GM-ADV': return 'GM · Advanced';
+        default: return r;
+      }
+    }
+
+    function roleColor(r) {
+      if (r && r.startsWith('GM')) return '#b9aa00';
+      if (r === 'PC-ADV') return '#4caf50';
+      if (r === 'PC-INT') return '#64b5f6';
+      return '#e0cfc0';
+    }
+
+    async function init() {
+      var app = document.getElementById('assessApp');
+      if (!currentUser || !currentUser.authKey) {
+        app.innerHTML = '<p style="color:#888;">Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to take the assessment.</p>';
+        return;
+      }
+      app.innerHTML = '<p style="color:#555;">Checking assessment status...</p>';
+      try {
+        var res = await fetch(API_URL + '/api/assess', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (data.assessment) {
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = data.assessment.role_granted;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          if (data.expired || data.needs_reassess) {
+            showResult(data.assessment, true, true);
+          } else {
+            showResult(data.assessment, true, false);
+          }
+        } else {
+          loadQuiz();
+        }
+      } catch(e) {
+        app.innerHTML = '<p style="color:#c93f35;">Connection error. Please try again.</p>';
+      }
+    }
+
+    async function loadQuiz() {
+      var app = document.getElementById('assessApp');
+      app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+      try {
+        var res = await fetch(API_URL + '/api/assess/questions', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        questions = data.questions || [];
+        renderQuiz();
+      } catch(e) {
+        app.innerHTML = '<p style="color:#c93f35;">Could not load questions.</p>';
+      }
+    }
+
+    function renderQuiz() {
+      var app = document.getElementById('assessApp');
+      var qHtml = questions.map(function(q, idx) {
+        return '<div class="q-card" id="qcard-' + q.id + '">' +
+          '<div class="q-num">Question ' + (idx + 1) + ' of ' + questions.length + '</div>' +
+          '<div class="q-text">' + esc(q.q) + '</div>' +
+          '<div class="q-options">' +
+            q.options.map(function(opt, idx) {
+              return '<button class="opt-btn" id="opt-' + q.id + '-' + idx + '" onclick="selectAnswer(' + q.id + ',' + idx + ')">' +
+                '<strong>' + ['A','B','C','D'][idx] + '.</strong> ' + esc(opt) + '</button>';
+            }).join('') +
+          '</div>' +
+          '<div style="margin-top:0.75rem;text-align:right;">' +
+            '<a href="/content/essentia_core/essentia_core_' + q.page + '.html" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">&#128218; Read Rules Pg. ' + q.page + '</a>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      app.innerHTML =
+        '<div class="role-track">' +
+          '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">&#9876; Player Character (PC)</button>' +
+          '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">&#127931; Game Master (GM)</button>' +
+        '</div>' +
+        '<p class="track-note" id="trackNote">&#9888; Choose your track before answering - it locks in on your first answer and cannot be changed.</p>' +
+        qHtml +
+        '<div class="submit-row">' +
+          '<button class="submit-btn" id="submitBtn" onclick="submitAssessment()" disabled>Submit Assessment</button>' +
+          '<span class="assess-msg" id="assessMsg"></span>' +
+        '</div>';
+
+      setTrack(false);
+    }
+
+    function setTrack(isGM) {
+      gmTrack = isGM;
+      document.getElementById('trackPC').classList.toggle('active', !isGM);
+      document.getElementById('trackGM').classList.toggle('active', isGM);
+      document.getElementById('trackNote').textContent = isGM
+        ? 'GM track selected. You must score 9 or higher to qualify as GM-ADV.'
+        : 'PC track selected. Score 6+ to pass and receive a PC role.';
+      questions.forEach(function(q) {
+        var sel = selectedAnswers[q.id];
+        if (sel !== undefined) {
+          for (var i = 0; i < q.options.length; i++) {
+            var btn = document.getElementById('opt-' + q.id + '-' + i);
+            if (btn) {
+              btn.classList.remove('selected', 'gm-track');
+              if (i === sel) {
+                btn.classList.add('selected');
+                if (isGM) btn.classList.add('gm-track');
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function selectAnswer(qId, optIdx) {
+      selectedAnswers[qId] = optIdx;
+      for (var i = 0; i < 4; i++) {
+        var btn = document.getElementById('opt-' + qId + '-' + i);
+        if (btn) {
+          btn.classList.remove('selected', 'gm-track');
+          if (i === optIdx) {
+            btn.classList.add('selected');
+            if (gmTrack) btn.classList.add('gm-track');
+          }
+        }
+      }
+      var answered = Object.keys(selectedAnswers).length;
+      var submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) submitBtn.disabled = answered < questions.length;
+      /* Lock track selection once first answer is given */
+      if (answered === 1) lockTrack();
+    }
+
+    function lockTrack() {
+      var pcBtn = document.getElementById('trackPC');
+      var gmBtn = document.getElementById('trackGM');
+      var note = document.getElementById('trackNote');
+      if (pcBtn) { pcBtn.disabled = true; pcBtn.style.opacity = '0.45'; pcBtn.style.cursor = 'default'; }
+      if (gmBtn) { gmBtn.disabled = true; gmBtn.style.opacity = '0.45'; gmBtn.style.cursor = 'default'; }
+      if (note) note.textContent = (gmTrack ? 'GM track locked in.' : 'PC track locked in.') + ' Complete all questions to submit.';
+    }
+
+    async function submitAssessment() {
+      var submitBtn = document.getElementById('submitBtn');
+      var msgEl = document.getElementById('assessMsg');
+      if (Object.keys(selectedAnswers).length < questions.length) {
+        msgEl.textContent = 'Please answer all questions.';
+        return;
+      }
+      submitBtn.disabled = true;
+      msgEl.textContent = 'Grading...';
+
+      var answers = questions.map(function(q) { return { id: q.id, answer: selectedAnswers[q.id] }; });
+      try {
+        var res = await fetch(API_URL + '/api/assess/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ answers: answers, gm_track: gmTrack })
+        });
+        var data = await res.json();
+        if (data.passed) {
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = data.role;
+            saved.role = data.site_role || saved.role;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          showResult({ score: data.score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false, false);
+        } else if (data.role === 'FAIL') {
+          /* Downgraded to Civilian - update local cache and reload quiz for retry */
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = null;
+            saved.role = 'CIVILIAN';
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          msgEl.style.color = '#c0392b';
+          msgEl.textContent = data.message || 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess.';
+          submitBtn.disabled = false;
+        } else {
+          msgEl.textContent = data.error || 'Submission failed.';
+          submitBtn.disabled = false;
+        }
+      } catch(e) {
+        msgEl.textContent = 'Connection error. Please try again.';
+        submitBtn.disabled = false;
+      }
+    }
+
+    function showResult(assessment, existing, expired) {
+      var app = document.getElementById('assessApp');
+      var role = assessment.role_granted;
+      var score = assessment.score;
+      var isGM = role && role.startsWith('GM');
+
+      var qaHtml = '';
+      if (questions.length > 0) {
+        qaHtml = '<div class="scroll-qa" style="margin-bottom:1.5rem;">' +
+          '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Assessment Q&A</p>' +
+          questions.map(function(q, i) {
+            return '<div class="scroll-qa-item">' +
+              '<div class="scroll-qa-q">Q' + (i+1) + ': ' + esc(q.q) + '</div>' +
+              '<div class="scroll-qa-a">Answer: ' + esc(q.options[ANSWER_KEY[i]]) + '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+      }
+
+      var expiryBanner = expired
+        ? '<div style="background:#3a0d0d;border:1px solid #c0392b;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#e08080;font-size:0.88rem;">&#9888; Your assessment has expired. You must reassess to re-enter lobbies. Your role has been paused - reassess now to restore it.</div>'
+        : '';
+      var gmNote = isGM ? '<p class="result-note">&#9733; GM Advanced role granted. You may now create and join lobbies as a GM.</p>' : '';
+      var pcNote = (!isGM && role !== 'FAIL') ? '<p class="result-note">You have been assessed as <strong style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</strong>. You may now join and create lobbies. Study more and reassess to advance your rating.</p>' : '';
+      var reassessLabel = expired ? 'Reassess Now' : 'Reassess';
+
+      app.innerHTML =
+        '<div class="result-card">' +
+          expiryBanner +
+          '<h2>' + (existing ? 'Your Current Role' : 'Assessment Complete') + '</h2>' +
+          '<div class="result-role" style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</div>' +
+          '<div class="result-score">' + score + '/10 correct</div>' +
+          gmNote + pcNote +
+          '<div class="result-links">' +
+            (expired ? '' : '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>') +
+            '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)" style="' + (expired ? 'border-color:#b9aa00;color:#b9aa00;' : '') + '">' + reassessLabel + '</button>' +
+          '</div>' +
+        '</div>' +
+        (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review the questions and answers:</p>' + qaHtml + '</div>' : '');
+    }
+
+    var ANSWER_KEY = [1,2,3,1,1,2,1,2,2,1];
+
+    async function reassess(btn) {
+      if (!btn) return;
+      if (btn.dataset.confirm !== '1') {
+        btn.dataset.confirm = '1';
+        btn.textContent = 'Confirm?';
+        setTimeout(function() {
+          if (btn.dataset.confirm === '1') {
+            btn.dataset.confirm = '';
+            btn.textContent = 'Reassess';
+          }
+        }, 3000);
+        return;
+      }
+      btn.dataset.confirm = '';
+      try {
+        await fetch(API_URL + '/api/assess', {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        selectedAnswers = {};
+        questions = [];
+        loadQuiz();
+      } catch(e) {
+        btn.textContent = 'Reassess';
+      }
+    }
+
+    init();
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+</body>
+</html>

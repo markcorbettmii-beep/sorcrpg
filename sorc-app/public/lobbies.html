@@ -1,0 +1,3023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campaign Lobbies | Slayers of Rings &sect; Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    /* ===== BASE LOBBY LAYOUT ===== */
+    .lobbies-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 5rem; }
+    .lobbies-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
+    .lobbies-sub { color: #666; font-size: 0.88rem; margin-bottom: 1.5rem; line-height: 1.5; }
+
+    /* ===== THEME SELECTOR ===== */
+    .theme-selector { margin-bottom: 2rem; }
+    .theme-selector-label { color: #555; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.6rem; }
+    .theme-grid { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .theme-pill { padding: 0.45rem 1rem; border-radius: 20px; border: 1.5px solid #2a2a2a; background: #111; color: #555;
+      font-size: 0.8rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .theme-pill:hover:not(.locked) { border-color: #555; color: #e0cfc0; }
+    .theme-pill.active { border-color: #b9aa00; color: #b9aa00; background: #1a1505; }
+    .theme-pill.locked { cursor: default; opacity: 0.5; position: relative; }
+    .theme-pill.locked .lock-icon { font-size: 0.7rem; margin-right: 0.3rem; }
+    .theme-pill .pts { font-size: 0.7rem; color: #444; margin-left: 0.3rem; }
+    .theme-pill.locked .pts { color: #555; }
+    .theme-more-wrap { position: relative; display: inline-block; }
+    .theme-more-btn { background: #111; color: #555; border-color: #2a2a2a; }
+    .theme-more-btn:hover { color: #e0cfc0; border-color: #555; }
+    .theme-more-dropdown { position: absolute; top: calc(100% + 6px); left: 0; background: #111; border: 1.5px solid #2a2a2a; border-radius: 10px; padding: 0.5rem; flex-direction: column; gap: 0.4rem; z-index: 50; min-width: 220px; box-shadow: 0 4px 18px rgba(0,0,0,0.6); display: none; }
+    .theme-more-dropdown.open { display: flex; }
+    .theme-more-dropdown .theme-pill { border-radius: 8px; text-align: left; width: 100%; }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-it-works-section { padding: 0.5rem 0 1.25rem; }
+    .how-it-works-section h2 { color: #c93f35; margin: 0 0 1rem 0; font-size: 1.1rem; }
+    .section-scroll-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+    .section-scroll-btn { background: none; border: none; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0; width: 48px; height: 48px; min-width: 48px; }
+    .section-scroll-btn svg polygon { fill: rgba(201,63,53,0.5); }
+    .how-it-works-list { display: flex; flex-direction: row; gap: 1.25rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 0.75rem; flex: 1; scrollbar-width: thin; scrollbar-color: #c93f35 #1a1a1a; }
+    .how-it-works-list::-webkit-scrollbar { height: 5px; }
+    .how-it-works-list::-webkit-scrollbar-thumb { background: #c93f35; border-radius: 4px; }
+    .how-it-works-list .feature-card { min-width: 240px; max-width: 300px; background: linear-gradient(140deg, #1a060c 55%, #0d1a36 100%); padding: 1.25rem; border-radius: 10px; border: 2px solid #c93f35; box-shadow: 0 2px 18px rgba(201,63,53,0.18); flex: 0 0 auto; scroll-snap-align: start; display: flex; flex-direction: column; }
+    .how-it-works-list .feature-card .feature-icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+    .how-it-works-list .feature-card h3 { color: #b9aa00; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+    .how-it-works-list .feature-card p { color: #e0cfc0; font-size: 0.82rem; line-height: 1.6; margin: 0; flex: 1; }
+    /* ===== INFO GRID (legacy) ===== */
+    .info-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 1.1rem 1.25rem; }
+    .info-card h3 { color: #b9aa00; font-size: 0.88rem; margin: 0 0 0.5rem 0; }
+    .info-card p { color: #666; font-size: 0.82rem; line-height: 1.6; margin: 0; }
+
+    /* ===== ACTION CARDS ===== */
+    .lobby-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+    @media (max-width: 600px) { .lobby-actions { grid-template-columns: 1fr; } }
+    .action-card { background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 12px; padding: 1.4rem; display: flex; flex-direction: column; gap: 0.7rem; }
+    .action-card.create { border-color: #b9aa00; }
+    .action-card h2 { margin: 0; font-size: 1rem; }
+    .action-card h2.gold { color: #b9aa00; }
+    .action-card h2.red { color: #c93f35; }
+    .action-card p { color: #666; font-size: 0.82rem; margin: 0; line-height: 1.5; }
+    .l-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.88rem; box-sizing: border-box; }
+    .l-input:focus { outline: none; border-color: #c93f35; }
+    .l-btn { padding: 9px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; width: 100%; transition: background 0.15s; }
+    .l-btn.gold { background: #b9aa00; color: #111; }
+    .l-btn.gold:hover { background: #b9aa00; }
+    .l-btn.red { background: #c93f35; color: #fff; }
+    .l-btn.red:hover { background: #c93f35; }
+    .l-btn.ghost { background: none; border: 1px solid #333; color: #888; }
+    .l-btn.ghost:hover { border-color: #888; color: #e0cfc0; }
+    .l-msg { font-size: 0.82rem; min-height: 1.2em; }
+    .l-msg.ok { color: #4caf50; }
+    .l-msg.err { color: #c93f35; }
+
+    /* ===== LOBBY LIST ===== */
+    .section-head { color: #b9aa00; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid #2a2a2a; }
+    .lobby-row { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; cursor: pointer; transition: border-color 0.15s; }
+    .lobby-row:hover { border-color: #444; }
+    .lobby-row-info h3 { color: #e0cfc0; font-size: 0.92rem; margin: 0 0 0.2rem 0; }
+    .lobby-row-info p { color: #555; font-size: 0.78rem; margin: 0; }
+    .lobby-row-right { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
+    .status-pip { font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 10px; }
+    .status-pip.open { background: #1a4a1a; color: #4caf50; }
+    .status-pip.full { background: #2a2a2a; color: #666; }
+    .status-pip.closed { background: #2a1a1a; color: #c93f35; }
+    .row-join-btn { padding: 5px 14px; background: #c93f35; color: #fff; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+    .row-join-btn:hover { background: #c93f35; }
+    .row-join-btn:disabled { background: #2a2a2a; color: #555; cursor: default; }
+    .row-msg-host-btn { padding: 4px 10px; background: none; border: 1px solid #555; color: #aaa; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+    .row-msg-host-btn:hover { border-color: #b9aa00; color: #b9aa00; }
+    .lobby-btn-col { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5px; min-width: 120px; }
+    .lobby-hint { font-size: 0.68rem; color: #555; text-align: right; max-width: 160px; line-height: 1.3; }
+    .empty-state { text-align: center; padding: 2.5rem; color: #444; font-size: 0.88rem; }
+    .locked-row { opacity: 0.6; cursor: default; }
+    .needs-assess-note { background: #1a0d00; border: 1px solid #5a3000; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; color: #c87d00; font-size: 0.88rem; }
+    .needs-assess-note a { color: #b9aa00; }
+
+    /* ===== LOBBY DETAIL VIEW ===== */
+    .lobby-detail { display: none; }
+    .lobby-detail.active { display: block; }
+    .lobby-list-view { display: block; }
+    .lobby-list-view.hidden { display: none; }
+    .detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .detail-header h2 { color: #e0cfc0; font-size: 1.2rem; margin: 0; }
+    .detail-header .detail-meta { color: #555; font-size: 0.8rem; margin-top: 0.3rem; }
+    .back-btn { padding: 6px 14px; background: none; border: 1px solid #333; color: #888; border-radius: 8px; cursor: pointer; font-size: 0.82rem; }
+    .back-btn:hover { border-color: #888; color: #e0cfc0; }
+    .invite-pool-wrap { border: 1px solid #252525; border-radius: 10px; overflow: hidden; margin-top: 0.75rem; }
+    .invite-pool-toggle { width:100%;text-align:left;background:#141414;border:none;padding:0.55rem 1rem;color:#b9aa00;font-size:0.78rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;display:flex;align-items:center;justify-content:space-between; }
+    .invite-tab-bar { display:flex;border-bottom:1px solid #222; }
+    .invite-tab { flex:1;padding:6px 4px;background:none;border:none;font-size:0.76rem;cursor:pointer;transition:color 0.15s; }
+    .invite-tab.active { color:#b9aa00;border-bottom:2px solid #b9aa00;margin-bottom:-1px; }
+    .invite-tab:not(.active) { color:#555; }
+    .invite-pool-list { max-height:190px;overflow-y:auto;padding:0.4rem 0; }
+    .invite-row { display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0.85rem;gap:0.5rem; }
+    .invite-row-info { flex:1;min-width:0; }
+    .invite-row-name { font-size:0.82rem;color:#e0cfc0;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .invite-row-sub  { font-size:0.72rem;color:#555; }
+    .invite-row-btn  { padding:4px 10px;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;border-radius:6px;font-size:0.74rem;cursor:pointer;white-space:nowrap;flex-shrink:0; }
+    .invite-row-btn:hover { background:#1e4a8a; }
+    /* ── Desktop / mouse (PC, Mac, laptop) ─────────────────────── */
+    @media (hover: hover) and (pointer: fine) {
+      .detail-grid { grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
+    }
+
+    /* ── Touch devices (Android + iPhone, finger input) ─────────── */
+    @media (hover: none) and (pointer: coarse) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .lobbies-wrap { padding: 0.5rem 0.4rem 4rem; }
+      .chat-panel { height: 360px; }
+    }
+
+    /* ── Fallback for anything that doesn't match above ─────────── */
+    @media not all and (hover: hover) and (pointer: fine) {
+      .detail-grid { grid-template-columns: minmax(0, 1fr) 255px; gap: 1.25rem; }
+    }
+
+    /* ── Touch landscape: keep single column, tighten chat height ── */
+    @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .chat-panel { height: 280px; }
+    }
+
+    /* ===== CHAT ===== */
+    .chat-panel { background: #111; border: 2px solid #333; border-radius: 12px; display: flex; flex-direction: column; height: 420px; box-shadow: 0 4px 18px rgba(0,0,0,0.5); }
+    .chat-panel-head { padding: 0.7rem 1rem; border-bottom: 2px solid #333; color: #b9aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; flex-shrink: 0; }
+    .chat-tab-bar { display: flex; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; background: #0a0a0a; border-radius: 10px 10px 0 0; }
+    .chat-tab { flex: 1; padding: 0.55rem 0.4rem; background: none; border: none; border-bottom: 3px solid transparent; color: #888; font-size: 0.73rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; transition: color 0.15s, background 0.15s; }
+    .chat-tab:hover:not(.active) { color: #bbb; background: #111; }
+    .chat-tab.active { color: #b9aa00; background: #111; border-bottom: 3px solid #b9aa00; }
+    .chat-tab-pane { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
+    .chat-tab-pane.active { display: flex; }
+    .tab-badge { display:inline-block; width:6px; height:6px; border-radius:50%; background:#b9aa00; vertical-align:middle; margin-left:3px; animation: badge-pulse 1.6s ease-in-out infinite; }
+    @keyframes badge-pulse { 0%,100%{opacity:1;}50%{opacity:0.25;} }
+    .lobby-pager { display:flex; align-items:center; justify-content:center; gap:1rem; padding:0.85rem 0 0.4rem; border-top:1px solid #1a1a1a; margin-top:0.25rem; }
+    .lobby-pager-btn { background:none; border:1px solid #2a2a2a; color:#888; border-radius:6px; padding:5px 14px; font-size:1rem; cursor:pointer; transition:border-color 0.15s, color 0.15s; }
+    .lobby-pager-btn:hover:not(:disabled) { border-color:#b9aa00; color:#b9aa00; }
+    .lobby-pager-btn:disabled { opacity:0.25; cursor:default; }
+    .lobby-pager-info { font-size:0.74rem; color:#444; letter-spacing:0.04em; }
+    .world-tab-messages { flex: 1; overflow-y: auto; padding: 0.65rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; scrollbar-color: #2a1a4a transparent; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .chat-msg { font-size: 0.84rem; line-height: 1.4; user-select: none; -webkit-user-select: none; }
+    .chat-msg.selected { background: #2a0808; border-radius: 4px; }
+    #chatSelectBar { display:none; flex-shrink:0; align-items:center; justify-content:space-between; padding:0.4rem 0.6rem; background:#1a0505; border-top:1px solid #5a1a1a; }
+    .chat-msg .msg-name { font-weight: bold; color: #b9aa00; margin-right: 0.4rem; font-size: 0.78rem; }
+    .chat-msg .msg-name.gm { color: #c93f35; }
+    .chat-msg .msg-body { color: #c0b0a0; }
+    .chat-msg .msg-time { color: #333; font-size: 0.72rem; margin-left: 0.4rem; }
+    .chat-input-row { display: flex; gap: 0.5rem; padding: 0.6rem 0.75rem; border-top: 2px solid #333; flex-shrink: 0; }
+    .chat-input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.85rem; }
+    .chat-input:focus { outline: none; border-color: #555; }
+    .chat-send { padding: 10px 16px; min-height: 44px; background: #c93f35; color: #fff; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: bold; cursor: pointer; }
+    .chat-send:hover { background: #c93f35; }
+
+    /* ===== MEMBERS PANEL ===== */
+    .members-panel { background: #111; border: 2px solid #333; border-radius: 12px; overflow: hidden; max-width: 280px; box-shadow: 0 4px 18px rgba(0,0,0,0.5); }
+    .members-head { padding: 0.7rem 1rem; border-bottom: 2px solid #333; color: #b9aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; display: flex; align-items: center; justify-content: space-between; }
+    .member-row { padding: 0.6rem 1rem; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 0.6rem; }
+    .member-row:last-child { border-bottom: none; }
+    .member-avatar { width: 28px; height: 28px; border-radius: 50%; background: #222; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; color: #666; flex-shrink: 0; }
+    .member-info { flex: 1; min-width: 0; }
+    .member-name { color: #e0cfc0; font-size: 0.82rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; }
+    .member-name:hover { color: #b9aa00; }
+    .member-role { color: #555; font-size: 0.72rem; }
+    .member-role.gm { color: #b9aa00; }
+    .member-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+    .member-act-btn { padding: 3px 8px; border-radius: 4px; border: 1px solid #2a2a2a; background: none; color: #666; font-size: 0.72rem; cursor: pointer; }
+    .member-act-btn:hover { border-color: #888; color: #e0cfc0; }
+    .member-act-btn.danger:hover { border-color: #c93f35; color: #c93f35; }
+    .muted-tag { font-size: 0.68rem; color: #555; background: #1a1a1a; padding: 1px 6px; border-radius: 4px; }
+    @keyframes ghost-fade { 0% { opacity: 0.45; } 75% { opacity: 0.2; } 100% { opacity: 0; } }
+    .member-row-ghost { animation: ghost-fade 4s ease-out forwards; pointer-events: none; }
+    .departure-notice { font-style: italic; color: #3a3a3a; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+    .activity-notice { font-style: italic; color: #2e2e2e; font-size: 0.74rem; padding: 0.1rem 0.5rem; opacity: 0.6; }
+    .world-msg.is-activity { opacity: 0.38; font-style: italic; font-size: 0.74rem; }
+    .member-name-btn { background: none; border: none; padding: 0; color: #b9aa00; font-size: 0.88rem; font-weight: bold; cursor: pointer; font-family: inherit; text-align: left; }
+    .member-name-btn:hover { text-decoration: underline; }
+    .member-name-wrap { position: relative; display: inline-flex; align-items: center; gap: 0.25rem; }
+    .member-name-menu { position: absolute; top: 100%; left: 0; z-index: 1000; background: #141414; border: 1px solid #2a2a2a; border-radius: 6px; padding: 0.3rem 0; min-width: 140px; box-shadow: 0 4px 16px rgba(0,0,0,0.7); display: none; }
+    .member-name-menu.open { display: block; }
+    .member-name-menu a, .member-name-menu button { display: block; width: 100%; text-align: left; padding: 0.35rem 0.75rem; font-size: 0.78rem; color: #ccc; background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: none; white-space: nowrap; }
+    .member-name-menu a:hover, .member-name-menu button:hover { background: #1e1e1e; color: #fff; }
+    .member-name-menu button.summon-opt { color: #d4b8ff; }
+    .member-name-menu button.summon-opt:hover { background: #1a0d2e; color: #e8d4ff; }
+    .member-sheet-hint { font-size: 0.6rem; color: #383838; margin-left: 0.15rem; }
+
+    /* ===== ROOMS PANEL ===== */
+    .rooms-section { margin-top: 1.5rem; max-width: 280px; }
+    .room-row { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+    .room-row-info h4 { color: #e0cfc0; font-size: 0.85rem; margin: 0 0 0.15rem 0; }
+    .room-row-info p { color: #555; font-size: 0.75rem; margin: 0; }
+    .room-badge { font-size: 0.7rem; padding: 2px 7px; border-radius: 8px; font-weight: bold; }
+    .room-badge.active { background: #1a3a1a; color: #4caf50; }
+    .room-badge.hidden { background: #2a2a2a; color: #555; }
+    .launch-room-btn { padding: 5px 12px; background: #b9aa00; color: #111; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
+    .launch-room-btn:hover { background: #b9aa00; }
+
+    /* ===== REPORT MODAL ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 14px; padding: 1.75rem; max-width: 420px; width: 100%; }
+    .modal-box h3 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.05rem; }
+    .modal-box .modal-sub { color: #555; font-size: 0.82rem; margin-bottom: 1.25rem; line-height: 1.5; }
+    .modal-box .modal-warn { color: #c87d00; background: #1a1200; border: 1px solid #5a3a00; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.8rem; margin-bottom: 1rem; line-height: 1.5; }
+    .reason-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .reason-btn { padding: 0.55rem; border: 1.5px solid #2a2a2a; border-radius: 8px; background: #111; color: #888; font-size: 0.82rem; cursor: pointer; text-align: center; transition: all 0.15s; }
+    .reason-btn:hover { border-color: #555; color: #e0cfc0; }
+    .reason-btn.selected { border-color: #c93f35; color: #e0cfc0; background: #1a0505; }
+    .modal-detail { width: 100%; padding: 8px 10px; background: #111; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.84rem; resize: none; box-sizing: border-box; margin-bottom: 0.75rem; }
+    .modal-detail:focus { outline: none; border-color: #555; }
+    .modal-actions { display: flex; gap: 0.6rem; }
+    .modal-actions button { flex: 1; padding: 0.7rem; border-radius: 8px; font-size: 0.88rem; font-weight: bold; cursor: pointer; border: none; }
+    .modal-submit { background: #c93f35; color: #fff; }
+    .modal-submit:hover { background: #c93f35; }
+    .modal-cancel { background: none; border: 1px solid #333 !important; color: #888; }
+    .modal-cancel:hover { border-color: #888 !important; color: #e0cfc0; }
+
+    /* ===== LEAVE BTN ===== */
+    .leave-btn { padding: 10px 16px; min-height: 44px; background: none; border: 1px solid #5a1a1a; color: #c93f35; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+    .leave-btn:hover { background: #1a0505; }
+    #lobbyHeaderBtns { flex-wrap: wrap; }
+
+    /* ── Ready Check overlay ─────────────────────── */
+    .rc-overlay { position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.72);backdrop-filter:blur(2px); }
+    .rc-overlay.hidden { display:none; }
+    .rc-box { background:#0d0d18;border:2px solid #b9aa00;border-radius:16px;padding:1.75rem 2rem;min-width:300px;max-width:420px;width:92%;box-shadow:0 0 60px rgba(185,170,0,0.25),0 0 20px rgba(0,0,0,0.8);text-align:center; }
+    .rc-title { color:#b9aa00;font-size:1.35rem;font-weight:bold;letter-spacing:0.08em;margin-bottom:0.25rem; }
+    .rc-sub { color:#666;font-size:0.74rem;margin-bottom:1.1rem; }
+    .rc-list { list-style:none;padding:0;margin:0 0 1.1rem;text-align:left;max-height:220px;overflow-y:auto; }
+    .rc-list li { padding:0.32rem 0.5rem;font-size:0.84rem;color:#ccc;display:flex;align-items:center;gap:0.55rem;border-bottom:1px solid #1a1a2a; }
+    .rc-list li:last-child { border-bottom:none; }
+    .rc-icon { font-size:0.9rem;width:1.1rem;text-align:center;flex-shrink:0; }
+    .rc-btns { display:flex;gap:0.75rem;justify-content:center;margin-top:0.25rem; }
+    .rc-ready-btn { background:#0d2a0d;border:1.5px solid #4caf50;color:#4caf50;padding:9px 22px;border-radius:8px;font-size:0.92rem;cursor:pointer;font-weight:bold; }
+    .rc-ready-btn:hover { background:#112e11; }
+    .rc-no-btn { background:#2a0d0d;border:1.5px solid #c0392b;color:#c0392b;padding:9px 22px;border-radius:8px;font-size:0.92rem;cursor:pointer; }
+    .rc-no-btn:hover { background:#2e1111; }
+    .rc-timer { font-size:1.6rem;font-weight:bold;color:#b9aa00;letter-spacing:0.05em;margin:0.2rem 0 0.9rem; }
+    .rc-timer.urgent { color:#c0392b; }
+    .rc-dismiss-btn { display:block;margin:0.85rem auto 0;background:none;border:none;color:#444;font-size:0.74rem;cursor:pointer; }
+    .rc-dismiss-btn:hover { color:#888; }
+
+    /* ================================================
+       ORBITAL TERMINAL THEME - canvas bg only, lobby UI unchanged
+    ================================================ */
+    .lt-terminal { background: #030d1a; }
+    .lt-terminal .theme-pill.active { border-color: #00e5ff; color: #00e5ff; background: #010a14; }
+
+    /* ================================================
+       THE VEILWOOD THEME - canvas bg only, lobby UI unchanged
+    ================================================ */
+    .lt-veilwood { background: #030810; }
+    .lt-veilwood .theme-pill.active { border-color: #7b2fff; color: #b57bff; background: #060b12; }
+
+    /* ===== ORBITAL TERMINAL - chat & member panel frames ===== */
+    .lt-terminal .chat-panel { background: #040f1e; border-color: #1a6e85; box-shadow: 0 4px 22px rgba(0,184,212,0.12); }
+    .lt-terminal .chat-panel-head { color: #00c8e8; border-bottom-color: #1a6e85; }
+    .lt-terminal .chat-tab-bar { border-bottom-color: #0e3848; background: #020a14; }
+    .lt-terminal .chat-tab { color: #4a9ab0; }
+    .lt-terminal .chat-tab.active { color: #00c8e8; border-bottom-color: #00c8e8; background: #040f1e; }
+    .lt-terminal .chat-tab:hover:not(.active) { color: #7acce0; background: #030c18; }
+    .lt-terminal .chat-input-row { border-top-color: #1a6e85; }
+    .lt-terminal .chat-messages { scrollbar-color: #1a6e85 transparent; }
+    .lt-terminal .chat-input { background: #020a14; border-color: #0e3848; color: #7ecde0; }
+    .lt-terminal .chat-input:focus { border-color: #00c8e8; }
+    .lt-terminal .chat-msg .msg-name { color: #00e5ff; }
+    .lt-terminal .chat-msg .msg-name.gm { color: #00e5ff; }
+    .lt-terminal .chat-msg .msg-body { color: #4a8fa8; }
+    .lt-terminal .members-panel { background: #040f1e; border-color: #1a6e85; box-shadow: 0 4px 22px rgba(0,184,212,0.12); }
+    .lt-terminal .members-head { border-bottom-color: #1a6e85; color: #00c8e8; }
+
+    /* ===== THE VEILWOOD - chat & member panel frames ===== */
+    .lt-veilwood .chat-panel { background: #06040f; border-color: #4a1a8a; box-shadow: 0 4px 22px rgba(123,47,255,0.14); }
+    .lt-veilwood .chat-panel-head { color: #b07aff; border-bottom-color: #4a1a8a; }
+    .lt-veilwood .chat-tab-bar { border-bottom-color: #200e40; background: #030210; }
+    .lt-veilwood .chat-tab { color: #6a4a9a; }
+    .lt-veilwood .chat-tab.active { color: #b07aff; border-bottom-color: #7b2fff; background: #06040f; }
+    .lt-veilwood .chat-tab:hover:not(.active) { color: #9a70cc; background: #040314; }
+    .lt-veilwood .chat-input-row { border-top-color: #4a1a8a; }
+    .lt-veilwood .chat-messages { scrollbar-color: #4a1a8a transparent; }
+    .lt-veilwood .chat-input { background: #030210; border-color: #200e40; color: #c0a0e0; }
+    .lt-veilwood .chat-input:focus { border-color: #7b2fff; }
+    .lt-veilwood .chat-msg .msg-name { color: #b57bff; }
+    .lt-veilwood .chat-msg .msg-name.gm { color: #b57bff; }
+    .lt-veilwood .chat-msg .msg-body { color: #6a5090; }
+    .lt-veilwood .members-panel { background: #06040f; border-color: #4a1a8a; box-shadow: 0 4px 22px rgba(123,47,255,0.14); }
+    .lt-veilwood .members-head { border-bottom-color: #4a1a8a; color: #b07aff; }
+
+    /* ===== LAWFUL MODE OVERRIDES ===== */
+    body.lawful-mode .info-card,
+    body.lawful-mode .action-card,
+    body.lawful-mode .lobby-row,
+    body.lawful-mode .chat-panel,
+    body.lawful-mode .members-panel,
+    body.lawful-mode .room-row,
+    body.lawful-mode .modal-box { background: #fff; border-color: #e0e0e0; }
+    body.lawful-mode .info-card p,
+    body.lawful-mode .action-card p,
+    body.lawful-mode .lobbies-sub { color: #555; }
+    body.lawful-mode .lobby-row-info h3,
+    body.lawful-mode .member-name,
+    body.lawful-mode .detail-header h2 { color: #2c2c2c; }
+    body.lawful-mode .l-input,
+    body.lawful-mode .chat-input { background: #f5f5f5; border-color: #ccc; color: #2c2c2c; }
+    body.lawful-mode .chat-msg .msg-body { color: #555; }
+
+    /* ===== SOLAR BG: transparent page wrapper so canvas shows through ===== */
+    body { background: transparent !important; }
+    .page-wrapper { background: rgba(10,10,16,0.45) !important; width: 100% !important; box-sizing: border-box; }
+    body.lawful-mode .page-wrapper { background: rgba(240,237,230,0.88) !important; }
+    @media (max-width: 900px) {
+      .page-wrapper { border-radius: 0 !important; box-shadow: none !important; }
+    }
+
+    /* Prevent iOS swipe-back/forward navigation while in a lobby */
+    html.lobby-locked { overscroll-behavior-x: none; touch-action: pan-y; }
+
+    /* ===== WORLD CHAT ===== */
+    .world-chat-wrap { background: #0d0a18; border: 1.5px solid #2a1a4a; border-radius: 12px; margin-bottom: 2rem; overflow: hidden; box-shadow: 0 2px 14px rgba(80,30,180,0.10); }
+    .world-chat-head { padding: 0.65rem 1.1rem; background: #110d22; border-bottom: 1px solid #2a1a4a; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+    .world-chat-title { color: #9370db; font-size: 0.78rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.09em; }
+    .world-chat-sub { color: #4a3a6a; font-size: 0.7rem; }
+    .world-chat-messages { max-height: 210px; overflow-y: auto; padding: 0.6rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; scrollbar-color: #2a1a4a transparent; }
+    .world-msg { font-size: 0.83rem; line-height: 1.4; }
+    .world-msg .wmsg-name { font-weight: bold; color: #9370db; margin-right: 0.35rem; font-size: 0.77rem; text-decoration: none; }
+    .world-msg .wmsg-name:hover { color: #b090ff; }
+    .world-msg .wmsg-name.is-host { color: #b9aa00; }
+    .world-msg .wmsg-body { color: #9080b8; }
+    .world-msg .wmsg-lobby { color: #3a2a5a; font-size: 0.7rem; margin-left: 0.3rem; }
+    .world-msg .wmsg-time { color: #2a2040; font-size: 0.7rem; margin-left: 0.4rem; }
+    .lfm-badge { display: inline-block; background: #1a0d40; color: #b090ff; border: 1px solid #5030a0; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-right: 0.2rem; transition: background 0.15s; vertical-align: middle; }
+    .lfm-badge:hover { background: #2a1a60; color: #d4b8ff; }
+    .lfg-badge { display: inline-block; background: #001a10; color: #50d080; border: 1px solid #1a6a40; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-right: 0.2rem; transition: background 0.15s; vertical-align: middle; }
+    .lfg-badge:hover { background: #002a1a; color: #70f0a0; }
+    .sum-badge { display: inline-block; background: #1a1200; color: #b9aa00; border: 1px solid #a07820; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; margin-right: 0.2rem; vertical-align: middle; }
+    .sum-accept-btn { display: inline-block; background: #1a5a1a; color: #90ee90; border: 1px solid #2a8a2a; border-radius: 4px; padding: 1px 8px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-left: 0.4rem; vertical-align: middle; }
+    .sum-accept-btn:hover { background: #236b23; }
+    .sum-decline-btn { display: inline-block; background: #3a0d0d; color: #e08080; border: 1px solid #6a2020; border-radius: 4px; padding: 1px 8px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-left: 0.25rem; vertical-align: middle; }
+    .sum-decline-btn:hover { background: #5a1010; }
+    .world-chat-input-row { display: flex; gap: 0.5rem; padding: 0.55rem 0.9rem; border-top: 1px solid #2a1a4a; }
+    .world-chat-input { flex: 1; padding: 2px 10px; background: #0a0818; border: 1px solid #2a1a4a; border-radius: 6px; color: #c0a8e8; font-size: 0.83rem; }
+    .world-chat-input:focus { outline: none; border-color: #6030b0; }
+    .world-chat-send { padding: 6px 14px; background: #5030a0; color: #e0d0ff; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+    .world-chat-send:hover { background: #6040c0; }
+    .world-chat-empty { color: #3a2a5a; font-size: 0.8rem; text-align: center; padding: 1.25rem; }
+
+    /* ===== TICKER ===== */
+    .lobby-ticker { overflow: hidden; width: 100%; max-width: 100%; box-sizing: border-box; border-top: 1px solid #333; border-bottom: 1px solid #333; background: #0d0d14; padding: 0.5rem 0; margin-bottom: 1.5rem; position: relative; }
+    .lobby-ticker::before,
+    .lobby-ticker::after { content: ''; position: absolute; top: 0; bottom: 0; width: 60px; z-index: 2; pointer-events: none; }
+    .lobby-ticker::before { left: 0; background: linear-gradient(to right, #0d0d14, transparent); }
+    .lobby-ticker::after { right: 0; background: linear-gradient(to left, #0d0d14, transparent); }
+    .ticker-track { display: flex; gap: 0; white-space: nowrap; animation: ticker-scroll 180s linear infinite; width: max-content; }
+    .ticker-track:hover { animation-play-state: paused; }
+    @keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .ticker-item { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 2.5rem; font-size: 0.78rem; color: #888; letter-spacing: 0.04em; }
+    .ticker-item .ticker-bullet { color: #b9aa00; font-size: 0.65rem; }
+    body.lawful-mode .lobby-ticker { background: #e8e2d8; border-color: #bbb; }
+    body.lawful-mode .lobby-ticker::before { background: linear-gradient(to right, #e8e2d8, transparent); }
+    body.lawful-mode .lobby-ticker::after { background: linear-gradient(to left, #e8e2d8, transparent); }
+    body.lawful-mode .ticker-item { color: #666; }
+    body.lawful-mode .ticker-item .ticker-bullet { color: #b8860b; }
+
+    /* ===== SUMMON FEATURE ===== */
+    .summon-name-btn { background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; }
+    .summon-name-btn:hover { color: #d4b8ff; }
+    .summon-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .summon-modal { background: #111; border: 1.5px solid #5030a0; border-radius: 14px; padding: 1.5rem; max-width: 400px; width: 100%; }
+    .summon-modal h3 { color: #d4b8ff; margin: 0 0 0.75rem; font-size: 1rem; }
+    .summon-modal p { color: #888; font-size: 0.84rem; margin: 0 0 0.75rem; line-height: 1.55; }
+    .summon-modal .summon-note { width: 100%; padding: 8px 10px; background: #0a0818; border: 1px solid #2a1a4a; border-radius: 6px; color: #c0a8e8; font-size: 0.83rem; box-sizing: border-box; resize: vertical; min-height: 60px; }
+    .summon-modal .summon-note:focus { outline: none; border-color: #6030b0; }
+    .summon-btn-row { display: flex; gap: 0.6rem; margin-top: 0.75rem; }
+    .summon-confirm-btn { flex: 1; padding: 9px; background: #5030a0; color: #e0d0ff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .summon-confirm-btn:hover { background: #6040c0; }
+    .summon-cancel-btn { padding: 9px 16px; background: none; border: 1px solid #333; color: #888; border-radius: 8px; cursor: pointer; font-size: 0.88rem; }
+    .summon-cancel-btn:hover { border-color: #888; color: #e0cfc0; }
+    .incoming-summon-modal { border-color: #b9aa00; }
+    .incoming-summon-modal h3 { color: #b9aa00; }
+    .summon-accept-btn { flex: 1; padding: 9px; background: #1a5a1a; color: #90ee90; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .summon-accept-btn:hover { background: #236b23; }
+    .summon-deny-btn { flex: 1; padding: 9px; background: #3a0d0d; color: #e08080; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+    .summon-deny-btn:hover { background: #4a1010; }
+  
+        body.lawful-mode .chat-tab:hover:not(.active) { background: #f0ede6; color: #2c2c2c; }
+    body.lawful-mode .muted-tag { background: #f0ede6; color: #555; }
+    body.lawful-mode .reason-btn { background: #f9f5f1; border-color: #ccc; color: #555; }
+    body.lawful-mode .theme-more-btn { background: #f9f5f1; border-color: #ccc; color: #555; }
+    body.lawful-mode .members-panel { background: #ffffff; border-color: #e0e0e0; }
+    body.lawful-mode .chat-tab.active { background: #f0ede6; }
+    body.lawful-mode .theme-more-dropdown { background: #ffffff; border-color: #e0e0e0; }
+    body.lawful-mode .summon-modal { background: #ffffff; }
+    body.lawful-mode .chat-tab-bar { background: #f0ede6; border-color: #e0e0e0; }
+    body.lawful-mode .modal-detail { background: #f9f5f1; border-color: #ccc; color: #2c2c2c; }
+    body.lawful-mode .info-card { background: #ffffff; border-color: #e0e0e0; }
+    body.lawful-mode .theme-pill { background: #f9f5f1; border-color: #ccc; color: #555; }
+    body.lawful-mode .chat-panel { background: #ffffff; border-color: #e0e0e0; }
+
+    /* World Chat panel */
+    body.lawful-mode .world-chat-wrap { background: #ffffff; border-color: #e0e0e0; box-shadow: 0 2px 14px rgba(0,0,0,0.08); }
+    body.lawful-mode .world-chat-head { background: #f9f5f1; border-color: #e0e0e0; }
+    body.lawful-mode .world-chat-title { color: #6030b0; }
+    body.lawful-mode .world-chat-sub { color: #888; }
+    body.lawful-mode .world-chat-messages { scrollbar-color: #b9aa00 transparent; }
+    body.lawful-mode .world-chat-input-row { border-color: #e0e0e0; }
+    body.lawful-mode .world-chat-input { background: #f9f5f1; border-color: #ccc; color: #2c2c2c; }
+    body.lawful-mode .world-chat-empty { color: #999; }
+
+    /* "How it Works" carousel */
+    body.lawful-mode .how-it-works-list { scrollbar-color: #c93f35 #f0ede6; }
+    body.lawful-mode .how-it-works-list::-webkit-scrollbar-thumb { background: #c93f35; }
+    body.lawful-mode .how-it-works-list::-webkit-scrollbar { background: #f0ede6; }
+    body.lawful-mode .how-it-works-list .feature-card { background: #ffffff; border-color: #c93f35; }
+    body.lawful-mode .how-it-works-list .feature-card p { color: #2c2c2c; }
+
+    /* Small containers */
+    body.lawful-mode #chatSelectBar { background: #f9f5f1; border-color: #e0c0c0; }
+    body.lawful-mode .chat-msg.selected { background: #f0ede6; }
+    body.lawful-mode .invite-pool-toggle { background: #f9f5f1; }
+    body.lawful-mode .member-avatar { background: #e6e0d0; border-color: #ccc; color: #888; }
+    body.lawful-mode .member-name-menu { background: #ffffff; border-color: #e0e0e0; }
+    body.lawful-mode .rc-box { background: #ffffff; }
+    body.lawful-mode .rc-overlay { background: rgba(60,50,20,0.35); }
+    body.lawful-mode .modal-overlay { background: rgba(60,50,20,0.35); }
+
+    /* Semantic status badges - lighter tint of the same color, not plain gray */
+    body.lawful-mode .lfg-badge { background: #e3f7ea; color: #1a7a40; border-color: #7fcf9f; }
+    body.lawful-mode .lfg-badge:hover { background: #c8ecd4; }
+    body.lawful-mode .lfm-badge { background: #efe8ff; color: #5a30b0; border-color: #b090ff; }
+    body.lawful-mode .lfm-badge:hover { background: #ddd0ff; }
+    body.lawful-mode .modal-box .modal-warn { color: #8a5800; background: #fdf3e0; border-color: #e0b060; }
+    body.lawful-mode .needs-assess-note { background: #fdf3e0; border-color: #e0b060; color: #8a5800; }
+    body.lawful-mode .rc-no-btn { background: #fbe6e4; }
+    body.lawful-mode .rc-ready-btn { background: #e6f5e6; }
+    body.lawful-mode .room-badge.active { background: #e6f5e6; }
+    body.lawful-mode .room-badge.hidden { background: #eee; color: #888; }
+    body.lawful-mode .row-join-btn:disabled { background: #eee; color: #999; }
+    body.lawful-mode .status-pip.closed { background: #fbe6e4; }
+    body.lawful-mode .status-pip.full { background: #eee; color: #888; }
+    body.lawful-mode .status-pip.open { background: #e6f5e6; }
+    body.lawful-mode .sum-accept-btn { background: #e6f5e6; color: #1a7a1a; }
+    body.lawful-mode .sum-badge { background: #fdf3e0; color: #8a6800; }
+    body.lawful-mode .sum-decline-btn { background: #fbe6e4; color: #a03030; }
+    body.lawful-mode .summon-accept-btn { background: #e6f5e6; color: #1a7a1a; }
+    body.lawful-mode .summon-deny-btn { background: #fbe6e4; color: #a03030; }
+    body.lawful-mode .invite-row-btn { background: #e3edf9; color: #1a4a8a; border-color: #9ecde8; }
+    body.lawful-mode .invite-row-btn:hover { background: #cfe0f5; }
+    body.lawful-mode .member-name-menu a:hover, body.lawful-mode .member-name-menu button:hover { background: #f0ede6; color: #2c2c2c; }
+    body.lawful-mode .member-name-menu button.summon-opt:hover { background: #efe8ff; color: #5a30b0; }
+    body.lawful-mode .leave-btn:hover { background: #fbe6e4; }
+    </style>
+</head>
+<body>
+  <script src="solar-bg.js"></script>
+  <div class="page-wrapper" id="pageRoot">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a class="current-section" href="lobbies.html">Lobbies</a></li>
+    </ul>
+
+    <div class="lobbies-wrap">
+
+      <div id="assessClearedBadge" style="display:none;text-align:center;margin-bottom:1rem;">
+        <span style="display:inline-block;background:rgba(30,90,40,0.35);border:1px solid rgba(80,200,100,0.35);color:#6ecf7f;font-size:0.92rem;letter-spacing:0.1em;padding:0.4rem 1.2rem;border-radius:20px;">&#10003; Assessment Cleared</span>
+      </div>
+
+      <h1>Campaign Lobbies</h1>
+      <p class="lobbies-sub">Join or host live SORC sessions online. Creating a lobby requires a valid box set code. Joining is open to all assessed members.</p>
+
+      <div id="lobbiesApp"><p style="color:#555;text-align:center;padding:3rem 0;">Loading...</p></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <!-- REPORT MODAL -->
+  <div class="modal-overlay hidden" id="reportModal">
+    <div class="modal-box">
+      <h3>&#9888; Report Member</h3>
+      <p class="modal-sub">Select a reason. This report will be reviewed. You will be notified of any action taken.</p>
+      <div class="modal-warn">&#128274; Submitting this report will block this member from contacting you.</div>
+      <div class="reason-grid" id="reasonGrid">
+        <button class="reason-btn" onclick="selectReason('Incompetence')">Incompetence</button>
+        <button class="reason-btn" onclick="selectReason('Language')">Language</button>
+        <button class="reason-btn" onclick="selectReason('Threats')">Threats</button>
+        <button class="reason-btn" onclick="selectReason('Harassment')">Harassment</button>
+        <button class="reason-btn" onclick="selectReason('Spam')">Spam</button>
+      </div>
+      <textarea class="modal-detail" id="reportDetail" rows="3" placeholder="Additional details (optional)..." maxlength="400"></textarea>
+      <div id="reportMsg" class="l-msg" style="margin-bottom:0.5rem;"></div>
+      <div class="modal-actions">
+        <button class="modal-submit" onclick="submitReport()">Submit Report</button>
+        <button class="modal-cancel" onclick="closeReportModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="summonOutModal" style="display:none;" class="summon-modal-overlay">
+    <div class="summon-modal">
+      <h3>&#9889; Summon Player</h3>
+      <p id="summonOutDesc"></p>
+      <textarea class="summon-note" id="summonNoteInput" placeholder="Role requirements or a note for the Player... (optional)" maxlength="200"></textarea>
+      <div class="summon-btn-row">
+        <button class="summon-confirm-btn" onclick="confirmSummon()">Send Summon</button>
+        <button class="summon-cancel-btn" onclick="closeSummonModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lobbyMsgModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
+    <div style="background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:1.5rem;max-width:400px;width:90%;display:flex;flex-direction:column;gap:0.75rem;">
+      <h3 id="lobbyMsgModalTitle" style="margin:0;color:#b9aa00;font-size:0.95rem;">Send Message</h3>
+      <textarea id="lobbyMsgModalInput" style="background:#0a0a0a;border:1px solid #333;border-radius:6px;color:#e0cfc0;padding:0.6rem;font-size:0.83rem;font-family:inherit;resize:vertical;min-height:80px;max-height:160px;" placeholder="Your message..." maxlength="400"></textarea>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+        <button onclick="closeLobbyMsgModal()" style="padding:6px 16px;background:none;border:1px solid #333;color:#666;border-radius:6px;cursor:pointer;font-size:0.8rem;">Cancel</button>
+        <button onclick="submitLobbyMsgModal()" style="padding:6px 16px;background:#b9aa00;color:#111;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:0.8rem;">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="summonInModal" style="display:none;" class="summon-modal-overlay">
+    <div class="summon-modal incoming-summon-modal">
+      <h3>&#9889; You have been summoned!</h3>
+      <p id="summonInDesc"></p>
+      <div class="summon-btn-row">
+        <button class="summon-accept-btn" onclick="respondSummon(true)">Accept</button>
+        <button class="summon-deny-btn" onclick="respondSummon(false)">Deny</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="readyCheckOverlay" class="rc-overlay hidden">
+    <div class="rc-box">
+      <div class="rc-title">&#9876; READY CHECK</div>
+      <div class="rc-sub" id="rcSub"></div>
+      <div class="rc-timer" id="rcTimer">&#10003; :20</div>
+      <ul class="rc-list" id="rcList"></ul>
+      <div class="rc-btns" id="rcBtns">
+        <button class="rc-ready-btn" onclick="respondReadyCheck('ready')">&#10003; Ready</button>
+        <button class="rc-no-btn" onclick="respondReadyCheck('not_ready')">&#10007; Not Ready</button>
+      </div>
+      <button class="rc-dismiss-btn" onclick="dismissReadyCheck()">Dismiss</button>
+    </div>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    // ===== WORLD CHAT STATE =====
+    var worldChatPollTimer = null;
+
+    // ===== SUMMON STATE =====
+    var summonPollTimer = null;
+    var chatSelectMode = false;
+    var selectedMsgIds = new Set();
+    var longPressTimer = null;
+    var worldChatNameUids = {};     // name → [uid, ...] built during loadWorldChat
+    var pendingSummonTarget = null; // { uid, name } for outgoing summon
+    var activeSummonId = null;      // id of incoming summon being shown
+    var activeSummonLobbyId = null; // lobby to join on accept
+    var myActiveLobbyId = null;     // user's own lobby id (set from list view)
+    var allLobbies = [];            // full lobby list for pagination
+    var lobbyPage = 0;             // current page index (0-based)
+    var LOBBIES_PER_PAGE = 5;
+
+    var PLACEHOLDER_LOBBIES = [
+      { id: 'ph-1', placeholder: true, name: 'The Siege of Veilmark',    _hostUid: 'ph-corby', _hostName: 'Corby', module: "Module .002 | Aseya's Crypt (LVLs 6 - 10)", member_count: 20, max_members: 20, is_private: false },
+      { id: 'ph-2', placeholder: true, name: 'Crown of Zailister',       _hostUid: 'ph-clod',  _hostName: 'Clod',  module: 'Private',                                     member_count: 4,  max_members: 20, is_private: true  },
+      { id: 'ph-3', placeholder: true, name: 'Dungeon of the Iron Mask', _hostUid: 'ph-mira',  _hostName: 'Mira',  module: 'Module .004 | Iron Mask (LVLs 1 - 5)',          member_count: 20, max_members: 20, is_private: false },
+      { id: 'ph-4', placeholder: true, name: 'The Sunken Vault',         _hostUid: 'ph-thorn', _hostName: 'Thorn', module: 'Module .005 | The Sunken Vault (LVLs 11 - 15)', member_count: 20, max_members: 20, is_private: false },
+      { id: 'ph-5', placeholder: true, name: 'Ashes of Redmark',         _hostUid: 'ph-vex',   _hostName: 'Vex',   module: "Module .003 | Ashes of Redmark (LVLs 6 - 10)", member_count: 15, max_members: 20, is_private: false },
+      { id: 'ph-6', placeholder: true, name: 'The Vault of Echoes',      _hostUid: 'ph-dren',  _hostName: 'Dren',  module: 'Module .001 | Valley of Darkness (LVLs 1 - 5)', member_count: 20, max_members: 20, is_private: false },
+    ];
+
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'evil';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    // ===== LOBBY THEME =====
+    /* Theme is per-lobby - never persisted; always default until inside a lobby */
+    var lobbyTheme = 'default';
+    var themeClassMap = { terminal: 'lt-terminal', veilwood: 'lt-veilwood' };
+
+    /* Apply theme visually + audio - no permission check, used for member sync */
+    function applyTheme(t) {
+      var root = document.getElementById('pageRoot');
+      Object.values(themeClassMap).forEach(function(c) { root.classList.remove(c); });
+      if (themeClassMap[t]) root.classList.add(themeClassMap[t]);
+      lobbyTheme = t;
+      document.querySelectorAll('.theme-pill:not(.locked)').forEach(function(p) { p.classList.remove('active'); });
+      var active = document.getElementById('tpill-' + t);
+      if (active) active.classList.add('active');
+      if (window.terminalTheme) window.terminalTheme.stop();
+      if (window.veilwoodTheme) window.veilwoodTheme.stop();
+      if (t === 'terminal' && window.terminalTheme) window.terminalTheme.start();
+      else if (t === 'veilwood' && window.veilwoodTheme) window.veilwoodTheme.start();
+      /* Persist theme for char-sheet continuation; clear when back to default (world chat) */
+      if (t && t !== 'default') sessionStorage.setItem('sorc_lobby_theme', t);
+      else sessionStorage.removeItem('sorc_lobby_theme');
+      /* Audio starts on first gesture - theme files handle this internally via
+         onUserInteraction (click/keydown/touchstart/pointerdown on document).
+         AudioContext is created inside that handler so iOS allows it. */
+    }
+
+    function setLobbyTheme(t) {
+      if (!isCreator && !isPrivileged()) return;
+      applyTheme(t);
+      if (currentLobby && currentUser) {
+        /* Broadcast via chat message so all members pick it up on next poll */
+        fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: '__sorc_theme__:' + t })
+        }).catch(function(){});
+        /* Also try the dedicated endpoint for when backend is deployed */
+        fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/theme', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ theme: t })
+        }).catch(function(){});
+      }
+    }
+    /* Initial theme apply: CSS classes apply immediately; canvas routing deferred
+       until all scripts (theme-terminal.js, theme-veilwood.js) have loaded */
+    /* Solar system always runs; lobby starts at default theme */
+    window.addEventListener('load', function () {
+      if (window.solarBg) window.solarBg.start();
+      applyTheme('default');
+    });
+
+    // ===== HELPERS =====
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    function roleLabel(r) {
+      if (!r) return 'Civilian';
+      switch(r) {
+        case 'OWNER': return 'OWN';
+        case 'ADMIN': return 'AD';
+        case 'MASTER': return 'GM';
+        case 'PLAYER': return 'PC';
+        case 'PC-BEG': return 'PC · Beginner';
+        case 'PC-INT': return 'PC · Intermediate';
+        case 'PC-ADV': return 'PC · Advanced';
+        case 'GM-ADV': return 'GM · Advanced';
+        default: return r;
+      }
+    }
+
+    function memberRoleLabel(m) {
+      if (m.role === 'OWNER' || m.role === 'ADMIN') return roleLabel(m.role);
+      return roleLabel(m.sorc_role || m.role);
+    }
+
+    function memberIsGM(m) {
+      return m.role === 'OWNER' || m.role === 'ADMIN' || m.role === 'MASTER'
+        || (m.sorc_role && m.sorc_role.startsWith('GM'));
+    }
+
+    function timeAgo(iso) {
+      var d = new Date(iso);
+      var diff = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+      return d.toLocaleDateString();
+    }
+
+    // ===== STATE =====
+    var currentLobby = null;
+    var chatPollTimer = null;
+    var lastMsgId = null;
+    var currentReadyCheckId = null;
+    var hasRespondedToReadyCheck = false;
+    var readyCheckDismissed = false;
+    var readyCheckTimerInterval = null;
+    var readyCheckInitiatedAt = null;
+    var lastReadyCheckData = null;
+
+    var reportTargetUid = null;
+    var reportTargetName = '';
+    var selectedReportReason = null;
+    var isCreator = false;
+    var hasGMRights = false;
+    var currentRooms = [];
+    var prevMemberMap = {};   // uid → member snapshot, for departure detection
+    var abandonedUids = new Set(); // uids that abandoned (show no ghost, different text)
+    var leftLobbyIds = new Set();  // lobbies the user just left - suppress stale is_member from API
+
+    // ===== JOINED LOBBY TRACKING =====
+    function trackJoinedLobby(lobbyId) {
+      try {
+        var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
+        joined[lobbyId] = true;
+        localStorage.setItem('sorc_joined_lobbies', JSON.stringify(joined));
+      } catch(e) {}
+    }
+    function hasJoinedLobby(lobbyId) {
+      try {
+        var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
+        return !!joined[lobbyId];
+      } catch(e) { return false; }
+    }
+    function removeJoinedLobby(lobbyId) {
+      try {
+        var joined = JSON.parse(localStorage.getItem('sorc_joined_lobbies') || '{}');
+        delete joined[lobbyId];
+        localStorage.setItem('sorc_joined_lobbies', JSON.stringify(joined));
+      } catch(e) {}
+    }
+    function markLobbyBanned(lobbyId) {
+      try {
+        var banned = JSON.parse(localStorage.getItem('sorc_banned_lobbies') || '{}');
+        banned[lobbyId] = true;
+        localStorage.setItem('sorc_banned_lobbies', JSON.stringify(banned));
+      } catch(e) {}
+    }
+    function isLobbyBanned(lobbyId) {
+      try {
+        var banned = JSON.parse(localStorage.getItem('sorc_banned_lobbies') || '{}');
+        return !!banned[lobbyId];
+      } catch(e) { return false; }
+    }
+
+    // ===== MAIN RENDER =====
+    function render() {
+      var app = document.getElementById('lobbiesApp');
+      if (!currentUser || !currentUser.authKey) {
+        app.innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to access lobbies.</div>';
+        return;
+      }
+      var hasAssessed = !!(currentUser.sorc_role) || isPrivileged();
+      if (!hasAssessed) {
+        window.location.replace('assess.html');
+        return;
+      }
+      var badge = document.getElementById('assessClearedBadge');
+      if (badge) { badge.style.display = 'block'; }
+      renderListView();
+      var savedLobbyId = sessionStorage.getItem('activeLobbyId');
+      if (savedLobbyId) openLobby(savedLobbyId);
+    }
+
+    window.toggleThemeMore = function(btn) {
+      var dd = btn.nextElementSibling;
+      if (!dd) return;
+      var isOpen = dd.classList.contains('open');
+      dd.classList.toggle('open', !isOpen);
+      btn.innerHTML = isOpen ? 'More &#9660;' : 'Less &#9650;';
+      if (!isOpen) {
+        function closeOnOutside(e) {
+          if (!btn.parentElement.contains(e.target)) {
+            dd.classList.remove('open');
+            btn.innerHTML = 'More &#9660;';
+            document.removeEventListener('click', closeOnOutside);
+          }
+        }
+        setTimeout(function() { document.addEventListener('click', closeOnOutside); }, 10);
+      }
+    };
+
+    // ===== TOAST (non-blocking error/info banner) =====
+    var toastTimer = null;
+    function showToast(msg, isErr) {
+      var t = document.getElementById('sorcToast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'sorcToast';
+        t.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(120%);' +
+          'background:#1a1a1a;border:1px solid #444;color:#e0cfc0;padding:0.65rem 1.2rem;border-radius:8px;' +
+          'font-size:0.85rem;z-index:9999;transition:transform 0.22s ease;white-space:nowrap;max-width:90vw;text-align:center;';
+        document.body.appendChild(t);
+      }
+      if (isErr) t.style.borderColor = '#c93f35';
+      else t.style.borderColor = '#444';
+      t.textContent = msg;
+      t.style.transform = 'translateX(-50%) translateY(0)';
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function() {
+        t.style.transform = 'translateX(-50%) translateY(120%)';
+      }, 3200);
+    }
+
+    // ===== HELPERS =====
+    function isPrivileged() {
+      if (!currentUser) return false;
+      if (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER') return true;
+      var OWNER_EMAILS = ['corbett@sorcrpg.com'];
+      var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+      return OWNER_EMAILS.includes(currentUser.email) || ADMIN_EMAILS.includes(currentUser.email);
+    }
+
+    function buildTicker() {
+      var msgs = [
+        '&#129309; Table sessions often only need 1 or 2 more Players - Adding Fellowships helps you avoid PUG placement and find your preferred group',
+        '&#128101; Click the Character sheet icon next to any member\'s name to view their armaments, companions, achievements, and more',
+        '&#127514; GMs and Admins can launch a private Campaign Room directly from the lobby - voice, dice, compendium, and full session tools inside',
+        '&#128172; Use Lobby Chat to assemble your party before the GM launches the Campaign Room - keep recruiting until the table is full',
+        '&#127775; When a lobby closes, any active Campaign Room stays accessible - a Rejoin Campaign Room button appears so nobody loses their session',
+        '&#127925; GMs play module-paired audio inside the Campaign Room - every Player hears it live, whether at the table or joining remotely',
+        '&#128421; Campaign Rooms work just as well fully online as they do at a physical table - GMs set the audio, Players roll live dice, everyone follows the same session',
+        '&#128273; Set your lobby to Private so only Players with your invite code can join - ideal for pre-arranged Fellowship sessions',
+        '&#127922; Campaign Rooms include live D4, D6, and D100 rolls, loot table generation, and compendium access for the whole party',
+        '&#129309; Find great Players through PUG lobbies - once you do, invite them directly to your next private session to skip the pickup queue',
+        '&#9733; Switch the Lobby Theme above to set the mood - Omnè Terminal and The Veilwood each have their own ambient soundscape',
+        '&#127760; If a host leaves their lobby, the next member in line becomes the new leader - the lobby stays open and keeps recruiting',
+        '&#128203; Click LFM: in World Chat to respond to a host recruitment post - your name and character sheet are shared automatically',
+        '&#127760; Hosts post freely in World Chat - Players looking for a group type LFG: followed by a short tag (e.g. LFG:LVL5-Lock-Hag) - 40 characters max',
+        '&#9889; Hosts: click any LFG: badge in World Chat to instantly open the summon flow for that Player - no typing required',
+        '&#127914; Only lobby hosts can choose lobby themes - if any member has a theme unlocked, the host can activate it for the whole lobby',
+        '&#127914; If the member who unlocked a theme leaves and no one else has it, the lobby theme reverts to the previous one',
+        '&#9889; New: Summon feature - hosts can summon Players directly from World Chat, sending them lobby details before they accept or deny',
+        '&#9993; New: Hosts can message any lobby member directly from the member list - click their name to open options',
+        '&#128081; New: Make Host - transfer lobby control to a GM in your party. Click their name inside the lobby to promote them',
+        '&#128272; Admin &amp; Owner: Generate GM Codes from the lobby panel to authorise new hosts without a physical box set',
+        '&#9889; New: Type SUM:Name in World Chat to summon a Player by name - use SUM:Name(2) if there are duplicates',
+        '&#128172; New: Lobby Messages tab - send private messages to any lobby member directly. Use the dropdown next to their name',
+        '&#128228; New: Messages are lobby-scoped and private - Corbett sees yours, you see his, nobody else does',
+        '&#128101; New: World Chat names no longer need a profile tap - names are clean and the summon flow is built right into chat',
+        '&#127925; New: Lobby theme sounds carry over to character sheet view - music keeps playing while you browse a member\'s sheet',
+        '&#128081; New: Host crown appears next to the current host\'s name - transfers instantly when a new host is promoted',
+        '&#10003; New: Ready Check - hosts can send a party-wide ready check to all members with a themed sound cue',
+        '&#9876; Ready Check rules: you have 20 seconds to respond - no response counts as Not Ready',
+        '&#127514; To launch a Campaign Room, all members must confirm Ready and the party needs at least 2 Players plus a GM',
+        '&#128081; OWN can promote any member to Host from their dropdown - AD can do the same except on OWN members',
+        '&#9878; Your role badge is set by your assessment track - GM track (9+) grants GM everywhere, PC track grants PC - failing drops you to Civilian',
+        '&#9878; You must choose GM or PC track before answering Question 1 - your track locks in on your first answer and cannot be changed mid-assessment',
+        '&#9878; Assessments expire after 30 days - you will be blocked from lobbies until you reassess and restore your role',
+        '&#9878; Failing a reassessment downgrades your role - GM becomes PC or Civilian depending on score, so study before you retake',
+      ];
+      var html = msgs.map(function(m) {
+        return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
+      }).join('');
+      return '<div class="lobby-ticker" style="margin-bottom:0;"><div class="ticker-track">' + html + html + '</div></div>';
+    }
+
+    function buildWorldChat() {
+      var isHost = false;
+      // We'll determine host status after render via loadWorldChat
+      return '<div class="world-chat-wrap" id="worldChatWrap">' +
+        '<div class="world-chat-head">' +
+          '<span class="world-chat-title">&#127760; World Lobby Chat</span>' +
+          '<span class="world-chat-sub">Hosts recruit · Anyone can respond via LFM:/LFG: links</span>' +
+        '</div>' +
+        '<div class="world-chat-messages" id="worldChatMessages"><div class="world-chat-empty">Loading world chat...</div></div>' +
+        '<div id="worldChatInputRow" style="display:none;" class="world-chat-input-row">' +
+          '<input type="text" class="world-chat-input" id="worldChatInput" placeholder="LFM: describe who you need... (hosts only)" maxlength="400" onkeydown="if(event.key===\'Enter\')sendWorldChat()" />' +
+          '<button class="world-chat-send" onclick="sendWorldChat()">Post</button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    var MODULES = [
+      { value: 'Module .001 | Valley of Darkness (LVLs 1 - 5)',  label: "Module .001 | Valley of Darkness (LVLs 1 - 5)" },
+      { value: "Module .002 | Aseya's Crypt (LVLs 6 - 10)",      label: "Module .002 | Aseya's Crypt (LVLs 6 - 10)" }
+    ];
+
+    // ===== LIST VIEW =====
+    function renderListView() {
+      var app = document.getElementById('lobbiesApp');
+      var priv = isPrivileged();
+      var hostName = esc(currentUser.display_name || currentUser.username || 'Unknown');
+
+      var moduleOptions = MODULES.map(function(m) {
+        return '<option value="' + esc(m.value) + '">' + esc(m.label) + '</option>';
+      }).join('');
+
+      var codeField = priv ? '' :
+        '<input type="text" id="boxSetCode" class="l-input" placeholder="Box set code..." maxlength="40" />';
+
+      var codeNote = priv
+        ? '<p style="color:#4caf50;font-size:0.78rem;margin:0;">&#10003; Admin account - box code not required. (Regular PC accounts see a GM/box set code entry here.)</p>'
+        : '<p>Host a live Campaign session. Enter your GM / box set code below.</p>';
+
+      var adminCodeGen = priv
+        ? '<div class="action-card" style="margin-top:1.25rem;">' +
+            '<h2 class="gold" style="font-size:0.92rem;">&#128274; Generate Box Set Code</h2>' +
+            '<p>Temporary GEN...BSC code for members with a physical box set. They enter it in Create Lobby to host games.</p>' +
+            '<button class="l-btn gold" onclick="generateBoxCode()">Generate Box Set Code</button>' +
+            '<div id="genCodeResult" class="l-msg"></div>' +
+            '<div style="margin-top:0.75rem;border-top:1px solid #2a2a2a;padding-top:0.75rem;">' +
+              '<h2 class="gold" style="font-size:0.92rem;">&#128081; Generate GM Code</h2>' +
+              '<p style="color:#666;font-size:0.82rem;margin:0 0 0.5rem 0;">One-time GM-... code. Member enters it on their Profile page to upgrade from PC to GM.</p>' +
+              '<button class="l-btn gold" onclick="generateGmCode()">Generate GM Code</button>' +
+              '<div id="genGmCodeResult" class="l-msg"></div>' +
+            '</div>' +
+          '</div>'
+        : '';
+
+      app.innerHTML =
+        '<div class="how-it-works-section">' +
+          '<h2>How it Works</h2>' +
+          '<div class="section-scroll-wrapper">' +
+            '<button class="section-scroll-btn" aria-label="Previous" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:-280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="36,9 9,24 36,39"></polygon></svg></button>' +
+            '<div class="how-it-works-list" id="howItWorksScroll">' +
+              '<div class="feature-card"><div class="feature-icon">&#128101;</div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#9876;&#65039;</div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128172;</div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#b9aa00;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#b9aa00;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128295;</div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
+            '</div>' +
+            '<button class="section-scroll-btn" aria-label="Next" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="12,9 39,24 12,39"></polygon></svg></button>' +
+          '</div>' +
+        '</div>' +
+        buildWorldChat() +
+        buildTicker() +
+        '<div class="section-head">Open Lobbies</div>' +
+        '<div id="lobbyList"><div class="empty-state">Loading...</div></div>' +
+        '<div class="lobby-actions">' +
+          '<div class="action-card create">' +
+            '<h2 class="gold">&#128101; Create Lobby</h2>' +
+            codeNote +
+            '<div style="color:#888;font-size:0.78rem;margin-bottom:-0.2rem;">Host: <strong style="color:#e0cfc0;">' + hostName + '</strong></div>' +
+            '<select id="lobbyModule" class="l-input" style="cursor:pointer;">' + moduleOptions + '</select>' +
+            codeField +
+            '<label style="color:#555;font-size:0.78rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="isPrivate" /> Private lobby (invite code only)</label>' +
+            '<button class="l-btn gold" onclick="createLobby()">Create Lobby</button>' +
+            '<div id="createMsg" class="l-msg"></div>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:1.25rem;">' +
+            '<div class="action-card">' +
+              '<h2 class="red">&#9876; Join by Code</h2>' +
+              '<p>Join with a lobby code from your GM, or browse open lobbies below.</p>' +
+              '<input type="text" id="joinCode" class="l-input" placeholder="Enter lobby code..." maxlength="20" />' +
+              '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
+              '<div id="joinMsg" class="l-msg"></div>' +
+            '</div>' +
+            adminCodeGen +
+          '</div>' +
+        '</div>';
+
+      loadLobbies();
+      loadWorldChat();
+      startWorldChatPoll();
+      startSummonPoll();
+    }
+
+    async function loadLobbies() {
+      var listEl = document.getElementById('lobbyList');
+      if (!listEl) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (data.error && data.error.includes('assess')) {
+          listEl.innerHTML = '<div class="needs-assess-note">&#128274; You must complete the <a href="assess.html">Role Assessment</a> before joining or creating lobbies.</div>';
+          return;
+        }
+        var lobbies = data.lobbies || [];
+        // Track the user's own active lobby so summon works from list view too
+        var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
+        if (myLobby) { myActiveLobbyId = myLobby.id; loadWorldChat(); }
+        allLobbies = lobbies.concat(PLACEHOLDER_LOBBIES);
+        lobbyPage = 0;
+        renderLobbyPage();
+      } catch(e) {
+        if (listEl) listEl.innerHTML = '<div class="empty-state">Could not load lobbies.</div>' + buildPlaceholderLobbies();
+      }
+    }
+
+    function buildLobbyRowHtml(l) {
+      if (l.placeholder) {
+        var phDrop = buildHostNameDrop(l._hostUid, l._hostName, l._hostName, l.id);
+        var phFull = l.member_count >= l.max_members;
+        var phBtn, phHint;
+        if (phFull) {
+          phBtn  = '<button class="row-join-btn" disabled onclick="event.stopPropagation()">Full</button>';
+          phHint = '<span class="lobby-hint">Cannot join - lobby has ' + l.max_members + ' members.</span>';
+        } else if (l.is_private) {
+          phBtn  = '<button class="row-join-btn" style="background:#c93f35;color:#fff;" onclick="event.stopPropagation()">Join</button>';
+          phHint = '<span class="lobby-hint">Message Host to join by code or summon.</span>';
+        } else {
+          phBtn  = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation()">Join</button>';
+          phHint = '<span class="lobby-hint">Join open lobby.</span>';
+        }
+        return '<div class="lobby-row" style="cursor:default;">' +
+          '<div class="lobby-row-info">' +
+            '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
+            '<p>Host: ' + phDrop + ' &nbsp;&middot;&nbsp; ' + l.member_count + '/' + l.max_members + ' members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">' + esc(l.module) + '</em></p>' +
+          '</div>' +
+          '<div class="lobby-row-right">' +
+            '<div class="lobby-btn-col">' + phBtn + phHint + '</div>' +
+          '</div>' +
+        '</div>';
+      }
+          var isFull = l.member_count >= l.max_members;
+          var statusClass = isFull ? 'full' : 'open';
+          var statusLabel = isFull ? 'Full' : 'Open';
+          var commandeeredNote = l.commandeered_from
+            ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; was hosted by ' + esc(l.commandeered_from) + '</span>'
+            : '';
+          var isCreatorOfLobby = currentUser && (l.creator_uid === currentUser.id);
+          var codeSnip = (isCreatorOfLobby || isPrivileged())
+            ? ' &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong>'
+            : '';
+          var isBanned = isLobbyBanned(l.id);
+          var isJoined = !leftLobbyIds.has(l.id) && (!!(l.is_member) || hasJoinedLobby(l.id) || isCreatorOfLobby);
+          var maxM = l.max_members || 20;
+          var hostUid = l.creator_uid || '';
+          var canSummon = isCreatorOfLobby && !isJoined;
+          var btnHtml, hintHtml;
+          if (isBanned) {
+            btnHtml = ''; hintHtml = '';
+          } else if (isJoined) {
+            btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined</button>';
+            hintHtml = '<span class="lobby-hint">You are a member of this lobby. Enter at will.</span>';
+          } else if (isFull) {
+            btnHtml = '<button class="row-join-btn" disabled>Full</button>';
+            hintHtml = '<span class="lobby-hint">Cannot join - lobby has ' + maxM + ' members.</span>';
+          } else if (l.is_private) {
+            btnHtml = '<button class="row-join-btn" style="background:#c93f35;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>'
+              + (hostUid ? ' <a class="row-msg-host-btn" href="inbox.html?to=' + esc(hostUid) + '" onclick="event.stopPropagation();">Message Host</a>' : '');
+            hintHtml = '<span class="lobby-hint">Message Host to join by code or summon.</span>';
+          } else {
+            btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>';
+            hintHtml = '<span class="lobby-hint">Join open lobby.</span>';
+          }
+          var hostDrop = buildHostNameDrop(l.creator_uid, l.creator_name || 'Unknown', l.creator_username || l.creator_name, l.id);
+          return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
+            '<div class="lobby-row-info">' +
+              '<h3>' + esc(l.name) + (l.is_private ? ' &#128274;' : '') + '</h3>' +
+              '<p>Host: ' + hostDrop + commandeeredNote + ' &nbsp;&middot;&nbsp; ' + (l.member_count||1) + '/' + maxM + ' members' + codeSnip + '</p>' +
+            '</div>' +
+            '<div class="lobby-row-right">' +
+              '<div class="lobby-btn-col">' + btnHtml + hintHtml + '</div>' +
+            '</div>' +
+          '</div>';
+    }
+
+    function renderLobbyPage() {
+      var listEl = document.getElementById('lobbyList');
+      if (!listEl) return;
+      var total = allLobbies.length;
+      var totalPages = Math.ceil(total / LOBBIES_PER_PAGE);
+      lobbyPage = Math.max(0, Math.min(lobbyPage, totalPages - 1));
+      var start = lobbyPage * LOBBIES_PER_PAGE;
+      var page = allLobbies.slice(start, start + LOBBIES_PER_PAGE);
+      var rowsHtml = page.map(buildLobbyRowHtml).join('');
+      var isFirst = lobbyPage === 0;
+      var isLast  = lobbyPage >= totalPages - 1;
+      var pager = totalPages > 1
+        ? '<div class="lobby-pager">' +
+            '<button class="lobby-pager-btn" onclick="changeLobbyPage(-1)" ' + (isFirst ? 'disabled' : '') + '>&#8592;</button>' +
+            '<span class="lobby-pager-info">Page ' + (lobbyPage + 1) + ' of ' + totalPages + ' &nbsp;(' + total + ' lobbies)</span>' +
+            '<button class="lobby-pager-btn" onclick="changeLobbyPage(1)" ' + (isLast ? 'disabled' : '') + '>&#8594;</button>' +
+          '</div>'
+        : '';
+      listEl.innerHTML = rowsHtml + pager;
+    }
+
+    window.changeLobbyPage = function(dir) {
+      lobbyPage += dir;
+      renderLobbyPage();
+      var listEl = document.getElementById('lobbyList');
+      if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    function buildHostNameDrop(uid, name, username, lobbyId) {
+      var profileHref = 'public-profile.html?username=' + encodeURIComponent(username || name || '');
+      var items = '<a href="' + profileHref + '" onclick="event.stopPropagation()">Profile</a>';
+      var isSelf = currentUser && currentUser.id === uid;
+      var isPhUid = uid && uid.startsWith('ph-');
+      if (!isSelf && !isPhUid) items += '<a href="inbox.html?to=' + encodeURIComponent(uid) + '" class="summon-opt" onclick="event.stopPropagation()">Message</a>';
+      return '<span class="member-name-wrap" style="display:inline-flex;vertical-align:middle;" onclick="event.stopPropagation()">' +
+        '<button class="member-name-btn" style="font-size:inherit;color:inherit;font-weight:inherit;" onclick="toggleMemberMenu(event,this)">' + esc(name) + ' &#8964;</button>' +
+        '<div class="member-name-menu">' + items + '</div>' +
+      '</span>';
+    }
+
+    function buildPlaceholderLobbies() {
+      var corbyDrop = buildHostNameDrop('corby-placeholder', 'Corby', 'Corby', 'ph-veilmark');
+      var clodDrop  = buildHostNameDrop('clod-placeholder',  'Clod',  'Clod',  'ph-zailister');
+      return '' +
+        /* Full lobby - Corby host */
+        '<div class="lobby-row">' +
+          '<div class="lobby-row-info">' +
+            '<h3>The Siege of Veilmark</h3>' +
+            '<p>Host: ' + corbyDrop + ' &nbsp;&middot;&nbsp; 20/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Module .002 | Aseya\'s Crypt (LVLs 6 - 10)</em></p>' +
+          '</div>' +
+          '<div class="lobby-row-right">' +
+            '<div class="lobby-btn-col">' +
+              '<button class="row-join-btn" disabled onclick="event.stopPropagation()">Full</button>' +
+              '<span class="lobby-hint">Cannot join - lobby has 20 members.</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        /* Private lobby - Clod host */
+        '<div class="lobby-row">' +
+          '<div class="lobby-row-info">' +
+            '<h3>Crown of Zailister &#128274;</h3>' +
+            '<p>Host: ' + clodDrop + ' &nbsp;&middot;&nbsp; 4/20 members &nbsp;&middot;&nbsp; <em style="color:#3a3a3a;">Private</em></p>' +
+          '</div>' +
+          '<div class="lobby-row-right">' +
+            '<div class="lobby-btn-col">' +
+              '<button class="row-join-btn" style="background:#c93f35;color:#fff;" onclick="event.stopPropagation()">Join</button>' +
+              '<span class="lobby-hint">Message Host to join by code or summon.</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // ===== CREATE =====
+    window.createLobby = async function() {
+      var moduleEl = document.getElementById('lobbyModule');
+      var name = moduleEl ? moduleEl.value : '';
+      var codeEl = document.getElementById('boxSetCode');
+      var code = codeEl ? codeEl.value.trim() : '';
+      var isPrivate = document.getElementById('isPrivate').checked;
+      var msgEl = document.getElementById('createMsg');
+      if (!name) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Select a module.'; return; }
+      if (!isPrivileged() && !code) { msgEl.className = 'l-msg err'; msgEl.textContent = 'A box set code is required.'; return; }
+      msgEl.className = 'l-msg'; msgEl.textContent = 'Creating...';
+      try {
+        var body = { name: name, is_private: isPrivate };
+        if (code) body.box_set_code = code;
+        var res = await fetch(API_URL + '/api/lobbies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Lobby created! Code: ' + (data.lobby_code || '');
+          setTimeout(function() { openLobby(data.lobby_id); }, 600);
+        } else if (data.needs_reassess) {
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
+        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    // ===== GENERATE BOX CODE (admin/owner) =====
+    window.generateBoxCode = async function() {
+      var resultEl = document.getElementById('genCodeResult');
+      resultEl.className = 'l-msg'; resultEl.textContent = 'Generating...';
+      try {
+        var res = await fetch(API_URL + '/api/box-codes/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({})
+        });
+        var data = await res.json();
+        if (data.success) {
+          resultEl.className = 'l-msg ok';
+          resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
+        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
+      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
+    };
+
+    window.generateGmCode = async function() {
+      var resultEl = document.getElementById('genGmCodeResult');
+      resultEl.className = 'l-msg'; resultEl.textContent = 'Generating...';
+      try {
+        var res = await fetch(API_URL + '/api/gm-codes/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({})
+        });
+        var data = await res.json();
+        if (data.success) {
+          resultEl.className = 'l-msg ok';
+          resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genGmCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
+        } else { resultEl.className = 'l-msg err'; resultEl.textContent = data.error || 'Failed.'; }
+      } catch(e) { resultEl.className = 'l-msg err'; resultEl.textContent = 'Connection error.'; }
+    };
+
+    // ===== CLOSE ALL (admin) =====
+    // ===== JOIN =====
+    window.joinByCode = async function() {
+      var code = document.getElementById('joinCode').value.trim();
+      var msgEl = document.getElementById('joinMsg');
+      if (!code) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Enter a lobby code.'; return; }
+      msgEl.className = 'l-msg'; msgEl.textContent = 'Joining...';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ lobby_code: code })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Joined!';
+          setTimeout(function() { openLobby(data.lobby_id); }, 400);
+        } else if (data.needs_reassess) {
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
+        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.joinLobby = async function(lobbyId) {
+      if (!currentUser || !currentUser.authKey) { showToast('Sign in to join a lobby.', true); return; }
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ lobby_id: lobbyId })
+        });
+        var data = await res.json();
+        if (data.success || (data.error && data.error.toLowerCase().indexOf('already') !== -1)) {
+          trackJoinedLobby(lobbyId);
+          setTimeout(function() { openLobby(lobbyId); }, 900);
+        } else {
+          var errLow = (data.error || '').toLowerCase();
+          if (errLow.indexOf('kick') !== -1 || errLow.indexOf('ban') !== -1 || errLow.indexOf('remov') !== -1) {
+            markLobbyBanned(lobbyId);
+            loadLobbies();
+          }
+          showToast(data.error || 'Could not join lobby.', true);
+        }
+      } catch(e) { showToast('Could not reach server. Check your connection.', true); }
+    };
+
+    // ===== OPEN LOBBY DETAIL =====
+    // Block swipe-back/forward navigation while inside a lobby
+    window.addEventListener('popstate', function() {
+      if (currentLobby) {
+        history.pushState({ lobby: currentLobby.id }, '');
+        history.pushState({ lobby: currentLobby.id }, '');
+      }
+    });
+
+    // Block edge-swipe back/forward gestures while in a lobby (iOS + Android)
+    document.addEventListener('touchstart', function(e) {
+      if (!currentLobby) return;
+      var x = e.touches[0].clientX;
+      if (x < 50 || x > window.innerWidth - 50) e.preventDefault();
+    }, { passive: false });
+
+    window.openLobby = async function(lobbyId) {
+      stopChatPoll();
+      leftLobbyIds.delete(lobbyId); // allow rejoining a lobby the user just left
+      sessionStorage.setItem('activeLobbyId', lobbyId);
+      history.pushState({ lobby: lobbyId }, '');
+      history.pushState({ lobby: lobbyId }, '');
+      history.pushState({ lobby: lobbyId }, '');
+      var app = document.getElementById('lobbiesApp');
+      app.innerHTML = '<p style="color:#555;text-align:center;padding:2rem;">Loading lobby...</p>';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId, { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (!data.lobby) {
+          sessionStorage.removeItem('activeLobbyId');
+          showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
+        }
+        /* Auto-join if not confirmed as a member - handles D1 lag and missing field */
+        var selfIsCreator = currentUser && data.lobby.creator_uid === currentUser.id;
+        if (!selfIsCreator && data.is_member !== true) {
+          await fetch(API_URL + '/api/lobbies/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ lobby_id: lobbyId })
+          }).catch(function(){});
+          /* Wait for D1 replica to catch up */
+          await new Promise(function(r) { setTimeout(r, 1400); });
+          res = await fetch(API_URL + '/api/lobbies/' + lobbyId, { headers: { 'X-Auth-Key': currentUser.authKey } });
+          data = await res.json();
+          if (!data.lobby) {
+            sessionStorage.removeItem('activeLobbyId');
+            showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
+          }
+        }
+        trackJoinedLobby(lobbyId);
+        currentLobby = data.lobby;
+        // Seed prevMemberMap from the initial load so departures before the first poll are detected
+        prevMemberMap = {};
+        (data.members || []).forEach(function(m) { prevMemberMap[m.user_id] = m; });
+        isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
+        hasGMRights = isCreator || isPrivileged();
+        document.documentElement.classList.add('lobby-locked');
+        renderLobbyDetail(data);
+        startChatPoll(lobbyId);
+        startSummonPoll();
+      } catch(e) {
+        sessionStorage.removeItem('activeLobbyId');
+        showToast('Could not load lobby. Check your connection.', true);
+        renderListView();
+      }
+    };
+
+    function renderLobbyDetail(data) {
+      var lobby = data.lobby;
+      var members = data.members || [];
+      var rooms = data.rooms || [];
+      currentRooms = rooms;
+      var app = document.getElementById('lobbiesApp');
+
+      var membersHtml = members.map(function(m) {
+        var isGM = memberIsGM(m);
+        var isSelf = currentUser && m.user_id === currentUser.id;
+        var actBtns = '';
+        if (!isSelf && hasGMRights) {
+          actBtns += '<button class="member-act-btn" onclick="muteMember(\'' + esc(m.user_id) + '\',\'' + esc(m.id) + '\')" title="Mute">' + (m.is_muted ? 'Unmute' : 'Mute') + '</button>';
+          actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')" title="Kick">Kick</button>';
+        }
+        if (!isSelf) {
+          actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report">&#9888;</button>';
+        }
+        var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+        var sheetHref = 'character_build_template.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
+        var menuItems = '';
+        if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
+        menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+        if (isCreator && !isSelf) {
+          menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+          menuItems += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
+        }
+        var cuRole = currentUser ? currentUser.role : '';
+        var canPrivPromote = !isSelf && (cuRole === 'OWNER' || (cuRole === 'ADMIN' && m.role !== 'OWNER'));
+        if (canPrivPromote && !isCreator) {
+          if (cuRole === 'OWNER') {
+            menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+          }
+          menuItems += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
+        }
+        var isLobbyHost = currentLobby && m.user_id === currentLobby.creator_uid;
+        var nameWrap = '<span class="member-name-wrap">' +
+          '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#b9aa00;font-size:0.72rem;margin-right:0.2rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
+          '<div class="member-name-menu">' + menuItems + '</div>' +
+          '<span class="member-sheet-hint">for stats &#8250;</span>' +
+          '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128196;</a>' +
+        '</span>';
+        return '<div class="member-row">' +
+          '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
+          '<div class="member-info">' +
+            nameWrap +
+            '<div class="member-role' + (isGM ? ' gm' : '') + '">' + memberRoleLabel(m) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
+          '</div>' +
+          '<div class="member-actions">' + actBtns + '</div>' +
+        '</div>';
+      }).join('');
+
+      var roomsHtml = '';
+      if (rooms.length > 0) {
+        roomsHtml = rooms.map(function(r) {
+          return '<div class="room-row">' +
+            '<div class="room-row-info">' +
+              '<h4>' + esc(r.room_name) + '</h4>' +
+              '<p>GM room &nbsp;&middot;&nbsp; ' + (r.spectate_enabled ? 'Spectate on' : 'Spectate off') + '</p>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:0.5rem;">' +
+              '<span class="room-badge ' + (r.is_hidden ? 'hidden' : 'active') + '">' + (r.is_hidden ? 'Hidden' : 'Active') + '</span>' +
+              '<button class="launch-room-btn" onclick="enterRoom(\'' + esc(r.id) + '\')">Enter Room</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } else {
+        roomsHtml = '<div class="empty-state" style="padding:1rem;">No active rooms. The GM can launch one from inside the lobby.</div>';
+      }
+
+      var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
+      var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
+      var readyCheckBtn = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var leaveBtn = isCreator
+        ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
+          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>' +
+          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
+      var deleteBtn = '';
+      var invitePanel = hasGMRights
+        ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
+          + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
+          + '<button onclick="copyLobbyCode()" style="padding:4px 12px;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;border-radius:6px;font-size:0.78rem;cursor:pointer;">Copy Code</button>'
+          + '<input id="inviteUsername" class="chat-input" placeholder="Player username..." style="max-width:180px;padding:5px 10px;font-size:0.82rem;" />'
+          + '<button onclick="sendInvite()" style="padding:5px 14px;background:#b9aa00;color:#111;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">Send Invite</button>'
+          + '<span id="inviteMsg" style="font-size:0.78rem;"></span>'
+          + '</div>'
+        : '';
+
+      app.innerHTML =
+        '<div class="detail-header">' +
+          '<div>' +
+            '<h2>' + esc(lobby.name) + (lobby.is_private ? ' &#128274;' : '') + '</h2>' +
+            '<div class="detail-meta">' + (hasGMRights ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
+          '</div>' +
+          '<div id="lobbyHeaderBtns" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+            launchBtn + readyCheckBtn + inviteBtn + leaveBtn + deleteBtn +
+          '</div>' +
+        '</div>' +
+        invitePanel +
+        '<div class="theme-selector" style="margin-bottom:1rem;">' +
+          '<div class="theme-selector-label">Lobby Theme</div>' +
+          '<div class="theme-grid">' +
+            '<button class="theme-pill' + (lobbyTheme==='default'?' active':'') + '" id="tpill-default" onclick="setLobbyTheme(\'default\')" title="Only the lobby host can change the theme">Default</button>' +
+            '<button class="theme-pill' + (lobbyTheme==='terminal'?' active':'') + '" id="tpill-terminal" onclick="setLobbyTheme(\'terminal\')" title="Only the lobby host can change the theme">Omnè Terminal</button>' +
+            '<button class="theme-pill' + (lobbyTheme==='veilwood'?' active':'') + '" id="tpill-veilwood" onclick="setLobbyTheme(\'veilwood\')" title="Only the lobby host can change the theme">The Veilwood</button>' +
+            '<div class="theme-more-wrap">' +
+              '<button class="theme-pill theme-more-btn" onclick="toggleThemeMore(this)" title="More themes">More &#9660;</button>' +
+              '<div class="theme-more-dropdown">' +
+                '<button class="theme-pill locked" title="500 pts or Achievement"><span class="lock-icon">&#128274;</span> Void Citadel<span class="pts">500 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="750 pts or Achievement"><span class="lock-icon">&#128274;</span> Iron Bastion<span class="pts">750 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="1,000 pts or Achievement"><span class="lock-icon">&#128274;</span> Celestial Court<span class="pts">1,000 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="1,500 pts or Achievement"><span class="lock-icon">&#128274;</span> Sunken Shrine<span class="pts">1,500 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="2,000 pts or Achievement"><span class="lock-icon">&#128274;</span> Dragon Throne<span class="pts">2,000 pts or Achievement</span></button>' +
+                '<button class="theme-pill locked" title="Achievement only"><span class="lock-icon">&#128274;</span> Heights of Tranquility<span class="pts">Achievement</span></button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="detail-grid">' +
+          '<div style="display:flex;flex-direction:column;min-width:0;">' +
+            '<div class="chat-panel" id="chatPanel">' +
+              /* Tab bar - Recruit only shown to hosts */
+              '<div class="chat-tab-bar">' +
+                '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="activity" onclick="switchChatTab(\'activity\')">Activity <span class="tab-badge" id="badge-activity" style="display:none;"></span></button>' +
+              '</div>' +
+              /* MAIN: lobby chat */
+              '<div class="chat-tab-pane active" id="chatPane-main">' +
+                (hasGMRights ? '<div style="text-align:right;padding:0.25rem 0.5rem 0;"><button id="clearChatBtn" onclick="clearLobbyChat()" style="font-size:0.7rem;background:none;border:1px solid #c0392b;color:#c0392b;border-radius:3px;padding:2px 8px;cursor:pointer;">Clear Chat</button></div>' : '') +
+                '<div class="chat-messages" id="chatMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div></div>' +
+                (hasGMRights ? '<div id="chatSelectBar"><span id="chatSelectCount" style="color:#e08080;font-size:0.8rem;">0 selected</span><div style="display:flex;gap:0.5rem;"><button onclick="exitChatSelectMode()" style="font-size:0.78rem;background:none;border:1px solid #444;color:#888;border-radius:5px;padding:4px 10px;cursor:pointer;">Cancel</button><button onclick="deleteSelectedMsgs()" style="font-size:0.78rem;background:#c0392b;border:none;color:#fff;border-radius:5px;padding:4px 10px;cursor:pointer;font-weight:bold;">Delete</button></div></div>' : '') +
+                '<div class="chat-input-row">' +
+                  '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
+                  '<button class="chat-send" onclick="sendChat()">Send</button>' +
+                '</div>' +
+              '</div>' +
+              /* WORLD: world chat - read for all, post input for hosts */
+              '<div class="chat-tab-pane" id="chatPane-world">' +
+                '<div class="world-tab-messages" id="worldChatMessages"><div style="color:#3a2a5a;font-size:0.8rem;text-align:center;padding:1.25rem;">Loading world chat...</div></div>' +
+                (hasGMRights
+                  ? '<div class="chat-input-row" id="worldChatInputRow">' +
+                      '<input type="text" class="chat-input" id="worldChatInput" placeholder="Post to world (LFM: or LFG:)..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendWorldChat()" />' +
+                      '<button class="chat-send" onclick="sendWorldChat()">Post</button>' +
+                    '</div>'
+                  : '<div style="padding:0.5rem 1rem;color:#3a2a5a;font-size:0.74rem;border-top:1px solid #1a1a2a;flex-shrink:0;">Read only - respond via LFM/LFG links above</div>') +
+              '</div>' +
+              /* MESSAGES: lobby-scoped direct messages */
+              '<div class="chat-tab-pane" id="chatPane-msgs">' +
+                '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div></div>' +
+              '</div>' +
+              /* ACTIVITY: lobby action log */
+              '<div class="chat-tab-pane" id="chatPane-activity">' +
+                '<div class="chat-messages" id="activityList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No activity yet.</div></div>' +
+              '</div>' +
+            '</div>' +
+            buildTicker() +
+          '</div>' +
+          '<div>' +
+            '<div class="members-panel">' +
+              '<div class="members-head"><span>Members (' + members.length + ')</span></div>' +
+              '<div id="membersList">' + (membersHtml || '<div style="padding:1rem;color:#444;font-size:0.82rem;">No members.</div>') + '</div>' +
+            '</div>' +
+            (hasGMRights
+              ? '<div class="invite-pool-wrap">' +
+                  '<button class="invite-pool-toggle" onclick="toggleInvitePool()" style="width:100%;">' +
+                    '<span>&#128100; Invite Players</span>' +
+                    '<span id="invitePoolArrow" style="pointer-events:none;">&#9660;</span>' +
+                  '</button>' +
+                  '<div id="invitePoolPanel" style="display:none;background:#0d0d0d;">' +
+                    '<div class="invite-tab-bar">' +
+                      '<button class="invite-tab active" id="tabFellows" onclick="switchInviteTab(\'fellows\')">Fellows</button>' +
+                      '<button class="invite-tab" id="tabWorld" onclick="switchInviteTab(\'world\')">World</button>' +
+                    '</div>' +
+                    '<div class="invite-pool-list" id="invitePoolList"><div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">Loading...</div></div>' +
+                    '<div id="invitePoolPager" style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0.85rem;border-top:1px solid #1a1a1a;"></div>' +
+                  '</div>' +
+                '</div>'
+              : '') +
+            '<div class="rooms-section">' +
+              '<div class="section-head" style="margin-top:1rem;">Active Rooms</div>' +
+              '<div id="roomsList">' + roomsHtml + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+      loadChatMessages(lobby.id);
+      initChatLongPress();
+    }
+
+    // ===== CHAT =====
+    async function loadChatMessages(lobbyId) {
+      var msgEl = document.getElementById('chatMessages');
+      if (!msgEl) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (res.status === 403) {
+          /* Kicked or not a member - go back to list, don't rejoin */
+          backToList();
+          showToast('You have been removed from this lobby.');
+          return;
+        }
+        if (data.lobby_status === 'closed') { handleLobbyClosed(); return; }
+        /* Sync lobby theme for all members - host change propagates via poll */
+        if (data.lobby_theme && data.lobby_theme !== lobbyTheme) {
+          applyTheme(data.lobby_theme);
+        }
+        /* Ready check */
+        handleReadyCheckPoll(data.ready_check);
+        var msgs = data.messages || [];
+        /* Apply theme from hidden system messages - use only the most recent one */
+        var lastThemeMsg = null;
+        msgs.forEach(function(m) {
+          if (m.body && m.body.indexOf('__sorc_theme__:') === 0) lastThemeMsg = m;
+        });
+        if (lastThemeMsg) {
+          var t = lastThemeMsg.body.replace('__sorc_theme__:', '').trim();
+          if (t && t !== lobbyTheme) applyTheme(t);
+        }
+        var nonThemeMsgs = msgs.filter(function(m) { return !m.body || m.body.indexOf('__sorc_theme__:') !== 0; });
+        if (msgs.length === 0 && !lastMsgId) { msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>'; }
+        if (msgs.length === 0) { return; }
+        var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
+        if (chatSelectMode) exitChatSelectMode();
+        msgEl.innerHTML = msgs.map(function(m) {
+          if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
+            var themeName = m.body.replace('__sorc_theme__:', '').trim();
+            return '<div class="chat-msg" id="lmsg-' + m.id + '" style="color:#6a4ca0;font-size:0.78rem;font-style:italic;">' +
+              '&#9670; <span class="msg-name" style="color:#8860c0;">' + esc(m.username) + '</span> changed the theme to <em>' + esc(themeName) + '</em>' +
+              '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+            '</div>';
+          }
+          if (m.body && m.body.indexOf('⬡ ') === 0) {
+            var actBody = m.body.replace(/^⬡\s*/, '');
+            return '<div class="chat-msg activity-notice" id="lmsg-' + m.id + '">&#8894; ' + esc(actBody) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
+          }
+          var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+          var delBtn = hasGMRights
+            ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
+            : '';
+          return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
+            '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
+            '<span class="msg-body">' + esc(m.body) + '</span>' +
+            '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+            delBtn +
+          '</div>';
+        }).join('');
+        if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
+        var prevLastId = lastMsgId;
+        if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id;
+        if (prevLastId && lastMsgId !== prevLastId) {
+          var activeTab = document.querySelector('.chat-tab.active');
+          if (!activeTab || activeTab.dataset.tab !== 'main') {
+            var b = document.getElementById('badge-main');
+            if (b) b.style.display = '';
+          }
+        }
+      } catch(e) {}
+    }
+
+    function handleLobbyClosed() {
+      stopChatPoll();
+      sessionStorage.removeItem('activeLobbyId');
+      var app = document.getElementById('lobbiesApp');
+      if (!app) return;
+      var roomLinks = currentRooms.filter(function(r) { return !r.is_hidden; }).map(function(r) {
+        return '<a href="room.html?id=' + esc(r.id) + '" style="display:inline-block;margin-top:0.75rem;padding:8px 20px;background:#b9aa00;color:#111;border-radius:8px;font-weight:bold;text-decoration:none;font-size:0.88rem;">&#127514; Rejoin Campaign Room</a>';
+      }).join('');
+      app.innerHTML =
+        '<div style="text-align:center;padding:3rem 1rem;">' +
+          '<div style="font-size:2rem;margin-bottom:0.75rem;">&#128274;</div>' +
+          '<h3 style="color:#e0cfc0;margin-bottom:0.5rem;">Lobby Closed</h3>' +
+          '<p style="color:#666;font-size:0.88rem;margin-bottom:1.5rem;">The GM has closed this lobby.' + (roomLinks ? ' Your Campaign Room is still active.' : '') + '</p>' +
+          roomLinks +
+          '<br/><button class="back-btn" style="margin-top:1.25rem;" onclick="backToList()">&#8592; Browse Lobbies</button>' +
+        '</div>';
+    }
+
+    window.sendChat = async function() {
+      var input = document.getElementById('chatInput');
+      if (!input || !currentLobby || !currentUser) return;
+      var body = input.value.trim();
+      if (!body) return;
+      input.value = '';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        var data = await res.json();
+        if (data.error) { showToast(data.error, true); input.value = body; return; }
+        loadChatMessages(currentLobby.id);
+      } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
+    };
+
+    window.clearLobbyChat = async function() {
+      if (!currentLobby || !hasGMRights) return;
+      var btn = document.getElementById('clearChatBtn');
+      if (btn && btn.dataset.confirm !== '1') {
+        btn.textContent = 'Confirm?';
+        btn.dataset.confirm = '1';
+        setTimeout(function() { if (btn) { btn.textContent = 'Clear Chat'; btn.dataset.confirm = '0'; } }, 3000);
+        return;
+      }
+      if (btn) { btn.textContent = 'Clear Chat'; btn.dataset.confirm = '0'; }
+      try {
+        var r = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        if (r.ok) {
+          lastMsgId = null;
+          var msgEl = document.getElementById('chatMessages');
+          if (msgEl) msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>';
+        }
+      } catch(e) {}
+    };
+
+    window.deleteLobbyMsg = async function(msgId) {
+      if (!currentLobby || !hasGMRights) return;
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages/' + msgId, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var el = document.getElementById('lmsg-' + msgId);
+        if (el) el.remove();
+      } catch(e) {}
+    };
+
+    // ── Chat long-press multi-select (GM only) ────────────────────────────────
+    function initChatLongPress() {
+      var msgEl = document.getElementById('chatMessages');
+      if (!msgEl || !hasGMRights) return;
+
+      function getMsgEl(target) {
+        return target.closest ? target.closest('[data-msg-id]') : null;
+      }
+
+      msgEl.addEventListener('touchstart', function(e) {
+        var el = getMsgEl(e.target);
+        if (!el) return;
+        longPressTimer = setTimeout(function() {
+          longPressTimer = null;
+          if (!chatSelectMode) enterChatSelectMode();
+          toggleMsgSelect(el);
+        }, 500);
+      }, { passive: true });
+
+      msgEl.addEventListener('touchend', function(e) {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+        else if (chatSelectMode) {
+          var el = getMsgEl(e.target);
+          if (el) { e.preventDefault(); toggleMsgSelect(el); }
+        }
+      });
+
+      msgEl.addEventListener('touchmove', function() {
+        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      }, { passive: true });
+
+      // Desktop: right-click to enter select mode
+      msgEl.addEventListener('contextmenu', function(e) {
+        var el = getMsgEl(e.target);
+        if (!el) return;
+        e.preventDefault();
+        if (!chatSelectMode) enterChatSelectMode();
+        toggleMsgSelect(el);
+      });
+
+      // Desktop: click to toggle while in select mode
+      msgEl.addEventListener('click', function(e) {
+        if (!chatSelectMode) return;
+        var el = getMsgEl(e.target);
+        if (el) toggleMsgSelect(el);
+      });
+    }
+
+    function enterChatSelectMode() {
+      chatSelectMode = true;
+      selectedMsgIds.clear();
+      var bar = document.getElementById('chatSelectBar');
+      if (bar) bar.style.display = 'flex';
+    }
+
+    window.exitChatSelectMode = function() {
+      chatSelectMode = false;
+      selectedMsgIds.clear();
+      var bar = document.getElementById('chatSelectBar');
+      if (bar) bar.style.display = 'none';
+      document.querySelectorAll('#chatMessages .chat-msg.selected').forEach(function(el) {
+        el.classList.remove('selected');
+      });
+    };
+
+    function toggleMsgSelect(el) {
+      var id = el.dataset.msgId;
+      if (selectedMsgIds.has(id)) {
+        selectedMsgIds.delete(id);
+        el.classList.remove('selected');
+      } else {
+        selectedMsgIds.add(id);
+        el.classList.add('selected');
+      }
+      var countEl = document.getElementById('chatSelectCount');
+      if (countEl) countEl.textContent = selectedMsgIds.size + ' selected';
+    }
+
+    window.deleteSelectedMsgs = async function() {
+      if (!currentLobby || !hasGMRights || selectedMsgIds.size === 0) return;
+      var ids = Array.from(selectedMsgIds);
+      exitChatSelectMode();
+      await Promise.all(ids.map(function(msgId) {
+        return fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages/' + msgId, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        }).then(function() {
+          var el = document.getElementById('lmsg-' + msgId);
+          if (el) el.remove();
+        }).catch(function() {});
+      }));
+    };
+
+    var memberPollCount = 0;
+    function startChatPoll(lobbyId) {
+      stopChatPoll();
+      stopLobbyMsgPoll();
+      memberPollCount = 0;
+      lastLobbyMsgCount = 0;
+      chatPollTimer = setInterval(function() {
+        loadChatMessages(lobbyId);
+        memberPollCount++;
+        if (memberPollCount % 3 === 0) refreshMembers();
+      }, 5000);
+      startLobbyMsgPoll();
+    }
+
+    function stopChatPoll() {
+      if (chatPollTimer) { clearInterval(chatPollTimer); chatPollTimer = null; }
+      stopLobbyMsgPoll();
+    }
+
+    function notifyDeparture(text) {
+      var msgEl = document.getElementById('worldChatMessages');
+      if (!msgEl) return;
+      var notice = document.createElement('div');
+      notice.className = 'world-msg activity-notice';
+      notice.textContent = text.replace(/^⬡\s*/, '');
+      msgEl.appendChild(notice);
+      if (msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 60) msgEl.scrollTop = msgEl.scrollHeight;
+      setTimeout(function() { if (notice.parentNode) notice.parentNode.removeChild(notice); }, 10000);
+    }
+
+    async function refreshMembers() {
+      if (!currentLobby || !currentUser) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id, { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        if (!data.members) return;
+        var membersEl = document.getElementById('membersList');
+        if (!membersEl) return;
+
+        /* Sync host transfer - update isCreator/hasGMRights when creator_uid changes */
+        if (data.lobby && data.lobby.creator_uid && data.lobby.creator_uid !== currentLobby.creator_uid) {
+          currentLobby.creator_uid = data.lobby.creator_uid;
+          isCreator = !!(currentUser && currentLobby.creator_uid === currentUser.id);
+          hasGMRights = isCreator || isPrivileged();
+          rebuildHeaderBtns();
+        }
+
+        // Detect departures vs previous snapshot
+        var newMemberMap = {};
+        data.members.forEach(function(m) { newMemberMap[m.user_id] = m; });
+        var departed = [];
+        if (Object.keys(prevMemberMap).length > 0) {
+          Object.keys(prevMemberMap).forEach(function(uid) {
+            if (!newMemberMap[uid] && !(currentUser && uid === currentUser.id)) {
+              departed.push(prevMemberMap[uid]);
+            }
+          });
+        }
+        prevMemberMap = newMemberMap;
+        var html = data.members.map(function(m) {
+          var isGM = memberIsGM(m);
+          var isSelf = currentUser && m.user_id === currentUser.id;
+          var actBtns = '';
+          if (!isSelf && hasGMRights) {
+            actBtns += '<button class="member-act-btn" onclick="muteMember(\'' + esc(m.user_id) + '\',\'' + esc(m.id) + '\')">' + (m.is_muted ? 'Unmute' : 'Mute') + '</button>';
+            actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')">Kick</button>';
+          }
+          if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')">&#9888;</button>';
+          var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+          var sheetHref = 'character_build_template.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
+          var menuItems2 = '';
+          if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
+          menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+          if (isCreator && !isSelf) {
+            menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+            menuItems2 += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
+          }
+          var cuRole2 = currentUser ? currentUser.role : '';
+          var canPrivPromote2 = !isSelf && (cuRole2 === 'OWNER' || (cuRole2 === 'ADMIN' && m.role !== 'OWNER'));
+          if (canPrivPromote2 && !isCreator) {
+            if (cuRole2 === 'OWNER') {
+              menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#9889; Summon</button>';
+            }
+            menuItems2 += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">&#128081; Promote to Host</button>';
+          }
+          var isLobbyHost2 = currentLobby && m.user_id === currentLobby.creator_uid;
+          var nameWrap2 = '<span class="member-name-wrap">' +
+            '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost2 ? '<span style="color:#b9aa00;font-size:0.72rem;margin-right:0.2rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
+            '<div class="member-name-menu">' + menuItems2 + '</div>' +
+            '<span class="member-sheet-hint">for stats &#8250;</span>' +
+            '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128196;</a>' +
+          '</span>';
+          return '<div class="member-row">' +
+            '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
+            '<div class="member-info">' +
+              nameWrap2 +
+              '<div class="member-role' + (isGM ? ' gm' : '') + '">' + memberRoleLabel(m) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
+            '</div>' +
+            '<div class="member-actions">' + actBtns + '</div>' +
+          '</div>';
+        }).join('');
+        membersEl.innerHTML = html || '<div style="padding:1rem;color:#444;font-size:0.82rem;">No members.</div>';
+        var countEl = document.querySelector('.members-head span');
+        if (countEl) countEl.textContent = 'Members (' + data.members.length + ')';
+
+        // Ghost rows + departure notices for departed members
+        departed.forEach(function(m) {
+          var name = m.display_name || m.username || 'Unknown';
+          var isAbandon = abandonedUids.has(m.user_id);
+          if (!isAbandon) {
+            // Leave: keep Player visible as a placeholder row for other members
+            var initials = name.charAt(0).toUpperCase();
+            var ghost = document.createElement('div');
+            ghost.className = 'member-row member-row-ghost';
+            ghost.innerHTML =
+              '<div class="member-avatar" style="opacity:0.35;">' + initials + '</div>' +
+              '<div class="member-info">' +
+                '<span style="color:#3a3a3a;font-size:0.85rem;">' + esc(name) + '</span>' +
+                '<div style="font-size:0.68rem;color:#333;margin-top:1px;">left - may return</div>' +
+              '</div>';
+            membersEl.appendChild(ghost);
+            setTimeout(function() { if (ghost.parentNode) ghost.parentNode.removeChild(ghost); }, 12000);
+          }
+          if (isAbandon) abandonedUids.delete(m.user_id);
+          var activityText = isAbandon
+            ? '⬡ ' + name + ' has abandoned the lobby.'
+            : '⬡ ' + name + ' has left the lobby and may return at will.';
+          // Leaving user already posts their own departure to lobby messages.
+          // Creator just needs to echo it to world chat for public visibility.
+          if (isCreator && currentUser) {
+            fetch(API_URL + '/api/world-chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+              body: JSON.stringify({ body: activityText })
+            }).then(function() { loadWorldChat(); }).catch(function(){});
+          }
+          notifyDeparture(activityText);
+        });
+      } catch(e) {}
+    }
+
+    // ===== MEMBER NAME MENU =====
+    window.toggleMemberMenu = function(e, btn) {
+      e.stopPropagation();
+      var menu = btn.parentNode.querySelector('.member-name-menu');
+      if (!menu) return;
+      var isOpen = menu.classList.contains('open');
+      document.querySelectorAll('.member-name-menu.open').forEach(function(m) {
+        m.classList.remove('open');
+        m.style.position = '';
+        m.style.top = '';
+        m.style.left = '';
+        m.style.bottom = '';
+      });
+      if (!isOpen) {
+        menu.classList.add('open');
+        // Position using fixed coords so it's never clipped by overflow:hidden parents
+        var btnRect = btn.getBoundingClientRect();
+        var menuH = menu.offsetHeight || 160;
+        var spaceBelow = window.innerHeight - btnRect.bottom;
+        menu.style.position = 'fixed';
+        menu.style.left = btnRect.left + 'px';
+        if (spaceBelow < menuH + 8) {
+          menu.style.top = '';
+          menu.style.bottom = (window.innerHeight - btnRect.top + 4) + 'px';
+        } else {
+          menu.style.bottom = '';
+          menu.style.top = (btnRect.bottom + 4) + 'px';
+        }
+      }
+    };
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.member-name-menu.open').forEach(function(m) { m.classList.remove('open'); });
+    });
+
+    // ===== MEMBER ACTIONS =====
+    window.muteMember = async function(uid, memberId) {
+      if (!currentLobby) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/members/' + uid + '/mute', {
+          method: 'PATCH',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await res.json();
+        if (data.success) openLobby(currentLobby.id);
+        else alert(data.error || 'Could not mute member.');
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    window.kickMember = async function(uid) {
+      if (!confirm('Remove this member from the lobby?')) return;
+      if (!currentLobby) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/members/' + uid, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await res.json();
+        if (data.success) openLobby(currentLobby.id);
+        else alert(data.error || 'Could not remove member.');
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    // ===== LEAVE / DELETE =====
+    /* ── INVITE POOL ── */
+    var invitePoolOpen = false;
+    var currentInviteTab = 'fellows';
+    var invitePoolData = null;
+    var invitePage = { fellows: 0, world: 0 };
+    var INVITE_PAGE_SIZE = 10;
+
+    window.toggleInvitePool = async function() {
+      var panel = document.getElementById('invitePoolPanel');
+      var arrow = document.getElementById('invitePoolArrow');
+      if (!panel) return;
+      invitePoolOpen = !invitePoolOpen;
+      panel.style.display = invitePoolOpen ? 'block' : 'none';
+      if (arrow) arrow.textContent = invitePoolOpen ? '▲' : '▼';
+      if (invitePoolOpen && !invitePoolData) await loadInvitePool();
+    };
+
+    window.switchInviteTab = function(tab) {
+      currentInviteTab = tab;
+      ['fellows','world'].forEach(function(t) {
+        var el = document.getElementById('tab' + (t === 'fellows' ? 'Fellows' : 'World'));
+        if (el) el.classList.toggle('active', t === tab);
+      });
+      renderInvitePool();
+    };
+
+    async function loadInvitePool() {
+      if (!currentLobby) return;
+      var listEl = document.getElementById('invitePoolList');
+      if (listEl) listEl.innerHTML = '<div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">Loading...</div>';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite-pool', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        invitePoolData = await res.json();
+        invitePage = { fellows: 0, world: 0 };
+        renderInvitePool();
+      } catch(e) {
+        if (listEl) listEl.innerHTML = '<div style="padding:0.75rem;color:#555;font-size:0.8rem;text-align:center;">Could not load.</div>';
+      }
+    }
+
+    function renderInvitePool() {
+      var listEl = document.getElementById('invitePoolList');
+      var pagerEl = document.getElementById('invitePoolPager');
+      if (!listEl || !invitePoolData) return;
+      var allItems = currentInviteTab === 'fellows' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
+      var page = invitePage[currentInviteTab] || 0;
+      var items = allItems.slice(page * INVITE_PAGE_SIZE, (page + 1) * INVITE_PAGE_SIZE);
+      var emptyMsg = currentInviteTab === 'fellows' ? 'No fellowship members to invite.' : 'No Players found in the world area.';
+      if (allItems.length === 0) {
+        listEl.innerHTML = '<div style="padding:0.75rem;color:#444;font-size:0.8rem;text-align:center;">' + emptyMsg + '</div>';
+        if (pagerEl) pagerEl.style.display = 'none';
+        return;
+      }
+      listEl.innerHTML = items.map(function(p) {
+        var sub = currentInviteTab === 'fellows'
+          ? esc(p.sorc_role || 'Unassessed')
+          : esc((p.sorc_role || 'PC') + (p.lobby_name ? ' - ' + p.lobby_name : ''));
+        return '<div class="invite-row">' +
+          '<div class="invite-row-info">' +
+            '<div class="invite-row-name">' + esc(p.display_name || p.username) + '</div>' +
+            '<div class="invite-row-sub">' + sub + '</div>' +
+          '</div>' +
+          '<button class="invite-row-btn" onclick="inviteFromPool(\'' + esc(p.username) + '\')">Invite</button>' +
+        '</div>';
+      }).join('');
+      var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
+      if (pagerEl) {
+        if (totalPages <= 1) {
+          pagerEl.style.display = 'none';
+        } else {
+          pagerEl.style.display = 'flex';
+          pagerEl.innerHTML =
+            '<button onclick="invitePageNav(-1)" style="padding:2px 10px;background:none;border:1px solid #2a2a2a;color:#888;border-radius:4px;font-size:0.74rem;cursor:pointer;"' + (page === 0 ? ' disabled' : '') + '>← Prev</button>' +
+            '<span style="color:#555;font-size:0.74rem;">' + (page+1) + ' / ' + totalPages + '</span>' +
+            '<button onclick="invitePageNav(1)" style="padding:2px 10px;background:none;border:1px solid #2a2a2a;color:#888;border-radius:4px;font-size:0.74rem;cursor:pointer;"' + (page >= totalPages-1 ? ' disabled' : '') + '>Next →</button>';
+        }
+      }
+    }
+
+    window.invitePageNav = function(dir) {
+      var allItems = currentInviteTab === 'fellows' ? (invitePoolData.fellowships || []) : (invitePoolData.others || []);
+      var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
+      var p = (invitePage[currentInviteTab] || 0) + dir;
+      if (p < 0 || p >= totalPages) return;
+      invitePage[currentInviteTab] = p;
+      renderInvitePool();
+    };
+
+    window.inviteFromPool = async function(username) {
+      if (!currentLobby) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ username: username })
+        });
+        var data = await res.json();
+        var listEl = document.getElementById('invitePoolList');
+        if (data.success) {
+          /* Flash the row green briefly */
+          var btns = listEl ? listEl.querySelectorAll('.invite-row-btn') : [];
+          btns.forEach(function(b) {
+            if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf(username) !== -1) {
+              b.textContent = 'Sent!'; b.style.background = '#1a5a1a'; b.style.borderColor = '#2a8a2a';
+              setTimeout(function() { b.textContent = 'Invite'; b.style.background = ''; b.style.borderColor = ''; }, 2500);
+            }
+          });
+        } else {
+          alert(data.error || 'Could not send invite.');
+        }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    /* ── Chat tab switcher ─────────────────────────────────── */
+    window.switchChatTab = function(tab) {
+      document.querySelectorAll('.chat-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.chat-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+      var btn = document.querySelector('.chat-tab[data-tab="' + tab + '"]');
+      if (btn) btn.classList.add('active');
+      var pane = document.getElementById('chatPane-' + tab);
+      if (pane) pane.classList.add('active');
+      var badge = document.getElementById('badge-' + tab);
+      if (badge) badge.style.display = 'none';
+      if (tab === 'world') {
+        loadWorldChat();
+        startWorldChatPoll();
+      } else if (tab === 'msgs') {
+        stopWorldChatPoll();
+        loadLobbyMsgs();
+      } else if (tab === 'activity') {
+        stopWorldChatPoll();
+        loadActivityMessages();
+      } else {
+        stopWorldChatPoll();
+      }
+    };
+
+
+    window.toggleInvitePanel = function() {
+      var p = document.getElementById('invitePanel');
+      if (!p) return;
+      p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+    };
+
+    window.copyLobbyCode = function() {
+      if (!currentLobby) return;
+      var code = currentLobby.lobby_code;
+      var msgEl = document.getElementById('inviteMsg');
+      navigator.clipboard.writeText(code).then(function() {
+        if (msgEl) { msgEl.style.color = '#4caf50'; msgEl.textContent = 'Code copied!'; setTimeout(function() { msgEl.textContent = ''; }, 2000); }
+      }).catch(function() { prompt('Copy this lobby code:', code); });
+    };
+
+    window.sendInvite = async function() {
+      var input = document.getElementById('inviteUsername');
+      var msgEl = document.getElementById('inviteMsg');
+      if (!input || !currentLobby) return;
+      var username = input.value.trim();
+      if (!username) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ username: username })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.style.color = '#4caf50'; msgEl.textContent = 'Invite sent to ' + username + '!';
+          input.value = '';
+          setTimeout(function() { msgEl.textContent = ''; }, 3000);
+        } else { msgEl.style.color = '#c93f35'; msgEl.textContent = data.error || 'Failed to send invite.'; }
+      } catch(e) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.confirmAbandon = function(btn) {
+      btn.outerHTML =
+        '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
+          '<span style="font-size:0.75rem;color:#888;">Remove yourself?</span>' +
+          '<button class="leave-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="abandonLobby()">Yes</button>' +
+          '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelAbandon(this)">No</button>' +
+        '</span>';
+    };
+
+    window.cancelAbandon = function(btn) {
+      var wrap = btn.closest('span');
+      if (wrap) wrap.outerHTML = '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
+    };
+
+    window.leaveLobby = async function() {
+      if (!currentLobby) return;
+      var lobbyId = currentLobby.id;
+      var myName = currentUser ? (currentUser.display_name || currentUser.username || 'A Player') : 'A Player';
+      // Post departure activity FIRST and await it - must arrive before the leave DELETE
+      // so the member check on the messages endpoint still passes
+      try {
+        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: '⬡ ' + myName + ' has left the lobby and may return at will.' })
+        });
+      } catch(e) {}
+      leftLobbyIds.add(lobbyId);
+      removeJoinedLobby(lobbyId);
+      sessionStorage.removeItem('activeLobbyId');
+      try {
+        backToList();
+      } catch(e) {
+        window.location.reload();
+        return;
+      }
+      try {
+        var leaveRes = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
+          method: 'POST',
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          keepalive: true
+        });
+        if (!leaveRes.ok) showToast('Warning: could not confirm leave - refresh if needed.', true);
+      } catch(e) {
+        showToast('Warning: could not confirm leave - refresh if needed.', true);
+      }
+    };
+
+    window.abandonLobby = async function() {
+      if (!currentLobby || !currentUser) return;
+      var lobbyId = currentLobby.id;
+      var myName = currentUser.display_name || currentUser.username || 'A Player';
+      // Post departure activity FIRST and await it
+      try {
+        await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: '⬡ ' + myName + ' has abandoned the lobby.' })
+        });
+      } catch(e) {}
+      abandonedUids.add(currentUser.id);
+      leftLobbyIds.add(lobbyId);
+      removeJoinedLobby(lobbyId);
+      backToList();
+      try {
+        var leaveRes = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
+          method: 'POST',
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          keepalive: true
+        });
+        if (!leaveRes.ok) showToast('Warning: could not confirm abandon - refresh if needed.', true);
+      } catch(e) {
+        showToast('Warning: could not confirm abandon - refresh if needed.', true);
+      }
+    };
+
+    window.deleteLobby = async function() {
+      if (!confirm('Close this lobby? A new lobby code will be generated, visible only to the new host. This cannot be undone.')) return;
+      if (!currentLobby) return;
+      sessionStorage.removeItem('activeLobbyId');
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id, {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        backToList();
+      } catch(e) { backToList(); }
+    };
+
+    // ===== LAUNCH ROOM =====
+    window.launchRoom = async function() {
+      if (!currentLobby) return;
+
+      /* ── Pre-flight: member count ── */
+      var memberCount = Object.keys(prevMemberMap).length;
+      if (memberCount < 3) {
+        showToast('At least 2 Players and a GM are required to launch a room.', true);
+        return;
+      }
+
+      /* ── Pre-flight: ready check ── */
+      if (!lastReadyCheckData) {
+        showToast('Run a ready check first - all Players must confirm ready before launching.', true);
+        return;
+      }
+      var readyUids = (lastReadyCheckData.responses || [])
+        .filter(function(r) { return r.status === 'ready'; })
+        .map(function(r) { return r.user_id; });
+      var notReady = Object.keys(prevMemberMap).filter(function(uid) {
+        return readyUids.indexOf(uid) === -1;
+      });
+      if (notReady.length > 0) {
+        var names = notReady.map(function(uid) {
+          var m = prevMemberMap[uid];
+          return m ? (m.display_name || m.username) : uid;
+        }).join(', ');
+        if (!confirm('Not everyone is ready: ' + names + '\n\nLaunch anyway?')) return;
+      }
+
+      var roomName = prompt('Name this campaign room:');
+      if (!roomName || !roomName.trim()) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ room_name: roomName.trim() })
+        });
+        var data = await res.json();
+        if (data.success && data.room_id) {
+          window.location.href = 'room.html?id=' + data.room_id;
+        } else { showToast(data.error || 'Could not launch room.', true); }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    window.enterRoom = function(roomId) {
+      window.location.href = 'room.html?id=' + roomId;
+    };
+
+    // ===== REPORT MODAL =====
+    window.openReportModal = function(uid, username) {
+      reportTargetUid = uid;
+      reportTargetName = username;
+      selectedReportReason = null;
+      document.querySelectorAll('.reason-btn').forEach(function(b) { b.classList.remove('selected'); });
+      document.getElementById('reportDetail').value = '';
+      document.getElementById('reportMsg').textContent = '';
+      document.querySelector('.modal-box h3').textContent = '⚠️ Report: ' + esc(username);
+      document.getElementById('reportModal').classList.remove('hidden');
+    };
+
+    window.closeReportModal = function() {
+      document.getElementById('reportModal').classList.add('hidden');
+      reportTargetUid = null;
+      selectedReportReason = null;
+    };
+
+    window.selectReason = function(r) {
+      selectedReportReason = r;
+      document.querySelectorAll('.reason-btn').forEach(function(b) {
+        b.classList.toggle('selected', b.textContent === r);
+      });
+    };
+
+    window.submitReport = async function() {
+      var msgEl = document.getElementById('reportMsg');
+      if (!selectedReportReason) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Select a reason.'; return; }
+      if (!currentLobby || !reportTargetUid) return;
+      var details = document.getElementById('reportDetail').value.trim();
+      msgEl.className = 'l-msg'; msgEl.textContent = 'Submitting...';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/report/' + reportTargetUid, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ reason: selectedReportReason, details: details })
+        });
+        var data = await res.json();
+        if (data.success) {
+          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Report submitted. This member has been blocked.';
+          setTimeout(closeReportModal, 1500);
+        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to submit report.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    // ===== WORLD CHAT =====
+    function parseWorldBody(body, msgId, summonOnclick, lfgOnclick) {
+      var sumBadgeOnclick = summonOnclick
+        ? summonOnclick
+        : "respondToWorldMsg('" + msgId + "','SUM')";
+      var lfgBadgeOnclick = lfgOnclick
+        ? lfgOnclick
+        : "respondToWorldMsg('" + msgId + "','LFG')";
+      return esc(body)
+        .replace(/LFM:/g, '<span class="lfm-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFM\')">LFM:</span>')
+        .replace(/LFG:/g, '<span class="lfg-badge" onclick="' + lfgBadgeOnclick.replace(/"/g, '&quot;') + '">LFG:</span>')
+        .replace(/SUM:/g, '<span class="sum-badge" onclick="' + sumBadgeOnclick.replace(/"/g, '&quot;') + '">SUM:</span>');
+    }
+
+    async function loadWorldChat() {
+      var msgEl = document.getElementById('worldChatMessages');
+      var inputRow = document.getElementById('worldChatInputRow');
+      if (!msgEl || !currentUser) return;
+      try {
+        var res = await fetch(API_URL + '/api/world-chat', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var msgs = data.messages || [];
+        if (msgs.length === 0) {
+          msgEl.innerHTML = '<div class="world-chat-empty">No world chat messages yet. Active lobby hosts can post here.</div>';
+        } else {
+          var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
+          // Build name→ordered UIDs map for disambiguation
+          var nameUids = {};
+          msgs.forEach(function(m) {
+            if (!m.sender_uid || !m.sender_name) return;
+            if (!nameUids[m.sender_name]) nameUids[m.sender_name] = [];
+            if (nameUids[m.sender_name].indexOf(m.sender_uid) === -1) nameUids[m.sender_name].push(m.sender_uid);
+          });
+          worldChatNameUids = nameUids;
+          msgEl.innerHTML = msgs.map(function(m) {
+            var isHost = !!m.sender_lobby_name;
+            var nameClass = 'wmsg-name' + (isHost ? ' is-host' : '');
+            // Append (N) if multiple UIDs share this display name
+            var uidsForName = m.sender_uid && m.sender_name ? nameUids[m.sender_name] : null;
+            var displayName = m.sender_name;
+            if (uidsForName && uidsForName.length > 1) {
+              displayName = m.sender_name + '(' + (uidsForName.indexOf(m.sender_uid) + 1) + ')';
+            }
+            var lobbyTag = m.sender_lobby_name ? '<span class="wmsg-lobby">[' + esc(m.sender_lobby_name) + ']</span>' : '';
+            /* Respond messages: extract username from embedded URL for char-sheet link,
+               strip the 📋 prefix and trailing raw URL before rendering */
+            var respondMatch = m.body && m.body.match(/public-profile\.html\?username=([^&\s\n"<]+)/);
+            var sheetIcon = respondMatch
+              ? '<a href="character_build_template.html?username=' + respondMatch[1] + '" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128196;</a>'
+              : '';
+            var rawBody = m.body || '';
+            var isActivity = rawBody.startsWith('⬡ ');
+            if (respondMatch) rawBody = rawBody.replace(/^📋\s*/, '').replace(/\s*[-\-]+\s*https?:\/\/\S+$/, '');
+            if (isActivity) rawBody = rawBody.replace(/^⬡\s*/, '');
+            var isSelf = currentUser && m.sender_uid === currentUser.id;
+            var hostLobbyId = (currentLobby && hasGMRights) ? currentLobby.id : myActiveLobbyId;
+            var canSummon = !!(hostLobbyId && !isSelf && m.sender_uid);
+            var isSummonConfirm = !!(respondMatch && rawBody.indexOf('confirmed') >= 0);
+            var summonOnclick = (isSummonConfirm && canSummon && m.sender_uid)
+              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(displayName) + "','" + esc(hostLobbyId) + "')"
+              : null;
+            var lfgOnclick = (canSummon && m.sender_uid)
+              ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(displayName) + "','" + esc(hostLobbyId) + "')"
+              : null;
+            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick, lfgOnclick);
+            var nameEl = '<span class="' + nameClass + '">' + esc(displayName || 'Unknown') + '</span>';
+            if (isActivity) {
+              return '<div class="world-msg is-activity">&#8894; ' + bodyHtml + '<span class="wmsg-time">' + timeAgo(m.created_at) + '</span></div>';
+            }
+            return '<div class="world-msg">' +
+              nameEl +
+              sheetIcon +
+              lobbyTag + ': ' +
+              '<span class="wmsg-body">' + bodyHtml + '</span>' +
+              '<span class="wmsg-time">' + timeAgo(m.created_at) + '</span>' +
+            '</div>';
+          }).join('');
+          if (atBottom) msgEl.scrollTop = msgEl.scrollHeight;
+          var activeTabEl = document.querySelector('.chat-tab.active');
+          if (!activeTabEl || activeTabEl.dataset.tab !== 'world') {
+            var wb = document.getElementById('badge-world');
+            if (wb) wb.style.display = '';
+          }
+        }
+        // Hosts get full input; non-hosts get LFG:-only input
+        if (inputRow && currentUser) {
+          var isActiveHost = !!(currentLobby && isCreator);
+          if (!isActiveHost && isPrivileged()) isActiveHost = true;
+          inputRow.style.display = 'flex';
+          var wcInput = document.getElementById('worldChatInput');
+          if (wcInput) {
+            if (isActiveHost) {
+              wcInput.placeholder = 'Post to world (LFM: or LFG:)...';
+              wcInput.maxLength = 400;
+              wcInput.dataset.hostOnly = 'false';
+            } else {
+              wcInput.placeholder = 'LFG:YourTag (e.g. LFG:LVL5-Lock-Hag)';
+              wcInput.maxLength = 40;
+              wcInput.dataset.hostOnly = 'true';
+            }
+          }
+        }
+      } catch(e) {}
+    }
+
+    window.sendWorldChat = async function() {
+      var input = document.getElementById('worldChatInput');
+      if (!input || !currentUser) return;
+      var body = input.value.trim();
+      if (!body) return;
+
+      // Non-hosts may only post LFG: tags
+      if (input.dataset.hostOnly === 'true') {
+        if (!/^LFG:/i.test(body)) { showToast('Only LFG: posts are allowed. Start your message with LFG:', true); return; }
+        if (body.length > 40) { showToast('LFG: tags must be 40 characters or less.', true); return; }
+      }
+
+      // SUM:Name command - resolve to UID and send summon directly
+      var sumMatch = body.match(/^SUM:(.+)$/i);
+      if (sumMatch) {
+        var lobbyId = (currentLobby && hasGMRights) ? currentLobby.id : myActiveLobbyId;
+        if (!lobbyId) { showToast('You need an active lobby to summon.', true); return; }
+        var sumName = sumMatch[1].trim();
+        var indexMatch = sumName.match(/^(.+)\((\d+)\)$/);
+        var baseName = indexMatch ? indexMatch[1].trim() : sumName;
+        var nameIndex = indexMatch ? parseInt(indexMatch[2]) - 1 : 0;
+        var uids = worldChatNameUids[baseName];
+        var uid = uids && uids[nameIndex];
+        if (!uid) { showToast('Player "' + sumName + '" not found in world chat.', true); return; }
+        input.value = '';
+        try {
+          var sr = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/summon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ to_uid: uid, note: null })
+          });
+          var sd = await sr.json();
+          if (sd.success) showToast('Summon sent to ' + baseName + '!');
+          else showToast(sd.error || 'Could not send summon.', true);
+        } catch(e) { showToast('Connection error.', true); }
+        return;
+      }
+
+      input.value = '';
+      try {
+        var res = await fetch(API_URL + '/api/world-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        var data = await res.json();
+        if (data.error) { alert(data.error); input.value = body; return; }
+        loadWorldChat();
+      } catch(e) {}
+    };
+
+    window.respondToWorldMsg = async function(msgId, type) {
+      if (!currentUser || !currentUser.authKey) { alert('Please sign in to respond.'); return; }
+      try {
+        var res = await fetch(API_URL + '/api/world-chat/' + msgId + '/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ type: type })
+        });
+        var data = await res.json();
+        if (data.success) {
+          loadWorldChat();
+        } else { alert(data.error || 'Could not respond.'); }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    function startWorldChatPoll() {
+      stopWorldChatPoll();
+      worldChatPollTimer = setInterval(loadWorldChat, 5000);
+    }
+
+    function stopWorldChatPoll() {
+      if (worldChatPollTimer) { clearInterval(worldChatPollTimer); worldChatPollTimer = null; }
+    }
+
+    // ===== LOBBY MESSAGES TAB =====
+    var lastLobbyMsgCount = 0;
+    var lobbyMsgPollTimer = null;
+
+    async function loadLobbyMsgs() {
+      if (!currentUser || !currentLobby) return;
+      var el = document.getElementById('lobbyMsgsList');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/direct-messages', {
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        if (!res.ok) { el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Could not load messages.</div>'; return; }
+        var data = await res.json();
+        var msgs = data.messages || [];
+        if (msgs.length === 0) {
+          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div>';
+          return;
+        }
+        var prevCount = parseInt(el.dataset.msgCount || '0');
+        var isNew = msgs.length > prevCount;
+        el.dataset.msgCount = String(msgs.length);
+        var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+        el.innerHTML = msgs.map(function(m) {
+          var isMine = currentUser && m.sender_uid === currentUser.id;
+          var name = esc(m.sender_name || 'Unknown');
+          var preview = esc((m.body || '').slice(0, 200));
+          var timeStr = m.created_at ? timeAgo(m.created_at) : '';
+          return '<div class="chat-msg" style="padding:0.45rem 0.5rem;border-bottom:1px solid #1a1a1a;">' +
+            '<span style="font-weight:bold;font-size:0.78rem;' + (isMine ? 'color:#9370db;' : 'color:#b9aa00;') + '">' + name + '</span>' +
+            '<span class="msg-time" style="margin-left:0.4rem;">' + timeStr + '</span>' +
+            '<div style="color:#b0a0c8;font-size:0.82rem;margin-top:2px;">' + preview + '</div>' +
+          '</div>';
+        }).join('');
+        if (atBottom) el.scrollTop = el.scrollHeight;
+        if (isNew) {
+          var activeTab = document.querySelector('.chat-tab.active');
+          if (!activeTab || activeTab.dataset.tab !== 'msgs') {
+            var badge = document.getElementById('badge-msgs');
+            if (badge) badge.style.display = '';
+          }
+        }
+      } catch(e) {}
+    }
+
+    window.openLobbyMsgModal = function(toUid, toName) {
+      if (!currentLobby) return;
+      window._lobbyMsgTargetUid = toUid;
+      var title = document.getElementById('lobbyMsgModalTitle');
+      if (title) title.textContent = 'Message ' + toName;
+      var input = document.getElementById('lobbyMsgModalInput');
+      if (input) { input.value = ''; input.placeholder = 'Message to ' + toName + '...'; }
+      var modal = document.getElementById('lobbyMsgModal');
+      if (modal) { modal.style.display = 'flex'; setTimeout(function() { if (input) input.focus(); }, 50); }
+    };
+
+    window.closeLobbyMsgModal = function() {
+      var modal = document.getElementById('lobbyMsgModal');
+      if (modal) modal.style.display = 'none';
+      window._lobbyMsgTargetUid = null;
+    };
+
+    window.submitLobbyMsgModal = async function() {
+      var input = document.getElementById('lobbyMsgModalInput');
+      if (!input || !currentUser || !window._lobbyMsgTargetUid) return;
+      var body = input.value.trim();
+      if (!body) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/direct-messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ to_uid: window._lobbyMsgTargetUid, body: body })
+        });
+        var data = await res.json();
+        if (data.success) {
+          input.value = '';
+          closeLobbyMsgModal();
+          showToast('Message sent.');
+          loadLobbyMsgs();
+        } else { showToast(data.error || 'Could not send message.', true); }
+      } catch(e) { showToast('Connection error.', true); }
+    };
+
+    function startLobbyMsgPoll() {
+      if (lobbyMsgPollTimer) clearInterval(lobbyMsgPollTimer);
+      lobbyMsgPollTimer = setInterval(function() {
+        var activeTab = document.querySelector('.chat-tab.active');
+        if (activeTab && activeTab.dataset.tab === 'msgs') { loadLobbyMsgs(); }
+        else { loadLobbyMsgs(); } // always load to detect new count
+      }, 8000);
+    }
+    function stopLobbyMsgPoll() {
+      if (lobbyMsgPollTimer) { clearInterval(lobbyMsgPollTimer); lobbyMsgPollTimer = null; }
+    }
+
+    // ===== MAKE HOST =====
+    window.makeHost = async function(uid, name, lobbyId) {
+      if (!lobbyId || !currentUser) return;
+      if (!confirm('Transfer host status to ' + name + '? You will no longer be the host of this lobby.')) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/transfer-host', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ new_host_uid: uid })
+        });
+        var data = await res.json();
+        if (data.success) {
+          showToast(name + ' is now the host.');
+          openLobby(lobbyId);
+        } else {
+          showToast(data.error || 'Transfer failed.', true);
+        }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    // ===== SUMMON FEATURE =====
+    window.summonPlayer = function(uid, name, lobbyId) {
+      var targetLobbyId = lobbyId || (currentLobby && currentLobby.id);
+      if (!targetLobbyId) return;
+      var targetLobbyName = (currentLobby && currentLobby.id == targetLobbyId) ? (currentLobby.name || 'this lobby') : 'your lobby';
+      pendingSummonTarget = { uid: uid, name: name, lobbyId: targetLobbyId };
+      document.getElementById('summonOutDesc').textContent =
+        'Send a summon to ' + name + ' for "' + targetLobbyName + '". They will see your lobby details and can accept or deny.';
+      document.getElementById('summonNoteInput').value = '';
+      document.getElementById('summonOutModal').style.display = 'flex';
+    };
+
+    window.closeSummonModal = function() {
+      document.getElementById('summonOutModal').style.display = 'none';
+      pendingSummonTarget = null;
+    };
+
+    window.confirmSummon = async function() {
+      if (!pendingSummonTarget || !currentUser) return;
+      var lobbyId = pendingSummonTarget.lobbyId || (currentLobby && currentLobby.id);
+      if (!lobbyId) { showToast('You need an active lobby to summon Players.', true); closeSummonModal(); return; }
+      var note = document.getElementById('summonNoteInput').value.trim();
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/summon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ to_uid: pendingSummonTarget.uid, note: note || null })
+        });
+        var data;
+        try { data = await res.json(); } catch(je) { data = {}; }
+        closeSummonModal();
+        if (data.success) {
+          showToast('Summon sent to ' + pendingSummonTarget.name + '! They\'ll see it when active.');
+        } else if (res.status === 403) {
+          showToast('Only the active host can send summons.', true);
+        } else if (res.status === 404) {
+          showToast(data.error || 'Lobby or Player not found.', true);
+        } else if (res.status === 400) {
+          showToast(data.error || 'Cannot summon this Player.', true);
+        } else if (!res.ok) {
+          showToast('Summon failed (server error ' + res.status + '). Try again.', true);
+        } else {
+          showToast(data.error || 'Could not send summon.', true);
+        }
+      } catch(e) {
+        closeSummonModal();
+        showToast('Connection error - check your internet and try again.', true);
+      }
+    };
+
+    async function checkPendingSummons() {
+      if (!currentUser || !currentUser.authKey) return;
+      if (document.getElementById('activeSummonCard')) return;
+      try {
+        var res = await fetch(API_URL + '/api/summons/pending', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var summons = data.summons || [];
+        if (summons.length === 0) return;
+        var s = summons[0];
+        activeSummonId = s.id;
+        activeSummonLobbyId = s.lobby_id;
+        var recipientName = (currentUser.display_name || currentUser.username || 'you');
+        var card = document.createElement('div');
+        card.id = 'activeSummonCard';
+        card.className = 'world-msg';
+        card.innerHTML =
+          '<span class="sum-badge">SUM:</span> ' +
+          '<span class="wmsg-body">' +
+            esc(s.from_name) + ' wants to summon ' + esc(recipientName) +
+            (s.note ? ' - <em style="color:#aaa;font-size:0.76rem;">' + esc(s.note) + '</em>' : '') +
+          '</span>' +
+          '<button class="sum-accept-btn" onclick="respondSummon(true)">Accept</button>' +
+          '<button class="sum-decline-btn" onclick="respondSummon(false)">Decline</button>';
+        var wcEl = document.getElementById('worldChatMessages');
+        if (wcEl && wcEl.parentNode) wcEl.parentNode.insertBefore(card, wcEl);
+      } catch(e) {}
+    }
+
+    window.respondSummon = async function(accept) {
+      if (!activeSummonId || !currentUser) return;
+      var summonId = activeSummonId;
+      var lobbyId = activeSummonLobbyId;
+      activeSummonId = null;
+      activeSummonLobbyId = null;
+      var card = document.getElementById('activeSummonCard');
+      if (card) card.remove();
+      try {
+        var res = await fetch(API_URL + '/api/summons/' + summonId + '/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ accept: accept })
+        });
+        var data = await res.json();
+        if (accept && data.lobby_id) {
+          showToast('Joining lobby...');
+          setTimeout(function() { openLobby(data.lobby_id); }, 500);
+        } else if (!accept) {
+          showToast('Summon declined.');
+        } else {
+          showToast(data.error || 'Could not respond.', true);
+        }
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    function startSummonPoll() {
+      stopSummonPoll();
+      summonPollTimer = setInterval(checkPendingSummons, 10000);
+      checkPendingSummons();
+    }
+
+    function stopSummonPoll() {
+      if (summonPollTimer) { clearInterval(summonPollTimer); summonPollTimer = null; }
+    }
+
+    // ===== READY CHECK =====
+    var RC_DURATION = 20; /* seconds */
+
+    function handleReadyCheckPoll(rc) {
+      if (!rc) {
+        var o = document.getElementById('readyCheckOverlay');
+        if (o) o.classList.add('hidden');
+        stopReadyCheckTimer();
+        currentReadyCheckId = null;
+        hasRespondedToReadyCheck = false;
+        readyCheckDismissed = false;
+        readyCheckInitiatedAt = null;
+        lastReadyCheckData = null;
+        return;
+      }
+      /* New check always resets dismissed state regardless of prior check */
+      if (rc.check_id !== currentReadyCheckId) {
+        currentReadyCheckId = rc.check_id;
+        readyCheckInitiatedAt = rc.initiated_at;
+        lastReadyCheckData = rc;
+        /* If the check already expired (e.g. rejoining after leaving), don't replay it */
+        var rcElapsed = Math.floor((Date.now() - new Date(rc.initiated_at).getTime()) / 1000);
+        if (rcElapsed >= RC_DURATION) {
+          hasRespondedToReadyCheck = true;
+          readyCheckDismissed = true;
+          return;
+        }
+        hasRespondedToReadyCheck = false;
+        readyCheckDismissed = false;
+        playReadyCheckSound();
+        startReadyCheckTimer();
+        renderReadyCheckOverlay(rc);
+        return;
+      }
+      if (readyCheckDismissed) return;
+      lastReadyCheckData = rc;
+      renderReadyCheckOverlay(rc);
+    }
+
+    function renderReadyCheckOverlay(rc) {
+      var overlay = document.getElementById('readyCheckOverlay');
+      if (!overlay || readyCheckDismissed) return;
+      overlay.classList.remove('hidden');
+      var subEl = document.getElementById('rcSub');
+      if (subEl) subEl.textContent = rc.initiated_name + ' called a ready check';
+      var listEl = document.getElementById('rcList');
+      if (listEl) {
+        var responseMap = {};
+        (rc.responses || []).forEach(function(r) { responseMap[r.user_id] = r.status; });
+        var members = Object.values(prevMemberMap);
+        listEl.innerHTML = members.map(function(m) {
+          var st = responseMap[m.user_id];
+          var icon = st === 'ready'     ? '<span class="rc-icon" style="color:#4caf50;">&#10003;</span>'
+                   : st === 'not_ready' ? '<span class="rc-icon" style="color:#c0392b;">&#10007;</span>'
+                   : '<span class="rc-icon" style="color:#444;">?</span>';
+          return '<li>' + icon + esc(m.display_name || m.username || 'Member') + '</li>';
+        }).join('');
+      }
+      var btnsEl = document.getElementById('rcBtns');
+      if (btnsEl) btnsEl.style.display = hasRespondedToReadyCheck ? 'none' : 'flex';
+    }
+
+    function startReadyCheckTimer() {
+      stopReadyCheckTimer();
+      readyCheckTimerInterval = setInterval(function() {
+        if (!readyCheckInitiatedAt) return;
+        var elapsed = Math.floor((Date.now() - new Date(readyCheckInitiatedAt).getTime()) / 1000);
+        var timeLeft = Math.max(0, RC_DURATION - elapsed);
+        var timerEl = document.getElementById('rcTimer');
+        if (timerEl) {
+          timerEl.textContent = '✓ :' + timeLeft;
+          timerEl.className = 'rc-timer' + (timeLeft <= 5 ? ' urgent' : '');
+        }
+        if (timeLeft <= 0) {
+          stopReadyCheckTimer();
+          if (!readyCheckDismissed) {
+            if (!hasRespondedToReadyCheck) expireReadyCheck();
+            else {
+              readyCheckDismissed = true;
+              var ov = document.getElementById('readyCheckOverlay');
+              if (ov) ov.classList.add('hidden');
+            }
+          }
+        }
+      }, 500);
+    }
+
+    function stopReadyCheckTimer() {
+      if (readyCheckTimerInterval) { clearInterval(readyCheckTimerInterval); readyCheckTimerInterval = null; }
+    }
+
+    function expireReadyCheck() {
+      hasRespondedToReadyCheck = true;
+      readyCheckDismissed = true;
+      var btnsEl = document.getElementById('rcBtns');
+      if (btnsEl) btnsEl.style.display = 'none';
+      var overlay = document.getElementById('readyCheckOverlay');
+      if (overlay) overlay.classList.add('hidden');
+      /* Post "did not accept" to lobby chat */
+      if (currentLobby && currentUser && currentReadyCheckId) {
+        var name = currentUser.display_name || currentUser.username || 'Unknown';
+        postReadyCheckChatMsg(name + ' did not accept ready check');
+        /* Also record not_ready so the host's list updates */
+        fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ check_id: currentReadyCheckId, status: 'not_ready' })
+        }).catch(function(){});
+      }
+    }
+
+    async function postReadyCheckChatMsg(text) {
+      if (!currentLobby || !currentUser) return;
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: text })
+        });
+        loadChatMessages(currentLobby.id);
+      } catch(e) {}
+    }
+
+    function playReadyCheckSound() {
+      var ctx;
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
+      if (ctx.state === 'suspended') ctx.resume();
+      var master = ctx.createGain();
+      master.gain.value = 1.0;
+      master.connect(ctx.destination);
+      var now = ctx.currentTime;
+
+      if (lobbyTheme === 'terminal') {
+        /* Sci-fi klaxon - three sharp two-tone bursts */
+        [0, 0.42, 0.84].forEach(function(off) {
+          [[880, 0], [660, 0.20]].forEach(function(pair) {
+            var t = now + off + pair[1];
+            var osc = ctx.createOscillator();
+            osc.type = 'square';
+            osc.frequency.value = pair[0];
+            var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 2200;
+            var g = ctx.createGain();
+            g.gain.setValueAtTime(0.42, t);
+            g.gain.linearRampToValueAtTime(0.36, t + 0.16);
+            g.gain.linearRampToValueAtTime(0, t + 0.19);
+            osc.connect(lpf); lpf.connect(g); g.connect(master);
+            osc.start(t); osc.stop(t + 0.22);
+          });
+        });
+        /* Sub-bass pulse on each burst */
+        [0, 0.42, 0.84].forEach(function(off) {
+          var osc = ctx.createOscillator();
+          osc.type = 'sine'; osc.frequency.value = 80;
+          var g = ctx.createGain();
+          g.gain.setValueAtTime(0.5, now + off);
+          g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.28);
+          osc.connect(g); g.connect(master);
+          osc.start(now + off); osc.stop(now + off + 0.30);
+        });
+
+      } else if (lobbyTheme === 'veilwood') {
+        /* Fantasy horn fanfare - rising four-note call */
+        var hornNotes = [392, 523, 659, 784]; /* G4 C5 E5 G5 */
+        var cursor = now;
+        hornNotes.forEach(function(freq, i) {
+          var dur = i < 3 ? 0.24 : 0.75;
+          [1, 2, 3].forEach(function(h) {
+            var osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = freq * h;
+            var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = i < 3 ? 2400 : 3200;
+            var g = ctx.createGain();
+            var vol = [0.30, 0.14, 0.07][h - 1];
+            g.gain.setValueAtTime(0, cursor);
+            g.gain.linearRampToValueAtTime(vol, cursor + 0.05);
+            g.gain.setValueAtTime(vol * 0.85, cursor + dur - 0.06);
+            g.gain.linearRampToValueAtTime(0, cursor + dur + 0.10);
+            osc.connect(lpf); lpf.connect(g); g.connect(master);
+            osc.start(cursor); osc.stop(cursor + dur + 0.15);
+          });
+          cursor += i < 3 ? 0.26 : 0;
+        });
+
+      } else {
+        /* Default - bright bell chime trio */
+        [523, 659, 784].forEach(function(freq, i) {
+          var t = now + i * 0.20;
+          [1, 2.756, 5.404].forEach(function(h, j) {
+            var osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq * h;
+            var g = ctx.createGain();
+            var pk = [0.38, 0.15, 0.07][j];
+            var dec = [1.1, 0.55, 0.28][j];
+            g.gain.setValueAtTime(pk, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+            osc.connect(g); g.connect(master);
+            osc.start(t); osc.stop(t + dec + 0.05);
+          });
+        });
+      }
+
+      setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
+    }
+
+    window.initiateReadyCheck = async function() {
+      if (!currentLobby || !currentUser || !isCreator) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await res.json();
+        if (!data.success) { showToast(data.error || 'Could not start ready check.', true); return; }
+        currentReadyCheckId = data.check_id;
+        readyCheckInitiatedAt = new Date().toISOString();
+        hasRespondedToReadyCheck = false;
+        readyCheckDismissed = false;
+        playReadyCheckSound();
+        startReadyCheckTimer();
+        loadChatMessages(currentLobby.id);
+      } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    window.respondReadyCheck = async function(status) {
+      if (!currentLobby || !currentUser || !currentReadyCheckId) return;
+      hasRespondedToReadyCheck = true;
+      stopReadyCheckTimer();
+      var btnsEl = document.getElementById('rcBtns');
+      if (btnsEl) btnsEl.style.display = 'none';
+      try {
+        await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/ready-check/respond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ check_id: currentReadyCheckId, status: status })
+        });
+        /* Immediately patch lastReadyCheckData so launchRoom sees this response
+           without waiting for the next poll cycle */
+        if (lastReadyCheckData && currentUser) {
+          var patched = (lastReadyCheckData.responses || []).filter(function(r) { return r.user_id !== currentUser.id; });
+          patched.push({ user_id: currentUser.id, status: status });
+          lastReadyCheckData = Object.assign({}, lastReadyCheckData, { responses: patched });
+        }
+        if (status === 'ready') {
+          var name = currentUser.display_name || currentUser.displayName || currentUser.username || 'Unknown';
+          await postReadyCheckChatMsg(name + ' is ready to launch room');
+        } else {
+          loadChatMessages(currentLobby.id);
+        }
+      } catch(e) {}
+    };
+
+    window.dismissReadyCheck = function() {
+      readyCheckDismissed = true;
+      stopReadyCheckTimer();
+      var overlay = document.getElementById('readyCheckOverlay');
+      if (overlay) overlay.classList.add('hidden');
+    };
+
+    function rebuildHeaderBtns() {
+      var container = document.getElementById('lobbyHeaderBtns');
+      if (!container) return;
+      var lb = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
+      var rcb = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var ib = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
+      var lvb = isCreator
+        ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
+      container.innerHTML = lb + rcb + ib + lvb;
+    }
+
+    async function loadActivityMessages() {
+      if (!currentLobby || !currentUser) return;
+      var el = document.getElementById('activityList');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await res.json();
+        var msgs = (data.messages || []).filter(function(m) { return m.body && m.body.indexOf('⬡ ') === 0; });
+        if (msgs.length === 0) {
+          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No activity yet.</div>';
+          return;
+        }
+        el.innerHTML = msgs.map(function(m) {
+          var body = m.body.replace(/^⬡\s*/, '');
+          return '<div class="chat-msg activity-notice" id="lact-' + m.id + '">&#8894; ' + esc(body) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
+        }).join('');
+        el.scrollTop = el.scrollHeight;
+      } catch(e) {}
+    }
+
+    // ===== BACK =====
+    window.backToList = function() {
+      stopChatPoll();
+      stopSummonPoll();
+      sessionStorage.removeItem('activeLobbyId');
+      currentLobby = null;
+      lastMsgId = null;
+      hasGMRights = false;
+      isCreator = false;
+      currentReadyCheckId = null;
+      hasRespondedToReadyCheck = false;
+      readyCheckDismissed = false;
+      readyCheckInitiatedAt = null;
+      lastReadyCheckData = null;
+      prevMemberMap = {};
+      stopReadyCheckTimer();
+      var rcOverlay = document.getElementById('readyCheckOverlay');
+      if (rcOverlay) rcOverlay.classList.add('hidden');
+      document.documentElement.classList.remove('lobby-locked');
+      applyTheme('default');
+      renderListView();
+      loadWorldChat();
+      startWorldChatPoll();
+      startSummonPoll();
+    };
+
+    render();
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+  <script src="theme-terminal.js"></script>
+  <script src="theme-veilwood.js"></script>
+</body>
+</html>

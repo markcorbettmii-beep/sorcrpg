@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Character Sheet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9"/>
+  <style>
+    .main {
+      max-width: 900px;
+      margin: 18px auto 30px auto;
+      background: #f6f0e1;
+      border: 2px solid #4a5a20;
+      border-radius: 14px;
+      padding: 16px 14px 24px 14px;
+      box-shadow: 0 0 18px #2222;
+    }
+    .header-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .char-title {
+      font-family: 'Cinzel', serif;
+      font-size: 2rem;
+      color: #2e3d0f;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+    }
+    .char-meta {
+      text-align: right;
+      font-family: Arial, sans-serif;
+      font-size: 1rem;
+      color: #444;
+    }
+    .portrait {
+      width: 120px;
+      height: 160px;
+      border: 2px solid #4a5a20;
+      background: #e8e1cc;
+      object-fit: cover;
+      margin-left: 22px;
+      border-radius: 8px;
+      display: block;
+    }
+    .sheet-img-wrap {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .sheet-img {
+      width: 700px;
+      max-width: 96vw;
+      border: 1.5px solid #4a5a20;
+      background: #fff;
+      display: block;
+      box-shadow: 0 0 8px #5552;
+      border-radius: 3px;
+    }
+    .sheet-buttons {
+      text-align: center;
+      margin-top: 22px;
+    }
+    .sheet-buttons a {
+      display: inline-block;
+      padding: 7px 18px;
+      margin: 0 0.5em;
+      background: #354f1e;
+      color: #f6f0e1;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: 1.08rem;
+      border: none;
+      border-radius: 7px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .sheet-buttons a:hover {
+      background: #4a5a20;
+    }
+  
+
+    /* ─── Lawful Mode (Light Theme) ─── */
+    body.lawful-mode {
+      background: #f5f5f0;
+      color: #2c2c2c;
+    }
+    body.lawful-mode header { background: #ffffff; }
+    body.lawful-mode nav { background: #ffffff; }
+    body.lawful-mode main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode .content-main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode h1, body.lawful-mode h2, body.lawful-mode h3, body.lawful-mode h4, body.lawful-mode h5 { color: #2c2c2c; }
+    body.lawful-mode p { color: #2c2c2c; }
+    body.lawful-mode .Profession-entry, body.lawful-mode .talent-entry, body.lawful-mode .skill-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+      color: #2c2c2c;
+    }
+    body.lawful-mode .talent-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+    }
+    body.lawful-mode .note { 
+      background: rgba(185,170,0,0.1); 
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+    body.lawful-mode .callout {
+      background: rgba(185,170,0,0.1);
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+</style>
+</head>
+<body>
+<div class="header-container">
+  <span class="sorc-letters">S O R C</span><img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" /><img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+</div>
+<nav><div id="navRoleBadge"></div></nav>
+<div class="main">
+  <div class="header-row">
+    <div>
+      <div class="char-title" id="cname">Character Name</div>
+      <div class="char-meta" id="cmeta"></div>
+    </div>
+    <img class="portrait" id="cportrait" src="" alt="Portrait" style="display:none;">
+  </div>
+
+  <div class="sheet-img-wrap">
+    <img class="sheet-img" id="sheetImg" src="blank-sheet.png" alt="Character Sheet">
+  </div>
+
+  <div class="sheet-buttons">
+    <a href="build-brunn-flip.html" id="customizeBtn">Customize / Print Sheet</a>
+  </div>
+</div>
+
+<script>
+  function getUrlParam(name) {
+    let m = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
+    return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    let uid = getUrlParam('uid') || getUrlParam('username');
+    // This block below should be replaced with your actual AJAX/fetch logic.
+    // Here is a simple demo for static use:
+    let user = window.user || {
+      name: "Character Name",
+      meta: "",
+      portrait_url: "",
+      character_sheet_url: ""
+    };
+    // If your backend injects a window.user object, it'll use that.
+    document.getElementById('cname').textContent = user.name || "Character Name";
+    document.getElementById('cmeta').textContent = user.meta || "";
+    if (user.portrait_url) {
+      let img = document.getElementById('cportrait');
+      img.src = user.portrait_url;
+      img.style.display = 'block';
+    }
+    if (user.character_sheet_url) {
+      document.getElementById('sheetImg').src = user.character_sheet_url;
+    }
+    if (uid) {
+      document.getElementById('customizeBtn').href = "build-brunn-flip.html?uid=" + encodeURIComponent(uid);
+    }
+  });
+</script>
+</body>
+</html>

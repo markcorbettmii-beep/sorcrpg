@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fellowships | Slayers of Rings § Crowns</title>
+    <link rel="stylesheet" href="styles.css?v=9" />
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; }
+
+        /* Hero */
+        .f-hero { background: linear-gradient(135deg, #1a0505 0%, #2a0808 50%, #0d0d0d 100%); padding: 1.5rem 1.25rem; border-bottom: 2px solid #c93f35; display: flex; align-items: center; gap: 1rem; }
+        .f-hero-icon { font-size: 2rem; }
+        .f-hero h1 { color: #fff; font-size: 1.4rem; margin: 0 0 0.15rem; }
+        .f-hero p { color: #555; font-size: 0.8rem; margin: 0; }
+
+        /* Layout */
+        .f-wrap { max-width: 680px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+
+        /* Tabs-Xbox-style pill row */
+        .f-tabs { display: flex; gap: 0; margin-bottom: 1.25rem; border-bottom: 2px solid #1e1e1e; }
+        .f-tab { padding: 0.6rem 1.1rem; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #555; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: color 0.2s, border-color 0.2s; letter-spacing: 0.03em; }
+        .f-tab:hover { color: #e0cfc0; }
+        .f-tab.active { color: #fff; border-bottom-color: #c93f35; }
+        .f-tab .notif { display: inline-block; background: #b9aa00; color: #222; border-radius: 10px; padding: 1px 6px; font-size: 0.65rem; margin-left: 5px; vertical-align: middle; }
+        .f-panel { display: none; }
+        .f-panel.active { display: block; }
+
+        /* Friend row-Xbox Live style */
+        .f-row { display: flex; align-items: center; gap: 0.85rem; padding: 0.75rem 0.9rem; border-radius: 8px; margin-bottom: 0.3rem; background: #161616; border: 1px solid #1e1e1e; transition: background 0.15s, border-color 0.15s; }
+        .f-row:hover { background: #1c1c1c; border-color: #2a2a2a; }
+
+        /* Avatar with online dot */
+        .f-avatar-wrap { position: relative; flex-shrink: 0; }
+        .f-avatar { width: 46px; height: 46px; border-radius: 8px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; color: #e0cfc0; border: 2px solid #2a2a2a; overflow: hidden; }
+        .f-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .f-status-dot { position: absolute; bottom: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #0d0d0d; background: #555; }
+        .f-status-dot.online { background: #4caf50; }
+        .f-status-dot.recent { background: #b9aa00; }
+
+        /* Info */
+        .f-info { flex: 1; min-width: 0; }
+        .f-name { font-weight: bold; color: #fff; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+        .f-role-tag { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 0.62rem; font-weight: bold; letter-spacing: 0.05em; }
+        .role-OWN { background: #b9aa00; color: #222; }
+        .role-AD  { background: #c93f35; color: #fff; }
+        .role-GM  { background: #1a6b1a; color: #fff; }
+        .role-PC  { background: #1a3a6b; color: #fff; }
+        .role-CIV { background: #2a2a2a; color: #888; }
+        .f-sub { font-size: 0.74rem; color: #555; margin-top: 2px; }
+
+        /* Actions */
+        .f-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .f-btn { padding: 6px 12px; border-radius: 5px; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5px; }
+        .f-btn-ghost { background: none; border: 1px solid #2a2a2a; color: #666; }
+        .f-btn-ghost:hover { border-color: #c93f35; color: #e0cfc0; }
+        .f-btn-red { background: #c93f35; color: #fff; }
+        .f-btn-red:hover { background: #c93f35; }
+        .f-btn-gold { background: #b9aa00; color: #222; }
+        .f-btn-gold:hover { background: #b9aa00; }
+        .f-btn-grey { background: #222; color: #666; border: 1px solid #2a2a2a; }
+        .f-btn-grey:hover { background: #2a2a2a; color: #aaa; }
+
+        /* Section label */
+        .f-section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: #3a3a3a; margin: 1rem 0 0.5rem 0.1rem; font-weight: bold; }
+
+        /* States */
+        .f-empty { text-align: center; padding: 2.5rem 1rem; color: #3a3a3a; font-size: 0.9rem; line-height: 1.7; }
+        .f-empty a { color: #b9aa00; text-decoration: none; }
+        .f-locked { text-align: center; padding: 2.5rem 1rem; }
+        .f-locked h2 { color: #b9aa00; margin: 0 0 0.6rem; font-size: 1.1rem; }
+        .f-locked p { color: #555; font-size: 0.88rem; line-height: 1.7; margin: 0.4rem 0; }
+        .f-locked .cp-bar-wrap { background: #1a1a1a; border-radius: 20px; height: 8px; margin: 0.75rem auto; max-width: 260px; overflow: hidden; }
+        .f-locked .cp-bar { height: 100%; background: linear-gradient(90deg, #c93f35, #b9aa00); border-radius: 20px; transition: width 0.4s; }
+        .f-not-logged { text-align: center; padding: 2.5rem; color: #444; }
+        .f-not-logged a { color: #b9aa00; }
+
+        /* Incoming request highlight */
+        .f-row.incoming { border-color: #b9aa0060; background: #1a1500; }
+        .f-row.incoming:hover { border-color: #b9aa00; }
+
+        /* Lawful mode */
+        body.lawful-mode { background: #f0f0ec; color: #2c2c2c; }
+        body.lawful-mode .f-hero { background: #fff; border-bottom-color: #b9aa00; }
+        body.lawful-mode .f-hero h1 { color: #2c2c2c; }
+        body.lawful-mode .f-row { background: #fff; border-color: #e0e0e0; }
+        body.lawful-mode .f-row:hover { background: #f8f8f8; }
+        body.lawful-mode .f-name { color: #2c2c2c; }
+        body.lawful-mode .f-tabs { border-bottom-color: #ddd; }
+        body.lawful-mode .f-tab { color: #aaa; }
+        body.lawful-mode .f-tab.active { color: #2c2c2c; border-bottom-color: #c93f35; }
+    
+        body.lawful-mode .f-locked .cp-bar-wrap { background: #e6e0d0; }
+    
+        body.lawful-mode .f-btn-grey { background: #eee; color: #888; border-color: #ccc; }
+        body.lawful-mode .role-CIV { background: #eee; color: #888; }
+        body.lawful-mode .role-PC { background: #e3edf9; color: #1a4a8a; }
+    
+        body.lawful-mode .f-avatar { background: #e6e0d0; border-color: #ccc; color: #555; }
+    </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="header-container">
+    <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-letters-img evil-only" />
+    <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-letters-img lawful-only" />
+  </div>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+    </ul>
+    <div class="f-hero">
+        <div class="f-hero-icon">⚔️</div>
+        <div>
+            <h1>Fellowships</h1>
+            <p>Your companions across Essentia</p>
+        </div>
+    </div>
+
+    <div class="f-wrap" id="fApp">
+        <div class="f-not-logged"><p>Loading…</p></div>
+    </div>
+
+    <div style="text-align:center;padding:1.25rem 1rem;margin-top:0.5rem;font-size:0.8rem;letter-spacing:0.06em;text-transform:uppercase;color:#888;">
+        Find Fellowships: <a href="forum.html" style="color:#b9aa00;text-decoration:none;font-weight:bold;">Forums</a> &nbsp;&middot;&nbsp; <a href="lobbies.html" style="color:#b9aa00;text-decoration:none;font-weight:bold;">Lobbies</a>
+    </div>
+    <div id="footer"></div>
+
+    <script>
+        var API_URL = 'https://api.sorcrpg.com';
+        var myUser = null;
+        var myUid = null;
+        var myAuthKey = null;
+
+        (function() {
+            var saved = localStorage.getItem('sorc_user');
+            if (saved) { try { myUser = JSON.parse(saved); } catch(e) {} }
+            if (myUser && myUser.authKey) { myUid = myUser.id; myAuthKey = myUser.authKey; }
+            var theme = localStorage.getItem('themeSelected') || 'evil';
+            if (theme === 'lawful') document.body.classList.add('lawful-mode');
+        })();
+
+        function esc(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'X-Auth-Key': myAuthKey };
+        }
+
+        async function apiFetch(path, opts) {
+            var res = await fetch(API_URL + path, Object.assign({ headers: authHeaders() }, opts || {}));
+            return res.json();
+        }
+
+        function roleTag(role) {
+            var map = { OWNER: ['OWN','role-OWN'], ADMIN: ['AD','role-AD'], MASTER: ['GM','role-GM'], PLAYER: ['PC','role-PC'], CIVILIAN: ['CIV','role-CIV'] };
+            var r = map[role] || ['CIV','role-CIV'];
+            return '<span class="f-role-tag ' + r[1] + '">' + r[0] + '</span>';
+        }
+
+        function avatarHtml(name, avatarFile) {
+            if (avatarFile) {
+                return '<img src="/images/avatars/' + esc(avatarFile) + '" onerror="this.style.display=\'none\'" />';
+            }
+            return esc((name || '?').charAt(0).toUpperCase());
+        }
+
+        function onlineDot(lastSeen) {
+            if (!lastSeen) return '<div class="f-status-dot"></div>';
+            var ago = Date.now() - new Date(lastSeen).getTime();
+            if (ago < 10 * 60 * 1000) return '<div class="f-status-dot online" title="Online"></div>';
+            if (ago < 24 * 60 * 60 * 1000) return '<div class="f-status-dot recent" title="Recently online"></div>';
+            return '<div class="f-status-dot" title="Offline"></div>';
+        }
+
+        var canSend = false;
+        var prevLastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
+
+        async function init() {
+            if (!myUid) {
+                document.getElementById('fApp').innerHTML =
+                    '<div class="f-not-logged"><p>Please <a href="/signin.html">sign in</a> to view Fellowships.</p></div>';
+                return;
+            }
+            var pts = myUser.community_points || 0;
+            var unlocked = myUser.unlocked_fellowships || myUser.role !== 'CIVILIAN';
+            canSend = unlocked || pts >= 100;
+
+            await renderApp();
+            // Mark fellowships as seen after rendering
+            localStorage.setItem('sorc_f_last_seen', String(Date.now()));
+        }
+
+        async function renderApp() {
+            var fellowsData, incomingData, outgoingData;
+            try {
+                [fellowsData, incomingData, outgoingData] = await Promise.all([
+                    apiFetch('/api/fellowships'),
+                    apiFetch('/api/fellowships/requests/incoming'),
+                    apiFetch('/api/fellowships/requests/outgoing')
+                ]);
+            } catch(e) {
+                document.getElementById('fApp').innerHTML =
+                    '<div class="f-empty" style="color:#c93f35;">Could not load Fellowships. Please try again.</div>';
+                return;
+            }
+
+            var fellows   = (fellowsData && fellowsData.fellows)   || [];
+            var incoming  = (incomingData && incomingData.requests) || [];
+            var outgoing  = (outgoingData && outgoingData.requests) || [];
+            var reqCount  = incoming.length;
+
+            var pts = myUser.community_points || 0;
+            var lockBanner = !canSend
+                ? '<div style="background:#1a1000;border:1px solid #3a2a00;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#888;">' +
+                      '🔒 Sending Fellowship requests unlocks at <b style="color:#b9aa00;">100 Community Points</b>. ' +
+                      'You have <b style="color:#b9aa00;">' + pts + ' / 100</b>. ' +
+                      '<div class="cp-bar-wrap" style="background:#1a1a1a;border-radius:20px;height:6px;margin:0.5rem 0 0;overflow:hidden;">' +
+                          '<div class="cp-bar" style="width:' + Math.min(100, Math.round(pts)) + '%;height:100%;background:linear-gradient(90deg,#c93f35,#b9aa00);border-radius:20px;"></div>' +
+                      '</div>' +
+                  '</div>'
+                : '';
+
+            // Count newly accepted (accepted after last visit)
+            var newlyAccepted = fellows.filter(function(f) {
+                return f.accepted_at && new Date(f.accepted_at).getTime() > prevLastSeen && f.sender_uid !== myUid;
+            });
+            var newCount = newlyAccepted.length;
+            var fellowsTabBadge = newCount > 0 ? ' <span class="notif">' + newCount + '</span>' : (fellows.length ? ' <span style="color:#555;font-size:0.75rem;font-weight:normal;">(' + fellows.length + ')</span>' : '');
+
+            // Auto-open Requests tab if there are pending incoming requests
+            var startTab = reqCount > 0 ? 'incoming' : 'fellows';
+
+            document.getElementById('fApp').innerHTML =
+                lockBanner +
+                '<div class="f-tabs">' +
+                    '<button class="f-tab' + (startTab === 'fellows' ? ' active' : '') + '" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows' + fellowsTabBadge + '</button>' +
+                    '<button class="f-tab' + (startTab === 'incoming' ? ' active' : '') + '" id="tab_incoming" onclick="switchTab(\'incoming\')">' +
+                        'Requests' + (reqCount > 0 ? ' <span class="notif">' + reqCount + '</span>' : '') +
+                    '</button>' +
+                    '<button class="f-tab" id="tab_sent" onclick="switchTab(\'sent\')">Sent</button>' +
+                '</div>' +
+                '<div class="f-panel' + (startTab === 'fellows' ? ' active' : '') + '" id="panel_fellows"></div>' +
+                '<div class="f-panel' + (startTab === 'incoming' ? ' active' : '') + '" id="panel_incoming"></div>' +
+                '<div class="f-panel" id="panel_sent"></div>';
+
+            /* ---- Fellows ---- */
+            var fp = document.getElementById('panel_fellows');
+            if (!fellows.length) {
+                fp.innerHTML = '<div class="f-empty">No Fellows yet.<br/><a href="/forum.html">Visit the forums</a> and check someone\'s profile to send a request.</div>';
+            } else {
+                var online = fellows.filter(function(f) {
+                    var ls = f.last_seen;
+                    return ls && (Date.now() - new Date(ls).getTime()) < 10 * 60 * 1000;
+                });
+                var offline = fellows.filter(function(f) {
+                    var ls = f.last_seen;
+                    return !ls || (Date.now() - new Date(ls).getTime()) >= 10 * 60 * 1000;
+                });
+
+                function fellowRow(f) {
+                    var uid  = f.sender_uid === myUid ? f.receiver_uid : f.sender_uid;
+                    var name = f.sender_uid === myUid ? f.receiver_name : f.sender_name;
+                    var role = f.role || 'CIVILIAN';
+                    var isNew = f.accepted_at && new Date(f.accepted_at).getTime() > prevLastSeen && f.sender_uid !== myUid;
+                    return '<div class="f-row' + (isNew ? ' incoming' : '') + '">' +
+                        '<div class="f-avatar-wrap">' +
+                            '<div class="f-avatar">' + avatarHtml(name, f.avatar) + '</div>' +
+                            onlineDot(f.last_seen) +
+                        '</div>' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(name) + roleTag(role) + (isNew ? ' <span class="notif" style="background:#b9aa00;color:#222;">NEW</span>' : '') + '</div>' +
+                            '<div class="f-sub">' + (isNew ? 'Accepted your Fellowship!' : (f.last_seen ? 'Last seen ' + timeAgo(f.last_seen) : 'Offline')) + '</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<a href="/public-profile.html?uid=' + esc(uid) + '" class="f-btn f-btn-ghost">Profile</a>' +
+                            '<button class="f-btn f-btn-grey" onclick="removeFellow(\'' + esc(f.id) + '\',\'' + esc(name).replace(/'/g,"\\'") + '\')">Remove</button>' +
+                        '</div>' +
+                    '</div>';
+                }
+
+                fp.innerHTML =
+                    (online.length ? '<div class="f-section-label">Online (' + online.length + ')</div>' + online.map(fellowRow).join('') : '') +
+                    (offline.length ? '<div class="f-section-label">Offline (' + offline.length + ')</div>' + offline.map(fellowRow).join('') : '');
+            }
+
+            /* ---- Incoming ---- */
+            var ip = document.getElementById('panel_incoming');
+            if (!incoming.length) {
+                ip.innerHTML = '<div class="f-empty">No pending Fellowship requests.</div>';
+            } else {
+                ip.innerHTML = incoming.map(function(req) {
+                    return '<div class="f-row incoming">' +
+                        '<div class="f-avatar-wrap">' +
+                            '<div class="f-avatar">' + avatarHtml(req.sender_name, req.avatar) + '</div>' +
+                            onlineDot(req.last_seen) +
+                        '</div>' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(req.sender_name) + roleTag(req.role || 'CIVILIAN') + '</div>' +
+                            '<div class="f-sub">Wants to be your Fellow</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<button class="f-btn f-btn-gold" onclick="acceptFellowship(\'' + esc(req.id) + '\')">Accept</button>' +
+                            '<button class="f-btn f-btn-grey" onclick="declineFellowship(\'' + esc(req.id) + '\')">Decline</button>' +
+                            '<a href="/public-profile.html?uid=' + esc(req.sender_uid) + '" class="f-btn f-btn-ghost">Profile</a>' +
+
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            }
+
+            /* ---- Sent ---- */
+            var sp = document.getElementById('panel_sent');
+            if (!outgoing.length) {
+                sp.innerHTML = '<div class="f-empty">No outgoing requests.</div>';
+            } else {
+                sp.innerHTML = outgoing.map(function(req) {
+                    return '<div class="f-row">' +
+                        '<div class="f-avatar-wrap">' +
+                            '<div class="f-avatar">' + avatarHtml(req.receiver_name, req.avatar) + '</div>' +
+                            onlineDot(req.last_seen) +
+                        '</div>' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(req.receiver_name) + roleTag(req.role || 'CIVILIAN') + '</div>' +
+                            '<div class="f-sub">Pending their response</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<a href="/public-profile.html?uid=' + esc(req.receiver_uid) + '" class="f-btn f-btn-ghost">Profile</a>' +
+                            '<button class="f-btn f-btn-grey" onclick="cancelRequest(\'' + esc(req.id) + '\')">Cancel</button>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            }
+        }
+
+        function timeAgo(iso) {
+            var ago = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+            if (ago < 60) return 'just now';
+            if (ago < 3600) return Math.floor(ago / 60) + 'm ago';
+            if (ago < 86400) return Math.floor(ago / 3600) + 'h ago';
+            return Math.floor(ago / 86400) + 'd ago';
+        }
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.f-tab').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.f-panel').forEach(function(p) { p.classList.remove('active'); });
+            document.getElementById('tab_' + tab).classList.add('active');
+            document.getElementById('panel_' + tab).classList.add('active');
+        };
+
+        window.acceptFellowship = async function(id) {
+            await apiFetch('/api/fellowships/' + id + '/accept', { method: 'POST', body: '{}' });
+            await renderApp();
+        };
+        window.declineFellowship = async function(id) {
+            await apiFetch('/api/fellowships/' + id + '/decline', { method: 'POST', body: '{}' });
+            await renderApp();
+        };
+        window.removeFellow = async function(id, name) {
+            if (!confirm('Remove ' + name + ' from your Fellowships?')) return;
+            await apiFetch('/api/fellowships/' + id, { method: 'DELETE' });
+            await renderApp();
+        };
+        window.cancelRequest = async function(id) {
+            if (!confirm('Cancel this Fellowship request?')) return;
+            await apiFetch('/api/fellowships/' + id, { method: 'DELETE' });
+            await renderApp();
+        };
+
+        init();
+    </script>
+    <script type="module" src="main.js?v=25"></script>
+</body>
+</html>

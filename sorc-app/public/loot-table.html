@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Slayers of Rings & Crowns -  Probability, Loot, Crafting & Discovery</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 960px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+  h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; }
+  h2 { border-bottom: 1px solid #000; margin-top: 40px; }
+  h3 { margin-top: 24px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  th { background: #000; color: #fff; padding: 8px 10px; text-align: left; }
+  td { padding: 8px 10px; border: 1px solid #000; vertical-align: top; }
+  tr:nth-child(even) { background: #f0f0f0; }
+  ul, ol { padding-left: 24px; }
+  li { margin-bottom: 1px; }
+  blockquote { border-left: 3px solid #000; margin: 16px 0; padding: 10px 16px; background: #f8f8f8; }
+  .scene { background: #f5f5f5; border: 1px solid #000; padding: 16px; margin: 16px 0; }
+  .scene p { margin: 6px 0; }
+  .center { text-align: center; }
+  .subtitle { text-align: center; font-style: italic; margin-top: 4px; }
+
+
+    /* ─── Lawful Mode (Light Theme) ─── */
+    body.lawful-mode {
+      background: #f5f5f0;
+      color: #2c2c2c;
+    }
+    body.lawful-mode header { background: #ffffff; }
+    body.lawful-mode nav { background: #ffffff; }
+    body.lawful-mode main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode .content-main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode h1, body.lawful-mode h2, body.lawful-mode h3, body.lawful-mode h4, body.lawful-mode h5 { color: #2c2c2c; }
+    body.lawful-mode p { color: #2c2c2c; }
+    body.lawful-mode .Profession-entry, body.lawful-mode .talent-entry, body.lawful-mode .skill-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+      color: #2c2c2c;
+    }
+    body.lawful-mode .talent-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+    }
+    body.lawful-mode .note { 
+      background: rgba(185,170,0,0.1); 
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+    body.lawful-mode .callout {
+      background: rgba(185,170,0,0.1);
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+</style>
+  <link rel="stylesheet" href="styles.css?v=9">
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="header-container">
+    <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-letters-img evil-only" />
+    <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-letters-img lawful-only" />
+  </div>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+
+<h1>Slayers of Rings &amp; Crowns</h1>
+<p class="subtitle">By Ogre Adventurer</p>
+<p class="subtitle">Probability Loot, Crafting &amp; Discovery System</p>
+
+<h2>Setting Reward Chances with Dice</h2>
+<p>Use <strong>Xd10</strong> (rolling X d10 dice) to control how rare or common rewards and events are.</p>
+<ul>
+  <li>Rare chances (like 0.005) require more dice, rolled as 2d10 x 2 (see below).</li>
+  <li>Larger chances (like 50%) need fewer dice.</li>
+</ul>
+
+<h3>How to Choose X</h3>
+<ul>
+  <li>For tiny probabilities (like 0.005), roll <strong>2d10 x 2</strong> and succeed if the sum is 2 or less.</li>
+  <li>For larger probabilities (like 50%), roll <strong>2d10</strong> and succeed if the sum is less than or equal to the success threshold.</li>
+</ul>
+
+<h3>Example Table</h3>
+<table>
+  <tr><th>Chance</th><th>Number of dice to roll</th><th>Success Threshold</th><th>Notes</th></tr>
+  <tr><td>0.005</td><td>2d10 x 2</td><td>Sum ≤ 2</td><td>Very rare; success if sum of two 2d10 x 2 ≤ 2</td></tr>
+  <tr><td>0.0625</td><td>2d10 x 2</td><td>Sum ≤ 5</td><td>Very rare</td></tr>
+  <tr><td>0.1</td><td>2d10 x 2</td><td>Sum ≤ 8</td><td>Very rare</td></tr>
+  <tr><td>0.25</td><td>2d10 x 2</td><td>Sum ≤ 25</td><td>Rare</td></tr>
+  <tr><td>0.5</td><td>2d10 x 2</td><td>Sum ≤ 50</td><td>Less rare</td></tr>
+  <tr><td>1</td><td>2d10</td><td>Sum ≤ 10</td><td>Roll 2d10; success if sum ≤ threshold</td></tr>
+  <tr><td>10</td><td>2d10</td><td>Sum ≤ 20</td><td>10% chance</td></tr>
+  <tr><td>25</td><td>2d10</td><td>Sum ≤ 25</td><td>25% chance</td></tr>
+  <tr><td>50</td><td>2d10</td><td>Sum ≤ 50</td><td>50% chance</td></tr>
+  <tr><td>100</td><td>2d10</td><td>Sum ≤ 100</td><td>Always succeed</td></tr>
+</table>
+
+<h3>How to Use</h3>
+<ol>
+  <li>Decide your chance.</li>
+  <li>Roll <strong>X d10</strong> (based on the table above).</li>
+  <li>If the total sum (for multiple dice) is within the success range:
+    <ul>
+      <li>For 2 dice: success if sum ≤ threshold.</li>
+    </ul>
+  </li>
+</ol>
+<p>You can add as many items as you want with any drop rate between 0.05% and 99%.</p>
+
+<h2>Sample Asmodeus Loot Table (Xd10 System)</h2>
+<table>
+  <tr><th>Item</th><th>Drop Chance (%)</th><th>Success Range (on 2d10)</th><th>Notes</th></tr>
+  <tr><td>Infernal Sword</td><td>0.05</td><td>Sum ≤ 2</td><td>Very rare; success if sum of 2d10 ≤ 2</td></tr>
+  <tr><td>Robe of Tyranny</td><td>0.07</td><td>Sum ≤ 6</td><td>Very rare</td></tr>
+  <tr><td>Quest Seal</td><td>99</td><td>Sum ≤ 7920</td><td>Almost guaranteed (roll 2d10 x 2, success if sum ≤ 7920)</td></tr>
+  <tr><td>Infernal Gem</td><td>2.5</td><td>Sum ≤ 200</td><td>Rare</td></tr>
+  <tr><td>Ashen Coin</td><td>10</td><td>Sum ≤ 800</td><td>Less rare</td></tr>
+  <tr><td>Demonic Essence</td><td>1.5</td><td>Sum ≤ 120</td><td>Very rare</td></tr>
+</table>
+
+<h2>Sample Asmodeus Loot Table (1–8000 Range)</h2>
+<table>
+  <tr><th>Item</th><th>Drop Chance (%)</th><th>Success Range (on 1–8000)</th></tr>
+  <tr><td>Infernal Sword</td><td>0.05</td><td>1–4</td></tr>
+  <tr><td>Robe of Tyranny</td><td>0.07</td><td>1–6</td></tr>
+  <tr><td>Quest Seal</td><td>99</td><td>1–7920</td></tr>
+  <tr><td>Infernal Gem</td><td>2.5</td><td>1–200</td></tr>
+  <tr><td>Ashen Coin</td><td>10</td><td>1–800</td></tr>
+  <tr><td>Demonic Essence</td><td>1.5</td><td>1–120</td></tr>
+</table>
+
+<h3>How to Interpret</h3>
+<ul>
+  <li>For Infernal Sword (0.05%), roll 2d10 and succeed if the sum is 2 or less.</li>
+  <li>For Quest Seal (99%), roll 2d10 and succeed if the sum is ≤ 7920 (effectively always succeed).</li>
+  <li>For Infernal Gem (2.5%), roll 2d10 and succeed if the sum is ≤ 200.</li>
+  <li>For Ashen Coin (10%), roll 2d10 and succeed if the sum is ≤ 800.</li>
+  <li>For Robe of Tyranny (0.07%), roll 2d10 and succeed if the sum is ≤ 6.</li>
+  <li>For Demonic Essence (1.5%), roll 2d10 and succeed if the sum is ≤ 120.</li>
+</ul>
+
+<blockquote>
+  <strong>Asmodeus cannot die.</strong><br>
+  He never drops certain items (set their chance to 0%) -  success range: none.<br>
+  He always drops certain items (set their chance to 100%) -  success range: all.<br>
+  Or, he flees, and only drops items if the party meets certain conditions -  success ranges depend on those conditions.
+</blockquote>
+
+<h2>Scene: The Final Battle</h2>
+<div class="scene">
+  <p><strong>GM:</strong> Asmodeus, Lord of the Infernal Furnace, snarls and spreads his wings, crimson fire swirling at his feet. "You have meddled enough!" he bellows, raising a jewel-encrusted scepter.</p>
+  <p><strong>Sylleniel:</strong> I ready a barrier of Salii Light, bracing for whatever comes.</p>
+  <p><strong>GM:</strong> Asmodeus slams his scepter into the obsidian floor. All of you, make a Spirit Save versus 21!</p>
+  <p><em>(The party rolls, but...)</em></p>
+  <p><strong>GM:</strong> The infernal shockwave is overwhelming -  each of you is stunned for... (rolls 1d4) ...3 turns! Asmodeus cackles, wings beating furiously as he vanishes into a billow of sulfurous smoke, leaving only scorched ground and the lingering echo of his laughter.</p>
+  <p><strong>Sir Joren:</strong> (groans) Did he drop anything?</p>
+</div>
+
+<h2>Loot Rolls -  Converted to Success Ranges (2d10)</h2>
+<p><strong>GM:</strong> Let's see what you managed to shake loose as he fled.</p>
+<table>
+  <tr><th>Item</th><th>Drop Chance (%)</th><th>Success Range (on 2d10)</th><th>Explanation</th></tr>
+  <tr><td>Infernal Sword</td><td>0.05</td><td>Sum ≤ 2</td><td>Very rare; success if sum of 2d10 ≤ 2</td></tr>
+  <tr><td>Robe of Tyranny</td><td>0.07</td><td>Sum ≤ 6</td><td>Very rare</td></tr>
+  <tr><td>Quest Seal</td><td>99</td><td>Sum ≤ 7920</td><td>Nearly guaranteed</td></tr>
+  <tr><td>Infernal Gem</td><td>2.5</td><td>Sum ≤ 200</td><td>Rare</td></tr>
+  <tr><td>Ashen Coin</td><td>10</td><td>Sum ≤ 800</td><td>Less rare</td></tr>
+  <tr><td>Demonic Essence</td><td>1.5</td><td>Sum ≤ 120</td><td>Very rare</td></tr>
+</table>
+
+<h3>How Success Ranges Work</h3>
+<ul>
+  <li>For tiny chances (like 0.05%), success if sum of 2d10 ≤ threshold (e.g., 2).</li>
+  <li>For common chances (like 50%), success if sum ≤ threshold (e.g., 100).</li>
+  <li>For almost guaranteed (like 99%), success if sum ≤ 7920.</li>
+</ul>
+
+<h3>How to Determine Success</h3>
+<ol>
+  <li>Roll 2d10.</li>
+  <li>If sum ≤ threshold, the item drops. If sum > threshold, it does not drop.</li>
+</ol>
+
+<h3>Summary</h3>
+<ul>
+  <li>For extremely rare items (0.05%), succeed if both dice roll 1 (sum = 2).</li>
+  <li>For less rare items, thresholds are higher: 6, 120, 200, 800.</li>
+  <li>Always succeed for items set at 100%.</li>
+</ul>
+
+<h2>SORC Crafting, Looting and Discovery</h2>
+<p><em>The Art of Creation and Treasure Discoveries -  By Ogre Adventurer</em></p>
+<p>The levels of value below are influenced by rolling mechanics pertaining to various activities in the game. The first category includes <strong>created or crafted values</strong> -  tailoring garments, tanning hides, crafting jewelry. The second category encompasses <strong>looted or found values</strong> -  items in chests, dropped by enemies, hidden in secret locations, and gems that can be mined.</p>
+
+<h3>Result Value Ladder for Crafted Items (Ascending)</h3>
+<ol>
+  <li>Shoddy</li>
+  <li>Good</li>
+  <li>Extravagant</li>
+  <li>Exquisite</li>
+  <li>Masterful</li>
+</ol>
+<p>Values are determined randomly, exactly how Rarity of Host encounters are.</p>
+<blockquote><strong>Perfect items</strong> are never found or discovered -  only crafted. Perfect items only hold their attributes for the one they were made for. Wielded or worn by anyone else, unparallel items lose their special abilities and attributes.</blockquote>
+
+<h3>Result Value Ladder for Discovered / Looted Items (Ascending)</h3>
+<p><em>Loot rarity is determined by the defeated Host's rarity.</em></p>
+<ol>
+  <li>Common</li>
+  <li>Uncommon</li>
+  <li>Rare</li>
+  <li>Unlikely</li>
+  <li>Heroic</li>
+  <li>Epic</li>
+  <li>Legendary</li>
+  <li>Unique</li>
+</ol>
+
+<h2>Roaming Natives</h2>
+<p>These are creatures only native to the area. Roll <strong>1d10</strong>.</p>
+<table>
+  <tr><th>Roll</th><th>Result</th></tr>
+  <tr><td>1</td><td>Friendly Host (native)</td></tr>
+  <tr><td>2–7</td><td>Indifferent Host</td></tr>
+  <tr><td>8–9</td><td>Aggressive Host (9: mobs link)</td></tr>
+  <tr><td>10</td><td>Attack on Sight (mobs link)</td></tr>
+</table>
+<p><strong>Link</strong> means any nearby mobs will join the fight. The GM will determine the distance.</p>
+
+<h2>Currency System</h2>
+<p>Value is determined using five types of coins in ascending order: Copper, Silver, Gold, Electrum, and Platinum. Copper is used for trivial purchases, Silver for everyday purchases, Gold for substantial purchases, Electrum for mid-tier and regional trade, and Platinum for exceptionally high-value items.</p>
+
+<h3>Essentia's Currency</h3>
+<table>
+  <tr><th>Coin</th><th>Description</th><th>Conversion</th><th>Notes</th></tr>
+  <tr><td>Copper Coin</td><td>Trivial purchases; food, drink, tolls.</td><td>10 Copper = 1 Silver</td><td></td></tr>
+  <tr><td>Silver Coin</td><td>Basic unit of currency; small purchases, taxes, everyday expenses.</td><td>Base coin</td><td>~180 coins per pound</td></tr>
+  <tr><td>Gold Coin</td><td>Substantial purchases and major economic transactions.</td><td>1 Gold = 50 Silver</td><td></td></tr>
+  <tr><td>Electrum Coin</td><td>Mid-tier transactions, regional trade.</td><td>1 Electrum = 10 Gold (500 Silver)</td><td></td></tr>
+  <tr><td>Platinum Coin</td><td>Estates, vehicles, spacecraft, one-of-a-kind relics.</td><td>1 Platinum = 500 Gold (25,000 Silver)</td><td></td></tr>
+</table>
+
+<h3>Currency Notes</h3>
+<p>For extraordinarily high-value transactions, certified currency notes may be used. These vouchers represent a fixed monetary value, easing large-scale trade across regions. Local conversion rates may vary.</p>
+
+<h3>Trials Currency</h3>
+<table>
+  <tr><th>Currency</th><th>Earned In</th><th>Spent On</th></tr>
+  <tr><td>Trial Coins</td><td>Combat trials</td><td>Trial vendor items only; not used in general transactions</td></tr>
+  <tr><td>Honor Points</td><td>Proving Grounds</td><td>Exclusive gear sets and enhancements for trial challenges</td></tr>
+  <tr><td>Valor Points</td><td>Arena</td><td>Formidable weaponry, protective gear, and combat consumables</td></tr>
+  <tr><td>Auctorati Points</td><td>Coliseum</td><td>Dangerous armament sets, ancient potions, scrolls of forgotten knowledge</td></tr>
+</table>
+
+<h2>Economy of the Planets</h2>
+<p>Zail is the universe's reserve currency holder and global economic hub. Rich in life-dependent natural resources, it serves as the central hub for currency exchange. The first planet (Ignis) and the last three planets do not recognize currencies from any other planet.</p>
+<table>
+  <tr><th>Planets</th><th>Trade Status</th><th>Currency</th></tr>
+  <tr><td>Ignis (1st)</td><td>No interest in trade. Underground humanoid societies trade via teleportation and magic.</td><td>No standard currency</td></tr>
+  <tr><td>2nd &amp; 3rd Planets</td><td>Active trade with Zail. Interested in magical minerals and Zail's technology.</td><td>Zail-adjacent</td></tr>
+  <tr><td>Zail (4th)</td><td>Universal reserve currency hub. Central exchange point.</td><td>Reserve Currency</td></tr>
+  <tr><td>5th–10th Planets</td><td>Free trade. Zail's laws generally respected. Smuggling and piracy occur.</td><td>Universal coins (Zail standard)</td></tr>
+  <tr><td>Last 3 (Futurem, Omnè, Tredici)</td><td>Futuristic credit card systems backed by laser-secured gem/mineral vaults.</td><td>Credit systems only</td></tr>
+</table>
+<blockquote>
+  There is illegal smuggling between all 13 planets. Each planet has different "doors" -  portals, sophisticated trading posts, and a gate to hell. Planets further from Zail require a pass to enter their airspace. The evil race <strong>Omnè</strong>, knowing their planets are endangered by the dying star Tawdry Dwarf, view universal coins as worthless and would simply melt them down.
+</blockquote>
+<p><strong>Additional Notes:</strong> All items can be sold to associated tradesmen for at least base price. Bartering may affect outcomes positively or negatively. Mined items may also be siphoned by magic or alchemy, but mining yields the highest success rates.</p>
+
+<h2>Earth Elements -  Gems</h2>
+<p>Gems are used for many things in SORC, including enhancing armament stats by socketing. The most valuable are found on Ignis, closest to Adoria.</p>
+<table>
+  <tr><th>Gem</th><th>Technique</th><th>Value</th><th>Power</th><th>Drop on Failed Modification</th></tr>
+  <tr><td>Diamond</td><td>Mined from deep earth caverns</td><td>30 Gold / gemstone</td><td>Enhances clarity, focus, protective enchantments; boosts item durability</td><td>Diamond shard</td></tr>
+  <tr><td>Sapphire</td><td>Extracted from riverbeds and mountain veins</td><td>18 Gold / gemstone</td><td>Amplifies water and ice magic; increases wisdom and perception</td><td>Sapphire dust</td></tr>
+  <tr><td>Ruby</td><td>Mined from volcanic rock layers</td><td>22 Gold / gemstone</td><td>Strengthens fire and passion spells; boosts vitality</td><td>Ruby fragment</td></tr>
+  <tr><td>Emerald</td><td>Harvested from lush caves and forested cliffs</td><td>16 Gold / gemstone</td><td>Enhances nature magic, healing, and regeneration</td><td>Emerald splinter</td></tr>
+  <tr><td>Topaz</td><td>Sifted from desert sands</td><td>12 Gold / gemstone</td><td>Grants resistance to lightning; boosts agility enchantments</td><td>Topaz chips</td></tr>
+  <tr><td>Amethyst</td><td>Found in enchanted crystal groves</td><td>14 Gold / gemstone</td><td>Improves mind-affecting spells; wards against corruption</td><td>Amethyst powder</td></tr>
+  <tr><td>Obsidian</td><td>Carved from cooled lava flows</td><td>9 Gold / block</td><td>Sharp weapons and dark wards; strengthens shadow enchantments</td><td>Obsidian shard</td></tr>
+  <tr><td>Garnet</td><td>Mined from rocky hillsides</td><td>10 Gold / gemstone</td><td>Boosts stamina and protective spells</td><td>Garnet fragments</td></tr>
+  <tr><td>Citrine</td><td>Gathered from sunlit cliffs</td><td>7 Gold / gemstone</td><td>Amplifies energy, luck, and prosperity enchantments</td><td>Citrine crumbs</td></tr>
+  <tr><td>Gem Dust</td><td>Ground from various gemstones</td><td>3–6 Silver / handful</td><td>Incorporates properties of the original gem into magical crafting</td><td>Gem dust fragments</td></tr>
+  <tr><td>Nyxium</td><td>Extracted from shadowed veins in dark waters and ancient rocks</td><td>8 Gold / ingot or shard</td><td>Grants mastery over shadow magic; used in relics and dark enchantments</td><td>Shadow shard or ingot</td></tr>
+  <tr><td>Infernium</td><td>Mined from volcanic caves</td><td>15 Gold / gemstone</td><td>Intense elemental fire magic; boosts fire enchantments</td><td>Infernium fragment</td></tr>
+  <tr><td>Aetherstone</td><td>Synthesized in high-energy labs</td><td>20 Gold / gemstone</td><td>Immense energy source; power generation and futuristic enchantments</td><td>Aetherstone shard</td></tr>
+  <tr><td>Moonstone</td><td>Can only be spotted during lunar events</td><td>17 Gold / gemstone</td><td>Enhances illusion, dream, and light magic</td><td>Moonstone dust</td></tr>
+</table>
+
+<h2>Earth Elements -  Metals</h2>
+<p>Metals are foundational materials throughout Essentia, valued for strength, versatility, and magical conductivity.</p>
+<table>
+  <tr><th>Metal</th><th>Technique</th><th>Value</th><th>Power</th><th>Drop on Failed Modification</th></tr>
+  <tr><td>Pyronium</td><td>Extracted from magma flows</td><td>10 Gold / ingot</td><td>Fire-resistant; ideal for heat-resistant weapons and armor</td><td>Pyronium scrap</td></tr>
+  <tr><td>Quantite</td><td>Harvested from interstellar dust fields</td><td>25 Gold / ingot</td><td>Extremely valuable; used in advanced crafting and technology</td><td>Quantite scrap</td></tr>
+  <tr><td>Lead Alloy</td><td>Standard smelting</td><td>2 Silver / ingot</td><td>Blocks magical detection; used in anti-magic containers</td><td> - </td></tr>
+  <tr><td>Iridium</td><td>Found in meteorite fragments</td><td>3 Gold / ingot</td><td>Resists magical and elemental damage; used in legendary items</td><td> - </td></tr>
+  <tr><td>Orichalcum</td><td>Smelted from rare enchanted ore</td><td>6 Gold / ingot</td><td>Greatly boosts enchantments and elemental affinity</td><td> - </td></tr>
+  <tr><td>Aetherium</td><td>Synthesized in magical laboratories</td><td>15 Gold / ingot</td><td>Source of immense energy; powers world-altering devices</td><td> - </td></tr>
+</table>
+
+<h2>Organic Elements</h2>
+<p>Harvested from creatures, essential for rituals, enchantments, and alchemy. The following elements have spell, potion, and/or scroll versions.</p>
+<table>
+  <tr><th>Material</th><th>Description</th></tr>
+  <tr><td>Bone Dust</td><td>Used in place of mana for necromancer or dark SORCerer rituals -  raising the dead or cursing enemies.</td></tr>
+  <tr><td>Bat Wings</td><td>Grant abilities like flight, invisibility, or transformation. Used in talismans, symbolic art, and remedies.</td></tr>
+  <tr><td>Elderwood Ash</td><td>Sacred residue from the Elderwood Tree. Used by shamans in place of mana; channels ancestral and primal energies.</td></tr>
+  <tr><td>Fairy Wings</td><td>Used by evil entities in dark rituals and enchantments to grant flight or illusions.</td></tr>
+  <tr><td>Reptilian Tail</td><td>Provides regeneration properties for certain classes, like witches. Stronger effects if still moving.</td></tr>
+  <tr><td>Beast Blood</td><td>Used in powerful potions and rituals that enhance strength, resilience, or grant beast-like abilities.</td></tr>
+  <tr><td>Star Crystals</td><td>Captured fragments of fallen stars; used to enhance celestial weapons or invoke divine favor.</td></tr>
+  <tr><td>Moonflower Petals</td><td>Used in potions for invisibility or night vision. Harvested under moonlight from rare, glowing flowers.</td></tr>
+  <tr><td>Luckstone</td><td>Gives +1 through +3 chance while enhancing armaments. Armaments may still break. Once used, value drops to a common stone.</td></tr>
+  <tr><td>Blessed Alloy</td><td>Gives 100% chance of crafting success. Must match the rank of the item being crafted. Legendary alloys work on any rank. Very rare. *The alloy disregards the chance of failure unless interrupted.</td></tr>
+</table>
+
+<h2>Prism Elements</h2>
+<p>Captured when a creature is slain by an attack, spell, or effect linked to the Soul Prism, or when a soul-binding ritual is completed. Used in advanced rituals and enchanted crafting.</p>
+<table>
+  <tr><th>Prism</th><th>Technique</th><th>Value</th><th>Power</th></tr>
+  <tr><td>Light Prism</td><td>Forged from pure light-infused minerals</td><td>60 Gold / prism</td><td>Focuses and refracts pure light or magical energies. Illuminates dark areas; light may project illusions.</td></tr>
+  <tr><td>Ethereal Prism</td><td>Made from rare spirit shards found in the spirit realm</td><td>200 Gold / shard</td><td>Captures or interacts with spiritual entities; used in communication with spirits or teleportation.</td></tr>
+  <tr><td>Void Prism</td><td>Crafted from shadow-infused obsidian and voidstone</td><td>300 Gold / prism</td><td>Manipulates void or null energies; used for banishment or containment of evil entities.</td></tr>
+  <tr><td>Elemental Prism</td><td>Made with materials representing fire, water, earth, and air</td><td>100 Gold / prism</td><td>Capable of creating gentle elemental activity.</td></tr>
+</table>
+
+<h2>Sci-Tech Elements</h2>
+<p>Advanced sci-tech materials mined, synthesized, or infused through high-energy and arcane processes. Form the building blocks of data chips, starship components, energy sources, and high-tech weaponry.</p>
+<table>
+  <tr><th>Material</th><th>Technique</th><th>Value</th><th>Power</th><th>Drop on Failed Modification</th></tr>
+  <tr><td>Plasma Crystal</td><td>Extracted from stellar plasma fields</td><td>50 Gold / core</td><td>High-energy plasma source for starship engines and plasma weaponry</td><td>Plasma shard</td></tr>
+  <tr><td>Laser Crystal</td><td>Mined from asteroid belts; refined with high-energy alchemy</td><td>30 Gold / crystal</td><td>Focuses and amplifies laser beams for weapons or cutting tools</td><td>Laser shard</td></tr>
+  <tr><td>Quantum Alloy</td><td>High-energy alchemical synthesis of rare space minerals</td><td>75 Gold / batch</td><td>Crafts advanced circuit boards, processors, and energy conduits</td><td>Quantum alloy scrap</td></tr>
+  <tr><td>Photon Core</td><td>Photonic energy condensates with rare crystalline materials</td><td>40 Gold / core</td><td>Energy source for photon-based weapons and propulsion systems</td><td>Photon shard</td></tr>
+  <tr><td>Dark Matter Infused Ore</td><td>Collected from cosmic dark matter reservoirs via ancient alchemy</td><td>100 Gold / infusion</td><td>Reinforces armor and weapons; grants dark energy amplification</td><td>Dark matter fragment</td></tr>
+  <tr><td>Cryo-Exotic Alloy</td><td>Smelted from space metals infused with cryogenic magic</td><td>35 Gold / ingot</td><td>Crafts heat- and cold-resistant plasma weapons and armor</td><td>Cryo alloy scrap</td></tr>
+  <tr><td>Starsteel</td><td>Forged from space minerals fused with cosmic energy</td><td>45 Gold / ingot</td><td>Lightweight, ultra-strong material for starship hulls, weapons, and armor</td><td>Starsteel fragment</td></tr>
+  <tr><td>Synthetic Fiber</td><td>Nano-engineered polymers infused with magic for durability</td><td>10 Gold / roll</td><td>Used in flexible stealth suits, armor, and high-tech gear</td><td>Synthetic fiber shard</td></tr>
+  <tr><td>Energy Conduit</td><td>Conductive crystalline materials infused with plasma and arcane energy</td><td>25 Gold / unit</td><td>Facilitates high-capacity energy transfer in ships and weapons</td><td>Conduit fragment</td></tr>
+  <tr><td>Nano-Infused Crystal</td><td>Crystals infused with nano-machines and arcane energy</td><td>60 Gold / crystal</td><td>Creates self-repairing technology or enhanced energy storage</td><td>Nano crystal shard</td></tr>
+  <tr><td>Voidstone</td><td>Mined from shadowed cosmic voids; infused with dark magic</td><td>80 Gold / stone</td><td>Manipulates space, teleportation, or shadow energy</td><td>Void shard</td></tr>
+  <tr><td>Stingers</td><td>Found on Futurem, Omnè, and Tredici</td><td> - </td><td>Shimmering metallic purple hue; lattice structure makes it incredibly strong yet lightweight. Essential for advanced technology and spacecraft construction.</td><td> - </td></tr>
+</table>
+
+<hr>
+<p class="center"><em>Slayers of Rings &amp; Crowns -  By Ogre Adventurer</em></p>
+  <script type="module" src="main.js?v=25"></script>
+  <div id="footer"></div>
+</body>
+</html>
