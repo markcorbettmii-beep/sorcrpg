@@ -194,6 +194,16 @@ for (const sheet of sheets) {
       }
     }
 
+    // Record the current hash so the Pages Function (functions/*.pdf.js) can
+    // tell an outdated ?v= apart from the live one at request time and show
+    // the "reach the newer version" page instead of silently doing nothing.
+    const manifestPath = 'pdf-versions.json';
+    const manifest = fs.existsSync(manifestPath)
+      ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+      : {};
+    manifest[pdfName] = pdfHash;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
     // A sheet is front + back. Anything else means the print CSS has drifted.
     if (pages !== 2) {
       console.error(`  WARNING: expected 2 pages, got ${pages}. Check the print CSS.`);
