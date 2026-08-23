@@ -84,16 +84,16 @@
                 <!-- Email Sign-In -->
                 <div style="margin-bottom:1.5rem;">
                     <div class="form-group">
-                        <label for="emailInput" style="display:block;font-size:16px;font-weight:400;margin-bottom:12px;color:#333333;">Email (example)</label>
+                        <label for="emailInput" style="display:block;font-size:16px;font-weight:400;margin-bottom:12px;">Email (example)</label>
                         <input type="email" id="emailInput" class="signin-input" placeholder="(corbett@sorcrpg.com)" />
                     </div>
                     <div class="password-wrapper">
-                        <label for="passwordInput" style="display:block;font-size:16px;font-weight:400;margin-bottom:12px;color:#333333;">Password</label>
+                        <label for="passwordInput" style="display:block;font-size:16px;font-weight:400;margin-bottom:12px;">Password</label>
                         <input type="password" id="passwordInput" class="signin-input" placeholder="••••••" />
                         <button class="toggle-pw" onclick="togglePassword('passwordInput', this)">👁</button>
                     </div>
                     <div style="text-align:right;margin-bottom:1.5rem;">
-                        <a href="javascript:void(0)" onclick="showForgotPassword()" style="color:#333333;text-decoration:none;font-size:0.9rem;">Forgot Password?</a>
+                        <a href="javascript:void(0)" onclick="showForgotPassword()" style="text-decoration:none;font-size:0.9rem;">Forgot Password?</a>
                     </div>
                     <button class="signin-btn signin-btn-primary" onclick="handleSignIn()" style="background:#6b5dd6;text-transform:uppercase;letter-spacing:1px;">LOG IN</button>
                 </div>
@@ -128,6 +128,19 @@
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
 
+        /* Where to send the user once they are signed in. A ?next= page may be
+           supplied by whoever sent them here, e.g. email verification points new
+           members at the Basic Membership section of SORC Beyond. Only a plain
+           relative path on this site is accepted, anything with a scheme, a host,
+           or a leading slash is ignored so this can't be used as an open redirect. */
+        function postSigninDest() {
+            try {
+                var next = new URLSearchParams(window.location.search).get('next');
+                if (next && /^[a-zA-Z0-9._-]+\.html(#[a-zA-Z0-9._-]+)?$/.test(next)) return next;
+            } catch(e) {}
+            return 'index.html';
+        }
+
         (function() {
             var savedTheme = localStorage.getItem('themeSelected') || 'evil';
             if (savedTheme === 'lawful') document.body.classList.add('lawful-mode');
@@ -138,7 +151,7 @@
                 try {
                     var u = JSON.parse(saved);
                     if (u && u.authKey) {
-                        window.location.href = 'index.html';
+                        window.location.href = postSigninDest();
                         return;
                     }
                 } catch(e) {}
@@ -221,7 +234,7 @@
                     authKey: data.authKey
                 }));
 
-                window.location.href = 'index.html';
+                window.location.href = postSigninDest();
             } catch(e) {
                 showStatus('Connection error. Please try again.', 'error');
             }
@@ -296,7 +309,7 @@
                         ...data.user,
                         authKey: data.authKey
                     }));
-                    window.location.href = 'index.html';
+                    window.location.href = postSigninDest();
                 } else {
                     showStatus(data.error || 'Sign in failed', 'error');
                 }
@@ -340,7 +353,7 @@
                         ...data.user,
                         authKey: data.authKey
                     }));
-                    window.location.href = 'index.html';
+                    window.location.href = postSigninDest();
                 } else {
                     showStatus(data.error || 'Sign in failed', 'error');
                 }
@@ -359,7 +372,7 @@
                 // Clear the URL parameter
                 window.history.replaceState({}, document.title, window.location.pathname);
                 // Redirect to home
-                window.location.href = 'index.html';
+                window.location.href = postSigninDest();
                 return;
             }
 
@@ -400,7 +413,7 @@
                             ...data.user,
                             authKey: data.authKey
                         }));
-                        window.location.href = 'index.html';
+                        window.location.href = postSigninDest();
                     } else {
                         showStatus(data.error || 'Sign in failed', 'error');
                     }
