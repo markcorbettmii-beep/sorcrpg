@@ -49,7 +49,7 @@
 
     /* Action Bar */
     .action-bar {
-      position: fixed;
+      position: sticky;
       bottom: 20px;
       left: 0;
       right: 0;
@@ -213,10 +213,22 @@
     const pages = document.querySelectorAll('.page');
     const ptabs = document.querySelectorAll('.ptab');
 
-    // Initialize - show front, hide back
-    if (pages.length >= 2) {
-      pages[1].classList.add('hidden');
+    // Reset to front/back's default state. Runs on first load AND whenever
+    // the page is restored from the browser's back/forward cache (bfcache) —
+    // without this, revisiting via back/forward can leave stale state (or a
+    // print-media snapshot) in place instead of the normal on-screen view.
+    function resetView() {
+      ptabs.forEach(t => t.classList.remove('active'));
+      const frontTab = document.querySelector('.ptab[data-side="front"]');
+      if (frontTab) frontTab.classList.add('active');
+      pages.forEach((page, pageIndex) => {
+        page.classList.toggle('hidden', pageIndex !== 0);
+      });
     }
+    resetView();
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) resetView();
+    });
 
     // Print tabs - flip pages
     ptabs.forEach((tab, index) => {
