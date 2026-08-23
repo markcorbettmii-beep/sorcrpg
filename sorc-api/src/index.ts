@@ -1192,14 +1192,45 @@ const ASSESSMENT_QUESTIONS = [
   { q: "What happens to a character at the Burdened load threshold (95-99%)?", options: ["They cannot act", "They move at half speed", "They move at full speed", "They drop all items"], answer: 1, page: 5 },
 ];
 
+// GM Codex: the GM-only counterpart to the Basic Rules pool above, drawn from
+// content/gm_essentials/gm_ref_001.html and gm_ref_002.html. IDs are offset by
+// 1000 so they never collide with ASSESSMENT_QUESTIONS' 0-based indices when
+// both pools are combined into one 20-question GM submission.
+const GM_CODEX_QUESTIONS = [
+  { q: "Per the GM Codex introduction, what actually gates a GM's access to Lobbies?", options: ["Reading the GM Codex itself", "Passing the SORC Assessment", "Owning a physical box set", "An admin invitation"], answer: 1, page: 1 },
+  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No — Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, page: 1 },
+  { q: "What happens to a Common or Uncommon rank Companion that dies?", options: ["It enters the boneyard for repair", "It can be resurrected once per campaign", "It is permanently lost and never enters the boneyard", "The GM automatically replaces it"], answer: 2, page: 1 },
+  { q: "At what item Rank does Attunement become required before an armament can be enhanced or Bound?", options: ["Rare and above", "Unique and above", "Heroic and above", "Legendary and above"], answer: 2, page: 1 },
+  { q: "Per the GM Codex Quick Reference table, what Card Rank is included in a module of Level 18-23?", options: ["Unique", "Heroic", "Elite", "Legendary"], answer: 1, page: 1 },
+  { q: "How many Drawn Ability picks does a character earn per year of age lived?", options: ["One every 2 years", "Exactly one, every year, flat", "One per Growth", "Two per year"], answer: 1, page: 2 },
+  { q: "A character who commits to a 20-ability capstone Drawn Ability tree and a 19-ability runner-up tree has spent how many of their 40 lifetime picks?", options: ["20", "30", "39", "40"], answer: 2, page: 2 },
+  { q: "How many total Class Ability picks does a character have across their entire career (Ch. Lvl 1 through 30)?", options: ["40", "50", "59", "60"], answer: 2, page: 2 },
+  { q: "Roughly how much cumulative XP does Ch. Lvl 30 require?", options: ["Roughly 1 million", "Roughly 1.5 million", "Roughly 2.58 million", "Roughly 3 million"], answer: 2, page: 2 },
+  { q: "In Attribute Development, how many d6 are rolled and how many of the lowest results are discarded?", options: ["Roll 1d6 six times, discard 1 lowest", "Roll 1d6 nine times, discard the two lowest", "Roll 1d6 seven times, discard none", "Roll 1d6 ten times, discard the three lowest"], answer: 1, page: 2 },
+];
+
 const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-function calcSorcRole(score: number, gmTrack: boolean): string {
-  if (score < 6) return 'FAIL';
-  if (gmTrack && score >= 9) return 'GM-ADV';
-  if (score >= 9) return 'PC-ADV';
-  if (score === 8) return 'PC-INT';
+// PC-track scoring, also used as the fallback grade for a GM-track attempt
+// that doesn't clear the perfect-score GM bar (see calcSorcRole below) — an
+// imperfect GM attempt still gets fair credit for their Basic Rules score.
+function calcPcRole(basicRulesScore: number): string {
+  if (basicRulesScore < 6) return 'FAIL';
+  if (basicRulesScore >= 9) return 'PC-ADV';
+  if (basicRulesScore === 8) return 'PC-INT';
   return 'PC-BEG';
+}
+
+// GM track requires a perfect score across BOTH sections (10 Basic Rules +
+// 10 GM Codex, 20 total) to be granted GM-ADV. Anything less than a perfect
+// 20/20 falls back to grading just the Basic Rules portion as a normal PC
+// attempt, rather than a blanket fail.
+function calcSorcRole(basicRulesScore: number, gmTrack: boolean, gmCodexScore?: number): string {
+  if (gmTrack) {
+    if (basicRulesScore === 10 && gmCodexScore === 10) return 'GM-ADV';
+    return calcPcRole(basicRulesScore);
+  }
+  return calcPcRole(basicRulesScore);
 }
 
 app.get('/api/assess', authMiddleware, async (c) => {
@@ -1217,22 +1248,39 @@ app.get('/api/assess', authMiddleware, async (c) => {
   return c.json({ assessment: result || null, expired, expires_at, needs_reassess: !!(user.needs_reassess) });
 });
 
-app.get('/api/assess/questions', authMiddleware, async (c) => {
-  const pool = ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i }));
-  for (let i = pool.length - 1; i > 0; i--) {
+function shuffle<T>(arr: T[]): T[] {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
+    [out[i], out[j]] = [out[j], out[i]];
   }
-  const questions = pool.slice(0, 10).map(q => ({
+  return out;
+}
+
+app.get('/api/assess/questions', authMiddleware, async (c) => {
+  const gmTrack = c.req.query('gm_track') === '1';
+  const basicPool = shuffle(ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i, section: 'basic' })));
+  const basicQuestions = basicPool.slice(0, 10);
+
+  let questions = basicQuestions;
+  if (gmTrack) {
+    // GM Codex ids are offset by 1000 so they never collide with the Basic
+    // Rules 0-based indices once both sections are combined for grading.
+    const codexPool = shuffle(GM_CODEX_QUESTIONS.map((q, i) => ({ ...q, id: 1000 + i, section: 'gm_codex' })));
+    questions = basicQuestions.concat(codexPool.slice(0, 10));
+  }
+
+  const out = questions.map(q => ({
     id: q.id,
     q: q.q,
     options: q.options,
-    page: q.page
+    page: q.page,
+    section: q.section
   }));
   /* Never cache: every request must return a freshly shuffled set of questions */
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   c.header('Pragma', 'no-cache');
-  return c.json({ questions });
+  return c.json({ questions: out });
 });
 
 app.post('/api/assess/submit', authMiddleware, async (c) => {
@@ -1251,20 +1299,30 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   }
 
   const { answers, gm_track } = await c.req.json() as any;
-  if (!Array.isArray(answers) || answers.length !== 10) {
-    return c.json({ error: 'Must answer all 10 questions.' }, 400);
+  const expectedCount = gm_track ? 20 : 10;
+  if (!Array.isArray(answers) || answers.length !== expectedCount) {
+    return c.json({ error: `Must answer all ${expectedCount} questions.` }, 400);
   }
 
-  let score = 0;
+  // GM track answers span both pools: Basic Rules ids are 0-based (< 1000),
+  // GM Codex ids are offset by 1000 (see /api/assess/questions). Scored
+  // separately so a GM attempt is graded per-section, not just combined.
+  let basicScore = 0;
+  let codexScore = 0;
   for (const entry of answers) {
     const qId = typeof entry === 'object' ? entry.id : null;
     const chosen = typeof entry === 'object' ? entry.answer : entry;
-    if (qId !== null && qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
-      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) score++;
+    if (qId === null) continue;
+    if (qId >= 1000) {
+      const codexId = qId - 1000;
+      if (codexId >= 0 && codexId < GM_CODEX_QUESTIONS.length && chosen === GM_CODEX_QUESTIONS[codexId].answer) codexScore++;
+    } else if (qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
+      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) basicScore++;
     }
   }
 
-  const role = calcSorcRole(score, !!gm_track);
+  const role = calcSorcRole(basicScore, !!gm_track, gm_track ? codexScore : undefined);
+  const score = gm_track ? basicScore + codexScore : basicScore;
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
@@ -1281,7 +1339,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
         ).bind(now, user.id).run();
       }
     } catch(_) {}
-    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
   }
 
   try {
@@ -1308,7 +1366,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
       ).bind(siteRole, role, pointsAwarded, now, user.id).run();
     }
 
-    return c.json({ score, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }

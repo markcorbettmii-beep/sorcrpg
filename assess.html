@@ -107,6 +107,10 @@
     var selectedAnswers = {};
     var questions = [];
 
+    var urlParams = new URLSearchParams(window.location.search);
+    var trackParam = urlParams.get('track'); // 'pc' | 'gm', preselects the track from take-assessment.html
+    var fromJoin = urlParams.get('from') === 'join'; // came here to join/log in, not just reassess
+
     function roleLabel(r) {
       switch(r) {
         case 'PC-BEG': return 'PC · Beginner';
@@ -149,20 +153,23 @@
             showResult(data.assessment, true, false);
           }
         } else {
-          loadQuiz();
+          loadQuiz(trackParam === 'gm');
         }
       } catch(e) {
         app.innerHTML = '<p style="color:#c93f35;">Connection error. Please try again.</p>';
       }
     }
 
-    async function loadQuiz() {
+    async function loadQuiz(isGM) {
       var app = document.getElementById('assessApp');
       app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+      gmTrack = !!isGM;
       try {
         /* Cache-busted, no-store fetch: the server reshuffles on every request, so
-           each page load, refresh, or return to the page draws a new set of questions. */
-        var res = await fetch(API_URL + '/api/assess/questions?t=' + Date.now(), {
+           each page load, refresh, or return to the page draws a new set of questions.
+           gm_track=1 pulls the GM Codex section on top of Basic Rules (20 total). */
+        var url = API_URL + '/api/assess/questions?t=' + Date.now() + (gmTrack ? '&gm_track=1' : '');
+        var res = await fetch(url, {
           headers: { 'X-Auth-Key': currentUser.authKey },
           cache: 'no-store'
         });
@@ -175,23 +182,40 @@
       }
     }
 
+    function renderQuestionCard(q, displayIdx, total) {
+      var page3 = ('00' + q.page).slice(-3);
+      var rulesHref = q.section === 'gm_codex'
+        ? '/content/gm_essentials/gm_ref_' + page3 + '.html'
+        : '/content/essentia_core/rules_ref_' + page3 + '.html';
+      return '<div class="q-card" id="qcard-' + q.id + '">' +
+        '<div class="q-num">Question ' + (displayIdx + 1) + ' of ' + total + '</div>' +
+        '<div class="q-text">' + esc(q.q) + '</div>' +
+        '<div class="q-options">' +
+          q.options.map(function(opt, oi) {
+            return '<button class="opt-btn" id="opt-' + q.id + '-' + oi + '" onclick="selectAnswer(' + q.id + ',' + oi + ')">' +
+              '<strong>' + ['A','B','C','D'][oi] + '.</strong> ' + esc(opt) + '</button>';
+          }).join('') +
+        '</div>' +
+        '<div style="margin-top:0.75rem;text-align:right;">' +
+          '<a href="' + rulesHref + '" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">&#128218; Read Rules Pg. ' + q.page + '</a>' +
+        '</div>' +
+      '</div>';
+    }
+
     function renderQuiz() {
       var app = document.getElementById('assessApp');
-      var qHtml = questions.map(function(q, idx) {
-        return '<div class="q-card" id="qcard-' + q.id + '">' +
-          '<div class="q-num">Question ' + (idx + 1) + ' of ' + questions.length + '</div>' +
-          '<div class="q-text">' + esc(q.q) + '</div>' +
-          '<div class="q-options">' +
-            q.options.map(function(opt, idx) {
-              return '<button class="opt-btn" id="opt-' + q.id + '-' + idx + '" onclick="selectAnswer(' + q.id + ',' + idx + ')">' +
-                '<strong>' + ['A','B','C','D'][idx] + '.</strong> ' + esc(opt) + '</button>';
-            }).join('') +
-          '</div>' +
-          '<div style="margin-top:0.75rem;text-align:right;">' +
-            '<a href="/content/essentia_core/essentia_core_' + q.page + '.html" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">&#128218; Read Rules Pg. ' + q.page + '</a>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+      var basicQs = questions.filter(function(q) { return q.section !== 'gm_codex'; });
+      var codexQs = questions.filter(function(q) { return q.section === 'gm_codex'; });
+
+      /* GM track is two graded sections in one continuous form: Basic Rules
+         then GM Codex, each under its own heading and <hr>. PC track is just
+         the single Basic Rules section, unchanged from before. */
+      var qHtml = '<h3 style="margin-top:1.5rem;">Basic Rules</h3><hr style="border-color:#2a2a2a;margin-bottom:1rem;">' +
+        basicQs.map(function(q, idx) { return renderQuestionCard(q, idx, questions.length); }).join('');
+      if (codexQs.length) {
+        qHtml += '<h3 style="margin-top:2rem;">GM Codex</h3><hr style="border-color:#2a2a2a;margin-bottom:1rem;">' +
+          codexQs.map(function(q, idx) { return renderQuestionCard(q, basicQs.length + idx, questions.length); }).join('');
+      }
 
       app.innerHTML =
         '<div class="role-track">' +
@@ -205,15 +229,23 @@
           '<span class="assess-msg" id="assessMsg"></span>' +
         '</div>';
 
-      setTrack(false);
+      updateTrackUI(gmTrack);
     }
 
+    /* Switching tracks changes how many questions there are (GM is 20, PC is
+       10), so it re-fetches instead of just re-rendering. Only reachable
+       pre-first-answer anyway (see lockTrack). */
     function setTrack(isGM) {
+      if (isGM !== gmTrack) { loadQuiz(isGM); return; }
+      updateTrackUI(isGM);
+    }
+
+    function updateTrackUI(isGM) {
       gmTrack = isGM;
       document.getElementById('trackPC').classList.toggle('active', !isGM);
       document.getElementById('trackGM').classList.toggle('active', isGM);
       document.getElementById('trackNote').textContent = isGM
-        ? 'GM track selected. You must score 9 or higher to qualify as GM-ADV.'
+        ? 'GM track selected. You must score a perfect 20/20 across both sections (Basic Rules + GM Codex) to qualify as GM-ADV.'
         : 'PC track selected. Score 6+ to pass and receive a PC role.';
       questions.forEach(function(q) {
         var sel = selectedAnswers[q.id];
@@ -285,7 +317,7 @@
             saved.role = data.site_role || saved.role;
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
-          showResult({ score: data.score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false, false);
+          showResult({ score: data.score, basic_score: data.basic_score, codex_score: data.codex_score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false, false);
         } else if (data.role === 'FAIL') {
           /* Downgraded to Civilian - update local cache and reload quiz for retry */
           try {
@@ -295,7 +327,12 @@
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
           msgEl.style.color = '#c0392b';
-          msgEl.textContent = data.message || 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess.';
+          var failMsg = data.message || 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess.';
+          if (fromJoin) {
+            failMsg += ' <a href="sorc-beyond.html#basic-member" style="color:#b9aa00;">Join As A Civilian</a> &middot; ' +
+              '<a href="library.html#character-sheets" style="color:#b9aa00;">Download Your Character Sheet Now</a>';
+          }
+          msgEl.innerHTML = failMsg;
           submitBtn.disabled = false;
         } else {
           msgEl.textContent = data.error || 'Submission failed.';
@@ -311,7 +348,14 @@
       var app = document.getElementById('assessApp');
       var role = assessment.role_granted;
       var score = assessment.score;
+      var wasGmTrack = !!assessment.gm_track;
+      var scoreMax = wasGmTrack ? 20 : 10;
       var isGM = role && role.startsWith('GM');
+
+      var scoreBreakdown = '';
+      if (wasGmTrack && assessment.basic_score !== undefined && assessment.codex_score !== undefined) {
+        scoreBreakdown = ' <span style="color:#555;">(Basic Rules ' + assessment.basic_score + '/10, GM Codex ' + assessment.codex_score + '/10)</span>';
+      }
 
       /* Study reference, not an answer key. Questions are drawn at random from a
          large pool and the assessment can be retaken, so revealing the correct
@@ -322,9 +366,14 @@
         qaHtml = '<div class="scroll-qa" style="margin-bottom:1.5rem;">' +
           '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Questions you were asked, and where to study them</p>' +
           questions.map(function(q, i) {
+            var page3 = ('00' + q.page).slice(-3);
+            var rulesHref = q.section === 'gm_codex'
+              ? '/content/gm_essentials/gm_ref_' + page3 + '.html'
+              : '/content/essentia_core/rules_ref_' + page3 + '.html';
+            var label = q.section === 'gm_codex' ? 'GM Codex' : 'Basic Rules';
             return '<div class="scroll-qa-item">' +
               '<div class="scroll-qa-q">Q' + (i+1) + ': ' + esc(q.q) + '</div>' +
-              '<div class="scroll-qa-a"><a href="/content/essentia_core/essentia_core_' + q.page + '.html" target="_blank" style="color:#b9aa00;text-decoration:none;">&#128218; Basic Rules Pg. ' + q.page + '</a></div>' +
+              '<div class="scroll-qa-a"><a href="' + rulesHref + '" target="_blank" style="color:#b9aa00;text-decoration:none;">&#128218; ' + label + ' Pg. ' + q.page + '</a></div>' +
             '</div>';
           }).join('') +
         '</div>';
@@ -333,19 +382,28 @@
       var expiryBanner = expired
         ? '<div style="background:#3a0d0d;border:1px solid #c0392b;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#e08080;font-size:0.88rem;">&#9888; Your assessment has expired. You must reassess to re-enter lobbies. Your role has been paused - reassess now to restore it.</div>'
         : '';
-      var gmNote = isGM ? '<p class="result-note">&#9733; GM Advanced role granted. You may now create and join lobbies as a GM.</p>' : '';
-      var pcNote = (!isGM && role !== 'FAIL') ? '<p class="result-note">You have been assessed as <strong style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</strong>. You may now join and create lobbies. Study more and reassess to advance your rating.</p>' : '';
+      var gmNote = isGM ? '<p class="result-note">&#9733; GM Advanced role granted. You may now create and join lobbies as a GM (a valid box set code is still required to create one).</p>' : '';
+      var pcNote = (!isGM && role !== 'FAIL') ? '<p class="result-note">You have been assessed as <strong style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</strong>. You may now join lobbies. Study more and reassess to advance your rating.</p>' : '';
       var reassessLabel = expired ? 'Reassess Now' : 'Reassess';
+
+      var roleForJoin = isGM ? 'GM' : 'Player';
+      var primaryLink = fromJoin
+        ? '<a href="sorc-beyond.html#basic-member" class="btn-go">Join As A ' + roleForJoin + '</a>'
+        : (expired ? '' : '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>');
+      var secondaryLobbies = (fromJoin && !expired)
+        ? '<a href="lobbies.html" class="btn-go" style="background:#333;">Enter Lobbies</a>'
+        : '';
+      var downloadSheetLink = '<a href="library.html#character-sheets" class="btn-go" style="background:none;border:1px solid #b9aa00;color:#b9aa00;">Download Your Character Sheet Now</a>';
 
       app.innerHTML =
         '<div class="result-card">' +
           expiryBanner +
           '<h2>' + (existing ? 'Your Current Role' : 'Assessment Complete') + '</h2>' +
           '<div class="result-role" style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</div>' +
-          '<div class="result-score">' + score + '/10 correct</div>' +
+          '<div class="result-score">' + score + '/' + scoreMax + ' correct' + scoreBreakdown + '</div>' +
           gmNote + pcNote +
           '<div class="result-links">' +
-            (expired ? '' : '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>') +
+            primaryLink + secondaryLobbies + downloadSheetLink +
             '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)" style="' + (expired ? 'border-color:#b9aa00;color:#b9aa00;' : '') + '">' + reassessLabel + '</button>' +
           '</div>' +
         '</div>' +

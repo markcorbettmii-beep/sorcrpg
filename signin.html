@@ -167,6 +167,18 @@
     <script>
         var API_URL = 'https://api.sorcrpg.com';
         var lastUnverifiedEmail = null;
+        var trackParam = new URLSearchParams(window.location.search).get('track'); // 'pc' | 'gm', from take-assessment.html
+
+        /* Where to send an already-authenticated visitor. Only a plain relative
+           path on this site is accepted (a leading slash, a scheme, or a host
+           is ignored), so this can't be used as an open redirect. */
+        function postSigninDest() {
+            try {
+                var next = new URLSearchParams(window.location.search).get('next');
+                if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) return next;
+            } catch(e) {}
+            return 'index.html';
+        }
 
         // Alert when page loads to check Google script status
         window.addEventListener('load', function() {
@@ -188,7 +200,7 @@
                 try {
                     var u = JSON.parse(saved);
                     if (u && u.authKey) {
-                        window.location.href = 'index.html';
+                        window.location.href = postSigninDest();
                         return;
                     }
                 } catch(e) {}
@@ -215,8 +227,9 @@
                     signupLink.style.display = 'none';
                 }
             }
-            // Show signup form after K-ID verification
-            if (params.get('signup') === 'true') {
+            // Show signup form after K-ID verification, or when arriving from
+            // the Take Assessment Now page (Player/GM tracks always signup, not signin)
+            if (params.get('signup') === 'true' || trackParam === 'pc' || trackParam === 'gm') {
                 document.getElementById('oauthSection').style.display = 'none';
                 document.getElementById('signupForm').style.display = 'block';
             }
@@ -231,7 +244,7 @@
                     localStorage.setItem('sorc_user', JSON.stringify(user));
                     window.history.replaceState({}, document.title, window.location.pathname);
                     console.log('Step 6: Redirecting to home');
-                    window.location.href = 'index.html';
+                    window.location.href = postSigninDest();
                     return;
                 } catch (e) {
                     window.location.href = '/signin.html';
@@ -317,7 +330,7 @@
                     authKey: data.authKey
                 }));
 
-                window.location.href = 'index.html';
+                window.location.href = postSigninDest();
             } catch(e) {
                 showStatus('Connection error. Please try again.', 'error');
             }
@@ -327,8 +340,10 @@
             // Check K-ID verification first
             if (!document.cookie.includes('kidVerified=true')) {
                 showStatus('Please verify your age to create an account.', 'error');
-                // Redirect to K-ID verification with return URL to signup
-                window.location.href = '/k-id-status.html?return=' + encodeURIComponent(window.location.pathname + '?signup=true');
+                // Redirect to K-ID verification with return URL to signup, preserving
+                // the track param so an Assess into Player/GM visitor doesn't lose it
+                var returnQs = '?signup=true' + (trackParam ? '&track=' + trackParam : '');
+                window.location.href = '/k-id-status.html?return=' + encodeURIComponent(window.location.pathname + returnQs);
                 return;
             }
 
@@ -368,6 +383,18 @@
 
                 if (!res.ok || !data.success) {
                     showStatus(data.error || 'Registration failed.', 'error');
+                    return;
+                }
+
+                if (trackParam === 'pc' || trackParam === 'gm') {
+                    // Assess-flow signup: authKey works immediately (authMiddleware only
+                    // checks for a valid key, not email_verified), so go straight into
+                    // the quiz rather than making them wait on the verification email.
+                    localStorage.setItem('sorc_user', JSON.stringify({
+                        ...data.user,
+                        authKey: data.authKey
+                    }));
+                    window.location.href = 'assess.html?track=' + trackParam + '&from=join';
                     return;
                 }
 
@@ -460,7 +487,7 @@
                         ...data.user,
                         authKey: data.authKey
                     }));
-                    window.location.href = 'index.html';
+                    window.location.href = postSigninDest();
                 } else {
                     showStatus(data.error || 'Sign in failed', 'error');
                 }
@@ -529,7 +556,7 @@
                         ...data.user,
                         authKey: data.authKey
                     }));
-                    window.location.href = 'index.html';
+                    window.location.href = postSigninDest();
                 } else {
                     showStatus(data.error || 'Sign in failed', 'error');
                 }
@@ -549,7 +576,7 @@
                     // Clear the URL parameter
                     window.history.replaceState({}, document.title, window.location.pathname);
                     // Redirect to home
-                    window.location.href = 'index.html';
+                    window.location.href = postSigninDest();
                     return;
                 } catch (e) {
                     console.error('Failed to parse user data:', e);
@@ -602,7 +629,7 @@
                             ...data.user,
                             authKey: data.authKey
                         }));
-                        window.location.href = 'index.html';
+                        window.location.href = postSigninDest();
                     } else {
                         showStatus(data.error || 'Sign in failed', 'error');
                     }
