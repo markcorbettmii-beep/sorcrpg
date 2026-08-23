@@ -175,6 +175,25 @@ for (const sheet of sheets) {
     const pages = doc.getPageCount();
     console.log(`rendered ${out} — ${pages} pages, ${added} fillable fields, ${Math.round(bytes.length / 1024)} KB`);
 
+    // Cache-busting: stamp every link to this PDF with a hash of its own
+    // bytes. A changed file gets a new URL, so browsers, Cloudflare's edge,
+    // and any other cache in between can never serve stale bytes under the
+    // new query string — there's nothing stale to have cached yet.
+    const pdfHash = crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 10);
+    const pdfName = path.basename(out);
+    for (const htmlFile of fs.readdirSync('.').filter(f => f.endsWith('.html'))) {
+      const html = fs.readFileSync(htmlFile, 'utf8');
+      const re = new RegExp(`(href="${pdfName})(\\?v=[0-9a-f]+)?(")`, 'g');
+      if (re.test(html)) {
+        re.lastIndex = 0;
+        const updated = html.replace(re, `$1?v=${pdfHash}$3`);
+        if (updated !== html) {
+          fs.writeFileSync(htmlFile, updated);
+          console.log(`  stamped ${htmlFile} link to ${pdfName} with ?v=${pdfHash}`);
+        }
+      }
+    }
+
     // A sheet is front + back. Anything else means the print CSS has drifted.
     if (pages !== 2) {
       console.error(`  WARNING: expected 2 pages, got ${pages}. Check the print CSS.`);
