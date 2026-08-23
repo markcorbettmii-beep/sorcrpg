@@ -128,10 +128,13 @@
       return '#e0cfc0';
     }
 
+    var betaMode = false; // anonymous visitor taking the no-account Player preview
+
     async function init() {
       var app = document.getElementById('assessApp');
       if (!currentUser || !currentUser.authKey) {
-        app.innerHTML = '<p>Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to take the assessment.</p>';
+        betaMode = true;
+        loadBetaQuiz();
         return;
       }
       app.innerHTML = '<p style="color:#555;">Checking assessment status...</p>';
@@ -182,6 +185,21 @@
       }
     }
 
+    async function loadBetaQuiz() {
+      var app = document.getElementById('assessApp');
+      app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+      gmTrack = false; // beta is Player-only, no account, no GM
+      try {
+        var res = await fetch(API_URL + '/api/assess/beta-questions?t=' + Date.now(), { cache: 'no-store' });
+        var data = await res.json();
+        questions = data.questions || [];
+        selectedAnswers = {};
+        renderQuiz();
+      } catch(e) {
+        app.innerHTML = '<p style="color:#c93f35;">Could not load questions.</p>';
+      }
+    }
+
     function renderQuestionCard(q, displayIdx, total) {
       var page3 = ('00' + q.page).slice(-3);
       var rulesHref = q.section === 'gm_codex'
@@ -217,19 +235,27 @@
           codexQs.map(function(q, idx) { return renderQuestionCard(q, basicQs.length + idx, questions.length); }).join('');
       }
 
+      var topSection = betaMode
+        ? '<div style="background:#1a1505;border:1px solid #5a4a00;border-radius:10px;padding:0.85rem 1.1rem;margin-bottom:1.25rem;color:#c9b400;font-size:0.85rem;">' +
+            '&#9888; <strong>BETA:</strong> The Player Assessment is open to visitors during beta &mdash; no account needed to try it. ' +
+            'This is a preview only: your score isn\'t saved. <a href="signin.html?track=pc" style="color:#b9aa00;">Create an account</a> to make a passing result official. ' +
+            'The GM Assessment still requires a Basic Member account.' +
+          '</div>'
+        : '<div class="role-track">' +
+            '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">&#9876; Player Character (PC)</button>' +
+            '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">&#127931; Game Master (GM)</button>' +
+          '</div>' +
+          '<p class="track-note" id="trackNote">&#9888; Choose your track before answering - it locks in on your first answer and cannot be changed.</p>';
+
       app.innerHTML =
-        '<div class="role-track">' +
-          '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">&#9876; Player Character (PC)</button>' +
-          '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">&#127931; Game Master (GM)</button>' +
-        '</div>' +
-        '<p class="track-note" id="trackNote">&#9888; Choose your track before answering - it locks in on your first answer and cannot be changed.</p>' +
+        topSection +
         qHtml +
         '<div class="submit-row">' +
           '<button class="submit-btn" id="submitBtn" onclick="submitAssessment()" disabled>Submit Assessment</button>' +
           '<span class="assess-msg" id="assessMsg"></span>' +
         '</div>';
 
-      updateTrackUI(gmTrack);
+      if (!betaMode) updateTrackUI(gmTrack);
     }
 
     /* Switching tracks changes how many questions there are (GM is 20, PC is
@@ -303,6 +329,23 @@
       msgEl.textContent = 'Grading...';
 
       var answers = questions.map(function(q) { return { id: q.id, answer: selectedAnswers[q.id] }; });
+
+      if (betaMode) {
+        try {
+          var betaRes = await fetch(API_URL + '/api/assess/beta-submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: answers })
+          });
+          var betaData = await betaRes.json();
+          showBetaResult(betaData);
+        } catch(e) {
+          msgEl.textContent = 'Connection error. Please try again.';
+          submitBtn.disabled = false;
+        }
+        return;
+      }
+
       try {
         var res = await fetch(API_URL + '/api/assess/submit', {
           method: 'POST',
@@ -342,6 +385,31 @@
         msgEl.textContent = 'Connection error. Please try again.';
         submitBtn.disabled = false;
       }
+    }
+
+    function showBetaResult(betaData) {
+      var app = document.getElementById('assessApp');
+      var role = betaData.role;
+      var passed = !!betaData.passed;
+      var roleText = passed ? roleLabel(role) : 'Civilian';
+
+      app.innerHTML =
+        '<div class="result-card">' +
+          '<div style="background:#1a1505;border:1px solid #5a4a00;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;color:#c9b400;font-size:0.85rem;">' +
+            '&#9888; <strong>BETA preview</strong> &mdash; this result is not saved. Create an account to make it official.' +
+          '</div>' +
+          '<h2>Beta Assessment Complete</h2>' +
+          '<div class="result-role" style="color:' + (passed ? roleColor(role) : '#e0cfc0') + ';">' + esc(roleText) + '</div>' +
+          '<div class="result-score">' + betaData.score + '/10 correct</div>' +
+          '<p class="result-note">' + (passed
+            ? 'You scored high enough to be a Player. Create an account and take the real Assessment to lock it in.'
+            : 'Score too low to pass as Player this time — study the Basic Rules and try again anytime during beta.') + '</p>' +
+          '<div class="result-links">' +
+            '<a href="signin.html?track=pc" class="choice-btn pc btn-go">Join As A Player</a>' +
+            '<a href="signin.html?next=' + encodeURIComponent('sorc-beyond.html#basic-member') + '" class="btn-go" style="background:#333;">Join As A Civilian</a>' +
+            '<button class="btn-reassess" onclick="loadBetaQuiz()">Try Again</button>' +
+          '</div>' +
+        '</div>';
     }
 
     function showResult(assessment, existing, expired) {

@@ -1283,6 +1283,43 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
   return c.json({ questions: out });
 });
 
+// Beta: the Player (PC) Assessment is open to anonymous visitors, no account
+// required — a genuine try-before-you-join preview. GM stays account-only
+// (it grants real lobby-creation power tied to a box code, this doesn't).
+// No DB writes here at all: there's no user to attach a role to, so this
+// never touches the users or assessments tables — just grades and returns
+// the result. Rate-limited by IP since there's no user id to key on.
+app.get('/api/assess/beta-questions', async (c) => {
+  const pool = shuffle(ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i, section: 'basic' })));
+  const out = pool.slice(0, 10).map(q => ({ id: q.id, q: q.q, options: q.options, page: q.page, section: q.section }));
+  c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  c.header('Pragma', 'no-cache');
+  return c.json({ questions: out });
+});
+
+app.post('/api/assess/beta-submit', async (c) => {
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  const allowed = await checkRateLimit(c.env.sorc_db, `assess-beta:${ip}`, 10, 3600);
+  if (!allowed) return c.json({ error: 'Too many assessment attempts. Please try again later.' }, 429);
+
+  const { answers } = await c.req.json() as any;
+  if (!Array.isArray(answers) || answers.length !== 10) {
+    return c.json({ error: 'Must answer all 10 questions.' }, 400);
+  }
+
+  let score = 0;
+  for (const entry of answers) {
+    const qId = typeof entry === 'object' ? entry.id : null;
+    const chosen = typeof entry === 'object' ? entry.answer : entry;
+    if (qId !== null && qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
+      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) score++;
+    }
+  }
+
+  const role = calcPcRole(score);
+  return c.json({ score, role, passed: role !== 'FAIL', beta: true });
+});
+
 app.post('/api/assess/submit', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const ip = c.req.header('CF-Connecting-IP') || 'unknown';
