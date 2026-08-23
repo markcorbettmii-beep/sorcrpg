@@ -399,17 +399,8 @@
         if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
 
         console.log('[PROFILE] Rendering profile - role:', role, 'displayName:', displayName, 'communityPoints:', communityPoints);
-
-        if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
-            communityPoints = 10000;
-            user.community_points = 10000;
-            localStorage.setItem('sorc_user', JSON.stringify(user));
-            fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
-                body: JSON.stringify({ community_points: 10000 })
-            }).catch(function(){});
-        }
+        // Privileged accounts are now auto-topped-up to 10,000 points server-side
+        // (in /api/me, gated by the real isPrivileged() check) - nothing to do here.
 
         var avatarDisplay = avatar
             ? '<img src="images/avatars/' + avatar + '" style="width:100%;height:100%;object-fit:cover;" />'

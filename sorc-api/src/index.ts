@@ -1015,8 +1015,14 @@ app.get('/api/profile/:userId', async (c) => {
 app.get('/api/me', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
-    const fullUser = await c.env.sorc_db.prepare('SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ?').bind(user.id).first();
+    const fullUser = await c.env.sorc_db.prepare('SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ?').bind(user.id).first() as any;
     if (!fullUser) return c.json({ error: 'User not found' }, 404);
+    // Privileged accounts (ADMIN/OWNER, verified server-side, never client-claimed)
+    // are auto-topped-up to a 10,000 community_points floor.
+    if (isPrivileged(fullUser) && (fullUser.community_points || 0) < 10000) {
+      await c.env.sorc_db.prepare('UPDATE users SET community_points = 10000 WHERE id = ?').bind(fullUser.id).run();
+      fullUser.community_points = 10000;
+    }
     return c.json({ user: fullUser });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
@@ -1026,7 +1032,7 @@ app.get('/api/me', authMiddleware, async (c) => {
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
-  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'signature', 'website', 'social_twitter', 'social_twitch', 'privacy_email', 'unlocked_features', 'community_points'];
+  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'signature', 'website', 'social_twitter', 'social_twitch', 'privacy_email'];
   const setParts: string[] = [];
   const values: any[] = [];
   for (const field of allowedFields) {
