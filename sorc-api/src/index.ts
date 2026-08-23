@@ -1097,9 +1097,9 @@ function isPrivileged(user: any): boolean {
 }
 
 const ASSESSMENT_QUESTIONS = [
-  // PAGE 1 - Dice, Box Set, Action Resolution
+  // PAGE 1 - Dice, D100 System, Action Resolution
   { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, page: 1 },
-  { q: "What does rolling 00 on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, page: 1 },
+  { q: "What does rolling two 0s on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, page: 1 },
   { q: "When using the D100+D100 system, what is the minimum possible total result?", options: ["1", "2", "10", "0"], answer: 1, page: 1 },
   { q: "What is the maximum possible result when using the D100+D100 system?", options: ["100", "150", "200", "198"], answer: 2, page: 1 },
   { q: "Which two dice combine to form a d100 roll in SORC?", options: ["Two D6s", "Two D10s (tens and ones)", "D20 and D6", "D12 and D8"], answer: 1, page: 1 },
@@ -1108,59 +1108,89 @@ const ASSESSMENT_QUESTIONS = [
   { q: "When rolling d100, the tens die shows 0 and the ones die shows 5. What is your result?", options: ["50", "0", "15", "5"], answer: 3, page: 1 },
   { q: "What is the maximum possible result on a single d100 roll?", options: ["99", "10", "50", "100"], answer: 3, page: 1 },
   { q: "What is the minimum possible result on a single d100 roll?", options: ["0", "1", "10", "5"], answer: 1, page: 1 },
-  { q: "Which die combination is used for Divine and Legendary item drops in SORC?", options: ["1D6", "1D4", "D100 + D100", "2D6"], answer: 2, page: 1 },
-  { q: "The D4 is primarily used for which type of roll?", options: ["Damage", "Initiative", "Luck", "Loot"], answer: 2, page: 1 },
-  { q: "How many D10 dice are included in the SORC box set?", options: ["4", "6", "8", "10"], answer: 2, page: 1 },
-  { q: "How many D6 dice are included in the SORC box set?", options: ["4", "6", "8", "12"], answer: 1, page: 1 },
-  { q: "What does DIFS stand for in SORC?", options: ["Defense Index Factor Score", "Damage Infliction Scale", "Difficulty Score", "Dice Influence Factor"], answer: 2, page: 1 },
-  { q: "In SORC, a D100 action roll must do what to the DIFS to succeed?", options: ["Fall below it", "Equal exactly", "Meet or exceed it", "Exceed it by at least 5"], answer: 2, page: 1 },
-  { q: "What is the rarest item drop rank in SORC?", options: ["Legendary", "Unique", "Divine", "Elite"], answer: 2, page: 1 },
-  // PAGE 2 - Races & Character Creation
-  { q: "Which color token represents Life (HP)?", options: ["Blue", "Red", "Yellow", "Green"], answer: 1, page: 2 },
-  { q: "How many playable races and sub-races are available in SORC?", options: ["20", "30", "40", "50"], answer: 2, page: 2 },
+  { q: "Which dice roll is used for very rare items such as Divine and Legendary drops?", options: ["1D6", "1D4", "D100 + D100", "2D6"], answer: 2, page: 1 },
+  { q: "What does DIFS stand for in SORC?", options: ["Defense Index Factor Score", "Difficulty Score", "Damage Infliction Scale", "Dice Influence Factor"], answer: 1, page: 1 },
+  { q: "In SORC, a D100 action roll must do what to the DIFS to succeed?", options: ["Fall below it", "Equal it exactly", "Meet or exceed it", "Exceed it by at least 5"], answer: 2, page: 1 },
+  { q: "Items obtained through loot, discovery, and crafting are determined by which die?", options: ["D20", "D12", "D100", "D6"], answer: 2, page: 1 },
+  { q: "In the d100 pair, what does each die represent?", options: ["Both are added together", "One is the tens place, the other the ones place", "One is damage, one is accuracy", "The higher die is used"], answer: 1, page: 1 },
+
+  // PAGE 2 - Races, Attributes, Traits, Professions, Hobbies, Ranks
+  { q: "Which color chips represent Life in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 0, page: 2 },
+  { q: "What color chips represent Mana in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 1, page: 2 },
+  { q: "What color chips represent Stamina in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 2, page: 2 },
+  { q: "How many playable races and subraces are available in SORC?", options: ["20", "30", "40", "50"], answer: 2, page: 2 },
   { q: "How many size categories do SORC races fall into?", options: ["2", "3", "4", "5"], answer: 1, page: 2 },
+  { q: "What are the three size categories for SORC races?", options: ["Large, Medium, Small", "Goliath, Standard, Small", "Titan, Normal, Tiny", "Heavy, Average, Light"], answer: 1, page: 2 },
   { q: "What is the height range for Goliath size races?", options: ["5-7 ft", "7-9 ft", "9-11 ft", "3-5 ft"], answer: 1, page: 2 },
-  { q: "What is the height range for Small size races?", options: ["3-4 ft", "2-4 ft", "3-5 ft", "4-6 ft"], answer: 2, page: 2 },
-  { q: "In SORC, does a Human's culture (Omne, Nordkin, etc.) affect their base stats?", options: ["Yes, significantly", "Yes, slightly", "No, all humans share the same base stats", "Only in combat"], answer: 2, page: 2 },
-  // PAGE 3 - Classes & Abilities
-  { q: "What is the maximum number of abilities a character can learn?", options: ["40", "50", "59", "75"], answer: 2, page: 3 },
-  { q: "How many main class trees exist in SORC?", options: ["8", "12", "16", "20"], answer: 2, page: 3 },
-  { q: "How many paths does each main class tree have?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
-  { q: "At what class level do Path Abilities become available?", options: ["Level 1", "Level 4", "Level 10", "Level 21"], answer: 1, page: 3 },
-  { q: "At what class level do Branch Abilities unlock?", options: ["Level 10", "Level 15", "Level 21", "Level 30"], answer: 2, page: 3 },
-  { q: "Which classes are restricted from using edged weapons?", options: ["Warlocks and Paladins", "Monks and Clerics", "Bards and Druids", "Rangers and Rogues"], answer: 1, page: 3 },
+  { q: "What is the height range for Small size races?", options: ["1-3 ft", "2-4 ft", "3-5 ft", "4-6 ft"], answer: 2, page: 2 },
+  { q: "In SORC, does a Human's culture (Omne, Nordkin, etc.) affect their base Traits and Stats?", options: ["Yes, significantly", "Yes, slightly", "No, every human begins with the same Traits and Stats", "Only in combat"], answer: 2, page: 2 },
+  { q: "How many Attributes exist in SORC?", options: ["5", "6", "7", "8"], answer: 1, page: 2 },
+  { q: "What is the theoretical maximum any single Attribute can reach?", options: ["20", "25", "45", "50"], answer: 3, page: 2 },
+  { q: "What is the maximum score a Skill can reach?", options: ["30", "45", "50", "59"], answer: 1, page: 2 },
+  { q: "How many REM Points must be invested to unlock a Profession?", options: ["1", "2", "5", "10"], answer: 1, page: 2 },
+  { q: "Skill and talent scores are multiplied by what number for each use?", options: ["2", "3", "5", "10"], answer: 2, page: 2 },
+  { q: "Which Trait sets the maximum cap (Extent) for each Vitality resource?", options: ["Spirit", "Apex", "Capacity", "Knowledge"], answer: 1, page: 2 },
+  { q: "Which Trait governs how fast Vitality resources recover?", options: ["Apex", "Spirit", "Willpower", "Focus"], answer: 1, page: 2 },
+  { q: "Which Expertise tier does every character have access to for free?", options: ["Novice", "Apprentice", "Journeyman", "Grandmaster"], answer: 0, page: 2 },
+  { q: "What is the correct Expertise order from lowest to highest?", options: ["Apprentice, Novice, Journeyman, Master, Grandmaster", "Novice, Apprentice, Journeyman, Master, Grandmaster", "Novice, Journeyman, Apprentice, Master, Grandmaster", "Novice, Apprentice, Master, Journeyman, Grandmaster"], answer: 1, page: 2 },
+  { q: "What is the correct Character Rank order from lowest to highest for the first three ranks?", options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Elite, Pauper", "Commoner, Peasant, Pauper"], answer: 1, page: 2 },
+  { q: "What Character Rank comes directly after Commoner?", options: ["Hero", "Peasant", "Adventurer", "Elite"], answer: 2, page: 2 },
+  { q: "What is the highest Character Rank in SORC?", options: ["Elite", "Hero", "Uber", "Legend"], answer: 3, page: 2 },
+  { q: "How many total Character Ranks exist in SORC?", options: ["6", "7", "8", "9"], answer: 2, page: 2 },
+  { q: "What Character Rank comes directly after Hero?", options: ["Uber", "Adventurer", "Legend", "Elite"], answer: 0, page: 2 },
+  { q: "Can characters equip items of a Rank above their own?", options: ["Yes, with a penalty", "Yes, if given by the GM", "No, never", "Only in emergencies"], answer: 2, page: 2 },
+  { q: "Can Hobbies or Professions be used during combat?", options: ["Only Professions can", "Only Hobbies can", "Both can be used freely", "Neither can ever be used in combat"], answer: 3, page: 2 },
+  { q: "How does Hobby action time compare to the equivalent Profession work?", options: ["Half the action time", "The same action time", "Double the action time", "Hobbies require no actions"], answer: 2, page: 2 },
+  { q: "Can Hobby action time be decreased with Expertise?", options: ["Yes, at the same rate as a Profession", "Yes, but only at Master tier", "No, only Profession action time can be decreased", "Only during downtime"], answer: 2, page: 2 },
+  { q: "What happens to the value of an item crafted as a Hobby?", options: ["It gains double value", "It loses half of the product's default value", "Its value is unchanged", "It cannot be valued at all"], answer: 1, page: 2 },
+  { q: "What bonus do characters who work at their craft as a Hobby receive?", options: ["Combat bonuses", "Discovery bonuses", "Crafting speed bonuses", "Wage bonuses"], answer: 1, page: 2 },
+  { q: "Can a character be paid for work done as a Hobby?", options: ["Yes, at half rate", "Yes, if the GM allows it", "No, the moment coin changes hands it is the Profession working", "Only during downtime"], answer: 2, page: 2 },
+  { q: "Which system do Hobbies improve through?", options: ["Expertise", "Growth", "Remnants", "Reputation"], answer: 1, page: 2 },
+  { q: "What is the Crafting Check formula in SORC?", options: ["d100 + Skill Score vs DIFS", "d100 + (Skill Score x 5) + Aligned Attribute Modifier vs DIFS", "d20 + Skill Score vs DIFS", "Skill Score x 5 vs DIFS"], answer: 1, page: 2 },
+
+  // PAGE 3 - Classes, Paths, Branches, Abilities
+  { q: "What is the maximum number of Abilities a character can learn?", options: ["40", "50", "59", "75"], answer: 2, page: 3 },
+  { q: "How many main Classes exist in SORC?", options: ["8", "12", "16", "20"], answer: 2, page: 3 },
+  { q: "How many Paths does each Class Tree have?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
+  { q: "How many Branches does each Path have?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
+  { q: "At what Character LVL do Path Abilities become available?", options: ["LVL 1", "LVL 4", "LVL 10", "LVL 21"], answer: 1, page: 3 },
+  { q: "At what Character LVL do Branch Abilities unlock?", options: ["LVL 10", "LVL 15", "LVL 21", "LVL 30"], answer: 2, page: 3 },
+  { q: "How many Abilities does a single Class Tree contain in total?", options: ["20", "30", "45", "59"], answer: 1, page: 3 },
+  { q: "Which LVL range covers a Class Tree's Tier Abilities?", options: ["LVLs 1-3", "LVLs 1-5", "LVLs 4-20", "LVLs 21-30"], answer: 0, page: 3 },
+  { q: "Which LVL range covers a Class Tree's Path Abilities?", options: ["LVLs 1-3", "LVLs 4-20", "LVLs 10-25", "LVLs 21-30"], answer: 1, page: 3 },
+  { q: "Which class is restricted from using edged weapons?", options: ["Cleric", "Warlock", "Bard", "Ranger"], answer: 0, page: 3 },
   { q: "Which class cannot use holy weapons?", options: ["Paladin", "Cleric", "Warlock", "Monk"], answer: 2, page: 3 },
-  // PAGE 4 - Cards, Currency, Ranks
-  { q: "What is the correct rank order from lowest to highest for ranks 1, 2, and 3?", options: ["Adventurer, Peasant, Pauper", "Pauper, Peasant, Commoner", "Legend, Master, Pauper", "Commoner, Peasant, Pauper"], answer: 1, page: 4 },
-  { q: "What rank comes directly after Commoner (rank 3) in SORC?", options: ["Hero", "Peasant", "Adventurer", "Elite"], answer: 2, page: 4 },
-  { q: "What is the highest rank a character can achieve in SORC?", options: ["Elite", "Hero", "Master", "Legend"], answer: 3, page: 4 },
-  { q: "How many total ranks exist in the SORC rank system?", options: ["5", "6", "7", "8"], answer: 3, page: 4 },
-  { q: "What rank comes directly after Hero (rank 5) in SORC?", options: ["Master", "Adventurer", "Legend", "Elite"], answer: 3, page: 4 },
-  { q: "Can characters use items of a rank above their own?", options: ["Yes, with a penalty", "Yes, if given by the GM", "No, never", "Only in emergencies"], answer: 2, page: 4 },
-  { q: "How many Silver coins equal one Gold coin in SORC?", options: ["10", "25", "50", "100"], answer: 2, page: 4 },
-  { q: "How many Silver coins equal one Platinum coin in SORC?", options: ["50", "100", "200", "500"], answer: 1, page: 4 },
-  { q: "What card rank is included in a module of levels 1-5?", options: ["Rare", "Uncommon", "Common", "Heroic"], answer: 2, page: 4 },
-  { q: "What bonus does a Rare rank armor provide to the base Armor Score?", options: ["+3", "+5", "+8", "+10"], answer: 1, page: 4 },
-  // PAGE 5 - Attributes, Vitality, Traits, Combat, Movement
-  { q: "How many Attributes exist in SORC?", options: ["5", "6", "7", "8"], answer: 2, page: 5 },
-  { q: "What is the maximum score any single Attribute can reach?", options: ["20", "25", "30", "50"], answer: 2, page: 5 },
+
+  // PAGE 4 - Cards, Currency, Modules
+  { q: "How many Silver coins equal one Gold coin in SORC?", options: ["5", "10", "25", "100"], answer: 1, page: 4 },
+  { q: "How many Copper coins equal one Silver coin in SORC?", options: ["5", "10", "25", "100"], answer: 1, page: 4 },
+  { q: "What are the three standard currency denominations in Essentia?", options: ["Platinum, Gold, Silver", "Gold, Silver, Copper", "Gold, Silver, Bronze", "Credits, Gold, Silver"], answer: 1, page: 4 },
+  { q: "Which world serves as the universe's primary reserve currency issuer?", options: ["Omne", "Ignis", "Zailister", "Tredici"], answer: 2, page: 4 },
+  { q: "Which worlds refuse coins and trade only in Credits?", options: ["Ignis and Zailister", "Futurem, Omne, and Tredici", "Zailister and Tredici", "Only Omne"], answer: 1, page: 4 },
+  { q: "What Card rank is included in a module of LVLs 1-5?", options: ["Rare", "Uncommon", "Common", "Heroic"], answer: 2, page: 4 },
+  { q: "What Card rank is included in a module of LVLs 5-10?", options: ["Common", "Uncommon", "Rare", "Unique"], answer: 1, page: 4 },
+  { q: "What is the highest item Rank in SORC?", options: ["Legendary", "Elite", "Divine", "Unique"], answer: 2, page: 4 },
+  { q: "Which item Rank sits directly above Rare?", options: ["Uncommon", "Unique", "Heroic", "Elite"], answer: 1, page: 4 },
+
+  // PAGE 5 - Combat, Movement, Armor, Encumbrance
   { q: "What does PROTS stand for in SORC?", options: ["Power Rating Over Target Score", "Protection Score", "Primary Roll Threshold", "Passive Resistance Stat"], answer: 1, page: 5 },
-  { q: "What roll result counts as a Critical Hit in SORC?", options: ["Natural 1", "Natural 99", "Natural 100", "Any roll of 95+"], answer: 2, page: 5 },
-  { q: "How much damage does a Critical Hit deal?", options: ["1.5x damage", "2x damage dice", "3x damage dice", "Instant incapacitation"], answer: 1, page: 5 },
-  { q: "Which Traits are used in the Initiative formula?", options: ["Strength, Defense, Courage", "Agility, Vigilance, Luck", "Dexterity, Wit, Spirit", "Toughness, Constitution, Willpower"], answer: 1, page: 5 },
+  { q: "What roll result counts as a Critical Hit in SORC?", options: ["Natural 1", "Natural 99 only", "96-100", "Any roll of 85+"], answer: 2, page: 5 },
+  { q: "How much damage does a Critical Hit deal?", options: ["1.5x damage", "2x damage dice plus the source bonus", "3x damage dice", "Instant incapacitation"], answer: 1, page: 5 },
+  { q: "What is the Initiative formula in SORC?", options: ["Base Speed + Agility Trait + Intuition Trait", "Agility + Vigilance + Luck", "Dexterity + Wit + Spirit", "Base Speed + Strength + Luck"], answer: 0, page: 5 },
+  { q: "Which Trait breaks a tie on Initiative?", options: ["Agility", "Intuition", "Luck", "Spirit"], answer: 2, page: 5 },
   { q: "How many real-time seconds does each combat turn represent in SORC?", options: ["3", "6", "10", "12"], answer: 1, page: 5 },
-  { q: "How much time does each player have per turn before it is forfeited?", options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"], answer: 2, page: 5 },
+  { q: "How much time does each Player have to complete their turn?", options: ["30 seconds", "1 minute", "2 minutes", "5 minutes"], answer: 2, page: 5 },
   { q: "What is the base movement speed for Standard size races?", options: ["25 ft", "30 ft", "35 ft", "40 ft"], answer: 1, page: 5 },
   { q: "What is the base movement speed for Goliath size races?", options: ["30 ft", "35 ft", "40 ft", "50 ft"], answer: 2, page: 5 },
-  { q: "Which Trait determines how fast Life, Mana, Stamina, and Endurance regenerate?", options: ["Apex", "Spirit", "Willpower", "Focus"], answer: 1, page: 5 },
-  { q: "Which Trait sets the maximum cap (Extent) for each Vitality resource?", options: ["Spirit", "Apex", "Capacity", "Knowledge"], answer: 1, page: 5 },
-  { q: "What color chips represent Mana in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 1, page: 5 },
-  { q: "What color chips represent Stamina in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 2, page: 5 },
+  { q: "What is the base movement speed for Small size races?", options: ["20 ft", "25 ft", "30 ft", "35 ft"], answer: 1, page: 5 },
   { q: "In SORC's armor system, when does an attack successfully hit?", options: ["When the roll is lower than PROTS", "When the roll equals zero", "When the roll equals or exceeds PROTS", "When the roll is a natural 1"], answer: 2, page: 5 },
   { q: "What does the abbreviation 'AS' stand for in SORC?", options: ["Attack Speed", "Armor Set", "Action Score", "Armor Score"], answer: 3, page: 5 },
-  { q: "What is the base Armor Score (AS) of Heavy (Plate) armor?", options: ["25", "35", "40", "45"], answer: 3, page: 5 },
+  { q: "What is the base Armor Score (AS) of Heavy (Plate) armor?", options: ["40", "45", "50", "60"], answer: 3, page: 5 },
   { q: "What does LST stand for in SORC combat?", options: ["Long-range Stealth Training", "Limb-Specific Targeting", "Light Strike Technique", "Luck Saving Throw"], answer: 1, page: 5 },
-  { q: "The maximum load a character can carry is determined by which formula?", options: ["STR x 10 lbs", "STR x 15 lbs", "STR x 20 lbs", "STR x 25 lbs"], answer: 1, page: 5 },
+  { q: "How much carry capacity does each positive point of Strength add on top of the racial base?", options: ["10 lbs", "15 lbs", "20 lbs", "25 lbs"], answer: 1, page: 5 },
+  { q: "At what load threshold does a character become Encumbered and unable to move or act?", options: ["0-94%", "95-99%", "100%+", "110%+"], answer: 2, page: 5 },
+  { q: "What load percentage range still allows a character to move at full speed?", options: ["0-94%", "0-80%", "95-99%", "100%+"], answer: 0, page: 5 },
+  { q: "What happens to a character at the Burdened load threshold (95-99%)?", options: ["They cannot act", "They move at half speed", "They move at full speed", "They drop all items"], answer: 1, page: 5 },
 ];
 
 const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -1200,6 +1230,9 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
     options: q.options,
     page: q.page
   }));
+  /* Never cache: every request must return a freshly shuffled set of questions */
+  c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  c.header('Pragma', 'no-cache');
   return c.json({ questions });
 });
 
