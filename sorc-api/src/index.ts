@@ -1128,7 +1128,7 @@ const ASSESSMENT_QUESTIONS = [
   { q: "What is the theoretical maximum any single Attribute can reach?", options: ["20", "25", "45", "50"], answer: 3, page: 2 },
   { q: "What is the maximum score a Skill can reach?", options: ["30", "45", "50", "59"], answer: 1, page: 2 },
   { q: "How many REM Points must be invested to unlock a Profession?", options: ["1", "2", "5", "10"], answer: 1, page: 2 },
-  { q: "Skill and talent scores are multiplied by what number for each use?", options: ["2", "3", "5", "10"], answer: 2, page: 2 },
+  { q: "Skill and talent scores are multiplied by what number to determine their bonus on each use?", options: ["2", "3", "5", "10"], answer: 2, page: 2 },
   { q: "Which Trait sets the maximum cap (Extent) for each Vitality resource?", options: ["Spirit", "Apex", "Capacity", "Knowledge"], answer: 1, page: 2 },
   { q: "Which Trait governs how fast Vitality resources recover?", options: ["Apex", "Spirit", "Willpower", "Focus"], answer: 1, page: 2 },
   { q: "Which Expertise tier does every character have access to for free?", options: ["Novice", "Apprentice", "Journeyman", "Grandmaster"], answer: 0, page: 2 },
@@ -1143,7 +1143,6 @@ const ASSESSMENT_QUESTIONS = [
   { q: "Can Hobby action time be decreased with Expertise?", options: ["Yes, at the same rate as a Profession", "Yes, but only at Master tier", "No, only Profession action time can be decreased", "Only during downtime"], answer: 2, page: 2 },
   { q: "What happens to the value of an item crafted as a Hobby?", options: ["It gains double value", "It loses half of the product's default value", "Its value is unchanged", "It cannot be valued at all"], answer: 1, page: 2 },
   { q: "What bonus do characters who work at their craft as a Hobby receive?", options: ["Combat bonuses", "Discovery bonuses", "Crafting speed bonuses", "Wage bonuses"], answer: 1, page: 2 },
-  { q: "Can a character be paid for work done as a Hobby?", options: ["Yes, at half rate", "Yes, if the GM allows it", "No, the moment coin changes hands it is the Profession working", "Only during downtime"], answer: 2, page: 2 },
   { q: "Which system do Hobbies improve through?", options: ["Expertise", "Growth", "Remnants", "Reputation"], answer: 1, page: 2 },
   { q: "What is the Crafting Check formula in SORC?", options: ["d100 + Skill Score vs DIFS", "d100 + (Skill Score x 5) + Aligned Attribute Modifier vs DIFS", "d20 + Skill Score vs DIFS", "Skill Score x 5 vs DIFS"], answer: 1, page: 2 },
 
@@ -1167,7 +1166,7 @@ const ASSESSMENT_QUESTIONS = [
   { q: "Which world serves as the universe's primary reserve currency issuer?", options: ["Omne", "Ignis", "Zailister", "Tredici"], answer: 2, page: 4 },
   { q: "Which worlds refuse coins and trade only in Credits?", options: ["Ignis and Zailister", "Futurem, Omne, and Tredici", "Zailister and Tredici", "Only Omne"], answer: 1, page: 4 },
   { q: "What Card rank is included in a module of LVLs 1-5?", options: ["Rare", "Uncommon", "Common", "Heroic"], answer: 2, page: 4 },
-  { q: "What Card rank is included in a module of LVLs 5-10?", options: ["Common", "Uncommon", "Rare", "Unique"], answer: 1, page: 4 },
+  { q: "What Card rank is included in a module of LVLs 5-8?", options: ["Common", "Uncommon", "Rare", "Unique"], answer: 1, page: 4 },
   { q: "What is the highest item Rank in SORC?", options: ["Legendary", "Elite", "Divine", "Unique"], answer: 2, page: 4 },
   { q: "Which item Rank sits directly above Rare?", options: ["Uncommon", "Unique", "Heroic", "Elite"], answer: 1, page: 4 },
 
