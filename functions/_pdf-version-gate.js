@@ -1,15 +1,10 @@
 // Shared by the character-sheet PDF functions. Each request's `?v=` is
 // checked against pdf-versions.json (written by scripts/render-sheet-pdfs.mjs
 // on every regeneration). A match falls through to the real static PDF; a
-// mismatch — an old link, or the bare unversioned path — redirects to the
-// static outdated-pdf-link.html interstitial instead of silently serving
-// nothing useful.
-//
-// This redirects rather than returning the interstitial's HTML directly at
-// the PDF's own path: _headers forces Content-Type: application/pdf and
-// Content-Disposition: inline on anything served from /character-sheet-*.pdf,
-// which would clobber an HTML response returned at that same path. Sending
-// the browser to a different path sidesteps that entirely.
+// mismatch — an old link, or the bare unversioned path — silently redirects
+// straight to the current versioned URL. No interstitial, no extra click:
+// the visitor just lands on the current PDF as if that's what they'd asked
+// for all along.
 //
 // Manifest reads are fail-open: any hiccup reading it just serves the file
 // rather than blocking every visitor.
@@ -29,9 +24,8 @@ export async function gatePdf(context, fileName) {
   }
 
   if (currentVersion && requestedVersion !== currentVersion) {
-    const freshUrl = `${url.pathname}?v=${currentVersion}`;
-    const redirectTo = `/outdated-pdf-link.html?fresh=${encodeURIComponent(freshUrl)}`;
-    return Response.redirect(new URL(redirectTo, url.origin).toString(), 302);
+    const freshUrl = new URL(`${url.pathname}?v=${currentVersion}`, url.origin);
+    return Response.redirect(freshUrl.toString(), 302);
   }
 
   return context.next();
