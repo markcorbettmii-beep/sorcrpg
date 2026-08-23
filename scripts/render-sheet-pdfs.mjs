@@ -25,7 +25,15 @@ const DEFAULT_SHEETS = [
   'character-sheet-fem-musc.html',
   'character-sheet-male-musc.html',
 ];
-const sheets = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_SHEETS;
+const args = process.argv.slice(2);
+// --check verifies the committed PDFs still match the current HTML instead of
+// rewriting them. Byte comparison is useless here: the output embeds timestamps
+// and ids, so two identical runs differ. The page count and field-name set are
+// stable, so those are what get compared.
+const CHECK = args.includes('--check');
+const sheets = args.filter(a => !a.startsWith('--')).length
+  ? args.filter(a => !a.startsWith('--'))
+  : DEFAULT_SHEETS;
 
 const launchOpts = process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {};
 const browser = await chromium.launch(launchOpts);
@@ -104,6 +112,30 @@ for (const sheet of sheets) {
 
     // Make filled values visible without the reader having to click each field.
     form.updateFieldAppearances();
+
+    if (CHECK) {
+      const signature = (d) => JSON.stringify({
+        pages: d.getPageCount(),
+        fields: d.getForm().getFields().map((x) => x.getName()).sort(),
+      });
+      if (!fs.existsSync(out)) {
+        console.error(`MISSING: ${out} has never been generated.`);
+        failed++;
+        continue;
+      }
+      const committed = await PDFDocument.load(fs.readFileSync(out));
+      if (signature(committed) !== signature(doc)) {
+        console.error(`STALE: ${out} no longer matches ${sheet}.`);
+        console.error(`  committed: ${signature(committed)}`);
+        console.error(`  expected : ${signature(doc)}`);
+        console.error('  Run: node scripts/render-sheet-pdfs.mjs   then commit the PDFs.');
+        failed++;
+      } else {
+        console.log(`ok ${out} matches ${sheet}`);
+      }
+      continue;
+    }
+
     fs.writeFileSync(out, await doc.save());
 
     const bytes = fs.readFileSync(out);

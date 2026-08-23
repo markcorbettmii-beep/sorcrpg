@@ -1,10 +1,28 @@
-name: Render Character Sheet PDFs
+name: Check Character Sheet PDFs
 
-# Keeps the printable PDFs in step with the HTML character sheets.
-# Whenever a sheet's HTML (or an image it uses) changes on main, the PDFs are
-# re-rendered from that HTML and committed back, so the two can never drift.
+# Guards against the printable PDFs drifting from the HTML character sheets.
+#
+# This does NOT commit. main is protected ("Changes must be made through a pull
+# request"), so a workflow pushing straight to main is rejected outright, which
+# is exactly how the first version of this failed. Instead the job re-renders
+# from the current HTML and fails if the committed PDFs no longer match, so the
+# drift shows up on the pull request that caused it.
+#
+# Byte comparison is not usable: the PDF embeds timestamps and object ids, so
+# two identical runs differ. The check compares page count and the set of form
+# field names, which are stable.
+#
+# To update the PDFs: node scripts/render-sheet-pdfs.mjs   then commit them.
 
 on:
+  pull_request:
+    paths:
+      - 'character-sheet-fem-musc.html'
+      - 'character-sheet-male-musc.html'
+      - 'character-sheet-fem-musc.pdf'
+      - 'character-sheet-male-musc.pdf'
+      - 'scripts/render-sheet-pdfs.mjs'
+      - 'images/**'
   push:
     branches:
       - main
@@ -15,14 +33,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: render-sheet-pdfs
+  group: check-sheet-pdfs-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  render:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,23 +50,10 @@ jobs:
           node-version: '22'
 
       - name: Install Playwright and Chromium
-        # playwright is already a devDependency in the root package.json
+        # playwright and pdf-lib are both devDependencies in the root package.json
         run: |
           npm install
           npx playwright install --with-deps chromium
 
-      - name: Render sheets to PDF
-        run: node scripts/render-sheet-pdfs.mjs
-
-      - name: Commit PDFs if they changed
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add character-sheet-fem-musc.pdf character-sheet-male-musc.pdf
-          if git diff --staged --quiet; then
-            echo "PDFs unchanged, nothing to commit."
-          else
-            # [skip ci] stops this commit from re-triggering the workflow
-            git commit -m "Re-render character sheet PDFs from HTML [skip ci]"
-            git push
-          fi
+      - name: Check PDFs match the HTML
+        run: node scripts/render-sheet-pdfs.mjs --check
