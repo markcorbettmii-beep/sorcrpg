@@ -132,7 +132,10 @@
       }
       app.innerHTML = '<p style="color:#555;">Checking assessment status...</p>';
       try {
-        var res = await fetch(API_URL + '/api/assess', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var res = await fetch(API_URL + '/api/assess?t=' + Date.now(), {
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          cache: 'no-store'
+        });
         var data = await res.json();
         if (data.assessment) {
           try {
@@ -157,9 +160,15 @@
       var app = document.getElementById('assessApp');
       app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
       try {
-        var res = await fetch(API_URL + '/api/assess/questions', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        /* Cache-busted, no-store fetch: the server reshuffles on every request, so
+           each page load, refresh, or return to the page draws a new set of questions. */
+        var res = await fetch(API_URL + '/api/assess/questions?t=' + Date.now(), {
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          cache: 'no-store'
+        });
         var data = await res.json();
         questions = data.questions || [];
+        selectedAnswers = {};
         renderQuiz();
       } catch(e) {
         app.innerHTML = '<p style="color:#c93f35;">Could not load questions.</p>';
@@ -304,14 +313,18 @@
       var score = assessment.score;
       var isGM = role && role.startsWith('GM');
 
+      /* Study reference, not an answer key. Questions are drawn at random from a
+         large pool and the assessment can be retaken, so revealing the correct
+         answers would defeat it. Each question points at the rules page it came
+         from instead. */
       var qaHtml = '';
       if (questions.length > 0) {
         qaHtml = '<div class="scroll-qa" style="margin-bottom:1.5rem;">' +
-          '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Assessment Q&A</p>' +
+          '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Questions you were asked, and where to study them</p>' +
           questions.map(function(q, i) {
             return '<div class="scroll-qa-item">' +
               '<div class="scroll-qa-q">Q' + (i+1) + ': ' + esc(q.q) + '</div>' +
-              '<div class="scroll-qa-a">Answer: ' + esc(q.options[ANSWER_KEY[i]]) + '</div>' +
+              '<div class="scroll-qa-a"><a href="/content/essentia_core/essentia_core_' + q.page + '.html" target="_blank" style="color:#b9aa00;text-decoration:none;">&#128218; Basic Rules Pg. ' + q.page + '</a></div>' +
             '</div>';
           }).join('') +
         '</div>';
@@ -336,10 +349,8 @@
             '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)" style="' + (expired ? 'border-color:#b9aa00;color:#b9aa00;' : '') + '">' + reassessLabel + '</button>' +
           '</div>' +
         '</div>' +
-        (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review the questions and answers:</p>' + qaHtml + '</div>' : '');
+        (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review what you were asked:</p>' + qaHtml + '</div>' : '');
     }
-
-    var ANSWER_KEY = [1,2,3,1,1,2,1,2,2,1];
 
     async function reassess(btn) {
       if (!btn) return;
@@ -369,6 +380,39 @@
     }
 
     init();
+
+    /* ─── Re-randomize whenever the page is left and returned to ───
+       A plain reload always re-runs init(). These handlers cover the cases a
+       reload does not: back/forward navigation restored from the browser's
+       bfcache, and the tab being switched away from and returned to. In both
+       cases the quiz is torn down and re-fetched, so the character never sees
+       the same ten questions twice. An in-progress quiz is discarded on leave
+       by design, questions are drawn fresh on return. */
+    var assessLeft = false;
+
+    function markLeft() { assessLeft = true; }
+
+    function reshuffleOnReturn() {
+      if (!assessLeft) return;
+      assessLeft = false;
+      /* Only re-draw while the quiz is actually on screen. A displayed result
+         card is a saved record, not a live quiz, and must not be replaced. */
+      if (!document.getElementById('submitBtn')) return;
+      selectedAnswers = {};
+      questions = [];
+      loadQuiz();
+    }
+
+    window.addEventListener('pagehide', markLeft);
+    window.addEventListener('beforeunload', markLeft);
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') markLeft();
+      else reshuffleOnReturn();
+    });
+    window.addEventListener('pageshow', function(e) {
+      /* e.persisted marks a bfcache restore, the page never re-ran its scripts */
+      if (e.persisted) { assessLeft = true; reshuffleOnReturn(); }
+    });
   </script>
   <script src="nav.js?v=2"></script>
   <script type="module" src="main.js?v=25"></script>
