@@ -1150,7 +1150,7 @@ const ASSESSMENT_QUESTIONS = [
   { q: "What is the maximum number of Abilities a character can learn?", options: ["40", "50", "59", "75"], answer: 2, page: 3 },
   { q: "How many main Classes exist in SORC?", options: ["8", "12", "16", "20"], answer: 2, page: 3 },
   { q: "How many Paths does each Class Tree have?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
-  { q: "How many Branches does each Path have?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
+  { q: "How many Branches does each Main Class have to choose from?", options: ["2", "3", "4", "5"], answer: 1, page: 3 },
   { q: "At what Character LVL do Path Abilities become available?", options: ["LVL 1", "LVL 4", "LVL 10", "LVL 21"], answer: 1, page: 3 },
   { q: "At what Character LVL do Branch Abilities unlock?", options: ["LVL 10", "LVL 15", "LVL 21", "LVL 30"], answer: 2, page: 3 },
   { q: "How many Abilities does a single Class Tree contain in total?", options: ["20", "30", "45", "59"], answer: 1, page: 3 },
