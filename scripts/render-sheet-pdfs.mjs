@@ -16,6 +16,7 @@ import { chromium } from 'playwright';
 import { PDFDocument, rgb } from 'pdf-lib';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const CSS_W = 768;   // .page width  in css px
 const CSS_H = 1104;  // .page height in css px
@@ -34,6 +35,27 @@ const CHECK = args.includes('--check');
 const sheets = args.filter(a => !a.startsWith('--')).length
   ? args.filter(a => !a.startsWith('--'))
   : DEFAULT_SHEETS;
+
+
+// Fingerprint of everything the PDF is rendered from: the HTML itself plus any
+// local file it references (the frame image, the banner). Stored in the PDF and
+// compared on --check, so ANY change to the source is caught, including
+// text-only edits that leave the page count and field names untouched.
+function sourceFingerprint(sheet) {
+  const html = fs.readFileSync(sheet);
+  const h = crypto.createHash('sha256').update(html);
+  const dir = path.dirname(path.resolve(sheet));
+  const refs = new Set();
+  for (const m of html.toString().matchAll(/(?:src|url)\(?["']?([^"')\s>]+\.(?:png|jpe?g|gif|webp|svg))["')]?/gi)) {
+    refs.add(m[1]);
+  }
+  for (const ref of [...refs].sort()) {
+    if (/^(https?:)?\/\//.test(ref)) continue;      // skip remote assets
+    const p = path.resolve(dir, ref);
+    if (fs.existsSync(p)) h.update(ref).update(fs.readFileSync(p));
+  }
+  return h.digest('hex');
+}
 
 const launchOpts = process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {};
 const browser = await chromium.launch(launchOpts);
@@ -112,8 +134,12 @@ for (const sheet of sheets) {
 
     // Make filled values visible without the reader having to click each field.
     form.updateFieldAppearances();
+    const fingerprint = sourceFingerprint(sheet);
+    doc.setKeywords([`sheet-src-sha256:${fingerprint}`]);
 
     if (CHECK) {
+      const stamp = (d) =>
+        (d.getKeywords() || '').match(/sheet-src-sha256:([0-9a-f]{64})/)?.[1] ?? null;
       const signature = (d) => JSON.stringify({
         pages: d.getPageCount(),
         fields: d.getForm().getFields().map((x) => x.getName()).sort(),
@@ -124,7 +150,14 @@ for (const sheet of sheets) {
         continue;
       }
       const committed = await PDFDocument.load(fs.readFileSync(out));
-      if (signature(committed) !== signature(doc)) {
+      const committedStamp = stamp(committed);
+      if (committedStamp !== fingerprint) {
+        console.error(`STALE: ${out} was not rendered from the current ${sheet}.`);
+        console.error(`  committed source fingerprint: ${committedStamp ?? '(none)'}`);
+        console.error(`  current source fingerprint  : ${fingerprint}`);
+        console.error('  Run: npm run render-sheets   then commit the PDFs.');
+        failed++;
+      } else if (signature(committed) !== signature(doc)) {
         console.error(`STALE: ${out} no longer matches ${sheet}.`);
         console.error(`  committed: ${signature(committed)}`);
         console.error(`  expected : ${signature(doc)}`);
