@@ -3724,8 +3724,46 @@ app.get('/api/trials-of-combat', authMiddleware, async (c) => {
 // is Pro-exclusive per the comparison table.
 app.get('/api/achievements', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  const isPro = await isProMember(c.env.sorc_db, user);
-  return c.json({ error: 'Achievements are not yet implemented.', full_system: isPro }, 501);
+  try {
+    await ensureAchievementsTable(c.env.sorc_db);
+    const isPro = await isProMember(c.env.sorc_db, user);
+    const visibleCatalog = ACHIEVEMENT_CATALOG.filter(a => a.tier === 'basic' || isPro);
+
+    const existing = await c.env.sorc_db.prepare(`SELECT achievement_id, earned_at FROM user_achievements WHERE user_id = ?`).bind(user.id).all();
+    const earnedMap = new Map<string, string>(((existing.results || []) as any[]).map((r: any) => [r.achievement_id, r.earned_at]));
+
+    // Awarding a new achievement grants +25 Community Points, matching the
+    // 'Earning an in-game achievement: +25 pts, awarded automatically upon
+    // achievement unlock' rule already documented on sorc-beyond.html.
+    let pointsAwarded = 0;
+    for (const ach of visibleCatalog) {
+      if (earnedMap.has(ach.id)) continue;
+      if (await checkAchievement(c.env.sorc_db, user, ach.id)) {
+        const now = new Date().toISOString();
+        await c.env.sorc_db.prepare(
+          `INSERT OR IGNORE INTO user_achievements (id, user_id, achievement_id, earned_at) VALUES (?, ?, ?, ?)`
+        ).bind(crypto.randomUUID(), user.id, ach.id, now).run();
+        earnedMap.set(ach.id, now);
+        pointsAwarded += 25;
+      }
+    }
+    if (pointsAwarded > 0) {
+      await c.env.sorc_db.prepare(`UPDATE users SET community_points = COALESCE(community_points, 0) + ? WHERE id = ?`).bind(pointsAwarded, user.id).run();
+    }
+
+    const achievements = visibleCatalog.map(a => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      tier: a.tier,
+      earned: earnedMap.has(a.id),
+      earned_at: earnedMap.get(a.id) || null
+    }));
+
+    return c.json({ achievements, full_system: isPro, points_awarded: pointsAwarded });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load achievements', details: error.message }, 500);
+  }
 });
 
 // SORC Store access via Community Points is Pro-exclusive per the table;
