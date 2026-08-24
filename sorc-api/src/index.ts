@@ -2044,6 +2044,10 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
   if (!privileged && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
 
+  // Check if user is banned from this lobby (due to abandon)
+  const isBanned = await c.env.sorc_db.prepare(`SELECT id FROM lobby_bans WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
+  if (isBanned && !privileged) return c.json({ error: 'You cannot rejoin this lobby without permission or a new code.' }, 403);
+
   const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
   if (existing) return c.json({ error: 'You are already in this lobby.' }, 400);
 
@@ -2071,6 +2075,9 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
 app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
+  const body = await c.req.json() as any;
+  const isAbandon = body?.abandon === true;
+
   try {
     const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
     if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
@@ -2080,24 +2087,64 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
     } catch (_) {}
 
+    // One-time migration: add lobby_bans table for abandon bans
+    try {
+      await c.env.sorc_db.prepare(`
+        CREATE TABLE IF NOT EXISTS lobby_bans (
+          id TEXT PRIMARY KEY,
+          lobby_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          banned_at TEXT NOT NULL,
+          banned_by TEXT,
+          reason TEXT
+        )
+      `).run();
+    } catch (_) {}
+
     const now = new Date().toISOString();
+
+    // If abandoning (not just leaving), ban the user from rejoining
+    if (isAbandon && lobby.creator_uid === user.id) {
+      const banId = crypto.randomUUID();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO lobby_bans (id, lobby_id, user_id, banned_at, reason) VALUES (?, ?, ?, ?, ?)`
+      ).bind(banId, lobbyId, user.id, now, 'Abandoned lobby').run();
+    }
+
     await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
 
     if (lobby.creator_uid === user.id) {
-      const next = await c.env.sorc_db.prepare(
+      // Look for next GM first (sorc_role = 'GM-ADV' or 'GM-INT' or 'GM-BEG')
+      const nextGM = await c.env.sorc_db.prepare(
         `SELECT lm.user_id FROM lobby_members lm
-         LEFT JOIN box_set_codes bsc ON bsc.owner_uid = lm.user_id
-         WHERE lm.lobby_id = ?
-         ORDER BY CASE WHEN bsc.owner_uid IS NOT NULL THEN 0 ELSE 1 END ASC, lm.joined_at ASC
+         WHERE lm.lobby_id = ? AND lm.sorc_role LIKE 'GM-%'
+         ORDER BY lm.joined_at ASC
          LIMIT 1`
       ).bind(lobbyId).first() as any;
-      if (next) {
+
+      if (nextGM) {
+        // Transfer to next GM
         await c.env.sorc_db.prepare(
           `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
-        ).bind(next.user_id, user.username, now, lobbyId).run();
+        ).bind(nextGM.user_id, user.username, now, lobbyId).run();
       } else {
-        await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
-          .bind(now, lobbyId).run();
+        // No GMs remaining, pass to next member who joined
+        const nextMember = await c.env.sorc_db.prepare(
+          `SELECT lm.user_id FROM lobby_members lm
+           WHERE lm.lobby_id = ?
+           ORDER BY lm.joined_at ASC
+           LIMIT 1`
+        ).bind(lobbyId).first() as any;
+
+        if (nextMember) {
+          await c.env.sorc_db.prepare(
+            `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
+          ).bind(nextMember.user_id, user.username, now, lobbyId).run();
+        } else {
+          // No members left, close the lobby
+          await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
+            .bind(now, lobbyId).run();
+        }
       }
     }
 
