@@ -263,6 +263,14 @@ app.post('/api/auth/guest', async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(uuid, email, authKey, authKeyExpiresAt, username, username, '', 'CIVILIAN', now, now, now, userId, true, passwordHash).run();
 
+    // Create an assessment record for the guest so they can join lobbies
+    // (assessment check at /api/lobbies/join requires either an assessment or privileged status)
+    const assessmentId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(`
+      INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(assessmentId, uuid, 8, 'PC-BEG', 0, now).run();
+
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE id = ?').bind(uuid).first();
     return c.json({ success: true, user: newUser, authKey, message: 'Guest account created' });
   } catch (error: any) {
