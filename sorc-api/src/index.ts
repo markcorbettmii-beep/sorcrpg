@@ -1655,12 +1655,15 @@ app.delete('/api/assess', authMiddleware, async (c) => {
 
 // ---------------------------------------------------------------------------
 // Chat roll codes. A message containing e.g. "3ROLLD100:" is rolled here, on
-// the server - a client-supplied result could be forged. "GM" in front hides
-// the outcome from everyone but the GM, while still recording it.
-//   xROLLD4:  xROLLD6:  xROLLD10:  xROLLD100:  xROLLD100+100:
+// the server - a client-supplied result could be forged.
+// - "GM" prefix: hidden roll, only GM can see
+// - "SHOW" prefix: GM roll visible to all (requires GM confirmation)
+// - No prefix: regular roll visible to all
+//   xROLLD4: xROLLD6: xROLLD10: xROLLD100: xROLLD100+100:
+//   GMxROLLD100: SHOWxROLLD100:
 // x is optional and defaults to 1.
 // ---------------------------------------------------------------------------
-const ROLL_CODE_RE = /\b(GM)?(\d{0,2})ROLLD(100\+100|100|10|6|4):/gi;
+const ROLL_CODE_RE = /\b(GM|SHOW)?(\d{0,2})ROLLD(100\+100|100|10|6|4):/gi;
 const MAX_DICE_PER_CODE = 20;
 
 // Unbiased 1..sides using rejection sampling; a plain modulo skews low faces.
@@ -1674,7 +1677,7 @@ function rollDie(sides: number): number {
 
 interface RollResult {
   code: string; gm: boolean; count: number; die: string;
-  rolls: number[]; total: number;
+  rolls: number[]; total: number; gmShown?: boolean;
 }
 
 function resolveRollCodes(body: string): RollResult[] {
@@ -1682,7 +1685,9 @@ function resolveRollCodes(body: string): RollResult[] {
   ROLL_CODE_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = ROLL_CODE_RE.exec(body)) !== null) {
-    const gm = !!m[1];
+    const prefix = m[1] ? m[1].toUpperCase() : '';
+    const gm = prefix === 'GM'; // Only GM prefix = hidden
+    const gmShown = prefix === 'SHOW'; // SHOW prefix = GM roll but shown to all
     const count = Math.min(Math.max(parseInt(m[2] || '1', 10) || 1, 1), MAX_DICE_PER_CODE);
     const dieRaw = m[3].toLowerCase();
     // D100 + D100 is two percentile rolls added together, 2 to 200, used for
@@ -1696,6 +1701,7 @@ function resolveRollCodes(body: string): RollResult[] {
     out.push({
       code: m[0], gm, count, die: 'd' + dieRaw,
       rolls, total: rolls.reduce((a, b) => a + b, 0),
+      gmShown: gmShown,
     });
     if (out.length >= 10) break; // one message can't spam unlimited codes
   }

@@ -88,16 +88,22 @@
     .dice-purpose { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
     .dice-purpose input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.84rem; }
     .dice-purpose input:focus { outline: none; border-color: #555; }
-    .dice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem; }
-    .die-btn { padding: 0.75rem 0.5rem; border-radius: 8px; border: 2px solid #2a2a2a; background: #1a1a1a; color: #888; font-size: 0.82rem; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.15s; }
-    .die-btn:hover { border-color: #b9aa00; color: #b9aa00; background: #1a1505; }
-    .die-btn.rolling { border-color: #c93f35; color: #c93f35; animation: pulse 0.4s ease; }
-    .die-btn .die-label { font-size: 1rem; display: block; }
-    .die-btn .die-name { font-size: 0.65rem; color: #555; display: block; margin-top: 0.1rem; }
-    .die-btn:hover .die-name { color: #888; }
+    .dice-controls { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .control-row { display: flex; gap: 0.5rem; align-items: center; }
+    .control-row label { font-size: 0.75rem; color: #666; min-width: 50px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .control-row select, .control-row input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.84rem; }
+    .control-row select:focus, .control-row input:focus { outline: none; border-color: #555; }
+    .roll-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .roll-btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #2a2a2a; background: #1a1a1a; color: #888; font-size: 0.82rem; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+    .roll-btn:hover { border-color: #b9aa00; color: #b9aa00; background: #1a1505; }
+    .roll-btn.primary { border-color: #5a4a10; color: #b9aa00; }
+    .roll-btn.primary:hover { background: #1a1505; }
+    .dice-grid { display: none; }
+    .die-btn { display: none; }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
     .dice-result { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 8px; padding: 0.75rem 1rem; text-align: center; min-height: 52px; }
     .result-total { font-size: 2rem; font-weight: bold; color: #b9aa00; line-height: 1; }
+    .result-total.gm-roll { color: #c93f35; }
     .result-detail { color: #555; font-size: 0.75rem; margin-top: 0.2rem; }
 
     /* ===== CHAT/ROLLS RIGHT COL ===== */
@@ -535,30 +541,47 @@
             '</div>' +
 
             '<div class="dice-panel">' +
-              '<div class="dice-head">&#127922; Dice</div>' +
+              '<div class="dice-head">&#127922; Roll Code</div>' +
               '<div class="dice-purpose">' +
-                '<input type="text" id="rollPurpose" placeholder="Roll purpose (e.g. Attack, Luck, Loot)..." maxlength="80" />' +
+                '<input type="text" id="rollPurpose" placeholder="Purpose (e.g. Attack, Luck)..." maxlength="80" />' +
               '</div>' +
-              '<div class="dice-grid">' +
-                '<button class="die-btn" onclick="rollDie(\'d4\')">' +
-                  '<span class="die-label">D4</span>' +
-                  '<span class="die-name">Luck</span>' +
-                '</button>' +
-                '<button class="die-btn" onclick="rollDie(\'d6\')">' +
-                  '<span class="die-label">D6</span>' +
-                  '<span class="die-name">Modifier</span>' +
-                '</button>' +
-                '<button class="die-btn" onclick="rollDie(\'d100\')">' +
-                  '<span class="die-label">D100</span>' +
-                  '<span class="die-name">Standard</span>' +
-                '</button>' +
-                '<button class="die-btn" onclick="rollDie(\'d100+d100\')">' +
-                  '<span class="die-label">D100</span>' +
-                  '<span class="die-name">+D100</span>' +
-                '</button>' +
+              '<div class="dice-controls">' +
+                '<div class="control-row">' +
+                  '<label>Die</label>' +
+                  '<select id="rollDieType">' +
+                    '<option value="d4">D4</option>' +
+                    '<option value="d6">D6</option>' +
+                    '<option value="d10">D10</option>' +
+                    '<option value="d100" selected>D100</option>' +
+                    '<option value="d100+100">D100+D100</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="control-row">' +
+                  '<label>Count</label>' +
+                  '<select id="rollCount">' +
+                    '<option value="1" selected>1</option>' +
+                    '<option value="2">2</option>' +
+                    '<option value="3">3</option>' +
+                    '<option value="4">4</option>' +
+                    '<option value="5">5</option>' +
+                    '<option value="10">10</option>' +
+                    '<option value="20">20</option>' +
+                  '</select>' +
+                '</div>' +
+                (isGM ? '<div class="control-row">' +
+                  '<label>Show</label>' +
+                  '<select id="rollVisibility">' +
+                    '<option value="shown" selected>Shown</option>' +
+                    '<option value="hidden">Hidden</option>' +
+                  '</select>' +
+                '</div>' : '') +
+              '</div>' +
+              '<div class="roll-buttons">' +
+                '<button class="roll-btn primary" onclick="submitRoll()">Roll &amp; Send</button>' +
+                (isGM && '<button class="roll-btn" onclick="previewRoll()">Preview</button>' || '') +
               '</div>' +
               '<div class="dice-result" id="diceResult">' +
-                '<div style="color:#333;font-size:0.82rem;">Select a die to roll</div>' +
+                '<div style="color:#333;font-size:0.82rem;">Configure and roll</div>' +
               '</div>' +
             '</div>' +
 
@@ -634,29 +657,43 @@
     };
 
     // ===== DICE =====
-    window.rollDie = async function(dieType) {
-      if (!roomData) return;
-      var purpose = (document.getElementById('rollPurpose')?.value || '').trim() || 'General roll';
-      var result1, result2, total;
-      if (dieType === 'd4') { result1 = Math.floor(Math.random() * 4) + 1; total = result1; }
-      else if (dieType === 'd6') { result1 = Math.floor(Math.random() * 6) + 1; total = result1; }
-      else if (dieType === 'd100') { result1 = Math.floor(Math.random() * 100) + 1; total = result1; }
-      else if (dieType === 'd100+d100') { result1 = Math.floor(Math.random() * 100) + 1; result2 = Math.floor(Math.random() * 100) + 1; total = result1 + result2; }
+    window.submitRoll = async function() {
+      if (!roomData || !currentUser) return;
+      var dieType = document.getElementById('rollDieType')?.value || 'd100';
+      var count = parseInt(document.getElementById('rollCount')?.value || '1', 10);
+      var visibility = document.getElementById('rollVisibility')?.value || 'shown';
+      var purpose = (document.getElementById('rollPurpose')?.value || '').trim() || 'Roll';
 
-      var resEl = document.getElementById('diceResult');
-      if (resEl) {
-        resEl.innerHTML = '<div class="result-total">' + total + '</div>' +
-          '<div class="result-detail">' + dieType + (result2 !== undefined ? ' (' + result1 + ' + ' + result2 + ')' : '') + ' &middot; ' + esc(purpose) + '</div>';
+      // Convert d10 to d100 for consistency with roll code system
+      if (dieType === 'd10') dieType = 'd100';
+
+      // Format: COUNTROLLDtype: or GMCOUNTROLLD type: or SHOWCOUNTROLLD type:
+      var prefix = isGM && visibility === 'hidden' ? 'GM' : (isGM && visibility === 'shown' ? 'SHOW' : '');
+      var code = prefix + count + 'ROLLD' + dieType + ':';
+
+      var msg = code + ' ' + esc(purpose);
+      var input = document.getElementById('chatInput');
+      if (input) { input.value = msg; }
+
+      sendChat();
+    };
+
+    window.previewRoll = function() {
+      if (!roomData) return;
+      var dieType = document.getElementById('rollDieType')?.value || 'd100';
+      var count = parseInt(document.getElementById('rollCount')?.value || '1', 10);
+      var visibility = document.getElementById('rollVisibility')?.value || 'shown';
+      var purpose = (document.getElementById('rollPurpose')?.value || '').trim() || 'Roll';
+
+      if (dieType === 'd10') dieType = 'd100';
+      var prefix = isGM && visibility === 'hidden' ? 'GM' : (isGM && visibility === 'shown' ? 'SHOW' : '');
+      var code = prefix + count + 'ROLLD' + dieType + ':';
+
+      if (!confirm('This roll will be sent to the chat:\n\n' + code + ' ' + esc(purpose) + '\n\n' + (isGM && visibility === 'hidden' ? '[GM ONLY - Hidden from party]' : 'Continue?'))) {
+        return;
       }
 
-      try {
-        await fetch(API_URL + '/api/rooms/' + roomId + '/roll', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ roll_purpose: purpose, die_type: dieType, result1: result1, result2: result2 || null, total: total, locked_by_gm: gmUid })
-        });
-        loadRolls();
-      } catch(e) {}
+      submitRoll();
     };
 
     // ===== CHAT =====
@@ -671,7 +708,9 @@
         if (msgs.length === 0) { el.innerHTML = '<div style="color:#333;font-size:0.8rem;text-align:center;padding:1rem;">No messages yet.</div>'; return; }
         el.innerHTML = msgs.map(function(m) {
           var isGmMsg = m.sorc_role && m.sorc_role.startsWith('GM');
-          return '<div class="chat-msg" id="msg-' + m.id + '">' +
+          var hasGmRoll = /\bGM\d{0,2}ROLLD/.test(m.body);
+          var msgStyle = (hasGmRoll && isGM ? 'style="color:#c93f35;"' : '');
+          return '<div class="chat-msg" id="msg-' + m.id + '" ' + msgStyle + '>' +
             '<span class="msg-name' + (isGmMsg ? ' gm' : '') + '">' + esc(m.username) + ':</span>' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
