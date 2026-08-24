@@ -189,12 +189,19 @@
           headers: { 'X-Auth-Key': currentUser.authKey },
           cache: 'no-store'
         });
+        if (!res.ok) {
+          throw new Error('Server error: ' + res.status);
+        }
         var data = await res.json();
+        if (!data.questions) {
+          throw new Error('No questions in response');
+        }
         questions = data.questions || [];
         selectedAnswers = {};
         renderQuiz();
       } catch(e) {
-        app.innerHTML = '<p style="color:#c93f35;">Could not load questions.</p>';
+        console.error('Error loading questions:', e);
+        app.innerHTML = '<p style="color:#c93f35;">Could not load questions. <button onclick="location.reload()" style="background:#c93f35;color:white;border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;">Reload Page</button></p>';
       }
     }
 
@@ -204,12 +211,19 @@
       gmTrack = false; // beta is Player-only, no account, no GM
       try {
         var res = await fetch(API_URL + '/api/assess/beta-questions?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error('Server error: ' + res.status);
+        }
         var data = await res.json();
+        if (!data.questions) {
+          throw new Error('No questions in response');
+        }
         questions = data.questions || [];
         selectedAnswers = {};
         renderQuiz();
       } catch(e) {
-        app.innerHTML = '<p style="color:#c93f35;">Could not load questions.</p>';
+        console.error('Error loading beta questions:', e);
+        app.innerHTML = '<p style="color:#c93f35;">Could not load questions. <button onclick="location.reload()" style="background:#c93f35;color:white;border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;">Reload Page</button></p>';
       }
     }
 
