@@ -772,7 +772,19 @@
     function render() {
       var app = document.getElementById('lobbiesApp');
       if (!currentUser || !currentUser.authKey) {
-        app.innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to access lobbies.</div>';
+        /* Signed out. The guest option lives here too - a beta tester with no
+           account has to be able to reach it from this screen, or guest access
+           is unreachable. Hidden until the server confirms guests are on. */
+        app.innerHTML =
+          '<div style="text-align:center;padding:3rem 1rem;color:#555;">' +
+            '<p>Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to access lobbies.</p>' +
+            '<div id="guestSignedOut" style="display:none;margin-top:2rem;padding-top:1.75rem;border-top:1px solid #2a2a2a;">' +
+              '<p style="margin-bottom:0.9rem;">Testing the beta? Join without an account.</p>' +
+              '<button class="l-btn red" style="max-width:240px;margin:0 auto;" onclick="joinAsGuest()">Join as Guest</button>' +
+              '<div id="guestMsg" class="l-msg" style="margin-top:0.5rem;"></div>' +
+            '</div>' +
+          '</div>';
+        refreshGuestCard();
         return;
       }
       var hasAssessed = !!(currentUser.sorc_role) || isPrivileged();
@@ -1009,12 +1021,14 @@
        so flipping the flag removes the button site-wide with no site change.
        Delete this along with the guest card when guest access is retired. */
     async function refreshGuestCard() {
-      var card = document.getElementById('guestCard');
-      if (!card) return;
+      var els = [document.getElementById('guestCard'), document.getElementById('guestSignedOut')]
+        .filter(function(el) { return !!el; });
+      if (!els.length) return;
       try {
         var res = await fetch(API_URL + '/api/public-config');
         var cfg = await readJson(res);
-        card.style.display = cfg && cfg.guests_enabled ? '' : 'none';
+        var on = !!(cfg && cfg.guests_enabled);
+        els.forEach(function(el) { el.style.display = on ? '' : 'none'; });
       } catch(e) { /* leave hidden if we cannot confirm it is on */ }
     }
 
@@ -1302,7 +1316,10 @@
             username: data.user.username,
             email: data.user.email,
             authKey: data.authKey,
-            display_name: data.user.display_name || data.user.username
+            display_name: data.user.display_name || data.user.username,
+            /* Both are needed or render() bounces the guest to the assessment */
+            role: data.user.role,
+            sorc_role: data.user.sorc_role
           }));
           setTimeout(function() { location.reload(); }, 800);
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create guest account.'; }

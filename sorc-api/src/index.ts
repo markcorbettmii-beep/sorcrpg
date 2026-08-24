@@ -299,21 +299,24 @@ app.post('/api/auth/guest', async (c) => {
     const randomPassword = crypto.randomUUID().substring(0, 20);
     const passwordHash = await bcrypt.hash(randomPassword, 12);
 
+    // Guests land as a Beginner Player. The beta skips the assessment gate, so
+    // both halves of that gate have to be satisfied: sorc_role is what the
+    // Lobbies page checks client-side, the assessments row below is what
+    // /api/lobbies/join checks server-side. Without both, a guest is bounced
+    // straight back to the assessment.
     await ensureAuthColumns(c.env.sorc_db);
     await c.env.sorc_db.prepare(`
-      INSERT INTO users (id, email, auth_key, auth_key_expires_at, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(uuid, email, authKey, authKeyExpiresAt, username, username, '', 'CIVILIAN', now, now, now, userId, true, passwordHash).run();
+      INSERT INTO users (id, email, auth_key, auth_key_expires_at, username, display_name, first_name, role, sorc_role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(uuid, email, authKey, authKeyExpiresAt, username, username, '', 'PLAYER', 'PC-BEG', now, now, now, userId, true, passwordHash).run();
 
-    // Create an assessment record for the guest so they can join lobbies
-    // (assessment check at /api/lobbies/join requires either an assessment or privileged status)
     const assessmentId = crypto.randomUUID();
     await c.env.sorc_db.prepare(`
       INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at)
       VALUES (?, ?, ?, ?, ?, ?)
     `).bind(assessmentId, uuid, 8, 'PC-BEG', 0, now).run();
 
-    const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE id = ?').bind(uuid).first();
+    const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, sorc_role, community_points, created_at FROM users WHERE id = ?').bind(uuid).first();
     return c.json({ success: true, user: newUser, authKey, message: 'Guest account created' });
   } catch (error: any) {
     console.error('Guest account creation failed:', error);
