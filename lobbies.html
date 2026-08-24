@@ -678,6 +678,19 @@
     // ===== HELPERS =====
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
+    /* TEMPORARY - beta guest access. A guest has no profile: "Guest x" is a
+       chat name and nothing more. Anywhere a name would normally link to a
+       profile, character sheet or DM, a guest gets plain text instead. */
+    function isGuestName(n) { return /^Guest \d+$/.test(String(n || '').trim()); }
+
+    /* A chat name. Guests are plain text - no profile to link to. */
+    function chatNameHtml(username, isGM) {
+      var cls = 'msg-name' + (isGM ? ' gm' : '');
+      if (isGuestName(username)) return '<span class="' + cls + '">' + esc(username) + '</span>';
+      return '<a href="public-profile.html?username=' + encodeURIComponent(username || '') +
+        '" class="' + cls + '" style="text-decoration:none;">' + esc(username) + '</a>';
+    }
+
     function roleLabel(r) {
       if (!r) return 'Civilian';
       switch(r) {
@@ -1702,7 +1715,7 @@
               ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
               : '';
             return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
-              '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
+              chatNameHtml(m.username, isGM) + ':' +
               '<span class="msg-body">' + rollSafe + '</span>' +
               '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
               rollDel +
@@ -1712,7 +1725,7 @@
             ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
             : '';
           return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
-            '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
+            chatNameHtml(m.username, isGM) + ':' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
             delBtn +
