@@ -1645,6 +1645,56 @@ app.delete('/api/assess', authMiddleware, async (c) => {
 // used by sorc-app alone. Same shared D1 database, so the table already
 // exists live; this just gives the live API routes to reach it.
 
+// ---------------------------------------------------------------------------
+// Chat roll codes. A message containing e.g. "3ROLLD100:" is rolled here, on
+// the server - a client-supplied result could be forged. "GM" in front hides
+// the outcome from everyone but the GM, while still recording it.
+//   xROLLD4:  xROLLD6:  xROLLD10:  xROLLD100:  xROLLD100+100:
+// x is optional and defaults to 1.
+// ---------------------------------------------------------------------------
+const ROLL_CODE_RE = /\b(GM)?(\d{0,2})ROLLD(100\+100|100|10|6|4):/gi;
+const MAX_DICE_PER_CODE = 20;
+
+// Unbiased 1..sides using rejection sampling; a plain modulo skews low faces.
+function rollDie(sides: number): number {
+  const limit = Math.floor(256 / sides) * sides;
+  const buf = new Uint8Array(1);
+  let v: number;
+  do { crypto.getRandomValues(buf); v = buf[0]; } while (v >= limit);
+  return (v % sides) + 1;
+}
+
+interface RollResult {
+  code: string; gm: boolean; count: number; die: string;
+  rolls: number[]; total: number;
+}
+
+function resolveRollCodes(body: string): RollResult[] {
+  const out: RollResult[] = [];
+  ROLL_CODE_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = ROLL_CODE_RE.exec(body)) !== null) {
+    const gm = !!m[1];
+    const count = Math.min(Math.max(parseInt(m[2] || '1', 10) || 1, 1), MAX_DICE_PER_CODE);
+    const dieRaw = m[3].toLowerCase();
+    const sides = dieRaw === '100+100' ? 100 : parseInt(dieRaw, 10);
+    const flat = dieRaw === '100+100' ? 100 : 0;
+    const rolls: number[] = [];
+    for (let i = 0; i < count; i++) rolls.push(rollDie(sides) + flat);
+    out.push({
+      code: m[0], gm, count, die: 'd' + dieRaw,
+      rolls, total: rolls.reduce((a, b) => a + b, 0),
+    });
+    if (out.length >= 10) break; // one message can't spam unlimited codes
+  }
+  return out;
+}
+
+function formatRolls(r: RollResult): string {
+  const detail = r.count > 1 ? ` [${r.rolls.join(', ')}]` : '';
+  return `${r.count}${r.die} = ${r.total}${detail}`;
+}
+
 async function validateBoxSetCode(db: D1Database, code: string, userId: string): Promise<{ valid: boolean; error?: string }> {
   const row = await db.prepare(`SELECT * FROM box_set_codes WHERE code = ?`).bind(code.toUpperCase().trim()).first() as any;
   if (!row) return { valid: false, error: 'Invalid box set code.' };
@@ -2650,7 +2700,14 @@ app.get('/api/rooms/:id/messages', authMiddleware, async (c) => {
   const messages = await c.env.sorc_db.prepare(
     `SELECT rm.*, u.sorc_role FROM room_messages rm JOIN users u ON rm.user_id = u.id WHERE rm.room_id = ? ORDER BY rm.created_at ASC LIMIT 100`
   ).bind(roomId).all();
-  return c.json({ messages: messages.results || [] });
+
+  // A GM roll is visible to the GM who owns the room and to the roller; every
+  // other member sees nothing of it. It stays recorded either way.
+  const roomRow = await c.env.sorc_db.prepare(`SELECT gm_uid FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  const canSeeGmRolls = !!roomRow && (roomRow.gm_uid === user.id || isPrivileged(user));
+  const visible = (messages.results || []).filter((m: any) =>
+    !m.gm_only || canSeeGmRolls || m.user_id === user.id);
+  return c.json({ messages: visible });
 });
 
 app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
@@ -2664,10 +2721,25 @@ app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
   const roomMsgCheck = filterContent(body.trim());
   if (roomMsgCheck.blocked) return c.json({ error: roomMsgCheck.reason }, 400);
   const now = new Date().toISOString();
+
+  // Resolve any roll codes before the message is stored, so the recorded
+  // outcome is the server's and cannot be edited after the fact.
+  const rolls = resolveRollCodes(roomMsgCheck.filtered);
+  const gmOnly = rolls.some((r) => r.gm) ? 1 : 0;
+  let finalBody = roomMsgCheck.filtered;
+  if (rolls.length) {
+    finalBody += '\n' + rolls.map((r) =>
+      `${r.gm ? '[GM] ' : ''}${r.code} ${formatRolls(r)}`).join('\n');
+  }
+
+  await c.env.sorc_db.prepare(`ALTER TABLE room_messages ADD COLUMN gm_only INTEGER DEFAULT 0`).run().catch(() => {});
+  await c.env.sorc_db.prepare(`ALTER TABLE room_messages ADD COLUMN roll_data TEXT`).run().catch(() => {});
+
   await c.env.sorc_db.prepare(
-    `INSERT INTO room_messages (id, room_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(crypto.randomUUID(), roomId, user.id, user.username, roomMsgCheck.filtered, now).run();
-  return c.json({ success: true });
+    `INSERT INTO room_messages (id, room_id, user_id, username, body, created_at, gm_only, roll_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), roomId, user.id, user.username, finalBody, now, gmOnly,
+         rolls.length ? JSON.stringify(rolls) : null).run();
+  return c.json({ success: true, rolls });
 });
 
 app.delete('/api/rooms/:id/messages', authMiddleware, async (c) => {
