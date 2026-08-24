@@ -61,11 +61,25 @@ app.use('/api/auth/*', async (c, next) => {
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
-  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE auth_key = ?').bind(authKey).first();
+  const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE auth_key = ?').bind(authKey).first() as any;
   if (!user) return c.json({ error: 'Invalid auth key' }, 401);
+  // Sessions are stamped with a 30-day expiry at signin/registration (see below).
+  // Rows written before this fix have no stamp yet (auth_key_expires_at is NULL)
+  // and are treated as not-yet-expired until their next fresh login re-stamps them.
+  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at) < new Date()) {
+    return c.json({ error: 'Session expired', expired: true }, 401);
+  }
   c.set('user', user);
   await next();
 };
+
+const AUTH_KEY_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, matches sorc-app's existing session length
+const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours, matches the verification/reset emails' own "expires in 24 hours" text
+
+async function ensureAuthColumns(db: D1Database) {
+  await db.prepare(`ALTER TABLE users ADD COLUMN auth_key_expires_at TEXT`).run().catch(() => {});
+  await db.prepare(`ALTER TABLE users ADD COLUMN verification_token_created_at TEXT`).run().catch(() => {});
+}
 
 // Trigger deployment with fixed wrangler secret put syntax
 app.post('/api/auth/register', async (c) => {
@@ -101,8 +115,10 @@ app.post('/api/auth/register', async (c) => {
   const userId = Math.floor(Math.random() * 90000) + 10000;
   const now = new Date().toISOString();
   const uuid = crypto.randomUUID();
+  const authKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
 
   try {
+    await ensureAuthColumns(c.env.sorc_db);
     // Hash password using bcrypt (12 rounds = ~250ms per hash, resistant to brute force)
     const passwordHash = await bcrypt.hash(password, 12);
 
@@ -111,7 +127,7 @@ app.post('/api/auth/register', async (c) => {
 
     // If user doesn't exist, create them
     if (!existingUser) {
-      await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, email_verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, false, passwordHash).run();
+      await c.env.sorc_db.prepare(`INSERT INTO users (id, email, auth_key, auth_key_expires_at, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, verification_token, verification_token_created_at, email_verified, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(uuid, email, authKey, authKeyExpiresAt, username, firstName || username, firstName || '', 'CIVILIAN', now, now, now, userId, verificationToken, now, false, passwordHash).run();
       userToUse = { id: uuid, username, email };
     } else {
       // Update existing unverified user's password
@@ -163,11 +179,13 @@ app.post('/api/auth/verify-email', async (c) => {
   if (!token) return c.json({ error: 'Verification token required' }, 400);
   // Reject reset tokens (which start with "reset_")
   if (token.startsWith('reset_')) return c.json({ error: 'Invalid verification token - this is a password reset link, not a verification link' }, 400);
-  // TODO: Add verification_token_created_at column to enforce 24-hour expiration
-  // Currently tokens never expire - SECURITY RISK
-  const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
+  await ensureAuthColumns(c.env.sorc_db);
+  const user = await c.env.sorc_db.prepare('SELECT id, email, verification_token_created_at FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired verification token' }, 400);
-  await c.env.sorc_db.prepare('UPDATE users SET email_verified = ?, verification_token = NULL WHERE id = ?').bind(true, user.id).run();
+  if (user.verification_token_created_at && Date.now() - new Date(user.verification_token_created_at).getTime() > TOKEN_LIFETIME_MS) {
+    return c.json({ error: 'This verification link has expired. Please request a new one.' }, 400);
+  }
+  await c.env.sorc_db.prepare('UPDATE users SET email_verified = ?, verification_token = NULL, verification_token_created_at = NULL WHERE id = ?').bind(true, user.id).run();
   return c.json({ success: true, message: 'Email verified' });
 });
 
@@ -176,14 +194,20 @@ app.post('/api/auth/resend-verification', async (c) => {
   if (!email) return c.json({ error: 'Email required' }, 400);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return c.json({ error: 'Invalid email address' }, 400);
 
-  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, email_verified FROM users WHERE email = ?').bind(email).first() as any;
+  await ensureAuthColumns(c.env.sorc_db);
+  const user = await c.env.sorc_db.prepare('SELECT id, email, username, verification_token, verification_token_created_at, email_verified FROM users WHERE email = ?').bind(email).first() as any;
   if (!user) return c.json({ error: 'Email not found', details: 'No account with this email' }, 404);
   if (user.email_verified) return c.json({ error: 'Account already verified', details: 'You can now sign in' }, 400);
 
-  // If no verification token or if token is a reset token, generate a new verification token
-  if (!user.verification_token || user.verification_token.startsWith('reset_')) {
+  // Generate a fresh verification token whenever there's none, it's a reset
+  // token, or the existing one has already expired - always re-stamps the
+  // 24-hour clock so a resend always gives a genuinely fresh window.
+  const tokenExpired = !user.verification_token_created_at
+    || (Date.now() - new Date(user.verification_token_created_at).getTime() > TOKEN_LIFETIME_MS);
+  if (!user.verification_token || user.verification_token.startsWith('reset_') || tokenExpired) {
     const newToken = 'verify_' + crypto.randomUUID();
-    await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(newToken, user.id).run();
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare('UPDATE users SET verification_token = ?, verification_token_created_at = ? WHERE id = ?').bind(newToken, now, user.id).run();
     user.verification_token = newToken;
   }
 
@@ -247,8 +271,10 @@ app.post('/api/auth/signin', async (c) => {
     return c.json({ error: 'Invalid credentials' }, 401);
   }
 
+  await ensureAuthColumns(c.env.sorc_db);
   const authKey = crypto.randomUUID();
-  await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+  const authKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
+  await c.env.sorc_db.prepare('UPDATE users SET auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(authKey, authKeyExpiresAt, user.id).run();
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
 
@@ -263,9 +289,11 @@ app.post('/api/auth/forgot-password', async (c) => {
     return c.json({ success: true, message: 'If that email is registered, a password reset link has been sent' });
   }
 
+  await ensureAuthColumns(c.env.sorc_db);
   // Generate password reset token (prefixed with "reset_" to distinguish from verification_token)
   const resetToken = 'reset_' + crypto.randomUUID();
-  await c.env.sorc_db.prepare('UPDATE users SET verification_token = ? WHERE id = ?').bind(resetToken, user.id).run();
+  const tokenNow = new Date().toISOString();
+  await c.env.sorc_db.prepare('UPDATE users SET verification_token = ?, verification_token_created_at = ? WHERE id = ?').bind(resetToken, tokenNow, user.id).run();
 
   // Send password reset email
   const resetLink = `https://sorcrpg.com/reset-password.html?token=${resetToken}`;
@@ -313,14 +341,24 @@ app.post('/api/auth/reset-password', async (c) => {
     return c.json({ error: 'Invalid reset link' }, 400);
   }
 
-  const user = await c.env.sorc_db.prepare('SELECT id, email FROM users WHERE verification_token = ?').bind(token).first() as any;
+  await ensureAuthColumns(c.env.sorc_db);
+  const user = await c.env.sorc_db.prepare('SELECT id, email, verification_token_created_at FROM users WHERE verification_token = ?').bind(token).first() as any;
   if (!user) return c.json({ error: 'Invalid or expired reset link' }, 400);
+  if (user.verification_token_created_at && Date.now() - new Date(user.verification_token_created_at).getTime() > TOKEN_LIFETIME_MS) {
+    return c.json({ error: 'This reset link has expired. Please request a new one.' }, 400);
+  }
 
   // Hash new password using bcrypt
   const passwordHash = await bcrypt.hash(password, 12);
 
-  // Update password, clear reset token, and clear password_reset_required flag
-  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, verification_token = NULL, password_reset_required = 0 WHERE id = ?').bind(passwordHash, user.id).run();
+  // Rotate auth_key too: anyone who already had a copy of this account's old
+  // session token (the exact scenario a reset is meant to lock out) loses it
+  // the moment the password changes, not just the token that got them here.
+  const newAuthKey = crypto.randomUUID();
+  const newAuthKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
+
+  // Update password, clear reset token, clear password_reset_required flag, rotate session
+  await c.env.sorc_db.prepare('UPDATE users SET password_hash = ?, verification_token = NULL, verification_token_created_at = NULL, password_reset_required = 0, auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(passwordHash, newAuthKey, newAuthKeyExpiresAt, user.id).run();
 
   return c.json({ success: true, message: 'Password reset successful. You can now sign in with your new password.' });
 });
@@ -554,12 +592,14 @@ Solution: Make sure your Google account has a public email address.</code>
       const now = new Date().toISOString();
       const uuid = crypto.randomUUID();
       const username = googleUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+      const authKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
 
       try {
+        await ensureAuthColumns(c.env.sorc_db);
         await c.env.sorc_db.prepare(`
-          INSERT INTO users (id, email, auth_key, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).bind(uuid, googleUser.email, authKey, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
+          INSERT INTO users (id, email, auth_key, auth_key_expires_at, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(uuid, googleUser.email, authKey, authKeyExpiresAt, username, googleUser.name || googleUser.email, googleUser.given_name || '', 'CIVILIAN', now, now, now, userId, true, '').run();
         user = { id: uuid, email: googleUser.email, username, display_name: googleUser.name || googleUser.email, role: 'CIVILIAN', community_points: 0, created_at: now };
       } catch (error: any) {
         return c.html(`
@@ -599,8 +639,10 @@ This usually means:
     } else {
       // User exists, generate new auth key
       authKey = crypto.randomUUID();
+      const authKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
       try {
-        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ? WHERE id = ?').bind(authKey, user.id).run();
+        await ensureAuthColumns(c.env.sorc_db);
+        await c.env.sorc_db.prepare('UPDATE users SET auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(authKey, authKeyExpiresAt, user.id).run();
       } catch (error: any) {
         return c.html(`
           <html>
