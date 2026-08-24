@@ -3739,4 +3739,24 @@ app.get('/api/sorc-store', authMiddleware, async (c) => {
   return c.json({ error: 'The SORC Store is not yet implemented.' }, 501);
 });
 
+// ─── GROUP FELLOWSHIP CHAT (stub, Pro) ──────────────────────────────────────
+// Per sorc-beyond.html's table: 1:1 fellowship messaging is free for everyone
+// (see /api/conversations above), but chatting with multiple fellows at once
+// in a single group thread is a Pro-exclusive perk.
+app.get('/api/fellowships/group-chat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'Group Fellowship chat is not yet implemented.' }, 501);
+});
+
+app.post('/api/fellowships/group-chat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'Group Fellowship chat is not yet implemented.' }, 501);
+});
+
 export default app;
