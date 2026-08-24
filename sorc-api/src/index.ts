@@ -1857,11 +1857,16 @@ function resolveRollCodes(body: string): RollResult[] {
     const prefix = m[1] ? m[1].toUpperCase() : '';
     const gm = prefix === 'GM'; // Only GM prefix = hidden
     const gmShown = prefix === 'SHOW'; // SHOW prefix = GM roll but shown to all
-    const count = Math.min(Math.max(parseInt(m[2] || '1', 10) || 1, 1), MAX_DICE_PER_CODE);
     const dieRaw = m[3].toLowerCase();
-    // D100 + D100 is two percentile rolls added together, 2 to 200, used for
-    // Rare and Divine items (see Basic Rules pg. 1). It is not a flat +100.
+    // The Divine Roll is two percentile rolls added together, 2 to 200, used
+    // for Rare and Divine items (see Basic Rules pg. 1). It is not a flat +100.
     const pair = dieRaw === '100+100';
+    // A Divine Roll is always exactly one roll - the count is not the player's
+    // to set. Clamped here rather than trusted from the code, since the roll
+    // code is client-supplied text.
+    const count = pair
+      ? 1
+      : Math.min(Math.max(parseInt(m[2] || '1', 10) || 1, 1), MAX_DICE_PER_CODE);
     const sides = pair ? 100 : parseInt(dieRaw, 10);
     const rolls: number[] = [];
     for (let i = 0; i < count; i++) {

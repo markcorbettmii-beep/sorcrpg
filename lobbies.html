@@ -1582,7 +1582,7 @@
                 '<div style="padding:0.6rem 0.75rem;border-top:1px solid #333;flex-shrink:0;">' +
                   '<div style="font-size:0.72rem;color:#555;margin-bottom:0.5rem;">🎲 Roll Dice <span style="color:#333;font-size:0.68rem;">(beta in lobbies • live in Campaign Rooms)</span></div>' +
                   '<div style="display:flex;gap:0.5rem;align-items:center;">' +
-                    '<select id="diceType" style="padding:6px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0cfc0;font-size:0.84rem;cursor:pointer;">' +
+                    '<select id="diceType" onchange="syncDiceCount()" style="padding:6px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0cfc0;font-size:0.84rem;cursor:pointer;">' +
                       '<option value="d4">D4</option>' +
                       '<option value="d6">D6</option>' +
                       '<option value="d8">D8</option>' +
@@ -1786,6 +1786,20 @@
       } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
     };
 
+    /* The Divine Roll is always a single roll. Pin the count to 1 and lock the
+       field so the rule is visible, not just enforced on submit. */
+    window.syncDiceCount = function() {
+      var typeEl = document.getElementById('diceType');
+      var countEl = document.getElementById('diceCount');
+      if (!typeEl || !countEl) return;
+      var divine = typeEl.value === 'divine';
+      if (divine) { countEl.value = '1'; }
+      countEl.disabled = divine;
+      countEl.title = divine ? 'A Divine Roll is always a single roll.' : '';
+      countEl.style.opacity = divine ? '0.5' : '';
+      countEl.style.cursor = divine ? 'not-allowed' : '';
+    };
+
     window.rollDice = async function() {
       if (!currentLobby || !currentUser) return;
       var diceTypeEl = document.getElementById('diceType');
@@ -1798,7 +1812,8 @@
          as a die type. See Basic Rules Pg. 1. */
       var isDivine = rawType === 'divine';
       var diceType = isDivine ? 'Divine Roll' : rawType.toUpperCase();
-      var count = parseInt(diceCountEl.value) || 1;
+      /* A Divine Roll is always exactly one roll - not the player's to change. */
+      var count = isDivine ? 1 : (parseInt(diceCountEl.value) || 1);
       if (count < 1 || count > 100) { showToast('Roll count must be between 1 and 100.', true); return; }
 
       // Parse dice type (d4 -> 4, d20 -> 20, d100 -> 100)
