@@ -1478,4 +1478,123 @@ app.delete('/api/assess', authMiddleware, async (c) => {
   return c.json({ success: true });
 });
 
+// ─── BOX SET CODE VALIDATION ───────────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24): sorc-api is the Worker actually bound to
+// api.sorcrpg.com, but never had this system - box_set_codes was created and
+// used by sorc-app alone. Same shared D1 database, so the table already
+// exists live; this just gives the live API routes to reach it.
+
+async function validateBoxSetCode(db: D1Database, code: string, userId: string): Promise<{ valid: boolean; error?: string }> {
+  const row = await db.prepare(`SELECT * FROM box_set_codes WHERE code = ?`).bind(code.toUpperCase().trim()).first() as any;
+  if (!row) return { valid: false, error: 'Invalid box set code.' };
+  if (row.owner_uid && row.owner_uid !== userId) return { valid: false, error: 'This box set code is already registered to another account.' };
+  if (row.expires_at && new Date(row.expires_at) < new Date()) return { valid: false, error: 'This code has expired.' };
+  return { valid: true };
+}
+
+async function claimBoxSetCode(db: D1Database, code: string, userId: string) {
+  const now = new Date().toISOString();
+  await db.prepare(`UPDATE box_set_codes SET owner_uid = ?, claimed_at = ? WHERE code = ? AND (owner_uid IS NULL OR owner_uid = ?)`)
+    .bind(userId, now, code.toUpperCase().trim(), userId).run();
+}
+
+// Pro Membership = owning a claimed box set code. There is no separate
+// purchase/subscription flow - claiming a code (admin-generated,
+// server-validated) is the only way to become Pro. No client-writable field
+// exists for this, on purpose - do not add one without a real redemption or
+// payment flow behind it.
+async function isProMember(db: D1Database, user: any): Promise<boolean> {
+  if (isPrivileged(user)) return true;
+  const owned = await db.prepare(`SELECT id FROM box_set_codes WHERE owner_uid = ? LIMIT 1`).bind(user.id).first();
+  return !!owned;
+}
+
+app.post('/api/box-codes/generate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+  try {
+    const now = new Date().toISOString();
+    // Format: GEN + 6 random digits + BSC
+    const rng = crypto.getRandomValues(new Uint8Array(6));
+    let code = 'GEN';
+    for (let i = 0; i < 6; i++) code += rng[i] % 10;
+    code += 'BSC';
+    const expiresAt = new Date(Date.now() + 2 * 86400000).toISOString();
+    // Ensure optional columns exist (ignore if already present)
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN created_by TEXT`).run().catch(() => {});
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN note TEXT`).run().catch(() => {});
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN created_at TEXT`).run().catch(() => {});
+    await c.env.sorc_db.prepare(`ALTER TABLE box_set_codes ADD COLUMN expires_at TEXT`).run().catch(() => {});
+    await c.env.sorc_db.prepare(
+      `INSERT INTO box_set_codes (id, code, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), code, user.id, now, expiresAt).run();
+    return c.json({ success: true, code, expires_at: expiresAt });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to generate code.', details: error.message }, 500);
+  }
+});
+
+// ─── GM CODES (role upgrade: PLAYER → MASTER) ─────────────────────────────────
+
+async function ensureGmCodesTable(db: D1Database) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS gm_codes (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    created_by TEXT NOT NULL,
+    note TEXT,
+    used_by TEXT,
+    used_at TEXT,
+    created_at TEXT NOT NULL,
+    expires_at TEXT
+  )`).run();
+}
+
+app.post('/api/gm-codes/generate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+  await ensureGmCodesTable(c.env.sorc_db);
+  const { note, days } = await c.req.json().catch(() => ({} as any)) as any;
+  const now = new Date().toISOString();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const rng = crypto.getRandomValues(new Uint8Array(8));
+  let suffix = '';
+  for (let i = 0; i < 8; i++) suffix += chars[rng[i] % chars.length];
+  const code = 'GM-' + suffix;
+  const expireDays = (typeof days === 'number' && days > 0) ? days : 7;
+  const expiresAt = new Date(Date.now() + expireDays * 86400000).toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO gm_codes (id, code, created_by, note, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), code, user.id, note ? note.substring(0, 100) : null, now, expiresAt).run();
+  return c.json({ success: true, code, expires_at: expiresAt });
+});
+
+app.post('/api/gm-codes/redeem', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (user.role === 'MASTER') return c.json({ error: 'Already a GM.' }, 400);
+  if (user.role !== 'PLAYER') return c.json({ error: 'Complete the Player Assessment before redeeming a GM code.' }, 400);
+  await ensureGmCodesTable(c.env.sorc_db);
+  const { code } = await c.req.json().catch(() => ({} as any)) as any;
+  if (!code) return c.json({ error: 'GM code required.' }, 400);
+  const row = await c.env.sorc_db.prepare(`SELECT * FROM gm_codes WHERE code = ?`).bind(code.toUpperCase().trim()).first() as any;
+  if (!row) return c.json({ error: 'Invalid GM code.' }, 400);
+  if (row.used_by) return c.json({ error: 'This GM code has already been used.' }, 400);
+  if (row.expires_at && new Date(row.expires_at) < new Date()) return c.json({ error: 'This GM code has expired.' }, 400);
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`UPDATE gm_codes SET used_by = ?, used_at = ? WHERE code = ?`).bind(user.id, now, code.toUpperCase().trim()).run();
+  await c.env.sorc_db.prepare(
+    `UPDATE users SET role = 'MASTER', sorc_role = 'GM-ADV', community_points = community_points + 500, updated_at = ? WHERE id = ?`
+  ).bind(now, user.id).run();
+  return c.json({ success: true, role: 'MASTER', sorc_role: 'GM-ADV', points_awarded: 500 });
+});
+
+app.get('/api/gm-codes/generated', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
+  await ensureGmCodesTable(c.env.sorc_db);
+  const rows = await c.env.sorc_db.prepare(
+    `SELECT code, note, used_by, used_at, created_at, expires_at FROM gm_codes WHERE created_by = ? ORDER BY created_at DESC LIMIT 50`
+  ).bind(user.id).all();
+  return c.json({ codes: rows.results || [] });
+});
+
 export default app;
