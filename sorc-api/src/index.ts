@@ -3671,4 +3671,72 @@ app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
   }
 });
 
+// ─── PRO MEMBERSHIP FEATURE STUBS ───────────────────────────────────────────
+// Per sorc-beyond.html's Basic vs. Pro comparison table. None of these have
+// a real implementation yet - each wires up the correct access gate ahead
+// of the actual feature, same pattern as the leaderboard stub above.
+
+app.get('/api/trading-post', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'The Trading Post requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'The Trading Post is not yet implemented.' }, 501);
+});
+
+app.get('/api/characters-home', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: "Character's Home requires Pro Membership (a registered box set)." }, 403);
+  }
+  return c.json({ error: "Character's Home is not yet implemented." }, 501);
+});
+
+app.get('/api/sorc-ambiance', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'The SORC Ambiance App requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'The SORC Ambiance App is not yet implemented.' }, 501);
+});
+
+app.post('/api/call-to-arms', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Call to Arms requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'Call to Arms is not yet implemented.' }, 501);
+});
+
+// Trials of Combat is free to all members (Basic and Pro) - Pro members get
+// exclusive cosmetic skins, a fuller achievements/trophies list, and Practice
+// Mode. No access gate on the base feature itself, only on those perks.
+app.get('/api/trials-of-combat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const isPro = await isProMember(c.env.sorc_db, user);
+  return c.json({
+    error: 'Trials of Combat is not yet implemented.',
+    perks: { exclusive_skins: isPro, practice_mode: isPro, leaderboard_depth: isPro ? 200 : 100 }
+  }, 501);
+});
+
+// Basic achievements are free to all; the full achievements/trophies system
+// is Pro-exclusive per the comparison table.
+app.get('/api/achievements', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const isPro = await isProMember(c.env.sorc_db, user);
+  return c.json({ error: 'Achievements are not yet implemented.', full_system: isPro }, 501);
+});
+
+// SORC Store access via Community Points is Pro-exclusive per the table;
+// Lottery raffle tickets remain a separate, open-to-all purchase (see
+// sorc-beyond.html: 'The SORC Lottery is open to all members, Basic and Pro').
+app.get('/api/sorc-store', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'SORC Store access via Community Points requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'The SORC Store is not yet implemented.' }, 501);
+});
+
 export default app;
