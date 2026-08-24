@@ -2038,14 +2038,16 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
     const worldMsgCheck = filterContent(body.trim());
     if (worldMsgCheck.blocked) return c.json({ error: worldMsgCheck.reason }, 400);
 
-    // Must be the active creator of an open lobby, or posting a short LFG: tag
+    // Must be the active creator of an open lobby, or posting a short
+    // LFG:/WTB:/WTS: tag. WTB:/WTS: (want to buy/sell) advertise Essentia
+    // Exchange trades the same way LFG: advertises looking for a group.
     const lobby = await c.env.sorc_db.prepare(
       `SELECT id, name FROM lobbies WHERE creator_uid = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`
     ).bind(user.id).first() as any;
     const isHost = !!(lobby || isPrivileged(user));
     if (!isHost) {
-      if (!/^LFG:/i.test(body.trim())) return c.json({ error: 'Only active lobby hosts can post freely. Use LFG: to advertise yourself.' }, 403);
-      if (body.trim().length > 40) return c.json({ error: 'LFG: tags are limited to 40 characters.' }, 400);
+      if (!/^(LFG|WTB|WTS):/i.test(body.trim())) return c.json({ error: 'Only active lobby hosts can post freely. Use LFG:, WTB:, or WTS: to advertise yourself.' }, 403);
+      if (body.trim().length > 40) return c.json({ error: 'LFG:/WTB:/WTS: tags are limited to 40 characters.' }, 400);
     }
 
     await c.env.sorc_db.prepare(
@@ -2410,6 +2412,15 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
 
   const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
+
+  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-beyond.html's
+     Basic vs. Pro table). Lobby *creation* already requires a box code for
+     non-privileged creators, but that doesn't cover a non-Pro member who
+     was recruited in and is now the designated GM launching the room
+     themselves — gate the launch itself too. ── */
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Launching a Private Campaign Room requires Pro Membership (a registered box set).' }, 403);
+  }
 
   /* ── Minimum party size: GM + at least 2 players ── */
   if (memberList.length < 3) {

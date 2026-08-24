@@ -160,6 +160,17 @@
   </div>
 
   <script>
+    // Same allowlist as signin.html's postSigninDest() and
+    // choose-username.html - only same-site .html paths, optionally
+    // carrying the track/from=join query shape or a hash.
+    function postSigninDest() {
+      try {
+        var next = new URLSearchParams(window.location.search).get('next');
+        if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) return next;
+      } catch(e) {}
+      return 'take-assessment.html';
+    }
+
     (function() {
       // Get user data from URL parameter
       var params = new URLSearchParams(window.location.search);
@@ -168,34 +179,24 @@
       if (userData) {
         try {
           var user = JSON.parse(userData);
+          document.getElementById('usernameDisplay').textContent = user.display_name || user.username || 'Adventurer';
 
-          // Step 1: Show username welcome
-          alert('✅ K-ID Verified!\n\nWelcome, ' + (user.display_name || user.username || 'Adventurer') + '!\n\nYou have successfully logged in to Essentia.');
+          // Brand-new Google sign-up with no chosen username yet - pick one
+          // before landing anywhere else (see choose-username.html).
+          if (user.needs_username) {
+            window.location.href = '/choose-username.html?user=' + encodeURIComponent(userData) +
+              (params.get('next') ? '&next=' + encodeURIComponent(params.get('next')) : '');
+            return;
+          }
 
-          // Step 2: Show user info
-          alert('Step 3: User Information\n\nEmail: ' + user.email + '\nUsername: ' + user.username + '\nRole: ' + user.role + '\nID: ' + user.id.substring(0, 8) + '...');
-
-          // Step 3: Show auth key info
-          alert('Step 4: Authentication\n\nAuth Key Generated: ' + user.authKey.substring(0, 8) + '...\n\nStoring credentials in browser...');
-
-          // Step 4: Store auth in localStorage
           localStorage.setItem('sorc_user', JSON.stringify(user));
-          alert('Step 5: Storage Complete\n\nYour credentials have been stored securely.\n\nPreparing to redirect to home page...');
-
-          // Step 5: Clear URL parameters for security
           window.history.replaceState({}, document.title, window.location.pathname);
-
-          // Step 6: Final redirect alert and go home
-          alert('Step 6: Redirecting Home\n\nRedirecting to your home page now...');
-          window.location.href = 'index.html';
-
+          window.location.href = postSigninDest();
         } catch (e) {
-          alert('ERROR: Failed to parse user data\n\nError: ' + e.toString() + '\n\nReturning to sign in...');
           window.location.href = '/signin.html';
         }
       } else {
         // No user data, redirect back to signin
-        alert('ERROR: No user data received\n\nRedirecting to sign in page...');
         window.location.href = '/signin.html';
       }
     })();

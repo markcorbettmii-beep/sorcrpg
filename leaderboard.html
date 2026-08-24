@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaderboard | Slayers of Rings &amp; Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .lb-wrap { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .lb-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
+    .lb-sub { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .my-rank-card { background: #1a1505; border: 1px solid #5a4a00; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; color: #c9b400; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .my-rank-card a { color: inherit; text-decoration: underline; }
+    .lb-list { list-style: none; margin: 0; padding: 0; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; overflow: hidden; }
+    .lb-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; border-bottom: 1px solid #242424; }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row.me { background: #1a1505; }
+    .lb-rank { width: 2.5rem; text-align: right; color: #b9aa00; font-weight: bold; font-size: 0.9rem; flex-shrink: 0; }
+    .lb-avatar { width: 32px; height: 32px; border-radius: 50%; background: #2a2a2a; flex-shrink: 0; overflow: hidden; }
+    .lb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .lb-name { flex: 1; color: #e0cfc0; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-points { color: #888; font-size: 0.85rem; font-weight: bold; flex-shrink: 0; }
+    .depth-note { color: #666; font-size: 0.82rem; text-align: center; margin-top: 1.25rem; line-height: 1.5; }
+    .depth-note a { color: #b9aa00; }
+    .lb-empty { color: #555; font-size: 0.9rem; text-align: center; padding: 2rem; }
+    body.lawful-mode .my-rank-card { background: #fdf8e0; border-color: #e0d060; color: #7a6a00; }
+    body.lawful-mode .lb-list { background: #fff; border-color: #ddd; }
+    body.lawful-mode .lb-row { border-color: #eee; }
+    body.lawful-mode .lb-row.me { background: #fdf8e0; }
+    body.lawful-mode .lb-name { color: #2c2c2c; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
+      <div id="navRoleBadge"></div>
+    </nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+    </ul>
+
+    <div class="lb-wrap">
+      <h1>Leaderboard</h1>
+      <p class="lb-sub">Ranked by Community Points. Basic members see the top 100; Pro members see the top 200.</p>
+
+      <div id="myRankCard" class="my-rank-card">Sign in to see your rank.</div>
+
+      <div id="lbList">
+        <p class="lb-empty">Loading&hellip;</p>
+      </div>
+
+      <p id="depthNote" class="depth-note"></p>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'lawful';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    var API_URL = 'https://api.sorcrpg.com';
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    var listEl = document.getElementById('lbList');
+    var myRankEl = document.getElementById('myRankCard');
+    var depthNoteEl = document.getElementById('depthNote');
+
+    if (!currentUser || !currentUser.authKey) {
+      listEl.innerHTML = '<p class="lb-empty">Sign in to view the leaderboard.</p>';
+      depthNoteEl.innerHTML = '<a href="signin.html">Sign In</a>';
+    } else {
+      fetch(API_URL + '/api/leaderboard', { headers: { 'X-Auth-Key': currentUser.authKey } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.leaderboard) {
+            listEl.innerHTML = '<p class="lb-empty">' + esc(data.error || 'Could not load the leaderboard.') + '</p>';
+            return;
+          }
+          myRankEl.innerHTML = 'Your rank: <strong>#' + data.my_rank + '</strong> &mdash; ' + data.my_points + ' Community Points';
+
+          if (data.leaderboard.length === 0) {
+            listEl.innerHTML = '<p class="lb-empty">No ranked members yet.</p>';
+          } else {
+            var rows = data.leaderboard.map(function(row) {
+              var isMe = currentUser.id && row.id === currentUser.id;
+              var avatarImg = row.avatar ? '<img src="images/avatars/' + esc(row.avatar) + '" />' : '';
+              return '<li class="lb-row' + (isMe ? ' me' : '') + '">' +
+                '<span class="lb-rank">#' + row.rank + '</span>' +
+                '<span class="lb-avatar">' + avatarImg + '</span>' +
+                '<span class="lb-name">' + esc(row.display_name || row.username) + '</span>' +
+                '<span class="lb-points">' + row.community_points + ' pts</span>' +
+              '</li>';
+            }).join('');
+            listEl.innerHTML = '<ul class="lb-list">' + rows + '</ul>';
+          }
+
+          depthNoteEl.innerHTML = data.is_pro
+            ? 'You have Pro Membership &mdash; showing the top ' + data.depth + '.'
+            : 'Showing the top ' + data.depth + ' (Basic). <a href="sorc-beyond.html#basic-member">Pro members see the top 200.</a>';
+        })
+        .catch(function() {
+          listEl.innerHTML = '<p class="lb-empty">Could not connect to the server.</p>';
+        });
+    }
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+</body>
+</html>

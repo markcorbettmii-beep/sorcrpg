@@ -52,6 +52,20 @@
     .scroll-qa-item:last-child { border-bottom: none; }
     .scroll-qa-q { color: #888; font-size: 0.8rem; }
     .scroll-qa-a { color: #b9aa00; font-size: 0.82rem; font-weight: bold; }
+    .review-wrap { margin-top: 1.5rem; text-align: left; }
+    .review-wrap h3 { color: #b9aa00; font-size: 1rem; margin-bottom: 0.75rem; }
+    .review-q { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+    .review-q-text { color: #e0cfc0; font-size: 0.9rem; margin-bottom: 0.6rem; line-height: 1.4; }
+    .review-opt { padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.85rem; color: #888; margin-bottom: 0.25rem; }
+    .review-opt.wrong-pick { color: #e08080; background: rgba(192,57,43,0.15); }
+    .review-opt.right-answer { color: #7bc47f; background: rgba(46,125,50,0.15); }
+    .review-q-link { font-size: 0.78rem; margin-top: 0.4rem; }
+    .review-q-link a { color: #b9aa00; text-decoration: none; }
+    body.lawful-mode .review-q { background: #f9f9f9; border-color: #e0e0e0; }
+    body.lawful-mode .review-q-text { color: #2c2c2c; }
+    body.lawful-mode .review-opt { color: #777; }
+    body.lawful-mode .review-opt.wrong-pick { color: #a02020; background: rgba(192,57,43,0.08); }
+    body.lawful-mode .review-opt.right-answer { color: #1e6b23; background: rgba(46,125,50,0.08); }
     body.lawful-mode .assess-wrap h1 { color: #c93f35; }
     body.lawful-mode .q-card { background: #f5f5f0; border-color: #ddd; }
     body.lawful-mode .q-text { color: #2c2c2c; }
@@ -79,7 +93,6 @@
 
     <ul class="page-nav">
       <li><a href="index.html">&#8962;</a></li>
-      <li><a class="current-section" href="assess.html">Assessment</a></li>
     </ul>
 
     <div class="assess-wrap">
@@ -220,6 +233,42 @@
       '</div>';
     }
 
+    /* wrongList entries come from the server's grading pass: { id, answer? }.
+       answer is present for Basic Rules misses (large, mostly-unseen pool -
+       safe to reveal) and omitted for GM Codex misses (the fixed 10-question
+       pool IS every GM Codex question shown, so revealing one would burn it
+       for every future attempt) - those just highlight the wrong pick. The
+       user's own pick comes from selectedAnswers, still in memory from the
+       submit that just happened. */
+    function renderWrongReview(wrongList) {
+      if (!wrongList || !wrongList.length) return '';
+      var letters = ['A', 'B', 'C', 'D'];
+      var html = '<div class="review-wrap"><h3>Review Your Missed Questions</h3>';
+      wrongList.forEach(function(w) {
+        var q = questions.filter(function(qq) { return qq.id === w.id; })[0];
+        if (!q) return;
+        var chosen = selectedAnswers[w.id];
+        var page3 = ('00' + q.page).slice(-3);
+        var rulesHref = q.section === 'gm_codex'
+          ? '/content/gm_essentials/gm_ref_' + page3 + '.html'
+          : '/content/essentia_core/rules_ref_' + page3 + '.html';
+        html += '<div class="review-q"><div class="review-q-text">' + esc(q.q) + '</div>';
+        q.options.forEach(function(opt, oi) {
+          var cls = '', mark = '';
+          if (w.answer !== undefined && oi === w.answer) { cls = 'right-answer'; mark = ' &#10003;'; }
+          else if (oi === chosen) { cls = 'wrong-pick'; mark = ' &#10007;'; }
+          html += '<div class="review-opt ' + cls + '"><strong>' + letters[oi] + '.</strong> ' + esc(opt) + mark + '</div>';
+        });
+        if (w.answer === undefined) {
+          html += '<div class="review-q-link" style="opacity:0.7;">GM Codex questions repeat every attempt, so the correct answer isn\'t shown here — check the rules page below.</div>';
+        }
+        html += '<div class="review-q-link"><a href="' + rulesHref + '" target="_blank">&#128218; Read Rules Pg. ' + q.page + '</a></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
     function renderQuiz() {
       var app = document.getElementById('assessApp');
       var basicQs = questions.filter(function(q) { return q.section !== 'gm_codex'; });
@@ -253,7 +302,8 @@
         '<div class="submit-row">' +
           '<button class="submit-btn" id="submitBtn" onclick="submitAssessment()" disabled>Submit Assessment</button>' +
           '<span class="assess-msg" id="assessMsg"></span>' +
-        '</div>';
+        '</div>' +
+        '<div id="assessReview"></div>';
 
       if (!betaMode) updateTrackUI(gmTrack);
     }
@@ -360,7 +410,7 @@
             saved.role = data.site_role || saved.role;
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
-          showResult({ score: data.score, basic_score: data.basic_score, codex_score: data.codex_score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false, false);
+          showResult({ score: data.score, basic_score: data.basic_score, codex_score: data.codex_score, role_granted: data.role, gm_track: gmTrack ? 1 : 0, wrong: data.wrong }, false, false);
         } else if (data.role === 'FAIL') {
           /* Downgraded to Civilian - update local cache and reload quiz for retry */
           try {
@@ -376,6 +426,8 @@
               '<a href="library.html#character-sheets" style="color:#b9aa00;">Download Your Character Sheet Now</a>';
           }
           msgEl.innerHTML = failMsg;
+          var reviewEl = document.getElementById('assessReview');
+          if (reviewEl) reviewEl.innerHTML = renderWrongReview(data.wrong);
           submitBtn.disabled = false;
         } else {
           msgEl.textContent = data.error || 'Submission failed.';
@@ -410,7 +462,8 @@
             '<a href="signin.html?next=' + encodeURIComponent('sorc-beyond.html#basic-member') + '" class="btn-go" style="background:#333;">Join As A Civilian</a>' +
             '<button class="btn-reassess" onclick="loadBetaQuiz()">Try Again</button>' +
           '</div>' +
-        '</div>';
+        '</div>' +
+        renderWrongReview(betaData.wrong);
     }
 
     function showResult(assessment, existing, expired) {
@@ -426,10 +479,12 @@
         scoreBreakdown = ' <span style="color:#555;">(Basic Rules ' + assessment.basic_score + '/10, GM Codex ' + assessment.codex_score + '/10)</span>';
       }
 
-      /* Study reference, not an answer key. Questions are drawn at random from a
-         large pool and the assessment can be retaken, so revealing the correct
-         answers would defeat it. Each question points at the rules page it came
-         from instead. */
+      /* Study reference for every question asked, not an answer key - points
+         at the rules page each one came from instead of the answer itself.
+         The separate wrong-answer review below (renderWrongReview) does
+         reveal correct answers, but only for misses, and only where it's
+         safe to (see that function's comment on the Basic Rules/GM Codex
+         split). */
       var qaHtml = '';
       if (questions.length > 0) {
         qaHtml = '<div class="scroll-qa" style="margin-bottom:1.5rem;">' +
@@ -476,6 +531,7 @@
             '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)" style="' + (expired ? 'border-color:#b9aa00;color:#b9aa00;' : '') + '">' + reassessLabel + '</button>' +
           '</div>' +
         '</div>' +
+        renderWrongReview(assessment.wrong) +
         (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review what you were asked:</p>' + qaHtml + '</div>' : '');
     }
 

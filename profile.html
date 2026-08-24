@@ -319,30 +319,27 @@
         } catch(e) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Connection error.'; }
     };
 
-    window.unlockFeature = async function(feature, cost) {
+    // Signature, socials, and banner are Pro Membership perks (see
+    // sorc-beyond.html's Basic vs. Pro table) - not something Community
+    // Points can buy. saveSignature/saveSocials/saveBanner below just PUT to
+    // /api/profile, which enforces Pro status server-side on its own.
+    window.saveBanner = async function() {
+        var url = document.getElementById('bannerInput').value.trim();
+        var msgEl = document.getElementById('bannerMsg');
         var saved = null;
         try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!saved || !saved.authKey) return;
-
-        var cp = saved.community_points || 0;
-        if (cp < cost) { alert('Not enough Community Points. Need ' + cost + ' CP.'); return; }
-
         try {
-            var res = await fetch(API_URL + '/api/unlock', {
-                method: 'POST',
+            var res = await fetch(API_URL + '/api/profile', {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ feature: feature })
+                body: JSON.stringify({ banner: url })
             });
             var data = await res.json();
-            if (data.success) {
-                saved.community_points = data.community_points;
-                saved.unlocked_features = data.unlocked_features;
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-                location.reload();
-            } else {
-                alert(data.error || 'Could not unlock. Please try again.');
-            }
-        } catch(e) { alert('Could not connect. Please try again.'); }
+            msgEl.className = data.success ? 'msg success' : 'msg error';
+            msgEl.textContent = data.success ? '✅ Banner saved!' : (data.error || 'Failed.');
+            if (data.success) setTimeout(function() { location.reload(); }, 900);
+        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
     };
 
     window.doSignOut = function() {
@@ -394,9 +391,10 @@
         var avatar = user.avatar || null;
         var communityPoints = user.community_points || 0;
         var postCount = user.post_count || 0;
-
-        var unlockedFeatures = user.unlocked_features || [];
-        if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
+        // Pro Membership (a claimed box set code) gates signature, social
+        // links, and a custom banner - see sorc-beyond.html's Basic vs. Pro
+        // table. This is display-only; /api/profile enforces it server-side.
+        var isPro = !!user.is_pro;
 
         console.log('[PROFILE] Rendering profile - role:', role, 'displayName:', displayName, 'communityPoints:', communityPoints);
         // Privileged accounts are now auto-topped-up to 10,000 points server-side
@@ -441,7 +439,7 @@
         document.getElementById('profileApp').innerHTML =
             '<div class="profile-container">' +
                 '<div class="profile-card">' +
-                    '<div class="profile-banner"></div>' +
+                    '<div class="profile-banner"' + (isPro && user.banner ? ' style="background-image:url(&quot;' + esc(user.banner) + '&quot;);background-size:cover;background-position:center;"' : '') + '></div>' +
                     '<div class="profile-info-row">' +
                         '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
                         '<div class="profile-name-block">' +
@@ -452,7 +450,7 @@
                     '</div>' +
                     '<div class="profile-section">' +
                         '<div class="stat-grid">' +
-                            '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div><a href="#unlocks" style="font-size:0.7rem;color:#b9aa00;text-decoration:underline;display:block;margin-top:3px;">Spend Points</a></div>' +
+                            '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div><a href="#unlocks" style="font-size:0.7rem;color:#b9aa00;text-decoration:underline;display:block;margin-top:3px;">Pro Perks</a></div>' +
                             '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>' +
                             '<div class="stat-box"><div class="stat-val">' + (user.email_verified ? '✅' : '❌') + '</div><div class="stat-label">Email Verified</div></div>' +
                         '</div>' +
@@ -488,31 +486,13 @@
                         '</div>' +
 
                         (function() {
-                            var locked = !unlockedFeatures.includes('fellowships');
+                            var locked = !isPro;
                             return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Send Fellowship Requests</h4><p>Unlock the ability to send Fellowship requests to other members.</p></div>' +
+                                '<div class="unlock-feature-info"><h4>Signature</h4><p>A short line shown below your forum posts. Pro Membership perk.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 50 CP') + '</span>' +
                                     (locked
-                                        ? (communityPoints >= 50
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'fellowships\',50)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (50 - communityPoints) + ' more CP</span>')
-                                        : '') +
-                                '</div>' +
-                            '</div>';
-                        })() +
-
-                        (function() {
-                            var locked = !unlockedFeatures.includes('signature');
-                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Signature</h4><p>A short line shown below your forum posts.</p></div>' +
-                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 100 CP') + '</span>' +
-                                    (locked
-                                        ? (communityPoints >= 100
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'signature\',100)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (100 - communityPoints) + ' more CP</span>')
-                                        : '') +
+                                        ? '<a href="sorc-beyond.html#basic-member" style="font-size:0.8rem;color:#b9aa00;font-weight:bold;">🔒 Pro Membership required</a>'
+                                        : '<span style="font-size:0.8rem;color:#1a6b1a;font-weight:bold;">✅ Pro</span>') +
                                 '</div>' +
                             '</div>' +
                             (!locked
@@ -525,16 +505,13 @@
                         })() +
 
                         (function() {
-                            var locked = !unlockedFeatures.includes('socials');
+                            var locked = !isPro;
                             return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Social Links</h4><p>Website, Twitter/X, and Twitch on your profile.</p></div>' +
+                                '<div class="unlock-feature-info"><h4>Social Links</h4><p>Website, Twitter/X, and Twitch on your profile. Pro Membership perk.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 250 CP') + '</span>' +
                                     (locked
-                                        ? (communityPoints >= 250
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'socials\',250)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (250 - communityPoints) + ' more CP</span>')
-                                        : '') +
+                                        ? '<a href="sorc-beyond.html#basic-member" style="font-size:0.8rem;color:#b9aa00;font-weight:bold;">🔒 Pro Membership required</a>'
+                                        : '<span style="font-size:0.8rem;color:#1a6b1a;font-weight:bold;">✅ Pro</span>') +
                                 '</div>' +
                             '</div>' +
                             (!locked
@@ -549,18 +526,22 @@
                         })() +
 
                         (function() {
-                            var locked = !unlockedFeatures.includes('banner');
+                            var locked = !isPro;
                             return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Profile Banner</h4><p>Custom banner image at the top of your profile.</p></div>' +
+                                '<div class="unlock-feature-info"><h4>Profile Banner</h4><p>Custom banner image at the top of your profile. Pro Membership perk.</p></div>' +
                                 '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 500 CP') + '</span>' +
                                     (locked
-                                        ? (communityPoints >= 500
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'banner\',500)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (500 - communityPoints) + ' more CP</span>')
-                                        : '<span style="font-size:0.75rem;color:#555;">Contact an admin to upload your banner.</span>') +
+                                        ? '<a href="sorc-beyond.html#basic-member" style="font-size:0.8rem;color:#b9aa00;font-weight:bold;">🔒 Pro Membership required</a>'
+                                        : '<span style="font-size:0.8rem;color:#1a6b1a;font-weight:bold;">✅ Pro</span>') +
                                 '</div>' +
-                            '</div>';
+                            '</div>' +
+                            (!locked
+                                ? '<div class="profile-field" style="margin-top:0.5rem;">' +
+                                    '<input type="text" id="bannerInput" class="profile-input" value="' + esc(user.banner) + '" placeholder="Banner image URL" />' +
+                                    '<button class="btn btn-gold btn-sm" onclick="saveBanner()" style="margin-top:6px;">Save Banner</button>' +
+                                    '<div id="bannerMsg" class="msg"></div>' +
+                                '</div>'
+                                : '');
                         })() +
 
                         (function() {

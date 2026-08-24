@@ -177,6 +177,7 @@
         }
 
         var canSend = false;
+        var isPro = false;
         var prevLastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
 
         async function init() {
@@ -185,9 +186,14 @@
                     '<div class="f-not-logged"><p>Please <a href="/signin.html">sign in</a> to view Fellowships.</p></div>';
                 return;
             }
-            var pts = myUser.community_points || 0;
-            var unlocked = myUser.unlocked_fellowships || myUser.role !== 'CIVILIAN';
-            canSend = unlocked || pts >= 100;
+            // Sending Fellowship requests is free for everyone - there's no
+            // Community Points gate on the server, so none is shown here.
+            canSend = true;
+
+            try {
+                var me = await apiFetch('/api/me');
+                isPro = !!(me.user && me.user.is_pro);
+            } catch(e) {}
 
             await renderApp();
             // Mark fellowships as seen after rendering
@@ -213,17 +219,6 @@
             var outgoing  = (outgoingData && outgoingData.requests) || [];
             var reqCount  = incoming.length;
 
-            var pts = myUser.community_points || 0;
-            var lockBanner = !canSend
-                ? '<div style="background:#1a1000;border:1px solid #3a2a00;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#888;">' +
-                      '🔒 Sending Fellowship requests unlocks at <b style="color:#b9aa00;">100 Community Points</b>. ' +
-                      'You have <b style="color:#b9aa00;">' + pts + ' / 100</b>. ' +
-                      '<div class="cp-bar-wrap" style="background:#1a1a1a;border-radius:20px;height:6px;margin:0.5rem 0 0;overflow:hidden;">' +
-                          '<div class="cp-bar" style="width:' + Math.min(100, Math.round(pts)) + '%;height:100%;background:linear-gradient(90deg,#c93f35,#b9aa00);border-radius:20px;"></div>' +
-                      '</div>' +
-                  '</div>'
-                : '';
-
             // Count newly accepted (accepted after last visit)
             var newlyAccepted = fellows.filter(function(f) {
                 return f.accepted_at && new Date(f.accepted_at).getTime() > prevLastSeen && f.sender_uid !== myUid;
@@ -235,17 +230,21 @@
             var startTab = reqCount > 0 ? 'incoming' : 'fellows';
 
             document.getElementById('fApp').innerHTML =
-                lockBanner +
                 '<div class="f-tabs">' +
                     '<button class="f-tab' + (startTab === 'fellows' ? ' active' : '') + '" id="tab_fellows" onclick="switchTab(\'fellows\')">Fellows' + fellowsTabBadge + '</button>' +
                     '<button class="f-tab' + (startTab === 'incoming' ? ' active' : '') + '" id="tab_incoming" onclick="switchTab(\'incoming\')">' +
                         'Requests' + (reqCount > 0 ? ' <span class="notif">' + reqCount + '</span>' : '') +
                     '</button>' +
                     '<button class="f-tab" id="tab_sent" onclick="switchTab(\'sent\')">Sent</button>' +
+                    '<button class="f-tab" id="tab_groups" onclick="switchTab(\'groups\')">Groups</button>' +
                 '</div>' +
                 '<div class="f-panel' + (startTab === 'fellows' ? ' active' : '') + '" id="panel_fellows"></div>' +
                 '<div class="f-panel' + (startTab === 'incoming' ? ' active' : '') + '" id="panel_incoming"></div>' +
-                '<div class="f-panel" id="panel_sent"></div>';
+                '<div class="f-panel" id="panel_sent"></div>' +
+                '<div class="f-panel" id="panel_groups"></div>';
+
+            window.__fellowsForGroups = fellows;
+            renderGroups();
 
             /* ---- Fellows ---- */
             var fp = document.getElementById('panel_fellows');
@@ -345,6 +344,7 @@
         }
 
         window.switchTab = function(tab) {
+            if (tab !== 'groups') stopGroupPoll();
             document.querySelectorAll('.f-tab').forEach(function(b) { b.classList.remove('active'); });
             document.querySelectorAll('.f-panel').forEach(function(p) { p.classList.remove('active'); });
             document.getElementById('tab_' + tab).classList.add('active');
@@ -368,6 +368,144 @@
             if (!confirm('Cancel this Fellowship request?')) return;
             await apiFetch('/api/fellowships/' + id, { method: 'DELETE' });
             await renderApp();
+        };
+
+        /* ---- Group Fellowship Chat (Pro) ---- */
+        var groupPollTimer = null;
+        var openGroupId = null;
+
+        function stopGroupPoll() {
+            if (groupPollTimer) { clearInterval(groupPollTimer); groupPollTimer = null; }
+        }
+
+        async function renderGroups() {
+            var gp = document.getElementById('panel_groups');
+            if (!gp) return;
+            stopGroupPoll();
+            openGroupId = null;
+            var data;
+            try { data = await apiFetch('/api/fellowships/groups'); } catch(e) { data = {}; }
+            var groups = (data && data.groups) || [];
+
+            var proNote = !isPro
+                ? '<div style="background:#1a1505;border:1px solid #5a4a00;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.82rem;color:#c9b400;">' +
+                      '🔒 Creating a Group requires Pro Membership. You can still be added to a Pro fellow\'s group for free. ' +
+                      '<a href="/sorc-beyond.html#basic-member" style="color:inherit;">Learn more</a>' +
+                  '</div>'
+                : '';
+
+            var newBtn = isPro
+                ? '<button class="f-btn f-btn-gold" style="margin-bottom:0.75rem;" onclick="showNewGroupForm()">+ New Group</button>'
+                : '';
+
+            var list = !groups.length
+                ? '<div class="f-empty">No Group chats yet.' + (isPro ? '' : ' A Pro fellow can add you to theirs.') + '</div>'
+                : groups.map(function(g) {
+                    return '<div class="f-row">' +
+                        '<div class="f-info">' +
+                            '<div class="f-name">' + esc(g.name) + '</div>' +
+                            '<div class="f-sub">' + g.member_count + ' member' + (g.member_count === 1 ? '' : 's') + (g.owner_uid === myUid ? ' &middot; you own this group' : '') + '</div>' +
+                        '</div>' +
+                        '<div class="f-actions">' +
+                            '<button class="f-btn f-btn-gold" onclick="openGroup(\'' + esc(g.id) + '\',\'' + esc(g.name).replace(/'/g,"\\'") + '\')">Open</button>' +
+                            (g.owner_uid === myUid
+                                ? '<button class="f-btn f-btn-grey" onclick="deleteGroup(\'' + esc(g.id) + '\')">Delete</button>'
+                                : '<button class="f-btn f-btn-grey" onclick="leaveGroup(\'' + esc(g.id) + '\')">Leave</button>') +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+
+            gp.innerHTML = proNote + newBtn + '<div id="groupListWrap">' + list + '</div><div id="groupFormWrap"></div><div id="groupChatWrap"></div>';
+        }
+
+        window.showNewGroupForm = function() {
+            var wrap = document.getElementById('groupFormWrap');
+            var fellows = window.__fellowsForGroups || [];
+            if (!fellows.length) {
+                wrap.innerHTML = '<div class="f-empty">You need at least one Fellow to start a group.</div>';
+                return;
+            }
+            var checks = fellows.map(function(f) {
+                var uid = f.sender_uid === myUid ? f.receiver_uid : f.sender_uid;
+                var name = f.sender_uid === myUid ? f.receiver_name : f.sender_name;
+                return '<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0;font-size:0.85rem;color:#ccc;">' +
+                    '<input type="checkbox" class="groupMemberCheck" value="' + esc(uid) + '" /> ' + esc(name) +
+                '</label>';
+            }).join('');
+            wrap.innerHTML =
+                '<div style="background:#161616;border:1px solid #2a2a2a;border-radius:8px;padding:1rem;margin-top:0.75rem;">' +
+                    '<input type="text" id="groupNameInput" class="profile-input" placeholder="Group name" style="width:100%;box-sizing:border-box;margin-bottom:0.6rem;padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#fff;" />' +
+                    checks +
+                    '<div style="margin-top:0.6rem;"><button class="f-btn f-btn-gold" onclick="submitNewGroup()">Create</button> ' +
+                    '<button class="f-btn f-btn-grey" onclick="document.getElementById(\'groupFormWrap\').innerHTML=\'\'">Cancel</button></div>' +
+                '</div>';
+        };
+
+        window.submitNewGroup = async function() {
+            var name = document.getElementById('groupNameInput').value.trim();
+            var uids = Array.prototype.slice.call(document.querySelectorAll('.groupMemberCheck:checked')).map(function(el) { return el.value; });
+            var data = await apiFetch('/api/fellowships/groups', { method: 'POST', body: JSON.stringify({ name: name, member_uids: uids }) });
+            if (data.error) { alert(data.error); return; }
+            await renderGroups();
+        };
+
+        window.deleteGroup = async function(id) {
+            if (!confirm('Delete this group for everyone?')) return;
+            await apiFetch('/api/fellowships/groups/' + id, { method: 'DELETE' });
+            await renderGroups();
+        };
+
+        window.leaveGroup = async function(id) {
+            if (!confirm('Leave this group?')) return;
+            await apiFetch('/api/fellowships/groups/' + id + '/members/' + myUid, { method: 'DELETE' });
+            await renderGroups();
+        };
+
+        window.openGroup = async function(id, name) {
+            openGroupId = id;
+            document.getElementById('groupListWrap').style.display = 'none';
+            document.getElementById('groupFormWrap').innerHTML = '';
+            var chatWrap = document.getElementById('groupChatWrap');
+            chatWrap.innerHTML =
+                '<div style="margin-bottom:0.5rem;"><button class="f-btn f-btn-grey" onclick="closeGroupChat()">&larr; Back to Groups</button> <strong style="color:#e0cfc0;">' + esc(name) + '</strong></div>' +
+                '<div id="groupMsgs" style="background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:0.75rem;height:280px;overflow-y:auto;margin-bottom:0.5rem;font-size:0.85rem;"></div>' +
+                '<div style="display:flex;gap:0.5rem;">' +
+                    '<input type="text" id="groupMsgInput" placeholder="Message the group..." style="flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#fff;" onkeydown="if(event.key===\'Enter\')sendGroupMessage()" />' +
+                    '<button class="f-btn f-btn-gold" onclick="sendGroupMessage()">Send</button>' +
+                '</div>';
+            await pollGroupMessages();
+            stopGroupPoll();
+            groupPollTimer = setInterval(pollGroupMessages, 5000);
+        };
+
+        window.closeGroupChat = function() {
+            stopGroupPoll();
+            openGroupId = null;
+            document.getElementById('groupListWrap').style.display = '';
+            document.getElementById('groupChatWrap').innerHTML = '';
+        };
+
+        async function pollGroupMessages() {
+            if (!openGroupId) return;
+            var data = await apiFetch('/api/fellowships/groups/' + openGroupId + '/messages');
+            var msgs = (data && data.messages) || [];
+            var box = document.getElementById('groupMsgs');
+            if (!box) return;
+            box.innerHTML = msgs.map(function(m) {
+                var mine = m.user_id === myUid;
+                return '<div style="margin-bottom:0.4rem;"><span style="color:' + (mine ? '#b9aa00' : '#8ab4e0') + ';font-weight:bold;">' + esc(m.username) + ':</span> <span style="color:#ccc;">' + esc(m.body) + '</span></div>';
+            }).join('') || '<div style="color:#555;">No messages yet. Say hello!</div>';
+            box.scrollTop = box.scrollHeight;
+        }
+
+        window.sendGroupMessage = async function() {
+            var input = document.getElementById('groupMsgInput');
+            var body = input.value.trim();
+            if (!body || !openGroupId) return;
+            input.value = '';
+            var data = await apiFetch('/api/fellowships/groups/' + openGroupId + '/messages', { method: 'POST', body: JSON.stringify({ body: body }) });
+            if (data.error) { alert(data.error); return; }
+            await pollGroupMessages();
         };
 
         init();

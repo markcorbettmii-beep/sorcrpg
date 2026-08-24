@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trials of Combat | Slayers of Rings &amp; Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .stub-wrap { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .stub-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
+    .stub-sub { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .stub-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+    .stub-card p { color: #aaa; font-size: 0.9rem; line-height: 1.6; margin: 0 0 0.75rem; }
+    .stub-card p:last-child { margin-bottom: 0; }
+    .free-badge { display: inline-block; background: #123a1a; border: 1px solid #4caf50; color: #4caf50; font-size: 0.75rem; font-weight: bold; padding: 0.2rem 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; }
+    .perk-note { background: #1a1505; border: 1px solid #5a4a00; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; color: #c9b400; font-size: 0.88rem; line-height: 1.5; }
+    .perk-note a { color: inherit; text-decoration: underline; }
+    .coming-soon { color: #666; font-size: 0.85rem; text-align: center; margin-top: 2rem; }
+    body.lawful-mode .stub-card { background: #f5f5f0; border-color: #ddd; }
+    body.lawful-mode .stub-card p { color: #444; }
+    body.lawful-mode .perk-note { background: #fdf8e0; border-color: #e0d060; color: #7a6a00; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
+      <div id="navRoleBadge"></div>
+    </nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+    </ul>
+
+    <div class="stub-wrap">
+      <span class="free-badge">FREE FOR ALL MEMBERS</span>
+      <h1>Trials of Combat</h1>
+      <p class="stub-sub">PvP arenas, battlegrounds, and coliseum modes &mdash; free to every member.</p>
+
+      <div class="stub-card">
+        <p>PvP arenas, battlegrounds (land, sea, air), coliseum modes, 1v1 duels, and Pet Parties up to 5 Players. No paid advantage in combat &mdash; no pay to win. All combat rewards are earned in-game only.</p>
+      </div>
+
+      <div id="perkNote" class="perk-note">Checking your membership status&hellip;</div>
+
+      <p class="coming-soon">This feature is still in development. The Basic/Pro perk split above is already live and enforced by the server.</p>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'lawful';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+    var perkNote = document.getElementById('perkNote');
+
+    if (!currentUser || !currentUser.authKey) {
+      perkNote.innerHTML = 'Sign in to see your Basic/Pro perks. <a href="signin.html">Sign In</a>';
+    } else {
+      fetch(API_URL + '/api/me', { headers: { 'X-Auth-Key': currentUser.authKey } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var isPro = !!(data.user && data.user.is_pro);
+          perkNote.innerHTML = isPro
+            ? 'You have Pro Membership &mdash; exclusive cosmetic skins, the top 200 leaderboard, a fuller achievements/trophies list, and Practice Mode are yours once this ships.'
+            : 'You have Basic access to Trials of Combat (top 100 leaderboard). Pro members additionally get exclusive skins, the top 200 leaderboard, a fuller achievements list, and Practice Mode. <a href="sorc-beyond.html#basic-member">Learn about Basic vs. Pro</a>';
+        })
+        .catch(function() { perkNote.innerHTML = 'Could not check your membership status right now.'; });
+    }
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+</body>
+</html>

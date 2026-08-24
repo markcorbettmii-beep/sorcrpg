@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choose Your Username - SORC</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #ffffff;
+      color: #333333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 40px;
+      border-radius: 8px;
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      text-align: center;
+    }
+
+    .logo-section {
+      margin-bottom: 20px;
+    }
+
+    .sorc-logo {
+      max-width: 150px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #333333;
+    }
+
+    .welcome-message {
+      font-size: 15px;
+      color: #666666;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 8px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #333333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      background: #ffffff;
+      color: #333333;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #0066cc;
+      box-shadow: 0 0 8px rgba(0, 102, 204, 0.2);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #888888;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .error {
+      color: #cc0000;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      background: #0066cc;
+      color: #ffffff;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background: #0052a3;
+      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+
+    button:disabled {
+      background: #999999;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .skip-link {
+      display: block;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #999999;
+      text-decoration: none;
+    }
+
+    .skip-link:hover {
+      color: #666666;
+      text-decoration: underline;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      font-size: 14px;
+      color: #666666;
+      margin-top: 10px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #ffffff;
+      }
+
+      .container {
+        background: #2a2a2a;
+        border-color: #444444;
+      }
+
+      h1 {
+        color: #ffffff;
+      }
+
+      label {
+        color: #dddddd;
+      }
+
+      .welcome-message {
+        color: #cccccc;
+      }
+
+      input {
+        background: #1a1a1a;
+        border-color: #555555;
+        color: #ffffff;
+      }
+
+      .hint {
+        color: #999999;
+      }
+
+      .skip-link {
+        color: #888888;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-section">
+      <img src="sorc-letters-lawful.png" alt="SORC" class="sorc-logo" />
+    </div>
+
+    <h1>Choose Your Username</h1>
+
+    <div class="welcome-message" id="welcomeMsg">
+      Welcome to Essentia! You signed in with Google, so we started you off with an auto-generated name. Pick your own before you head in.
+    </div>
+
+    <form id="usernameForm">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="off" required />
+        <div class="hint">3-30 characters. Letters, numbers, and hyphens only.</div>
+        <div id="usernameError" class="error"></div>
+      </div>
+
+      <button type="submit" id="submitBtn">Continue</button>
+      <div class="loading" id="loading">Saving...</div>
+    </form>
+
+    <a href="#" class="skip-link" id="skipLink">Skip for now, keep my auto-generated username</a>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var badWords = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+    function containsBadWord(str) {
+      var lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return badWords.some(function(word) { return lower.includes(word); });
+    }
+    function isValidUsername(username) {
+      if (username.length < 3) return 'Name must be at least 3 characters.';
+      if (username.length > 30) return 'Name must be 30 characters or less.';
+      if (!/^[a-zA-Z0-9-]+$/.test(username)) return 'Letters, numbers and hyphens only. No underscores or spaces.';
+      if (containsBadWord(username)) return 'Name contains inappropriate language.';
+      return null;
+    }
+
+    // Same allowlist as signin.html's postSigninDest() - only same-site .html
+    // paths, optionally carrying the track/from=join query shape or a hash.
+    function postSigninDest() {
+      try {
+        var next = new URLSearchParams(window.location.search).get('next');
+        if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) return next;
+      } catch(e) {}
+      return 'take-assessment.html';
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    var userData = params.get('user');
+    var user = null;
+    try { user = userData ? JSON.parse(userData) : null; } catch(e) { user = null; }
+
+    if (!user || !user.authKey) {
+      // Nothing to work with - back to sign in rather than trap the visitor here.
+      window.location.href = '/signin.html';
+    } else {
+      // Suggest the auto-generated username as a starting point, not a submission -
+      // most people will want to change it, but it's still a valid placeholder.
+      document.getElementById('username').value = user.username || '';
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
+
+    function finishSignin(finalUser) {
+      try { localStorage.setItem('sorc_user', JSON.stringify(finalUser)); } catch(e) {}
+      window.location.href = postSigninDest();
+    }
+
+    document.getElementById('skipLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!user) return;
+      delete user.needs_username;
+      finishSignin(user);
+    });
+
+    document.getElementById('usernameForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!user) return;
+
+      var errEl = document.getElementById('usernameError');
+      errEl.style.display = 'none';
+      var username = document.getElementById('username').value.trim();
+
+      var localErr = isValidUsername(username);
+      if (localErr) {
+        errEl.textContent = localErr;
+        errEl.style.display = 'block';
+        return;
+      }
+
+      var submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      document.getElementById('loading').style.display = 'block';
+
+      try {
+        var res = await fetch(API_URL + '/api/auth/set-username', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
+          body: JSON.stringify({ username: username })
+        });
+        var data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Could not save that username. Please try again.';
+          errEl.style.display = 'block';
+          submitBtn.disabled = false;
+          document.getElementById('loading').style.display = 'none';
+          return;
+        }
+        user.username = data.username;
+        delete user.needs_username;
+        finishSignin(user);
+      } catch (err) {
+        errEl.textContent = 'Connection error. Please try again.';
+        errEl.style.display = 'block';
+        submitBtn.disabled = false;
+        document.getElementById('loading').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -2,6 +2,40 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import * as bcrypt from 'bcryptjs';
 
+// ─── CONTENT FILTER ─────────────────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24) — needed by the lobby/room chat routes below.
+const SLUR_LIST = [
+  'nigger','nigga','faggot','fag','kike','spic','chink','gook','wetback',
+  'tranny','shemale','cunt','dyke','cracker','redskin','raghead','towelhead',
+  'beaner','zipperhead','jigaboo','porch monkey','coon','jungle bunny',
+  'sandnigger','camel jockey'
+];
+
+const PROFANITY_LIST = [
+  'fuck','shit','ass','bitch','bastard','damn','crap','piss','dick','cock',
+  'pussy','whore','slut','jackass','asshole','bullshit','motherfucker',
+  'motherfucking','fucker','fucking','shitty','dipshit','dumbass','dumbfuck',
+  'horseshit','clusterfuck','shithead','fuckhead','butthead','twat',
+  'wanker','tosser','bollocks','bloody hell','arse','arsehole','prick',
+  'tit','tits','boob','boobs','boner','dildo','jizz','cum','cumshot',
+  'blowjob','handjob','rimjob','buttfuck','butt fuck','titty','titties'
+];
+
+function filterContent(text: string): { blocked: boolean; filtered: string; reason: string } {
+  if (!text) return { blocked: false, filtered: text, reason: '' };
+  const lower = text.toLowerCase();
+  for (const slur of SLUR_LIST) {
+    const re = new RegExp('\\b' + slur.replace(/\s+/g, '\\s+') + '\\b', 'i');
+    if (re.test(lower)) return { blocked: true, filtered: text, reason: 'Your message contains a slur and cannot be sent.' };
+  }
+  let filtered = text;
+  for (const word of PROFANITY_LIST) {
+    const re = new RegExp('\\b' + word + '\\b', 'gi');
+    filtered = filtered.replace(re, (m: string) => '*'.repeat(m.length));
+  }
+  return { blocked: false, filtered, reason: '' };
+}
+
 interface Env {
   sorc_db: D1Database;
   RESEND_API_KEY: string;
@@ -74,11 +108,18 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 const AUTH_KEY_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, matches sorc-app's existing session length
+const FELLOWSHIP_CAP = 25; // Basic members; Pro Membership is unlimited (see sorc-beyond.html's table)
 const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours, matches the verification/reset emails' own "expires in 24 hours" text
 
 async function ensureAuthColumns(db: D1Database) {
   await db.prepare(`ALTER TABLE users ADD COLUMN auth_key_expires_at TEXT`).run().catch(() => {});
   await db.prepare(`ALTER TABLE users ADD COLUMN verification_token_created_at TEXT`).run().catch(() => {});
+}
+
+// Custom profile banner (see sorc-beyond.html's Basic vs. Pro table: "Custom
+// profile banner" is Pro-exclusive, same tier as signature/website/socials).
+async function ensureProfileColumns(db: D1Database) {
+  await db.prepare(`ALTER TABLE users ADD COLUMN banner TEXT`).run().catch(() => {});
 }
 
 // Trigger deployment with fixed wrangler secret put syntax
@@ -584,8 +625,10 @@ Solution: Make sure your Google account has a public email address.</code>
     // Check if user exists
     let user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ?').bind(googleUser.email).first() as any;
     let authKey: string;
+    let isNewUser = false;
 
     if (!user) {
+      isNewUser = true;
       // Create new user from Google OAuth
       authKey = crypto.randomUUID();
       const userId = Math.floor(Math.random() * 90000) + 10000;
@@ -696,7 +739,15 @@ This usually means:
       titles: user.titles || null,
       join_date: user.join_date,
       created_at: user.created_at,
-      authKey: authKey
+      authKey: authKey,
+      // New Google sign-ups get an auto-generated username (email prefix +
+      // random digits, see above) with no chance to pick their own. This
+      // flag routes the post-K-ID redirect through choose-username.html
+      // once, right after verification, before the account is otherwise
+      // considered fully set up - see choose-username.html and
+      // POST /api/auth/set-username. Existing users logging back in never
+      // carry this flag.
+      needs_username: isNewUser
     });
     const returnUrl = `https://sorcrpg.com/signin.html?user=${encodeURIComponent(userData)}`;
     const kidUrl = `https://sorcrpg.com/k-id-status.html?return=${encodeURIComponent(returnUrl)}`;
@@ -759,6 +810,35 @@ app.post('/auth/google/login-after-kid', async (c) => {
     console.error('POST /auth/google/login-after-kid error:', error);
     return c.json({ error: 'Invalid request' }, 400);
   }
+});
+
+// Lets a brand-new Google (or future OAuth) signup replace the auto-generated
+// email-prefix username with one they actually chose - see needs_username in
+// /auth/google/callback and choose-username.html. Same validation as
+// /api/auth/register's username field, plus the profanity filter signin.html
+// already runs client-side for the email/password signup form, repeated here
+// server-side so it can't be skipped.
+const USERNAME_BAD_WORDS = ['fuck','shit','ass','bitch','cunt','dick','cock','pussy','nigger','nigga','faggot','retard','whore','slut','bastard','crap','piss','prick','twat','wanker','bollocks'];
+function containsBadWord(str: string): boolean {
+  const lower = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return USERNAME_BAD_WORDS.some(w => lower.includes(w));
+}
+
+app.post('/api/auth/set-username', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { username } = await c.req.json() as any;
+  if (!username || typeof username !== 'string') return c.json({ error: 'Username required' }, 400);
+  const trimmed = username.trim();
+  if (trimmed.length < 3 || trimmed.length > 30) return c.json({ error: 'Username must be 3-30 characters' }, 400);
+  if (!/^[a-zA-Z0-9-]+$/.test(trimmed)) return c.json({ error: 'Username can only contain letters, numbers, and hyphens' }, 400);
+  if (containsBadWord(trimmed)) return c.json({ error: 'Username contains inappropriate language' }, 400);
+
+  const existing = await c.env.sorc_db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').bind(trimmed, user.id).first();
+  if (existing) return c.json({ error: 'Username already taken' }, 400);
+
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare('UPDATE users SET username = ?, updated_at = ? WHERE id = ?').bind(trimmed, now, user.id).run();
+  return c.json({ success: true, username: trimmed });
 });
 
 app.get('/api/forum/categories', async (c) => {
@@ -923,6 +1003,28 @@ app.post('/api/fellowships/:id/accept', authMiddleware, async (c) => {
     if (!fellowship) return c.json({ error: 'Not found' }, 404);
     if (fellowship.receiver_uid !== user.id) return c.json({ error: 'Forbidden' }, 403);
     if (fellowship.status !== 'pending') return c.json({ error: 'Request is not pending' }, 400);
+
+    // Fellowship cap: Basic members top out at 25 accepted fellowships
+    // (remove one to add another); Pro Membership is unlimited, per
+    // sorc-beyond.html's Basic vs. Pro table.
+    if (!(await isProMember(c.env.sorc_db, user))) {
+      const count = await c.env.sorc_db.prepare(
+        `SELECT COUNT(*) as cnt FROM fellowships WHERE status = 'accepted' AND (sender_uid = ? OR receiver_uid = ?)`
+      ).bind(user.id, user.id).first() as any;
+      if ((count?.cnt || 0) >= FELLOWSHIP_CAP) {
+        return c.json({ error: `You've reached the Basic Fellowship cap (${FELLOWSHIP_CAP}). Remove one to add another, or upgrade to Pro for unlimited fellows.` }, 403);
+      }
+    }
+    const sender = await c.env.sorc_db.prepare('SELECT * FROM users WHERE id = ?').bind(fellowship.sender_uid).first() as any;
+    if (sender && !(await isProMember(c.env.sorc_db, sender))) {
+      const senderCount = await c.env.sorc_db.prepare(
+        `SELECT COUNT(*) as cnt FROM fellowships WHERE status = 'accepted' AND (sender_uid = ? OR receiver_uid = ?)`
+      ).bind(sender.id, sender.id).first() as any;
+      if ((senderCount?.cnt || 0) >= FELLOWSHIP_CAP) {
+        return c.json({ error: (sender.display_name || sender.username) + " has reached their Basic Fellowship cap. They'll need to remove one, or upgrade to Pro." }, 403);
+      }
+    }
+
     await c.env.sorc_db.prepare(`UPDATE fellowships SET status = 'accepted', accepted_at = ? WHERE id = ?`).bind(new Date().toISOString(), fellowshipId).run();
     return c.json({ success: true });
   } catch (error: any) {
@@ -1046,8 +1148,14 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
 app.get('/api/profile/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
-    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first();
+    await ensureProfileColumns(c.env.sorc_db);
+    const user = await c.env.sorc_db.prepare(`SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at, signature, website, social_twitter, social_twitch, banner FROM users WHERE id = ? OR username = ?`).bind(userId, userId).first() as any;
     if (!user) return c.json({ error: 'User not found' }, 404);
+    // Signature/website/socials/banner are Pro-exclusive - don't show them on
+    // a public profile for a member who no longer has (or never had) Pro.
+    if (!(await isProMember(c.env.sorc_db, user))) {
+      user.signature = null; user.website = null; user.social_twitter = null; user.social_twitch = null; user.banner = null;
+    }
     return c.json({ user });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
@@ -1057,7 +1165,8 @@ app.get('/api/profile/:userId', async (c) => {
 app.get('/api/me', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
-    const fullUser = await c.env.sorc_db.prepare('SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at FROM users WHERE id = ?').bind(user.id).first() as any;
+    await ensureProfileColumns(c.env.sorc_db);
+    const fullUser = await c.env.sorc_db.prepare('SELECT id, username, display_name, first_name, surname, prefix, suffix, avatar, bio, role, community_points, post_count, titles, join_date, last_seen, created_at, signature, website, social_twitter, social_twitch, banner FROM users WHERE id = ?').bind(user.id).first() as any;
     if (!fullUser) return c.json({ error: 'User not found' }, 404);
     // Privileged accounts (ADMIN/OWNER, verified server-side, never client-claimed)
     // are auto-topped-up to a 10,000 community_points floor.
@@ -1065,6 +1174,10 @@ app.get('/api/me', authMiddleware, async (c) => {
       await c.env.sorc_db.prepare('UPDATE users SET community_points = 10000 WHERE id = ?').bind(fullUser.id).run();
       fullUser.community_points = 10000;
     }
+    // Client pages (Trading Post, Character's Home, etc.) need to know Basic
+    // vs. Pro to show the right locked/unlocked state without a second call.
+    // The real gate is always server-side on each endpoint - this is display only.
+    fullUser.is_pro = await isProMember(c.env.sorc_db, fullUser);
     return c.json({ user: fullUser });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
@@ -1074,7 +1187,14 @@ app.get('/api/me', authMiddleware, async (c) => {
 app.put('/api/profile', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
-  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'signature', 'website', 'social_twitter', 'social_twitch', 'privacy_email'];
+  await ensureProfileColumns(c.env.sorc_db);
+  const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'privacy_email'];
+  // Pro Membership perks (see sorc-beyond.html's comparison table): a signature,
+  // personal website link, social links, and a custom banner are Pro-only. Not
+  // purchasable with Community Points, and not settable at all without a
+  // claimed box set code.
+  const proOnlyFields = ['signature', 'website', 'social_twitter', 'social_twitch', 'banner'];
+  const isPro = await isProMember(c.env.sorc_db, user);
   const setParts: string[] = [];
   const values: any[] = [];
   for (const field of allowedFields) {
@@ -1083,11 +1203,21 @@ app.put('/api/profile', authMiddleware, async (c) => {
       values.push(updates[field]);
     }
   }
+  const blockedProFields: string[] = [];
+  for (const field of proOnlyFields) {
+    if (updates[field] === undefined) continue;
+    if (!isPro) { blockedProFields.push(field); continue; }
+    setParts.push(`${field} = ?`);
+    values.push(updates[field]);
+  }
+  if (blockedProFields.length > 0 && setParts.length === 0) {
+    return c.json({ error: 'Pro Membership required to set: ' + blockedProFields.join(', ') }, 403);
+  }
   if (setParts.length === 0) return c.json({ error: 'No valid fields to update' }, 400);
   try {
     await c.env.sorc_db.prepare(`UPDATE users SET ${setParts.join(', ')}, updated_at = ? WHERE id = ?`).bind(...values, new Date().toISOString(), user.id).run();
     const updatedUser = await c.env.sorc_db.prepare('SELECT * FROM users WHERE id = ?').bind(user.id).first();
-    return c.json({ success: true, user: updatedUser });
+    return c.json({ success: true, user: updatedUser, blocked_pro_fields: blockedProFields.length ? blockedProFields : undefined });
   } catch (error: any) {
     return c.json({ error: 'Failed to update profile', details: error.message }, 500);
   }
@@ -1357,11 +1487,18 @@ app.post('/api/assess/beta-submit', async (c) => {
   }
 
   let score = 0;
+  // Basic Rules pool is 83 questions deep and only 10 are ever shown per
+  // attempt, so revealing the correct answer for a missed question here
+  // only leaks one of 83 facts, not the whole quiz - safe to hand back for
+  // the review screen (see showBetaResult/renderWrongReview in assess.html).
+  const wrong: Array<{ id: number; answer: number }> = [];
   for (const entry of answers) {
     const qId = typeof entry === 'object' ? entry.id : null;
     const chosen = typeof entry === 'object' ? entry.answer : entry;
     if (qId !== null && qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
-      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) score++;
+      const correct = ASSESSMENT_QUESTIONS[qId].answer;
+      if (chosen === correct) score++;
+      else wrong.push({ id: qId, answer: correct });
     }
   }
 
@@ -1370,7 +1507,7 @@ app.post('/api/assess/beta-submit', async (c) => {
   // (6/10) used for the real, logged-in assessment - the preview only shows a
   // pass message on a genuinely strong score.
   const passed = score >= 8;
-  return c.json({ score, role, passed, beta: true });
+  return c.json({ score, role, passed, beta: true, wrong });
 });
 
 app.post('/api/assess/submit', authMiddleware, async (c) => {
@@ -1399,15 +1536,29 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   // separately so a GM attempt is graded per-section, not just combined.
   let basicScore = 0;
   let codexScore = 0;
+  // Review data for the result screen's wrong-answer breakdown (see
+  // renderWrongReview in assess.html). Basic Rules is an 83-question pool
+  // with only 10 drawn per attempt, so handing back the correct answer for
+  // a miss only leaks one of 83 facts - fine. GM Codex is the opposite: its
+  // pool IS the 10 questions shown, every attempt, so revealing an answer
+  // there would permanently burn that question for every future GM
+  // attempt. Codex misses are flagged (id only, no answer) so the chosen
+  // option still highlights red without exposing the fixed answer key.
+  const wrong: Array<{ id: number; answer?: number }> = [];
   for (const entry of answers) {
     const qId = typeof entry === 'object' ? entry.id : null;
     const chosen = typeof entry === 'object' ? entry.answer : entry;
     if (qId === null) continue;
     if (qId >= 1000) {
       const codexId = qId - 1000;
-      if (codexId >= 0 && codexId < GM_CODEX_QUESTIONS.length && chosen === GM_CODEX_QUESTIONS[codexId].answer) codexScore++;
+      if (codexId >= 0 && codexId < GM_CODEX_QUESTIONS.length) {
+        if (chosen === GM_CODEX_QUESTIONS[codexId].answer) codexScore++;
+        else wrong.push({ id: qId });
+      }
     } else if (qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
-      if (chosen === ASSESSMENT_QUESTIONS[qId].answer) basicScore++;
+      const correct = ASSESSMENT_QUESTIONS[qId].answer;
+      if (chosen === correct) basicScore++;
+      else wrong.push({ id: qId, answer: correct });
     }
   }
 
@@ -1429,7 +1580,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
         ).bind(now, user.id).run();
       }
     } catch(_) {}
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.', wrong });
   }
 
   try {
@@ -1456,7 +1607,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
       ).bind(siteRole, role, pointsAwarded, now, user.id).run();
     }
 
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded, wrong });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }
@@ -1595,6 +1746,1835 @@ app.get('/api/gm-codes/generated', authMiddleware, async (c) => {
     `SELECT code, note, used_by, used_at, created_at, expires_at FROM gm_codes WHERE created_by = ? ORDER BY created_at DESC LIMIT 50`
   ).bind(user.id).all();
   return c.json({ codes: rows.results || [] });
+});
+
+// ─── LOBBIES ───────────────────────────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24): "Browse & join Tavern Lobbies" is
+// advertised to every member (Basic and Pro alike) but had zero backing
+// routes on sorc-api, the Worker actually live at api.sorcrpg.com.
+
+app.get('/api/lobbies', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const assessment = await c.env.sorc_db.prepare(
+    `SELECT * FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first() as any;
+
+  const lobbies = await c.env.sorc_db.prepare(
+    `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+     FROM lobbies l JOIN users u ON l.creator_uid = u.id
+     WHERE l.is_private = 0 AND l.status != 'closed'
+     ORDER BY l.created_at DESC LIMIT 50`
+  ).all();
+
+  return c.json({
+    lobbies: lobbies.results || [],
+    assessed: !!assessment || isPrivileged(user),
+    sorc_role: user.sorc_role || assessment?.role_granted || null,
+    is_privileged: isPrivileged(user),
+    needs_reassess: !!(user.needs_reassess)
+  });
+});
+
+app.post('/api/lobbies', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const assessment = await c.env.sorc_db.prepare(
+    `SELECT * FROM assessments WHERE user_id = ?`
+  ).bind(user.id).first() as any;
+  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must complete the assessment before creating a lobby.', needs_reassess: true }, 403);
+
+  if (!isPrivileged(user) && assessment) {
+    const age = Date.now() - new Date(assessment.taken_at).getTime();
+    if (age > ASSESSMENT_EXPIRY_MS) {
+      await c.env.sorc_db.prepare(`UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
+      return c.json({ error: 'Your assessment has expired (30 days). Please reassess to create lobbies.', needs_reassess: true }, 403);
+    }
+  }
+
+  if (user.needs_reassess && !isPrivileged(user)) {
+    return c.json({ error: 'You are flagged for reassessment. Please reassess before creating lobbies.', needs_reassess: true }, 403);
+  }
+
+  const { name, box_set_code, is_private } = await c.req.json() as any;
+  if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
+
+  const existingLobby = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed'`
+  ).bind(user.id).first();
+  if (existingLobby) return c.json({ error: 'You already have an active lobby. Close it before creating a new one.' }, 400);
+
+  if (!isPrivileged(user)) {
+    if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);
+    const codeCheck = await validateBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+    if (!codeCheck.valid) return c.json({ error: codeCheck.error || 'Invalid box set code.' }, 400);
+  }
+
+  const lobbyId = crypto.randomUUID();
+  const lobbyCode = genLobbyCode();
+  const now = new Date().toISOString();
+  const memberId = crypto.randomUUID();
+
+  try {
+    if (!isPrivileged(user) && box_set_code) {
+      await claimBoxSetCode(c.env.sorc_db, box_set_code, user.id);
+    }
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?)`
+    ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, now, now).run();
+
+    const creatorRole = assessment?.role_granted || user.sorc_role || user.role;
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_members (id, lobby_id, user_id, sorc_role, username, display_name, joined_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(memberId, lobbyId, user.id, creatorRole, user.username, user.display_name || user.username, now).run();
+
+    return c.json({ success: true, lobby_id: lobbyId, lobby_code: lobbyCode });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to create lobby.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/lobbies/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+
+  const lobby = await c.env.sorc_db.prepare(
+    `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+     FROM lobbies l JOIN users u ON l.creator_uid = u.id WHERE l.id = ?`
+  ).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+
+  const privileged = isPrivileged(user);
+
+  if (lobby.is_private && lobby.creator_uid !== user.id && !privileged) {
+    const isMember = await c.env.sorc_db.prepare(
+      `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobbyId, user.id).first();
+    if (!isMember) return c.json({ error: 'This lobby is private.' }, 403);
+  }
+
+  // Include username for profile links; privileged users also see user_id for admin tools
+  const members = await c.env.sorc_db.prepare(
+    `SELECT lm.*, u.avatar, u.user_id as public_uid, u.role as live_role, u.sorc_role as live_sorc_role, u.email as member_email FROM lobby_members lm
+     LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? ORDER BY lm.joined_at ASC`
+  ).bind(lobbyId).all();
+
+  const OWNER_EMAILS_LIST = ['corbett@sorcrpg.com'];
+  const ADMIN_EMAILS_LIST = ['markcorbett.mii@gmail.com'];
+
+  const memberList = (members.results || []).map((m: any) => {
+    let displayRole = m.live_role;
+    if (OWNER_EMAILS_LIST.includes(m.member_email)) displayRole = 'OWNER';
+    else if (ADMIN_EMAILS_LIST.includes(m.member_email)) displayRole = 'ADMIN';
+    const out: any = {
+      id: m.id, lobby_id: m.lobby_id, user_id: m.user_id,
+      role: displayRole, sorc_role: m.live_sorc_role || m.sorc_role, username: m.username, display_name: m.display_name,
+      joined_at: m.joined_at, is_muted: m.is_muted, avatar: m.avatar,
+      profile_url: 'public-profile.html?u=' + encodeURIComponent(m.username)
+    };
+    if (privileged) out.public_uid = m.public_uid;
+    return out;
+  });
+
+  const isMember = memberList.some((m: any) => m.user_id === user.id);
+  const isCreator = lobby.creator_uid === user.id;
+
+  return c.json({
+    lobby, members: memberList, is_member: isMember || privileged,
+    is_creator: isCreator, is_privileged: privileged
+  });
+});
+
+app.post('/api/lobbies/join', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const privileged = isPrivileged(user);
+
+  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
+  if (!assessment && !privileged) return c.json({ error: 'You must complete the assessment before joining a lobby.', needs_reassess: true }, 403);
+
+  if (!privileged && assessment) {
+    const age = Date.now() - new Date(assessment.taken_at).getTime();
+    if (age > ASSESSMENT_EXPIRY_MS) {
+      await c.env.sorc_db.prepare(`UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
+      return c.json({ error: 'Your assessment has expired (30 days). Please reassess to rejoin lobbies.', needs_reassess: true }, 403);
+    }
+  }
+
+  if (user.needs_reassess && !privileged) {
+    return c.json({
+      error: 'You are flagged for reassessment. Please reassess before joining lobbies.',
+      needs_reassess: true
+    }, 403);
+  }
+
+  const { lobby_id, lobby_code } = await c.req.json() as any;
+
+  let lobby: any;
+  if (lobby_code) {
+    lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE lobby_code = ?`).bind(lobby_code.toUpperCase().trim()).first();
+  } else if (lobby_id) {
+    lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobby_id).first();
+  }
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
+  if (!privileged && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
+
+  const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
+  if (existing) return c.json({ error: 'You are already in this lobby.' }, 400);
+
+  const memberId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const memberRole = privileged ? user.role : (assessment?.role_granted || user.sorc_role);
+
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_members (id, lobby_id, user_id, sorc_role, username, display_name, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(memberId, lobby.id, user.id, memberRole, user.username, user.display_name || user.username, now).run();
+
+    if (!privileged) {
+      const newCount = (lobby.member_count || 1) + 1;
+      const newStatus = newCount >= lobby.max_members ? 'full' : 'open';
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = ?, updated_at = ? WHERE id = ?`).bind(newCount, newStatus, now, lobby.id).run();
+    }
+
+    return c.json({ success: true, lobby_name: lobby.name, lobby_id: lobby.id });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to join lobby.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  try {
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+
+    // One-time migration: add commandeered_from column if not yet present
+    try {
+      await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
+    } catch (_) {}
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
+
+    if (lobby.creator_uid === user.id) {
+      const next = await c.env.sorc_db.prepare(
+        `SELECT lm.user_id FROM lobby_members lm
+         LEFT JOIN box_set_codes bsc ON bsc.owner_uid = lm.user_id
+         WHERE lm.lobby_id = ?
+         ORDER BY CASE WHEN bsc.owner_uid IS NOT NULL THEN 0 ELSE 1 END ASC, lm.joined_at ASC
+         LIMIT 1`
+      ).bind(lobbyId).first() as any;
+      if (next) {
+        await c.env.sorc_db.prepare(
+          `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
+        ).bind(next.user_id, user.username, now, lobbyId).run();
+      } else {
+        await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
+          .bind(now, lobbyId).run();
+      }
+    }
+
+    const newCount = Math.max(0, (lobby.member_count || 1) - 1);
+    await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to leave lobby.', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the creator can close this lobby.' }, 403);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), lobbyId).run();
+  return c.json({ success: true });
+});
+
+app.post('/api/lobbies/:id/invite', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  try {
+    const { username } = await c.req.json() as any;
+    if (!username) return c.json({ error: 'Username required.' }, 400);
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+    if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can send invites.' }, 403);
+    const target = await c.env.sorc_db.prepare(`SELECT id, username, display_name FROM users WHERE username = ?`).bind(username.trim()).first() as any;
+    if (!target) return c.json({ error: 'Player not found.' }, 404);
+    if (target.id === user.id) return c.json({ error: 'Cannot invite yourself.' }, 400);
+    const now = new Date().toISOString();
+    const myName = user.display_name || user.username;
+    const targetName = target.display_name || target.username;
+    const msgBody = `You've been invited to join "${lobby.name}"! Use code ${lobby.lobby_code} on the Lobbies page.`;
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT id FROM conversations WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
+    ).bind(user.id, target.id, target.id, user.id).first() as any;
+    if (existing) {
+      await c.env.sorc_db.prepare(
+        `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), existing.id, user.id, myName, msgBody, now).run();
+      await c.env.sorc_db.prepare(
+        `UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?`
+      ).bind(msgBody.substring(0, 100), now, existing.id).run();
+    } else {
+      const convId = crypto.randomUUID();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, last_message_text, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?)`
+      ).bind(convId, user.id, target.id, myName, targetName, msgBody.substring(0, 100), now, now).run();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), convId, user.id, myName, msgBody, now).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send invite.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+
+  // Fellowships: accepted fellows not already in this lobby
+  const fellowsRaw = await c.env.sorc_db.prepare(
+    `SELECT u.id, u.username, u.display_name, u.sorc_role
+     FROM fellowships f
+     JOIN users u ON u.id = CASE WHEN f.sender_uid = ? THEN f.receiver_uid ELSE f.sender_uid END
+     WHERE (f.sender_uid = ? OR f.receiver_uid = ?) AND f.status = 'accepted'
+       AND u.id NOT IN (SELECT user_id FROM lobby_members WHERE lobby_id = ?)
+     ORDER BY u.display_name ASC LIMIT 50`
+  ).bind(user.id, user.id, user.id, lobbyId).all();
+
+  // Players currently in other open lobbies not already in this one
+  const othersRaw = await c.env.sorc_db.prepare(
+    `SELECT u.id, u.username, u.display_name, u.sorc_role, l.name as lobby_name
+     FROM lobby_members lm
+     JOIN users u ON u.id = lm.user_id
+     JOIN lobbies l ON l.id = lm.lobby_id
+     WHERE l.id != ? AND l.status != 'closed' AND l.is_private = 0
+       AND lm.user_id NOT IN (SELECT user_id FROM lobby_members WHERE lobby_id = ?)
+     ORDER BY lm.joined_at DESC LIMIT 50`
+  ).bind(lobbyId, lobbyId).all();
+
+  return c.json({ fellowships: fellowsRaw.results || [], others: othersRaw.results || [] });
+});
+
+const SUMMON_DDL = `CREATE TABLE IF NOT EXISTS lobby_summons (
+  id TEXT PRIMARY KEY,
+  lobby_id TEXT NOT NULL,
+  lobby_name TEXT NOT NULL,
+  from_uid TEXT NOT NULL,
+  from_name TEXT NOT NULL,
+  to_uid TEXT NOT NULL,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL
+)`;
+
+app.post('/api/lobbies/:id/summon', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(SUMMON_DDL).run();
+    const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+    if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can send summons.' }, 403);
+    if (lobby.status === 'closed') return c.json({ error: 'Lobby is closed.' }, 400);
+
+    const { to_uid, note } = await c.req.json() as any;
+    if (!to_uid) return c.json({ error: 'Target player required.' }, 400);
+    if (to_uid === user.id) return c.json({ error: 'Cannot summon yourself.' }, 400);
+
+    const target = await c.env.sorc_db.prepare(
+      `SELECT id FROM users WHERE id = ? AND (banned IS NULL OR banned = 0)`
+    ).bind(to_uid).first() as any;
+    if (!target) return c.json({ error: 'Player not found.' }, 404);
+
+    const isMember = await c.env.sorc_db.prepare(
+      `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobbyId, to_uid).first() as any;
+    if (isMember) return c.json({ error: 'Player is already in this lobby.' }, 400);
+
+    await c.env.sorc_db.prepare(
+      `UPDATE lobby_summons SET status = 'superseded' WHERE lobby_id = ? AND from_uid = ? AND to_uid = ? AND status = 'pending'`
+    ).bind(lobbyId, user.id, to_uid).run();
+
+    const summonId = crypto.randomUUID();
+    const fromName = user.display_name || user.username;
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_summons (id, lobby_id, lobby_name, from_uid, from_name, to_uid, note, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)`
+    ).bind(summonId, lobbyId, lobby.name, user.id, fromName, to_uid, note || null, now).run();
+
+    return c.json({ success: true, summon_id: summonId });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send summon.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/summons/pending', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await c.env.sorc_db.prepare(SUMMON_DDL).run();
+    const summons = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobby_summons WHERE to_uid = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 5`
+    ).bind(user.id).all();
+    return c.json({ summons: summons.results || [] });
+  } catch (e: any) {
+    return c.json({ summons: [] });
+  }
+});
+
+app.post('/api/summons/:id/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const summonId = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare(SUMMON_DDL).run();
+    const summon = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobby_summons WHERE id = ? AND to_uid = ? AND status = 'pending'`
+    ).bind(summonId, user.id).first() as any;
+    if (!summon) return c.json({ error: 'Summon not found or already handled.' }, 404);
+
+    const { accept } = await c.req.json() as any;
+    const newStatus = accept ? 'accepted' : 'denied';
+    await c.env.sorc_db.prepare(`UPDATE lobby_summons SET status = ? WHERE id = ?`).bind(newStatus, summonId).run();
+
+    if (accept) {
+      const playerName = user.display_name || user.username;
+      const activityBody = `⬡ ${playerName} joined ${summon.lobby_name}`;
+      const now = new Date().toISOString();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO world_messages (id, sender_uid, sender_name, sender_lobby_id, sender_lobby_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), user.id, playerName, summon.lobby_id, summon.lobby_name, activityBody, now).run().catch(() => {});
+    }
+
+    return c.json({ success: true, status: newStatus, lobby_id: accept ? summon.lobby_id : null });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to respond to summon.', details: error.message }, 500);
+  }
+});
+
+// ─── LOBBY OPERATIONS (chat, ready-check, DMs, mute/kick, transfer-host) ────
+// Ported from sorc-app (2026-08-24).
+
+app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member of this lobby.' }, 403);
+  const since = c.req.query('since');
+  let msgs: any;
+  if (since) {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM lobby_messages WHERE lobby_id = ? AND created_at > ? ORDER BY created_at ASC LIMIT 100`).bind(lobbyId, since).all();
+  } else {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM lobby_messages WHERE lobby_id = ? ORDER BY created_at DESC LIMIT 80`).bind(lobbyId).all();
+    msgs.results = (msgs.results || []).reverse();
+  }
+  const lobbyStatus = await c.env.sorc_db.prepare(`SELECT status FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  let lobbyTheme = 'default';
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_themes (lobby_id TEXT PRIMARY KEY, theme TEXT NOT NULL)`).run();
+    const themeRow = await c.env.sorc_db.prepare(`SELECT theme FROM lobby_themes WHERE lobby_id = ?`).bind(lobbyId).first() as any;
+    if (themeRow?.theme) lobbyTheme = themeRow.theme;
+  } catch {}
+  let readyCheck: any = null;
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+    const rc = await c.env.sorc_db.prepare(`SELECT * FROM ready_checks WHERE lobby_id = ?`).bind(lobbyId).first() as any;
+    if (rc) {
+      const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      if (rc.initiated_at > fiveMinsAgo) {
+        const resp = await c.env.sorc_db.prepare(`SELECT user_id, username, status FROM ready_check_responses WHERE lobby_id = ? AND check_id = ?`).bind(lobbyId, rc.check_id).all();
+        readyCheck = { check_id: rc.check_id, initiated_at: rc.initiated_at, initiated_name: rc.initiated_name, responses: resp.results || [] };
+      }
+    }
+  } catch {}
+  return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open', lobby_theme: lobbyTheme, ready_check: readyCheck });
+});
+
+app.patch('/api/lobbies/:id/theme', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  const { theme } = await c.req.json() as any;
+  const VALID_THEMES = ['default', 'terminal', 'veilwood', 'ember', 'arcane', 'lawful'];
+  if (!theme || !VALID_THEMES.includes(theme)) return c.json({ error: 'Invalid theme.' }, 400);
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS lobby_themes (lobby_id TEXT PRIMARY KEY, theme TEXT NOT NULL)`).run();
+  await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO lobby_themes (lobby_id, theme) VALUES (?, ?)`).bind(lobbyId, theme).run();
+  return c.json({ success: true });
+});
+
+app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const member = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first() as any;
+  if (!member) return c.json({ error: 'Not a member of this lobby.' }, 403);
+  if (member.is_muted) return c.json({ error: 'You are muted in this lobby.' }, 403);
+  const chatAllowed = await checkRateLimit(c.env.sorc_db, `lobbychat:${user.id}`, 20, 60);
+  if (!chatAllowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  const { body } = await c.req.json() as any;
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
+  const lobbyMsgCheck = filterContent(body.trim());
+  if (lobbyMsgCheck.blocked) return c.json({ error: lobbyMsgCheck.reason }, 400);
+  const msgId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO lobby_messages (id, lobby_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(msgId, lobbyId, user.id, user.display_name || user.username, lobbyMsgCheck.filtered, now).run();
+  return c.json({ success: true, message_id: msgId });
+});
+
+app.delete('/api/lobbies/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM lobby_messages WHERE lobby_id = ?`).bind(lobbyId).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/lobbies/:id/messages/:msgId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const msgId = c.req.param('msgId');
+  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM lobby_messages WHERE id = ? AND lobby_id = ?`).bind(msgId, lobbyId).run();
+  return c.json({ success: true });
+});
+
+app.post('/api/lobbies/:id/ready-check', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Host only.' }, 403);
+  const checkId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
+  await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO ready_checks (lobby_id, check_id, initiated_at, initiated_by, initiated_name) VALUES (?, ?, ?, ?, ?)`).bind(lobbyId, checkId, now, user.id, user.display_name || user.username).run();
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+  await c.env.sorc_db.prepare(`DELETE FROM ready_check_responses WHERE lobby_id = ?`).bind(lobbyId).run();
+  return c.json({ success: true, check_id: checkId });
+});
+
+app.post('/api/lobbies/:id/ready-check/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const body = await c.req.json() as any;
+  const status = body.status === 'ready' ? 'ready' : 'not_ready';
+  const checkId = body.check_id;
+  if (!checkId) return c.json({ error: 'Missing check_id.' }, 400);
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member.' }, 403);
+  await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+  await c.env.sorc_db.prepare(`INSERT OR REPLACE INTO ready_check_responses (lobby_id, check_id, user_id, username, status, responded_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(lobbyId, checkId, user.id, user.display_name || user.username, status, new Date().toISOString()).run();
+  return c.json({ success: true });
+});
+
+app.get('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member.' }, 403);
+  try {
+    const result = await c.env.sorc_db.prepare(
+      `SELECT * FROM lobby_dms WHERE lobby_id = ? AND (sender_uid = ? OR recipient_uid = ?) ORDER BY created_at DESC LIMIT 80`
+    ).bind(lobbyId, user.id, user.id).all();
+    return c.json({ messages: (result.results || []).reverse() });
+  } catch {
+    return c.json({ messages: [] });
+  }
+});
+
+app.post('/api/lobbies/:id/direct-messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const allowed = await checkRateLimit(c.env.sorc_db, `lobby_dm:${user.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Too many messages. Slow down.' }, 429);
+  const isMember = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member.' }, 403);
+  const { to_uid, body } = await c.req.json();
+  if (!to_uid || !body || typeof body !== 'string') return c.json({ error: 'to_uid and body required.' }, 400);
+  const trimmed = body.trim().slice(0, 400);
+  if (!trimmed) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (to_uid === user.id) return c.json({ error: 'Cannot message yourself.' }, 400);
+  const recipient = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, to_uid).first();
+  if (!recipient) return c.json({ error: 'Recipient is not in this lobby.' }, 404);
+  const senderName = user.display_name || user.username;
+  const check = filterContent(trimmed);
+  if (check.blocked) return c.json({ error: 'Message blocked: ' + check.reason }, 400);
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO lobby_dms (id, lobby_id, sender_uid, sender_name, recipient_uid, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), lobbyId, user.id, senderName, to_uid, check.filtered, new Date().toISOString()).run();
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ error: 'Could not send message.' }, 500);
+  }
+});
+
+app.patch('/api/lobbies/:id/members/:uid/mute', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby || lobby.creator_uid !== user.id) return c.json({ error: 'Not authorized.' }, 403);
+  const member = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).first() as any;
+  if (!member) return c.json({ error: 'Member not found.' }, 404);
+  const newMuted = member.is_muted ? 0 : 1;
+  await c.env.sorc_db.prepare(`UPDATE lobby_members SET is_muted = ? WHERE lobby_id = ? AND user_id = ?`).bind(newMuted, lobbyId, targetUid).run();
+  return c.json({ success: true, muted: !!newMuted });
+});
+
+app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  if (targetUid === user.id) return c.json({ error: 'Cannot kick yourself.' }, 400);
+  await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).run();
+  const newCount = Math.max(1, (lobby.member_count || 1) - 1);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, new Date().toISOString(), lobbyId).run();
+  return c.json({ success: true });
+});
+
+app.post('/api/lobbies/:id/transfer-host', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  const isHost = lobby.creator_uid === user.id;
+  const isOwner = user.role === 'OWNER' || isPrivileged(user);
+  const isAdmin = user.role === 'ADMIN';
+  if (!isHost && !isOwner && !isAdmin) return c.json({ error: 'Only the host, an Admin, or an Owner can promote.' }, 403);
+  const { new_host_uid } = await c.req.json();
+  if (!new_host_uid) return c.json({ error: 'new_host_uid required.' }, 400);
+  if (new_host_uid === user.id) return c.json({ error: 'Already the host.' }, 400);
+  const member = await c.env.sorc_db.prepare(
+    `SELECT lm.*, u.role as live_role FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? AND lm.user_id = ?`
+  ).bind(lobbyId, new_host_uid).first() as any;
+  if (!member) return c.json({ error: 'That player is not in this lobby.' }, 404);
+  if (isAdmin && !isOwner && member.live_role === 'OWNER') return c.json({ error: 'Admins cannot promote over an Owner.' }, 403);
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
+    .bind(new_host_uid, now, lobbyId).run();
+  return c.json({ success: true });
+});
+
+// ─── LOBBY REPORTS ───────────────────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24).
+
+const VALID_LOBBY_REPORT_REASONS = ['Incompetence', 'Language', 'Threats', 'Harassment', 'Spam', 'Other'];
+
+app.post('/api/lobbies/:id/report/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+
+  if (targetUid === user.id) return c.json({ error: 'Cannot report yourself.' }, 400);
+
+  const isMember = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!isMember) return c.json({ error: 'You must be in the lobby to file a report.' }, 403);
+
+  const target = await c.env.sorc_db.prepare(
+    `SELECT id, username FROM users WHERE id = ?`
+  ).bind(targetUid).first() as any;
+  if (!target) return c.json({ error: 'User not found.' }, 404);
+
+  const { reason, details } = await c.req.json() as any;
+  if (!reason || !VALID_LOBBY_REPORT_REASONS.includes(reason)) {
+    return c.json({ error: 'Invalid report reason.' }, 400);
+  }
+
+  const now = new Date().toISOString();
+  const reportId = crypto.randomUUID();
+
+  await c.env.sorc_db.prepare(
+    `INSERT INTO lobby_reports (id, lobby_id, reporter_uid, reported_uid, reason, details, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).bind(reportId, lobbyId, user.id, targetUid, reason, details ? details.substring(0, 500) : null, now).run();
+
+  // Reporter blocks the reported user (one-way, reporter → reported)
+  await c.env.sorc_db.prepare(
+    `INSERT OR IGNORE INTO blocks (id, blocker_uid, blocked_uid, created_at) VALUES (?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), user.id, targetUid, now).run();
+
+  // If incompetence, flag the reported user for reassessment
+  if (reason === 'Incompetence') {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`
+    ).bind(now, targetUid).run();
+  }
+
+  return c.json({ success: true, blocked: true, needs_reassess_flagged: reason === 'Incompetence' });
+});
+
+// ─── PRIVATE ROOMS (launched from a Lobby by its GM) ────────────────────────
+// Ported from sorc-app (2026-08-24). This is the actual "Launch Room" backing
+// endpoint lobbies.html calls — it validates that whoever is designated GM
+// (gm_uid) genuinely holds a GM role, requires the caller to be the lobby
+// creator, the designated GM, or privileged, enforces a minimum party size
+// (GM + 2 players) and a fresh all-ready ready-check before letting play begin.
+
+app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+
+  const members = await c.env.sorc_db.prepare(
+    `SELECT lm.*, u.role, u.email FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ?`
+  ).bind(lobbyId).all();
+  const memberList = members.results as any[] || [];
+
+  const body = await c.req.json() as any;
+  // Default gm_uid to the caller; default selected_members to everyone in the lobby
+  const gm_uid: string = body.gm_uid || user.id;
+  const selected_members: string[] = body.selected_members || memberList.map((m: any) => m.user_id);
+
+  const gmMember = memberList.find((m: any) => m.user_id === gm_uid);
+  if (!gmMember) return c.json({ error: 'GM must be a lobby member.' }, 400);
+  const gmIsPrivileged = isPrivileged({ id: gm_uid, role: gmMember.role, email: gmMember.email || '' });
+  const gmRoleOk = (gmMember.sorc_role && gmMember.sorc_role.startsWith('GM'))
+    || gmMember.role === 'MASTER' || gmIsPrivileged;
+  if (!gmRoleOk) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
+
+  const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
+  if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
+
+  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-beyond.html's
+     Basic vs. Pro table). Lobby *creation* already requires a box code for
+     non-privileged creators, but that doesn't cover a non-Pro member who
+     was recruited in and is now the designated GM launching the room
+     themselves — gate the launch itself too. ── */
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Launching a Private Campaign Room requires Pro Membership (a registered box set).' }, 403);
+  }
+
+  /* ── Minimum party size: GM + at least 2 players ── */
+  if (memberList.length < 3) {
+    return c.json({ error: 'At least 2 players and a GM are required to launch a room.' }, 400);
+  }
+
+  /* ── Ready check: all members must have confirmed ready ── */
+  try {
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
+    await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_check_responses (lobby_id TEXT NOT NULL, check_id TEXT NOT NULL, user_id TEXT NOT NULL, username TEXT NOT NULL, status TEXT NOT NULL, responded_at TEXT NOT NULL, PRIMARY KEY (lobby_id, user_id))`).run();
+    const rc = await c.env.sorc_db.prepare(`SELECT * FROM ready_checks WHERE lobby_id = ?`).bind(lobbyId).first() as any;
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    if (!rc || rc.initiated_at < fiveMinsAgo) {
+      return c.json({ error: 'Run a ready check first — all players must confirm ready before launching.' }, 400);
+    }
+    const responses = await c.env.sorc_db.prepare(
+      `SELECT user_id FROM ready_check_responses WHERE lobby_id = ? AND check_id = ? AND status = 'ready'`
+    ).bind(lobbyId, rc.check_id).all();
+    const readyUids = new Set((responses.results as any[]).map((r: any) => r.user_id));
+    const notReady = memberList.filter((m: any) => !readyUids.has(m.user_id));
+    if (notReady.length > 0) {
+      const names = notReady.map((m: any) => m.display_name || m.username).join(', ');
+      return c.json({ error: 'Not everyone is ready: ' + names }, 400);
+    }
+  } catch (e: any) {
+    return c.json({ error: 'Could not verify ready check status.' }, 500);
+  }
+
+  const roomId = crypto.randomUUID();
+  const jitsiRoom = 'sorc-' + roomId.replace(/-/g, '').substring(0, 12);
+  const now = new Date().toISOString();
+
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT INTO private_rooms (id, lobby_id, room_name, gm_uid, status, jitsi_room, created_at) VALUES (?, ?, ?, ?, 'active', ?, ?)`
+    ).bind(roomId, lobbyId, lobby.name, gm_uid, jitsiRoom, now).run();
+
+    const allParticipants = [gm_uid, ...selected_members.filter((id: string) => id !== gm_uid)];
+    for (const uid of allParticipants) {
+      const m = memberList.find((x: any) => x.user_id === uid);
+      if (!m) continue;
+      const roomRole = uid === gm_uid ? 'gm' : 'pc';
+      await c.env.sorc_db.prepare(
+        `INSERT INTO room_members (id, room_id, user_id, room_role, username, joined_at) VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(crypto.randomUUID(), roomId, uid, roomRole, m.username, now).run();
+    }
+
+    await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'in_progress', updated_at = ? WHERE id = ?`).bind(now, lobbyId).run();
+
+    return c.json({ success: true, room_id: roomId, jitsi_room: jitsiRoom });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to launch room.', details: error.message }, 500);
+  }
+});
+
+// ─── USER LOOKUP (safe - no sensitive fields) ───────────────────────────────
+// Ported from sorc-app (2026-08-24).
+
+app.get('/api/users/lookup', authMiddleware, async (c) => {
+  const requester = c.get('user') as any;
+  const username = c.req.query('username');
+  if (!username || username.trim().length < 1) return c.json({ error: 'Username required.' }, 400);
+  if (username.length > 40) return c.json({ error: 'Invalid username.' }, 400);
+
+  const allowed = await checkRateLimit(c.env.sorc_db, `lookup:${requester.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Too many lookups. Please wait.' }, 429);
+
+  const found = await c.env.sorc_db.prepare(
+    `SELECT id, username, display_name, sorc_role, avatar
+     FROM users
+     WHERE username = ? AND (banned IS NULL OR banned = 0) AND (suspended_until IS NULL OR suspended_until < datetime('now'))`
+  ).bind(username.trim()).first() as any;
+
+  if (!found) return c.json({ error: 'User not found.' }, 404);
+  if (found.id === requester.id) return c.json({ error: 'Cannot invite yourself.' }, 400);
+
+  return c.json({ user: { id: found.id, username: found.username, display_name: found.display_name, sorc_role: found.sorc_role, avatar: found.avatar } });
+});
+
+// ─── ROOMS (dice, roll log) ──────────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24). Room creation itself happens through
+// POST /api/lobbies/:id/launch above — these are the in-room routes.
+
+app.get('/api/rooms/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+
+  const membership = await c.env.sorc_db.prepare(`SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first() as any;
+  if (!membership) return c.json({ error: 'You are not a member of this room.' }, 403);
+
+  const members = await c.env.sorc_db.prepare(`SELECT * FROM room_members WHERE room_id = ? ORDER BY joined_at ASC`).bind(roomId).all();
+  const rolls = await c.env.sorc_db.prepare(`SELECT * FROM roll_log WHERE room_id = ? ORDER BY rolled_at DESC LIMIT 50`).bind(roomId).all();
+
+  return c.json({
+    room,
+    members: members.results || [],
+    rolls: rolls.results || [],
+    my_role: membership.room_role,
+    is_gm: membership.room_role === 'gm'
+  });
+});
+
+app.post('/api/rooms/:id/roll', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+
+  const { roll_purpose, die_type, result1, result2, total, locked_by_gm } = await c.req.json() as any;
+  if (!roll_purpose || !die_type || result1 === undefined || total === undefined || !locked_by_gm) {
+    return c.json({ error: 'Missing roll data.' }, 400);
+  }
+
+  const validDice = ['d4', 'd6', 'd100', 'd100+d100'];
+  if (!validDice.includes(die_type)) return c.json({ error: 'Invalid die type.' }, 400);
+
+  const gmMembership = await c.env.sorc_db.prepare(
+    `SELECT * FROM room_members WHERE room_id = ? AND user_id = ? AND room_role = 'gm'`
+  ).bind(roomId, locked_by_gm).first();
+  if (!gmMembership) return c.json({ error: 'Roll purpose must be locked by the GM.' }, 403);
+
+  const playerMembership = await c.env.sorc_db.prepare(
+    `SELECT * FROM room_members WHERE room_id = ? AND user_id = ?`
+  ).bind(roomId, user.id).first();
+  if (!playerMembership) return c.json({ error: 'Not a room member.' }, 403);
+
+  const rollId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO roll_log (id, room_id, player_uid, roll_purpose, die_type, result1, result2, total, locked_by_gm, rolled_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(rollId, roomId, user.id, roll_purpose, die_type, result1, result2 || null, total, locked_by_gm, now).run();
+
+  return c.json({ success: true, roll_id: rollId, total });
+});
+
+app.get('/api/rooms/:id/rolls', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a room member.' }, 403);
+  const since = c.req.query('since');
+  let rolls: any;
+  if (since) {
+    rolls = await c.env.sorc_db.prepare(`SELECT * FROM roll_log WHERE room_id = ? AND rolled_at > ? ORDER BY rolled_at ASC LIMIT 50`).bind(roomId, since).all();
+  } else {
+    rolls = await c.env.sorc_db.prepare(`SELECT * FROM roll_log WHERE room_id = ? ORDER BY rolled_at DESC LIMIT 50`).bind(roomId).all();
+  }
+  return c.json({ rolls: rolls.results || [] });
+});
+
+// ─── ROOM CHAT ────────────────────────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24).
+
+app.get('/api/rooms/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a room member.' }, 403);
+  const messages = await c.env.sorc_db.prepare(
+    `SELECT rm.*, u.sorc_role FROM room_messages rm JOIN users u ON rm.user_id = u.id WHERE rm.room_id = ? ORDER BY rm.created_at ASC LIMIT 100`
+  ).bind(roomId).all();
+  return c.json({ messages: messages.results || [] });
+});
+
+app.post('/api/rooms/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a room member.' }, 403);
+  const { body } = await c.req.json() as any;
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (body.length > 500) return c.json({ error: 'Message too long.' }, 400);
+  const roomMsgCheck = filterContent(body.trim());
+  if (roomMsgCheck.blocked) return c.json({ error: roomMsgCheck.reason }, 400);
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO room_messages (id, room_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), roomId, user.id, user.username, roomMsgCheck.filtered, now).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/rooms/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE room_id = ?`).bind(roomId).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/rooms/:id/messages/:msgId', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const msgId = c.req.param('msgId');
+  const room = await c.env.sorc_db.prepare(`SELECT gm_uid FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM room_messages WHERE id = ? AND room_id = ?`).bind(msgId, roomId).run();
+  return c.json({ success: true });
+});
+
+// ─── ROOM VISIBILITY & SPECTATE ──────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24).
+
+app.get('/api/rooms', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const privileged = isPrivileged(user);
+  let rooms: any;
+  if (privileged) {
+    rooms = await c.env.sorc_db.prepare(
+      `SELECT r.*, u.username as gm_name, u.display_name as gm_display,
+       (SELECT COUNT(*) FROM room_members rm WHERE rm.room_id = r.id) as member_count
+       FROM private_rooms r LEFT JOIN users u ON r.gm_uid = u.id
+       WHERE r.status = 'active' ORDER BY r.created_at DESC LIMIT 50`
+    ).all();
+  } else {
+    rooms = await c.env.sorc_db.prepare(
+      `SELECT r.*, u.username as gm_name, u.display_name as gm_display,
+       (SELECT COUNT(*) FROM room_members rm WHERE rm.room_id = r.id) as member_count
+       FROM private_rooms r LEFT JOIN users u ON r.gm_uid = u.id
+       WHERE r.status = 'active' AND r.is_hidden = 0 ORDER BY r.created_at DESC LIMIT 50`
+    ).all();
+  }
+  return c.json({ rooms: rooms.results || [] });
+});
+
+app.patch('/api/rooms/:id/spectate', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the GM can toggle spectate mode.' }, 403);
+  const newVal = room.spectate_enabled ? 0 : 1;
+  await c.env.sorc_db.prepare(`UPDATE private_rooms SET spectate_enabled = ? WHERE id = ?`).bind(newVal, roomId).run();
+  return c.json({ success: true, spectate_enabled: !!newVal });
+});
+
+app.patch('/api/rooms/:id/visibility', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the GM can toggle room visibility.' }, 403);
+  const newHidden = room.is_hidden ? 0 : 1;
+  await c.env.sorc_db.prepare(`UPDATE private_rooms SET is_hidden = ? WHERE id = ?`).bind(newHidden, roomId).run();
+  return c.json({ success: true, is_hidden: !!newHidden });
+});
+
+// ─── ROOM INVITES (GM invites fellows) ───────────────────────────────────────
+// Ported from sorc-app (2026-08-24).
+
+app.post('/api/rooms/:id/invite/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const invitedUid = c.req.param('uid');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id) return c.json({ error: 'Only the GM can send invites.' }, 403);
+  if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
+
+  const fellowship = await c.env.sorc_db.prepare(
+    `SELECT id FROM fellowship_requests WHERE status = 'accepted'
+     AND ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?))`
+  ).bind(user.id, invitedUid, invitedUid, user.id).first();
+  if (!fellowship) return c.json({ error: 'You can only invite fellows.' }, 403);
+
+  const already = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, invitedUid).first();
+  if (already) return c.json({ error: 'User is already in the room.' }, 400);
+
+  const memberCount = await c.env.sorc_db.prepare(
+    `SELECT COUNT(*) as cnt FROM room_members WHERE room_id = ? AND room_role = 'pc'`
+  ).bind(roomId).first() as any;
+  if ((memberCount?.cnt || 0) >= 5) return c.json({ error: 'Room is full (max 5 PCs).' }, 400);
+
+  const now = new Date().toISOString();
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT OR IGNORE INTO room_invites (id, room_id, invited_by, invited_uid, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`
+    ).bind(crypto.randomUUID(), roomId, user.id, invitedUid, now).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send invite.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/rooms/invites/mine', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const invites = await c.env.sorc_db.prepare(
+    `SELECT ri.*, r.room_name, u.username as inviter_name, r.spectate_enabled
+     FROM room_invites ri
+     JOIN private_rooms r ON ri.room_id = r.id
+     JOIN users u ON ri.invited_by = u.id
+     WHERE ri.invited_uid = ? AND ri.status = 'pending' AND r.status = 'active'
+     ORDER BY ri.created_at DESC`
+  ).bind(user.id).all();
+  return c.json({ invites: invites.results || [] });
+});
+
+app.post('/api/rooms/invites/:inviteId/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const inviteId = c.req.param('inviteId');
+  const invite = await c.env.sorc_db.prepare(`SELECT * FROM room_invites WHERE id = ?`).bind(inviteId).first() as any;
+  if (!invite || invite.invited_uid !== user.id) return c.json({ error: 'Invite not found.' }, 404);
+  if (invite.status !== 'pending') return c.json({ error: 'Invite already responded to.' }, 400);
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ? AND status = 'active'`).bind(invite.room_id).first() as any;
+  if (!room) return c.json({ error: 'Room is no longer active.' }, 400);
+
+  const now = new Date().toISOString();
+
+  await c.env.sorc_db.prepare(`UPDATE room_invites SET status = 'accepted' WHERE id = ?`).bind(inviteId).run();
+  await c.env.sorc_db.prepare(
+    `INSERT OR IGNORE INTO room_members (id, room_id, user_id, room_role, username, joined_at) VALUES (?, ?, ?, 'pc', ?, ?)`
+  ).bind(crypto.randomUUID(), invite.room_id, user.id, user.username, now).run();
+
+  return c.json({ success: true, room_id: invite.room_id });
+});
+
+app.post('/api/rooms/invites/:inviteId/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const inviteId = c.req.param('inviteId');
+  const invite = await c.env.sorc_db.prepare(`SELECT * FROM room_invites WHERE id = ? AND invited_uid = ?`).bind(inviteId, user.id).first();
+  if (!invite) return c.json({ error: 'Invite not found.' }, 404);
+  await c.env.sorc_db.prepare(`UPDATE room_invites SET status = 'declined' WHERE id = ?`).bind(inviteId).run();
+  return c.json({ success: true });
+});
+
+// ─── ROOM JOIN REQUESTS (lobby members request to join visible rooms) ───────
+// Ported from sorc-app (2026-08-24).
+
+app.post('/api/rooms/:id/request', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const { request_type } = await c.req.json() as any;
+  const reqType = request_type === 'spectate' ? 'spectate' : 'join';
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.is_hidden) return c.json({ error: 'This room is not accepting requests.' }, 403);
+  if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
+  if (reqType === 'spectate' && !room.spectate_enabled) return c.json({ error: 'Spectate mode is off for this room.' }, 403);
+
+  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first();
+  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must be assessed to request entry.' }, 403);
+
+  const already = await c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`).bind(roomId, user.id).first();
+  if (already) return c.json({ error: 'You are already in this room.' }, 400);
+
+  const now = new Date().toISOString();
+  try {
+    await c.env.sorc_db.prepare(
+      `INSERT OR IGNORE INTO room_requests (id, room_id, requester_uid, request_type, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`
+    ).bind(crypto.randomUUID(), roomId, user.id, reqType, now).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send request.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/rooms/:id/requests', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+
+  const requests = await c.env.sorc_db.prepare(
+    `SELECT rr.*, u.username, u.display_name, u.sorc_role, u.avatar
+     FROM room_requests rr JOIN users u ON rr.requester_uid = u.id
+     WHERE rr.room_id = ? AND rr.status = 'pending' ORDER BY rr.created_at ASC`
+  ).bind(roomId).all();
+  return c.json({ requests: requests.results || [] });
+});
+
+app.post('/api/rooms/:id/requests/:reqId/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const reqId = c.req.param('reqId');
+
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room) return c.json({ error: 'Room not found.' }, 404);
+  if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+
+  const req = await c.env.sorc_db.prepare(`SELECT * FROM room_requests WHERE id = ? AND room_id = ?`).bind(reqId, roomId).first() as any;
+  if (!req || req.status !== 'pending') return c.json({ error: 'Request not found.' }, 404);
+
+  if (req.request_type === 'join') {
+    const pcCount = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as cnt FROM room_members WHERE room_id = ? AND room_role = 'pc'`
+    ).bind(roomId).first() as any;
+    if ((pcCount?.cnt || 0) >= 5) return c.json({ error: 'Room is full (max 5 PCs).' }, 400);
+  }
+
+  const requester = await c.env.sorc_db.prepare(`SELECT username FROM users WHERE id = ?`).bind(req.requester_uid).first() as any;
+  const roomRole = req.request_type === 'spectate' ? 'spectator' : 'pc';
+  const now = new Date().toISOString();
+
+  await c.env.sorc_db.prepare(`UPDATE room_requests SET status = 'accepted' WHERE id = ?`).bind(reqId).run();
+  await c.env.sorc_db.prepare(
+    `INSERT OR IGNORE INTO room_members (id, room_id, user_id, room_role, username, joined_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), roomId, req.requester_uid, roomRole, requester?.username || 'Unknown', now).run();
+
+  return c.json({ success: true });
+});
+
+app.post('/api/rooms/:id/requests/:reqId/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const roomId = c.req.param('id');
+  const reqId = c.req.param('reqId');
+  const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
+  if (!room || (room.gm_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  await c.env.sorc_db.prepare(`UPDATE room_requests SET status = 'declined' WHERE id = ?`).bind(reqId).run();
+  return c.json({ success: true });
+});
+
+// ─── ADMIN: MEMBER MANAGEMENT & REPORTS ─────────────────────────────────────
+// Ported from sorc-app (2026-08-24). admin.html has had no working backend
+// on the live Worker at all until now — only migrate-bcrypt existed here.
+
+const requireAdmin = async (c: any, next: any) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Not authorized' }, 403);
+  await next();
+};
+
+app.post('/api/forum/posts/:id/report', authMiddleware, async (c) => {
+  const postId = c.req.param('id');
+  const user = c.get('user') as any;
+  const { reason } = await c.req.json();
+  if (!reason) return c.json({ error: 'Reason required' }, 400);
+  try {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const existing = await c.env.sorc_db.prepare('SELECT id, report_count FROM reports WHERE type = ? AND target_id = ?').bind('post', postId).first() as any;
+    if (existing) {
+      await c.env.sorc_db.prepare('UPDATE reports SET report_count = report_count + 1, reason = ?, updated_at = ? WHERE id = ?').bind(reason, now, existing.id).run();
+    } else {
+      const preview = await c.env.sorc_db.prepare('SELECT body FROM posts WHERE id = ?').bind(postId).first() as any;
+      await c.env.sorc_db.prepare('INSERT INTO reports (id, type, target_id, target_preview, reason, reporter_uid, reporter_name, report_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)').bind(id, 'post', postId, (preview?.body || '').substring(0, 120), reason, user.id, user.display_name || user.username, now, now).run();
+    }
+    const reportCount = existing ? existing.report_count + 1 : 1;
+    if (reportCount >= 3) {
+      await c.env.sorc_db.prepare('UPDATE posts SET hidden = 1 WHERE id = ?').bind(postId).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to submit report', details: error.message }, 500);
+  }
+});
+
+app.post('/api/users/:uid/report', authMiddleware, async (c) => {
+  const uid = c.req.param('uid');
+  const user = c.get('user') as any;
+  const { reason } = await c.req.json();
+  if (!reason) return c.json({ error: 'Reason required' }, 400);
+  try {
+    const target = await c.env.sorc_db.prepare('SELECT id, display_name, username FROM users WHERE id = ? OR username = ?').bind(uid, uid).first() as any;
+    if (!target) return c.json({ error: 'User not found' }, 404);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const existing = await c.env.sorc_db.prepare('SELECT id, report_count FROM reports WHERE type = ? AND target_id = ?').bind('user', target.id).first() as any;
+    if (existing) {
+      await c.env.sorc_db.prepare('UPDATE reports SET report_count = report_count + 1, reason = ?, updated_at = ? WHERE id = ?').bind(reason, now, existing.id).run();
+    } else {
+      await c.env.sorc_db.prepare('INSERT INTO reports (id, type, target_id, target_preview, reason, reporter_uid, reporter_name, report_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)').bind(id, 'user', target.id, target.display_name || target.username, reason, user.id, user.display_name || user.username, now, now).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to submit report', details: error.message }, 500);
+  }
+});
+
+app.get('/api/admin/reports', authMiddleware, requireAdmin, async (c) => {
+  try {
+    const result = await c.env.sorc_db.prepare('SELECT * FROM reports WHERE dismissed = 0 ORDER BY report_count DESC, created_at DESC').all();
+    return c.json({ reports: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load reports', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/reports/:id/dismiss', authMiddleware, requireAdmin, async (c) => {
+  const id = c.req.param('id');
+  try {
+    await c.env.sorc_db.prepare('UPDATE reports SET dismissed = 1 WHERE id = ?').bind(id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to dismiss report', details: error.message }, 500);
+  }
+});
+
+app.get('/api/admin/members', authMiddleware, requireAdmin, async (c) => {
+  const search = c.req.query('search') || '';
+  const limit = Math.min(parseInt(c.req.query('limit') || '100'), 200);
+  try {
+    let result;
+    if (search) {
+      result = await c.env.sorc_db.prepare('SELECT id, user_id, username, display_name, email, role, community_points, post_count, created_at, last_seen FROM users WHERE username LIKE ? OR display_name LIKE ? OR email LIKE ? OR CAST(user_id AS TEXT) = ? LIMIT ?').bind(`%${search}%`, `%${search}%`, `%${search}%`, search, limit).all();
+    } else {
+      result = await c.env.sorc_db.prepare('SELECT id, user_id, username, display_name, email, role, community_points, post_count, created_at, last_seen FROM users ORDER BY created_at DESC LIMIT ?').bind(limit).all();
+    }
+    return c.json({ members: result.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load members', details: error.message }, 500);
+  }
+});
+
+app.put('/api/admin/members/:uid/role', authMiddleware, requireAdmin, async (c) => {
+  const uid = c.req.param('uid');
+  const admin = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
+  const { role } = await c.req.json();
+  const validRoles = ['CIVILIAN', 'PLAYER', 'MASTER', 'ADMIN', 'OWNER'];
+  if (!validRoles.includes(role)) return c.json({ error: 'Invalid role' }, 400);
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET role = ? WHERE id = ? OR username = ?').bind(role, uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to update role', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/members/:uid/warn', authMiddleware, requireAdmin, async (c) => {
+  const uid = c.req.param('uid');
+  const { reason } = await c.req.json();
+  if (!reason) return c.json({ error: 'Reason required' }, 400);
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET warnings = COALESCE(warnings, 0) + 1, last_warning = ? WHERE id = ? OR username = ?').bind(reason, uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to warn member', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/members/:uid/suspend', authMiddleware, requireAdmin, async (c) => {
+  const uid = c.req.param('uid');
+  const { days } = await c.req.json();
+  const safeDays = Math.min(Math.max(parseInt(days) || 1, 1), 365);
+  const until = new Date(Date.now() + safeDays * 86400000).toISOString();
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET suspended_until = ? WHERE id = ? OR username = ?').bind(until, uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to suspend member', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/members/:uid/ban', authMiddleware, requireAdmin, async (c) => {
+  const uid = c.req.param('uid');
+  const admin = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
+  const { reason } = await c.req.json();
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET banned = 1, ban_reason = ? WHERE id = ? OR username = ?').bind(reason || '', uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to ban member', details: error.message }, 500);
+  }
+});
+
+app.post('/api/admin/invitations', authMiddleware, requireAdmin, async (c) => {
+  const { uid } = await c.req.json();
+  const admin = c.get('user') as any;
+  const OWNER_EMAILS = ['corbett@sorcrpg.com'];
+  if (!OWNER_EMAILS.includes(admin.email)) return c.json({ error: 'Owner only' }, 403);
+  try {
+    await c.env.sorc_db.prepare('UPDATE users SET admin_invited = 1 WHERE id = ? OR username = ?').bind(uid, uid).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to send invitation', details: error.message }, 500);
+  }
+});
+
+app.get('/api/admin/invitations/pending', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  return c.json({ invitation: user.admin_invited === 1 || user.admin_invited === true });
+});
+
+app.post('/api/admin/invitations/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { accept } = await c.req.json();
+  try {
+    const fresh = await c.env.sorc_db.prepare('SELECT admin_invited, community_points FROM users WHERE id = ?').bind(user.id).first() as any;
+    if (!fresh || !(fresh.admin_invited === 1 || fresh.admin_invited === true)) {
+      return c.json({ error: 'No pending admin invitation.' }, 403);
+    }
+    if (accept) {
+      const newCp = Math.min((fresh.community_points || 0) + 10000, 999999);
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET role = 'ADMIN', community_points = ?, admin_invited = 0, updated_at = ? WHERE id = ?`
+      ).bind(newCp, new Date().toISOString(), user.id).run();
+      return c.json({ success: true, role: 'ADMIN', community_points: newCp });
+    } else {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET admin_invited = 0, updated_at = ? WHERE id = ?`
+      ).bind(new Date().toISOString(), user.id).run();
+      return c.json({ success: true });
+    }
+  } catch (error: any) {
+    return c.json({ error: 'Failed to respond', details: error.message }, 500);
+  }
+});
+
+// ─── TRIALS LEADERBOARD (stub) ──────────────────────────────────────────────
+// Ported from sorc-app (2026-08-24). Basic members see the top 100, Pro
+// Members (a registered box set) see the top 200 - per sorc-beyond.html's
+// own Basic vs. Pro comparison table. Ranking metric/computation TBD; this
+// wires up the depth gate ahead of the actual feature.
+// Ranked by community_points (the only real, comparable metric that exists
+// today - Trials of Combat win/loss ranking is a separate, not-yet-built
+// feature; once it ships this can add a `metric=trials` mode alongside).
+// Depth (top 100 Basic / top 200 Pro) matches sorc-beyond.html's table.
+app.get('/api/leaderboard', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const isPro = await isProMember(c.env.sorc_db, user);
+  const depth = isPro ? 200 : 100;
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT id, username, display_name, avatar, role, community_points
+       FROM users
+       WHERE (banned IS NULL OR banned = 0)
+       ORDER BY community_points DESC, created_at ASC
+       LIMIT ?`
+    ).bind(depth).all();
+    const ranked = ((rows.results || []) as any[]).map((r, i) => ({
+      rank: i + 1,
+      id: r.id,
+      username: r.username,
+      display_name: r.display_name,
+      avatar: r.avatar,
+      role: r.role,
+      community_points: r.community_points
+    }));
+
+    const myPoints = user.community_points || 0;
+    const aheadRow = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as cnt FROM users
+       WHERE (banned IS NULL OR banned = 0)
+       AND (community_points > ? OR (community_points = ? AND created_at < ?))`
+    ).bind(myPoints, myPoints, user.created_at).first() as any;
+
+    return c.json({
+      leaderboard: ranked,
+      depth,
+      is_pro: isPro,
+      my_rank: (aheadRow?.cnt || 0) + 1,
+      my_points: myPoints
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load leaderboard', details: error.message }, 500);
+  }
+});
+
+// ─── PRO MEMBERSHIP FEATURE STUBS ───────────────────────────────────────────
+// Per sorc-beyond.html's Basic vs. Pro comparison table. None of these have
+// a real implementation yet - each wires up the correct access gate ahead
+// of the actual feature, same pattern as the leaderboard stub above.
+
+app.get('/api/trading-post', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'The Trading Post requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'The Trading Post is not yet implemented.' }, 501);
+});
+
+app.get('/api/characters-home', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: "Character's Home requires Pro Membership (a registered box set)." }, 403);
+  }
+  return c.json({ error: "Character's Home is not yet implemented." }, 501);
+});
+
+app.get('/api/sorc-ambiance', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'The SORC Ambiance App requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'The SORC Ambiance App is not yet implemented.' }, 501);
+});
+
+app.post('/api/call-to-arms', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Call to Arms requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'Call to Arms is not yet implemented.' }, 501);
+});
+
+// Trials of Combat is free to all members (Basic and Pro) - Pro members get
+// exclusive cosmetic skins, a fuller achievements/trophies list, and Practice
+// Mode. No access gate on the base feature itself, only on those perks.
+app.get('/api/trials-of-combat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const isPro = await isProMember(c.env.sorc_db, user);
+  return c.json({
+    error: 'Trials of Combat is not yet implemented.',
+    perks: { exclusive_skins: isPro, practice_mode: isPro, leaderboard_depth: isPro ? 200 : 100 }
+  }, 501);
+});
+
+// Basic achievements are free to all; the full achievements/trophies system
+// is Pro-exclusive per the comparison table. Catalog is grounded in data
+// that already exists (posts, points, fellowships, lobbies, rooms, role) -
+// nothing here depends on the not-yet-built Trading Post/Trials/Home.
+async function ensureAchievementsTable(db: D1Database) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS user_achievements (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    achievement_id TEXT NOT NULL,
+    earned_at TEXT NOT NULL,
+    UNIQUE(user_id, achievement_id)
+  )`).run().catch(() => {});
+}
+
+const ACHIEVEMENT_CATALOG: { id: string; tier: 'basic' | 'pro'; name: string; description: string }[] = [
+  { id: 'first_post', tier: 'basic', name: 'First Words', description: 'Made your first forum post.' },
+  { id: 'century_points', tier: 'basic', name: 'Century Club', description: 'Earned 100 Community Points.' },
+  { id: 'assessed', tier: 'basic', name: 'Essentia Discovered', description: 'Passed a Role Assessment.' },
+  { id: 'first_fellow', tier: 'basic', name: 'Fellowship Forged', description: 'Made your first Fellowship connection.' },
+  { id: 'lobby_goer', tier: 'basic', name: 'Tavern Regular', description: 'Joined your first Lobby.' },
+  { id: 'game_master', tier: 'basic', name: 'Behind the Screen', description: 'Passed the GM Assessment.' },
+  { id: 'into_the_fray', tier: 'basic', name: 'Into the Fray', description: 'Joined your first private Room session.' },
+  // Pro-exclusive: not shown or earnable at all for Basic members, per the
+  // 'Full achievements system' row on sorc-beyond.html's table.
+  { id: 'pro_initiate', tier: 'pro', name: 'Pro Initiate', description: 'Registered a SORC box set.' },
+  { id: 'community_pillar', tier: 'pro', name: 'Community Pillar', description: 'Pro Membership with 500+ Community Points.' },
+];
+
+async function checkAchievement(db: D1Database, user: any, id: string): Promise<boolean> {
+  switch (id) {
+    case 'first_post': return (user.post_count || 0) >= 1;
+    case 'century_points': return (user.community_points || 0) >= 100;
+    case 'assessed': return !!user.role && user.role !== 'CIVILIAN';
+    case 'first_fellow': {
+      const row = await db.prepare(`SELECT id FROM fellowships WHERE status = 'accepted' AND (sender_uid = ? OR receiver_uid = ?) LIMIT 1`).bind(user.id, user.id).first();
+      return !!row;
+    }
+    case 'lobby_goer': {
+      const row = await db.prepare(`SELECT id FROM lobby_members WHERE user_id = ? LIMIT 1`).bind(user.id).first();
+      return !!row;
+    }
+    case 'game_master': return !!(user.sorc_role && String(user.sorc_role).indexOf('GM') === 0);
+    case 'into_the_fray': {
+      const row = await db.prepare(`SELECT id FROM room_members WHERE user_id = ? LIMIT 1`).bind(user.id).first();
+      return !!row;
+    }
+    case 'pro_initiate': return await isProMember(db, user);
+    case 'community_pillar': return (await isProMember(db, user)) && (user.community_points || 0) >= 500;
+    default: return false;
+  }
+}
+
+app.get('/api/achievements', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureAchievementsTable(c.env.sorc_db);
+    const isPro = await isProMember(c.env.sorc_db, user);
+    const visibleCatalog = ACHIEVEMENT_CATALOG.filter(a => a.tier === 'basic' || isPro);
+
+    const existing = await c.env.sorc_db.prepare(`SELECT achievement_id, earned_at FROM user_achievements WHERE user_id = ?`).bind(user.id).all();
+    const earnedMap = new Map<string, string>(((existing.results || []) as any[]).map((r: any) => [r.achievement_id, r.earned_at]));
+
+    // Awarding a new achievement grants +25 Community Points, matching the
+    // 'Earning an in-game achievement: +25 pts, awarded automatically upon
+    // achievement unlock' rule already documented on sorc-beyond.html.
+    let pointsAwarded = 0;
+    for (const ach of visibleCatalog) {
+      if (earnedMap.has(ach.id)) continue;
+      if (await checkAchievement(c.env.sorc_db, user, ach.id)) {
+        const now = new Date().toISOString();
+        await c.env.sorc_db.prepare(
+          `INSERT OR IGNORE INTO user_achievements (id, user_id, achievement_id, earned_at) VALUES (?, ?, ?, ?)`
+        ).bind(crypto.randomUUID(), user.id, ach.id, now).run();
+        earnedMap.set(ach.id, now);
+        pointsAwarded += 25;
+      }
+    }
+    if (pointsAwarded > 0) {
+      await c.env.sorc_db.prepare(`UPDATE users SET community_points = COALESCE(community_points, 0) + ? WHERE id = ?`).bind(pointsAwarded, user.id).run();
+    }
+
+    const achievements = visibleCatalog.map(a => ({
+      id: a.id,
+      name: a.name,
+      description: a.description,
+      tier: a.tier,
+      earned: earnedMap.has(a.id),
+      earned_at: earnedMap.get(a.id) || null
+    }));
+
+    return c.json({ achievements, full_system: isPro, points_awarded: pointsAwarded });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load achievements', details: error.message }, 500);
+  }
+});
+
+// SORC Store access via Community Points is Pro-exclusive per the table;
+// Lottery raffle tickets remain a separate, open-to-all purchase (see
+// sorc-beyond.html: 'The SORC Lottery is open to all members, Basic and Pro').
+app.get('/api/sorc-store', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'SORC Store access via Community Points requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'The SORC Store is not yet implemented.' }, 501);
+});
+
+// ─── GROUP FELLOWSHIP CHAT (Pro) ────────────────────────────────────────────
+// Per sorc-beyond.html's table: 1:1 fellowship messaging is free for everyone
+// (see /api/conversations above), but a multi-fellow group thread is a Pro
+// perk. Hosting (creating a group, adding members) requires the OWNER to be
+// Pro - same pattern as Lobbies (creator needs a box code, joiners don't).
+// Reading/posting in a group you already belong to needs no extra Pro check,
+// same as joining someone else's Lobby for free.
+
+async function ensureFellowshipGroupTables(db: D1Database) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_groups (
+    id TEXT PRIMARY KEY,
+    owner_uid TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  )`).run().catch(() => {});
+  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_group_members (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    added_at TEXT NOT NULL,
+    UNIQUE(group_id, user_id)
+  )`).run().catch(() => {});
+  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_group_messages (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    username TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  )`).run().catch(() => {});
+}
+
+async function isAcceptedFellow(db: D1Database, uidA: string, uidB: string): Promise<boolean> {
+  const row = await db.prepare(
+    `SELECT id FROM fellowships WHERE status = 'accepted' AND ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?))`
+  ).bind(uidA, uidB, uidB, uidA).first();
+  return !!row;
+}
+
+app.post('/api/fellowships/groups', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
+  }
+  await ensureFellowshipGroupTables(c.env.sorc_db);
+  const { name, member_uids } = await c.req.json() as any;
+  const groupName = (name || '').trim().slice(0, 60) || 'Fellowship Group';
+  const uids: string[] = Array.isArray(member_uids) ? member_uids.filter((u: any) => typeof u === 'string') : [];
+  try {
+    for (const uid of uids) {
+      if (uid === user.id) continue;
+      if (!(await isAcceptedFellow(c.env.sorc_db, user.id, uid))) {
+        return c.json({ error: 'Every member must be an accepted Fellowship of yours.' }, 400);
+      }
+    }
+    const groupId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(`INSERT INTO fellowship_groups (id, owner_uid, name, created_at) VALUES (?, ?, ?, ?)`).bind(groupId, user.id, groupName, now).run();
+    await c.env.sorc_db.prepare(`INSERT INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`).bind(crypto.randomUUID(), groupId, user.id, now).run();
+    for (const uid of uids) {
+      if (uid === user.id) continue;
+      await c.env.sorc_db.prepare(`INSERT OR IGNORE INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`).bind(crypto.randomUUID(), groupId, uid, now).run();
+    }
+    return c.json({ success: true, group_id: groupId });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to create group.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/fellowships/groups', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  await ensureFellowshipGroupTables(c.env.sorc_db);
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT g.id, g.name, g.owner_uid, g.created_at,
+       (SELECT COUNT(*) FROM fellowship_group_members m2 WHERE m2.group_id = g.id) as member_count
+       FROM fellowship_groups g
+       JOIN fellowship_group_members m ON m.group_id = g.id
+       WHERE m.user_id = ?
+       ORDER BY g.created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ groups: rows.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load groups.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/groups/:id/members', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  await ensureFellowshipGroupTables(c.env.sorc_db);
+  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
+  if (!group) return c.json({ error: 'Group not found.' }, 404);
+  if (group.owner_uid !== user.id) return c.json({ error: 'Only the group owner can add members.' }, 403);
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
+  }
+  const { uid } = await c.req.json() as any;
+  if (!uid) return c.json({ error: 'uid required.' }, 400);
+  if (!(await isAcceptedFellow(c.env.sorc_db, user.id, uid))) {
+    return c.json({ error: 'That member must be an accepted Fellowship of yours.' }, 400);
+  }
+  await c.env.sorc_db.prepare(`INSERT OR IGNORE INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`)
+    .bind(crypto.randomUUID(), groupId, uid, new Date().toISOString()).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/fellowships/groups/:id/members/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
+  if (!group) return c.json({ error: 'Group not found.' }, 404);
+  // The owner can remove anyone; anyone else can only remove themselves (leave).
+  if (group.owner_uid !== user.id && targetUid !== user.id) {
+    return c.json({ error: 'Not authorized.' }, 403);
+  }
+  if (targetUid === group.owner_uid) return c.json({ error: 'The owner cannot be removed - delete the group instead.' }, 400);
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, targetUid).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/fellowships/groups/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
+  if (!group) return c.json({ error: 'Group not found.' }, 404);
+  if (group.owner_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the group owner can delete it.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_groups WHERE id = ?`).bind(groupId).run();
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_members WHERE group_id = ?`).bind(groupId).run();
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_messages WHERE group_id = ?`).bind(groupId).run();
+  return c.json({ success: true });
+});
+
+app.get('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
+  const since = c.req.query('since');
+  let msgs: any;
+  if (since) {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_group_messages WHERE group_id = ? AND created_at > ? ORDER BY created_at ASC LIMIT 100`).bind(groupId, since).all();
+  } else {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_group_messages WHERE group_id = ? ORDER BY created_at DESC LIMIT 80`).bind(groupId).all();
+    msgs.results = (msgs.results || []).reverse();
+  }
+  return c.json({ messages: msgs.results || [] });
+});
+
+app.post('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
+  const allowed = await checkRateLimit(c.env.sorc_db, `groupchat:${user.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  const { body } = await c.req.json() as any;
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
+  const check = filterContent(body.trim());
+  if (check.blocked) return c.json({ error: check.reason }, 400);
+  const msgId = crypto.randomUUID();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO fellowship_group_messages (id, group_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(msgId, groupId, user.id, user.display_name || user.username, check.filtered, new Date().toISOString()).run();
+  return c.json({ success: true, message_id: msgId });
+});
+
+// ─── WORLD CHAT (LFG/LFM/WTB/WTS) ───────────────────────────────────────────
+// Ported from sorc-app (2026-08-24). lobbies.html's World Chat tab has been
+// dead on the live Worker - it calls these routes and none existed here.
+// LFG:/WTB:/WTS: are all the same shape: a short, non-host-postable
+// advertising tag (looking for a group, want to buy, want to sell).
+
+app.get('/api/world-chat', authMiddleware, async (c) => {
+  try {
+    await c.env.sorc_db.prepare(
+      `CREATE TABLE IF NOT EXISTS world_messages (
+         id TEXT PRIMARY KEY,
+         sender_uid TEXT NOT NULL,
+         sender_name TEXT NOT NULL,
+         sender_lobby_id TEXT,
+         sender_lobby_name TEXT,
+         body TEXT NOT NULL,
+         created_at TEXT NOT NULL
+       )`
+    ).run();
+    const msgs = await c.env.sorc_db.prepare(
+      `SELECT * FROM world_messages ORDER BY created_at DESC LIMIT 60`
+    ).all();
+    return c.json({ messages: (msgs.results || []).reverse() });
+  } catch (error: any) {
+    return c.json({ messages: [] });
+  }
+});
+
+app.post('/api/world-chat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const allowed = await checkRateLimit(c.env.sorc_db, `worldchat:${user.id}`, 8, 60);
+  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  try {
+    const { body } = await c.req.json() as any;
+    if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+    if (body.length > 400) return c.json({ error: 'Message too long (max 400 chars).' }, 400);
+    const worldMsgCheck = filterContent(body.trim());
+    if (worldMsgCheck.blocked) return c.json({ error: worldMsgCheck.reason }, 400);
+
+    // Must be the active creator of an open lobby, or posting a short
+    // LFG:/WTB:/WTS: tag. WTB:/WTS: (want to buy/sell) advertise Essentia
+    // Exchange trades the same way LFG: advertises looking for a group.
+    const lobby = await c.env.sorc_db.prepare(
+      `SELECT id, name FROM lobbies WHERE creator_uid = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`
+    ).bind(user.id).first() as any;
+    const isHost = !!(lobby || isPrivileged(user));
+    if (!isHost) {
+      if (!/^(LFG|WTB|WTS):/i.test(body.trim())) return c.json({ error: 'Only active lobby hosts can post freely. Use LFG:, WTB:, or WTS: to advertise yourself.' }, 403);
+      if (body.trim().length > 40) return c.json({ error: 'LFG:/WTB:/WTS: tags are limited to 40 characters.' }, 400);
+    }
+
+    await c.env.sorc_db.prepare(
+      `CREATE TABLE IF NOT EXISTS world_messages (
+         id TEXT PRIMARY KEY,
+         sender_uid TEXT NOT NULL,
+         sender_name TEXT NOT NULL,
+         sender_lobby_id TEXT,
+         sender_lobby_name TEXT,
+         body TEXT NOT NULL,
+         created_at TEXT NOT NULL
+       )`
+    ).run();
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO world_messages (id, sender_uid, sender_name, sender_lobby_id, sender_lobby_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      user.id,
+      user.display_name || user.username,
+      lobby?.id || null,
+      lobby?.name || null,
+      worldMsgCheck.filtered,
+      now
+    ).run();
+
+    // Prune old messages (keep last 200)
+    await c.env.sorc_db.prepare(
+      `DELETE FROM world_messages WHERE id NOT IN (SELECT id FROM world_messages ORDER BY created_at DESC LIMIT 200)`
+    ).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to post.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const respondAllowed = await checkRateLimit(c.env.sorc_db, `wcrespond:${user.id}`, 5, 60);
+  if (!respondAllowed) return c.json({ error: 'Slow down — too many responses.' }, 429);
+  const msgId = c.req.param('msgId');
+  try {
+    const original = await c.env.sorc_db.prepare(
+      `SELECT * FROM world_messages WHERE id = ?`
+    ).bind(msgId).first() as any;
+    if (!original) return c.json({ error: 'Message not found.' }, 404);
+
+    const myName = user.display_name || user.username;
+    const profileUrl = `https://sorcrpg.com/public-profile.html?username=${encodeURIComponent(user.username)}`;
+    const { type } = await c.req.json().catch(() => ({ type: 'LFM' })) as any;
+    const responseBody = type === 'SUM'
+      ? `SUM: ${myName} confirmed — ${profileUrl}`
+      : `📋 ${myName} responds to ${original.sender_name}'s request — ${profileUrl}`;
+    const now = new Date().toISOString();
+
+    await c.env.sorc_db.prepare(
+      `INSERT INTO world_messages (id, sender_uid, sender_name, sender_lobby_id, sender_lobby_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), user.id, myName, null, null, responseBody, now).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed.', details: error.message }, 500);
+  }
 });
 
 export default app;

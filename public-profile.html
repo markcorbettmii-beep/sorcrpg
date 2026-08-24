@@ -206,7 +206,7 @@
 
             document.getElementById('profileApp').innerHTML =
                 '<div class="profile-card">'
-                    + '<div class="profile-banner"></div>'
+                    + '<div class="profile-banner"' + (user.banner ? ' style="background-image:url(&quot;' + escapeHtml(user.banner) + '&quot;);background-size:cover;background-position:center;"' : '') + '></div>'
                     + '<div class="profile-info-row">'
                         + '<div class="profile-avatar-large">' + avatarDisplay + '</div>'
                         + '<div class="profile-name-block">'
@@ -489,16 +489,9 @@
         var currentUser = null;
         try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!currentUser || !currentUser.authKey) { window.location.href = 'signin.html'; return; }
-        var unlockedFeatures = currentUser.unlocked_features || [];
-        if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
+        // Fellowship requests are free for every member - there is no unlock
+        // gate for this on the server, so none is enforced here either.
         var msgEl = document.getElementById('actionMsg');
-        var viewerEmail = currentUser.email || '';
-        var isPrivileged = OWNER_EMAILS.includes(viewerEmail) || ADMIN_EMAILS.includes(viewerEmail);
-        if (!isPrivileged && !unlockedFeatures.includes('fellowships')) {
-            msgEl.className = 'msg error';
-            msgEl.textContent = '🔒 Fellowship sending requires the "Send Fellowship Requests" unlock (50 CP) in your profile.';
-            return;
-        }
         var params = new URLSearchParams(window.location.search);
         var uid = params.get('uid') || params.get('username');
         try {

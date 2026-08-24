@@ -238,12 +238,18 @@
             var userData = params.get('user');
             if (userData) {
                 try {
-                    console.log('Step 4: Parsing user data from OAuth callback');
                     var user = JSON.parse(userData);
-                    console.log('Step 5: Storing auth in localStorage');
+                    // Brand-new Google sign-up with no chosen username yet - this is
+                    // the "kidVerified cookie already set" path (see k-id-status.html's
+                    // checkVerification), which lands here directly instead of via
+                    // login-welcome.html. Route through choose-username.html either way.
+                    if (user.needs_username) {
+                        window.location.href = '/choose-username.html?user=' + encodeURIComponent(userData) +
+                            (params.get('next') ? '&next=' + encodeURIComponent(params.get('next')) : '');
+                        return;
+                    }
                     localStorage.setItem('sorc_user', JSON.stringify(user));
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    console.log('Step 6: Redirecting to home');
                     window.location.href = postSigninDest();
                     return;
                 } catch (e) {
