@@ -972,6 +972,12 @@
               '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
               '<div id="joinMsg" class="l-msg"></div>' +
             '</div>' +
+            '<div class="action-card">' +
+              '<h2 class="red">Guest Access</h2>' +
+              '<p>Join as a guest to test the lobby and features. You will be assigned a unique guest name.</p>' +
+              '<button class="l-btn red" onclick="joinAsGuest()">Join as Guest</button>' +
+              '<div id="guestMsg" class="l-msg"></div>' +
+            '</div>' +
             adminCodeGen +
           '</div>' +
         '</div>';
@@ -1244,6 +1250,32 @@
         } else if (data.needs_reassess) {
           msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
+    };
+
+    // ===== JOIN AS GUEST =====
+    window.joinAsGuest = async function() {
+      var msgEl = document.getElementById('guestMsg');
+      msgEl.className = 'l-msg'; msgEl.textContent = 'Creating guest account...';
+      try {
+        var res = await fetch(API_URL + '/api/auth/guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        var data = await readJson(res);
+        if (data.user && data.authKey) {
+          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Guest account created! Reloading...';
+          // Store guest credentials
+          localStorage.setItem('sorc_user', JSON.stringify({
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email,
+            authKey: data.authKey,
+            display_name: data.user.display_name || data.user.username
+          }));
+          setTimeout(function() { location.reload(); }, 800);
+        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create guest account.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
