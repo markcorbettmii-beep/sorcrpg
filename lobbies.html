@@ -979,7 +979,7 @@
             '<button class="section-scroll-btn" aria-label="Previous" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:-280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="36,9 9,24 36,39"></polygon></svg></button>' +
             '<div class="how-it-works-list" id="howItWorksScroll">' +
               '<div class="feature-card"><div class="feature-icon">&#128101;</div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
-              '<div class="feature-card"><div class="feature-icon">&#9876;&#65039;</div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#9876;&#65039;</div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="lobbies.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#128172;</div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#b9aa00;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#b9aa00;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#128682;</div><h3>Leave vs. Abandon</h3><p><strong style="color:#b9aa00;">Leave</strong> is free for everyone, the lobby starter included. Step out whenever you like and walk back in at will, in the same role you left with.<br/><br/><strong style="color:#b9aa00;">Abandon</strong> belongs to the lobby starter alone. It gives the lobby up for good &mdash; they cannot rejoin without permission or a new code. The lobby passes to the next GM in it; with no GM present it passes to the next member who joined, until a GM arrives. There is no closing a lobby: one closes on its own once its last member is gone.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#128295;</div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100, and the Divine Roll), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
@@ -1052,7 +1052,7 @@
         var res = await fetch(API_URL + '/api/lobbies', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await readJson(res);
         if (data.error && data.error.includes('assess')) {
-          listEl.innerHTML = '<div class="needs-assess-note">&#128274; You must complete the <a href="assess.html">Role Assessment</a> before joining or creating lobbies.</div>';
+          listEl.innerHTML = '<div class="needs-assess-note">&#128274; You must complete the <a href="lobbies.html">Role Assessment</a> before joining or creating lobbies.</div>';
           return;
         }
         var lobbies = data.lobbies || [];
@@ -1247,7 +1247,7 @@
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Lobby created! Code: ' + (data.lobby_code || '');
           setTimeout(function() { openLobby(data.lobby_id); }, 600);
         } else if (data.needs_reassess) {
-          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="lobbies.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
@@ -1305,7 +1305,7 @@
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Joined!';
           setTimeout(function() { openLobby(data.lobby_id); }, 400);
         } else if (data.needs_reassess) {
-          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="lobbies.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
