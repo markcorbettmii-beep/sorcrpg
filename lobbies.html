@@ -1502,6 +1502,12 @@
       var launchBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
       var inviteBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
       var readyCheckBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      /* Whoever holds the lobby now sets whether it is open or private. */
+      var privacyBtn = (isCreator && lobby.status !== 'closed')
+        ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a1505;color:#b9aa00;border:1px solid #5a4a00;" onclick="toggleLobbyPrivacy()">' +
+            (lobby.is_private ? '&#128274; Private' : '&#128275; Open') +
+          '</button>'
+        : '';
       /* Leave is for everyone, creator included - step out and come back at
          will. Abandon is the creator's alone: it gives the lobby up for good
          and hands it to the next host. There is no Close. */
@@ -1527,7 +1533,7 @@
             '<div class="detail-meta">' + (hasGMRights && lobby.status !== 'closed' ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div id="lobbyHeaderBtns" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
-            launchBtn + readyCheckBtn + inviteBtn + leaveBtn +
+            launchBtn + readyCheckBtn + inviteBtn + privacyBtn + leaveBtn +
           '</div>' +
         '</div>' +
         invitePanel +
@@ -2338,6 +2344,23 @@
           setTimeout(function() { msgEl.textContent = ''; }, 3000);
         } else { msgEl.style.color = '#c93f35'; msgEl.textContent = data.error || 'Failed to send invite.'; }
       } catch(e) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Connection error.'; }
+    };
+
+    window.toggleLobbyPrivacy = async function() {
+      if (!currentLobby || !currentUser) return;
+      var next = !currentLobby.is_private;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/privacy', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ is_private: next })
+        });
+        var data = await readJson(res);
+        if (!data.success) { showToast(data.error || 'Could not change privacy.', true); return; }
+        currentLobby.is_private = next;
+        showToast(next ? 'Lobby is now private - the code is required to join.' : 'Lobby is now open - anyone can join.');
+        openLobby(currentLobby.id);
+      } catch(e) { showToast('Could not reach the server.', true); }
     };
 
     window.confirmAbandon = function(btn) {

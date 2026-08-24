@@ -157,18 +157,49 @@ function isGuestUser(user: any): boolean {
   return typeof user?.email === 'string' && user.email.endsWith(GUEST_EMAIL_DOMAIN);
 }
 
-async function ensureLobbyBansTable(db: D1Database) {
+// IP bans. Admin-only, and the bluntest tool on the site: it turns away a
+// whole address before anything else runs, which is what makes it useful
+// against a guest who just makes a new guest account every time they are
+// kicked. Enforced by ipBanGate below.
+async function ensureIpBansTable(db: D1Database) {
   await db.prepare(`
-    CREATE TABLE IF NOT EXISTS lobby_bans (
-      id TEXT PRIMARY KEY,
-      lobby_id TEXT NOT NULL,
-      user_id TEXT NOT NULL,
-      banned_at TEXT NOT NULL,
+    CREATE TABLE IF NOT EXISTS ip_bans (
+      ip TEXT PRIMARY KEY,
       banned_by TEXT,
-      reason TEXT
+      banned_by_name TEXT,
+      reason TEXT,
+      created_at TEXT NOT NULL
     )
   `).run().catch(() => {});
 }
+
+// Remember the address an account last came from, so an admin has something to
+// ban. Best-effort: never let this fail a request.
+async function recordLastIp(db: D1Database, userId: string, ip: string) {
+  if (!ip || ip === 'unknown') return;
+  await db.prepare(`ALTER TABLE users ADD COLUMN last_ip TEXT`).run().catch(() => {});
+  await db.prepare(`UPDATE users SET last_ip = ? WHERE id = ?`).bind(ip, userId).run().catch(() => {});
+}
+
+// Turn away banned addresses before any route runs. Deliberately fail-open: if
+// the ban list cannot be read the site keeps working, because a moderation
+// feature must never be able to take the whole API down. Read-only requests
+// are left alone so a banned address can still see the site; what it loses is
+// the ability to act - sign up, sign in, join, post.
+const ipBanGate = async (c: any, next: any) => {
+  const method = c.req.method;
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return next();
+  try {
+    const ip = c.req.header('CF-Connecting-IP');
+    if (ip) {
+      await ensureIpBansTable(c.env.sorc_db);
+      const banned = await c.env.sorc_db.prepare(`SELECT ip FROM ip_bans WHERE ip = ?`).bind(ip).first();
+      if (banned) return c.json({ error: 'This address has been banned from SORC.' }, 403);
+    }
+  } catch (_) { /* fail open - never take the API down over the ban list */ }
+  return next();
+};
+app.use('/api/*', ipBanGate);
 
 // Public, unauthenticated feature flags the static pages need before a user
 // exists. Never put anything sensitive here - it is readable by anyone.
@@ -341,6 +372,10 @@ app.post('/api/auth/guest', async (c) => {
       VALUES (?, ?, ?, ?, ?, ?)
     `).bind(assessmentId, uuid, 8, 'PC-BEG', 0, now).run();
 
+    // Record the address so an admin can IP-ban a guest who misbehaves - a
+    // guest account itself is worthless to ban, they can mint another instantly.
+    await recordLastIp(c.env.sorc_db, uuid, c.req.header('CF-Connecting-IP') || '');
+
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, sorc_role, community_points, created_at FROM users WHERE id = ?').bind(uuid).first();
     return c.json({ success: true, user: newUser, authKey, message: 'Guest account created' });
   } catch (error: any) {
@@ -450,6 +485,7 @@ app.post('/api/auth/signin', async (c) => {
   const authKey = crypto.randomUUID();
   const authKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(authKey, authKeyExpiresAt, user.id).run();
+  await recordLastIp(c.env.sorc_db, user.id, c.req.header('CF-Connecting-IP') || '');
   return c.json({ success: true, user: { id: user.id, email: user.email, username: user.username, display_name: user.display_name, role: user.role, community_points: user.community_points, created_at: user.created_at }, authKey });
 });
 
@@ -1993,6 +2029,16 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
 
 app.post('/api/lobbies', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  // Guests join and play; they never host. Creating a lobby needs a real
+  // account and a box set code, and a guest holds neither. The box code check
+  // further down would stop them anyway, but say so plainly and up front
+  // rather than handing a tester a confusing code error.
+  if (isGuestUser(user)) {
+    return c.json({
+      error: 'Creating a lobby requires login and a box set code. Guests can join and play, but cannot host.',
+      requires_login: true
+    }, 403);
+  }
   const assessment = await c.env.sorc_db.prepare(
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
@@ -2136,16 +2182,15 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
   if (!privileged && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
 
-  // Check if user is banned from this lobby (due to abandon).
-  // lobby_bans is created lazily by /leave, so on a database where nobody has
-  // abandoned a lobby yet the table does not exist. That must never take the
-  // join endpoint down: an unreadable ban list means "not banned", not a 500.
-  await ensureLobbyBansTable(c.env.sorc_db);
-  let isBanned: unknown = null;
-  try {
-    isBanned = await c.env.sorc_db.prepare(`SELECT id FROM lobby_bans WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
-  } catch (_) { isBanned = null; }
-  if (isBanned && !privileged) return c.json({ error: 'You cannot rejoin this lobby without permission or a new code.' }, 403);
+  // Nobody is barred from a lobby. Entry is decided by the lobby itself: an
+  // open one takes anyone, a private one takes the code - which is also how an
+  // invite from the host reaches you. That applies to someone who abandoned a
+  // lobby exactly as it does to anyone else; what they lost by abandoning is
+  // the lobby itself, since creator_uid moved on the moment they left, so they
+  // come back as an ordinary member rather than the host.
+  if (lobby.is_private && !lobby_code && !privileged) {
+    return c.json({ error: 'This lobby is private. Join with its code, or ask the host for an invite.' }, 403);
+  }
 
   const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
   if (existing) return c.json({ error: 'You are already in this lobby.' }, 400);
@@ -2186,8 +2231,6 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
     } catch (_) {}
 
-    await ensureLobbyBansTable(c.env.sorc_db);
-
     const now = new Date().toISOString();
 
     // Abandon belongs to the lobby's creator alone. Everyone else only ever
@@ -2198,14 +2241,10 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       return c.json({ error: 'Only the lobby creator can abandon a lobby. You can leave and return at will.' }, 403);
     }
 
-    // Abandoning gives the lobby up for good: the creator cannot rejoin
-    // without permission or a new code.
-    if (isAbandon) {
-      const banId = crypto.randomUUID();
-      await c.env.sorc_db.prepare(
-        `INSERT INTO lobby_bans (id, lobby_id, user_id, banned_at, reason) VALUES (?, ?, ?, ?, ?)`
-      ).bind(banId, lobbyId, user.id, now, 'Abandoned lobby').run();
-    }
+    // What abandoning costs is the lobby, not access to it: the handover below
+    // moves creator_uid to the next in line, so the abandoner comes back as an
+    // ordinary member under the same entry rules as anyone else. No record of
+    // the abandonment is kept, because nothing downstream depends on one.
 
     await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
 
@@ -2460,6 +2499,24 @@ app.get('/api/lobbies/:id/messages', authMiddleware, async (c) => {
     }
   } catch {}
   return c.json({ messages: msgs.results || [], lobby_status: lobbyStatus?.status || 'open', lobby_theme: lobbyTheme, ready_check: readyCheck });
+});
+
+// Whoever holds the lobby now decides whether it is open or private - including
+// a host who inherited it when the previous one abandoned. Open means anyone
+// may walk in; private means the code is required.
+app.patch('/api/lobbies/:id/privacy', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.creator_uid !== user.id && !isPrivileged(user)) {
+    return c.json({ error: 'Only the current host can change this lobby\'s privacy.' }, 403);
+  }
+  const { is_private } = await c.req.json() as any;
+  if (typeof is_private !== 'boolean') return c.json({ error: 'is_private must be true or false.' }, 400);
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET is_private = ?, updated_at = ? WHERE id = ?`)
+    .bind(is_private ? 1 : 0, new Date().toISOString(), lobbyId).run();
+  return c.json({ success: true, is_private });
 });
 
 app.patch('/api/lobbies/:id/theme', authMiddleware, async (c) => {
@@ -3324,6 +3381,54 @@ app.post('/api/admin/members/:uid/ban', authMiddleware, requireAdmin, async (c) 
   } catch (error: any) {
     return c.json({ error: 'Failed to ban member', details: error.message }, 500);
   }
+});
+
+// ─── IP BANS (admin only) ───────────────────────────────────────────────────
+// Banning an account is not enough against a guest, who can mint a fresh one
+// in a click. Banning the address is. Enforced globally by ipBanGate.
+app.get('/api/admin/ip-bans', authMiddleware, requireAdmin, async (c) => {
+  await ensureIpBansTable(c.env.sorc_db);
+  const rows = await c.env.sorc_db.prepare(
+    `SELECT ip, banned_by_name, reason, created_at FROM ip_bans ORDER BY created_at DESC`
+  ).all();
+  return c.json({ ip_bans: rows.results || [] });
+});
+
+// Ban by raw address, or by user_id/username to ban whatever address that
+// account last came from - an admin sees names in a lobby, not IPs.
+app.post('/api/admin/ip-bans', authMiddleware, requireAdmin, async (c) => {
+  const admin = c.get('user') as any;
+  const { ip, user_id, reason } = await c.req.json() as any;
+  await ensureIpBansTable(c.env.sorc_db);
+
+  let target = (ip || '').trim();
+  let targetName = target;
+  if (!target && user_id) {
+    await c.env.sorc_db.prepare(`ALTER TABLE users ADD COLUMN last_ip TEXT`).run().catch(() => {});
+    const u = await c.env.sorc_db.prepare(
+      `SELECT username, last_ip FROM users WHERE id = ? OR username = ?`
+    ).bind(user_id, user_id).first() as any;
+    if (!u) return c.json({ error: 'User not found.' }, 404);
+    if (!u.last_ip) return c.json({ error: 'No address on record for that user yet - they have not signed in since IP logging began.' }, 400);
+    target = u.last_ip;
+    targetName = `${u.username} (${u.last_ip})`;
+  }
+  if (!target) return c.json({ error: 'Provide an ip or a user_id to ban.' }, 400);
+
+  // Never let an admin ban the address they are working from.
+  const ownIp = c.req.header('CF-Connecting-IP');
+  if (ownIp && target === ownIp) return c.json({ error: 'That is your own address.' }, 400);
+
+  await c.env.sorc_db.prepare(
+    `INSERT OR REPLACE INTO ip_bans (ip, banned_by, banned_by_name, reason, created_at) VALUES (?, ?, ?, ?, ?)`
+  ).bind(target, admin.id, admin.display_name || admin.username, (reason || '').slice(0, 200), new Date().toISOString()).run();
+  return c.json({ success: true, ip: target, banned: targetName });
+});
+
+app.delete('/api/admin/ip-bans/:ip', authMiddleware, requireAdmin, async (c) => {
+  await ensureIpBansTable(c.env.sorc_db);
+  await c.env.sorc_db.prepare(`DELETE FROM ip_bans WHERE ip = ?`).bind(decodeURIComponent(c.req.param('ip'))).run();
+  return c.json({ success: true });
 });
 
 app.post('/api/admin/invitations', authMiddleware, requireAdmin, async (c) => {
