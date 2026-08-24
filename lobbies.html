@@ -2297,13 +2297,19 @@
     window.deleteLobby = async function() {
       if (!confirm('Close this lobby? A new lobby code will be generated, visible only to the new host. This cannot be undone.')) return;
       if (!currentLobby) return;
+      var closedLobbyId = currentLobby.id;
       sessionStorage.removeItem('activeLobbyId');
       try {
-        await fetch(API_URL + '/api/lobbies/' + currentLobby.id, {
+        await fetch(API_URL + '/api/lobbies/' + closedLobbyId, {
           method: 'DELETE',
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
+        // Remove from joined list immediately to reflect closed status
+        leftLobbyIds.add(closedLobbyId);
+        removeJoinedLobby(closedLobbyId);
         backToList();
+        // Refresh the lobby list to show closed status immediately
+        loadLobbies();
       } catch(e) { backToList(); }
     };
 
