@@ -225,6 +225,52 @@ app.post('/api/auth/register', async (c) => {
   }
 });
 
+app.post('/api/auth/guest', async (c) => {
+  try {
+    // Ensure guest_counter table exists
+    await c.env.sorc_db.prepare(`
+      CREATE TABLE IF NOT EXISTS guest_counter (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        next_guest_number INTEGER DEFAULT 1
+      )
+    `).run();
+
+    // Initialize if not exists
+    const counter = await c.env.sorc_db.prepare('SELECT next_guest_number FROM guest_counter WHERE id = 1').first() as any;
+    if (!counter) {
+      await c.env.sorc_db.prepare('INSERT INTO guest_counter (id, next_guest_number) VALUES (1, 1)').run();
+    }
+
+    // Get and increment the counter atomically
+    const result = await c.env.sorc_db.prepare('UPDATE guest_counter SET next_guest_number = next_guest_number + 1 WHERE id = 1 RETURNING next_guest_number').first() as any;
+    const guestNumber = result.next_guest_number - 1; // Get the old value before increment
+
+    const username = `Guest ${guestNumber}`;
+    const email = `guest-${guestNumber}-${Date.now()}@guest.sorcrpg.local`;
+    const authKey = crypto.randomUUID();
+    const uuid = crypto.randomUUID();
+    const userId = Math.floor(Math.random() * 90000) + 10000;
+    const now = new Date().toISOString();
+    const authKeyExpiresAt = new Date(Date.now() + AUTH_KEY_LIFETIME_MS).toISOString();
+
+    // Hash a random password (guest won't use it)
+    const randomPassword = crypto.randomUUID().substring(0, 20);
+    const passwordHash = await bcrypt.hash(randomPassword, 12);
+
+    await ensureAuthColumns(c.env.sorc_db);
+    await c.env.sorc_db.prepare(`
+      INSERT INTO users (id, email, auth_key, auth_key_expires_at, username, display_name, first_name, role, join_date, created_at, updated_at, user_id, email_verified, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(uuid, email, authKey, authKeyExpiresAt, username, username, '', 'CIVILIAN', now, now, now, userId, true, passwordHash).run();
+
+    const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, community_points, created_at FROM users WHERE id = ?').bind(uuid).first();
+    return c.json({ success: true, user: newUser, authKey, message: 'Guest account created' });
+  } catch (error: any) {
+    console.error('Guest account creation failed:', error);
+    return c.json({ error: 'Guest account creation failed', details: error.message }, 500);
+  }
+});
+
 app.post('/api/auth/verify-email', async (c) => {
   const { token } = await c.req.json();
   if (!token) return c.json({ error: 'Verification token required' }, 400);
@@ -1840,7 +1886,7 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
   const lobbies = await c.env.sorc_db.prepare(
     `SELECT l.*, u.username as creator_name, u.display_name as creator_display
      FROM lobbies l JOIN users u ON l.creator_uid = u.id
-     WHERE l.is_private = 0 AND l.status != 'closed'
+     WHERE l.is_private = 0
      ORDER BY l.created_at DESC LIMIT 50`
   ).all();
 

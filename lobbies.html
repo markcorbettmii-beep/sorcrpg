@@ -101,6 +101,7 @@
     .detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .detail-header h2 { color: #e0cfc0; font-size: 1.2rem; margin: 0; }
     .detail-header .detail-meta { color: #555; font-size: 0.8rem; margin-top: 0.3rem; }
+    .beta-badge { display: inline-block; background: #1a3a1a; border: 1px solid #4caf50; color: #7ed957; font-size: 0.7rem; font-weight: bold; padding: 0.25rem 0.6rem; border-radius: 4px; margin-left: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
     .back-btn { padding: 6px 14px; background: none; border: 1px solid #333; color: #888; border-radius: 8px; cursor: pointer; font-size: 0.82rem; }
     .back-btn:hover { border-color: #888; color: #e0cfc0; }
     .invite-pool-wrap { border: 1px solid #252525; border-radius: 10px; overflow: hidden; margin-top: 0.75rem; }
@@ -1028,9 +1029,10 @@
           '</div>' +
         '</div>';
       }
+          var isClosed = l.status === 'closed';
           var isFull = l.member_count >= l.max_members;
-          var statusClass = isFull ? 'full' : 'open';
-          var statusLabel = isFull ? 'Full' : 'Open';
+          var statusClass = isClosed ? 'closed' : (isFull ? 'full' : 'open');
+          var statusLabel = isClosed ? 'Closed' : (isFull ? 'Full' : 'Open');
           var commandeeredNote = l.commandeered_from
             ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; was hosted by ' + esc(l.commandeered_from) + '</span>'
             : '';
@@ -1046,6 +1048,9 @@
           var btnHtml, hintHtml;
           if (isBanned) {
             btnHtml = ''; hintHtml = '';
+          } else if (isClosed) {
+            btnHtml = '<span class="status-pip closed">Closed</span>';
+            hintHtml = '<span class="lobby-hint">This lobby has been closed.</span>';
           } else if (isJoined) {
             btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined</button>';
             hintHtml = '<span class="lobby-hint">You are a member of this lobby. Enter at will.</span>';
@@ -1402,15 +1407,15 @@
         roomsHtml = '<div class="empty-state" style="padding:1rem;">No active rooms. The GM can launch one from inside the lobby.</div>';
       }
 
-      var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
-      var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
-      var readyCheckBtn = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var launchBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
+      var inviteBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
+      var readyCheckBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
       var leaveBtn = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
         : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
-      var deleteBtn = '';
+      var deleteBtn = isCreator && lobby.status !== 'closed' ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#5a2a2a;color:#ff9999;border:1px solid #8a4a4a;" onclick="deleteLobby()">Close Lobby</button>' : '';
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
           + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
@@ -1421,11 +1426,12 @@
           + '</div>'
         : '';
 
+      var closedBadge = lobby.status === 'closed' ? '<span class="status-pip closed" style="margin-left:0.5rem;">Closed</span>' : '';
       app.innerHTML =
         '<div class="detail-header">' +
           '<div>' +
-            '<h2>' + esc(lobby.name) + (lobby.is_private ? ' &#128274;' : '') + '</h2>' +
-            '<div class="detail-meta">' + (hasGMRights ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
+            '<h2>' + esc(lobby.name) + (lobby.is_private ? ' &#128274;' : '') + '<span class="beta-badge">OPEN FOR BETA</span>' + closedBadge + '</h2>' +
+            '<div class="detail-meta">' + (hasGMRights && lobby.status !== 'closed' ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div id="lobbyHeaderBtns" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
             launchBtn + readyCheckBtn + inviteBtn + leaveBtn + deleteBtn +
