@@ -40,6 +40,19 @@ interface Env {
   sorc_db: D1Database;
   RESEND_API_KEY: string;
   GOOGLE_CLIENT_SECRET: string;
+  // Beta-only guest access. "1" = on. Flip to "0" in wrangler.toml (or via the
+  // Cloudflare dashboard) and redeploy to switch guest sign-in off site-wide -
+  // no code change needed. See GUESTS_ENABLED below.
+  GUESTS_ENABLED?: string;
+}
+
+// Guest access is a TEMPORARY beta feature. One switch governs it: the
+// GUESTS_ENABLED var. Off means /api/auth/guest refuses to mint accounts and
+// the Lobbies page hides its "Join as Guest" card (it asks /api/public-config).
+// Turning it off does NOT delete the guests already created - see the teardown
+// note on /api/auth/guest for that.
+function guestsEnabled(env: Env): boolean {
+  return (env.GUESTS_ENABLED ?? '1') !== '0';
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -131,6 +144,13 @@ async function ensureAuthColumns(db: D1Database) {
 async function ensureProfileColumns(db: D1Database) {
   await db.prepare(`ALTER TABLE users ADD COLUMN banner TEXT`).run().catch(() => {});
 }
+
+// Public, unauthenticated feature flags the static pages need before a user
+// exists. Never put anything sensitive here - it is readable by anyone.
+app.get('/api/public-config', (c) => {
+  c.header('Cache-Control', 'no-store');
+  return c.json({ guests_enabled: guestsEnabled(c.env) });
+});
 
 // Trigger deployment with fixed wrangler secret put syntax
 app.post('/api/auth/register', async (c) => {
@@ -225,7 +245,29 @@ app.post('/api/auth/register', async (c) => {
   }
 });
 
+// ─── GUEST ACCESS (TEMPORARY - BETA ONLY) ───────────────────────────────────
+// Mints a throwaway "Guest N" account so beta testers can try lobbies without
+// signing up. Everything guest-related is designed to be switched off and then
+// removed cleanly:
+//
+//   1. To DISABLE: set GUESTS_ENABLED = "0" in wrangler.toml and redeploy.
+//      New guests stop being minted and the Lobbies page hides the button.
+//      Existing guest sessions keep working until their auth keys expire.
+//   2. To PURGE the data afterwards, every guest row is identifiable by its
+//      email domain:
+//        DELETE FROM assessments WHERE user_id IN
+//          (SELECT id FROM users WHERE email LIKE '%@guest.sorcrpg.local');
+//        DELETE FROM lobby_members WHERE user_id IN
+//          (SELECT id FROM users WHERE email LIKE '%@guest.sorcrpg.local');
+//        DELETE FROM users WHERE email LIKE '%@guest.sorcrpg.local';
+//        DROP TABLE IF EXISTS guest_counter;
+//   3. To REMOVE the feature, delete this route, guestsEnabled(), the
+//      GUESTS_ENABLED field, and the guest card in lobbies.html.
+// ─────────────────────────────────────────────────────────────────────────────
 app.post('/api/auth/guest', async (c) => {
+  if (!guestsEnabled(c.env)) {
+    return c.json({ error: 'Guest access is closed. Please create an account to join lobbies.' }, 403);
+  }
   try {
     // Ensure guest_counter table exists
     await c.env.sorc_db.prepare(`

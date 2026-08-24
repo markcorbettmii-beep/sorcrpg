@@ -985,7 +985,9 @@
               '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
               '<div id="joinMsg" class="l-msg"></div>' +
             '</div>' +
-            '<div class="action-card">' +
+            /* TEMPORARY - beta guest access. Hidden until the server confirms
+               it is switched on (GUESTS_ENABLED); see refreshGuestCard(). */
+            '<div class="action-card" id="guestCard" style="display:none;">' +
               '<h2 class="red">Guest Access</h2>' +
               '<p>Join as a guest to test the lobby and features. You will be assigned a unique guest name.</p>' +
               '<button class="l-btn red" onclick="joinAsGuest()">Join as Guest</button>' +
@@ -999,6 +1001,21 @@
       loadWorldChat();
       startWorldChatPoll();
       startSummonPoll();
+      refreshGuestCard();
+    }
+
+    /* TEMPORARY - beta guest access. The server owns the switch
+       (GUESTS_ENABLED); this only reveals the card when it says guests are on,
+       so flipping the flag removes the button site-wide with no site change.
+       Delete this along with the guest card when guest access is retired. */
+    async function refreshGuestCard() {
+      var card = document.getElementById('guestCard');
+      if (!card) return;
+      try {
+        var res = await fetch(API_URL + '/api/public-config');
+        var cfg = await readJson(res);
+        card.style.display = cfg && cfg.guests_enabled ? '' : 'none';
+      } catch(e) { /* leave hidden if we cannot confirm it is on */ }
     }
 
     async function loadLobbies() {
