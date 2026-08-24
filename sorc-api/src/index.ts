@@ -4081,4 +4081,549 @@ app.get('/api/sorc-store', authMiddleware, async (c) => {
   }
   return c.json({ error: 'The SORC Store is not yet implemented.' }, 501);
 });
+// ─── TRADE CHAT (WTB/WTS/WTT) + HAND TRADE ──────────────────────────────────
+// The lobby's Trade tab. WTB:/WTS:/WTT: only work here — World Chat is for
+// recruiting (LFM:/LFG:/SUM:) and rejects trade tags.
+//
+//   WTS:Item        want to sell   — poster hands the item over, takes Coin
+//   WTB:Item        want to buy    — poster pays Coin on delivery of the item
+//   WTT:Give>Want   want to trade  — poster hands Give over, takes Want back
+//
+// No price is ever typed or argued over. Every item's Coin value is printed
+// on its SORC Card, and that value IS the cost — always. So WTB:/WTS: are
+// take-it-or-leave-it: the responder Accepts or Declines. Only WTT: has
+// anything to negotiate, because both sides are items and the card values
+// may not line up; there, either party may counter with different items.
+//
+// Item names render as inspectable links (like gear links in chat): clicking
+// one pops that item's SORC Card — Item, Weapon, Armor, and so on — showing
+// its rank, stats, and the Coin value the trade is priced at.
+
+const TRADE_TAG_MAX = 60;
+
+async function ensureTradeTables(db: any) {
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS trade_messages (
+       id TEXT PRIMARY KEY,
+       sender_uid TEXT NOT NULL,
+       sender_name TEXT NOT NULL,
+       lobby_id TEXT,
+       lobby_name TEXT,
+       kind TEXT NOT NULL,
+       item TEXT NOT NULL,
+       want_item TEXT,
+       coin INTEGER,
+       want_coin INTEGER,
+       status TEXT NOT NULL DEFAULT 'open',
+       body TEXT NOT NULL,
+       created_at TEXT NOT NULL
+     )`
+  ).run();
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS hand_trades (
+       id TEXT PRIMARY KEY,
+       message_id TEXT NOT NULL,
+       kind TEXT NOT NULL,
+       poster_uid TEXT NOT NULL,
+       poster_name TEXT NOT NULL,
+       responder_uid TEXT NOT NULL,
+       responder_name TEXT NOT NULL,
+       give_item TEXT NOT NULL,
+       want_item TEXT,
+       coin INTEGER,
+       want_coin INTEGER,
+       poster_ok INTEGER NOT NULL DEFAULT 0,
+       responder_ok INTEGER NOT NULL DEFAULT 0,
+       status TEXT NOT NULL DEFAULT 'pending',
+       created_at TEXT NOT NULL,
+       updated_at TEXT NOT NULL
+     )`
+  ).run();
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS hand_trade_offers (
+       id TEXT PRIMARY KEY,
+       trade_id TEXT NOT NULL,
+       actor_uid TEXT NOT NULL,
+       actor_name TEXT NOT NULL,
+       action TEXT NOT NULL,
+       give_item TEXT,
+       want_item TEXT,
+       coin INTEGER,
+       want_coin INTEGER,
+       note TEXT,
+       created_at TEXT NOT NULL
+     )`
+  ).run();
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS member_inventory (
+       id TEXT PRIMARY KEY,
+       user_id TEXT NOT NULL,
+       item_name TEXT NOT NULL,
+       qty INTEGER NOT NULL DEFAULT 1,
+       tradeable INTEGER NOT NULL DEFAULT 1,
+       source TEXT,
+       created_at TEXT NOT NULL
+     )`
+  ).run();
+  // The card catalog. An item's Coin value lives here and nowhere else —
+  // this is the single authority every trade is priced from.
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS item_cards (
+       id TEXT PRIMARY KEY,
+       item_name TEXT NOT NULL,
+       card_type TEXT NOT NULL DEFAULT 'Item',
+       item_rank TEXT,
+       coin_value INTEGER NOT NULL DEFAULT 0,
+       stats TEXT,
+       lore TEXT,
+       ref_code TEXT,
+       created_at TEXT NOT NULL
+     )`
+  ).run();
+  await db.prepare(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_item_cards_name ON item_cards (item_name COLLATE NOCASE)`
+  ).run();
+}
+
+// Look up an item's SORC Card. The card carries the Coin value that prices
+// every trade of that item. An uncatalogued item comes back as null and is
+// shown as "not yet catalogued" rather than being priced at zero.
+async function lookupItemCard(db: any, name: string): Promise<any | null> {
+  if (!name) return null;
+  const card = await db.prepare(
+    `SELECT item_name, card_type, item_rank, coin_value, stats, lore, ref_code
+     FROM item_cards WHERE item_name = ? COLLATE NOCASE LIMIT 1`
+  ).bind(name.trim()).first();
+  return card || null;
+}
+
+async function cardValue(db: any, name: string): Promise<number | null> {
+  const card = await lookupItemCard(db, name);
+  return card ? (card.coin_value as number) : null;
+}
+
+// Parse a trade tag into its parts. Returns null when the body is not a
+// well-formed WTB:/WTS:/WTT: tag. No price appears in a tag — the item's
+// card supplies it.
+function parseTradeTag(raw: string): { kind: string; item: string; want_item: string | null } | null {
+  const body = (raw || '').trim();
+  const m = body.match(/^(WTB|WTS|WTT):(.+)$/i);
+  if (!m) return null;
+  const kind = m[1].toUpperCase();
+  const rest = m[2].trim();
+  if (!rest) return null;
+
+  if (kind === 'WTT') {
+    // Give > Want. Accept ">" or "for" as the separator.
+    const parts = rest.split(/\s*(?:>|\bfor\b)\s*/i);
+    if (parts.length !== 2) return null;
+    const give = parts[0].trim();
+    const want = parts[1].trim();
+    if (!give || !want) return null;
+    return { kind, item: give.slice(0, 40), want_item: want.slice(0, 40) };
+  }
+
+  return { kind, item: rest.slice(0, 40), want_item: null };
+}
+
+// Only items proven on the server (earned in a recorded private room
+// session) may be put up. When a member has no inventory rows at all we let
+// the post through — inventory is populated by session play, and gating a
+// brand-new member out of the board entirely would be worse than the risk.
+async function ownsItem(db: any, userId: string, itemName: string): Promise<boolean> {
+  const owned = await db.prepare(
+    `SELECT COUNT(*) AS n FROM member_inventory WHERE user_id = ? AND tradeable = 1`
+  ).bind(userId).first() as any;
+  if (!owned || !owned.n) return true;
+  const hit = await db.prepare(
+    `SELECT id FROM member_inventory WHERE user_id = ? AND tradeable = 1 AND qty > 0 AND LOWER(item_name) = LOWER(?)`
+  ).bind(userId, itemName).first();
+  return !!hit;
+}
+
+// Items the member can offer, for the composer's suggestion list. Each one
+// carries the Coin value off its card, so the seller sees the price the
+// moment they pick it.
+app.get('/api/trade-chat/inventory', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT inv.item_name, inv.qty, card.card_type, card.item_rank, card.coin_value
+       FROM member_inventory inv
+       LEFT JOIN item_cards card ON card.item_name = inv.item_name COLLATE NOCASE
+       WHERE inv.user_id = ? AND inv.tradeable = 1 AND inv.qty > 0
+       ORDER BY card.coin_value DESC, inv.item_name ASC LIMIT 100`
+    ).bind(user.id).all();
+    return c.json({ items: rows.results || [] });
+  } catch (error: any) {
+    return c.json({ items: [] });
+  }
+});
+
+// The whole catalog, for the "what do you want in return" side of a WTT:
+// where the member is naming something they do not own yet.
+app.get('/api/item-cards', authMiddleware, async (c) => {
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const q = (c.req.query('q') || '').trim();
+    const rows = q
+      ? await c.env.sorc_db.prepare(
+          `SELECT item_name, card_type, item_rank, coin_value FROM item_cards
+           WHERE item_name LIKE ? COLLATE NOCASE ORDER BY item_name ASC LIMIT 25`
+        ).bind(`%${q}%`).all()
+      : await c.env.sorc_db.prepare(
+          `SELECT item_name, card_type, item_rank, coin_value FROM item_cards
+           ORDER BY item_name ASC LIMIT 25`
+        ).all();
+    return c.json({ items: rows.results || [] });
+  } catch (error: any) {
+    return c.json({ items: [] });
+  }
+});
+
+// Inspect one item — this is what a clicked item link pops open.
+app.get('/api/item-card', authMiddleware, async (c) => {
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const name = (c.req.query('name') || '').trim();
+    if (!name) return c.json({ error: 'Missing name.' }, 400);
+    const card = await lookupItemCard(c.env.sorc_db, name);
+    if (!card) return c.json({ card: null, item_name: name });
+    return c.json({ card });
+  } catch (error: any) {
+    return c.json({ card: null });
+  }
+});
+
+app.get('/api/trade-chat', authMiddleware, async (c) => {
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const msgs = await c.env.sorc_db.prepare(
+      `SELECT * FROM trade_messages ORDER BY created_at DESC LIMIT 60`
+    ).all();
+    return c.json({ messages: (msgs.results || []).reverse() });
+  } catch (error: any) {
+    return c.json({ messages: [] });
+  }
+});
+
+app.post('/api/trade-chat', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const allowed = await checkRateLimit(c.env.sorc_db, `tradechat:${user.id}`, 6, 60);
+  if (!allowed) return c.json({ error: 'Slow down — too many trade posts.' }, 429);
+  try {
+    const { body } = await c.req.json() as any;
+    const raw = (body || '').trim();
+    if (!raw) return c.json({ error: 'Post cannot be empty.' }, 400);
+    if (raw.length > TRADE_TAG_MAX) {
+      return c.json({ error: `Trade tags are limited to ${TRADE_TAG_MAX} characters.` }, 400);
+    }
+    const check = filterContent(raw);
+    if (check.blocked) return c.json({ error: check.reason }, 400);
+
+    const tag = parseTradeTag(check.filtered);
+    if (!tag) {
+      return c.json({
+        error: 'Trade Chat only takes WTS:Item, WTB:Item, or WTT:YourItem>TheirItem.'
+      }, 400);
+    }
+
+    // You can only offer up what you actually hold. WTB: is a request for
+    // something you do not have yet, so nothing to check there.
+    if (tag.kind !== 'WTB' && !(await ownsItem(c.env.sorc_db, user.id, tag.item))) {
+      return c.json({ error: `You do not own "${tag.item}". Only items earned in a recorded session can be offered.` }, 403);
+    }
+
+    // Price is read off the card, never typed by the poster.
+    const coin = await cardValue(c.env.sorc_db, tag.item);
+    const wantCoin = tag.want_item ? await cardValue(c.env.sorc_db, tag.want_item) : null;
+
+    const lobby = await c.env.sorc_db.prepare(
+      `SELECT id, name FROM lobbies WHERE creator_uid = ? AND status != 'closed' ORDER BY created_at DESC LIMIT 1`
+    ).bind(user.id).first() as any;
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO trade_messages (id, sender_uid, sender_name, lobby_id, lobby_name, kind, item, want_item, coin, want_coin, status, body, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
+    ).bind(
+      crypto.randomUUID(),
+      user.id,
+      user.display_name || user.username,
+      lobby?.id || null,
+      lobby?.name || null,
+      tag.kind,
+      tag.item,
+      tag.want_item,
+      coin,
+      wantCoin,
+      check.filtered,
+      now
+    ).run();
+
+    await c.env.sorc_db.prepare(
+      `DELETE FROM trade_messages WHERE id NOT IN (SELECT id FROM trade_messages ORDER BY created_at DESC LIMIT 200)`
+    ).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to post.', details: error.message }, 500);
+  }
+});
+
+// Open (or re-open) the Hand Trade between the poster and whoever clicked.
+// One thread per poster/responder pair per posting, so clicking twice
+// returns you to the negotiation already in progress.
+app.post('/api/hand-trade/open', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const { message_id } = await c.req.json() as any;
+    if (!message_id) return c.json({ error: 'Missing message_id.' }, 400);
+
+    const msg = await c.env.sorc_db.prepare(
+      `SELECT * FROM trade_messages WHERE id = ?`
+    ).bind(message_id).first() as any;
+    if (!msg) return c.json({ error: 'That posting is gone.' }, 404);
+    if (msg.sender_uid === user.id) return c.json({ error: 'That is your own posting.' }, 400);
+    if (msg.status !== 'open') return c.json({ error: 'That posting has already been settled.' }, 400);
+
+    const existing = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trades WHERE message_id = ? AND responder_uid = ?`
+    ).bind(message_id, user.id).first() as any;
+    if (existing) return c.json({ success: true, trade_id: existing.id });
+
+    const myName = user.display_name || user.username;
+    const now = new Date().toISOString();
+    const tradeId = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO hand_trades (id, message_id, kind, poster_uid, poster_name, responder_uid, responder_name, give_item, want_item, coin, want_coin, poster_ok, responder_ok, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'pending', ?, ?)`
+    ).bind(
+      tradeId, message_id, msg.kind,
+      msg.sender_uid, msg.sender_name,
+      user.id, myName,
+      msg.item, msg.want_item, msg.coin, msg.want_coin,
+      now, now
+    ).run();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO hand_trade_offers (id, trade_id, actor_uid, actor_name, action, give_item, want_item, coin, want_coin, note, created_at)
+       VALUES (?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(), tradeId, msg.sender_uid, msg.sender_name,
+      msg.item, msg.want_item, msg.coin, msg.want_coin, 'Opening terms', now
+    ).run();
+
+    return c.json({ success: true, trade_id: tradeId });
+  } catch (error: any) {
+    return c.json({ error: 'Could not open the trade.', details: error.message }, 500);
+  }
+});
+
+app.get('/api/hand-trade/mine', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trades WHERE (poster_uid = ? OR responder_uid = ?) AND status = 'pending'
+       ORDER BY updated_at DESC LIMIT 40`
+    ).bind(user.id, user.id).all();
+    const trades = (rows.results || []) as any[];
+    // "Your move" = the other side moved last and you have not accepted the
+    // terms on the table yet.
+    const waiting = trades.filter((t) => (t.poster_uid === user.id ? !t.poster_ok : !t.responder_ok)).length;
+    return c.json({ trades, waiting });
+  } catch (error: any) {
+    return c.json({ trades: [], waiting: 0 });
+  }
+});
+
+app.get('/api/hand-trade/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const trade = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trades WHERE id = ?`
+    ).bind(c.req.param('id')).first() as any;
+    if (!trade) return c.json({ error: 'Trade not found.' }, 404);
+    const isParty = trade.poster_uid === user.id || trade.responder_uid === user.id;
+    // GMs and Admins can read a thread they are not party to — trades are
+    // session property and need to be auditable.
+    if (!isParty && !isPrivileged(user) && (user.sorc_role || '').indexOf('GM') !== 0) {
+      return c.json({ error: 'Not your trade.' }, 403);
+    }
+    const offers = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trade_offers WHERE trade_id = ? ORDER BY created_at ASC LIMIT 60`
+    ).bind(trade.id).all();
+    // Ship the cards alongside so the popup can price and inspect both
+    // sides without a second round trip.
+    const giveCard = await lookupItemCard(c.env.sorc_db, trade.give_item);
+    const wantCard = trade.want_item ? await lookupItemCard(c.env.sorc_db, trade.want_item) : null;
+    return c.json({
+      trade,
+      offers: offers.results || [],
+      give_card: giveCard,
+      want_card: wantCard,
+      you: isParty ? (trade.poster_uid === user.id ? 'poster' : 'responder') : 'observer'
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not load the trade.', details: error.message }, 500);
+  }
+});
+
+// Counter: swap in different items. WTT: only — a WTB:/WTS: is priced off
+// the card and there is nothing to argue about, so it is Accept or Decline.
+// Any counter clears both acceptances; nobody is bound to terms they never saw.
+app.post('/api/hand-trade/:id/counter', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const allowed = await checkRateLimit(c.env.sorc_db, `handtrade:${user.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Slow down.' }, 429);
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const trade = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trades WHERE id = ?`
+    ).bind(c.req.param('id')).first() as any;
+    if (!trade) return c.json({ error: 'Trade not found.' }, 404);
+    if (trade.poster_uid !== user.id && trade.responder_uid !== user.id) return c.json({ error: 'Not your trade.' }, 403);
+    if (trade.status !== 'pending') return c.json({ error: 'This trade is already closed.' }, 400);
+    if (trade.kind !== 'WTT') {
+      return c.json({ error: 'The price is the item\'s card value — accept it or decline.' }, 400);
+    }
+
+    const payload = await c.req.json().catch(() => ({})) as any;
+    let giveItem = trade.give_item;
+    let wantItem = trade.want_item;
+    if (payload.give_item && String(payload.give_item).trim()) giveItem = String(payload.give_item).trim().slice(0, 40);
+    if (payload.want_item && String(payload.want_item).trim()) wantItem = String(payload.want_item).trim().slice(0, 40);
+
+    if (giveItem === trade.give_item && wantItem === trade.want_item) {
+      return c.json({ error: 'Those are the terms already on the table.' }, 400);
+    }
+
+    // Whoever is handing an item over has to actually hold it. give_item is
+    // always the poster's side of the table; want_item is the responder's.
+    if (giveItem !== trade.give_item && !(await ownsItem(c.env.sorc_db, trade.poster_uid, giveItem))) {
+      return c.json({ error: `${trade.poster_name} does not hold "${giveItem}".` }, 403);
+    }
+    if (wantItem !== trade.want_item && !(await ownsItem(c.env.sorc_db, trade.responder_uid, wantItem))) {
+      return c.json({ error: `${trade.responder_name} does not hold "${wantItem}".` }, 403);
+    }
+
+    let note = payload.note ? String(payload.note).trim().slice(0, 120) : null;
+    if (note) {
+      const noteCheck = filterContent(note);
+      if (noteCheck.blocked) return c.json({ error: noteCheck.reason }, 400);
+      note = noteCheck.filtered;
+    }
+
+    const coin = await cardValue(c.env.sorc_db, giveItem);
+    const wantCoin = await cardValue(c.env.sorc_db, wantItem);
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `UPDATE hand_trades SET give_item = ?, want_item = ?, coin = ?, want_coin = ?, poster_ok = 0, responder_ok = 0, updated_at = ? WHERE id = ?`
+    ).bind(giveItem, wantItem, coin, wantCoin, now, trade.id).run();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO hand_trade_offers (id, trade_id, actor_uid, actor_name, action, give_item, want_item, coin, want_coin, note, created_at)
+       VALUES (?, ?, ?, ?, 'counter', ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(), trade.id, user.id, user.display_name || user.username,
+      giveItem, wantItem, coin, wantCoin, note, now
+    ).run();
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Could not send the counter.', details: error.message }, 500);
+  }
+});
+
+// Accept the terms currently on the table. The trade only settles once both
+// sides have accepted the same terms.
+app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const trade = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trades WHERE id = ?`
+    ).bind(c.req.param('id')).first() as any;
+    if (!trade) return c.json({ error: 'Trade not found.' }, 404);
+    const isPoster = trade.poster_uid === user.id;
+    const isResponder = trade.responder_uid === user.id;
+    if (!isPoster && !isResponder) return c.json({ error: 'Not your trade.' }, 403);
+    if (trade.status !== 'pending') return c.json({ error: 'This trade is already closed.' }, 400);
+
+    const now = new Date().toISOString();
+    const posterOk = isPoster ? 1 : trade.poster_ok;
+    const responderOk = isResponder ? 1 : trade.responder_ok;
+    const settled = !!(posterOk && responderOk);
+
+    await c.env.sorc_db.prepare(
+      `UPDATE hand_trades SET poster_ok = ?, responder_ok = ?, status = ?, updated_at = ? WHERE id = ?`
+    ).bind(posterOk, responderOk, settled ? 'accepted' : 'pending', now, trade.id).run();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO hand_trade_offers (id, trade_id, actor_uid, actor_name, action, give_item, want_item, coin, want_coin, note, created_at)
+       VALUES (?, ?, ?, ?, 'accept', ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(), trade.id, user.id, user.display_name || user.username,
+      trade.give_item, trade.want_item, trade.coin, trade.want_coin, null, now
+    ).run();
+
+    if (settled) {
+      // Close the posting and drop a public line so the board — and any GM
+      // reading it — sees what changed hands.
+      await c.env.sorc_db.prepare(
+        `UPDATE trade_messages SET status = 'settled' WHERE id = ?`
+      ).bind(trade.message_id).run();
+      const terms = trade.kind === 'WTT'
+        ? `${trade.give_item} for ${trade.want_item}`
+        : `${trade.give_item}${trade.coin === null ? '' : ` at ${trade.coin} Coin`}`;
+      await c.env.sorc_db.prepare(
+        `INSERT INTO trade_messages (id, sender_uid, sender_name, lobby_id, lobby_name, kind, item, want_item, coin, want_coin, status, body, created_at)
+         VALUES (?, ?, ?, NULL, NULL, 'SETTLED', ?, ?, ?, ?, 'settled', ?, ?)`
+      ).bind(
+        crypto.randomUUID(), trade.poster_uid, trade.poster_name,
+        trade.give_item, trade.want_item, trade.coin, trade.want_coin,
+        `⬡ Hand Trade settled — ${trade.poster_name} and ${trade.responder_name}: ${terms}`,
+        now
+      ).run();
+    }
+
+    return c.json({ success: true, settled });
+  } catch (error: any) {
+    return c.json({ error: 'Could not accept.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/hand-trade/:id/decline', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureTradeTables(c.env.sorc_db);
+    const trade = await c.env.sorc_db.prepare(
+      `SELECT * FROM hand_trades WHERE id = ?`
+    ).bind(c.req.param('id')).first() as any;
+    if (!trade) return c.json({ error: 'Trade not found.' }, 404);
+    if (trade.poster_uid !== user.id && trade.responder_uid !== user.id) return c.json({ error: 'Not your trade.' }, 403);
+    if (trade.status !== 'pending') return c.json({ error: 'This trade is already closed.' }, 400);
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `UPDATE hand_trades SET status = 'declined', updated_at = ? WHERE id = ?`
+    ).bind(now, trade.id).run();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO hand_trade_offers (id, trade_id, actor_uid, actor_name, action, give_item, want_item, coin, want_coin, note, created_at)
+       VALUES (?, ?, ?, ?, 'decline', ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(), trade.id, user.id, user.display_name || user.username,
+      trade.give_item, trade.want_item, trade.coin, trade.want_coin, null, now
+    ).run();
+
+    // Declining one thread does not kill the posting — other members may
+    // still be negotiating on it.
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Could not decline.', details: error.message }, 500);
+  }
+});
+
 export default app;
