@@ -2249,6 +2249,8 @@
       sessionStorage.removeItem('activeLobbyId');
       try {
         backToList();
+        // Refresh the lobby list to show updated joined status
+        loadLobbies();
       } catch(e) {
         window.location.reload();
         return;
@@ -2281,6 +2283,8 @@
       leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
       backToList();
+      // Refresh the lobby list to show updated status
+      loadLobbies();
       try {
         var leaveRes = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
