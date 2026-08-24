@@ -1278,6 +1278,14 @@ async function checkRateLimit(db: D1Database, key: string, maxAttempts: number, 
   }
 }
 
+function genLobbyCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  const arr = crypto.getRandomValues(new Uint8Array(6));
+  for (let i = 0; i < 6; i++) code += chars[arr[i] % chars.length];
+  return code;
+}
+
 function isPrivileged(user: any): boolean {
   const OWNER_EMAILS = ['corbett@sorcrpg.com'];
   const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];

@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Avenger - Class Tree Template - SORC</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+<style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .beyond-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #2196f3; }
+    .slot-c { color: #e53935; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #b9aa00 !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.beyond-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Avenger class-card, standing alone as the
+       reference template every other class's icon-Slot conversion is
+       measured against. Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Avenger - Class Tree Template</h2>
+      <div class="template-note"><strong>Template, not a live rules page.</strong> This is the Avenger class-card exactly as it stands in Basic Rules pg. 3 (content/essentia_core/rules_ref_003.html), pulled out on its own to serve as the pattern for converting the other fifteen classes: one Ability column matching the class's actual Nature/Spell Split (no Martial column on a Spell-only class), Slots marked by role icon rather than by letter, and Tier Armaments specific to the Main Class rather than copied from one of its own Paths. Edit the source page, not this file - this is a reference snapshot, regenerated from it, not maintained separately.</div>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="avenger">Avenger <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>
+            <p>Faith-driven warriors bound to a higher power, at first restricted to blunt weapons and a light armor default threshold. As with all Paths and Branches, later Avengers unlock some 1h bladed weapons and Medium or Half Medium Armor.</p>
+            <p>Avengers practice unwavering judgment showcasing an array of protection, healing, martial combative skills, hand to hand combat and mythical chants guided through their chosen deity or spiritual force, whether that devotion is righteous and public or quieter and more self-interested. Where others seek to end a fight quickly, an Avenger is built to outlast it, wearing down whoever stands against them through unshakable faith and sheer endurance until judgment finally comes due.</p>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Path and Branch Dependent<br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Avenger's Paths individually restrict by alignment beyond LVL 4, see each Path above for its specific Alignment.<br><br>
+              <strong>Favored Races:</strong><br>Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5, Firbolg +5, Hawkbear +5<br><br>
+              &dagger;Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> <span class="beyond-starter">Bast -5, Bugbear -5, Troll (Bridge) -5, Troll (Mountain) -5, Dr&#257;co Blood -5, Drow -5, Dwarf (Glimmerstone) -5, Gnoll -5, Orcus -5, Goblorc -5, Pinkling -5, Ratkin -5, Emberscale -5, Imperials -5</span><br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Avenger Blessing, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Zealous Reckoning, Once Per Day the Avenger calls down judgment, dealing holy damage equal to twice their Piety Score to one target and healing themselves for half that amount.<br><br>
+              Extra 1d6 + lvl radiant damage on Critical Hits.<br>
+              Once per encounter, Avengers can Flourish their blunt weapon to grant an ally a free Defense roll.<br><br>
+              Avengers get +5 feet their base movement speed, once per encounter.<br><br>
+              Avengers get +4 plus their PIETY Score on Knowledge checks involving religious lore.<br><br>
+                            <hr class="thin-hr">
+              <strong>Avenger Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Cleric</em> - The frontline face of the faith, standing in the shield-line and striking with holy conviction alongside their allies.<br>
+              &nbsp;&nbsp;a. <em>Holy</em> - The Cleric's default and most balanced expression, a steady shield-and-mace defender.<br>
+              &nbsp;&nbsp;b. <em>Oracle</em> - A farther-reaching caster who trades armor weight for spell range, wielding only wood or glass blunt weapons to keep their channeling pure.<br>
+              &nbsp;&nbsp;c. <em>Warpriest</em> - A dual-wielding Cleric who pairs a blunt main-hand weapon with any offhand blunt weapon, eventually earning a magic slashing weapon in the main hand.<br>
+              ii. <em>Monk</em> - A disciplined, often unarmed practitioner of the faith who channels devotion through the body itself rather than steel.<br>
+              &nbsp;&nbsp;a. <em>Chanter</em> - A Monk who channels devotion through music, using a light instrument as a magical focus for their chants.<br>
+              &nbsp;&nbsp;b. <em>Qirateka</em> - A tankier Monk branch that uses medium armor and bracers to parry blows, drawing enemy attention away from allies with taunts.<br>
+              &nbsp;&nbsp;c. <em>Shapeflow</em> - The most mobile Monk branch, forgoing all but the lightest armor to strike with precise, piercing unarmed blows.<br>
+              iii. <em>Priest</em> - A quieter servant of the faith who deals in ritual, shadow, and blood-price rather than open combat.<br>
+              &nbsp;&nbsp;a. <em>Discipline</em> - A defensively-minded Priest who fights with a blunt weapon and shield, or dual blunt weapons, in a disciplined guarding stance.<br>
+              &nbsp;&nbsp;b. <em>Salii</em> - The Priest branch that finally unlocks true enchanted daggers and heavier armor.<br>
+              &nbsp;&nbsp;c. <em>Shadow Weaver</em> - A stealth-focused Priest who favors concealed blades and shadow over open ritual combat.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Theologist<br>
+              Professions: Apothecary, Enchanter, Witchcrafter<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Avenger Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Weapon Proficiency</strong><br><em>Abilities from this Tier require one of the weapons below to be readied (see Required Weapons, Appendix). Basic Attacks are never restricted this way, any weapon performs one. A Main Class Tier carries no Culture of its own, since its three Paths share none, Cleric, Monk and Priest hold only faith in common; Culture arrives at LVL 4 with the Path and carries through that Path's Branches, each of which may state its own exceptions (see Culture, Basic Rules pg. 2).</em><br><br>
+              <strong>Weapon Style:</strong><br>
+              &#9670;Blunt.<br><br>
+              <strong>Weapon Type:</strong><br>
+              &#9670;Magic (Spell).<br>
+              &#9670;<strong>Weapon/Hand Proficiency Bonus:</strong> +8 to Hit when a Blunt weapon is wielded (Main Hand).<br><br>
+              &dagger;Reminder: Abilities from a Tier, Path, or Branch require one of that tree's listed weapons to be readied. A weapon the tree does not list, one it names Forbidden, or no weapon at all, performs no Ability from it. Basic Attacks are never restricted this way, any weapon a Character can carry performs one. Wielding the weapon above additionally grants the stated Weapon/Hand Proficiency bonus (see Required Weapons, Appendix).<br><br>
+              </span><strong>Armor Thresholds</strong><br>
+              Grade: Light (thick Wool, Leather, Padded).<br><br>
+              Paths and Branches unlock various Armaments not available for Class Tier Abilities.<br><br>
+              A Path or Branch's Weapon/Hand Proficiency profile includes every weapon already available to the Main Class, plus any new weapons that Path or Branch unlocks. A Path or Branch's Armor Threshold also rises without an Armament Penalty, typically half a Grade step above the Tier before it.<br><br>
+              Armament Thresholds allow the given Grade and anything lighter. If Armor that is heavier than the Avenger's Threshold is worn, Characters suffer the ensuing Penalties to the Armor's Score (see Armament Penalty, Basic Rules pg. 6).<br><br>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #c93f35; line-height:1.25;">Avenger Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). Each LVL offers 3 choices, learn only ONE. See Ability Cards individually for details, see card examples on this page. See Slots and Prerequisites, above, for how a later choice can require an earlier one.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #c93f35;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Avenger)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Avenger Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Fortify</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Somatic | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A radiant, hardening ward, granting a temporary PROTS bonus to self or an ally... refer to Ability Card.</li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Divine Light</strong><br><strong>Attack</strong><span class="stat-line">Range: Shoot | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A lance of searing white light, dealing minor holy damage to one target... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Minor Mend</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>Warmth spreads through torn flesh and closes it, a small Life heal to self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Avenger Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Blessed Deflection</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Somatic | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A shimmering ward that turns aside the next blow, granting a temporary Defense bonus to self or ally... refer to Ability Card.</li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Radiant Lance</strong><br><strong>Attack</strong><span class="stat-line">Range: Shoot | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A spear of holy light punched clean through, striking with Wit-based accuracy... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Tender Touch</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: HoT | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A soft, steady light that mends over time, ticking each round... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Avenger Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-c" id="gate-avenger-spe-a"><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Guiding Word</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A steadying word that braces the mind, a temporary Resistance bonus against the next incoming Attack... refer to Ability Card.<br><span class="prereq-note">↳ Unlocks <a href="#unlock-avenger-cleric-spe-a">Anointed Sanctuary (Lvl 4)</a></span></span></li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Smite</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>Holy fire that boils through flesh and bone alike, bonus damage vs undead or evil-aligned targets... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Vital Spark</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A jolt of pure radiance that snaps a body back from the brink, instant heal that also clears one Fatigue... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+<p class="sample-card-caption">Example Spell Card - Smite. (Temporary layout, pending final card design.)</p>
+                <div class="sample-card tier-card">
+                  <span class="sc-name">Ability Card | Spell</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Smite</span>
+                  <span class="sc-desc">"Light detonates from the Avenger's outstretched hand like a verdict already passed, scorching flesh and searing the air with the reek of judgment made real. Against the undead and the evil-aligned the light does not merely burn, it unmakes, peeling shadow from bone and leaving nothing behind that wants to keep standing."</span>
+                  <span class="sc-line">Action Cost: 1 Action</span>
+                  <span class="sc-line">Cost: 2 Mana</span>
+                  <span class="sc-line">Uses: Unlimited (Vitality-gated)</span>
+                  <span class="sc-line">Range: 30 ft</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Blunt weapon equipped. Avoids Armament Penalty: Light Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Shoot holy damage, 2d6 + PIETY. Damage becomes 3d6 + PIETY against undead or evil-aligned targets.</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's School is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Spell*** | pg. 00x</span>
+                  </div>
+                </div>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Avenger Tier</a></p>
+              <strong>Avenger Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Cleric</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Lawful<br>
+              <strong>Higher Power:</strong> TBA (Lawful)<br>
+              <em>The frontline face of the faith, standing in the shield-line and striking with holy conviction alongside their allies. (LVL 4-20)</em><br>
+              <em>(see Cleric Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Cleric Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Cleric)</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Weapon Style: Blunt, 1h Blunt (Main), shield or holy symbol (Off), or 2h Blunt. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit (Main Hand), +2 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Cleric):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Energy<br>
+                &#9670;Evil Symbols<br>
+                <strong>Materials Forbidden (Culture, Cleric):</strong><br>
+                &#9670;None. The Cleric Culture judges a weapon by its shape and its making, not its substance.<br>
+                <strong>Armor Forbidden (Culture, Cleric):</strong><br>
+                &#9670;None by Culture; the Armor Grade threshold below still applies. Cleric orders have always sent their own into the shield-line, and armor of any make is thought no barrier between a Cleric and their Higher Power.<br>
+                <em>Cleric doctrine forbids the shedding of blood by an edge. Its Abilities are performed with weapons that break rather than cut, which is why the mace, hammer and shield-boss carry the tradition and the sword never has. Bladed and Chopping weapons perform no Cleric Ability, though a Cleric may of course still swing one as a Basic Attack.</em><br><br>
+                <strong>Branch Exceptions (Culture, Cleric):</strong><br>
+                <em>This Culture carries through to every Cleric Branch. Each Branch below states only where its own practice departs from it; anything unlisted stays as set above.</em><br>
+                &#9670;<strong>Holy</strong> - <em>Permits:</em> a Piercing weapon, the blessed spear, and Heavy Grade (Sanctified Plate). A spear consecrated at the altar is held to strike as a rod rather than a blade, the one edge-adjacent arm the doctrine has ever admitted.<br>
+                &#9670;<strong>Oracle</strong> - <em>Refuses:</em> all metal, in weapon and armor alike. Oracles read what is to come through untouched substance, and hold worked metal to cloud it. Wood and glass only, Light Grade (Ivory-threaded Cloth) or lighter.<br>
+                &#9670;<strong>Warpriest</strong> - <em>Permits:</em> a 1h (Main) Slashing weapon where it is Magic, and Medium Grade (Battle Chain). An enchanted edge is reckoned an instrument of the power that blessed it rather than a blade of war, and so falls outside the prohibition.<br>
+                <br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Half Medium (Chain).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Cleric Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Holy (1h blunt weapon and shield, or 2h blunt weapon, as Cleric default; unlocks Heavy Grade (Sanctified Plate) armor and a Piercing weapon, a blessed spear) (LVL 21-30)<br>
+                <em>The Cleric's default and most balanced expression, a steady shield-and-mace defender.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Holy Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Holy Branch chosen at LVL 21 - see Holy above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Holy Branch chosen at LVL 21 - see Holy above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Oracle (2h blunt weapon, wood or glass only, no metal, or 1h blunt weapon, wood or glass, and holy symbol in offhand; Light Grade (Ivory-threaded Cloth) armor or lighter) (LVL 21-30)<br>
+                <em>A farther-reaching caster who trades armor weight for spell range, wielding only wood or glass blunt weapons to keep their channeling pure.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Oracle Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Oracle Branch chosen at LVL 21 - see Oracle above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Oracle Branch chosen at LVL 21 - see Oracle above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Warpriest (1h (Main) blunt weapon, 1h (Off) any blunt weapon; unlocks Medium Grade (Battle Chain) armor and a 1h (Main) Slashing weapon, must be magic) (LVL 21-30)<br>
+                <em>A dual-wielding Cleric who pairs a blunt main-hand weapon with any offhand blunt weapon, eventually earning a magic slashing weapon in the main hand.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Warpriest Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Warpriest Branch chosen at LVL 21 - see Warpriest above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Warpriest Branch chosen at LVL 21 - see Warpriest above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Cleric Abilities (Avenger Tier)<br><em>- The frontline face of the faith, standing in the shield-line and striking with holy conviction alongside their allies.</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Avenger - Cleric Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-c" id="unlock-avenger-cleric-spe-a"><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Anointed Sanctuary</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>Hallowed ground rises, granting a greater Resistance bonus and punishing any evil-aligned attacker with a Defense penalty while it holds... refer to Ability Card.<br><span class="prereq-note">↰ Requires <a href="#gate-avenger-spe-a">Guiding Word (Lvl 3)</a></span></span></li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Anointing Touch</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A hand pressed to flesh sears a mark of judgment through it, holy damage vs an evil-aligned target... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Charitable Blessing</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A rite of fire and water together that calls the wound back toward wholeness, a heal that also clears one minor Condition... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Avenger - Cleric Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Charitable Grace</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A steadying hand held firm as a shield-line, granting Resistance to the next Fear or Panic Engine effect... refer to Ability Card.</li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Ward of Cleansing</strong><br><strong>Attack</strong><span class="stat-line">Range: Shoot | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>Holy fire invoked with a war-priest's chant, burning a curse or disease out by the root... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Ward of Kinship</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Burst/Radius | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A consecrated draught shared between two open wounds, a small heal split between two allies at once... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Avenger - Cleric Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Guarded Light Ward</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A line of holy light held between self or an ally and whatever's coming for them, brief bonus Resistance... refer to Ability Card.</li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Judgment Ray</strong><br><strong>Attack</strong><span class="stat-line">Range: Shoot | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A ray of holy light loosed at an evil-aligned target, bonus damage plus a brief Defense penalty against them... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Ward of Guarding</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A ward of holy light sealed over a wound, a small heal plus one turn of bonus Resistance... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Avenger - Cleric Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Rooted Ward</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>A ward rooted against a curse mid-battle, resisting the next Condition applied to self or an ally while it holds... refer to Ability Card.</li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Rooted Ray</strong><br><strong>Attack</strong><span class="stat-line">Range: Shoot | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>Holy light rooted into a ray, bonus damage vs a cursed or diseased target... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Rooted Cleanse</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>A curse burned out by the root mid-battle, clears one Condition and grants a small heal... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Avenger - Cleric Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><strong>&#128737;&#65039; Tank</strong><strong class="ability-name">Anointed Aegis</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>An anointing ward drawn over self or an ally, granting Resistance and a small heal while it holds... refer to Ability Card.</li><li><strong>&#128481;&#65039; DPS</strong><strong class="ability-name">Anointed Ray</strong><br><strong>Attack</strong><span class="stat-line">Range: Shoot | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>Holy light anointed the instant it lands, bonus damage vs evil-aligned and cursed targets alike... refer to Ability Card.</li><li><strong>&#127761; Hybrid</strong><strong class="ability-name">Anointed Curse</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>Every wound anointed with light the same breath it's cleansed, a heal that also clears one Condition... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Avenger - Cleric Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                <p class="sample-card-caption">Example Spell Card - Shield-Wall Bash. (Temporary layout, pending final card design.)</p>
+                <p class="sample-card-badge">CD, 3 Charges</p>
+                <div class="sample-card path-card">
+                  <span class="sc-name">Ability Card | Martial</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Path: Cleric</span>
+                  <span class="sc-line">Shield-Wall Bash</span>
+                  <span class="sc-desc">"The Avenger drives their shield forward like the front rank of a wall closing a gap, splintering wood against jaw and driving the enemy back a full stride. For one heartbeat the line holds unbroken, boots planted, shield-arm locked, daring the next blow to come and find nothing waiting behind the rim but bone."</span>
+                  <span class="sc-line">Action Cost: 1 Action</span>
+                  <span class="sc-line">Cost: 3 Stamina</span>
+                  <span class="sc-line">Uses: 3/Round</span>
+                  <span class="sc-line">Range: Touch (5 ft)</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Blunt weapon equipped. Avoids Armament Penalty: Medium Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Melee attack roll at normal Hit. On a hit, deal weapon damage +1d4 bonus Damage, and gain +2 Defense until your next turn (Block, shield braced formation-style; +1 additional PROTS if a real shield is already in hand).</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's Discipline is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Nature*** | pg. 00x</span>
+                  </div>
+                </div>
+                <em>Weapon Types (Weapon/Hand Proficiency bonus if wielded) - Magic: 1h Blunt (Main), shield or holy symbol (Off). 2h Blunt (e.g., warhammer, morning star, or two-handed maul).</em><br>
+                
+                <p class="sample-card-caption">Example Spell Card - Ward of Cleansing. (Temporary layout, pending final card design.)</p>
+                <p class="sample-card-badge">CD, 3 Charges</p>
+                <div class="sample-card path-card">
+                  <span class="sc-name">Ability Card | Spell</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Path: Cleric</span>
+                  <span class="sc-line">Ward of Cleansing</span>
+                  <span class="sc-desc">"Holy fire crawls up through cursed flesh or festering rot, called forth with a war-priest's chant, blistering the affliction to ash even as it scours the wound clean. What's left behind steams and stinks of burnt corruption, but it no longer spreads, no longer speaks, no longer belongs to whatever put it there."</span>
+                  <span class="sc-line">Action Cost: 1 Action</span>
+                  <span class="sc-line">Cost: 3 Mana</span>
+                  <span class="sc-line">Uses: 3/Round</span>
+                  <span class="sc-line">Range: 30 ft</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Blunt weapon equipped. Avoids Armament Penalty: Medium Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Shoot holy damage, 3d6 + PIETY, to a target currently suffering a curse, disease, or poison effect. That affliction ends immediately if the target takes damage from this Spell.</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's School is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Spell*** | pg. 00x</span>
+                  </div>
+                </div>
+                                
+                              &#9670; Holy (1h blunt weapon and shield, or 2h blunt weapon, as Cleric default; unlocks Heavy Grade (Sanctified Plate) armor and a Piercing weapon, a blessed spear) (LVL 21-30)<br>
+                <em>The Cleric's default and most balanced expression, a steady shield-and-mace defender.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Holy Abilities (Cleric Path)<br><em>- the Cleric's default and most balanced expression, a steady shield-and-mace defender. (1h blunt weapon and shield, or 2h blunt weapon, as Cleric default; unlocks Heavy Grade (Sanctified Plate) armor and a Piercing weapon, a blessed spear)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Holy Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+                <p class="sample-card-caption">Example Spell Card - Sanctified Reckoning (LVL 30, &#128481;&#65039; DPS, hypothetical, Goliath race). Uses: 2/Day, the Tier a LVL 30 capstone reaches on a Goliath's lower 24-point Mana pool; Holy's real LVL 21-30 content is still content TBA. (Temporary layout, pending final card design.)</p>
+                <p class="sample-card-badge">RECHRG, 2 Charges</p>
+                <div class="sample-card branch-card">
+                  <span class="sc-name">Ability Card | Spell</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Path: Cleric</span>
+                  <span class="sc-line">Branch: Holy</span>
+                  <span class="sc-line">Sanctified Reckoning</span>
+                  <span class="sc-desc">"Judgment made manifest in a single blinding column of light, the blessed spear's own oath given voice, and any who stand against it are unmade to the last shadow they cast."</span>
+                  <span class="sc-line">Action Cost: 1 Action</span>
+                  <span class="sc-line">Cost: 15 Mana</span>
+                  <span class="sc-line">Uses: 2/Day</span>
+                  <span class="sc-line">Range: 30 ft</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Blessed spear equipped. Avoids Armament Penalty: Heavy Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Shoot holy damage, 10d6 + PIETY, to all evil-aligned targets in a 15 ft burst.</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's School is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Spell*** | pg. 00x</span>
+                  </div>
+                </div>
+                <p class="sample-card-caption">Example Spell Card - Rite of Rejoined Breath (LVL 30, &#127761; Hybrid, hypothetical). Uses: 1/Day, a designer override, since Breather/Short Rest regeneration always leaves room for a second use before a Long Rest. (Temporary layout, pending final card design.)</p>
+                <p class="sample-card-badge">RECHRG, 1 Charge</p>
+                <div class="sample-card branch-card">
+                  <span class="sc-name">Ability Card | Spell</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Path: Cleric</span>
+                  <span class="sc-line">Branch: Holy</span>
+                  <span class="sc-line">Rite of Rejoined Breath</span>
+                  <span class="sc-desc">"The rite does not merely mend, it calls, reaching past the closing dark to press breath back into lungs that had already stopped reaching for it. What answers is never quite untouched by the crossing, but it answers."</span>
+                  <span class="sc-line">Action Cost: 3 Actions</span>
+                  <span class="sc-line">Cost: 15 Mana</span>
+                  <span class="sc-line">Uses: 1/Day (designer override)</span>
+                  <span class="sc-line">Range: Touch</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Blessed spear or holy symbol equipped. Avoids Armament Penalty: Heavy Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Restores a slain ally to life with half Life remaining, provided the body has been dead no longer than 1 hour and is present for the rite.</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's School is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Spell*** | pg. 00x</span>
+                  </div>
+                </div>
+  </details>              &#9670; Oracle (2h blunt weapon, wood or glass only, no metal, or 1h blunt weapon, wood or glass, and holy symbol in offhand; Light Grade (Ivory-threaded Cloth) armor or lighter) (LVL 21-30)<br>
+                <em>A farther-reaching caster who trades armor weight for spell range, wielding only wood or glass blunt weapons to keep their channeling pure.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Oracle Abilities (Cleric Path)<br><em>- a farther-reaching caster who trades armor weight for spell range, wielding only wood or glass blunt weapons to keep their channeling pure. (2h blunt weapon, wood or glass only, no metal, or 1h blunt weapon, wood or glass, and holy symbol in offhand; Light Grade (Ivory-threaded Cloth) armor or lighter)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Oracle Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Warpriest (1h (Main) blunt weapon, 1h (Off) any blunt weapon; unlocks Medium Grade (Battle Chain) armor and a 1h (Main) Slashing weapon, must be magic) (LVL 21-30)<br>
+                <em>A dual-wielding Cleric who pairs a blunt main-hand weapon with any offhand blunt weapon, eventually earning a magic slashing weapon in the main hand.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Warpriest Abilities (Cleric Path)<br><em>- a dual-wielding Cleric who pairs a blunt main-hand weapon with any offhand blunt weapon, eventually earning a magic slashing weapon in the main hand. (1h (Main) blunt weapon, 1h (Off) any blunt weapon; unlocks Medium Grade (Battle Chain) armor and a 1h (Main) Slashing weapon, must be magic)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Warpriest Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Monk</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A disciplined, often unarmed practitioner of the faith who channels devotion through the body itself rather than steel. (LVL 4-20)</em><br>
+              <em>(see Monk Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Monk Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Monk)</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Weapon Style: Blunt, 1h, 2h, or bare hands, Melee. Weapon Type: Tactical for Martial, Magic for Spell. Wood Only - TAW and Energy Forbidden. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Monk):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Energy<br>
+                <strong>Materials Forbidden (Culture, Monk):</strong><br>
+                &#9670;Any material not of wood, in weapon and in hand-covering alike.<br>
+                &#9670;Worked metal of every kind.<br>
+                &#9670;Hide, leather, bone, sinew, and every other part of a living creature.<br>
+                <strong>Armor Forbidden (Culture, Monk):</strong><br>
+                &#9670;Metal armor of any Grade, however light.<br>
+                &#9670;Hide and leather armor of any Grade.<br>
+                <em>The Monk Culture holds that what is carried shapes what is practiced. Metal is worked for war and carries that purpose into the hand; the parts of a beast are taken by harm and carry that. A Monk trains with what grew and was cut without violence, or with nothing at all, which is why the staff and the open hand carry this tradition. The restriction is on Monk Abilities only, never on what a Monk may pick up and swing.</em><br><br>
+                <strong>Branch Exceptions (Culture, Monk):</strong><br>
+                <em>This Culture carries through to every Monk Branch. Each Branch below states only where its own practice departs from it; anything unlisted stays as set above.</em><br>
+                &#9670;<strong>Chanter</strong> - <em>Permits:</em> a chant instrument of any grown material, gourd, cane, reed or string, and Light Grade (Songweave Cloth). The voice is the instrument proper; what carries it is held to be furniture rather than arm.<br>
+                &#9670;<strong>Qirateka</strong> - <em>Permits:</em> worked metal in light bladed hand weapons such as tonfa or sai, Medium Grade (Banded Chain), and Medium Grade bracers for Parry. Qirateka answered the question of who stands in front by deciding a body between the enemy and the weak is worth the compromise the rest of the tradition will not make.<br>
+                &#9670;<strong>Shapeflow</strong> - <em>Refuses:</em> all bracers and every rigid piece, beyond even the Path's own bar. Delicate Grade (Featherwrap Silk) and hand wraps only, since anything stiffer is held to interrupt the motion the whole practice is built on.<br>
+                <br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: Light or lighter (Padded Wraps).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Monk Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Chanter (unarmed strikes plus a light instrument for chants; Light Grade (Songweave Cloth) armor or lighter, and a Magic-channeling chant instrument) (LVL 21-30)<br>
+                <em>A Monk who channels devotion through music, using a light instrument as a magical focus for their chants.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Chanter Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Chanter Branch chosen at LVL 21 - see Chanter above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Chanter Branch chosen at LVL 21 - see Chanter above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Qirateka (unarmed strikes; unlocks Medium Grade (Banded Chain) armor and light bladed hand weapons like tonfa or sai, plus Medium Grade bracers usable for Parry; also gains taunts that draw threat from allies onto themselves) (LVL 21-30)<br>
+                <em>A tankier Monk branch that uses medium armor and bracers to parry blows, drawing enemy attention away from allies with taunts.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Qirateka Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Qirateka Branch chosen at LVL 21 - see Qirateka above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Qirateka Branch chosen at LVL 21 - see Qirateka above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Shapeflow (unarmed strikes only; Delicate Grade (Featherwrap Silk) armor only, for maximum mobility; unlocks a 1h Piercing unarmed strike, precise knuckle and joint strikes; hand wraps and Delicate Grade bracers may be worn for style and limited protection, usable for Parry, +1 AS) (LVL 21-30)<br>
+                <em>The most mobile Monk branch, forgoing all but the lightest armor to strike with precise, piercing unarmed blows.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Shapeflow Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Shapeflow Branch chosen at LVL 21 - see Shapeflow above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Shapeflow Branch chosen at LVL 21 - see Shapeflow above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Monk Abilities (Avenger Tier)<br><em>- A disciplined, often unarmed practitioner of the faith who channels devotion through the body itself rather than steel.</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Avenger - Monk Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Breath of Clarity</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A single exhale timed to the rhythm of the body's own flow, the next strike lands with bonus Damage... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Unshaken Mind</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A mind disciplined through deliberate hardship until nothing left can shake it, brief Charm immunity... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Stoic Resolve</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Stillness held past the point of comfort, a minor Willpower/Focus buff... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Avenger - Monk Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">War-Dance Vigor</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Burst/Radius | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A whirling rhythm of strikes that opens every foe within reach, minor Damage to all adjacent foes... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">War-Dance Renewal</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>The same rhythm turned inward, flesh hardened by a renewing rite, +1 PROTS... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Clarity's Calm</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A single exhale that empties the mind of terror, removes one Fear or Panic Engine effect... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Avenger - Monk Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Opening Mind</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A counter read mid-parry, bonus Damage the instant the enemy can't recover... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Parry's Clarity</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A parried blow turned into an opening read mid-cast, brief bonus Hit on the next strike... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Recovering Mind</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A breath drawn mid-cast between blows, clears one Fatigue stack... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Avenger - Monk Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Counting Mind</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A strike read from every blow absorbed this fight, landing harder the longer the Monk has endured... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Counted Ward</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A ward that counts every blow absorbed, growing steadier the longer it holds... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Counted Renewal</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal counted between blows absorbed, a small heal the longer the Monk has endured... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Avenger - Monk Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Nerve Aegis</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Discipline drawn into a ward over self or an ally, marking a struck nerve for a finishing blow only the Monk can land... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Nerve Bolt</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A finishing bolt loosed at a nerve already marked... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Disciplined Renewal</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Mind | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn from discipline turned into a weapon, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Avenger - Monk Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                <p class="sample-card-caption">Example Spell Card - Iron Palm Strike (LVL 4, &#128737;&#65039; Tank). Uses: Unlimited, the Tier every currently published Ability falls into on a Standard character. (Temporary layout, pending final card design.)</p>
+                <div class="sample-card path-card">
+                  <span class="sc-name">Ability Card | Martial</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Path: Monk</span>
+                  <span class="sc-line">Iron Palm Strike</span>
+                  <span class="sc-desc">"A palm strike landing with far more weight than it should carry, ignores a portion of PROTS."</span>
+                  <span class="sc-line">Action Cost: 1 Action</span>
+                  <span class="sc-line">Cost: 2 Stamina</span>
+                  <span class="sc-line">Uses: Unlimited</span>
+                  <span class="sc-line">Range: Touch</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Bare hands. Avoids Armament Penalty: Delicate Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Melee attack roll at normal Hit. On a hit, ignore a portion of the target's PROTS.</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's Discipline is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Nature*** | pg. 00x</span>
+                  </div>
+                </div>
+                                
+                              &#9670; Chanter (unarmed strikes plus a light instrument for chants; Light Grade (Songweave Cloth) armor or lighter, and a Magic-channeling chant instrument) (LVL 21-30)<br>
+                <em>A Monk who channels devotion through music, using a light instrument as a magical focus for their chants.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Chanter Abilities (Monk Path)<br><em>- a Monk who channels devotion through music, using a light instrument as a magical focus for their chants. (unarmed strikes plus a light instrument for chants; Light Grade (Songweave Cloth) armor or lighter, and a Magic-channeling chant instrument)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Chanter Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Qirateka (unarmed strikes; unlocks Medium Grade (Banded Chain) armor and light bladed hand weapons like tonfa or sai, plus Medium Grade bracers usable for Parry; also gains taunts that draw threat from allies onto themselves) (LVL 21-30)<br>
+                <em>A tankier Monk branch that uses medium armor and bracers to parry blows, drawing enemy attention away from allies with taunts.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Qirateka Abilities (Monk Path)<br><em>- a tankier Monk branch that uses medium armor and bracers to parry blows, drawing enemy attention away from allies with taunts. (unarmed strikes; unlocks Medium Grade (Banded Chain) armor and light bladed hand weapons like tonfa or sai, plus Medium Grade bracers usable for Parry; also gains taunts that draw threat from allies onto themselves)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Qirateka Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Shapeflow (unarmed strikes only; Delicate Grade (Featherwrap Silk) armor only, for maximum mobility; unlocks a 1h Piercing unarmed strike, precise knuckle and joint strikes; hand wraps and Delicate Grade bracers may be worn for style and limited protection, usable for Parry, +1 AS) (LVL 21-30)<br>
+                <em>The most mobile Monk branch, forgoing all but the lightest armor to strike with precise, piercing unarmed blows.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Shapeflow Abilities (Monk Path)<br><em>- the most mobile Monk branch, forgoing all but the lightest armor to strike with precise, piercing unarmed blows. (unarmed strikes only; Delicate Grade (Featherwrap Silk) armor only, for maximum mobility; unlocks a 1h Piercing unarmed strike, precise knuckle and joint strikes)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Shapeflow Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Priest</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A quieter servant of the faith who deals in ritual, shadow, and blood-price rather than open combat. (LVL 4-20)</em><br>
+              <em>(see Priest Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Priest Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Priest)</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Weapon Style: Blunt, 1h, Melee; conjures a spectral strike until Salii unlocks a real Piercing weapon. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Priest):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Energy<br>
+                <strong>Materials Forbidden (Culture, Priest):</strong><br>
+                &#9670;None by substance, though see the weapon profile above; the Priest Culture cares far more for how a thing was consecrated than for what it was made from.<br>
+                <strong>Armor Forbidden (Culture, Priest):</strong><br>
+                &#9670;Rigid armor of any Grade while a rite is being performed. Priest practice is conducted in cloth, and the tradition holds that plates and scales interrupt what is being asked for.<br>
+                <em>The Priest Culture deals in rite, shadow and blood-price rather than the open shield-line. Its Abilities are performed with a consecrated hand weapon or with nothing visible at all, a spectral strike called up in place of steel, until a Branch grants the tradition a real blade to carry.</em><br><br>
+                <strong>Branch Exceptions (Culture, Priest):</strong><br>
+                <em>This Culture carries through to every Priest Branch. Each Branch below states only where its own practice departs from it; anything unlisted stays as set above.</em><br>
+                &#9670;<strong>Discipline</strong> - <em>Refuses:</em> the free offhand. Discipline is practiced with a shield or a second blunt weapon always in the off hand, and its Abilities are not performed without one.<br>
+                &#9670;<strong>Salii</strong> - <em>Permits:</em> 1h Slashing weapons, enchanted daggers of Piercing or Slashing make, a shield in the off hand, and Medium Grade (Mithril) armor. The Salii are the armed dancers of the priesthood, and theirs is the oldest reading of the rite: that it was always performed under arms, in armor and behind a shield, and that the cloth-only practice of the other Branches is the later softening. A Salii performs the rite in step, blade drawn and shield on the arm, and their Abilities are not performed without them. This is the widest exception any Avenger Branch states.<br>
+                &#9670;<strong>Shadow Weaver</strong> - <em>Permits:</em> concealed Piercing blades, while refusing every Grade above Light (Shadowweave Cloth). What cannot be hidden cannot be carried, so the blade is permitted and the armor narrows further.<br>
+                <br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: Light or lighter (Shroud Cloth).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Priest Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Discipline (1h (Main) blunt weapon and shield, or 1h (Main) blunt weapon and 1h (Off) blunt weapon; disciplined defensive stance) (LVL 21-30)<br>
+                <em>A defensively-minded Priest who fights with a blunt weapon and shield, or dual blunt weapons, in a disciplined guarding stance.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Discipline Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Discipline Branch chosen at LVL 21 - see Discipline above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Discipline Branch chosen at LVL 21 - see Discipline above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Salii (unlocks enchanted daggers and Mithril, Medium Grade armor) (LVL 21-30)<br>
+                <em>The Priest branch that finally unlocks true enchanted daggers and heavier armor.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Salii Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Salii Branch chosen at LVL 21 - see Salii above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Salii Branch chosen at LVL 21 - see Salii above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Shadow Weaver (Light Grade (Shadowweave Cloth) armor and concealed blades, favors stealth over daggers) (LVL 21-30)<br>
+                <em>A stealth-focused Priest who favors concealed blades and shadow over open ritual combat.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Shadow Weaver Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic Attacks do not)</em><br>
+                Set by the Shadow Weaver Branch chosen at LVL 21 - see Shadow Weaver above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Shadow Weaver Branch chosen at LVL 21 - see Shadow Weaver above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Priest Abilities (Avenger Tier)<br><em>- A quieter servant of the faith who deals in ritual, shadow, and blood-price rather than open combat.</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Avenger - Priest Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Whispered Ward</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A boundary drawn in murmured words the wicked cannot cross, a minor Resistance buff... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Whispered Curse</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 2 Mana<br>Uses: Unlimited</span>The same rite spoken backward, a minor Resistance debuff... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Death's Toll</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: DoT | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A slow rite that gnaws at a target from within, minor holy damage over time... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Avenger - Priest Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Silent Vigil</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A ward kept like a vigil through the night, +1 Defense to self or ally... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Grave Chant</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A funeral rite spoken over the living, holy damage to an undead or evil-aligned target... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Binding Rite</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 3 Mana<br>Uses: 3/Round</span>Grave-dirt and a whispered name wrapped around an ankle that isn't there, reducing target's movement... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Avenger - Priest Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Grave Whisper Rite</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A whisper drawn from the space between light and shadow, holy damage loosed at a foe... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Twilight Curse</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A curse cast where light and shadow meet, minor Resistance debuff on the target... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Twilight Ward</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A ward drawn where light and shadow meet, brief concealment for self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Avenger - Priest Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Dying Scripture</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>A dying breath read like scripture, marked for a rite only the Priest can complete... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Scripture Bolt</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>A line read from scripture loosed at a marked target, bonus damage... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Scripture's Vigil</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>A vigil kept over a target already marked, +1 Defense to self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Avenger - Priest Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table single-col">
+                    <thead><tr><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(&#128737;&#65039; Tank) <strong class="ability-name">Final Rite</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 4 Mana<br>Uses: 3/Round</span>Priests cut from the shadows they were trained in, marking the dying for one final rite before the end... refer to Ability Card.</li><li>(&#128481;&#65039; DPS) <strong class="ability-name">Final Bolt</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 4 Mana<br>Uses: 3/Round</span>Priests loose a final rite at whoever's already marked for the end... refer to Ability Card.</li><li>(&#127761; Hybrid) <strong class="ability-name">Final Vigil</strong><br><strong>Attack</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 4 Mana<br>Uses: 3/Round</span>Priests keep a final vigil over the dying, self or an ally, +1 Defense while it holds... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Avenger - Priest Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Discipline (1h (Main) blunt weapon and shield, or 1h (Main) blunt weapon and 1h (Off) blunt weapon; disciplined defensive stance) (LVL 21-30)<br>
+                <em>A defensively-minded Priest who fights with a blunt weapon and shield, or dual blunt weapons, in a disciplined guarding stance.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Discipline Abilities (Priest Path)<br><em>- a defensively-minded Priest who fights with a blunt weapon and shield, or dual blunt weapons, in a disciplined guarding stance. (1h (Main) blunt weapon and shield, or 1h (Main) blunt weapon and 1h (Off) blunt weapon; disciplined defensive stance)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Discipline Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Salii (unlocks enchanted daggers and Mithril, Medium Grade armor) (LVL 21-30)<br>
+                <em>The Priest branch that finally unlocks true enchanted daggers and heavier armor.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Salii Abilities (Priest Path)<br><em>- the Priest branch that finally unlocks true enchanted daggers and heavier armor. (unlocks enchanted daggers and Mithril, Medium Grade armor)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Salii Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+                <p class="sample-card-caption">Example Spell Card - Consecrated Dagger Strike (LVL 21, &#128481;&#65039; DPS, hypothetical). Uses: 3/Day, the Tier a LVL 21 Branch pick reaches on a Standard character; Salii's real LVL 21-30 content is still content TBA. (Temporary layout, pending final card design.)</p>
+                <p class="sample-card-badge">RECHRG, 3 Charges</p>
+                <div class="sample-card branch-card">
+                  <span class="sc-name">Ability Card | Martial</span>
+                  <div class="sc-art-window"><span class="sc-art-window-text">Place Holder awaiting Image and/or Statistic Details.</span></div>
+                  <div class="sc-body">
+                  <span class="sc-line">Main Class: Avenger</span>
+                  <span class="sc-line">Path: Priest</span>
+                  <span class="sc-line">Branch: Salii</span>
+                  <span class="sc-line">Consecrated Dagger Strike</span>
+                  <span class="sc-desc">"The enchanted dagger finds its mark with a precision no unblessed blade could match, the wound it leaves already closing against corruption before it's finished bleeding."</span>
+                  <span class="sc-line">Action Cost: 1 Action</span>
+                  <span class="sc-line">Cost: 11 Stamina</span>
+                  <span class="sc-line">Uses: 3/Day</span>
+                  <span class="sc-line">Range: Touch</span>
+                  <span class="sc-line">Weapon/Hand Proficiency Bonus: Enchanted dagger equipped. Avoids Armament Penalty: Medium Grade armor or lighter donned (see readied Armaments pg. 4)</span>
+                  <span class="sc-line">Effect: Melee attack roll at normal Hit. On a hit, deal weapon damage +3d6 bonus Damage vs cursed, diseased, or evil-aligned targets.</span>
+                  <span class="sc-ref-note">The below reference code points to a directory where detailed information of this Ability's Discipline is logged via; libraries, lore, diaries and other recorded sources.</span>
+                  <span class="sc-ref">Module: Hypothetical, Branch content not yet published | Ref #Nature*** | pg. 00x</span>
+                  </div>
+                </div>
+  </details>              &#9670; Shadow Weaver (Light Grade (Shadowweave Cloth) armor and concealed blades, favors stealth over daggers) (LVL 21-30)<br>
+                <em>A stealth-focused Priest who favors concealed blades and shadow over open ritual combat.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Shadow Weaver Abilities (Priest Path)<br><em>- a stealth-focused Priest who favors concealed blades and shadow over open ritual combat. (Light Grade (Shadowweave Cloth) armor and concealed blades, favors stealth over daggers)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col single-col">
+                  <thead><tr><th>Lvl</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Shadow Weaver Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
