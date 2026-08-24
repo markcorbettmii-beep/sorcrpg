@@ -3779,22 +3779,171 @@ app.get('/api/sorc-store', authMiddleware, async (c) => {
 
 // ─── GROUP FELLOWSHIP CHAT (stub, Pro) ──────────────────────────────────────
 // Per sorc-beyond.html's table: 1:1 fellowship messaging is free for everyone
-// (see /api/conversations above), but chatting with multiple fellows at once
-// in a single group thread is a Pro-exclusive perk.
-app.get('/api/fellowships/group-chat', authMiddleware, async (c) => {
+// (see /api/conversations above), but a multi-fellow group thread is a Pro
+// perk. Hosting (creating a group, adding members) requires the OWNER to be
+// Pro - same pattern as Lobbies (creator needs a box code, joiners don't).
+// Reading/posting in a group you already belong to needs no extra Pro check,
+// same as joining someone else's Lobby for free.
+
+async function ensureFellowshipGroupTables(db: D1Database) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_groups (
+    id TEXT PRIMARY KEY,
+    owner_uid TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  )`).run().catch(() => {});
+  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_group_members (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    added_at TEXT NOT NULL,
+    UNIQUE(group_id, user_id)
+  )`).run().catch(() => {});
+  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_group_messages (
+    id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    username TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  )`).run().catch(() => {});
+}
+
+async function isAcceptedFellow(db: D1Database, uidA: string, uidB: string): Promise<boolean> {
+  const row = await db.prepare(
+    `SELECT id FROM fellowships WHERE status = 'accepted' AND ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?))`
+  ).bind(uidA, uidB, uidB, uidA).first();
+  return !!row;
+}
+
+app.post('/api/fellowships/groups', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   if (!(await isProMember(c.env.sorc_db, user))) {
     return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
   }
-  return c.json({ error: 'Group Fellowship chat is not yet implemented.' }, 501);
+  await ensureFellowshipGroupTables(c.env.sorc_db);
+  const { name, member_uids } = await c.req.json() as any;
+  const groupName = (name || '').trim().slice(0, 60) || 'Fellowship Group';
+  const uids: string[] = Array.isArray(member_uids) ? member_uids.filter((u: any) => typeof u === 'string') : [];
+  try {
+    for (const uid of uids) {
+      if (uid === user.id) continue;
+      if (!(await isAcceptedFellow(c.env.sorc_db, user.id, uid))) {
+        return c.json({ error: 'Every member must be an accepted Fellowship of yours.' }, 400);
+      }
+    }
+    const groupId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(`INSERT INTO fellowship_groups (id, owner_uid, name, created_at) VALUES (?, ?, ?, ?)`).bind(groupId, user.id, groupName, now).run();
+    await c.env.sorc_db.prepare(`INSERT INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`).bind(crypto.randomUUID(), groupId, user.id, now).run();
+    for (const uid of uids) {
+      if (uid === user.id) continue;
+      await c.env.sorc_db.prepare(`INSERT OR IGNORE INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`).bind(crypto.randomUUID(), groupId, uid, now).run();
+    }
+    return c.json({ success: true, group_id: groupId });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to create group.', details: error.message }, 500);
+  }
 });
 
-app.post('/api/fellowships/group-chat', authMiddleware, async (c) => {
+app.get('/api/fellowships/groups', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  await ensureFellowshipGroupTables(c.env.sorc_db);
+  try {
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT g.id, g.name, g.owner_uid, g.created_at,
+       (SELECT COUNT(*) FROM fellowship_group_members m2 WHERE m2.group_id = g.id) as member_count
+       FROM fellowship_groups g
+       JOIN fellowship_group_members m ON m.group_id = g.id
+       WHERE m.user_id = ?
+       ORDER BY g.created_at DESC`
+    ).bind(user.id).all();
+    return c.json({ groups: rows.results || [] });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load groups.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/fellowships/groups/:id/members', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  await ensureFellowshipGroupTables(c.env.sorc_db);
+  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
+  if (!group) return c.json({ error: 'Group not found.' }, 404);
+  if (group.owner_uid !== user.id) return c.json({ error: 'Only the group owner can add members.' }, 403);
   if (!(await isProMember(c.env.sorc_db, user))) {
     return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
   }
-  return c.json({ error: 'Group Fellowship chat is not yet implemented.' }, 501);
+  const { uid } = await c.req.json() as any;
+  if (!uid) return c.json({ error: 'uid required.' }, 400);
+  if (!(await isAcceptedFellow(c.env.sorc_db, user.id, uid))) {
+    return c.json({ error: 'That member must be an accepted Fellowship of yours.' }, 400);
+  }
+  await c.env.sorc_db.prepare(`INSERT OR IGNORE INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`)
+    .bind(crypto.randomUUID(), groupId, uid, new Date().toISOString()).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/fellowships/groups/:id/members/:uid', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const targetUid = c.req.param('uid');
+  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
+  if (!group) return c.json({ error: 'Group not found.' }, 404);
+  // The owner can remove anyone; anyone else can only remove themselves (leave).
+  if (group.owner_uid !== user.id && targetUid !== user.id) {
+    return c.json({ error: 'Not authorized.' }, 403);
+  }
+  if (targetUid === group.owner_uid) return c.json({ error: 'The owner cannot be removed - delete the group instead.' }, 400);
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, targetUid).run();
+  return c.json({ success: true });
+});
+
+app.delete('/api/fellowships/groups/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
+  if (!group) return c.json({ error: 'Group not found.' }, 404);
+  if (group.owner_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the group owner can delete it.' }, 403);
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_groups WHERE id = ?`).bind(groupId).run();
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_members WHERE group_id = ?`).bind(groupId).run();
+  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_messages WHERE group_id = ?`).bind(groupId).run();
+  return c.json({ success: true });
+});
+
+app.get('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
+  const since = c.req.query('since');
+  let msgs: any;
+  if (since) {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_group_messages WHERE group_id = ? AND created_at > ? ORDER BY created_at ASC LIMIT 100`).bind(groupId, since).all();
+  } else {
+    msgs = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_group_messages WHERE group_id = ? ORDER BY created_at DESC LIMIT 80`).bind(groupId).all();
+    msgs.results = (msgs.results || []).reverse();
+  }
+  return c.json({ messages: msgs.results || [] });
+});
+
+app.post('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const groupId = c.req.param('id');
+  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
+  if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
+  const allowed = await checkRateLimit(c.env.sorc_db, `groupchat:${user.id}`, 20, 60);
+  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  const { body } = await c.req.json() as any;
+  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
+  if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
+  const check = filterContent(body.trim());
+  if (check.blocked) return c.json({ error: check.reason }, 400);
+  const msgId = crypto.randomUUID();
+  await c.env.sorc_db.prepare(
+    `INSERT INTO fellowship_group_messages (id, group_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(msgId, groupId, user.id, user.display_name || user.username, check.filtered, new Date().toISOString()).run();
+  return c.json({ success: true, message_id: msgId });
 });
 
 export default app;
