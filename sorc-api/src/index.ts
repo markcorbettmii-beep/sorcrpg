@@ -1677,10 +1677,14 @@ function resolveRollCodes(body: string): RollResult[] {
     const gm = !!m[1];
     const count = Math.min(Math.max(parseInt(m[2] || '1', 10) || 1, 1), MAX_DICE_PER_CODE);
     const dieRaw = m[3].toLowerCase();
-    const sides = dieRaw === '100+100' ? 100 : parseInt(dieRaw, 10);
-    const flat = dieRaw === '100+100' ? 100 : 0;
+    // D100 + D100 is two percentile rolls added together, 2 to 200, used for
+    // Rare and Divine items (see Basic Rules pg. 1). It is not a flat +100.
+    const pair = dieRaw === '100+100';
+    const sides = pair ? 100 : parseInt(dieRaw, 10);
     const rolls: number[] = [];
-    for (let i = 0; i < count; i++) rolls.push(rollDie(sides) + flat);
+    for (let i = 0; i < count; i++) {
+      rolls.push(pair ? rollDie(100) + rollDie(100) : rollDie(sides));
+    }
     out.push({
       code: m[0], gm, count, die: 'd' + dieRaw,
       rolls, total: rolls.reduce((a, b) => a + b, 0),
