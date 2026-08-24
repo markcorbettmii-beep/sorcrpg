@@ -145,6 +145,21 @@ async function ensureProfileColumns(db: D1Database) {
   await db.prepare(`ALTER TABLE users ADD COLUMN banner TEXT`).run().catch(() => {});
 }
 
+// Abandon bans. Created lazily, so every reader must make sure it exists first
+// rather than assuming /leave has run at least once on this database.
+async function ensureLobbyBansTable(db: D1Database) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS lobby_bans (
+      id TEXT PRIMARY KEY,
+      lobby_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      banned_at TEXT NOT NULL,
+      banned_by TEXT,
+      reason TEXT
+    )
+  `).run().catch(() => {});
+}
+
 // Public, unauthenticated feature flags the static pages need before a user
 // exists. Never put anything sensitive here - it is readable by anyone.
 app.get('/api/public-config', (c) => {
@@ -2103,8 +2118,15 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
   if (!privileged && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
 
-  // Check if user is banned from this lobby (due to abandon)
-  const isBanned = await c.env.sorc_db.prepare(`SELECT id FROM lobby_bans WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
+  // Check if user is banned from this lobby (due to abandon).
+  // lobby_bans is created lazily by /leave, so on a database where nobody has
+  // abandoned a lobby yet the table does not exist. That must never take the
+  // join endpoint down: an unreadable ban list means "not banned", not a 500.
+  await ensureLobbyBansTable(c.env.sorc_db);
+  let isBanned: unknown = null;
+  try {
+    isBanned = await c.env.sorc_db.prepare(`SELECT id FROM lobby_bans WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
+  } catch (_) { isBanned = null; }
   if (isBanned && !privileged) return c.json({ error: 'You cannot rejoin this lobby without permission or a new code.' }, 403);
 
   const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
@@ -2146,19 +2168,7 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       await c.env.sorc_db.prepare('ALTER TABLE lobbies ADD COLUMN commandeered_from TEXT').run();
     } catch (_) {}
 
-    // One-time migration: add lobby_bans table for abandon bans
-    try {
-      await c.env.sorc_db.prepare(`
-        CREATE TABLE IF NOT EXISTS lobby_bans (
-          id TEXT PRIMARY KEY,
-          lobby_id TEXT NOT NULL,
-          user_id TEXT NOT NULL,
-          banned_at TEXT NOT NULL,
-          banned_by TEXT,
-          reason TEXT
-        )
-      `).run();
-    } catch (_) {}
+    await ensureLobbyBansTable(c.env.sorc_db);
 
     const now = new Date().toISOString();
 
