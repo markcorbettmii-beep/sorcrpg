@@ -324,6 +324,8 @@
     body.lawful-mode .detail-header h2 { color: #2c2c2c; }
     body.lawful-mode .l-input,
     body.lawful-mode .chat-input { background: #f5f5f5; border-color: #ccc; color: #2c2c2c; }
+    body.lawful-mode #diceType,
+    body.lawful-mode #diceCount { background: #f5f5f5; border-color: #ccc; color: #2c2c2c; }
     body.lawful-mode .chat-msg .msg-body { color: #555; }
 
     /* ===== SOLAR BG: transparent page wrapper so canvas shows through ===== */
@@ -1469,6 +1471,25 @@
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
                   '<button class="chat-send" onclick="sendChat()">Send</button>' +
                 '</div>' +
+                '<div style="padding:0.6rem 0.75rem;border-top:1px solid #333;flex-shrink:0;">' +
+                  '<div style="font-size:0.72rem;color:#555;margin-bottom:0.5rem;">🎲 Roll Dice <span style="color:#333;font-size:0.68rem;">(beta in lobbies • live in Campaign Rooms)</span></div>' +
+                  '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+                    '<select id="diceType" style="padding:6px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0cfc0;font-size:0.84rem;cursor:pointer;">' +
+                      '<option value="d4">D4</option>' +
+                      '<option value="d6">D6</option>' +
+                      '<option value="d8">D8</option>' +
+                      '<option value="d10">D10</option>' +
+                      '<option value="d12">D12</option>' +
+                      '<option value="d20" selected>D20</option>' +
+                      '<option value="d100">D100</option>' +
+                    '</select>' +
+                    '<div style="display:flex;align-items:center;gap:0.3rem;">' +
+                      '<label for="diceCount" style="font-size:0.75rem;color:#666;">×</label>' +
+                      '<input type="number" id="diceCount" value="1" min="1" max="100" style="width:40px;padding:6px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0cfc0;font-size:0.84rem;text-align:center;" />' +
+                    '</div>' +
+                    '<button onclick="rollDice()" style="padding:6px 14px;background:#b9aa00;color:#111;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">Roll</button>' +
+                  '</div>' +
+                '</div>' +
               '</div>' +
               /* WORLD: world chat - read for all, post input for hosts */
               '<div class="chat-tab-pane" id="chatPane-world">' +
@@ -1636,6 +1657,49 @@
         if (data.error) { showToast(data.error, true); input.value = body; return; }
         loadChatMessages(currentLobby.id);
       } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
+    };
+
+    window.rollDice = async function() {
+      if (!currentLobby || !currentUser) return;
+      var diceTypeEl = document.getElementById('diceType');
+      var diceCountEl = document.getElementById('diceCount');
+      if (!diceTypeEl || !diceCountEl) return;
+
+      var diceType = diceTypeEl.value.toUpperCase();
+      var count = parseInt(diceCountEl.value) || 1;
+      if (count < 1 || count > 100) { showToast('Roll count must be between 1 and 100.', true); return; }
+
+      // Parse dice type (d4 -> 4, d20 -> 20, d100 -> 100)
+      var maxValue = parseInt(diceType.substring(1));
+      if (!maxValue) { showToast('Invalid dice type.', true); return; }
+
+      // Roll the dice
+      var rolls = [];
+      var total = 0;
+      for (var i = 0; i < count; i++) {
+        var roll = Math.floor(Math.random() * maxValue) + 1;
+        rolls.push(roll);
+        total += roll;
+      }
+
+      // Format the roll result message
+      var rollsStr = rolls.join(', ');
+      if (count > 1) {
+        var body = '🎲 ' + diceType + ' × ' + count + ': [' + rollsStr + '] = <strong>' + total + '</strong>';
+      } else {
+        var body = '🎲 ' + diceType + ': <strong>' + total + '</strong>';
+      }
+
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        var data = await readJson(res);
+        if (data.error) { showToast(data.error, true); return; }
+        loadChatMessages(currentLobby.id);
+      } catch(e) { showToast('Could not post roll result. Check your connection.', true); }
     };
 
     window.clearLobbyChat = async function() {
