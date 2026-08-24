@@ -164,6 +164,10 @@
     .chat-msg .msg-name.gm { color: #c93f35; }
     .chat-msg .msg-body { color: #c0b0a0; }
     .chat-msg .msg-time { color: #333; font-size: 0.72rem; margin-left: 0.4rem; }
+    .msg-trade-tag { display: inline-block; font-weight: bold; font-size: 0.74rem; padding: 2px 6px; border-radius: 4px; margin-right: 0.2rem; }
+    .msg-trade-tag.msg-wts { background: #1a1200; color: #e0c040; border: 1px solid #5a4020; }
+    .msg-trade-tag.msg-wtb { background: #001428; color: #50a0e0; border: 1px solid #1a3a5a; }
+    .msg-trade-tag.msg-wtt { background: #0d1a0d; color: #70d080; border: 1px solid #2a5a2a; }
     .chat-input-row { display: flex; gap: 0.5rem; padding: 0.6rem 0.75rem; border-top: 2px solid #333; flex-shrink: 0; }
     .chat-input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.85rem; }
     .chat-input:focus { outline: none; border-color: #555; }
@@ -454,6 +458,9 @@
     body.lawful-mode .wts-badge:hover { background: #f8e8b0; }
     body.lawful-mode .wtb-badge { background: #e0eefc; color: #1a5090; border-color: #7fb0e0; }
     body.lawful-mode .wtb-badge:hover { background: #c8e0f8; }
+    body.lawful-mode .msg-trade-tag.msg-wts { background: #fdf3d0; color: #8a6800; border-color: #d0a840; }
+    body.lawful-mode .msg-trade-tag.msg-wtb { background: #e0eefc; color: #1a5090; border-color: #7fb0e0; }
+    body.lawful-mode .msg-trade-tag.msg-wtt { background: #e3f7ea; color: #1a7a40; border-color: #7fcf9f; }
     body.lawful-mode .modal-box .modal-warn { color: #8a5800; background: #fdf3e0; border-color: #e0b060; }
     body.lawful-mode .needs-assess-note { background: #fdf3e0; border-color: #e0b060; color: #8a5800; }
     body.lawful-mode .rc-no-btn { background: #fbe6e4; }
@@ -1449,6 +1456,7 @@
               '<div class="chat-tab-bar">' +
                 '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="trade" onclick="switchChatTab(\'trade\')">Trade <span class="tab-badge" id="badge-trade" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="activity" onclick="switchChatTab(\'activity\')">Activity <span class="tab-badge" id="badge-activity" style="display:none;"></span></button>' +
               '</div>' +
@@ -1475,6 +1483,14 @@
               /* MESSAGES: lobby-scoped direct messages */
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
                 '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div></div>' +
+              '</div>' +
+              /* TRADE: trade chat with WTB/WTS/WTT tags */
+              '<div class="chat-tab-pane" id="chatPane-trade">' +
+                '<div class="chat-messages" id="tradeMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div></div>' +
+                '<div class="chat-input-row">' +
+                  '<input type="text" class="chat-input" id="tradeInput" placeholder="WTS:Item, WTB:Item, or WTT:Give>Want..." maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
+                  '<button class="chat-send" onclick="sendTradeChat()">Post</button>' +
+                '</div>' +
               '</div>' +
               /* ACTIVITY: lobby action log */
               '<div class="chat-tab-pane" id="chatPane-activity">' +
@@ -2083,6 +2099,9 @@
       } else if (tab === 'msgs') {
         stopWorldChatPoll();
         loadLobbyMsgs();
+      } else if (tab === 'trade') {
+        stopWorldChatPoll();
+        loadTradeChat();
       } else if (tab === 'activity') {
         stopWorldChatPoll();
         loadActivityMessages();
@@ -2502,6 +2521,103 @@
 
     function stopWorldChatPoll() {
       if (worldChatPollTimer) { clearInterval(worldChatPollTimer); worldChatPollTimer = null; }
+    }
+
+    // ===== TRADE CHAT TAB =====
+    var lastTradeMsgId = null;
+    var tradeChatPollTimer = null;
+
+    async function loadTradeChat() {
+      if (!currentUser || !currentLobby) return;
+      var el = document.getElementById('tradeMessages');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/trade-chat?lobby_id=' + currentLobby.id, {
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await readJson(res);
+        var msgs = data.messages || [];
+
+        if (msgs.length === 0) {
+          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div>';
+        } else {
+          var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+          el.innerHTML = msgs.map(function(m) {
+            var isSelf = currentUser && m.sender_uid === currentUser.id;
+            var timeStr = timeAgo(m.created_at);
+            var nameEl = '<span class="msg-name">' + esc(m.sender_name || 'Unknown') + '</span>';
+
+            // Parse the trade tag (WTS:Item, WTB:Item, WTT:Give>Want)
+            var body = m.body || '';
+            var tagMatch = body.match(/^(WTS|WTB|WTT):(.+)$/i);
+            var tag = tagMatch ? tagMatch[1].toUpperCase() : '';
+            var content = tagMatch ? tagMatch[2] : body;
+
+            var tagClass = 'msg-trade-tag msg-' + tag.toLowerCase();
+            var tagEl = '<span class="' + tagClass + '">' + tag + ':</span>';
+
+            return '<div class="chat-msg" data-msg-id="' + esc(m.id) + '">' +
+              nameEl +
+              ' ' + tagEl +
+              ' <span class="msg-body">' + esc(content) + '</span>' +
+              ' <span class="msg-time">' + timeStr + '</span>' +
+            '</div>';
+          }).join('');
+          if (atBottom) el.scrollTop = el.scrollHeight;
+          var activeTabEl = document.querySelector('.chat-tab.active');
+          if (!activeTabEl || activeTabEl.dataset.tab !== 'trade') {
+            var tb = document.getElementById('badge-trade');
+            if (tb) tb.style.display = '';
+          }
+        }
+        lastTradeMsgId = msgs.length > 0 ? msgs[msgs.length - 1].id : null;
+        startTradeChatPoll();
+      } catch(e) {}
+    }
+
+    window.sendTradeChat = async function() {
+      var input = document.getElementById('tradeInput');
+      if (!input || !currentUser || !currentLobby) return;
+      var body = input.value.trim();
+      if (!body) return;
+
+      // Validate trade tag format
+      if (!/^(WTS|WTB|WTT):/i.test(body)) {
+        showToast('Trade messages must start with WTS:, WTB:, or WTT:', true);
+        return;
+      }
+
+      if (body.length > 60) {
+        showToast('Trade messages are limited to 60 characters.', true);
+        return;
+      }
+
+      input.value = '';
+      try {
+        var res = await fetch(API_URL + '/api/trade-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ lobby_id: currentLobby.id, body: body })
+        });
+        var data = await readJson(res);
+        if (data.error) {
+          showToast(data.error, true);
+          input.value = body;
+          return;
+        }
+        loadTradeChat();
+      } catch(e) {
+        showToast('Connection error.', true);
+      }
+    };
+
+    function startTradeChatPoll() {
+      stopTradeChatPoll();
+      tradeChatPollTimer = setInterval(loadTradeChat, 6000);
+    }
+
+    function stopTradeChatPoll() {
+      if (tradeChatPollTimer) { clearInterval(tradeChatPollTimer); tradeChatPollTimer = null; }
     }
 
     // ===== LOBBY MESSAGES TAB =====
