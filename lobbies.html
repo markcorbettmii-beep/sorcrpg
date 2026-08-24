@@ -783,6 +783,18 @@
       var badge = document.getElementById('assessClearedBadge');
       if (badge) { badge.style.display = 'block'; }
       renderListView();
+      /* One-time forced exit. Bump LOBBY_FORCE_EXIT whenever lobby rules change
+         and everyone sitting in a lobby should be dropped back to the list on
+         their next load so hosts can remake their lobbies under the new rules. */
+      var LOBBY_FORCE_EXIT = '2026-08-24-leave-abandon';
+      try {
+        if (localStorage.getItem('sorc_lobby_force_exit') !== LOBBY_FORCE_EXIT) {
+          localStorage.setItem('sorc_lobby_force_exit', LOBBY_FORCE_EXIT);
+          sessionStorage.removeItem('activeLobbyId');
+          localStorage.removeItem('sorc_joined_lobbies');
+          return;
+        }
+      } catch(e) {}
       var savedLobbyId = sessionStorage.getItem('activeLobbyId');
       if (savedLobbyId) openLobby(savedLobbyId);
     }
@@ -846,7 +858,7 @@
         '&#127925; GMs play module-paired audio inside the Campaign Room - every Player hears it live, whether at the table or joining remotely',
         '&#128421; Campaign Rooms work just as well fully online as they do at a physical table - GMs set the audio, Players roll live dice, everyone follows the same session',
         '&#128273; Set your lobby to Private so only Players with your invite code can join - ideal for pre-arranged Fellowship sessions',
-        '&#127922; Campaign Rooms include live D4, D6, and D100 rolls, loot table generation, and compendium access for the whole party',
+        '&#127922; Campaign Rooms include live D4, D6, D100 and Divine Roll results, loot table generation, and compendium access for the whole party',
         '&#129309; Find great Players through PUG lobbies - once you do, invite them directly to your next private session to skip the pickup queue',
         '&#9733; Switch the Lobby Theme above to set the mood - Omnè Terminal and The Veilwood each have their own ambient soundscape',
         '&#127760; If a host leaves their lobby, the next member in line becomes the new leader - the lobby stays open and keeps recruiting',
@@ -944,7 +956,8 @@
               '<div class="feature-card"><div class="feature-icon">&#128101;</div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#9876;&#65039;</div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#128172;</div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#b9aa00;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#b9aa00;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
-              '<div class="feature-card"><div class="feature-icon">&#128295;</div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128682;</div><h3>Leave vs. Abandon</h3><p><strong style="color:#b9aa00;">Leave</strong> is free and reversible. Step out of a lobby whenever you like and walk back in at will, in the same role you left with.<br/><br/><strong style="color:#b9aa00;">Abandon</strong> is final. You give the lobby up and cannot rejoin it without the host\'s permission or a new code. If the host abandons, the lobby passes to the next GM in it; with no GM present it passes to the next member who joined, until a GM arrives. A lobby closes on its own once its last member is gone.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128295;</div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100, and the Divine Roll), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
             '</div>' +
             '<button class="section-scroll-btn" aria-label="Next" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="12,9 39,24 12,39"></polygon></svg></button>' +
           '</div>' +
@@ -1447,7 +1460,8 @@
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
         : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
-      var deleteBtn = isCreator && lobby.status !== 'closed' ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#5a2a2a;color:#ff9999;border:1px solid #8a4a4a;" onclick="deleteLobby()">Close Lobby</button>' : '';
+      /* No "Close Lobby" button by design - Abandon is the only way out for a
+         host. A lobby closes on its own once its last member is gone. */
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
           + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
@@ -1466,7 +1480,7 @@
             '<div class="detail-meta">' + (hasGMRights && lobby.status !== 'closed' ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div id="lobbyHeaderBtns" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
-            launchBtn + readyCheckBtn + inviteBtn + leaveBtn + deleteBtn +
+            launchBtn + readyCheckBtn + inviteBtn + leaveBtn +
           '</div>' +
         '</div>' +
         invitePanel +
@@ -1523,6 +1537,7 @@
                       '<option value="d12">D12</option>' +
                       '<option value="d20" selected>D20</option>' +
                       '<option value="d100">D100</option>' +
+                      '<option value="divine">Divine Roll</option>' +
                     '</select>' +
                     '<div style="display:flex;align-items:center;gap:0.3rem;">' +
                       '<label for="diceCount" style="font-size:0.75rem;color:#666;">×</label>' +
@@ -1641,6 +1656,24 @@
             return '<div class="chat-msg activity-notice" id="lmsg-' + m.id + '">&#8894; ' + esc(actBody) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
           }
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+          if (m.body && m.body.indexOf('🎲') === 0) {
+            /* Dice results are stored as plain text. Strip any <strong> from
+               rolls posted by older clients, escape, then bold the total so
+               markup can never come out of the stored body. */
+            var rollSafe = esc(m.body.replace(/<\/?strong>/g, ''));
+            rollSafe = rollSafe.indexOf('= ') !== -1
+              ? rollSafe.replace(/=\s(\d+)/, '= <strong>$1</strong>')
+              : rollSafe.replace(/:\s(\d+)/, ': <strong>$1</strong>');
+            var rollDel = hasGMRights
+              ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
+              : '';
+            return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
+              '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
+              '<span class="msg-body">' + rollSafe + '</span>' +
+              '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+              rollDel +
+            '</div>';
+          }
           var delBtn = hasGMRights
             ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
             : '';
@@ -1706,12 +1739,17 @@
       var diceCountEl = document.getElementById('diceCount');
       if (!diceTypeEl || !diceCountEl) return;
 
-      var diceType = diceTypeEl.value.toUpperCase();
+      var rawType = diceTypeEl.value;
+      /* The Divine Roll is the rules' two-percentile roll (D100 + D100, 2-200)
+         used for Divine and Legendary items - it is named, never spelled out
+         as a die type. See Basic Rules Pg. 1. */
+      var isDivine = rawType === 'divine';
+      var diceType = isDivine ? 'Divine Roll' : rawType.toUpperCase();
       var count = parseInt(diceCountEl.value) || 1;
       if (count < 1 || count > 100) { showToast('Roll count must be between 1 and 100.', true); return; }
 
       // Parse dice type (d4 -> 4, d20 -> 20, d100 -> 100)
-      var maxValue = parseInt(diceType.substring(1));
+      var maxValue = isDivine ? 100 : parseInt(diceType.substring(1));
       if (!maxValue) { showToast('Invalid dice type.', true); return; }
 
       // Roll the dice
@@ -1719,16 +1757,19 @@
       var total = 0;
       for (var i = 0; i < count; i++) {
         var roll = Math.floor(Math.random() * maxValue) + 1;
+        if (isDivine) roll += Math.floor(Math.random() * maxValue) + 1;
         rolls.push(roll);
         total += roll;
       }
 
-      // Format the roll result message
+      /* Roll messages are stored as PLAIN TEXT - chat bodies are escaped on
+         render, so any markup here would show up literally in the chat. The
+         total is bolded client-side in loadChatMessages instead. */
       var rollsStr = rolls.join(', ');
       if (count > 1) {
-        var body = '🎲 ' + diceType + ' × ' + count + ': [' + rollsStr + '] = <strong>' + total + '</strong>';
+        var body = '🎲 ' + diceType + ' × ' + count + ': [' + rollsStr + '] = ' + total;
       } else {
-        var body = '🎲 ' + diceType + ': <strong>' + total + '</strong>';
+        var body = '🎲 ' + diceType + ': ' + total;
       }
 
       try {
@@ -2255,7 +2296,7 @@
     window.confirmAbandon = function(btn) {
       btn.outerHTML =
         '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
-          '<span style="font-size:0.75rem;color:#888;">Remove yourself?</span>' +
+          '<span style="font-size:0.75rem;color:#888;">Abandon for good? You cannot rejoin without permission or a new code.</span>' +
           '<button class="leave-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="abandonLobby()">Yes</button>' +
           '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelAbandon(this)">No</button>' +
         '</span>';
@@ -2331,25 +2372,6 @@
       } catch(e) {
         showToast('Warning: could not confirm abandon - refresh if needed.', true);
       }
-    };
-
-    window.deleteLobby = async function() {
-      if (!confirm('Close this lobby? A new lobby code will be generated, visible only to the new host. This cannot be undone.')) return;
-      if (!currentLobby) return;
-      var closedLobbyId = currentLobby.id;
-      sessionStorage.removeItem('activeLobbyId');
-      try {
-        await fetch(API_URL + '/api/lobbies/' + closedLobbyId, {
-          method: 'DELETE',
-          headers: { 'X-Auth-Key': currentUser.authKey }
-        });
-        // Remove from joined list immediately to reflect closed status
-        leftLobbyIds.add(closedLobbyId);
-        removeJoinedLobby(closedLobbyId);
-        backToList();
-        // Refresh the lobby list to show closed status immediately
-        loadLobbies();
-      } catch(e) { backToList(); }
     };
 
     // ===== LAUNCH ROOM =====

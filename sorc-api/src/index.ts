@@ -1352,15 +1352,16 @@ const ASSESSMENT_QUESTIONS = [
   // PAGE 1 - Dice, D100 System, Action Resolution
   { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, page: 1 },
   { q: "What does rolling two 0s on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, page: 1 },
-  { q: "When using the D100+D100 system, what is the minimum possible total result?", options: ["1", "2", "10", "0"], answer: 1, page: 1 },
-  { q: "What is the maximum possible result when using the D100+D100 system?", options: ["100", "150", "200", "198"], answer: 2, page: 1 },
+  { q: "What is the minimum possible total on a Divine Roll?", options: ["1", "2", "10", "0"], answer: 1, page: 1 },
+  { q: "What is the maximum possible total on a Divine Roll?", options: ["100", "150", "200", "198"], answer: 2, page: 1 },
   { q: "Which two dice combine to form a d100 roll in SORC?", options: ["Two D6s", "Two D10s (tens and ones)", "D20 and D6", "D12 and D8"], answer: 1, page: 1 },
   { q: "When rolling d100, your tens die shows 4 and your ones die shows 0. What is your result?", options: ["4", "400", "40", "100"], answer: 2, page: 1 },
   { q: "When rolling d100, the tens die shows 1 and the ones die shows 0. What is your result?", options: ["1", "100", "10", "01"], answer: 2, page: 1 },
   { q: "When rolling d100, the tens die shows 0 and the ones die shows 5. What is your result?", options: ["50", "0", "15", "5"], answer: 3, page: 1 },
   { q: "What is the maximum possible result on a single d100 roll?", options: ["99", "10", "50", "100"], answer: 3, page: 1 },
   { q: "What is the minimum possible result on a single d100 roll?", options: ["0", "1", "10", "5"], answer: 1, page: 1 },
-  { q: "Which dice roll is used for very rare items such as Divine and Legendary drops?", options: ["1D6", "1D4", "D100 + D100", "2D6"], answer: 2, page: 1 },
+  { q: "Which roll is used for very rare items such as Divine and Legendary drops?", options: ["1D6", "1D4", "The Divine Roll", "2D6"], answer: 2, page: 1 },
+  { q: "What is a Divine Roll made up of?", options: ["A single D100", "Two D100 results added together", "A D100 plus a flat 100", "Two D10 multiplied"], answer: 1, page: 1 },
   { q: "What does DIFS stand for in SORC?", options: ["Defense Index Factor Score", "Difficulty Score", "Damage Infliction Scale", "Dice Influence Factor"], answer: 1, page: 1 },
   { q: "In SORC, a D100 action roll must do what to the DIFS to succeed?", options: ["Fall below it", "Equal it exactly", "Meet or exceed it", "Exceed it by at least 5"], answer: 2, page: 1 },
   { q: "Items obtained through loot, discovery, and crafting are determined by which die?", options: ["D20", "D12", "D100", "D6"], answer: 2, page: 1 },
@@ -1559,9 +1560,9 @@ app.post('/api/assess/beta-submit', async (c) => {
   }
 
   let score = 0;
-  // Basic Rules pool is 83 questions deep and only 10 are ever shown per
+  // Basic Rules pool is 84 questions deep and only 10 are ever shown per
   // attempt, so revealing the correct answer for a missed question here
-  // only leaks one of 83 facts, not the whole quiz - safe to hand back for
+  // only leaks one of 84 facts, not the whole quiz - safe to hand back for
   // the review screen (see showBetaResult/renderWrongReview in assess.html).
   const wrong: Array<{ id: number; answer: number }> = [];
   for (const entry of answers) {
@@ -1609,9 +1610,9 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   let basicScore = 0;
   let codexScore = 0;
   // Review data for the result screen's wrong-answer breakdown (see
-  // renderWrongReview in assess.html). Basic Rules is an 83-question pool
+  // renderWrongReview in assess.html). Basic Rules is an 84-question pool
   // with only 10 drawn per attempt, so handing back the correct answer for
-  // a miss only leaks one of 83 facts - fine. GM Codex is the opposite: its
+  // a miss only leaks one of 84 facts - fine. GM Codex is the opposite: its
   // pool IS the 10 questions shown, every attempt, so revealing an answer
   // there would permanently burn that question for every future GM
   // attempt. Codex misses are flagged (id only, no answer) so the chosen
@@ -1764,7 +1765,12 @@ function resolveRollCodes(body: string): RollResult[] {
 
 function formatRolls(r: RollResult): string {
   const detail = r.count > 1 ? ` [${r.rolls.join(', ')}]` : '';
-  return `${r.count}${r.die} = ${r.total}${detail}`;
+  // The two-percentile roll is called the Divine Roll in the rules - it is
+  // named, never printed as a die spelling.
+  const label = r.die === 'd100+100'
+    ? (r.count > 1 ? `${r.count}× Divine Roll` : 'Divine Roll')
+    : `${r.count}${r.die}`;
+  return `${label} = ${r.total}${detail}`;
 }
 
 async function validateBoxSetCode(db: D1Database, code: string, userId: string): Promise<{ valid: boolean; error?: string }> {
@@ -3889,174 +3895,4 @@ app.get('/api/sorc-store', authMiddleware, async (c) => {
   }
   return c.json({ error: 'The SORC Store is not yet implemented.' }, 501);
 });
-
-// ─── GROUP FELLOWSHIP CHAT (stub, Pro) ──────────────────────────────────────
-// Per sorc-beyond.html's table: 1:1 fellowship messaging is free for everyone
-// (see /api/conversations above), but a multi-fellow group thread is a Pro
-// perk. Hosting (creating a group, adding members) requires the OWNER to be
-// Pro - same pattern as Lobbies (creator needs a box code, joiners don't).
-// Reading/posting in a group you already belong to needs no extra Pro check,
-// same as joining someone else's Lobby for free.
-
-async function ensureFellowshipGroupTables(db: D1Database) {
-  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_groups (
-    id TEXT PRIMARY KEY,
-    owner_uid TEXT NOT NULL,
-    name TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  )`).run().catch(() => {});
-  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_group_members (
-    id TEXT PRIMARY KEY,
-    group_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    added_at TEXT NOT NULL,
-    UNIQUE(group_id, user_id)
-  )`).run().catch(() => {});
-  await db.prepare(`CREATE TABLE IF NOT EXISTS fellowship_group_messages (
-    id TEXT PRIMARY KEY,
-    group_id TEXT NOT NULL,
-    user_id TEXT NOT NULL,
-    username TEXT NOT NULL,
-    body TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  )`).run().catch(() => {});
-}
-
-async function isAcceptedFellow(db: D1Database, uidA: string, uidB: string): Promise<boolean> {
-  const row = await db.prepare(
-    `SELECT id FROM fellowships WHERE status = 'accepted' AND ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?))`
-  ).bind(uidA, uidB, uidB, uidA).first();
-  return !!row;
-}
-
-app.post('/api/fellowships/groups', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  if (!(await isProMember(c.env.sorc_db, user))) {
-    return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
-  }
-  await ensureFellowshipGroupTables(c.env.sorc_db);
-  const { name, member_uids } = await c.req.json() as any;
-  const groupName = (name || '').trim().slice(0, 60) || 'Fellowship Group';
-  const uids: string[] = Array.isArray(member_uids) ? member_uids.filter((u: any) => typeof u === 'string') : [];
-  try {
-    for (const uid of uids) {
-      if (uid === user.id) continue;
-      if (!(await isAcceptedFellow(c.env.sorc_db, user.id, uid))) {
-        return c.json({ error: 'Every member must be an accepted Fellowship of yours.' }, 400);
-      }
-    }
-    const groupId = crypto.randomUUID();
-    const now = new Date().toISOString();
-    await c.env.sorc_db.prepare(`INSERT INTO fellowship_groups (id, owner_uid, name, created_at) VALUES (?, ?, ?, ?)`).bind(groupId, user.id, groupName, now).run();
-    await c.env.sorc_db.prepare(`INSERT INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`).bind(crypto.randomUUID(), groupId, user.id, now).run();
-    for (const uid of uids) {
-      if (uid === user.id) continue;
-      await c.env.sorc_db.prepare(`INSERT OR IGNORE INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`).bind(crypto.randomUUID(), groupId, uid, now).run();
-    }
-    return c.json({ success: true, group_id: groupId });
-  } catch (error: any) {
-    return c.json({ error: 'Failed to create group.', details: error.message }, 500);
-  }
-});
-
-app.get('/api/fellowships/groups', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  await ensureFellowshipGroupTables(c.env.sorc_db);
-  try {
-    const rows = await c.env.sorc_db.prepare(
-      `SELECT g.id, g.name, g.owner_uid, g.created_at,
-       (SELECT COUNT(*) FROM fellowship_group_members m2 WHERE m2.group_id = g.id) as member_count
-       FROM fellowship_groups g
-       JOIN fellowship_group_members m ON m.group_id = g.id
-       WHERE m.user_id = ?
-       ORDER BY g.created_at DESC`
-    ).bind(user.id).all();
-    return c.json({ groups: rows.results || [] });
-  } catch (error: any) {
-    return c.json({ error: 'Failed to load groups.', details: error.message }, 500);
-  }
-});
-
-app.post('/api/fellowships/groups/:id/members', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const groupId = c.req.param('id');
-  await ensureFellowshipGroupTables(c.env.sorc_db);
-  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
-  if (!group) return c.json({ error: 'Group not found.' }, 404);
-  if (group.owner_uid !== user.id) return c.json({ error: 'Only the group owner can add members.' }, 403);
-  if (!(await isProMember(c.env.sorc_db, user))) {
-    return c.json({ error: 'Group Fellowship chat requires Pro Membership (a registered box set).' }, 403);
-  }
-  const { uid } = await c.req.json() as any;
-  if (!uid) return c.json({ error: 'uid required.' }, 400);
-  if (!(await isAcceptedFellow(c.env.sorc_db, user.id, uid))) {
-    return c.json({ error: 'That member must be an accepted Fellowship of yours.' }, 400);
-  }
-  await c.env.sorc_db.prepare(`INSERT OR IGNORE INTO fellowship_group_members (id, group_id, user_id, added_at) VALUES (?, ?, ?, ?)`)
-    .bind(crypto.randomUUID(), groupId, uid, new Date().toISOString()).run();
-  return c.json({ success: true });
-});
-
-app.delete('/api/fellowships/groups/:id/members/:uid', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const groupId = c.req.param('id');
-  const targetUid = c.req.param('uid');
-  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
-  if (!group) return c.json({ error: 'Group not found.' }, 404);
-  // The owner can remove anyone; anyone else can only remove themselves (leave).
-  if (group.owner_uid !== user.id && targetUid !== user.id) {
-    return c.json({ error: 'Not authorized.' }, 403);
-  }
-  if (targetUid === group.owner_uid) return c.json({ error: 'The owner cannot be removed - delete the group instead.' }, 400);
-  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, targetUid).run();
-  return c.json({ success: true });
-});
-
-app.delete('/api/fellowships/groups/:id', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const groupId = c.req.param('id');
-  const group = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_groups WHERE id = ?`).bind(groupId).first() as any;
-  if (!group) return c.json({ error: 'Group not found.' }, 404);
-  if (group.owner_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the group owner can delete it.' }, 403);
-  await c.env.sorc_db.prepare(`DELETE FROM fellowship_groups WHERE id = ?`).bind(groupId).run();
-  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_members WHERE group_id = ?`).bind(groupId).run();
-  await c.env.sorc_db.prepare(`DELETE FROM fellowship_group_messages WHERE group_id = ?`).bind(groupId).run();
-  return c.json({ success: true });
-});
-
-app.get('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const groupId = c.req.param('id');
-  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
-  if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
-  const since = c.req.query('since');
-  let msgs: any;
-  if (since) {
-    msgs = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_group_messages WHERE group_id = ? AND created_at > ? ORDER BY created_at ASC LIMIT 100`).bind(groupId, since).all();
-  } else {
-    msgs = await c.env.sorc_db.prepare(`SELECT * FROM fellowship_group_messages WHERE group_id = ? ORDER BY created_at DESC LIMIT 80`).bind(groupId).all();
-    msgs.results = (msgs.results || []).reverse();
-  }
-  return c.json({ messages: msgs.results || [] });
-});
-
-app.post('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const groupId = c.req.param('id');
-  const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
-  if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
-  const allowed = await checkRateLimit(c.env.sorc_db, `groupchat:${user.id}`, 20, 60);
-  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
-  const { body } = await c.req.json() as any;
-  if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
-  if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
-  const check = filterContent(body.trim());
-  if (check.blocked) return c.json({ error: check.reason }, 400);
-  const msgId = crypto.randomUUID();
-  await c.env.sorc_db.prepare(
-    `INSERT INTO fellowship_group_messages (id, group_id, user_id, username, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(msgId, groupId, user.id, user.display_name || user.username, check.filtered, new Date().toISOString()).run();
-  return c.json({ success: true, message_id: msgId });
-});
-
 export default app;
