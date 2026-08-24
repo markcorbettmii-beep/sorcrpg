@@ -1618,7 +1618,7 @@
               '<div class="chat-tab-pane" id="chatPane-trade">' +
                 '<div class="chat-messages" id="tradeMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div></div>' +
                 '<div class="chat-input-row">' +
-                  '<input type="text" class="chat-input" id="tradeInput" placeholder="WTS:Item, WTB:Item, or WTT:Give>Want..." maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
+                  '<input type="text" class="chat-input" id="tradeInput" placeholder="WTT: MobCard, WTS: MobCard, WTB: MobCard" maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
                   '<button class="chat-send" onclick="sendTradeChat()">Post</button>' +
                 '</div>' +
               '</div>' +
@@ -2776,13 +2776,23 @@
             var tag = tagMatch ? tagMatch[1].toUpperCase() : '';
             var content = tagMatch ? tagMatch[2] : body;
 
+            // Link mob card references
+            var mobCardMap = {
+              'MobCard': '/content/sorc-cards/encounter-cards/Encounter-Card-Common-Mob-Skeleton-Soldier_20260610_104351_0000.png'
+            };
+            var linkedContent = esc(content);
+            for (var cardName in mobCardMap) {
+              var regex = new RegExp('\\b' + cardName + '\\b', 'g');
+              linkedContent = linkedContent.replace(regex, '<a href="' + mobCardMap[cardName] + '" target="_blank" style="color:#b9aa00;text-decoration:underline;">' + cardName + '</a>');
+            }
+
             var tagClass = 'msg-trade-tag msg-' + tag.toLowerCase();
             var tagEl = '<span class="' + tagClass + '">' + tag + ':</span>';
 
             return '<div class="chat-msg" data-msg-id="' + esc(m.id) + '">' +
               nameEl +
               ' ' + tagEl +
-              ' <span class="msg-body">' + esc(content) + '</span>' +
+              ' <span class="msg-body">' + linkedContent + '</span>' +
               ' <span class="msg-time">' + timeStr + '</span>' +
             '</div>';
           }).join('');
