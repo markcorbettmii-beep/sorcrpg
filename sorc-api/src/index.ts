@@ -1364,7 +1364,11 @@ app.post('/api/assess/beta-submit', async (c) => {
   }
 
   const role = calcPcRole(score);
-  return c.json({ score, role, passed: role !== 'FAIL', beta: true });
+  // Beta preview pass bar is 75% (8/10), stricter than the normal PC-BEG floor
+  // (6/10) used for the real, logged-in assessment - the preview only shows a
+  // pass message on a genuinely strong score.
+  const passed = score >= 8;
+  return c.json({ score, role, passed, beta: true });
 });
 
 app.post('/api/assess/submit', authMiddleware, async (c) => {

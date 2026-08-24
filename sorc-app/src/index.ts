@@ -2495,16 +2495,25 @@ app.get('/api/users/lookup', authMiddleware, async (c) => {
 
 // STUB: Room creation (the "Launch Room" button in lobbies.html has no
 // backing endpoint or client function yet - this wires up the access gate
-// ahead of the actual feature). Only the lobby's own GM may launch a Room
-// from it, and only if they're a Pro Member (see isProMember above).
+// ahead of the actual feature). A Lobby can be created by a Player OR a GM
+// (box set code required either way) - but a Room, where actual play
+// begins, always requires a GM specifically to launch it, whether or not
+// that GM is the one who created the Lobby. Pro Membership (a registered
+// box set) is required too.
 app.post('/api/rooms', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const { lobby_id } = await c.req.json().catch(() => ({} as any)) as any;
   if (!lobby_id) return c.json({ error: 'lobby_id required.' }, 400);
-  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobby_id).first() as any;
+  const lobby = await c.env.sorc_db.prepare(`SELECT id FROM lobbies WHERE id = ?`).bind(lobby_id).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-  if (!isPrivileged(user) && lobby.creator_uid !== user.id) {
-    return c.json({ error: 'Only this Lobby\'s GM may launch a Room.' }, 403);
+  if (!isPrivileged(user)) {
+    const membership = await c.env.sorc_db.prepare(
+      `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobby_id, user.id).first();
+    if (!membership) return c.json({ error: 'You must be a member of this Lobby to launch a Room from it.' }, 403);
+    if (user.sorc_role !== 'GM-ADV') {
+      return c.json({ error: 'A GM is required to launch a Room - Players cannot start one, even from a Lobby they created.' }, 403);
+    }
   }
   if (!(await isProMember(c.env.sorc_db, user))) {
     return c.json({ error: 'Launching a Room requires Pro Membership (a registered box set).' }, 403);
