@@ -62,6 +62,16 @@ app.use('*', cors({
   credentials: true,
 }));
 
+// Every API response must be JSON. Without this an uncaught error returns
+// Hono's plain-text 500, the browser's res.json() throws, and the UI reports
+// it as a connection failure - hiding the real cause.
+app.onError((err: any, c: any) => {
+  console.error('Unhandled error:', c.req.method, c.req.path, err?.stack || err);
+  return c.json({ error: 'Server error.', details: err?.message || String(err) }, 500);
+});
+
+app.notFound((c: any) => c.json({ error: 'Not found.', path: c.req.path }, 404));
+
 // In-memory rate limiter for auth endpoints (resets per Worker instance; good-enough for basic abuse prevention)
 const authRateLimit = new Map<string, { count: number; resetAt: number }>();
 

@@ -350,6 +350,10 @@
     .lfm-badge:hover { background: #2a1a60; color: #d4b8ff; }
     .lfg-badge { display: inline-block; background: #001a10; color: #50d080; border: 1px solid #1a6a40; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-right: 0.2rem; transition: background 0.15s; vertical-align: middle; }
     .lfg-badge:hover { background: #002a1a; color: #70f0a0; }
+    .wts-badge { display: inline-block; background: #1a1200; color: #e0c040; border: 1px solid #a07820; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-right: 0.2rem; transition: background 0.15s; vertical-align: middle; }
+    .wts-badge:hover { background: #2a1e00; color: #f0d868; }
+    .wtb-badge { display: inline-block; background: #001428; color: #50a0e0; border: 1px solid #1a4a7a; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-right: 0.2rem; transition: background 0.15s; vertical-align: middle; }
+    .wtb-badge:hover { background: #002240; color: #70c0ff; }
     .sum-badge { display: inline-block; background: #1a1200; color: #b9aa00; border: 1px solid #a07820; border-radius: 4px; padding: 1px 6px; font-size: 0.74rem; font-weight: bold; margin-right: 0.2rem; vertical-align: middle; }
     .sum-accept-btn { display: inline-block; background: #1a5a1a; color: #90ee90; border: 1px solid #2a8a2a; border-radius: 4px; padding: 1px 8px; font-size: 0.74rem; font-weight: bold; cursor: pointer; margin-left: 0.4rem; vertical-align: middle; }
     .sum-accept-btn:hover { background: #236b23; }
@@ -446,6 +450,10 @@
     body.lawful-mode .lfg-badge:hover { background: #c8ecd4; }
     body.lawful-mode .lfm-badge { background: #efe8ff; color: #5a30b0; border-color: #b090ff; }
     body.lawful-mode .lfm-badge:hover { background: #ddd0ff; }
+    body.lawful-mode .wts-badge { background: #fdf3d0; color: #8a6800; border-color: #d0a840; }
+    body.lawful-mode .wts-badge:hover { background: #f8e8b0; }
+    body.lawful-mode .wtb-badge { background: #e0eefc; color: #1a5090; border-color: #7fb0e0; }
+    body.lawful-mode .wtb-badge:hover { background: #c8e0f8; }
     body.lawful-mode .modal-box .modal-warn { color: #8a5800; background: #fdf3e0; border-color: #e0b060; }
     body.lawful-mode .needs-assess-note { background: #fdf3e0; border-color: #e0b060; color: #8a5800; }
     body.lawful-mode .rc-no-btn { background: #fbe6e4; }
@@ -855,6 +863,8 @@
         '&#9878; You must choose GM or PC track before answering Question 1 - your track locks in on your first answer and cannot be changed mid-assessment',
         '&#9878; Assessments expire after 30 days - you will be blocked from lobbies until you reassess and restore your role',
         '&#9878; Failing a reassessment downgrades your role - GM becomes PC or Civilian depending on score, so study before you retake',
+        '&#128176; New: Players can also post WTB: or WTS: tags in World Chat to advertise an Essentia Exchange trade (e.g. WTS:RareHelm-STR) - 40 characters max',
+        '&#128176; Click any WTB: or WTS: badge in World Chat to message that Player directly and work out the trade',
       ];
       var html = msgs.map(function(m) {
         return '<span class="ticker-item"><span class="ticker-bullet">&#9670;</span>' + m + '</span>';
@@ -967,7 +977,7 @@
       if (!listEl) return;
       try {
         var res = await fetch(API_URL + '/api/lobbies', { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.error && data.error.includes('assess')) {
           listEl.innerHTML = '<div class="needs-assess-note">&#128274; You must complete the <a href="assess.html">Role Assessment</a> before joining or creating lobbies.</div>';
           return;
@@ -1125,6 +1135,17 @@
         '</div>';
     }
 
+    // Reads a response as JSON, but never lets a non-JSON body (a plain-text
+    // 500, an HTML error page) surface as a misleading "Connection error".
+    async function readJson(res) {
+      var text = await res.text();
+      try { return JSON.parse(text); }
+      catch (e) {
+        return { error: 'Server returned ' + res.status + ' ' + res.statusText +
+                        (text ? ': ' + text.slice(0, 160) : ' (empty response)') };
+      }
+    }
+
     // ===== CREATE =====
     window.createLobby = async function() {
       var moduleEl = document.getElementById('lobbyModule');
@@ -1144,14 +1165,14 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify(body)
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Lobby created! Code: ' + (data.lobby_code || '');
           setTimeout(function() { openLobby(data.lobby_id); }, 600);
         } else if (data.needs_reassess) {
           msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
-      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
     // ===== GENERATE BOX CODE (admin/owner) =====
@@ -1164,7 +1185,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({})
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           resultEl.className = 'l-msg ok';
           resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
@@ -1181,7 +1202,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({})
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           resultEl.className = 'l-msg ok';
           resultEl.innerHTML = 'Code: <strong style="font-size:1rem;letter-spacing:0.1em;">' + esc(data.code) + '</strong> &nbsp;<button onclick="navigator.clipboard.writeText(\'' + esc(data.code) + '\').then(function(){document.getElementById(\'genGmCodeResult\').textContent=\'Copied!\'})" style="padding:2px 10px;border:1px solid #4caf50;border-radius:4px;background:none;color:#4caf50;cursor:pointer;font-size:0.75rem;">Copy</button>';
@@ -1202,14 +1223,14 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ lobby_code: code })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Joined!';
           setTimeout(function() { openLobby(data.lobby_id); }, 400);
         } else if (data.needs_reassess) {
           msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
-      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
     window.joinLobby = async function(lobbyId) {
@@ -1220,7 +1241,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ lobby_id: lobbyId })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success || (data.error && data.error.toLowerCase().indexOf('already') !== -1)) {
           trackJoinedLobby(lobbyId);
           setTimeout(function() { openLobby(lobbyId); }, 900);
@@ -1262,7 +1283,7 @@
       app.innerHTML = '<p style="color:#555;text-align:center;padding:2rem;">Loading lobby...</p>';
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId, { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         if (!data.lobby) {
           sessionStorage.removeItem('activeLobbyId');
           showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
@@ -1446,10 +1467,10 @@
                 '<div class="world-tab-messages" id="worldChatMessages"><div style="color:#3a2a5a;font-size:0.8rem;text-align:center;padding:1.25rem;">Loading world chat...</div></div>' +
                 (hasGMRights
                   ? '<div class="chat-input-row" id="worldChatInputRow">' +
-                      '<input type="text" class="chat-input" id="worldChatInput" placeholder="Post to world (LFM: or LFG:)..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendWorldChat()" />' +
+                      '<input type="text" class="chat-input" id="worldChatInput" placeholder="Post to world (LFM:, LFG:, WTB:, or WTS:)..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendWorldChat()" />' +
                       '<button class="chat-send" onclick="sendWorldChat()">Post</button>' +
                     '</div>'
-                  : '<div style="padding:0.5rem 1rem;color:#3a2a5a;font-size:0.74rem;border-top:1px solid #1a1a2a;flex-shrink:0;">Read only - respond via LFM/LFG links above</div>') +
+                  : '<div style="padding:0.5rem 1rem;color:#3a2a5a;font-size:0.74rem;border-top:1px solid #1a1a2a;flex-shrink:0;">Read only - respond via LFM/LFG/WTB/WTS links above</div>') +
               '</div>' +
               /* MESSAGES: lobby-scoped direct messages */
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
@@ -1500,7 +1521,7 @@
       if (!msgEl) return;
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         if (res.status === 403) {
           /* Kicked or not a member - go back to list, don't rejoin */
           backToList();
@@ -1595,7 +1616,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ body: body })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.error) { showToast(data.error, true); input.value = body; return; }
         loadChatMessages(currentLobby.id);
       } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
@@ -1763,7 +1784,7 @@
       if (!currentLobby || !currentUser) return;
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id, { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         if (!data.members) return;
         var membersEl = document.getElementById('membersList');
         if (!membersEl) return;
@@ -1912,7 +1933,7 @@
           method: 'PATCH',
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) openLobby(currentLobby.id);
         else alert(data.error || 'Could not mute member.');
       } catch(e) { showToast('Could not reach server.', true); }
@@ -1926,7 +1947,7 @@
           method: 'DELETE',
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) openLobby(currentLobby.id);
         else alert(data.error || 'Could not remove member.');
       } catch(e) { showToast('Could not reach server.', true); }
@@ -2029,7 +2050,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ username: username })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         var listEl = document.getElementById('invitePoolList');
         if (data.success) {
           /* Flash the row green briefly */
@@ -2098,7 +2119,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ username: username })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           msgEl.style.color = '#4caf50'; msgEl.textContent = 'Invite sent to ' + username + '!';
           input.value = '';
@@ -2234,7 +2255,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ room_name: roomName.trim() })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success && data.room_id) {
           window.location.href = 'room.html?id=' + data.room_id;
         } else { showToast(data.error || 'Could not launch room.', true); }
@@ -2282,25 +2303,35 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ reason: selectedReportReason, details: details })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Report submitted. This member has been blocked.';
           setTimeout(closeReportModal, 1500);
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to submit report.'; }
-      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Connection error.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
     // ===== WORLD CHAT =====
-    function parseWorldBody(body, msgId, summonOnclick, lfgOnclick) {
+    function parseWorldBody(body, msgId, summonOnclick, lfgOnclick, tradeOnclick) {
       var sumBadgeOnclick = summonOnclick
         ? summonOnclick
         : "respondToWorldMsg('" + msgId + "','SUM')";
       var lfgBadgeOnclick = lfgOnclick
         ? lfgOnclick
         : "respondToWorldMsg('" + msgId + "','LFG')";
+      // WTB:/WTS: (want to buy/sell, Essentia Exchange) have no lobby-summon
+      // equivalent - clicking one just opens a direct conversation with the
+      // poster so the two of you can work out the trade.
+      var tradeBadgeOnclick = tradeOnclick || null;
       return esc(body)
         .replace(/LFM:/g, '<span class="lfm-badge" onclick="respondToWorldMsg(\'' + msgId + '\',\'LFM\')">LFM:</span>')
         .replace(/LFG:/g, '<span class="lfg-badge" onclick="' + lfgBadgeOnclick.replace(/"/g, '&quot;') + '">LFG:</span>')
+        .replace(/WTS:/g, tradeBadgeOnclick
+          ? '<span class="wts-badge" onclick="' + tradeBadgeOnclick.replace(/"/g, '&quot;') + '">WTS:</span>'
+          : '<span class="wts-badge">WTS:</span>')
+        .replace(/WTB:/g, tradeBadgeOnclick
+          ? '<span class="wtb-badge" onclick="' + tradeBadgeOnclick.replace(/"/g, '&quot;') + '">WTB:</span>'
+          : '<span class="wtb-badge">WTB:</span>')
         .replace(/SUM:/g, '<span class="sum-badge" onclick="' + sumBadgeOnclick.replace(/"/g, '&quot;') + '">SUM:</span>');
     }
 
@@ -2310,7 +2341,7 @@
       if (!msgEl || !currentUser) return;
       try {
         var res = await fetch(API_URL + '/api/world-chat', { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         var msgs = data.messages || [];
         if (msgs.length === 0) {
           msgEl.innerHTML = '<div class="world-chat-empty">No world chat messages yet. Active lobby hosts can post here.</div>';
@@ -2354,7 +2385,10 @@
             var lfgOnclick = (canSummon && m.sender_uid)
               ? "summonPlayer('" + esc(m.sender_uid) + "','" + esc(displayName) + "','" + esc(hostLobbyId) + "')"
               : null;
-            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick, lfgOnclick);
+            var tradeOnclick = (!isSelf && m.sender_uid)
+              ? "window.location.href='inbox.html?to=" + esc(m.sender_uid) + "'"
+              : null;
+            var bodyHtml = parseWorldBody(rawBody, m.id, summonOnclick, lfgOnclick, tradeOnclick);
             var nameEl = '<span class="' + nameClass + '">' + esc(displayName || 'Unknown') + '</span>';
             if (isActivity) {
               return '<div class="world-msg is-activity">&#8894; ' + bodyHtml + '<span class="wmsg-time">' + timeAgo(m.created_at) + '</span></div>';
@@ -2382,11 +2416,11 @@
           var wcInput = document.getElementById('worldChatInput');
           if (wcInput) {
             if (isActiveHost) {
-              wcInput.placeholder = 'Post to world (LFM: or LFG:)...';
+              wcInput.placeholder = 'Post to world (LFM:, LFG:, WTB:, or WTS:)...';
               wcInput.maxLength = 400;
               wcInput.dataset.hostOnly = 'false';
             } else {
-              wcInput.placeholder = 'LFG:YourTag (e.g. LFG:LVL5-Lock-Hag)';
+              wcInput.placeholder = 'LFG:/WTB:/WTS:YourTag (e.g. WTS:RareHelm-STR)';
               wcInput.maxLength = 40;
               wcInput.dataset.hostOnly = 'true';
             }
@@ -2401,10 +2435,10 @@
       var body = input.value.trim();
       if (!body) return;
 
-      // Non-hosts may only post LFG: tags
+      // Non-hosts may only post LFG:/WTB:/WTS: tags
       if (input.dataset.hostOnly === 'true') {
-        if (!/^LFG:/i.test(body)) { showToast('Only LFG: posts are allowed. Start your message with LFG:', true); return; }
-        if (body.length > 40) { showToast('LFG: tags must be 40 characters or less.', true); return; }
+        if (!/^(LFG|WTB|WTS):/i.test(body)) { showToast('Only LFG:, WTB:, or WTS: posts are allowed.', true); return; }
+        if (body.length > 40) { showToast('LFG:/WTB:/WTS: tags must be 40 characters or less.', true); return; }
       }
 
       // SUM:Name command - resolve to UID and send summon directly
@@ -2440,7 +2474,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ body: body })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.error) { alert(data.error); input.value = body; return; }
         loadWorldChat();
       } catch(e) {}
@@ -2454,7 +2488,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ type: type })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           loadWorldChat();
         } else { alert(data.error || 'Could not respond.'); }
@@ -2483,7 +2517,7 @@
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
         if (!res.ok) { el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">Could not load messages.</div>'; return; }
-        var data = await res.json();
+        var data = await readJson(res);
         var msgs = data.messages || [];
         if (msgs.length === 0) {
           el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div>';
@@ -2543,7 +2577,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ to_uid: window._lobbyMsgTargetUid, body: body })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           input.value = '';
           closeLobbyMsgModal();
@@ -2575,7 +2609,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ new_host_uid: uid })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (data.success) {
           showToast(name + ' is now the host.');
           openLobby(lobbyId);
@@ -2640,7 +2674,7 @@
       if (document.getElementById('activeSummonCard')) return;
       try {
         var res = await fetch(API_URL + '/api/summons/pending', { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         var summons = data.summons || [];
         if (summons.length === 0) return;
         var s = summons[0];
@@ -2677,7 +2711,7 @@
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
           body: JSON.stringify({ accept: accept })
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (accept && data.lobby_id) {
           showToast('Joining lobby...');
           setTimeout(function() { openLobby(data.lobby_id); }, 500);
@@ -2907,7 +2941,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey }
         });
-        var data = await res.json();
+        var data = await readJson(res);
         if (!data.success) { showToast(data.error || 'Could not start ready check.', true); return; }
         currentReadyCheckId = data.check_id;
         readyCheckInitiatedAt = new Date().toISOString();
@@ -2972,7 +3006,7 @@
       if (!el) return;
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', { headers: { 'X-Auth-Key': currentUser.authKey } });
-        var data = await res.json();
+        var data = await readJson(res);
         var msgs = (data.messages || []).filter(function(m) { return m.body && m.body.indexOf('⬡ ') === 0; });
         if (msgs.length === 0) {
           el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No activity yet.</div>';

@@ -56,6 +56,16 @@ app.use('*', cors({
   credentials: true,
 }));
 
+// Every API response must be JSON. Without this an uncaught error returns
+// Hono's plain-text 500, the browser's res.json() throws, and the UI reports
+// it as a connection failure - hiding the real cause.
+app.onError((err: any, c: any) => {
+  console.error('Unhandled error:', c.req.method, c.req.path, err?.stack || err);
+  return c.json({ error: 'Server error.', details: err?.message || String(err) }, 500);
+});
+
+app.notFound((c: any) => c.json({ error: 'Not found.', path: c.req.path }, 404));
+
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
