@@ -1096,7 +1096,9 @@ app.put('/api/profile', authMiddleware, async (c) => {
 // ===== MIGRATIONS =====
 
 // Migration endpoint to add password_reset_required column and force password reset
-app.post('/api/admin/migrate-bcrypt', async (c) => {
+app.post('/api/admin/migrate-bcrypt', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
   try {
     // Add password_reset_required column if it doesn't exist
     await c.env.sorc_db.prepare(`
