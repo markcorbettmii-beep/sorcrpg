@@ -1001,6 +1001,16 @@ app.post('/api/gm/invitations/respond', authMiddleware, async (c) => {
   }
 });
 
+// STUB: Trials leaderboard. Basic members see the top 100, Pro Members (a
+// registered box set) see the top 200 - per sorc-beyond.html's own Basic vs.
+// Pro comparison table. Ranking metric/computation TBD; this wires up the
+// depth gate ahead of the actual feature.
+app.get('/api/leaderboard', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const depth = (await isProMember(c.env.sorc_db, user)) ? 200 : 100;
+  return c.json({ error: 'Leaderboard is not yet implemented.', depth }, 501);
+});
+
 app.get('/api/forum/recent-visitors', async (c) => {
   try {
     const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
@@ -1568,6 +1578,18 @@ function isPrivileged(user: any): boolean {
   return user.role === 'ADMIN' || user.role === 'OWNER'
     || OWNER_EMAILS.includes(user.email)
     || ADMIN_EMAILS.includes(user.email);
+}
+
+// Pro Membership = owning a claimed box set code (see BOX SET CODE VALIDATION
+// above). There is no separate purchase/subscription flow yet - claiming a
+// code (admin-generated, server-validated, see /api/box-codes/generate and
+// validateBoxSetCode) is the only way to become Pro. No client-writable field
+// exists for this, on purpose - do not add one without a real redemption or
+// payment flow behind it.
+async function isProMember(db: D1Database, user: any): Promise<boolean> {
+  if (isPrivileged(user)) return true;
+  const owned = await db.prepare(`SELECT id FROM box_set_codes WHERE owner_uid = ? LIMIT 1`).bind(user.id).first();
+  return !!owned;
 }
 
 app.get('/api/lobbies', authMiddleware, async (c) => {
@@ -2470,6 +2492,25 @@ app.get('/api/users/lookup', authMiddleware, async (c) => {
 });
 
 // ─── ROOMS ────────────────────────────────────────────────────────────────────
+
+// STUB: Room creation (the "Launch Room" button in lobbies.html has no
+// backing endpoint or client function yet - this wires up the access gate
+// ahead of the actual feature). Only the lobby's own GM may launch a Room
+// from it, and only if they're a Pro Member (see isProMember above).
+app.post('/api/rooms', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { lobby_id } = await c.req.json().catch(() => ({} as any)) as any;
+  if (!lobby_id) return c.json({ error: 'lobby_id required.' }, 400);
+  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobby_id).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (!isPrivileged(user) && lobby.creator_uid !== user.id) {
+    return c.json({ error: 'Only this Lobby\'s GM may launch a Room.' }, 403);
+  }
+  if (!(await isProMember(c.env.sorc_db, user))) {
+    return c.json({ error: 'Launching a Room requires Pro Membership (a registered box set).' }, 403);
+  }
+  return c.json({ error: 'Room creation is not yet implemented.' }, 501);
+});
 
 app.get('/api/rooms/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
