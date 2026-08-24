@@ -981,7 +981,7 @@
               '<div class="feature-card"><div class="feature-icon">&#128101;</div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#9876;&#65039;</div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#128172;</div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#b9aa00;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#b9aa00;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
-              '<div class="feature-card"><div class="feature-icon">&#128682;</div><h3>Leave vs. Abandon</h3><p><strong style="color:#b9aa00;">Leave</strong> is free and reversible. Step out of a lobby whenever you like and walk back in at will, in the same role you left with.<br/><br/><strong style="color:#b9aa00;">Abandon</strong> is final. You give the lobby up and cannot rejoin it without the host\'s permission or a new code. If the host abandons, the lobby passes to the next GM in it; with no GM present it passes to the next member who joined, until a GM arrives. A lobby closes on its own once its last member is gone.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon">&#128682;</div><h3>Leave vs. Abandon</h3><p><strong style="color:#b9aa00;">Leave</strong> is free for everyone, the lobby starter included. Step out whenever you like and walk back in at will, in the same role you left with.<br/><br/><strong style="color:#b9aa00;">Abandon</strong> belongs to the lobby starter alone. It gives the lobby up for good &mdash; they cannot rejoin without permission or a new code. The lobby passes to the next GM in it; with no GM present it passes to the next member who joined, until a GM arrives. There is no closing a lobby: one closes on its own once its last member is gone.</p></div>' +
               '<div class="feature-card"><div class="feature-icon">&#128295;</div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100, and the Divine Roll), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
             '</div>' +
             '<button class="section-scroll-btn" aria-label="Next" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="12,9 39,24 12,39"></polygon></svg></button>' +
@@ -1502,13 +1502,13 @@
       var launchBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">&#127514; Launch Room</button>' : '';
       var inviteBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
       var readyCheckBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      /* Leave is for everyone, creator included - step out and come back at
+         will. Abandon is the creator's alone: it gives the lobby up for good
+         and hands it to the next host. There is no Close. */
       var leaveBtn = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
-        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>' +
-          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
-      /* No "Close Lobby" button by design - Abandon is the only way out for a
-         host. A lobby closes on its own once its last member is gone. */
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>';
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
           + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
@@ -3297,7 +3297,7 @@
       var ib = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">&#128100; Invite</button>' : '';
       var lvb = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
-        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>';
       container.innerHTML = lb + rcb + ib + lvb;
     }
 

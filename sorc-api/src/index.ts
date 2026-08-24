@@ -147,6 +147,16 @@ async function ensureProfileColumns(db: D1Database) {
 
 // Abandon bans. Created lazily, so every reader must make sure it exists first
 // rather than assuming /leave has run at least once on this database.
+// TEMPORARY - beta guest access. Authoritative guest check: the email domain
+// is assigned by /api/auth/guest and cannot be claimed through registration,
+// unlike the "Guest x" display name. Guests are full Players inside a lobby
+// (chat, dice, mute, kick, report all apply to them normally) but hold no real
+// account, so account-level social features are closed to them.
+const GUEST_EMAIL_DOMAIN = '@guest.sorcrpg.local';
+function isGuestUser(user: any): boolean {
+  return typeof user?.email === 'string' && user.email.endsWith(GUEST_EMAIL_DOMAIN);
+}
+
 async function ensureLobbyBansTable(db: D1Database) {
   await db.prepare(`
     CREATE TABLE IF NOT EXISTS lobby_bans (
@@ -1101,9 +1111,17 @@ app.post('/api/fellowships/request', authMiddleware, async (c) => {
   const { receiverUid } = await c.req.json();
   if (!receiverUid) return c.json({ error: 'receiverUid required' }, 400);
   if (receiverUid === user.id) return c.json({ error: 'Cannot send request to yourself' }, 400);
+  // Fellowships are account-level and outlive a lobby, so they require a real
+  // login on both sides. A guest holds no account to attach one to.
+  if (isGuestUser(user)) {
+    return c.json({ error: 'Fellowship requires login. Create an account to add fellows.', requires_login: true }, 403);
+  }
   try {
-    const receiver = await c.env.sorc_db.prepare('SELECT id, display_name, username FROM users WHERE id = ?').bind(receiverUid).first() as any;
+    const receiver = await c.env.sorc_db.prepare('SELECT id, email, display_name, username FROM users WHERE id = ?').bind(receiverUid).first() as any;
     if (!receiver) return c.json({ error: 'User not found' }, 404);
+    if (isGuestUser(receiver)) {
+      return c.json({ error: 'Fellowship requires login. This player is a guest and has no account yet.', requires_login: true }, 403);
+    }
     const existing = await c.env.sorc_db.prepare(
       `SELECT id FROM fellowships WHERE (sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)`
     ).bind(user.id, receiverUid, receiverUid, user.id).first();
@@ -2172,8 +2190,17 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
 
     const now = new Date().toISOString();
 
-    // If abandoning (not just leaving), ban the user from rejoining
-    if (isAbandon && lobby.creator_uid === user.id) {
+    // Abandon belongs to the lobby's creator alone. Everyone else only ever
+    // leaves, and leaving is free - they can walk back in at will. Reject an
+    // abandon from a non-creator outright rather than quietly downgrading it
+    // to a leave, so the client can never strand someone on a wrong rule.
+    if (isAbandon && lobby.creator_uid !== user.id) {
+      return c.json({ error: 'Only the lobby creator can abandon a lobby. You can leave and return at will.' }, 403);
+    }
+
+    // Abandoning gives the lobby up for good: the creator cannot rejoin
+    // without permission or a new code.
+    if (isAbandon) {
       const banId = crypto.randomUUID();
       await c.env.sorc_db.prepare(
         `INSERT INTO lobby_bans (id, lobby_id, user_id, banned_at, reason) VALUES (?, ?, ?, ?, ?)`
@@ -2225,15 +2252,9 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   }
 });
 
-app.delete('/api/lobbies/:id', authMiddleware, async (c) => {
-  const user = c.get('user') as any;
-  const lobbyId = c.req.param('id');
-  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  if (!lobby) return c.json({ error: 'Lobby not found' }, 404);
-  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the creator can close this lobby.' }, 403);
-  await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), lobbyId).run();
-  return c.json({ success: true });
-});
+// There is no "close a lobby" endpoint. Closing is not a thing a person does:
+// a lobby closes itself in /leave once its last member is gone. A creator who
+// is done with a lobby abandons it, which hands it to the next in line.
 
 app.post('/api/lobbies/:id/invite', authMiddleware, async (c) => {
   const user = c.get('user') as any;
