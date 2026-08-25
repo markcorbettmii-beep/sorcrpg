@@ -4428,6 +4428,9 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
       if (held.bound) {
         return c.json({ error: `${linkedCard.item_name} is Bound and cannot be traded.` }, 403);
       }
+      if (held.locked) {
+        return c.json({ error: `${linkedCard.item_name} is locked in your Vault. Unlock it to trade it.`, locked: true }, 403);
+      }
       if (held.listing_id) {
         return c.json({ error: `${linkedCard.item_name} is already listed on the Exchange.` }, 409);
       }
@@ -5117,6 +5120,9 @@ app.post('/api/exchange/list', authMiddleware, async (c) => {
     if (held.bound) {
       return c.json({ error: `${card.item_name} is Bound and cannot be traded.` }, 403);
     }
+    if (held.locked) {
+      return c.json({ error: `${card.item_name} is locked in your Vault. Unlock it to trade it.`, locked: true }, 403);
+    }
     if (held.listing_id) {
       return c.json({ error: `${card.item_name} is already listed on the Exchange.` }, 409);
     }
@@ -5291,7 +5297,7 @@ app.post('/api/exchange/cancel', authMiddleware, async (c) => {
 //   5. Anything that must happen once is guarded by a consumed flag.
 
 async function ensureOwnershipColumns(db: any) {
-  for (const col of ['ref_code TEXT', 'bound INTEGER NOT NULL DEFAULT 0', 'listing_id TEXT']) {
+  for (const col of ['ref_code TEXT', 'bound INTEGER NOT NULL DEFAULT 0', 'listing_id TEXT', 'locked INTEGER NOT NULL DEFAULT 0']) {
     try {
       await db.prepare(`ALTER TABLE member_inventory ADD COLUMN ${col}`).run();
     } catch (e) {
@@ -5362,7 +5368,7 @@ app.get('/api/cards/mine', authMiddleware, async (c) => {
 
     const rows = await c.env.sorc_db.prepare(
       `SELECT inv.ref_code, inv.qty, inv.bound, inv.listing_id,
-              card.item_name, card.card_type, card.item_rank, card.coin_value, card.stats
+              inv.locked, card.item_name, card.card_type, card.item_rank, card.coin_value, card.stats
        FROM member_inventory inv
        LEFT JOIN item_cards card ON UPPER(card.ref_code) = UPPER(inv.ref_code)
        WHERE ${whereSql}
@@ -5381,8 +5387,9 @@ app.get('/api/cards/mine', authMiddleware, async (c) => {
         coin_value: r.coin_value,
         qty: r.qty,
         bound: !!r.bound,
+        locked: !!r.locked,
         listed: !!r.listing_id,
-        tradeable: !r.bound && !r.listing_id,
+        tradeable: !r.bound && !r.locked && !r.listing_id,
         art,
       };
     });
@@ -5457,6 +5464,7 @@ async function handOverCard(db: any, fromUid: string, toUid: string, itemName: s
   ).bind(fromUid, itemName).first() as any;
   if (!row) return { ok: false, reason: `They no longer hold ${itemName}.` };
   if (row.bound) return { ok: false, reason: `${itemName} is Bound and cannot be traded.` };
+  if (row.locked) return { ok: false, reason: `${itemName} is locked in their Vault.` };
   if (row.listing_id) return { ok: false, reason: `${itemName} is listed on the Exchange.` };
 
   const taken = await db.prepare(
@@ -5713,6 +5721,57 @@ app.get('/api/lobbies/:id/room', authMiddleware, async (c) => {
     });
   } catch (error: any) {
     return c.json({ error: 'Could not read that lobby.' }, 500);
+  }
+});
+
+// ─── THE VAULT: LOCKING ──────────────────────────────────────────────────────
+// Bound and Locked are different things and both matter.
+//
+//   Bound   the game's rule. A Card becomes Bound when it is equipped,
+//           enhanced or socketed, and the card face says so. Nothing the
+//           owner can undo here.
+//   Locked  the owner's own decision. A deliberate second step before parting
+//           with something valuable — a locked Card cannot be listed on the
+//           Exchange or handed over at a table until it is unlocked.
+//
+// Locking is what makes the Vault a safe rather than a shelf.
+app.post('/api/cards/lock', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'the Vault');
+  if (gated) return gated;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    await ensureOwnershipColumns(c.env.sorc_db);
+    const { ref_code, locked } = await c.req.json() as any;
+    if (!ref_code) return c.json({ error: 'Which Card?' }, 400);
+
+    // Holding is re-read from the server's own row, never taken on trust.
+    const held = await ownedCardRow(c.env.sorc_db, user.id, ref_code) as any;
+    if (!held) return c.json({ error: `You do not hold #${ref_code}.` }, 403);
+
+    const wantLocked = locked === true || locked === 1 || locked === 'true';
+
+    // A Card sitting on the Exchange is already committed. Locking it there
+    // would be a contradiction, so say what to do instead of half-doing it.
+    if (wantLocked && held.listing_id) {
+      return c.json({
+        error: `${held.item_name} is listed on the Exchange. Withdraw the listing before locking it.`,
+      }, 409);
+    }
+
+    const done = await c.env.sorc_db.prepare(
+      `UPDATE member_inventory SET locked = ? WHERE id = ? AND user_id = ?`
+    ).bind(wantLocked ? 1 : 0, held.id, user.id).run();
+    if (!done.meta || done.meta.changes !== 1) {
+      return c.json({ error: 'Could not change that Card.' }, 409);
+    }
+
+    return c.json({
+      success: true, ref_code: held.ref_code, item_name: held.item_name,
+      locked: wantLocked,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not change that Card.', details: error.message }, 500);
   }
 });
 

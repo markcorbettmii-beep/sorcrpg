@@ -51,6 +51,11 @@
     .ch-flag.bound { color:#c87d00; }
     .ch-flag.listed { color:#6a9ad0; }
 
+    .ch-flag.vaulted { color:#b9aa00; }
+    .ch-lock { margin-top:0.4rem; width:100%; padding:0.28rem; border-radius:6px; border:1px solid #333;
+               background:#181818; color:#999; font-size:0.7rem; font-weight:bold; cursor:pointer; }
+    .ch-lock:hover { background:#232323; color:#ddd; }
+    body.lawful-mode .ch-lock { background:#f2efe8; border-color:#ddd; color:#555; }
     .ch-pager { display:flex; align-items:center; justify-content:center; gap:0.6rem; margin-top:1rem; color:#777; font-size:0.78rem; }
     .ch-pager button { background:#181818; border:1px solid #333; color:#aaa; border-radius:6px; padding:0.25rem 0.7rem; cursor:pointer; }
     .ch-pager button:disabled { opacity:0.35; cursor:not-allowed; }
@@ -121,7 +126,7 @@
           <div class="ch-stat-value" id="chWorth">&mdash;</div>
         </div>
         <div class="ch-stat">
-          <div class="ch-stat-label">On the Exchange</div>
+          <div class="ch-stat-label">Locked</div>
           <div class="ch-stat-value" id="chListed">&mdash;</div>
         </div>
       </div>
@@ -209,7 +214,7 @@
       var worth = 0, listed = 0;
       (data.cards || []).forEach(function(c) {
         worth += (c.coin_value || 0) * (c.qty || 1);
-        if (c.listed) listed++;
+        if (c.locked) listed++;
       });
       /* Worth and listed count reflect the page in view; the catalog is small
          enough today that this is the whole collection, and the label says
@@ -244,13 +249,20 @@
           ? '<img class="ch-art" src="' + esc(c.art) + '" alt="" loading="lazy" />'
           : '<div class="ch-art-ph">&#127183;</div>';
         var flag = c.bound ? '<div class="ch-flag bound">&#128274; Bound</div>'
-                 : (c.listed ? '<div class="ch-flag listed">&#8646; On the Exchange</div>' : '');
+                 : (c.locked ? '<div class="ch-flag vaulted">&#128274; Locked in the Vault</div>'
+                 : (c.listed ? '<div class="ch-flag listed">&#8646; On the Exchange</div>' : ''));
+        /* Bound is the game's rule and cannot be undone here, so no control is
+           offered for it — only for the lock the owner chose. */
+        var lockBtn = c.bound ? '' :
+          '<button class="ch-lock" onclick="event.stopPropagation();chToggleLock(\'' + esc(c.ref_code) + '\',' + (c.locked ? 'false' : 'true') + ')">' +
+            (c.locked ? '&#128275; Unlock' : '&#128274; Lock') +
+          '</button>';
         return '<div class="ch-card" onclick="chOpenCard(\'' + esc(c.ref_code) + '\')">' + art +
           '<div class="ch-meta">' +
             '<div class="ch-name">' + esc(c.item_name) + (c.qty > 1 ? ' &times;' + c.qty : '') + '</div>' +
             '<div class="ch-ref">#' + esc(c.ref_code) + '</div>' +
             '<div class="ch-coin">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
-            flag +
+            flag + lockBtn +
           '</div></div>';
       }).join('');
     }
@@ -264,6 +276,23 @@
         '<span>Page ' + chPage + ' of ' + pages + '</span>' +
         '<button onclick="chSetPage(' + (chPage + 1) + ')"' + (chPage >= pages ? ' disabled' : '') + '>&#9654;</button>';
     }
+
+
+    /* Locking is the deliberate second step before a Card can leave your
+       hands. A locked Card cannot be listed on the Exchange or handed over at
+       a table until it is unlocked. */
+    window.chToggleLock = async function(ref, lock) {
+      try {
+        var res = await fetch(API_URL + '/api/cards/lock', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ ref_code: ref, locked: lock })
+        });
+        var data = await readJson(res);
+        if (data.success) { loadCollection(); }
+        else { alert(data.error || 'Could not change that Card.'); }
+      } catch(e) { alert('Could not reach the server.'); }
+    };
 
     window.chOpenCard = async function(ref) {
       var modal = document.getElementById('chModal');
