@@ -1,9 +1,9 @@
 /* ============================================================
    THE VEILWOOD - theme-veilwood.js
    Four-movement soundscape cycling morning to night:
-   1. Fable Forest    - warm, whimsical, morning
-   2. Macalania Woods - ethereal, crystalline, midday
-   3. Skyrim Riften   - Nordic, melancholic, dusk
+   1. Whimsy Woods    - warm, whimsical, morning
+   2. Crystalline Woods - ethereal, crystalline, midday
+   3. Northern Vale   - Nordic, melancholic, dusk
    4. Darkwood        - tense, sparse, night dread
    3 min each, 30s crossfade, loops forever.
    Exposes: window.veilwoodTheme = { start, stop }
@@ -101,7 +101,7 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     MOVEMENT 1 - FABLE FOREST (MORNING)
+     MOVEMENT 1 - WHIMSY WOODS (MORNING)
      D major / pentatonic. Harp, bright flute, warm strings,
      birds, distant horse. Safe, golden, whimsical.
   ════════════════════════════════════════════════════════════ */
@@ -109,7 +109,7 @@
       D4=293, E4=329, Fs4=370, G4=392, A4=440, B4=494,
       D5=587, E5=659, G5=784;
 
-  function startFableForest(out) {
+  function startWhimsyWoods(out) {
     var idx = 0;
     movementActive[idx] = true;
 
@@ -150,7 +150,7 @@
     sched(doHarp, 1, 4);
 
     /* Bright flute melody - D major, stepwise, lilting */
-    var FABLE_PHRASES = [
+    var WHIMSY_PHRASES = [
       [{f:D5,d:0.55},{f:B4,d:0.45},{f:A4,d:0.45},{f:G4,d:0.85}],
       [{f:A4,d:0.45},{f:B4,d:0.40},{f:D5,d:0.95}],
       [{f:G4,d:0.50},{f:A4,d:0.40},{f:B4,d:0.40},{f:A4,d:0.50},{f:G4,d:0.75}],
@@ -160,7 +160,7 @@
     ];
     function doFlute() {
       if (!movementActive[idx]) return;
-      var phrase = pick(FABLE_PHRASES);
+      var phrase = pick(WHIMSY_PHRASES);
       var cursor = audioCtx.currentTime + rnd(0.5, 1.5);
       phrase.forEach(function (n) {
         (function (t, freq, dur) {
@@ -264,16 +264,16 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     MOVEMENT 2 - KOROK FOREST
-     C major / G pentatonic. Ocarina melody, pizzicato strings,
+     MOVEMENT 2 - EMERALD GROVE
+     C major / G pentatonic. Forest flute melody, pizzicato strings,
      xylophone sparkles, soft choir. Ancient, mysterious, magical.
      Zelda BOTW/OOT inspired - forest spirits, old trees, wonder.
   ════════════════════════════════════════════════════════════ */
   var C3k=131, G3k=196, C4k=261, D4k=293, E4k=329, G4k=392,
       A4k=440, C5k=523, D5k=587, E5k=659, G5k=784;
-  var KOR_PENT = [C4k, D4k, E4k, G4k, A4k, C5k, D5k, E5k];
+  var SPARKLE_PENT = [C4k, D4k, E4k, G4k, A4k, C5k, D5k, E5k];
 
-  function startKorokForest(out) {
+  function startEmeraldGrove(out) {
     var idx = 1;
     movementActive[idx] = true;
 
@@ -293,8 +293,8 @@
       });
     });
 
-    /* Ocarina melody - Saria/Korok style, stepwise C major phrases */
-    var KOR_PHRASES = [
+    /* Forest flute melody - stepwise C major phrases */
+    var FLUTE_PHRASES = [
       [{f:E4k,d:0.35},{f:D4k,d:0.30},{f:E4k,d:0.35},{f:G4k,d:0.65}],
       [{f:G4k,d:0.40},{f:A4k,d:0.35},{f:G4k,d:0.35},{f:E4k,d:0.55},{f:C4k,d:0.80}],
       [{f:C5k,d:0.40},{f:A4k,d:0.35},{f:G4k,d:0.35},{f:E4k,d:0.70}],
@@ -302,15 +302,15 @@
       [{f:E4k,d:0.45},{f:G4k,d:0.40},{f:A4k,d:0.40},{f:G4k,d:0.35},{f:E4k,d:0.35},{f:D4k,d:0.75}],
       [{f:G4k,d:0.55},{f:E4k,d:0.45},{f:D4k,d:0.40},{f:C4k,d:0.90}],
     ];
-    function doOcarina() {
+    function doFlute() {
       if (!movementActive[idx]) return;
-      var phrase = pick(KOR_PHRASES);
+      var phrase = pick(FLUTE_PHRASES);
       var cursor = audioCtx.currentTime + rnd(0.4, 1.2);
       phrase.forEach(function (n) {
         (function (t, freq, dur) {
           var osc = audioCtx.createOscillator();
           osc.type = 'sine';
-          /* Ocarina attack - slight flat then settle */
+          /* Flute attack - slight flat then settle */
           osc.frequency.setValueAtTime(freq * Math.pow(2, -6 / 1200), t);
           osc.frequency.linearRampToValueAtTime(freq, t + 0.06);
           allSources.push(osc);
@@ -322,7 +322,7 @@
           vd.gain.setValueAtTime(0, t);
           vd.gain.linearRampToValueAtTime(rnd(1.8, 3.0), t + dur * 0.55);
           vib.connect(vd); vd.connect(osc.frequency);
-          /* Breath layer - gives ocarina its hollow character */
+          /* Breath layer - gives flute its hollow character */
           var breath = oneshotNoise(dur + 0.1);
           var bbpf = makeFilter('bandpass', freq * 1.4, 2.5);
           var bg = makeGain(0.0004);
@@ -340,11 +340,11 @@
         })(cursor, n.f, n.d);
         cursor += n.d + rnd(0.03, 0.10);
       });
-      sched(doOcarina, 8, 20);
+      sched(doFlute, 8, 20);
     }
-    sched(doOcarina, 2, 6);
+    sched(doFlute, 2, 6);
 
-    /* Pizzicato strings - light plucks, like Zelda orchestral arrangements */
+    /* Pizzicato strings - light plucks, orchestral style */
     function doPizz() {
       if (!movementActive[idx]) return;
       var now = audioCtx.currentTime;
@@ -364,7 +364,7 @@
     }
     sched(doPizz, 1, 4);
 
-    /* Magic sparkle - inharmonic bell pings, like Navi or Korok seeds */
+    /* Magic sparkle - inharmonic bell pings */
     function doSparkle() {
       if (!movementActive[idx]) return;
       var now = audioCtx.currentTime;
@@ -436,7 +436,7 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     MOVEMENT 3 - MACALANIA WOODS (MIDDAY)
+     MOVEMENT 3 - CRYSTALLINE WOODS (MIDDAY)
      A major / Lydian shimmer. Bell tones, ethereal choir,
      floating pads. Water drops, crystal hum. Otherworldly.
   ════════════════════════════════════════════════════════════ */
@@ -444,7 +444,7 @@
       A4m=440, Cs5=554, E5m=659;
   var MAC_NOTES = [A3m, Cs4, E4m, Gs4, A4m, Cs5, E5m];
 
-  function startMacalaniaWoods(out) {
+  function startCrystallineWoods(out) {
     var idx = 2;
     movementActive[idx] = true;
 
@@ -579,7 +579,7 @@
   }
 
   /* ════════════════════════════════════════════════════════════
-     MOVEMENT 3 - SKYRIM RIFTEN / AUTUMNWOOD (DUSK)
+     MOVEMENT 4 - NORTHERN VALE (DUSK)
      D minor / Dorian. Low strings, lute plucks, Nordic drone.
      Wind, ravens, rustling. Melancholic, brooding, earthy.
   ════════════════════════════════════════════════════════════ */
@@ -587,7 +587,7 @@
       Bb3=233, C4s=261, D4s=293, F4s=349;
   var SKY_NOTES = [D3s, F3s, G3s, A3s, C4s, D4s];
 
-  function startSkyrimRiften(out) {
+  function startNorthernVale(out) {
     var idx = 3;
     movementActive[idx] = true;
 
@@ -734,7 +734,7 @@
      Launches each movement in order, schedules crossfade,
      then launches next. Cycles forever.
   ════════════════════════════════════════════════════════════ */
-  var MOVEMENTS = [startFableForest, startKorokForest, startMacalaniaWoods, startSkyrimRiften];
+  var MOVEMENTS = [startWhimsyWoods, startEmeraldGrove, startCrystallineWoods, startNorthernVale];
 
   function launchMovement(idx) {
     /* Create this movement's gain node */

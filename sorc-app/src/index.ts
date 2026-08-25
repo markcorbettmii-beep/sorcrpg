@@ -113,7 +113,7 @@ async function checkRateLimit(db: D1Database, key: string, maxAttempts: number, 
     await db.prepare('INSERT INTO rate_limits (key, created_at) VALUES (?, ?)').bind(key, now).run();
     return true;
   } catch {
-    return false; // deny on DB error — don't fail open
+    return false; // deny on DB error - don't fail open
   }
 }
 
@@ -258,7 +258,7 @@ app.post('/api/auth/signin', async (c) => {
   if (!password) return c.json({ error: 'Invalid credentials' }, 401);
   const user = await c.env.sorc_db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').bind(email || '', username || '').first() as any;
   if (!user) return c.json({ error: 'Invalid credentials' }, 401);
-  if (!user.password_hash) return c.json({ error: 'We recently upgraded account security. No password is set for this account yet — please use "Forgot password" to create one.' }, 401);
+  if (!user.password_hash) return c.json({ error: 'We recently upgraded account security. No password is set for this account yet - please use "Forgot password" to create one.' }, 401);
   const passwordValid = await verifyPassword(password, user.password_hash);
   if (!passwordValid) return c.json({ error: 'Invalid credentials' }, 401);
   if (!user.email_verified) {
@@ -732,7 +732,7 @@ app.put('/api/forum/posts/:id', authMiddleware, async (c) => {
   try {
     const post = await c.env.sorc_db.prepare('SELECT * FROM posts WHERE id = ?').bind(postId).first() as any;
     if (!post) {
-      // OP edit — update thread body
+      // OP edit - update thread body
       const thread = await c.env.sorc_db.prepare('SELECT * FROM threads WHERE id = ?').bind(postId).first() as any;
       if (!thread) return c.json({ error: 'Post not found' }, 404);
       if (thread.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
@@ -753,7 +753,7 @@ app.delete('/api/forum/posts/:id', authMiddleware, async (c) => {
   try {
     const post = await c.env.sorc_db.prepare('SELECT * FROM posts WHERE id = ?').bind(postId).first() as any;
     if (!post) {
-      // OP delete — delete whole thread
+      // OP delete - delete whole thread
       const thread = await c.env.sorc_db.prepare('SELECT * FROM threads WHERE id = ?').bind(postId).first() as any;
       if (!thread) return c.json({ error: 'Post not found' }, 404);
       if (thread.author_uid !== user.id) return c.json({ error: 'Not your post' }, 403);
@@ -1095,7 +1095,7 @@ app.get('/api/conversations/requests', authMiddleware, async (c) => {
   }
 });
 
-// Create or get a conversation — always starts as pending unless one already exists
+// Create or get a conversation - always starts as pending unless one already exists
 app.post('/api/conversations', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const { recipient_uid, initial_message } = await c.req.json();
@@ -1124,7 +1124,7 @@ app.post('/api/conversations', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare(
       `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, last_message_text, created_at, last_message_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
     ).bind(id, user.id, recipient_uid, myName, otherName, msgBody.substring(0, 100), now, now).run();
-    // Store initial message — visible after acceptance
+    // Store initial message - visible after acceptance
     await c.env.sorc_db.prepare(
       `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at) VALUES (?, ?, ?, ?, ?, ?)`
     ).bind(crypto.randomUUID(), id, user.id, myName, msgBody, now).run();
@@ -1406,7 +1406,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
 
   if (role === 'FAIL') {
-    /* FAIL downgrades to Civilian everywhere — record it and update user */
+    /* FAIL downgrades to Civilian everywhere - record it and update user */
     try {
       await c.env.sorc_db.prepare(
         `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
@@ -1417,7 +1417,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
         ).bind(now, user.id).run();
       }
     } catch(_) {}
-    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
+    return c.json({ score, role: 'FAIL', passed: false, message: 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.' });
   }
 
   try {
@@ -2040,7 +2040,7 @@ app.get('/api/world-chat', authMiddleware, async (c) => {
 app.post('/api/world-chat', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const allowed = await checkRateLimit(c.env.sorc_db, `worldchat:${user.id}`, 8, 60);
-  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  if (!allowed) return c.json({ error: 'Slow down - too many messages.' }, 429);
   try {
     const { body } = await c.req.json() as any;
     if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
@@ -2099,7 +2099,7 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
 app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const respondAllowed = await checkRateLimit(c.env.sorc_db, `wcrespond:${user.id}`, 5, 60);
-  if (!respondAllowed) return c.json({ error: 'Slow down — too many responses.' }, 429);
+  if (!respondAllowed) return c.json({ error: 'Slow down - too many responses.' }, 429);
   const msgId = c.req.param('msgId');
   try {
     const original = await c.env.sorc_db.prepare(
@@ -2111,8 +2111,8 @@ app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
     const profileUrl = `https://sorcrpg.com/public-profile.html?username=${encodeURIComponent(user.username)}`;
     const { type } = await c.req.json().catch(() => ({ type: 'LFM' })) as any;
     const responseBody = type === 'SUM'
-      ? `SUM: ${myName} confirmed — ${profileUrl}`
-      : `📋 ${myName} responds to ${original.sender_name}'s request — ${profileUrl}`;
+      ? `SUM: ${myName} confirmed - ${profileUrl}`
+      : `📋 ${myName} responds to ${original.sender_name}'s request - ${profileUrl}`;
     const now = new Date().toISOString();
 
     await c.env.sorc_db.prepare(
@@ -2181,7 +2181,7 @@ app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   if (!member) return c.json({ error: 'Not a member of this lobby.' }, 403);
   if (member.is_muted) return c.json({ error: 'You are muted in this lobby.' }, 403);
   const chatAllowed = await checkRateLimit(c.env.sorc_db, `lobbychat:${user.id}`, 20, 60);
-  if (!chatAllowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  if (!chatAllowed) return c.json({ error: 'Slow down - too many messages.' }, 429);
   const { body } = await c.req.json() as any;
   if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
   if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
@@ -2427,7 +2427,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
      Basic vs. Pro table). Lobby *creation* already requires a box code for
      non-privileged creators, but that doesn't cover a non-Pro member who
      was recruited in and is now the designated GM launching the room
-     themselves — gate the launch itself too. ── */
+     themselves - gate the launch itself too. ── */
   if (!(await isProMember(c.env.sorc_db, user))) {
     return c.json({ error: 'Launching a Private Campaign Room requires Pro Membership (a registered box set).' }, 403);
   }
@@ -2444,7 +2444,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
     const rc = await c.env.sorc_db.prepare(`SELECT * FROM ready_checks WHERE lobby_id = ?`).bind(lobbyId).first() as any;
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     if (!rc || rc.initiated_at < fiveMinsAgo) {
-      return c.json({ error: 'Run a ready check first — all players must confirm ready before launching.' }, 400);
+      return c.json({ error: 'Run a ready check first - all players must confirm ready before launching.' }, 400);
     }
     const responses = await c.env.sorc_db.prepare(
       `SELECT user_id FROM ready_check_responses WHERE lobby_id = ? AND check_id = ? AND status = 'ready'`
@@ -2668,7 +2668,7 @@ app.delete('/api/rooms/:id/messages/:msgId', authMiddleware, async (c) => {
 
 // ─── ROOM VISIBILITY & SPECTATE ───────────────────────────────────────────────
 
-// List all visible (not hidden) active rooms — for the lobbies page rooms section
+// List all visible (not hidden) active rooms - for the lobbies page rooms section
 app.get('/api/rooms', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const privileged = isPrivileged(user);

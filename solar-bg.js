@@ -1,4 +1,4 @@
-/* Essentia Solar System Background — SORC RPG
+/* Essentia Solar System Background - SORC RPG
    Artistic screen layout matching the reference image.
    Planets wobble in tilted ellipses around their home positions → 3D orbital effect.
    Tawdry Dwarf: upper-right, top of nebula. Adoria: lower-left. */
@@ -19,7 +19,7 @@
   function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
   resize();
   window.addEventListener('resize', resize);
-  /* Force re-measure after orientation change — iOS/Android report stale dimensions otherwise */
+  /* Force re-measure after orientation change - iOS/Android report stale dimensions otherwise */
   window.addEventListener('orientationchange', function () { setTimeout(resize, 120); });
 
   /* ── STARS ── */
@@ -30,7 +30,7 @@
     tw: Math.random() * Math.PI * 2
   }));
 
-  /* ── NEBULA — purple/blue cloud on the right side, with Tawdry at its top ── */
+  /* ── NEBULA - purple/blue cloud on the right side, with Tawdry at its top ── */
   const NEBULA = Array.from({ length: 70 }, () => ({
     x: 0.60 + Math.random() * 0.32,
     y: 0.05 + Math.random() * 0.72,
@@ -44,52 +44,52 @@
   /* ── PLANET / BODY DATA ──
      hx, hy  : home position as fraction of W, H  (from reference image)
      r       : visual radius px at 1080p (scaled by min(H/1080,1))
-     wR      : wobble radius px  — inner planets wobble more (faster orbit = more apparent motion)
+     wR      : wobble radius px  - inner planets wobble more (faster orbit = more apparent motion)
      wS      : wobble speed multiplier (Zailister=1.0 reference)
      φ       : starting phase so planets are spread out on load
   ── */
   const PLANETS = [
-    /* Large red gas giant — upper left */
+    /* Large red gas giant - upper left */
     { name:'Quintus Elementum', hx:0.118, hy:0.290, r:20, col:'#c85828', dark:'#7a3010',
       wR:30, wS:0.65, φ:0.8 },
 
-    /* Blue-purple gas giant — top left */
+    /* Blue-purple gas giant - top left */
     { name:'Angeligla',         hx:0.115, hy:0.082, r:16, col:'#5050b8', dark:'#303080',
       wR:18, wS:0.12, φ:2.1, gas:true },
 
-    /* Zailister — ringed, center-bottom-left */
+    /* Zailister - ringed, center-bottom-left */
     { name:'Zailister',         hx:0.333, hy:0.725, r:14, col:'#8090a0', dark:'#506070',
       wR:24, wS:1.00, φ:1.6, ring:true, ringCol:'#e0a0b8' },
 
-    /* Pale blue small — top center */
+    /* Pale blue small - top center */
     { name:'Tenue',             hx:0.440, hy:0.098, r:7,  col:'#80c0d8', dark:'#409098',
       wR:42, wS:5.50, φ:4.0 },
 
-    /* Pink / pastel — center bottom, with 3 moons */
+    /* Pink / pastel - center bottom, with 3 moons */
     { name:'Citrine Candenti',  hx:0.557, hy:0.718, r:13, col:'#d8b8c0', dark:'#a08090',
       wR:16, wS:0.28, φ:3.3, moons:['#c8b0c8','#c06040','#60a0c8'] },
 
-    /* Blue planet — upper right area */
+    /* Blue planet - upper right area */
     { name:'Corpus Caeleste',   hx:0.783, hy:0.136, r:12, col:'#3888c8', dark:'#205880',
       wR:10, wS:0.07, φ:1.0 },
 
-    /* Purple-striped — far top right */
+    /* Purple-striped - far top right */
     { name:'Omne Malum',        hx:0.958, hy:0.070, r:10, col:'#7868b8', dark:'#403870',
       wR:6,  wS:0.030, φ:5.2 },
 
-    /* Large icy blue — far bottom right */
+    /* Large icy blue - far bottom right */
     { name:'Tredici',           hx:0.972, hy:0.725, r:15, col:'#90c0e0', dark:'#5090b8',
       wR:5,  wS:0.020, φ:0.5 },
 
-    /* Undecimus — mid right */
+    /* Undecimus - mid right */
     { name:'Undecimus',         hx:0.700, hy:0.500, r:9,  col:'#78a868', dark:'#486040',
       wR:8,  wS:0.045, φ:3.7 },
   ];
 
-  /* Tawdry Dwarf — dying red star, top of nebula, upper right */
+  /* Tawdry Dwarf - dying red star, top of nebula, upper right */
   const TAWDRY = { hx:0.858, hy:0.142, r:13, wR:7, wS:0.09, φ:2.5 };
 
-  /* Omnè survival structure — just below Tawdry, near the nebula */
+  /* Omnè survival structure - just below Tawdry, near the nebula */
   const OMNE = { hx:0.880, hy:0.225, r:9,  wR:7, wS:0.085, φ:2.8 };
 
   /* ── SATELLITES ── */
@@ -153,7 +153,7 @@
     const phase = body.wS * t + body.φ;
     const s = sc();
     const wR = body.wR * s;
-    const tiltY = 0.38;   /* vertical compression factor — orbital tilt illusion */
+    const tiltY = 0.38;   /* vertical compression factor - orbital tilt illusion */
     return {
       x: body.hx * W + Math.cos(phase) * wR,
       y: body.hy * H + Math.sin(phase) * wR * tiltY,
@@ -191,7 +191,7 @@
     }
   }
 
-  /* ── DRAW: Adoria (sun) — lower-left, partially off-screen ── */
+  /* ── DRAW: Adoria (sun) - lower-left, partially off-screen ── */
   function drawAdoria() {
     const cx = W * -0.02;
     const cy = H * 0.82;
@@ -352,7 +352,7 @@
     }
     ctx.restore();
 
-    /* mith3r energy halos — rotating rings at different tilts */
+    /* mith3r energy halos - rotating rings at different tilts */
     [0, Math.PI/3, Math.PI*2/3].forEach((ha, i) => {
       ctx.save();
       ctx.translate(x, y);
@@ -410,7 +410,7 @@
     bodies.sort((a, b) => a.z - b.z);
     for (const b of bodies) b.draw();
 
-    /* semi-transparent overlay — keeps page content legible */
+    /* semi-transparent overlay - keeps page content legible */
     ctx.fillStyle = 'rgba(1,2,10,0.58)';
     ctx.fillRect(0, 0, W, H);
 

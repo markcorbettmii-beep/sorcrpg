@@ -1,10 +1,10 @@
-# Space Tabs — Original Post (VERBATIM, DO NOT EDIT)
+# Space Tabs - Original Post (VERBATIM, DO NOT EDIT)
 
 Owner's original message, saved exactly as written. This is the source of truth.
 The specification and questions docs are interpretations of THIS. When they
 conflict with this file, this file wins.
 
-Incomplete sentences and trailing "..." are intentional — they mark threads the
+Incomplete sentences and trailing "..." are intentional - they mark threads the
 owner had not finished yet. Do not fill them in or clean them up.
 
 ---

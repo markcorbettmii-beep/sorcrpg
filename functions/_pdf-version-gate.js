@@ -1,7 +1,7 @@
 // Shared by the character-sheet PDF functions. Each request's `?v=` is
 // checked against pdf-versions.json (written by scripts/render-sheet-pdfs.mjs
 // on every regeneration). A match falls through to the real static PDF; a
-// mismatch — an old link, or the bare unversioned path — silently redirects
+// mismatch - an old link, or the bare unversioned path - silently redirects
 // straight to the current versioned URL. No interstitial, no extra click:
 // the visitor just lands on the current PDF as if that's what they'd asked
 // for all along.
@@ -20,7 +20,7 @@ export async function gatePdf(context, fileName) {
       currentVersion = (await manifestRes.json())[fileName] ?? null;
     }
   } catch {
-    // Fail open — see comment above.
+    // Fail open - see comment above.
   }
 
   if (currentVersion && requestedVersion !== currentVersion) {

@@ -3,7 +3,7 @@ import { cors } from 'hono/cors';
 import * as bcrypt from 'bcryptjs';
 
 // ─── CONTENT FILTER ─────────────────────────────────────────────────────────
-// Ported from sorc-app (2026-08-24) — needed by the lobby/room chat routes below.
+// Ported from sorc-app (2026-08-24) - needed by the lobby/room chat routes below.
 const SLUR_LIST = [
   'nigger','nigga','faggot','fag','kike','spic','chink','gook','wetback',
   'tranny','shemale','cunt','dyke','cracker','redskin','raghead','towelhead',
@@ -1442,7 +1442,7 @@ async function checkRateLimit(db: D1Database, key: string, maxAttempts: number, 
     await db.prepare('INSERT INTO rate_limits (key, created_at) VALUES (?, ?)').bind(key, now).run();
     return true;
   } catch {
-    return false; // deny on DB error — don't fail open
+    return false; // deny on DB error - don't fail open
   }
 }
 
@@ -1564,7 +1564,7 @@ const ASSESSMENT_QUESTIONS = [
 // both pools are combined into one 20-question GM submission.
 const GM_CODEX_QUESTIONS = [
   { q: "Per the GM Codex introduction, what actually gates a GM's access to Lobbies?", options: ["Reading the GM Codex itself", "Passing the SORC Assessment", "Owning a physical box set", "An admin invitation"], answer: 1, page: 1 },
-  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No — Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, page: 1 },
+  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No - Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, page: 1 },
   { q: "What happens to a Common or Uncommon rank Companion that dies?", options: ["It enters the boneyard for repair", "It can be resurrected once per campaign", "It is permanently lost and never enters the boneyard", "The GM automatically replaces it"], answer: 2, page: 1 },
   { q: "At what item Rank does Attunement become required before an armament can be enhanced or Bound?", options: ["Rare and above", "Unique and above", "Heroic and above", "Legendary and above"], answer: 2, page: 1 },
   { q: "Per the GM Codex Quick Reference table, what Card Rank is included in a module of Level 18-23?", options: ["Unique", "Heroic", "Elite", "Legendary"], answer: 1, page: 1 },
@@ -1578,7 +1578,7 @@ const GM_CODEX_QUESTIONS = [
 const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // PC-track scoring, also used as the fallback grade for a GM-track attempt
-// that doesn't clear the perfect-score GM bar (see calcSorcRole below) — an
+// that doesn't clear the perfect-score GM bar (see calcSorcRole below) - an
 // imperfect GM attempt still gets fair credit for their Basic Rules score.
 function calcPcRole(basicRulesScore: number): string {
   if (basicRulesScore < 6) return 'FAIL';
@@ -1650,10 +1650,10 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
 });
 
 // Beta: the Player (PC) Assessment is open to anonymous visitors, no account
-// required — a genuine try-before-you-join preview. GM stays account-only
+// required - a genuine try-before-you-join preview. GM stays account-only
 // (it grants real lobby-creation power tied to a box code, this doesn't).
 // No DB writes here at all: there's no user to attach a role to, so this
-// never touches the users or assessments tables — just grades and returns
+// never touches the users or assessments tables - just grades and returns
 // the result. Rate-limited by IP since there's no user id to key on.
 app.get('/api/assess/beta-questions', async (c) => {
   const pool = shuffle(ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i, section: 'basic' })));
@@ -1756,7 +1756,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
 
   if (role === 'FAIL') {
-    /* FAIL downgrades to Civilian everywhere — record it and update user */
+    /* FAIL downgrades to Civilian everywhere - record it and update user */
     try {
       await c.env.sorc_db.prepare(
         `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
@@ -1767,7 +1767,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
         ).bind(now, user.id).run();
       }
     } catch(_) {}
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role: 'FAIL', passed: false, message: 'Score too low — you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.', wrong });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role: 'FAIL', passed: false, message: 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.', wrong });
   }
 
   try {
@@ -2393,7 +2393,7 @@ app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
 });
 
 // A declined summon holds off further invites from that host to that lobby for
-// a day — long enough to stop a host re-sending on a loop, short enough that a
+// a day - long enough to stop a host re-sending on a loop, short enough that a
 // misclicked Deny does not lock a Player out of a table they wanted.
 const DECLINE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
@@ -2445,7 +2445,7 @@ app.post('/api/lobbies/:id/summon', authMiddleware, async (c) => {
 
     if (priorSummon && priorSummon.status === 'pending') {
       return c.json({
-        error: `${targetName} has already been invited — waiting on their answer.`,
+        error: `${targetName} has already been invited - waiting on their answer.`,
         already_invited: true,
       }, 409);
     }
@@ -2453,13 +2453,13 @@ app.post('/api/lobbies/:id/summon', authMiddleware, async (c) => {
       // A "no" holds for a day. That is long enough that a host cannot sit
       // there re-sending, and short enough that a misclicked Deny does not
       // lock someone out of a table they wanted. It only stops unsolicited
-      // summons either way — the Player can still join by code or answer an
+      // summons either way - the Player can still join by code or answer an
       // LFM: post whenever they like.
       const since = Date.now() - new Date(priorSummon.created_at).getTime();
       if (since < DECLINE_COOLDOWN_MS) {
         const hoursLeft = Math.max(1, Math.ceil((DECLINE_COOLDOWN_MS - since) / (60 * 60 * 1000)));
         return c.json({
-          error: `${targetName} declined your invite. You can invite them again in ${hoursLeft}h — they can still join on their own before then.`,
+          error: `${targetName} declined your invite. You can invite them again in ${hoursLeft}h - they can still join on their own before then.`,
           declined: true, hours_left: hoursLeft,
         }, 409);
       }
@@ -2517,7 +2517,7 @@ app.post('/api/summons/:id/respond', authMiddleware, async (c) => {
     if (!accept) {
       // Declining is not a door slammed shut. The Player gets a line in their
       // Inbox with a way back in, so a "not right now" does not cost them the
-      // table — and the host, who is now barred from re-inviting for a day,
+      // table - and the host, who is now barred from re-inviting for a day,
       // does not have to chase them.
       //
       // Wrapped: a failure to write the Inbox note must never turn a
@@ -2620,7 +2620,7 @@ app.post('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   if (!member) return c.json({ error: 'Not a member of this lobby.' }, 403);
   if (member.is_muted) return c.json({ error: 'You are muted in this lobby.' }, 403);
   const chatAllowed = await checkRateLimit(c.env.sorc_db, `lobbychat:${user.id}`, 20, 60);
-  if (!chatAllowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  if (!chatAllowed) return c.json({ error: 'Slow down - too many messages.' }, 429);
   const { body } = await c.req.json() as any;
   if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
   if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
@@ -2833,7 +2833,7 @@ app.post('/api/lobbies/:id/report/:uid', authMiddleware, async (c) => {
 
 // ─── PRIVATE ROOMS (launched from a Lobby by its GM) ────────────────────────
 // Ported from sorc-app (2026-08-24). This is the actual "Launch Room" backing
-// endpoint lobbies.html calls — it validates that whoever is designated GM
+// endpoint lobbies.html calls - it validates that whoever is designated GM
 // (gm_uid) genuinely holds a GM role, requires the caller to be the lobby
 // creator, the designated GM, or privileged, enforces a minimum party size
 // (GM + 2 players) and a fresh all-ready ready-check before letting play begin.
@@ -2869,7 +2869,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
      Basic vs. Pro table). Lobby *creation* already requires a box code for
      non-privileged creators, but that doesn't cover a non-Pro member who
      was recruited in and is now the designated GM launching the room
-     themselves — gate the launch itself too. ── */
+     themselves - gate the launch itself too. ── */
   if (!(await isProMember(c.env.sorc_db, user))) {
     return c.json({ error: 'Launching a Private Campaign Room requires Pro Membership (a registered box set).' }, 403);
   }
@@ -2886,7 +2886,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
     const rc = await c.env.sorc_db.prepare(`SELECT * FROM ready_checks WHERE lobby_id = ?`).bind(lobbyId).first() as any;
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     if (!rc || rc.initiated_at < fiveMinsAgo) {
-      return c.json({ error: 'Run a ready check first — all players must confirm ready before launching.' }, 400);
+      return c.json({ error: 'Run a ready check first - all players must confirm ready before launching.' }, 400);
     }
     const responses = await c.env.sorc_db.prepare(
       `SELECT user_id FROM ready_check_responses WHERE lobby_id = ? AND check_id = ? AND status = 'ready'`
@@ -2954,7 +2954,7 @@ app.get('/api/users/lookup', authMiddleware, async (c) => {
 
 // ─── ROOMS (dice, roll log) ──────────────────────────────────────────────────
 // Ported from sorc-app (2026-08-24). Room creation itself happens through
-// POST /api/lobbies/:id/launch above — these are the in-room routes.
+// POST /api/lobbies/:id/launch above - these are the in-room routes.
 
 app.get('/api/rooms/:id', authMiddleware, async (c) => {
   const user = c.get('user') as any;
@@ -3319,7 +3319,7 @@ app.post('/api/rooms/:id/requests/:reqId/decline', authMiddleware, async (c) => 
 
 // ─── ADMIN: MEMBER MANAGEMENT & REPORTS ─────────────────────────────────────
 // Ported from sorc-app (2026-08-24). admin.html has had no working backend
-// on the live Worker at all until now — only migrate-bcrypt existed here.
+// on the live Worker at all until now - only migrate-bcrypt existed here.
 
 const requireAdmin = async (c: any, next: any) => {
   const user = c.get('user') as any;
@@ -3727,7 +3727,7 @@ app.get('/api/achievements', authMiddleware, async (c) => {
         // Award only if this row is genuinely new. Reading the earned list and
         // then writing is a race: two requests firing together both see the
         // achievement unearned, both reach here, and INSERT OR IGNORE quietly
-        // drops the second — but the old code still paid out for it. Checking
+        // drops the second - but the old code still paid out for it. Checking
         // the row count is what makes the insert the single source of truth,
         // so points cannot be farmed by hammering this endpoint.
         const inserted = await c.env.sorc_db.prepare(
@@ -3923,7 +3923,7 @@ app.post('/api/fellowships/groups/:id/messages', authMiddleware, async (c) => {
   const isMember = await c.env.sorc_db.prepare(`SELECT id FROM fellowship_group_members WHERE group_id = ? AND user_id = ?`).bind(groupId, user.id).first();
   if (!isMember) return c.json({ error: 'Not a member of this group.' }, 403);
   const allowed = await checkRateLimit(c.env.sorc_db, `groupchat:${user.id}`, 20, 60);
-  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  if (!allowed) return c.json({ error: 'Slow down - too many messages.' }, 429);
   const { body } = await c.req.json() as any;
   if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
   if (body.length > 500) return c.json({ error: 'Message too long (max 500 chars).' }, 400);
@@ -3967,7 +3967,7 @@ app.get('/api/world-chat', authMiddleware, async (c) => {
 app.post('/api/world-chat', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const allowed = await checkRateLimit(c.env.sorc_db, `worldchat:${user.id}`, 8, 60);
-  if (!allowed) return c.json({ error: 'Slow down — too many messages.' }, 429);
+  if (!allowed) return c.json({ error: 'Slow down - too many messages.' }, 429);
   try {
     const { body } = await c.req.json() as any;
     if (!body || !body.trim()) return c.json({ error: 'Message cannot be empty.' }, 400);
@@ -3977,7 +3977,7 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
 
     // World Chat is the recruiting board. Trade tags moved to the lobby's
     // Trade tab (/api/trade-chat), where the card catalog and Hand Trade
-    // live — a WTB:/WTS:/WTT: posted here would have no way to be acted on.
+    // live - a WTB:/WTS:/WTT: posted here would have no way to be acted on.
     if (/^(WTB|WTS|WTT):/i.test(body.trim())) {
       return c.json({ error: 'Trade tags belong in the Trade tab, not World Chat.' }, 400);
     }
@@ -4032,7 +4032,7 @@ app.post('/api/world-chat', authMiddleware, async (c) => {
 app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const respondAllowed = await checkRateLimit(c.env.sorc_db, `wcrespond:${user.id}`, 5, 60);
-  if (!respondAllowed) return c.json({ error: 'Slow down — too many responses.' }, 429);
+  if (!respondAllowed) return c.json({ error: 'Slow down - too many responses.' }, 429);
   const msgId = c.req.param('msgId');
   try {
     const original = await c.env.sorc_db.prepare(
@@ -4044,8 +4044,8 @@ app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
     const profileUrl = `https://sorcrpg.com/public-profile.html?username=${encodeURIComponent(user.username)}`;
     const { type } = await c.req.json().catch(() => ({ type: 'LFM' })) as any;
     const responseBody = type === 'SUM'
-      ? `SUM: ${myName} confirmed — ${profileUrl}`
-      : `📋 ${myName} responds to ${original.sender_name}'s request — ${profileUrl}`;
+      ? `SUM: ${myName} confirmed - ${profileUrl}`
+      : `📋 ${myName} responds to ${original.sender_name}'s request - ${profileUrl}`;
     const now = new Date().toISOString();
 
     await c.env.sorc_db.prepare(
@@ -4130,7 +4130,7 @@ app.get('/api/achievements', authMiddleware, async (c) => {
         // Award only if this row is genuinely new. Reading the earned list and
         // then writing is a race: two requests firing together both see the
         // achievement unearned, both reach here, and INSERT OR IGNORE quietly
-        // drops the second — but the old code still paid out for it. Checking
+        // drops the second - but the old code still paid out for it. Checking
         // the row count is what makes the insert the single source of truth,
         // so points cannot be farmed by hammering this endpoint.
         const inserted = await c.env.sorc_db.prepare(
@@ -4170,21 +4170,21 @@ app.get('/api/sorc-store', authMiddleware, async (c) => {
   return c.json({ error: 'The SORC Store is not yet implemented.' }, 501);
 });
 // ─── TRADE CHAT (WTB/WTS/WTT) + HAND TRADE ──────────────────────────────────
-// The lobby's Trade tab. WTB:/WTS:/WTT: only work here — World Chat is for
+// The lobby's Trade tab. WTB:/WTS:/WTT: only work here - World Chat is for
 // recruiting (LFM:/LFG:/SUM:) and rejects trade tags.
 //
-//   WTS:Item        want to sell   — poster hands the item over, takes Coin
-//   WTB:Item        want to buy    — poster pays Coin on delivery of the item
-//   WTT:Give>Want   want to trade  — poster hands Give over, takes Want back
+//   WTS:Item        want to sell   - poster hands the item over, takes Coin
+//   WTB:Item        want to buy    - poster pays Coin on delivery of the item
+//   WTT:Give>Want   want to trade  - poster hands Give over, takes Want back
 //
 // No price is ever typed or argued over. Every item's Coin value is printed
-// on its SORC Card, and that value IS the cost — always. So WTB:/WTS: are
+// on its SORC Card, and that value IS the cost - always. So WTB:/WTS: are
 // take-it-or-leave-it: the responder Accepts or Declines. Only WTT: has
 // anything to negotiate, because both sides are items and the card values
 // may not line up; there, either party may counter with different items.
 //
 // Item names render as inspectable links (like gear links in chat): clicking
-// one pops that item's SORC Card — Item, Weapon, Armor, and so on — showing
+// one pops that item's SORC Card - Item, Weapon, Armor, and so on - showing
 // its rank, stats, and the Coin value the trade is priced at.
 
 const TRADE_TAG_MAX = 60;
@@ -4253,7 +4253,7 @@ async function ensureTradeTables(db: any) {
        created_at TEXT NOT NULL
      )`
   ).run();
-  // The card catalog. An item's Coin value lives here and nowhere else —
+  // The card catalog. An item's Coin value lives here and nowhere else -
   // this is the single authority every trade is priced from.
   await db.prepare(
     `CREATE TABLE IF NOT EXISTS item_cards (
@@ -4291,7 +4291,7 @@ async function cardValue(db: any, name: string): Promise<number | null> {
 }
 
 // Parse a trade tag into its parts. Returns null when the body is not a
-// well-formed WTB:/WTS:/WTT: tag. No price appears in a tag — the item's
+// well-formed WTB:/WTS:/WTT: tag. No price appears in a tag - the item's
 // card supplies it.
 function parseTradeTag(raw: string): { kind: string; item: string; want_item: string | null } | null {
   const body = (raw || '').trim();
@@ -4325,7 +4325,7 @@ function parseTradeTag(raw: string): { kind: string; item: string; want_item: st
 
 // Only items proven on the server (earned in a recorded private room
 // session) may be put up. When a member has no inventory rows at all we let
-// the post through — inventory is populated by session play, and gating a
+// the post through - inventory is populated by session play, and gating a
 // brand-new member out of the board entirely would be worse than the risk.
 async function ownsItem(db: any, userId: string, itemName: string): Promise<boolean> {
   const owned = await db.prepare(
@@ -4379,7 +4379,7 @@ app.get('/api/item-cards', authMiddleware, async (c) => {
   }
 });
 
-// Inspect one item — this is what a clicked item link pops open.
+// Inspect one item - this is what a clicked item link pops open.
 app.get('/api/item-card', authMiddleware, async (c) => {
   try {
     await ensureTradeTables(c.env.sorc_db);
@@ -4408,7 +4408,7 @@ app.get('/api/trade-chat', authMiddleware, async (c) => {
 app.post('/api/trade-chat', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const allowed = await checkRateLimit(c.env.sorc_db, `tradechat:${user.id}`, 6, 60);
-  if (!allowed) return c.json({ error: 'Slow down — too many trade posts.' }, 429);
+  if (!allowed) return c.json({ error: 'Slow down - too many trade posts.' }, 429);
   try {
     const { body } = await c.req.json() as any;
     const raw = (body || '').trim();
@@ -4428,7 +4428,7 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
 
     // You can only offer up what you actually hold. WTB: is a request for
     // something you do not have yet, so nothing to check there.
-    // A posting may name a Card by its ref # — "WTS: Skeleton Soldier #MOB001".
+    // A posting may name a Card by its ref # - "WTS: Skeleton Soldier #MOB001".
     // Resolve that first: the text carries both a name and a ref, so matching
     // the whole string against a stored item_name would never hit. Holding is
     // then checked against the ref further down, which is the authority.
@@ -4450,7 +4450,7 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
     let listingId: string | null = null;
     if (linkedCard && tag.kind !== 'WTB') {
       // Listing from chat is still listing. It goes through exactly the same
-      // ownership gate as /api/exchange/list — holding is re-read from the
+      // ownership gate as /api/exchange/list - holding is re-read from the
       // server's own row, Bound Cards are refused, and the claim is conditional.
       await ensureOwnershipColumns(c.env.sorc_db);
       const held = await ownedCardRow(c.env.sorc_db, user.id, linkedCard.ref_code) as any;
@@ -4566,7 +4566,7 @@ app.post('/api/hand-trade/open', authMiddleware, async (c) => {
     if (!message_id) return c.json({ error: 'Missing message_id.' }, 400);
 
     // Hand Trade is face to face. It happens inside a Campaign Room and
-    // nowhere else — never in a lobby, never across the open board.
+    // nowhere else - never in a lobby, never across the open board.
     if (!room_id) {
       return c.json({ error: 'Hand Trade only happens inside a Campaign Room.' }, 400);
     }
@@ -4652,7 +4652,7 @@ app.get('/api/hand-trade/:id', authMiddleware, async (c) => {
     ).bind(c.req.param('id')).first() as any;
     if (!trade) return c.json({ error: 'Trade not found.' }, 404);
     const isParty = trade.poster_uid === user.id || trade.responder_uid === user.id;
-    // GMs and Admins can read a thread they are not party to — trades are
+    // GMs and Admins can read a thread they are not party to - trades are
     // session property and need to be auditable.
     if (!isParty && !isPrivileged(user) && (user.sorc_role || '').indexOf('GM') !== 0) {
       return c.json({ error: 'Not your trade.' }, 403);
@@ -4676,7 +4676,7 @@ app.get('/api/hand-trade/:id', authMiddleware, async (c) => {
   }
 });
 
-// Counter: swap in different items. WTT: only — a WTB:/WTS: is priced off
+// Counter: swap in different items. WTT: only - a WTB:/WTS: is priced off
 // the card and there is nothing to argue about, so it is Accept or Decline.
 // Any counter clears both acceptances; nobody is bound to terms they never saw.
 app.post('/api/hand-trade/:id/counter', authMiddleware, async (c) => {
@@ -4692,7 +4692,7 @@ app.post('/api/hand-trade/:id/counter', authMiddleware, async (c) => {
     if (trade.poster_uid !== user.id && trade.responder_uid !== user.id) return c.json({ error: 'Not your trade.' }, 403);
     if (trade.status !== 'pending') return c.json({ error: 'This trade is already closed.' }, 400);
     if (trade.kind !== 'WTT') {
-      return c.json({ error: 'The price is the item\'s card value — accept it or decline.' }, 400);
+      return c.json({ error: 'The price is the item\'s card value - accept it or decline.' }, 400);
     }
 
     const payload = await c.req.json().catch(() => ({})) as any;
@@ -4757,7 +4757,7 @@ app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
     if (!isPoster && !isResponder) return c.json({ error: 'Not your trade.' }, 403);
     if (trade.status !== 'pending') return c.json({ error: 'This trade is already closed.' }, 400);
 
-    // Both parties must still be in the Room. Walking out cancels the deal —
+    // Both parties must still be in the Room. Walking out cancels the deal -
     // a Hand Trade cannot settle across an empty table.
     if (trade.room_id) {
       const [a, b] = await Promise.all([
@@ -4794,7 +4794,7 @@ app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
     ).run();
 
     if (settled) {
-      // Move the goods. Until this runs nothing has actually changed hands —
+      // Move the goods. Until this runs nothing has actually changed hands -
       // an accepted trade that transfers nothing is worse than no trade at all.
       const moved = await settleHandTrade(c.env.sorc_db, trade, now);
       if (!moved.ok) {
@@ -4805,8 +4805,8 @@ app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
         return c.json({ error: moved.reason }, 409);
       }
 
-      // Close the posting and drop a public line so the board — and any GM
-      // reading it — sees what changed hands.
+      // Close the posting and drop a public line so the board - and any GM
+      // reading it - sees what changed hands.
       await c.env.sorc_db.prepare(
         `UPDATE trade_messages SET status = 'settled' WHERE id = ?`
       ).bind(trade.message_id).run();
@@ -4819,7 +4819,7 @@ app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
       ).bind(
         crypto.randomUUID(), trade.poster_uid, trade.poster_name,
         trade.give_item, trade.want_item, trade.coin, trade.want_coin,
-        `⬡ Hand Trade settled — ${trade.poster_name} and ${trade.responder_name}: ${terms}`,
+        `⬡ Hand Trade settled - ${trade.poster_name} and ${trade.responder_name}: ${terms}`,
         now
       ).run();
     }
@@ -4853,7 +4853,7 @@ app.post('/api/hand-trade/:id/decline', authMiddleware, async (c) => {
       trade.give_item, trade.want_item, trade.coin, trade.want_coin, null, now
     ).run();
 
-    // Declining one thread does not kill the posting — other members may
+    // Declining one thread does not kill the posting - other members may
     // still be negotiating on it.
     return c.json({ success: true });
   } catch (error: any) {
@@ -4862,11 +4862,11 @@ app.post('/api/hand-trade/:id/decline', authMiddleware, async (c) => {
 });
 
 // ─── THE EXCHANGE (Auction House) ────────────────────────────────────────────
-// The Exchange is SORC's auction house. It settles in IN-GAME CURRENCY ONLY —
+// The Exchange is SORC's auction house. It settles in IN-GAME CURRENCY ONLY -
 // no real money ever moves between Players on SORC servers.
 //
 // Four surfaces, three of them tabs inside The Exchange:
-//   Bazaar        SORC Card trading — where Cards listed from chat land
+//   Bazaar        SORC Card trading - where Cards listed from chat land
 //   Trade Post    Player-to-Player item hub
 //   Black Market  reserved; no purpose assigned yet, listed but inert
 //   Hand Trade    NOT part of The Exchange. Room-only, face-to-face, see below.
@@ -4911,7 +4911,7 @@ async function ensureExchangeTables(db: any) {
     try {
       await db.prepare(`ALTER TABLE trade_messages ADD COLUMN ${col}`).run();
     } catch (e) {
-      // Column already present — SQLite has no ADD COLUMN IF NOT EXISTS.
+      // Column already present - SQLite has no ADD COLUMN IF NOT EXISTS.
     }
   }
   await seedItemCards(db);
@@ -4931,7 +4931,7 @@ async function seedItemCards(db: any) {
       rank: 'Common',
       coin: 25,
       module: 'SFK v. 0.01',
-      lore: 'Each token represents one Skeleton Soldier. Remove a token as each is defeated. Skeleton Soldiers may be accompanied by 1d4 of each — guards, archers, soldiers, or others.',
+      lore: 'Each token represents one Skeleton Soldier. Remove a token as each is defeated. Skeleton Soldiers may be accompanied by 1d4 of each - guards, archers, soldiers, or others.',
       stats: {
         title: 'Common Skeleton',
         race: 'Skeleton', species: 'Undead', size: 'Standard',
@@ -5143,7 +5143,7 @@ app.post('/api/exchange/list', authMiddleware, async (c) => {
     if (!card) return c.json({ error: 'No Card with that ref #.' }, 404);
 
     // You may only list a Card you actually hold. Ownership is re-read from the
-    // server's own row here — never taken from the request or a stale session.
+    // server's own row here - never taken from the request or a stale session.
     await ensureOwnershipColumns(c.env.sorc_db);
     const held = await ownedCardRow(c.env.sorc_db, user.id, card.ref_code) as any;
     if (!held) {
@@ -5198,7 +5198,7 @@ app.post('/api/exchange/list', authMiddleware, async (c) => {
 });
 
 // Buying settles in Coin and nothing else. A Player with too little Coin gets
-// told exactly that — the listing stays up and nothing moves.
+// told exactly that - the listing stays up and nothing moves.
 app.post('/api/exchange/buy', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const gated = await exchangeGate(c, user, 'The Exchange');
@@ -5221,7 +5221,7 @@ app.post('/api/exchange/buy', authMiddleware, async (c) => {
     const now = new Date().toISOString();
     await ensureOwnershipColumns(c.env.sorc_db);
 
-    // No room, no purchase — checked before any Coin moves, so a full shelf
+    // No room, no purchase - checked before any Coin moves, so a full shelf
     // costs nothing rather than taking payment for a Card with nowhere to go.
     if (!(await collectionHasRoom(c.env.sorc_db, user))) {
       return c.json({
@@ -5242,7 +5242,7 @@ app.post('/api/exchange/buy', authMiddleware, async (c) => {
     }
 
     // Debit conditionally. A purse that cannot cover the price is not touched,
-    // and the check and the write are the same statement — so no race can
+    // and the check and the write are the same statement - so no race can
     // overdraw an account the way a read-then-write could.
     const debit = await c.env.sorc_db.prepare(
       `UPDATE user_wallets SET coin = coin - ?, updated_at = ? WHERE user_id = ? AND coin >= ?`
@@ -5303,7 +5303,7 @@ app.post('/api/exchange/cancel', authMiddleware, async (c) => {
       return c.json({ error: 'That is not your listing.' }, 403);
     }
     const now = new Date().toISOString();
-    // Only an open listing can be withdrawn — one already settling or sold is
+    // Only an open listing can be withdrawn - one already settling or sold is
     // past the point of recall, and the conditional says so rather than trusting
     // the row we read a moment ago.
     const pulled = await c.env.sorc_db.prepare(
@@ -5330,7 +5330,7 @@ app.post('/api/exchange/cancel', authMiddleware, async (c) => {
 //
 //   1. Identity comes from the auth key, never from the request body.
 //   2. Eligibility is re-read fresh from the database immediately before the
-//      write — a stale session object is never trusted.
+//      write - a stale session object is never trusted.
 //   3. The write is conditional (WHERE ... AND still_valid) and the row count
 //      is checked, so two racing callers cannot both win.
 //   4. Balances move by relative arithmetic (coin = coin - ?), never by
@@ -5342,7 +5342,7 @@ async function ensureOwnershipColumns(db: any) {
     try {
       await db.prepare(`ALTER TABLE member_inventory ADD COLUMN ${col}`).run();
     } catch (e) {
-      // Column already present — SQLite has no ADD COLUMN IF NOT EXISTS.
+      // Column already present - SQLite has no ADD COLUMN IF NOT EXISTS.
     }
   }
 }
@@ -5398,7 +5398,7 @@ app.get('/api/cards/mine', authMiddleware, async (c) => {
       where.push('(card.item_name LIKE ? COLLATE NOCASE OR inv.ref_code LIKE ? COLLATE NOCASE)');
       args.push(`%${q}%`, `%${q}%`);
     }
-    // ?locked=1 narrows to what is locked away — this is what the Vault reads.
+    // ?locked=1 narrows to what is locked away - this is what the Vault reads.
     const lockedOnly = c.req.query('locked');
     if (lockedOnly === '1' || lockedOnly === 'true') where.push('inv.locked = 1');
     const whereSql = where.join(' AND ');
@@ -5456,7 +5456,7 @@ app.get('/api/cards/mine', authMiddleware, async (c) => {
 
 // ─── ADMIN: GRANT CARDS ──────────────────────────────────────────────────────
 // Privileged only. Grants the whole live catalog, so it stays correct as cards
-// are added rather than freezing a hardcoded list. Idempotent — re-running it
+// are added rather than freezing a hardcoded list. Idempotent - re-running it
 // tops a member up to one of each rather than stacking duplicates.
 app.post('/api/admin/grant-cards', authMiddleware, async (c) => {
   const actor = c.get('user') as any;
@@ -5536,7 +5536,7 @@ async function settleHandTrade(db: any, trade: any, at: string) {
     if (!first.ok) return first;
     const second = await handOverCard(db, trade.responder_uid, trade.poster_uid, trade.want_item, at);
     if (!second.ok) {
-      // Undo the first leg — a half-completed swap would be a theft.
+      // Undo the first leg - a half-completed swap would be a theft.
       await handOverCard(db, trade.responder_uid, trade.poster_uid, trade.give_item, at);
       return second;
     }
@@ -5580,7 +5580,7 @@ async function settleHandTrade(db: any, trade: any, at: string) {
 }
 
 // ─── EXCHANGE ACCESS GATE ────────────────────────────────────────────────────
-// The Exchange is for assessed members. A Civilian cannot trade — they must
+// The Exchange is for assessed members. A Civilian cannot trade - they must
 // assess into Player or GM first, exactly as they must to enter a Lobby.
 //
 // Follows the community_points discipline: eligibility is re-read from the
@@ -5633,7 +5633,7 @@ async function exchangeGate(c: any, user: any, what: string): Promise<any | null
   return null;
 }
 
-// The full Card catalog, for the second half of a WTT: — you cannot pick what
+// The full Card catalog, for the second half of a WTT: - you cannot pick what
 // you want from your own collection, because you do not own it yet. Read-only
 // and open to anyone who can see the Exchange; it exposes nothing but what is
 // printed on the card faces.
@@ -5743,7 +5743,7 @@ async function sendDirectMessage(
 
 // Where does this lobby lead right now? Read-only. The Inbox link after a
 // decline points at the lobby, but by the time it is clicked the table may
-// have launched into a Campaign Room — this says which, so the page can join
+// have launched into a Campaign Room - this says which, so the page can join
 // the lobby or knock on the Room's door as appropriate.
 app.get('/api/lobbies/:id/room', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
@@ -5775,7 +5775,7 @@ app.get('/api/lobbies/:id/room', authMiddleware, async (c) => {
 //           enhanced or socketed, and the card face says so. Nothing the
 //           owner can undo here.
 //   Locked  the owner's own decision. A deliberate second step before parting
-//           with something valuable — a locked Card cannot be listed on the
+//           with something valuable - a locked Card cannot be listed on the
 //           Exchange or handed over at a table until it is unlocked.
 //
 // Locking is what makes the Vault a safe rather than a shelf.
@@ -5823,7 +5823,7 @@ app.post('/api/cards/lock', authMiddleware, async (c) => {
 // How much room a member has to keep Cards, and whether anyone else may look.
 //
 // Basic members get a modest shelf, Pro members a larger one, and either can
-// buy more room with Community Points — Points are earned on the platform, so
+// buy more room with Community Points - Points are earned on the platform, so
 // space is something you work toward rather than something you purchase with
 // money.
 const COLLECTION_SLOTS_BASIC = 24;
@@ -5900,7 +5900,7 @@ app.get('/api/collection/settings', authMiddleware, async (c) => {
 });
 
 // Public or private. A public collection can be looked at by anyone; a private
-// one only by its owner. Off by default — a member opts in to being seen.
+// one only by its owner. Off by default - a member opts in to being seen.
 app.post('/api/collection/visibility', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
@@ -5918,7 +5918,7 @@ app.post('/api/collection/visibility', authMiddleware, async (c) => {
 
 // Buy shelf space with Community Points. Follows the same discipline as every
 // other balance: the Points are read fresh, the debit is conditional on there
-// being enough, and the row count is checked — so a double-tap cannot buy two
+// being enough, and the row count is checked - so a double-tap cannot buy two
 // packs for the price of one.
 app.post('/api/collection/slots/buy', authMiddleware, async (c) => {
   const user = c.get('user') as any;
@@ -5936,7 +5936,7 @@ app.post('/api/collection/slots/buy', authMiddleware, async (c) => {
     const points = fresh.community_points || 0;
     if (points < COLLECTION_SLOT_COST) {
       return c.json({
-        error: `That costs ${COLLECTION_SLOT_COST} Community Points — you have ${points}.`,
+        error: `That costs ${COLLECTION_SLOT_COST} Community Points - you have ${points}.`,
         insufficient: true, points, cost: COLLECTION_SLOT_COST,
       }, 402);
     }

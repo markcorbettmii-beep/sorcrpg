@@ -151,7 +151,7 @@
     .chat-tab-pane { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
     .chat-tab-pane.active { display: flex; }
     /* The unread dot sits above the label, and is taken out of the flow so it
-       cannot grow its tab's line box — inline, it pushed that one tab's text
+       cannot grow its tab's line box - inline, it pushed that one tab's text
        higher than the rest of the row. */
     .tab-badge { position:absolute; top:4px; left:50%; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#b9aa00; animation: badge-pulse 1.6s ease-in-out infinite; }
     @keyframes badge-pulse { 0%,100%{opacity:1;}50%{opacity:0.25;} }
@@ -901,7 +901,7 @@
           return;
         }
       } catch(e) {}
-      /* ?join=<lobby id> — the way back in from the Inbox note a Player gets
+      /* ?join=<lobby id> - the way back in from the Inbox note a Player gets
          after declining a summon. It takes precedence over restoring whatever
          lobby they were last sitting in. */
       var joinParam = null;
@@ -915,7 +915,7 @@
     }
 
     /* A declined Player changing their mind. The lobby may since have launched
-       into a Campaign Room, in which case there is nothing to join — so we ask
+       into a Campaign Room, in which case there is nothing to join - so we ask
        the GM for entry instead of failing at them. */
     async function enterFromLink(lobbyId) {
       try {
@@ -949,7 +949,7 @@
           });
           var rd = await readJson(rr);
           showToast(rd.success
-            ? 'That table is already in session — the GM has been asked to let you in.'
+            ? 'That table is already in session - the GM has been asked to let you in.'
             : (rd.error || 'Could not reach the GM of that Campaign Room.'), !rd.success);
           return;
         }
@@ -1719,7 +1719,7 @@
                   '<button class="chat-send" onclick="sendChat()">Send</button>' +
                 '</div>' +
               '</div>' +
-              /* ROLLS: dice only. Rolls never touch Main — but a line typed
+              /* ROLLS: dice only. Rolls never touch Main - but a line typed
                  here is ordinary lobby talk, so it posts to Main where the
                  conversation actually lives. */
               '<div class="chat-tab-pane" id="chatPane-rolls">' +
@@ -1854,7 +1854,7 @@
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
         if (chatSelectMode) exitChatSelectMode();
 
-        /* Rolls live in the Rolls tab and nowhere else — a table that rolls a
+        /* Rolls live in the Rolls tab and nowhere else - a table that rolls a
            lot would otherwise bury the conversation in Main. */
         function isRoll(m) { return !!(m.body && m.body.indexOf('\uD83C\uDFB2') === 0); }
         renderRollTab(msgs.filter(isRoll));
@@ -2441,7 +2441,7 @@
 
     /* Invite sends a real summon, not a private message with a code to copy.
        The Fellow gets a prompt with the lobby's details and accepts or denies
-       from there — the same flow the host gets from World Chat. */
+       from there - the same flow the host gets from World Chat. */
     window.inviteFromPool = async function(uid, name) {
       if (!currentLobby) return;
       var btn = document.querySelector('.invite-row-btn[data-uid="' + uid + '"]');
@@ -2464,7 +2464,7 @@
           flash('Summoned!', '#1a5a1a', '#2a8a2a');
           showToast((name || 'Player') + ' has been summoned to the lobby.');
         } else if (data.already_invited) {
-          /* Not a failure — the invite is still standing. Say so on the button
+          /* Not a failure - the invite is still standing. Say so on the button
              and leave it disabled, so nobody taps it again out of doubt. */
           flash('Invited', '#3a3000', '#6b5a00');
           showToast(data.error, true);
@@ -2485,12 +2485,12 @@
     /* ── Card picker ───────────────────────────────────────────
        Nobody should have to remember "#MOB001". Tap the Card, the line
        writes itself. WTS:/WTB: name one Card; WTT: is a barter, so it asks
-       for yours first and then what you want back — and that second Card
+       for yours first and then what you want back - and that second Card
        comes from the whole catalog, since you do not own it yet. */
 
     /* ── Rolls tab ─────────────────────────────────────────────
        Rolls are pulled out of Main and rendered here. Talk typed in this tab
-       is not a roll, so it posts to Main where the conversation lives — you
+       is not a roll, so it posts to Main where the conversation lives - you
        can roll and chat without leaving the tab, and Main stays readable. */
     function renderRollTab(rolls) {
       var el = document.getElementById('rollMessages');
@@ -2622,7 +2622,7 @@
       });
     }
 
-    // WTB: names a Card you do not hold, and WTT: step two likewise — both read
+    // WTB: names a Card you do not hold, and WTT: step two likewise - both read
     // the catalog. Everything else reads your own collection.
     function pickerSource() {
       if (cpVerb === 'WTB') return '/api/cards/catalog';

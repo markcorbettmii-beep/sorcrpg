@@ -23,13 +23,13 @@ online value.
 
 ---
 
-## Precedent 1: Pathfinder Society / D&D Adventurers League — Chronicle Sheets
+## Precedent 1: Tabletop RPG Organized Play - Chronicle Sheets
 
 **What they do.** Organized play across thousands of unconnected tables. After
 each session the GM signs a *Chronicle Sheet*: a physical per-session document
-listing gold earned, items unlocked, and boons granted, stamped with the
+listing rewards earned, items unlocked, and boons granted, stamped with the
 session number, the GM's organized-play ID, and the player's ID. The sheet is
-a bearer instrument — it travels with the character folder. Items are only
+a bearer instrument, it travels with the character folder. Items are only
 legal if a Chronicle Sheet grants them.
 
 **Right:**
@@ -51,11 +51,11 @@ gathered materials is a small extension of the GM Sheet you already have.
 
 ---
 
-## Precedent 2: Pokémon TCG code cards / Magic Online redemption
+## Precedent 2: Physical Product Code Redemption
 
-**What they do.** Every physical booster includes a one-time code redeemable
-for a digital equivalent. Codes burn on redemption. MTGO redemption runs the
-other direction — assemble a digital set, mail it back, receive physical cards.
+**What they do.** Every physical product includes a one-time code redeemable
+for a digital equivalent. Codes burn on redemption. Some systems run the
+other direction - assemble digital items, mail them back, receive physical goods.
 
 **Right:**
 - Burn-on-redeem makes double-spend impossible without any GM involvement.
@@ -71,12 +71,12 @@ other direction — assemble a digital set, mail it back, receive physical cards
 
 **For SORC:** Your box set already does this, and it works for **bought**
 materials. It cannot cover **gathered** materials, which is the actual gap.
-And watch the eBay failure: if a code grants tradeable online value, the code
+And watch the resale failure: if a code grants tradeable online value, the code
 becomes the commodity instead of the game.
 
 ---
 
-## Precedent 3: Toys-to-life — Skylanders, Amiibo, Disney Infinity
+## Precedent 3: Toys-to-life - NFC-based object ownership
 
 **What they do.** An NFC chip in a physical figure stores character state. The
 game reads and writes back to the toy. Possession of the object is the proof.
@@ -99,7 +99,7 @@ build anything where holding the object alone authorizes online value.
 
 ---
 
-## Precedent 4: Geocaching — physical logbook, online log
+## Precedent 4: Geocaching - physical logbook, online log
 
 **What they do.** Find a hidden container, sign the paper logbook inside, then
 log the find online. The cache owner can delete logs that don't match the
@@ -111,7 +111,7 @@ physical book, and photo proof is often expected.
 - Photo evidence raises effort without requiring infrastructure.
 
 **Wrong:**
-- "Armchair logging" — people log finds they never made. Widespread, and only
+- "Armchair logging" - people log finds they never made. Widespread, and only
   caught when an owner bothers to audit.
 - Enforcement is uneven and depends entirely on an owner who cares.
 
@@ -120,7 +120,7 @@ cheap. But it is deterrence, not proof.
 
 ---
 
-## Precedent 5: Ingress / Pokémon GO — GPS as attestation
+## Precedent 5: Location-based games - GPS as attestation
 
 **What they do.** Physical presence at real coordinates is the credential.
 
@@ -136,30 +136,30 @@ the gate on anything valuable.
 
 ---
 
-## Precedent 6: MMO housing — Ultima Online, Wurm Online, FFXIV, SWG
+## Precedent 6: MMO housing - Deed-based property systems
 
 Relevant to the *design* of Homes rather than the proof problem, but your
 deed/plot/neighbour questions are all solved problems here.
 
-- **Ultima Online:** a house *deed* is an item; you use it on a plot to place
-  the house. Your "Deeds" concept already has this precedent exactly.
-- **Wurm Online:** land claims literally called deeds, with coordinates,
-  upkeep, permissions, and neighbours. The closest match to your description.
-- **FFXIV:** plots in wards, real scarcity, demolition for inactivity. The
-  scarcity created a hostile secondary market — worth avoiding given you've
-  said there's no limit.
-- **Star Wars Galaxies:** player cities with mayors and civic structures.
+- **Deed-as-item model:** A house *deed* is an item; you use it on a plot to
+  place the house. Your "Deeds" concept already has this precedent exactly.
+- **Deed-with-coordinates model:** Land claims with coordinates, upkeep,
+  permissions, and neighbours. The closest match to your description.
+- **Ward-plot housing:** Plots organized in spatial wards. Real scarcity can
+  create a hostile secondary market, worth avoiding given you've said there's
+  no limit.
+- **Player cities:** Player-created settlements with mayors and civic structures.
   The precedent for your Neighbours question.
-- **EQ Landmark:** players uploaded built structures to a shared claim
-  system — the closest precedent for "upload your offline home", and it
-  failed commercially, though the build/share tech worked.
+- **User-built structure uploads:** Players uploading built structures to a shared
+  claim system, the closest precedent for "upload your offline home". This
+  approach had mixed results; the build/share tech worked but adoption varied.
 
-**Take:** UO's deed-as-item and Wurm's deed-with-coordinates are the two to
-copy. Skip FFXIV-style scarcity.
+**Take:** The deed-as-item and deed-with-coordinates models are the two to
+copy. Skip real-scarcity housing markets.
 
 ---
 
-## Precedent 7: Second Life — immutable creator attribution
+## Precedent 7: User-created content platforms - immutable creator attribution
 
 **What they do.** Every user-created object carries a creator field that
 cannot be altered, plus a permissions system (copy/modify/transfer).
@@ -167,8 +167,8 @@ cannot be altered, plus a permissions system (copy/modify/transfer).
 **Right:** Attribution survives every resale. Provenance is native to the
 object rather than bolted on.
 
-**Wrong:** "Copybot" clients copied geometry and re-uploaded it under a new
-creator, and the platform never fully fixed it.
+**Wrong:** Third-party tools have copied geometry and re-uploaded it under a new
+creator. Platforms struggle to prevent this fully.
 
 **For SORC:** If Homes are uploadable, stamp creator + first-registration
 timestamp immutably. It won't stop copying, but it makes the *original*
@@ -180,13 +180,13 @@ provable, which is usually what matters in a dispute.
 
 Layered, cheapest first. None of these require trusting a claim on its own.
 
-**1. Bought materials — extend the box set (already works).**
+**1. Bought materials - extend the box set (already works).**
 Codes burn on redemption. No change needed. Guard against the Pokémon failure:
 codes should grant *account-bound* materials, never tradeable ones.
 
-**2. Gathered materials — GM attestation, Pathfinder-style.**
+**2. Gathered materials - GM attestation, Pathfinder-style.**
 A session record signed off by the GM, carrying session number, GM ID, and the
-materials gathered. You already have a GM Sheet and campaign records — this is
+materials gathered. You already have a GM Sheet and campaign records, this is
 a field on something that exists. Rate-limit it: a cap per session makes
 forgery slow and boring rather than impossible.
 
@@ -195,7 +195,7 @@ A Home is not built in one session. For high-value claims require co-signature
 from other Players at the table. Collusion is possible but now needs several
 people to agree, which is exactly the friction you want.
 
-**4. Make forgery pointless — the important one.**
+**4. Make forgery pointless - the important one.**
 Offline-gathered materials build your Home. Your Home is *display* and *lore*.
 If those materials cannot be sold on the Essentia Exchange, converted to Coin,
 or transferred to another Character, then a forger has spent effort to obtain
@@ -216,7 +216,7 @@ campaign, unchangeably. Settles ownership disputes without preventing copying.
 ## Open questions for the owner
 
 1. **Should offline-gathered materials ever be tradeable?** My recommendation
-   is no, and it's the load-bearing decision — everything above gets easier if
+   is no, and it's the load-bearing decision, everything above gets easier if
    the answer is no.
 2. **What is the per-session cap on gathered materials?** Needs a number.
 3. **Does peer co-signature apply above a threshold, or always?**

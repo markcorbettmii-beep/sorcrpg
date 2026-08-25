@@ -72,12 +72,12 @@ See QUESTIONS.md section below.
 
 ---
 
-# RESOLVED — Owner answers (session 2026-08-25)
+# RESOLVED - Owner answers (session 2026-08-25)
 
 Supersedes the corresponding open questions. Verbatim source:
 `space-tabs-original-post.md` plus the follow-up answering points 1-5.
 
-## 1. Game Modes — NOT its own tab
+## 1. Game Modes - NOT its own tab
 "Games" is the wrong name. It is **Game Modes**, and it already exists on the
 home page. Folded into **Leaderboards** as a sub-tab area, with each mode a
 sub-category, taken from the live home-page list:
@@ -89,19 +89,19 @@ Leaderboards also links to the Character's Home **Trophy Room**, where wins,
 ranks, and awards are displayed.
 *Implemented in `space.html` (`switchGameMode`, `GAME_MODES`).*
 
-## 2. Contributions — REPLACED by "Standing"
+## 2. Contributions - REPLACED by "Standing"
 Contributions is removed as a tab. The tab is **Standing** (not Family;
 Family is one category inside it). Contributions is a tag carried by each
 category.
 
 Seven categories, each with its own **Standing** tag and **Contributions** tag:
-- **Family** — the Character's kin (replaced Household)
-- **Affiliations** — formal faction membership
-- **Companions** — Pets, Guardians, mounts, pack animals, **and Fellowships**; Standing recorded as Mood
-- **Campaign** — **the people you have partied with** (not campaigns run)
-- **Fellows** — the friends list
-- **Neighbours** — those sharing or bordering your coordinates
-- **Wellness** — the Character's Standing with themselves; self-directed Contributions
+- **Family** - the Character's kin (replaced Household)
+- **Affiliations** - formal faction membership
+- **Companions** - Pets, Guardians, mounts, pack animals, **and Fellowships**; Standing recorded as Mood
+- **Campaign** - **the people you have partied with** (not campaigns run)
+- **Fellows** - the friends list
+- **Neighbours** - those sharing or bordering your coordinates
+- **Wellness** - the Character's Standing with themselves; self-directed Contributions
 
 Both tab and rules point to the Journal booklet or the **Online Journal** tab.
 
@@ -110,9 +110,9 @@ under Prestige (`rules_ref_002.html`), summarised in the appendix.*
 
 Wellness IS a Standing category (self-contribution) and also remains its own system with its own 0-150% scale (Wellness, pg. 2).
 
-## 2b. Praise & Blowback — NEW RULE
-- **Praise** — from the friends and allies of those you hold good Standing with
-- **Blowback** — from the enemies of those same parties
+## 2b. Praise & Blowback - NEW RULE
+- **Praise** - from the friends and allies of those you hold good Standing with
+- **Blowback** - from the enemies of those same parties
 
 Both arrive unasked, so there is no neutral gain: rising with one faction is
 a way of falling with its rivals.
@@ -129,7 +129,7 @@ Mission Statement page.*
 ## 2c. Session History renamed
 **Session History → Online Journal** (owner answer 8). Tab id `online-journal`.
 
-## 3 & 4. Offline acquisition and Home upload — PROOF PROBLEM
+## 3 & 4. Offline acquisition and Home upload - PROOF PROBLEM
 Box set codes already cover **bought** materials. The open gap is **gathered**
 materials from strictly offline play, and proving an offline-built Home.
 Full precedent analysis with several real game examples, what each got right
@@ -140,47 +140,47 @@ pointless. Recommended path is GM attestation (Pathfinder Society Chronicle
 Sheet model) + peer co-signature + **severing offline-gathered materials from
 the tradeable economy**, which makes forgery worthless.
 
-Four decisions still needed from owner — see that doc's closing section.
+Four decisions still needed from owner - see that doc's closing section.
 
-## 5. Neighbours — CONFIRMED, extended
+## 5. Neighbours - CONFIRMED, extended
 - A neighbour's Home, or part of it, may appear on your **offline maps**
 - Neighbours may be sent a **Fellowship request** and campaign together
   regularly
-- **Standing applies to Friends who party together and to neighbours** —
+- **Standing applies to Friends who party together and to neighbours** -
   written into the Basic Rules Contribution & Family section under Standing
 
 ---
 
 ## LOCKED IN: Standing numbers, Praise/Blowback, Contribution/Neglect, the Mark
 
-**Tier values** — Exalted +4, Cherished +3, Adored +2, Respected +1,
+**Tier values** - Exalted +4, Cherished +3, Adored +2, Respected +1,
 Neutral 0, Tolerable −1, Disliked −2, Hated −3. This is "Standing LVL",
 which three rules referenced and none defined.
 
-**The ripple (Praise & Blowback)** — Praise and Blowback are DERIVED, not
+**The ripple (Praise & Blowback)** - Praise and Blowback are DERIVED, not
 separately tracked. When Standing with a target moves, allies of that target
 move the same direction by half the tiers moved (rounded down, min 1);
 enemies move the opposite direction by the same amount; neutral parties do
 not move.
 
-**Contribution & Neglect** — one line per category, not two scores.
+**Contribution & Neglect** - one line per category, not two scores.
 Contribution up, Neglect down, ticking on its own like Wellness.
 
-**The Neglect floor** — Neglect can only carry a Character toward Neutral,
+**The Neglect floor** - Neglect can only carry a Character toward Neutral,
 never past it. Falling below Neutral takes a deliberate act. This is what
 lets drifting apart be told from betrayal.
 
-**The Mark** — the highest Standing ever held with a party, recorded beside
+**The Mark** - the highest Standing ever held with a party, recorded beside
 current Standing, never decays. Not goodwill owed; the measure of the fall.
 
-**Betrayal scales with the Mark** — a deliberate act drops a party as far
+**Betrayal scales with the Mark** - a deliberate act drops a party as far
 below Neutral as their Mark stood above it (Mark +2 → Disliked −2;
 Mark +4 → Hated). Minimum one tier below Neutral regardless of Mark.
 
-**Sealing** — a Mark is never erased, but a Bond Quest may seal it: the
+**Sealing** - a Mark is never erased, but a Bond Quest may seal it: the
 record stands, the GM stops applying it.
 
-*Written into: `rules_ref_002.html` (Prestige — Standing Tiers, Praise &
+*Written into: `rules_ref_002.html` (Prestige - Standing Tiers, Praise &
 Blowback, Contribution Neglect & the Mark), `rules_ref_appendix.html`,
 `rules_ref_006.html` glossary (6 new terms: Standing, Contribution, Neglect,
 Mark, Praise, Blowback), and the journal booklet's Standing Tracker, which

@@ -1,5 +1,5 @@
 /* ============================================================
-   OMNE TERMINAL THEME — theme-terminal.js
+   OMNE TERMINAL THEME - theme-terminal.js
    Space station soundscape with droids, metal grid footsteps,
    ship traffic, machinery, and ambient drones.
    Exposes: window.terminalTheme = { start, stop }
@@ -57,7 +57,7 @@
     return f;
   }
 
-  /* Early-reflection reverb — no feedback loops, clean teardown */
+  /* Early-reflection reverb - no feedback loops, clean teardown */
   function makeReverb(wet) {
     var w   = wet !== undefined ? wet : 0.42;
     var inp = audioCtx.createGain();
@@ -75,7 +75,7 @@
     return { input: inp, output: out };
   }
 
-  /* ── Scale — E natural minor ──────────────────────────── */
+  /* ── Scale - E natural minor ──────────────────────────── */
   var E1=41.20, B1=61.74;
   var E2=82.41, Fs2=92.50, G2=98.00, A2=110.00, B2=123.47, C3=130.81;
   var D3=146.83, E3=164.81, Fs3=185.00, G3=196.00, A3=220.00, B3=246.94;
@@ -85,7 +85,7 @@
   function startSpaceDrone() {
     var rev = makeReverb(0.55);
     rev.output.connect(masterGain);
-    /* Sub-bass only — no mid detuned cluster (that caused metallic beating) */
+    /* Sub-bass only - no mid detuned cluster (that caused metallic beating) */
     [[E1, 0.032],[B1, 0.018],[E2, 0.018],[B2, 0.010]].forEach(function (p) {
       var osc = makeOsc('sawtooth', p[0]);
       var lpf = makeFilt('lowpass', 140, 0.6);
@@ -287,7 +287,7 @@
       var loFreq   = rnd(600, 1200);
       var peak     = rnd(0.055, 0.085);
 
-      /* Engine tone — thin whine that Doppler-shifts */
+      /* Engine tone - thin whine that Doppler-shifts */
       var toneSrc = audioCtx.createOscillator();
       toneSrc.type = 'sawtooth';
       toneSrc.frequency.setValueAtTime(rnd(280, 420), now);
@@ -362,7 +362,7 @@
       subSrc.connect(subLpf); subLpf.connect(subG); subG.connect(masterGain);
       subSrc.start(now);
 
-      /* Hull vibration — low bandpass noise sweep */
+      /* Hull vibration - low bandpass noise sweep */
       var hullSrc = audioCtx.createBufferSource();
       hullSrc.buffer = makeNoiseBuf(dur + 0.5);
       var hullBpf = audioCtx.createBiquadFilter();
@@ -394,7 +394,7 @@
       var clunk    = retro + 0.25;
       var hiss     = clunk + 0.1;
 
-      /* Approach thruster build — low rumble growing closer */
+      /* Approach thruster build - low rumble growing closer */
       var thrustFreq = rnd(70, 110);
       [1, 2].forEach(function (h) {
         var osc = audioCtx.createOscillator();
@@ -411,7 +411,7 @@
         osc.start(now); osc.stop(now + retro + 0.15);
       });
 
-      /* Retro-fire burst — short sharp noise blast */
+      /* Retro-fire burst - short sharp noise blast */
       var retroSrc = audioCtx.createBufferSource();
       retroSrc.buffer = makeNoiseBuf(0.45);
       var retroBpf = audioCtx.createBiquadFilter();
@@ -423,7 +423,7 @@
       retroSrc.connect(retroBpf); retroBpf.connect(retroG); retroG.connect(masterGain);
       retroSrc.start(now + retro);
 
-      /* Landing clunk — thud + metallic ring */
+      /* Landing clunk - thud + metallic ring */
       var clunkOsc = audioCtx.createOscillator();
       clunkOsc.type = 'sine';
       clunkOsc.frequency.setValueAtTime(rnd(95, 130), now + clunk);
@@ -546,7 +546,7 @@
     }, 90, 230);
   }
 
-  /* ── DROIDS: Common — small chirp sequence (R2-style) ── */
+  /* ── DROIDS: Common - small chirp sequence (R2-style) ── */
   function scheduleDroidChirp() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -575,7 +575,7 @@
     }, 12, 35);
   }
 
-  /* ── DROIDS: Common — servo motor whine ─────────────── */
+  /* ── DROIDS: Common - servo motor whine ─────────────── */
   function scheduleDroidServo() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -607,7 +607,7 @@
     }, 18, 45);
   }
 
-  /* ── DROIDS: Common — electronic warble/scan ─────────── */
+  /* ── DROIDS: Common - electronic warble/scan ─────────── */
   function scheduleDroidWarble() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -636,7 +636,7 @@
     }, 22, 55);
   }
 
-  /* ── DROIDS: Rare — power-up / boot sequence ─────────── */
+  /* ── DROIDS: Rare - power-up / boot sequence ─────────── */
   function scheduleDroidPowerUp() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -673,7 +673,7 @@
     }, 90, 220);
   }
 
-  /* ── DROIDS: Rare — heavy droid walking on metal ─────── */
+  /* ── DROIDS: Rare - heavy droid walking on metal ─────── */
   function scheduleDroidHeavyWalk() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -723,7 +723,7 @@
     }, 80, 200);
   }
 
-  /* ── FOOTSTEPS: Metal grid — single person ───────────── */
+  /* ── FOOTSTEPS: Metal grid - single person ───────────── */
   function scheduleGridFootsteps() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -736,7 +736,7 @@
       rev.output.connect(masterGain);
       for (var i = 0; i < steps; i++) {
         (function (t) {
-          /* low-mid boot impact — dry direct + reverb send */
+          /* low-mid boot impact - dry direct + reverb send */
           var nSrc = audioCtx.createBufferSource();
           nSrc.buffer = makeNoiseBuf(0.12);
           var bpf = audioCtx.createBiquadFilter();
@@ -766,7 +766,7 @@
     }, 4, 12);
   }
 
-  /* ── FOOTSTEPS: Metal grid — group passing by (rare) ─── */
+  /* ── FOOTSTEPS: Metal grid - group passing by (rare) ─── */
   function scheduleGroupFootsteps() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -811,7 +811,7 @@
     }, 25, 60);
   }
 
-  /* ── DROIDS: C-3PO style — wordy harmonic chatter ───── */
+  /* ── DROIDS: C-3PO style - wordy harmonic chatter ───── */
   function scheduleDroidProtocol() {
     sched(function () {
       if (!audioCtx || !masterGain) return;
@@ -871,7 +871,7 @@
       var type = Math.floor(Math.random() * 3); /* 0=small, 1=large blast, 2=energy */
 
       if (type === 0) {
-        /* Small door — pressure seal pop + smooth slide + soft lock */
+        /* Small door - pressure seal pop + smooth slide + soft lock */
         var rev0 = makeReverb(0.28); rev0.output.connect(masterGain);
         /* pressure pop */
         var popSrc = audioCtx.createBufferSource();
@@ -883,7 +883,7 @@
         popG.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
         popSrc.connect(popBpf); popBpf.connect(popG); popG.connect(rev0.input);
         popSrc.start(now);
-        /* panel slide — filtered noise sweep */
+        /* panel slide - filtered noise sweep */
         var slSrc = audioCtx.createBufferSource();
         slSrc.buffer = makeNoiseBuf(0.5);
         var slBpf = audioCtx.createBiquadFilter();
@@ -907,7 +907,7 @@
         lkOsc.start(now + 0.50); lkOsc.stop(now + 0.66);
 
       } else if (type === 1) {
-        /* Large blast door — long pressure exhale + deep panel travel + firm seat */
+        /* Large blast door - long pressure exhale + deep panel travel + firm seat */
         var rev1 = makeReverb(0.42); rev1.output.connect(masterGain);
         /* pressure exhale hiss */
         var exSrc = audioCtx.createBufferSource();
@@ -933,7 +933,7 @@
         hvG.gain.linearRampToValueAtTime(0, now + 1.15);
         hvSrc.connect(hvLpf); hvLpf.connect(hvG); hvG.connect(rev1.input);
         hvSrc.start(now + 0.08);
-        /* firm controlled seat — one thud, no crash */
+        /* firm controlled seat - one thud, no crash */
         var stOsc = audioCtx.createOscillator();
         stOsc.type = 'sine';
         stOsc.frequency.setValueAtTime(85, now + 1.1);
@@ -945,7 +945,7 @@
         stOsc.start(now + 1.1); stOsc.stop(now + 1.4);
 
       } else {
-        /* Energy barrier — rising hum + pressure seal + clean cut */
+        /* Energy barrier - rising hum + pressure seal + clean cut */
         var rev2 = makeReverb(0.32); rev2.output.connect(masterGain);
         var eHum = audioCtx.createOscillator();
         eHum.type = 'sine'; eHum.frequency.value = 180;
@@ -999,7 +999,7 @@
       sweepG.gain.linearRampToValueAtTime(0, now + dur);
       sweepOsc.connect(sweepG); sweepG.connect(rev.input);
       sweepOsc.start(now); sweepOsc.stop(now + dur + 0.1);
-      /* shimmer — many fast LFO-modulated tones */
+      /* shimmer - many fast LFO-modulated tones */
       var shimmerCount = 8;
       for (var i = 0; i < shimmerCount; i++) {
         (function(idx) {
@@ -1023,7 +1023,7 @@
           sOsc.start(startAt); sOsc.stop(now + dur + 0.2);
         })(i);
       }
-      /* sparkle — short high noise bursts scattered throughout */
+      /* sparkle - short high noise bursts scattered throughout */
       var sparkCount = rndInt(10, 20);
       for (var k = 0; k < sparkCount; k++) {
         (function(kt) {
@@ -1055,7 +1055,7 @@
       var cursor = now;
       for (var i = 0; i < steps; i++) {
         (function (t) {
-          /* Mid-body thud — bandpass centred around footfall impact */
+          /* Mid-body thud - bandpass centred around footfall impact */
           var src = audioCtx.createBufferSource();
           src.buffer = makeNoiseBuf(0.10);
           var bpf = audioCtx.createBiquadFilter();
@@ -1087,7 +1087,7 @@
     try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     catch (e) { return; }
 
-    /* Keep the context alive — mobile browsers re-suspend after ~1s without this */
+    /* Keep the context alive - mobile browsers re-suspend after ~1s without this */
     keepAliveId = setInterval(function() {
       if (!audioCtx) { clearInterval(keepAliveId); keepAliveId = null; return; }
       if (audioCtx.state === 'suspended') audioCtx.resume().catch(function(){});
