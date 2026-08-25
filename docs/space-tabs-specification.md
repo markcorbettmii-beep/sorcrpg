@@ -89,32 +89,44 @@ Leaderboards also links to the Character's Home **Trophy Room**, where wins,
 ranks, and awards are displayed.
 *Implemented in `space.html` (`switchGameMode`, `GAME_MODES`).*
 
-## 2. Contributions — REPLACED by "Family"
-Contributions is removed as a tab. **Family** replaces it, and Contributions
-becomes a tag carried by each Family sub-category.
+## 2. Contributions — REPLACED by "Standing"
+Contributions is removed as a tab. The tab is **Standing** (not Family;
+Family is one category inside it). Contributions is a tag carried by each
+category.
 
-Family has five sub-categories:
-- **Household** — direct nuclear family; each member has their own Character Sheet
-- **Affiliations** — formal faction membership held by the Household
-- **Companions** — Pets, Guardians, mounts, pack animals
-- **Campaign** — campaigns the Family has run
-- **Fellowships** — Fellowships and the parties they ride with
+Six categories, each with its own **Standing** tag and **Contributions** tag:
+- **Family** — the Character's kin (replaced Household)
+- **Affiliations** — formal faction membership
+- **Companions** — Pets, Guardians, mounts; Standing recorded as Mood
+- **Campaign** — **the people you have partied with** (not campaigns run)
+- **Fellowships** — Fellowships and regular parties
+- **Neighbours** — those sharing or bordering your coordinates
 
-**Each sub-category carries its own Standing tag and its own Contributions
-tag.** Standing and Contributions are therefore attributes of each area, not
-areas themselves. (Note: Wellness was in the earlier four-area list and is not
-in this one — it remains its own system under Wellness, pg. 2.)
+Both tab and rules point to the Journal booklet or the **Online Journal** tab.
 
-The tab and the rules both point the reader to the Journal booklet or the
-**Online Journal** tab for the full record.
+*Implemented in `space.html` (`case 'standing'`) and Basic Rules "Standing"
+under Prestige (`rules_ref_002.html`), summarised in the appendix.*
 
-*Implemented in `space.html` (Family case, `.fam-tag`) and Basic Rules
-"Family" under Prestige (`rules_ref_002.html`).*
+Wellness is not a Standing category; it remains its own system (Wellness, pg. 2).
 
-## 2b. Session History renamed
-**Session History → Online Journal** (owner answer 8, to avoid confusion with
-the Journal booklet). Tab id `session-history` → `online-journal`.
-The Family tab links to it.
+## 2b. Praise & Blowback — NEW RULE
+- **Praise** — from the friends and allies of those you hold good Standing with
+- **Blowback** — from the enemies of those same parties
+
+Both arrive unasked, so there is no neutral gain: rising with one faction is
+a way of falling with its rivals.
+
+**On Mission Statements** (the important case): working *towards* a mission
+statement draws Praise from those who hope to see it done and Blowback from
+those who do not. *Neglecting* it reverses both exactly. There is no way to
+sit still and avoid both.
+
+*Written into `rules_ref_002.html` under Prestige AND under Mission Statement,
+summarised in `rules_ref_appendix.html`, and noted on the journal booklet's
+Mission Statement page.*
+
+## 2c. Session History renamed
+**Session History → Online Journal** (owner answer 8). Tab id `online-journal`.
 
 ## 3 & 4. Offline acquisition and Home upload — PROOF PROBLEM
 Box set codes already cover **bought** materials. The open gap is **gathered**
