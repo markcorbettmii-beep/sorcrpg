@@ -90,22 +90,31 @@ ranks, and awards are displayed.
 *Implemented in `space.html` (`switchGameMode`, `GAME_MODES`).*
 
 ## 2. Contributions — REPLACED by "Family"
-Rules section is titled **Family**; Contributions is a sub-category inside it.
-Contributions had no clear origin and is removed. In its place a **Family**
-tab (PUBLIC), which separates Family from Home everywhere on the site.
-A Home is a place; a Family is people.
+Contributions is removed as a tab. **Family** replaces it, and Contributions
+becomes a tag carried by each Family sub-category.
 
-Four contribution areas:
-- **a. Household** — direct nuclear family; each member has their own
-  Character Sheet and stats
-- **b. Affiliations** — see rules
-- **c. Standing** — see rules
-- **d. Wellness** — see rules
+Family has five sub-categories:
+- **Household** — direct nuclear family; each member has their own Character Sheet
+- **Affiliations** — formal faction membership held by the Household
+- **Companions** — Pets, Guardians, mounts, pack animals
+- **Campaign** — campaigns the Family has run
+- **Fellowships** — Fellowships and the parties they ride with
 
-These four are what a Character contributes to.
-*Implemented in `space.html`, and written into Basic Rules as
-"Contribution & Family" under Prestige (`rules_ref_002.html`), placed
-directly after Standing Tiers per owner instruction.*
+**Each sub-category carries its own Standing tag and its own Contributions
+tag.** Standing and Contributions are therefore attributes of each area, not
+areas themselves. (Note: Wellness was in the earlier four-area list and is not
+in this one — it remains its own system under Wellness, pg. 2.)
+
+The tab and the rules both point the reader to the Journal booklet or the
+**Online Journal** tab for the full record.
+
+*Implemented in `space.html` (Family case, `.fam-tag`) and Basic Rules
+"Family" under Prestige (`rules_ref_002.html`).*
+
+## 2b. Session History renamed
+**Session History → Online Journal** (owner answer 8, to avoid confusion with
+the Journal booklet). Tab id `session-history` → `online-journal`.
+The Family tab links to it.
 
 ## 3 & 4. Offline acquisition and Home upload — PROOF PROBLEM
 Box set codes already cover **bought** materials. The open gap is **gathered**

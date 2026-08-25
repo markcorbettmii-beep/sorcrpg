@@ -51,6 +51,9 @@
         .card h4 { color: #e0cfc0; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
         .card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.5; }
 
+        .fam-tags { margin: 0.6rem 0 0 0; display: flex; gap: 0.35rem; flex-wrap: wrap; }
+        .fam-tag { font-size: 0.68rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; background: #2c2c1a; color: #b9aa00; border: 1px solid #4a4420; }
+        body.lawful-mode .fam-tag { background: #f5f1e0; color: #7a6a00; border-color: #ddd5b0; }
         /* Sub-tabs (game boards under Leaderboards) */
         .subtab { padding: 6px 14px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.15s; }
         .subtab:hover { border-color: #b9aa00; color: #b9aa00; }
@@ -114,7 +117,7 @@
         { id: 'leaderboards', label: 'Leaderboards', access: 'PUBLIC', pro: false },
         { id: 'fellowship', label: 'Fellowship', access: 'PUBLIC', pro: false },
         { id: 'vault', label: 'Vault', access: 'PRIVATE', pro: false },
-        { id: 'session-history', label: 'Session History', access: 'PRIVATE', pro: false },
+        { id: 'online-journal', label: 'Online Journal', access: 'PRIVATE', pro: false },
         { id: 'character-home', label: "Character's Home", access: 'PRO', pro: true },
         { id: 'family', label: 'Family', access: 'PUBLIC', pro: false },
         { id: 'general-trade', label: 'General Trade', access: 'PRO', pro: true },
@@ -315,10 +318,10 @@
                             '</div>';
                         break;
 
-                    case 'session-history':
-                        html += '<h3>Session History</h3>' +
+                    case 'online-journal':
+                        html += '<h3>Online Journal</h3>' +
                             '<span class="access-badge PRIVATE">PRIVATE</span>' +
-                            '<p>Your completed sessions and campaign records.</p>' +
+                            '<p>Your completed sessions and campaign records. This is the online counterpart to your Journal booklet.</p>' +
                             '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;color:#666;">No sessions yet.</div>';
                         break;
 
@@ -351,14 +354,32 @@
                         html += '<h3>Family</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC</span>' +
                             '<p>Family is tracked separately from Home. A Home is a place; a Family is people. ' +
-                            'These four areas are what a Character contributes to — time, Coin, effort, and reputation spent on the people around them.</p>' +
+                            'Each area below carries its own <strong>Standing</strong> and its own <strong>Contributions</strong>.</p>' +
                             '<div class="content-grid">' +
-                                '<div class="card"><h4>Household</h4><p>Your direct nuclear family. Each member carries their own Character Sheet and stats.</p></div>' +
-                                '<div class="card"><h4>Affiliations</h4><p>Formal faction membership held by the Household — deeper access, obligations, and consequences.</p></div>' +
-                                '<div class="card"><h4>Standing</h4><p>Where the Household sits with factions and named NPCs, Exalted through Hated.</p></div>' +
-                                '<div class="card"><h4>Wellness</h4><p>How well the Household is cared for. Contributions raise it; neglect lets it decline.</p></div>' +
+                                '<div class="card"><h4>Household</h4>' +
+                                    '<p>Your direct nuclear family. Each member carries their own Character Sheet and stats.</p>' +
+                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                                '</div>' +
+                                '<div class="card"><h4>Affiliations</h4>' +
+                                    '<p>Formal faction membership held by the Household, with its access, obligations, and consequences.</p>' +
+                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                                '</div>' +
+                                '<div class="card"><h4>Companions</h4>' +
+                                    '<p>Pets, Guardians, mounts, and pack animals bound to the Family.</p>' +
+                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                                '</div>' +
+                                '<div class="card"><h4>Campaign</h4>' +
+                                    '<p>The campaigns this Family has run, and what they earned or lost in them.</p>' +
+                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                                '</div>' +
+                                '<div class="card"><h4>Fellowships</h4>' +
+                                    '<p>Fellowships the Family belongs to, and the parties they ride with regularly.</p>' +
+                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                                '</div>' +
                             '</div>' +
-                            '<p style="margin-top:1rem;color:#888;font-size:0.85rem;">Full rules: Contribution &amp; Family under Prestige, Basic Rules pg. 2. ' +
+                            '<p style="margin-top:1rem;color:#888;font-size:0.85rem;">Refer to your Journal booklet or ' +
+                            '<a href="#" onclick="switchTab(\'online-journal\');return false;" style="color:#b9aa00;text-decoration:underline;">Online Journal</a> for details. ' +
+                            'Full rules: Family under Prestige, Basic Rules pg. 2. ' +
                             'Your Home and its rooms live in <a href="/home-and-family.html" style="color:#b9aa00;text-decoration:underline;">Home &amp; Family</a>.</p>';
                         break;
 
