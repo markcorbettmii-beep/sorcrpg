@@ -4214,6 +4214,15 @@ function parseTradeTag(raw: string): { kind: string; item: string; want_item: st
   if (!rest) return null;
 
   if (kind === 'WTT') {
+    // Two shapes. "WTT: Mob Card #1001" names a single Card by its ref # and
+    // drops it into the Bazaar. "WTT: Give>Want" is the older barter form and
+    // still opens a Hand Trade negotiation.
+    if (!/(?:>|\bfor\b)/i.test(rest)) {
+      if (!extractCardRef(rest)) {
+        return null; // A bare WTT with no ref # and no ">" says nothing.
+      }
+      return { kind, item: rest.slice(0, 40), want_item: null };
+    }
     // Give > Want. Accept ">" or "for" as the separator.
     const parts = rest.split(/\s*(?:>|\bfor\b)\s*/i);
     if (parts.length !== 2) return null;
@@ -4335,8 +4344,44 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
       return c.json({ error: `You do not own "${tag.item}". Only items earned in a recorded session can be offered.` }, 403);
     }
 
+    // A posting may name a Card by its ref # — "WTT: Mob Card #1001". When it
+    // does, the Card is resolved from the catalog and dropped straight into the
+    // Bazaar, so the chat line and the Exchange listing are the same trade.
+    await ensureExchangeTables(c.env.sorc_db);
+    const postedRef = extractCardRef(tag.item);
+    const linkedCard = postedRef
+      ? await findCard(c.env.sorc_db, postedRef, null) as any
+      : null;
+    if (postedRef && !linkedCard) {
+      return c.json({ error: `No Card carries ref #${postedRef}.` }, 404);
+    }
+
+    let listingId: string | null = null;
+    if (linkedCard && tag.kind !== 'WTB') {
+      const max = await slotAllowance(c.env.sorc_db, user);
+      const used = await slotsUsed(c.env.sorc_db, user.id);
+      if (used >= max) {
+        const tier = max === EXCHANGE_SLOTS_PRO ? 'Pro' : 'Basic';
+        return c.json({
+          error: `All ${max} of your trading slots are in use. ${tier} members get ${max}.` +
+                 (tier === 'Basic' ? ` Pro members get ${EXCHANGE_SLOTS_PRO}.` : ''),
+          slots_full: true, used, max,
+        }, 403);
+      }
+      const listedAt = new Date().toISOString();
+      listingId = crypto.randomUUID();
+      await c.env.sorc_db.prepare(
+        `INSERT INTO exchange_listings (id, tab, seller_uid, seller_name, ref_code, item_name, card_type, coin_price, status, created_at, updated_at)
+         VALUES (?, 'bazaar', ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
+      ).bind(
+        listingId, user.id, user.display_name || user.username,
+        linkedCard.ref_code, linkedCard.item_name, linkedCard.card_type,
+        linkedCard.coin_value, listedAt, listedAt
+      ).run();
+    }
+
     // Price is read off the card, never typed by the poster.
-    const coin = await cardValue(c.env.sorc_db, tag.item);
+    const coin = linkedCard ? linkedCard.coin_value : await cardValue(c.env.sorc_db, tag.item);
     const wantCoin = tag.want_item ? await cardValue(c.env.sorc_db, tag.want_item) : null;
 
     const lobby = await c.env.sorc_db.prepare(
@@ -4345,8 +4390,8 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
 
     const now = new Date().toISOString();
     await c.env.sorc_db.prepare(
-      `INSERT INTO trade_messages (id, sender_uid, sender_name, lobby_id, lobby_name, kind, item, want_item, coin, want_coin, status, body, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
+      `INSERT INTO trade_messages (id, sender_uid, sender_name, lobby_id, lobby_name, kind, item, want_item, coin, want_coin, status, body, created_at, card_ref, listing_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)`
     ).bind(
       crypto.randomUUID(),
       user.id,
@@ -4354,19 +4399,30 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
       lobby?.id || null,
       lobby?.name || null,
       tag.kind,
-      tag.item,
+      linkedCard ? linkedCard.item_name : tag.item,
       tag.want_item,
       coin,
       wantCoin,
       check.filtered,
-      now
+      now,
+      linkedCard ? linkedCard.ref_code : null,
+      listingId
     ).run();
 
     await c.env.sorc_db.prepare(
       `DELETE FROM trade_messages WHERE id NOT IN (SELECT id FROM trade_messages ORDER BY created_at DESC LIMIT 200)`
     ).run();
 
-    return c.json({ success: true });
+    return c.json({
+      success: true,
+      dropped: listingId ? {
+        listing_id: listingId,
+        ref_code: linkedCard.ref_code,
+        item_name: linkedCard.item_name,
+        coin_price: linkedCard.coin_value,
+        tab: 'bazaar',
+      } : null,
+    });
   } catch (error: any) {
     return c.json({ error: 'Failed to post.', details: error.message }, 500);
   }
@@ -4623,6 +4679,343 @@ app.post('/api/hand-trade/:id/decline', authMiddleware, async (c) => {
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Could not decline.', details: error.message }, 500);
+  }
+});
+
+// ─── THE EXCHANGE (Auction House) ────────────────────────────────────────────
+// The Exchange is SORC's auction house. It settles in IN-GAME CURRENCY ONLY —
+// no real money ever moves between Players on SORC servers.
+//
+// Four surfaces, three of them tabs inside The Exchange:
+//   Bazaar        SORC Card trading — where Cards listed from chat land
+//   Trade Post    Player-to-Player item hub
+//   Black Market  reserved; no purpose assigned yet, listed but inert
+//   Hand Trade    NOT part of The Exchange. Room-only, face-to-face, see below.
+//
+// Trading slots, Grand Exchange style: a member may hold only so many live
+// listings at once. Basic members get 3, Pro members get 8.
+
+const EXCHANGE_SLOTS_BASIC = 3;
+const EXCHANGE_SLOTS_PRO = 8;
+const EXCHANGE_TABS = ['bazaar', 'trade_post', 'black_market'];
+
+async function ensureExchangeTables(db: any) {
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS exchange_listings (
+       id TEXT PRIMARY KEY,
+       tab TEXT NOT NULL DEFAULT 'bazaar',
+       seller_uid TEXT NOT NULL,
+       seller_name TEXT NOT NULL,
+       ref_code TEXT,
+       item_name TEXT NOT NULL,
+       card_type TEXT,
+       coin_price INTEGER NOT NULL DEFAULT 0,
+       status TEXT NOT NULL DEFAULT 'open',
+       buyer_uid TEXT,
+       buyer_name TEXT,
+       created_at TEXT NOT NULL,
+       updated_at TEXT NOT NULL
+     )`
+  ).run();
+  // Every Player's in-game purse. Coin is earned in recorded sessions; there is
+  // no path from real money into this column, by design.
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS user_wallets (
+       user_id TEXT PRIMARY KEY,
+       coin INTEGER NOT NULL DEFAULT 0,
+       updated_at TEXT NOT NULL
+     )`
+  ).run();
+  // Chat postings carry the Card they linked, so the Trade tab can render the
+  // link and the Buy/Pass control against the live listing.
+  for (const col of ['card_ref TEXT', 'listing_id TEXT']) {
+    try {
+      await db.prepare(`ALTER TABLE trade_messages ADD COLUMN ${col}`).run();
+    } catch (e) {
+      // Column already present — SQLite has no ADD COLUMN IF NOT EXISTS.
+    }
+  }
+  await seedItemCards(db);
+}
+
+// The card catalog is the single authority on what a Card is worth. Seeded
+// with the Cards that ship in the rules; ref_code is the number printed on the
+// physical Card (the green half of mod-ref#pg.N), and is what Players type.
+async function seedItemCards(db: any) {
+  const seeds = [
+    {
+      ref: '1001',
+      name: 'Skeleton Soldier',
+      type: 'Mob',
+      rank: 'Common',
+      coin: 25,
+      stats: 'Common Mob Encounter Card',
+      lore: 'A risen footsoldier, bound to the order it died following.',
+      art: '/content/sorc-cards/encounter-cards/Encounter-Card-Common-Mob-Skeleton-Soldier_20260610_104351_0000.png',
+    },
+    {
+      ref: '1002',
+      name: 'Divine Chimassu',
+      type: 'Boss',
+      rank: 'Divine',
+      coin: 500,
+      stats: 'Divine Boss Encounter Card',
+      lore: 'A divine terror; few tables have ever put one down.',
+      art: '/content/sorc-cards/encounter-cards/SORC-Card-Encounter-Card-Boss-Divine-Chimassu_20260610_111729_0000.png',
+    },
+  ];
+  const now = new Date().toISOString();
+  for (const s of seeds) {
+    const existing = await db.prepare(
+      `SELECT id FROM item_cards WHERE ref_code = ? LIMIT 1`
+    ).bind(s.ref).first();
+    if (existing) continue;
+    await db.prepare(
+      `INSERT INTO item_cards (id, item_name, card_type, item_rank, coin_value, stats, lore, ref_code, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      crypto.randomUUID(), s.name, s.type, s.rank, s.coin,
+      JSON.stringify({ summary: s.stats, art: s.art }), s.lore, s.ref, now
+    ).run();
+  }
+}
+
+async function walletBalance(db: any, userId: string): Promise<number> {
+  const row = await db.prepare(
+    `SELECT coin FROM user_wallets WHERE user_id = ?`
+  ).bind(userId).first() as any;
+  if (row) return row.coin || 0;
+  await db.prepare(
+    `INSERT INTO user_wallets (user_id, coin, updated_at) VALUES (?, 0, ?)`
+  ).bind(userId, new Date().toISOString()).run();
+  return 0;
+}
+
+async function slotAllowance(db: any, user: any): Promise<number> {
+  return (await isProMember(db, user)) ? EXCHANGE_SLOTS_PRO : EXCHANGE_SLOTS_BASIC;
+}
+
+async function slotsUsed(db: any, userId: string): Promise<number> {
+  const row = await db.prepare(
+    `SELECT COUNT(*) AS n FROM exchange_listings WHERE seller_uid = ? AND status = 'open'`
+  ).bind(userId).first() as any;
+  return row?.n || 0;
+}
+
+// Look a Card up the way a Player refers to it: by the ref # off the card, or
+// failing that by name. Returns null when neither hits.
+async function findCard(db: any, ref: string | null, name: string | null) {
+  if (ref) {
+    const byRef = await db.prepare(
+      `SELECT * FROM item_cards WHERE ref_code = ? LIMIT 1`
+    ).bind(String(ref).replace(/^#/, '')).first();
+    if (byRef) return byRef;
+  }
+  if (name) {
+    const byName = await db.prepare(
+      `SELECT * FROM item_cards WHERE LOWER(item_name) = LOWER(?) LIMIT 1`
+    ).bind(name.trim()).first();
+    if (byName) return byName;
+  }
+  return null;
+}
+
+// "Mob Card #1001", "Card #1001", or plain "#1001" — pull the ref # out.
+function extractCardRef(text: string): string | null {
+  const m = (text || '').match(/#\s*([0-9]{3,8})/);
+  return m ? m[1] : null;
+}
+
+app.get('/api/exchange/wallet', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const coin = await walletBalance(c.env.sorc_db, user.id);
+    return c.json({ coin });
+  } catch (error: any) {
+    return c.json({ coin: 0 });
+  }
+});
+
+app.get('/api/exchange/slots', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const max = await slotAllowance(c.env.sorc_db, user);
+    const used = await slotsUsed(c.env.sorc_db, user.id);
+    return c.json({
+      used, max, free: Math.max(0, max - used),
+      tier: max === EXCHANGE_SLOTS_PRO ? 'Pro' : 'Basic',
+    });
+  } catch (error: any) {
+    return c.json({ used: 0, max: EXCHANGE_SLOTS_BASIC, free: EXCHANGE_SLOTS_BASIC, tier: 'Basic' });
+  }
+});
+
+app.get('/api/card', authMiddleware, async (c) => {
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const ref = c.req.query('ref') || null;
+    const name = c.req.query('name') || null;
+    const card = await findCard(c.env.sorc_db, ref, name) as any;
+    if (!card) return c.json({ error: 'No Card with that ref #.' }, 404);
+    let art = null, summary = null;
+    try {
+      const parsed = JSON.parse(card.stats || '{}');
+      art = parsed.art || null;
+      summary = parsed.summary || null;
+    } catch (e) { /* stats may be plain text on older rows */ }
+    return c.json({
+      card: {
+        ref_code: card.ref_code,
+        item_name: card.item_name,
+        card_type: card.card_type,
+        item_rank: card.item_rank,
+        coin_value: card.coin_value,
+        lore: card.lore,
+        summary, art,
+      },
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not read that Card.' }, 500);
+  }
+});
+
+app.get('/api/exchange/listings', authMiddleware, async (c) => {
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const tab = (c.req.query('tab') || 'bazaar').toLowerCase();
+    if (!EXCHANGE_TABS.includes(tab)) {
+      return c.json({ error: 'Unknown Exchange tab.' }, 400);
+    }
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT * FROM exchange_listings WHERE tab = ? AND status = 'open'
+       ORDER BY created_at DESC LIMIT 100`
+    ).bind(tab).all();
+    return c.json({ tab, listings: rows.results || [] });
+  } catch (error: any) {
+    return c.json({ tab: 'bazaar', listings: [] });
+  }
+});
+
+app.post('/api/exchange/list', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const { ref_code, item_name, tab } = await c.req.json() as any;
+    const target = (tab || 'bazaar').toLowerCase();
+    if (!EXCHANGE_TABS.includes(target)) {
+      return c.json({ error: 'Unknown Exchange tab.' }, 400);
+    }
+    if (target === 'black_market') {
+      return c.json({ error: 'The Black Market is not open for listings yet.' }, 403);
+    }
+
+    const max = await slotAllowance(c.env.sorc_db, user);
+    const used = await slotsUsed(c.env.sorc_db, user.id);
+    if (used >= max) {
+      const tier = max === EXCHANGE_SLOTS_PRO ? 'Pro' : 'Basic';
+      return c.json({
+        error: `All ${max} of your trading slots are in use. ${tier} members get ${max}.` +
+               (tier === 'Basic' ? ' Pro members get ' + EXCHANGE_SLOTS_PRO + '.' : ''),
+        slots_full: true, used, max,
+      }, 403);
+    }
+
+    const card = await findCard(c.env.sorc_db, ref_code || null, item_name || null) as any;
+    if (!card) return c.json({ error: 'No Card with that ref #.' }, 404);
+
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO exchange_listings (id, tab, seller_uid, seller_name, ref_code, item_name, card_type, coin_price, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
+    ).bind(
+      id, target, user.id, user.display_name || user.username,
+      card.ref_code, card.item_name, card.card_type, card.coin_value, now, now
+    ).run();
+
+    return c.json({
+      success: true, listing_id: id, tab: target,
+      item_name: card.item_name, ref_code: card.ref_code,
+      coin_price: card.coin_value, slots: { used: used + 1, max },
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not list that Card.', details: error.message }, 500);
+  }
+});
+
+// Buying settles in Coin and nothing else. A Player with too little Coin gets
+// told exactly that — the listing stays up and nothing moves.
+app.post('/api/exchange/buy', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const { listing_id } = await c.req.json() as any;
+    if (!listing_id) return c.json({ error: 'Which listing?' }, 400);
+
+    const listing = await c.env.sorc_db.prepare(
+      `SELECT * FROM exchange_listings WHERE id = ?`
+    ).bind(listing_id).first() as any;
+    if (!listing) return c.json({ error: 'That listing is gone.' }, 404);
+    if (listing.status !== 'open') return c.json({ error: 'That listing is no longer open.' }, 409);
+    if (listing.seller_uid === user.id) {
+      return c.json({ error: 'You cannot buy your own listing.' }, 400);
+    }
+
+    const price = listing.coin_price || 0;
+    const balance = await walletBalance(c.env.sorc_db, user.id);
+    if (balance < price) {
+      return c.json({
+        error: 'Insufficient Coin',
+        insufficient: true, balance, price, short: price - balance,
+      }, 402);
+    }
+
+    const now = new Date().toISOString();
+    await c.env.sorc_db.prepare(
+      `UPDATE user_wallets SET coin = coin - ?, updated_at = ? WHERE user_id = ?`
+    ).bind(price, now, user.id).run();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO user_wallets (user_id, coin, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(user_id) DO UPDATE SET coin = coin + ?, updated_at = ?`
+    ).bind(listing.seller_uid, price, now, price, now).run();
+    await c.env.sorc_db.prepare(
+      `UPDATE exchange_listings SET status = 'sold', buyer_uid = ?, buyer_name = ?, updated_at = ? WHERE id = ?`
+    ).bind(user.id, user.display_name || user.username, now, listing_id).run();
+    // Digital ownership follows the Coin, per the card trading rules.
+    await c.env.sorc_db.prepare(
+      `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at)
+       VALUES (?, ?, ?, 1, 1, 'exchange', ?)`
+    ).bind(crypto.randomUUID(), user.id, listing.item_name, now).run();
+
+    return c.json({
+      success: true, item_name: listing.item_name,
+      paid: price, balance: balance - price,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not complete that purchase.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/exchange/cancel', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const { listing_id } = await c.req.json() as any;
+    const listing = await c.env.sorc_db.prepare(
+      `SELECT * FROM exchange_listings WHERE id = ?`
+    ).bind(listing_id).first() as any;
+    if (!listing) return c.json({ error: 'That listing is gone.' }, 404);
+    if (listing.seller_uid !== user.id && !isPrivileged(user)) {
+      return c.json({ error: 'That is not your listing.' }, 403);
+    }
+    await c.env.sorc_db.prepare(
+      `UPDATE exchange_listings SET status = 'cancelled', updated_at = ? WHERE id = ?`
+    ).bind(new Date().toISOString(), listing_id).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Could not cancel.', details: error.message }, 500);
   }
 });
 
