@@ -686,12 +686,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
+        var container = document.getElementById('profileContainer');
         try {
             var saved = null;
             try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
 
             if (!saved || !saved.authKey) {
-                document.getElementById('profileContainer').innerHTML =
+                container.innerHTML =
                     '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
                 return;
             }
@@ -716,26 +717,42 @@
                         localStorage.setItem('sorc_user', JSON.stringify(user));
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.warn('Fresh data fetch failed:', e); }
 
             // Render profile
-            var container = document.getElementById('profileContainer');
             if (!container) throw new Error('profileContainer not found');
 
-            container.innerHTML = renderProfileHeader(user, role, isPro) +
-                renderTabNav(user, role, isPro) +
-                renderTabContent(user, role, isPro);
+            var headerHtml = '';
+            var navHtml = '';
+            var contentHtml = '';
+
+            try {
+                headerHtml = renderProfileHeader(user, role, isPro);
+            } catch(e) { throw new Error('Header render failed: ' + e.message); }
+
+            try {
+                navHtml = renderTabNav(user, role, isPro);
+            } catch(e) { throw new Error('Nav render failed: ' + e.message); }
+
+            try {
+                contentHtml = renderTabContent(user, role, isPro);
+            } catch(e) { throw new Error('Content render failed: ' + e.message); }
+
+            container.innerHTML = headerHtml + navHtml + contentHtml;
 
             // Set initial active tab from URL
             var params = new URLSearchParams(window.location.search);
             var initialTab = params.get('tab') || 'overview';
-            switchTab(initialTab);
+
+            try {
+                switchTab(initialTab);
+            } catch(e) { throw new Error('switchTab failed: ' + e.message); }
+
         } catch(err) {
             console.error('[Space] Error:', err);
-            var container = document.getElementById('profileContainer');
             if (container) {
                 var errMsg = (err && err.message) ? String(err.message) : 'Unknown error loading profile';
-                container.innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>' + errMsg + '</p><p><a href="signin.html">Sign in again</a></p></div>';
+                container.innerHTML = '<div class="not-logged-in" style="padding:2rem;"><h2 style="color:#c93f35;">⚠️ Error</h2><p style="color:#e0cfc0;white-space:pre-wrap;word-break:break-word;font-size:0.9rem;background:#1a1a1a;padding:1rem;border-radius:6px;border-left:3px solid #c93f35;">' + esc(errMsg) + '</p><p><a href="signin.html" style="color:#b9aa00;">Sign in again</a></p></div>';
             }
         }
     });
