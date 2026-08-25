@@ -69,3 +69,53 @@
 ## Open Questions & Uncertainties
 
 See QUESTIONS.md section below.
+
+---
+
+# RESOLVED — Owner answers (session 2026-08-25)
+
+Supersedes the corresponding open questions. Verbatim source:
+`space-tabs-original-post.md` plus the follow-up answering points 1-5.
+
+## 1. Games — NOT its own tab
+Folded into **Leaderboards** as a sub-tab area. Opens with **Trials of
+Combat**; further games join as they open. Leaderboards also carries a link
+to the Character's Home **Trophy Room**, where wins and awards are displayed.
+*Implemented in `space.html` (`switchGameBoard`).*
+
+## 2. Contributions — REPLACED by "Family"
+Contributions had no clear origin and is removed. In its place a **Family**
+tab (PUBLIC), which separates Family from Home everywhere on the site.
+A Home is a place; a Family is people.
+
+Four contribution areas:
+- **a. Household** — direct nuclear family; each member has their own
+  Character Sheet and stats
+- **b. Affiliations** — see rules
+- **c. Standing** — see rules
+- **d. Wellness** — see rules
+
+These four are what a Character contributes to.
+*Implemented in `space.html`, and written into Basic Rules as
+"Contribution & Family" under Prestige (`rules_ref_002.html`), placed
+directly after Standing Tiers per owner instruction.*
+
+## 3 & 4. Offline acquisition and Home upload — PROOF PROBLEM
+Box set codes already cover **bought** materials. The open gap is **gathered**
+materials from strictly offline play, and proving an offline-built Home.
+Full precedent analysis with several real game examples, what each got right
+and wrong, and a layered recommendation: **`offline-provenance-precedents.md`**.
+
+Headline: offline play cannot be proven, only made expensive, visible, or
+pointless. Recommended path is GM attestation (Pathfinder Society Chronicle
+Sheet model) + peer co-signature + **severing offline-gathered materials from
+the tradeable economy**, which makes forgery worthless.
+
+Four decisions still needed from owner — see that doc's closing section.
+
+## 5. Neighbours — CONFIRMED, extended
+- A neighbour's Home, or part of it, may appear on your **offline maps**
+- Neighbours may be sent a **Fellowship request** and campaign together
+  regularly
+- **Standing applies to Friends who party together and to neighbours** —
+  written into the Basic Rules Contribution & Family section under Standing

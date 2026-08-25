@@ -51,6 +51,13 @@
         .card h4 { color: #e0cfc0; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
         .card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.5; }
 
+        /* Sub-tabs (game boards under Leaderboards) */
+        .subtab { padding: 6px 14px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+        .subtab:hover { border-color: #b9aa00; color: #b9aa00; }
+        .subtab.active { background: #222; border-color: #b9aa00; color: #b9aa00; }
+        body.lawful-mode .subtab { background: #ffffff; border-color: #e0e0e0; }
+        body.lawful-mode .subtab.active { background: #f9f5f1; border-color: #c93f35; color: #c93f35; }
+
         .not-logged-in { text-align: center; padding: 3rem; }
         .not-logged-in a { color: #c93f35; }
 
@@ -106,12 +113,11 @@
         { id: 'characters', label: 'Characters', access: 'PUBLIC', pro: false },
         { id: 'leaderboards', label: 'Leaderboards', access: 'PUBLIC', pro: false },
         { id: 'fellowship', label: 'Fellowship', access: 'PUBLIC', pro: false },
-        { id: 'games', label: 'Games', access: 'PRIVATE', pro: false },
         { id: 'vault', label: 'Vault', access: 'PRIVATE', pro: false },
         { id: 'session-history', label: 'Session History', access: 'PRIVATE', pro: false },
         { id: 'character-home', label: "Character's Home", access: 'PRO', pro: true },
+        { id: 'family', label: 'Family', access: 'PUBLIC', pro: false },
         { id: 'general-trade', label: 'General Trade', access: 'PRO', pro: true },
-        { id: 'contributions', label: 'Contributions', access: 'PUBLIC', pro: false },
         { id: 'inbox', label: 'Inbox', access: 'PRIVATE', pro: false },
         { id: 'settings', label: 'Space Settings', access: 'PRIVATE', pro: false }
     ];
@@ -140,6 +146,20 @@
     }
 
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    window.switchGameBoard = function(ev, board) {
+        var bar = ev.target.parentNode;
+        var btns = bar.querySelectorAll('.subtab');
+        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+        ev.target.classList.add('active');
+        var out = document.getElementById('gameBoard');
+        if (!out) return;
+        if (board === 'trials') {
+            out.innerHTML = '<p>Trials of Combat standings loading...</p>';
+        } else {
+            out.innerHTML = '<p>Community Points standings loading...</p>';
+        }
+    };
 
     function switchTab(tabId) {
         document.querySelectorAll('.tab-nav button').forEach(function(btn) { btn.classList.remove('active'); });
@@ -253,9 +273,22 @@
                     case 'leaderboards':
                         html += '<h3>Leaderboards</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC (Top 100)</span><span class="access-badge PRO" style="margin-left:0.5rem;">PRO (Top 200+)</span>' +
-                            '<p>Trials of Combat leaderboards. Compete against other adventurers and claim your rank.</p>' +
-                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
+                            '<p>Ranked standings across SORC games. Trials of Combat leads; further games join this board as they open.</p>' +
+                            '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+                                '<button class="subtab active" onclick="switchGameBoard(event, \'trials\')">Trials of Combat</button>' +
+                                '<button class="subtab" onclick="switchGameBoard(event, \'community\')">Community Points</button>' +
+                            '</div>' +
+                            '<div id="gameBoard" style="padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
                                 '<p>Leaderboards loading...</p>' +
+                            '</div>' +
+                            '<div class="card" style="margin-top:1rem;">' +
+                                '<h4>⚔️ Lobbies &amp; Campaigns</h4>' +
+                                '<p><a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Join or create a lobby</a> to enter ranked play.</p>' +
+                            '</div>' +
+                            '<div class="card" style="margin-top:0.75rem;">' +
+                                '<h4>🏆 Trophy Room</h4>' +
+                                '<p>Wins, ranks, and tournament awards are displayed in your Home\'s Trophy Room. ' +
+                                '<a href="/home-and-family.html#trophy-room" style="color:#b9aa00;text-decoration:underline;">Open Trophy Room</a></p>' +
                             '</div>';
                         break;
 
@@ -265,17 +298,6 @@
                             '<p>Your Fellowship members and group status. Invite friends to adventure together.</p>' +
                             '<div class="content-grid">' +
                                 '<div class="card" style="text-align:center;padding:2rem;"><h4>No Fellowship Yet</h4><p>Start a Fellowship or join an existing one to adventure together.</p></div>' +
-                            '</div>';
-                        break;
-
-                    case 'games':
-                        html += '<h3>Active Games</h3>' +
-                            '<span class="access-badge PRIVATE">PRIVATE</span>' +
-                            '<p>Your active game sessions, lobbies, and campaigns in progress.</p>' +
-                            '<div class="content-grid">' +
-                                '<div class="card"><h4>🎲 Lobbies</h4><p><a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Join or create a lobby</a> for multiplayer sessions.</p></div>' +
-                                '<div class="card"><h4>⚔️ Active Campaigns</h4><p>Your campaigns in progress. 0 active.</p></div>' +
-                                '<div class="card"><h4>🏆 Trials of Combat</h4><p>Compete in ranked tournaments.</p></div>' +
                             '</div>';
                         break;
 
@@ -322,11 +344,19 @@
                             '</div>';
                         break;
 
-                    case 'contributions':
-                        html += '<h3>Community Contributions</h3>' +
+                    case 'family':
+                        html += '<h3>Family</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC</span>' +
-                            '<p>Share maps, campaign recaps, character art, and house rules with the SORC community.</p>' +
-                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;color:#666;">No contributions yet. <a href="#" style="color:#b9aa00;">Share your creations</a></div>';
+                            '<p>Family is tracked separately from Home. A Home is a place; a Family is people. ' +
+                            'These four areas are what a Character contributes to — time, Coin, effort, and reputation spent on the people around them.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card"><h4>🧬 Household</h4><p>Your direct nuclear family. Each member carries their own Character Sheet and stats.</p></div>' +
+                                '<div class="card"><h4>⚔️ Affiliations</h4><p>Formal faction membership held by the Household — deeper access, obligations, and consequences.</p></div>' +
+                                '<div class="card"><h4>⚖️ Standing</h4><p>Where the Household sits with factions and named NPCs, Exalted through Hated.</p></div>' +
+                                '<div class="card"><h4>❤️ Wellness</h4><p>How well the Household is cared for. Contributions raise it; neglect lets it decline.</p></div>' +
+                            '</div>' +
+                            '<p style="margin-top:1rem;color:#888;font-size:0.85rem;">Full rules: Contribution &amp; Family under Prestige, Basic Rules pg. 2. ' +
+                            'Your Home and its rooms live in <a href="/home-and-family.html" style="color:#b9aa00;text-decoration:underline;">Home &amp; Family</a>.</p>';
                         break;
 
                     case 'inbox':
