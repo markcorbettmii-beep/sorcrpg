@@ -74,9 +74,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var profileBtn = document.createElement('button');
   profileBtn.id = 'profileBtn';
-  profileBtn.title = 'Profile';
+  profileBtn.title = 'Space';
   profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
-  profileBtn.innerHTML = '';
+  profileBtn.textContent = 'S';
 
   window._updateProfileBtnColors = function() {
     var isLawful = document.body.classList.contains('lawful-mode');
@@ -92,20 +92,21 @@ document.addEventListener('DOMContentLoaded', function() {
   };
   window._updateProfileBtnColors();
 
-  window._profileBtn_loggedIn = function(avatarFilename) {
+  window._profileBtn_loggedIn = function(avatarFilename, displayName) {
+    var initial = (displayName || '').trim().charAt(0).toUpperCase() || 'S';
     if (avatarFilename) {
-      profileBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'\'" />';
+      profileBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.textContent=\'' + initial + '\'" />';
     } else {
-      profileBtn.innerHTML = '';
+      profileBtn.textContent = initial;
     }
     profileBtn.onclick = function(e) {
       e.stopPropagation();
-      window.location.href = '/profile.html';
+      window.location.href = '/space.html';
     };
   };
 
   window._profileBtn_loggedOut = function() {
-    profileBtn.innerHTML = '';
+    profileBtn.textContent = 'S';
     profileBtn.onclick = function(e) {
       e.stopPropagation();
       window.location.href = '/signin.html';
@@ -116,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
     e.stopPropagation();
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
-    window.location.href = (saved && saved.authKey) ? '/profile.html' : '/signin.html';
+    window.location.href = (saved && saved.authKey) ? '/space.html' : '/signin.html';
   });
 
   headerControls.appendChild(profileBtn);
@@ -523,7 +524,7 @@ async function checkNotifications(user) {
           ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
-      var profileLink = badgeEl.querySelector('a[href="/profile.html"]');
+      var profileLink = badgeEl.querySelector('a[href="/space.html"]');
       if (profileLink) {
         profileLink.innerHTML = data.admin_invite
           ? 'Profile <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
