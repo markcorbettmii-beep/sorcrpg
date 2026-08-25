@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trophy &amp; Collectables | Slayers of Rings &amp; Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .ch-wrap { max-width: 980px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .ch-wrap h1 { color: #c93f35; margin-bottom: 0.2rem; font-size: 1.6rem; }
+    .ch-sub { color: #777; font-size: 0.88rem; margin-bottom: 1.25rem; line-height: 1.55; }
+    .pro-badge { display:inline-block; background:#3a2a05; border:1px solid #b9aa00; color:#b9aa00;
+                 font-size:0.7rem; font-weight:bold; padding:0.18rem 0.55rem; border-radius:6px; margin-bottom:0.6rem; }
+
+    .ch-stats { display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.25rem; }
+    .ch-stat { flex:1 1 130px; background:#141414; border:1px solid #262626; border-radius:10px; padding:0.7rem 0.9rem; }
+    .ch-stat-label { color:#777; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.09em; }
+    .ch-stat-value { color:#b9aa00; font-size:1.2rem; font-weight:bold; margin-top:0.15rem; }
+
+    .ch-rooms { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:0.6rem; margin-bottom:1.5rem; }
+    .ch-room { background:#141414; border:1px solid #262626; border-radius:10px; padding:0.8rem;
+               text-align:center; cursor:pointer; transition:border-color 0.15s; }
+    .ch-room:hover { border-color:#b9aa00; }
+    .ch-room.active { border-color:#b9aa00; background:#1a1505; }
+    .ch-room.soon { opacity:0.45; cursor:not-allowed; }
+    .ch-room.soon:hover { border-color:#262626; }
+    .ch-room-icon { font-size:1.6rem; }
+    .ch-room-name { color:#e0cfc0; font-size:0.8rem; font-weight:bold; margin-top:0.3rem; }
+    .ch-room-note { color:#666; font-size:0.68rem; margin-top:0.15rem; }
+
+    .ch-tools { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.8rem; }
+    .ch-search { flex:1 1 200px; padding:0.45rem 0.7rem; border-radius:7px; border:1px solid #2a2a2a;
+                 background:#0d0d0d; color:#ddd; font-size:0.84rem; }
+    .ch-tabs { display:flex; gap:0.3rem; overflow-x:auto; margin-bottom:0.8rem; }
+    .ch-tab { flex:0 0 auto; padding:0.28rem 0.75rem; border-radius:20px; border:1px solid #2a2a2a;
+              background:#161616; color:#888; font-size:0.74rem; cursor:pointer; white-space:nowrap; }
+    .ch-tab.active { background:#1a1505; border-color:#b9aa00; color:#b9aa00; }
+
+    .ch-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:0.7rem; }
+    .ch-card { background:#141414; border:1px solid #262626; border-radius:10px; overflow:hidden; cursor:pointer;
+               transition:transform 0.12s, border-color 0.15s; }
+    .ch-card:hover { transform:translateY(-3px); border-color:#b9aa00; }
+    .ch-art { width:100%; aspect-ratio:3/4; object-fit:cover; background:#0c0c0c; display:block; }
+    .ch-art-ph { width:100%; aspect-ratio:3/4; background:#0c0c0c; display:flex; align-items:center;
+                 justify-content:center; color:#333; font-size:2rem; }
+    .ch-meta { padding:0.5rem 0.6rem; }
+    .ch-name { color:#e0cfc0; font-size:0.8rem; font-weight:bold; line-height:1.25; }
+    .ch-ref { font-family:ui-monospace,Menlo,monospace; color:#8a7f00; font-size:0.68rem; margin-top:0.12rem; }
+    .ch-coin { color:#b9aa00; font-size:0.74rem; margin-top:0.18rem; }
+    .ch-flag { font-size:0.66rem; margin-top:0.18rem; }
+    .ch-flag.bound { color:#c87d00; }
+    .ch-flag.listed { color:#6a9ad0; }
+
+    .ch-pager { display:flex; align-items:center; justify-content:center; gap:0.6rem; margin-top:1rem; color:#777; font-size:0.78rem; }
+    .ch-pager button { background:#181818; border:1px solid #333; color:#aaa; border-radius:6px; padding:0.25rem 0.7rem; cursor:pointer; }
+    .ch-pager button:disabled { opacity:0.35; cursor:not-allowed; }
+    .ch-empty { color:#555; text-align:center; padding:2.5rem 1rem; font-size:0.9rem; line-height:1.7; }
+    .ch-note { background:#1a1505; border:1px solid #5a4a00; border-radius:10px; padding:0.9rem 1.1rem;
+               color:#c9b400; font-size:0.84rem; line-height:1.55; margin-bottom:1rem; }
+    .ch-note.locked { background:#1a0d00; border-color:#5a3000; color:#c87d00; }
+    .ch-note a { color:inherit; font-weight:bold; }
+
+    .ch-modal { position:fixed; inset:0; background:rgba(0,0,0,0.84); display:none; align-items:center;
+                justify-content:center; padding:1rem; z-index:4000; }
+    .ch-modal.open { display:flex; }
+    .ch-modal-inner { background:#121212; border:1px solid #2a2a2a; border-radius:14px; max-width:760px;
+                      width:100%; max-height:90vh; overflow-y:auto; padding:1.1rem; }
+    .ch-modal-top { display:flex; gap:1rem; flex-wrap:wrap; }
+    .ch-modal-art { flex:0 0 230px; max-width:100%; border-radius:8px; }
+    .ch-modal-info { flex:1 1 250px; min-width:210px; }
+    .ch-modal-info h3 { color:#b9aa00; margin:0 0 0.15rem; font-size:1.1rem; }
+    .ch-row { display:flex; justify-content:space-between; gap:0.75rem; padding:0.26rem 0;
+              border-bottom:1px solid #1e1e1e; font-size:0.8rem; }
+    .ch-row dt { color:#7a7a7a; text-transform:capitalize; }
+    .ch-row dd { color:#ccc; margin:0; text-align:right; }
+    .ch-close { margin-top:0.9rem; width:100%; padding:0.55rem; background:#1a1a1a; border:1px solid #3a3a3a;
+                color:#aaa; border-radius:8px; font-weight:bold; cursor:pointer; }
+
+    body.lawful-mode .ch-stat, body.lawful-mode .ch-card, body.lawful-mode .ch-room { background:#fbfaf7; border-color:#e2ded4; }
+    body.lawful-mode .ch-name, body.lawful-mode .ch-room-name { color:#2c2c2c; }
+    body.lawful-mode .ch-stat-value { color:#8a7f00; }
+    body.lawful-mode .ch-search { background:#f7f5f0; color:#333; border-color:#ddd; }
+    body.lawful-mode .ch-modal-inner { background:#fff; border-color:#ddd; }
+    body.lawful-mode .ch-row dd { color:#333; }
+    body.lawful-mode .ch-note { background:#fdf8e0; border-color:#e0d060; color:#7a6a00; }
+    body.lawful-mode .ch-note.locked { background:#fdf3e0; border-color:#e0b060; color:#8a5800; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav><div id="navRoleBadge"></div></nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a href="exchange.html">The Exchange</a></li>
+      <li><a href="lobbies.html">Lobbies</a></li>
+    </ul>
+
+    <div class="ch-wrap">
+      <h1>Trophy &amp; Collectables</h1>
+      <p class="ch-sub">
+        Every SORC Card you own &mdash; what came out of recorded sessions, what you bought on the Exchange,
+        and what was handed to you at a table. This is your account's collection, not your Character's in-game
+        property: for the land, the house and its rooms, see <a href="characters-home.html" style="color:#b9aa00;">Character's Home</a>.
+      </p>
+
+      <div id="chGate"></div>
+
+      <div class="ch-stats">
+        <div class="ch-stat">
+          <div class="ch-stat-label">Cards Held</div>
+          <div class="ch-stat-value" id="chTotal">&mdash;</div>
+        </div>
+        <div class="ch-stat">
+          <div class="ch-stat-label">Collection Worth</div>
+          <div class="ch-stat-value" id="chWorth">&mdash;</div>
+        </div>
+        <div class="ch-stat">
+          <div class="ch-stat-label">On the Exchange</div>
+          <div class="ch-stat-value" id="chListed">&mdash;</div>
+        </div>
+      </div>
+
+      <div class="ch-tools">
+        <input type="text" class="ch-search" id="chSearch" placeholder="Search your collection by name or ref #..." oninput="chSearch(this.value)" />
+      </div>
+      <div class="ch-tabs" id="chTabs"></div>
+      <div class="ch-grid" id="chGrid"></div>
+      <div class="ch-pager" id="chPager"></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <div class="ch-modal" id="chModal" onclick="if(event.target===this)chCloseCard()">
+    <div class="ch-modal-inner" id="chModalInner"></div>
+  </div>
+
+  <script>
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'lawful';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    var chTab = 'all', chQuery = '', chPage = 1, chTimer = null;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(m) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m];
+      });
+    }
+    function authHeaders() {
+      return currentUser && currentUser.authKey ? { 'X-Auth-Key': currentUser.authKey } : {};
+    }
+    async function readJson(res) { try { return await res.json(); } catch(e) { return {}; } }
+
+    window.chSearch = function(v) {
+      chQuery = v;
+      if (chTimer) clearTimeout(chTimer);
+      chTimer = setTimeout(function() { chPage = 1; loadCollection(); }, 220);
+    };
+    window.chSetTab = function(t) { chTab = t; chPage = 1; loadCollection(); };
+    window.chSetPage = function(p) { chPage = p; loadCollection(); };
+
+    async function loadCollection() {
+      var grid = document.getElementById('chGrid');
+      if (!currentUser || !currentUser.authKey) {
+        document.getElementById('chGate').innerHTML =
+          '<div class="ch-note locked">Sign in to open your collection. <a href="signin.html">Sign in</a></div>';
+        grid.innerHTML = '<div class="ch-empty">Nothing to show yet.</div>';
+        return;
+      }
+      grid.innerHTML = '<div class="ch-empty">Opening your collection...</div>';
+      try {
+        var url = API_URL + '/api/cards/mine?tab=' + encodeURIComponent(chTab) +
+                  '&q=' + encodeURIComponent(chQuery) + '&page=' + chPage + '&per_page=18';
+        var res = await fetch(url, { headers: authHeaders() });
+        var data = await readJson(res);
+
+        if (data.can_trade === false && data.needs_assess) {
+          document.getElementById('chGate').innerHTML =
+            '<div class="ch-note locked">&#128274; Assess into Player or GM to hold and trade Cards. ' +
+            '<a href="take-assessment.html">Take the assessment</a>.</div>';
+        } else {
+          document.getElementById('chGate').innerHTML = '';
+        }
+
+        renderTabs(data.tabs || []);
+        renderGrid(data);
+        renderPager(data);
+        renderStats(data);
+      } catch(e) {
+        grid.innerHTML = '<div class="ch-empty">Could not open your collection.<br/><span style="color:#444;font-size:0.78rem;">' +
+          esc(e && e.message ? e.message : e) + '</span></div>';
+      }
+    }
+
+    function renderStats(data) {
+      document.getElementById('chTotal').textContent = data.total || 0;
+      var worth = 0, listed = 0;
+      (data.cards || []).forEach(function(c) {
+        worth += (c.coin_value || 0) * (c.qty || 1);
+        if (c.listed) listed++;
+      });
+      /* Worth and listed count reflect the page in view; the catalog is small
+         enough today that this is the whole collection, and the label says
+         Collection Worth rather than claiming a total across pages. */
+      document.getElementById('chWorth').textContent = worth.toLocaleString();
+      document.getElementById('chListed').textContent = listed;
+    }
+
+    function renderTabs(tabs) {
+      var html = '<button class="ch-tab' + (chTab === 'all' ? ' active' : '') + '" onclick="chSetTab(\'all\')">All</button>';
+      tabs.forEach(function(t) {
+        if (!t.type || t.type === 'Unknown') return;
+        html += '<button class="ch-tab' + (chTab === String(t.type).toLowerCase() ? ' active' : '') +
+                '" onclick="chSetTab(\'' + esc(String(t.type).toLowerCase()) + '\')">' +
+                esc(t.type) + ' <span style="opacity:0.6;">' + t.count + '</span></button>';
+      });
+      document.getElementById('chTabs').innerHTML = html;
+    }
+
+    function renderGrid(data) {
+      var grid = document.getElementById('chGrid');
+      var cards = data.cards || [];
+      if (!cards.length) {
+        grid.innerHTML = '<div class="ch-empty">' + (chQuery
+          ? 'Nothing in your collection matches &ldquo;' + esc(chQuery) + '&rdquo;.'
+          : 'Nothing collected yet.<br/><span style="color:#444;font-size:0.8rem;">Cards are earned in recorded Campaign Room sessions, ' +
+            'bought on <a href="exchange.html" style="color:#b9aa00;">The Exchange</a>, or handed to you at a table.</span>') + '</div>';
+        return;
+      }
+      grid.innerHTML = cards.map(function(c) {
+        var art = c.art
+          ? '<img class="ch-art" src="' + esc(c.art) + '" alt="" loading="lazy" />'
+          : '<div class="ch-art-ph">&#127183;</div>';
+        var flag = c.bound ? '<div class="ch-flag bound">&#128274; Bound</div>'
+                 : (c.listed ? '<div class="ch-flag listed">&#8646; On the Exchange</div>' : '');
+        return '<div class="ch-card" onclick="chOpenCard(\'' + esc(c.ref_code) + '\')">' + art +
+          '<div class="ch-meta">' +
+            '<div class="ch-name">' + esc(c.item_name) + (c.qty > 1 ? ' &times;' + c.qty : '') + '</div>' +
+            '<div class="ch-ref">#' + esc(c.ref_code) + '</div>' +
+            '<div class="ch-coin">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
+            flag +
+          '</div></div>';
+      }).join('');
+    }
+
+    function renderPager(data) {
+      var el = document.getElementById('chPager');
+      var pages = data.pages || 1;
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML =
+        '<button onclick="chSetPage(' + (chPage - 1) + ')"' + (chPage <= 1 ? ' disabled' : '') + '>&#9664;</button>' +
+        '<span>Page ' + chPage + ' of ' + pages + '</span>' +
+        '<button onclick="chSetPage(' + (chPage + 1) + ')"' + (chPage >= pages ? ' disabled' : '') + '>&#9654;</button>';
+    }
+
+    window.chOpenCard = async function(ref) {
+      var modal = document.getElementById('chModal');
+      var inner = document.getElementById('chModalInner');
+      inner.innerHTML = '<div class="ch-empty">Loading Card...</div>';
+      modal.classList.add('open');
+      try {
+        var res = await fetch(API_URL + '/api/card?ref=' + encodeURIComponent(ref), { headers: authHeaders() });
+        var data = await readJson(res);
+        if (!data.card) { inner.innerHTML = '<div class="ch-empty">' + esc(data.error || 'Card not found.') + '</div>'; return; }
+        var c = data.card, rows = '';
+        Object.keys(c.stats || {}).forEach(function(k) {
+          rows += '<div class="ch-row"><dt>' + esc(k.replace(/_/g, ' ')) + '</dt><dd>' + esc(c.stats[k]) + '</dd></div>';
+        });
+        inner.innerHTML =
+          '<div class="ch-modal-top">' +
+            (c.art ? '<img class="ch-modal-art" src="' + esc(c.art) + '" alt="" />' : '') +
+            '<div class="ch-modal-info">' +
+              '<h3>' + esc(c.item_name) + '</h3>' +
+              '<div class="ch-ref">Ref #' + esc(c.ref_code) + (c.module ? ' &middot; ' + esc(c.module) : '') + '</div>' +
+              '<div class="ch-coin" style="margin:0.35rem 0 0.5rem;">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
+              rows +
+              (c.lore ? '<p style="color:#8a8a8a;font-size:0.8rem;line-height:1.55;margin-top:0.7rem;">' + esc(c.lore) + '</p>' : '') +
+            '</div>' +
+          '</div>' +
+          '<button class="ch-close" onclick="chCloseCard()">Close</button>';
+      } catch(e) {
+        inner.innerHTML = '<div class="ch-empty">Could not load that Card.</div>';
+      }
+    };
+    window.chCloseCard = function() { document.getElementById('chModal').classList.remove('open'); };
+
+    loadCollection();
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+</body>
+</html>
