@@ -671,10 +671,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', async function() {
+        console.log('[Space] DOMContentLoaded fired');
         var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) { console.error('[Space] localStorage parse error:', e); }
+        console.log('[Space] saved user:', saved);
 
         if (!saved || !saved.authKey) {
+            console.log('[Space] No auth, showing not-logged-in');
             document.getElementById('profileContainer').innerHTML =
                 '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
             return;
@@ -703,15 +706,33 @@
         } catch(e) {}
 
         // Render profile
+        console.log('[Space] About to render, user:', user.display_name, 'role:', role);
         var container = document.getElementById('profileContainer');
-        container.innerHTML = renderProfileHeader(user, role, isPro) +
-            renderTabNav(user, role, isPro) +
-            renderTabContent(user, role, isPro);
+        console.log('[Space] Container found:', !!container);
+        if (!container) {
+            console.error('[Space] profileContainer not found in DOM');
+            return;
+        }
+        try {
+            var header = renderProfileHeader(user, role, isPro);
+            console.log('[Space] Header rendered');
+            var nav = renderTabNav(user, role, isPro);
+            console.log('[Space] Nav rendered');
+            var content = renderTabContent(user, role, isPro);
+            console.log('[Space] Content rendered');
+            container.innerHTML = header + nav + content;
+            console.log('[Space] Profile rendered successfully');
+        } catch(e) {
+            console.error('[Space] Rendering error:', e);
+            container.innerHTML = '<div class="not-logged-in"><p>Error loading profile: ' + e.message + '</p></div>';
+            return;
+        }
 
         // Set initial active tab from URL
         var params = new URLSearchParams(window.location.search);
         var initialTab = params.get('tab') || 'overview';
         switchTab(initialTab);
+        console.log('[Space] Switched to tab:', initialTab);
     });
     </script>
 </body>
