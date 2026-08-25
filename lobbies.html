@@ -1637,7 +1637,7 @@
             (hasGMRights
               ? '<div class="invite-pool-wrap">' +
                   '<button class="invite-pool-toggle" onclick="toggleInvitePool()" style="width:100%;">' +
-                    '<span>&#128100; Invite Players</span>' +
+                    '<span>&#129309; Invite Fellows</span>' +
                     '<span id="invitePoolArrow" style="pointer-events:none;">&#9660;</span>' +
                   '</button>' +
                   '<div id="invitePoolPanel" style="display:none;background:#0d0d0d;">' +
@@ -2246,7 +2246,7 @@
             '<div class="invite-row-name">' + esc(p.display_name || p.username) + '</div>' +
             '<div class="invite-row-sub">' + sub + '</div>' +
           '</div>' +
-          '<button class="invite-row-btn" onclick="inviteFromPool(\'' + esc(p.username) + '\')">Invite</button>' +
+          '<button class="invite-row-btn" data-uid="' + esc(p.id) + '" onclick="inviteFromPool(\'' + esc(p.id) + '\', \'' + esc(p.display_name || p.username) + '\')">Invite</button>' +
         '</div>';
       }).join('');
       var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
@@ -2272,29 +2272,38 @@
       renderInvitePool();
     };
 
-    window.inviteFromPool = async function(username) {
+    /* Invite sends a real summon, not a private message with a code to copy.
+       The Fellow gets a prompt with the lobby's details and accepts or denies
+       from there — the same flow the host gets from World Chat. */
+    window.inviteFromPool = async function(uid, name) {
       if (!currentLobby) return;
+      var btn = document.querySelector('.invite-row-btn[data-uid="' + uid + '"]');
+      function flash(text, bg, border) {
+        if (!btn) return;
+        btn.textContent = text; btn.style.background = bg || ''; btn.style.borderColor = border || '';
+        setTimeout(function() {
+          btn.textContent = 'Invite'; btn.style.background = ''; btn.style.borderColor = ''; btn.disabled = false;
+        }, 2500);
+      }
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite', {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/summon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ username: username })
+          body: JSON.stringify({ to_uid: uid })
         });
         var data = await readJson(res);
-        var listEl = document.getElementById('invitePoolList');
         if (data.success) {
-          /* Flash the row green briefly */
-          var btns = listEl ? listEl.querySelectorAll('.invite-row-btn') : [];
-          btns.forEach(function(b) {
-            if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf(username) !== -1) {
-              b.textContent = 'Sent!'; b.style.background = '#1a5a1a'; b.style.borderColor = '#2a8a2a';
-              setTimeout(function() { b.textContent = 'Invite'; b.style.background = ''; b.style.borderColor = ''; }, 2500);
-            }
-          });
+          flash('Summoned!', '#1a5a1a', '#2a8a2a');
+          showToast((name || 'Player') + ' has been summoned to the lobby.');
         } else {
-          alert(data.error || 'Could not send invite.');
+          flash('Failed', '#5a1a1a', '#8a2a2a');
+          showToast(data.error || 'Could not send the invite.', true);
         }
-      } catch(e) { showToast('Could not reach server.', true); }
+      } catch(e) {
+        flash('Failed', '#5a1a1a', '#8a2a2a');
+        showToast('Could not reach server.', true);
+      }
     };
 
     /* ── Chat tab switcher ─────────────────────────────────── */
