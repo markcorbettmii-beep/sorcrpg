@@ -94,20 +94,21 @@ Contributions is removed as a tab. The tab is **Standing** (not Family;
 Family is one category inside it). Contributions is a tag carried by each
 category.
 
-Six categories, each with its own **Standing** tag and **Contributions** tag:
+Seven categories, each with its own **Standing** tag and **Contributions** tag:
 - **Family** — the Character's kin (replaced Household)
 - **Affiliations** — formal faction membership
-- **Companions** — Pets, Guardians, mounts; Standing recorded as Mood
+- **Companions** — Pets, Guardians, mounts, pack animals, **and Fellowships**; Standing recorded as Mood
 - **Campaign** — **the people you have partied with** (not campaigns run)
-- **Fellowships** — Fellowships and regular parties
+- **Fellows** — the friends list
 - **Neighbours** — those sharing or bordering your coordinates
+- **Wellness** — the Character's Standing with themselves; self-directed Contributions
 
 Both tab and rules point to the Journal booklet or the **Online Journal** tab.
 
 *Implemented in `space.html` (`case 'standing'`) and Basic Rules "Standing"
 under Prestige (`rules_ref_002.html`), summarised in the appendix.*
 
-Wellness is not a Standing category; it remains its own system (Wellness, pg. 2).
+Wellness IS a Standing category (self-contribution) and also remains its own system with its own 0-150% scale (Wellness, pg. 2).
 
 ## 2b. Praise & Blowback — NEW RULE
 - **Praise** — from the friends and allies of those you hold good Standing with
