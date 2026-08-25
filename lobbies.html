@@ -3797,36 +3797,53 @@
         });
 
       } else {
-        /* Ready check alert: sharp sword "schwing" + booming war drum */
-        /* The "Schwing" - high-pitched metallic sword clash */
-        var schwingStart = now;
-        [2800, 3600, 4400].forEach(function(freq, i) {
-          var osc = ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = freq;
-          var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 5000;
-          var g = ctx.createGain();
-          g.gain.setValueAtTime([0.35, 0.18, 0.10][i], schwingStart);
-          g.gain.linearRampToValueAtTime([0.30, 0.15, 0.08][i], schwingStart + 0.05);
-          g.gain.exponentialRampToValueAtTime(0.0001, schwingStart + 0.35);
-          osc.connect(lpf); lpf.connect(g); g.connect(master);
-          osc.start(schwingStart); osc.stop(schwingStart + 0.40);
-        });
+        /* Battle alert: sharp metallic sword clash + war drum strike */
+        /* Metallic sword clash - sharp and crisp */
+        var clashStart = now;
+        var clashOsc = ctx.createOscillator();
+        clashOsc.type = 'square';
+        clashOsc.frequency.setValueAtTime(3200, clashStart);
+        clashOsc.frequency.exponentialRampToValueAtTime(1600, clashStart + 0.3);
+        var clashFilter = ctx.createBiquadFilter();
+        clashFilter.type = 'highpass';
+        clashFilter.frequency.value = 2000;
+        var clashGain = ctx.createGain();
+        clashGain.gain.setValueAtTime(0.5, clashStart);
+        clashGain.gain.exponentialRampToValueAtTime(0.05, clashStart + 0.25);
+        clashGain.gain.exponentialRampToValueAtTime(0, clashStart + 0.35);
+        clashOsc.connect(clashFilter);
+        clashFilter.connect(clashGain);
+        clashGain.connect(master);
+        clashOsc.start(clashStart);
+        clashOsc.stop(clashStart + 0.35);
 
-        /* The "Thud" - deep bass drum beat overlapping schwing */
-        var drumStart = now + 0.05;
-        var drumOsc = ctx.createOscillator(); drumOsc.type = 'sine'; drumOsc.frequency.value = 60;
-        var drumEnv = ctx.createGain();
-        drumEnv.gain.setValueAtTime(0.65, drumStart);
-        drumEnv.gain.exponentialRampToValueAtTime(0.0001, drumStart + 0.85);
-        drumOsc.connect(drumEnv); drumEnv.connect(master);
-        drumOsc.start(drumStart); drumOsc.stop(drumStart + 0.90);
+        /* War drum beat - deep resonant strike */
+        var drumStart = now + 0.15;
+        var drumOsc = ctx.createOscillator();
+        drumOsc.type = 'sine';
+        drumOsc.frequency.setValueAtTime(100, drumStart);
+        drumOsc.frequency.exponentialRampToValueAtTime(40, drumStart + 0.5);
+        var drumGain = ctx.createGain();
+        drumGain.gain.setValueAtTime(0.7, drumStart);
+        drumGain.gain.exponentialRampToValueAtTime(0.1, drumStart + 0.4);
+        drumGain.gain.exponentialRampToValueAtTime(0, drumStart + 0.7);
+        drumOsc.connect(drumGain);
+        drumGain.connect(master);
+        drumOsc.start(drumStart);
+        drumOsc.stop(drumStart + 0.75);
 
-        /* Sub-bass for resonance */
-        var subOsc = ctx.createOscillator(); subOsc.type = 'sine'; subOsc.frequency.value = 40;
-        var subEnv = ctx.createGain();
-        subEnv.gain.setValueAtTime(0.40, drumStart);
-        subEnv.gain.exponentialRampToValueAtTime(0.0001, drumStart + 1.0);
-        subOsc.connect(subEnv); subEnv.connect(master);
-        subOsc.start(drumStart); subOsc.stop(drumStart + 1.05);
+        /* Sub-bass rumble for impact */
+        var bassStart = now + 0.15;
+        var bassOsc = ctx.createOscillator();
+        bassOsc.type = 'sine';
+        bassOsc.frequency.value = 50;
+        var bassGain = ctx.createGain();
+        bassGain.gain.setValueAtTime(0.5, bassStart);
+        bassGain.gain.exponentialRampToValueAtTime(0, bassStart + 0.8);
+        bassOsc.connect(bassGain);
+        bassGain.connect(master);
+        bassOsc.start(bassStart);
+        bassOsc.stop(bassStart + 0.85);
       }
 
       setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
