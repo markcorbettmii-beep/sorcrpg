@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Fix Tool</title>
+    <title>Space Fix Tool</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f0; }
         .container { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ccc; }
@@ -34,10 +34,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Profile Fix Tool</h1>
+        <h1>Space Fix Tool</h1>
 
         <div class="status info">
-            <strong>Purpose:</strong> Diagnose and fix profile page "Loading..." issue
+            <strong>Purpose:</strong> Diagnose and fix Space "Loading..." issue
         </div>
 
         <h2>Current Status</h2>
@@ -45,7 +45,7 @@
 
         <h2>Diagnosis Steps</h2>
         <div class="step">
-            <strong>Step 1:</strong> Check if profile endpoint has all required fields
+            <strong>Step 1:</strong> Check if Space endpoint has all required fields
             <div id="step1Status"></div>
         </div>
 
@@ -55,8 +55,8 @@
         </div>
 
         <div class="step">
-            <strong>Step 3:</strong> Run profile data sync
-            <button id="fixBtn" onclick="runProfileFix()" disabled>Running Diagnostics... (Checking...)</button>
+            <strong>Step 3:</strong> Run Space data sync
+            <button id="fixBtn" onclick="runSpaceFix()" disabled>Running Diagnostics... (Checking...)</button>
             <div id="step3Status"></div>
         </div>
 
@@ -64,12 +64,12 @@
         <ul>
             <li>✓ Checks if <code>/api/me</code> returns all required fields</li>
             <li>✓ Verifies user data in localStorage is valid</li>
-            <li>✓ Tests profile page rendering with live data</li>
-            <li>✓ Repairs missing or corrupted profile data if needed</li>
+            <li>✓ Tests Space page rendering with live data</li>
+            <li>✓ Repairs missing or corrupted Space data if needed</li>
         </ul>
 
         <h2>After Fix</h2>
-        <p>Once fixed, visit <a href="/profile.html" target="_blank">your profile</a> and it should load properly.</p>
+        <p>Once fixed, visit <a href="/space.html" target="_blank">your Space</a> and it should load properly.</p>
     </div>
 
     <script>
@@ -111,7 +111,7 @@
                 const missingFields = requiredFields.filter(f => !(f in (meData.user || {})));
 
                 if (missingFields.length > 0) {
-                    statusDiv.innerHTML = '<div class="status warning">Some profile fields are missing: ' + missingFields.join(', ') + '</div>';
+                    statusDiv.innerHTML = '<div class="status warning">Some Space fields are missing: ' + missingFields.join(', ') + '</div>';
                     step1Div.innerHTML = '<div class="status warning">Missing fields detected - will attempt repair</div>';
                 } else {
                     statusDiv.innerHTML = '<div class="status success">✓ API responding with all required fields</div>';
@@ -131,7 +131,7 @@
 
                 // Enable fix button
                 fixBtn.disabled = false;
-                fixBtn.textContent = 'Run Profile Fix Now';
+                fixBtn.textContent = 'Run Space Fix Now';
 
             } catch(e) {
                 statusDiv.innerHTML = '<div class="status error">Error: ' + e.message + '</div>';
@@ -139,13 +139,13 @@
             }
         }
 
-        async function runProfileFix() {
+        async function runSpaceFix() {
             const step3Div = document.getElementById('step3Status');
             const fixBtn = document.getElementById('fixBtn');
 
             fixBtn.disabled = true;
             fixBtn.textContent = 'Running Fix...';
-            step3Div.innerHTML = '<div class="status info">⏳ Checking and repairing profile data...</div>';
+            step3Div.innerHTML = '<div class="status info">⏳ Checking and repairing Space data...</div>';
 
             try {
                 let saved = null;
@@ -186,15 +186,15 @@
                 saved = Object.assign(saved, meData.user);
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
 
-                step3Div.innerHTML = '<div class="status success">Profile data repaired successfully!<br><br>' +
+                step3Div.innerHTML = '<div class="status success">Space data repaired successfully!<br><br>' +
                     '<strong>What was fixed:</strong><br>' +
-                    '• Updated user profile from server<br>' +
+                    '• Updated user Space from server<br>' +
                     '• Restored missing fields: ' + Object.keys(meData.user).join(', ') + '<br>' +
                     '• Synced localStorage with current server data<br><br>' +
                     '<strong>Next Steps:</strong><br>' +
-                    '1. <a href="/profile.html" style="color:#2e7d32;text-decoration:underline;">Visit your profile</a><br>' +
+                    '1. <a href="/space.html" style="color:#2e7d32;text-decoration:underline;">Visit your Space</a><br>' +
                     '2. Refresh the page if needed<br>' +
-                    '3. Profile should now load correctly</div>';
+                    '3. Space should now load correctly</div>';
 
                 fixBtn.textContent = 'Fix Complete ✓';
 

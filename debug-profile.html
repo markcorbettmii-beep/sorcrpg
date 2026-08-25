@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Debugger</title>
+    <title>Space Debugger</title>
     <style>
         body { font-family: sans-serif; max-width: 900px; margin: 50px auto; padding: 20px; background: #f5f5f0; }
         .container { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ccc; }
@@ -29,10 +29,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Profile Debugger</h1>
+        <h1>Space Debugger</h1>
 
         <div class="status info">
-            <strong>Purpose:</strong> Debug why the profile page shows "Loading..." instead of content
+            <strong>Purpose:</strong> Debug why Space shows "Loading..." instead of content
         </div>
 
         <div class="section">
@@ -44,22 +44,22 @@
 
         <div class="section">
             <h2>Step 2: Test /api/me Endpoint</h2>
-            <p>Make the same call the profile page makes</p>
+            <p>Make the same call Space makes</p>
             <button onclick="testApiMe()">Test /api/me</button>
             <div id="meStatus"></div>
             <div id="meData" class="data-display" style="display:none;"></div>
         </div>
 
         <div class="section">
-            <h2>Step 3: Test Profile Page Load</h2>
-            <p>Load the actual profile page in an iframe and monitor logs</p>
-            <button onclick="testProfilePage()">Load Profile Page</button>
-            <div id="profileStatus"></div>
+            <h2>Step 3: Test Space Page Load</h2>
+            <p>Load the actual Space page in an iframe and monitor logs</p>
+            <button onclick="testSpacePage()">Load Space Page</button>
+            <div id="spaceStatus"></div>
         </div>
 
         <div class="section">
             <h2>Live Console Logs</h2>
-            <p>Shows logs from the profile page load (refresh to see new logs)</p>
+            <p>Shows logs from the Space load (refresh to see new logs)</p>
             <div class="log" id="logOutput">
                 <div class="log-line">Logs will appear here...</div>
             </div>
@@ -192,24 +192,24 @@
             }
         }
 
-        async function testProfilePage() {
-            const statusDiv = document.getElementById('profileStatus');
-            addLog('Loading profile page for testing...');
+        async function testSpacePage() {
+            const statusDiv = document.getElementById('spaceStatus');
+            addLog('Loading Space page for testing...');
 
             try {
-                const res = await fetch('/profile.html');
+                const res = await fetch('/space.html');
                 if (!res.ok) {
-                    addLog('Profile page returned ' + res.status, 'error');
-                    statusDiv.innerHTML = '<div class="status error">✗ Profile page returned ' + res.status + '</div>';
+                    addLog('Space page returned ' + res.status, 'error');
+                    statusDiv.innerHTML = '<div class="status error">✗ Space page returned ' + res.status + '</div>';
                     return;
                 }
 
                 const html = await res.text();
-                addLog('Profile page HTML loaded (' + html.length + ' bytes)', 'success');
+                addLog('Space page HTML loaded (' + html.length + ' bytes)', 'success');
 
                 // Check for the console logs we added
-                if (html.includes('[PROFILE]')) {
-                    addLog('✓ Debugging code is present in profile page', 'success');
+                if (html.includes('[SPACE]')) {
+                    addLog('✓ Debugging code is present in Space page', 'success');
                 } else {
                     addLog('✗ Debugging code NOT found - may not be deployed', 'warn');
                 }
@@ -220,9 +220,9 @@
                     addLog('✗ "Loading..." message not found', 'warn');
                 }
 
-                statusDiv.innerHTML = '<div class="status success">✓ Profile page loaded<br>Open your browser console (F12) and visit <a href="/profile.html" target="_blank">/profile.html</a> to see [PROFILE] logs</div>';
+                statusDiv.innerHTML = '<div class="status success">✓ Space page loaded<br>Open your browser console (F12) and visit <a href="/space.html" target="_blank">/space.html</a> to see [SPACE] logs</div>';
             } catch(e) {
-                addLog('Error loading profile page: ' + e.message, 'error');
+                addLog('Error loading Space page: ' + e.message, 'error');
                 statusDiv.innerHTML = '<div class="status error">✗ Error: ' + e.message + '</div>';
             }
         }
