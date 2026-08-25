@@ -895,8 +895,63 @@
           return;
         }
       } catch(e) {}
+      /* ?join=<lobby id> — the way back in from the Inbox note a Player gets
+         after declining a summon. It takes precedence over restoring whatever
+         lobby they were last sitting in. */
+      var joinParam = null;
+      try { joinParam = new URLSearchParams(window.location.search).get('join'); } catch(e) {}
+      if (joinParam) {
+        enterFromLink(joinParam);
+        return;
+      }
       var savedLobbyId = sessionStorage.getItem('activeLobbyId');
       if (savedLobbyId) openLobby(savedLobbyId);
+    }
+
+    /* A declined Player changing their mind. The lobby may since have launched
+       into a Campaign Room, in which case there is nothing to join — so we ask
+       the GM for entry instead of failing at them. */
+    async function enterFromLink(lobbyId) {
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/room', {
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var info = await readJson(res);
+        if (info.error) { showToast(info.error, true); return; }
+
+        if (info.lobby && info.lobby.status !== 'closed') {
+          var jr = await fetch(API_URL + '/api/lobbies/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ lobby_id: lobbyId })
+          });
+          var jd = await readJson(jr);
+          if (jd.success || jd.lobby_id) {
+            showToast('Welcome to ' + (info.lobby.name || 'the lobby') + '.');
+            openLobby(jd.lobby_id || lobbyId);
+          } else {
+            showToast(jd.error || 'Could not enter that lobby.', true);
+          }
+          return;
+        }
+
+        if (info.room && !info.room.hidden) {
+          var rr = await fetch(API_URL + '/api/rooms/' + info.room.id + '/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ request_type: 'join' })
+          });
+          var rd = await readJson(rr);
+          showToast(rd.success
+            ? 'That table is already in session — the GM has been asked to let you in.'
+            : (rd.error || 'Could not reach the GM of that Campaign Room.'), !rd.success);
+          return;
+        }
+
+        showToast('That lobby has closed and its table is no longer open.', true);
+      } catch(e) {
+        showToast('Could not reach the server.', true);
+      }
     }
 
     window.toggleThemeMore = function(btn) {

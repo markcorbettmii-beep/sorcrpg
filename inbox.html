@@ -125,6 +125,24 @@
             return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
+
+        /* Turn our own links in a message body into real links. Order matters:
+           the body is escaped FIRST, then anchors are built from the escaped
+           text, so nothing a sender writes can become markup. Only sorcrpg.com
+           URLs are linked — an arbitrary address from another member is left
+           as plain text on purpose. */
+        function linkifyOwn(escaped) {
+            return escaped.replace(
+                /https:\/\/(?:www\.)?sorcrpg\.com\/[A-Za-z0-9._~:\/?#\[\]@!$&'()*+,;=%-]*/g,
+                function(url) {
+                    var clean = url.replace(/[.,;:)]+$/, '');
+                    var tail = url.slice(clean.length);
+                    return '<a href="' + clean + '" style="color:#b9aa00;text-decoration:underline;">'
+                         + clean + '</a>' + tail;
+                }
+            );
+        }
+
         function timeAgo(ts) {
             if (!ts) return '';
             var d = new Date(ts);
@@ -337,7 +355,7 @@
                     var isMine = msg.sender_uid === myUid;
                     return '<div class="message-bubble ' + (isMine ? 'mine' : 'theirs') + '">'
                         + (!isMine ? '<div class="bubble-sender">' + escapeHtml(msg.sender_name) + '</div>' : '')
-                        + '<div class="bubble-inner">' + escapeHtml(msg.body) + '</div>'
+                        + '<div class="bubble-inner">' + linkifyOwn(escapeHtml(msg.body)) + '</div>'
                     + '</div>';
                 }).join('');
                 listEl.scrollTop = listEl.scrollHeight;

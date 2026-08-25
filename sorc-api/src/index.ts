@@ -2494,6 +2494,29 @@ app.post('/api/summons/:id/respond', authMiddleware, async (c) => {
       ).bind(crypto.randomUUID(), user.id, playerName, summon.lobby_id, summon.lobby_name, activityBody, now).run().catch(() => {});
     }
 
+    if (!accept) {
+      // Declining is not a door slammed shut. The Player gets a line in their
+      // Inbox with a way back in, so a "not right now" does not cost them the
+      // table — and the host, who is now barred from re-inviting for a day,
+      // does not have to chase them.
+      //
+      // Wrapped: a failure to write the Inbox note must never turn a
+      // successful decline into an error the Player sees.
+      try {
+        const playerName = user.display_name || user.username;
+        const entryUrl = `https://sorcrpg.com/lobbies.html?join=${summon.lobby_id}`;
+        await sendDirectMessage(
+          c.env.sorc_db,
+          summon.from_uid, summon.from_name,
+          user.id, playerName,
+          `You declined the summon into "${summon.lobby_name}". ` +
+          `If you change your mind, you may enter here: ${entryUrl}`
+        );
+      } catch (e) {
+        console.error('Decline follow-up message failed:', e);
+      }
+    }
+
     return c.json({ success: true, status: newStatus, lobby_id: accept ? summon.lobby_id : null });
   } catch (error: any) {
     return c.json({ error: 'Failed to respond to summon.', details: error.message }, 500);
@@ -5631,5 +5654,63 @@ async function grantCatalogTo(db: any, userId: string): Promise<number> {
   }
   return granted;
 }
+
+// Drop a direct message into a member's Inbox, opening the conversation if the
+// two have never spoken. Lifted verbatim from the lobby-invite path so both
+// use one implementation rather than two copies that can drift.
+async function sendDirectMessage(
+  db: any, fromUid: string, fromName: string,
+  toUid: string, toName: string, body: string
+) {
+  const now = new Date().toISOString();
+  const existing = await db.prepare(
+    `SELECT id FROM conversations
+     WHERE (user1_uid = ? AND user2_uid = ?) OR (user1_uid = ? AND user2_uid = ?)`
+  ).bind(fromUid, toUid, toUid, fromUid).first() as any;
+
+  const convId = existing ? existing.id : crypto.randomUUID();
+  if (!existing) {
+    await db.prepare(
+      `INSERT INTO conversations (id, user1_uid, user2_uid, user1_name, user2_name, status, last_message_text, created_at, last_message_at)
+       VALUES (?, ?, ?, ?, ?, 'accepted', ?, ?, ?)`
+    ).bind(convId, fromUid, toUid, fromName, toName, body.substring(0, 100), now, now).run();
+  } else {
+    await db.prepare(
+      `UPDATE conversations SET last_message_text = ?, last_message_at = ? WHERE id = ?`
+    ).bind(body.substring(0, 100), now, convId).run();
+  }
+  await db.prepare(
+    `INSERT INTO messages (id, conversation_id, sender_uid, sender_name, body, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).bind(crypto.randomUUID(), convId, fromUid, fromName, body, now).run();
+  return convId;
+}
+
+// Where does this lobby lead right now? Read-only. The Inbox link after a
+// decline points at the lobby, but by the time it is clicked the table may
+// have launched into a Campaign Room — this says which, so the page can join
+// the lobby or knock on the Room's door as appropriate.
+app.get('/api/lobbies/:id/room', authMiddleware, async (c) => {
+  const lobbyId = c.req.param('id');
+  try {
+    const lobby = await c.env.sorc_db.prepare(
+      `SELECT id, name, status FROM lobbies WHERE id = ?`
+    ).bind(lobbyId).first() as any;
+    if (!lobby) return c.json({ error: 'That lobby is gone.' }, 404);
+
+    const room = await c.env.sorc_db.prepare(
+      `SELECT id, room_name, gm_uid, status, is_hidden FROM private_rooms
+       WHERE lobby_id = ? AND status = 'active'
+       ORDER BY created_at DESC LIMIT 1`
+    ).bind(lobbyId).first() as any;
+
+    return c.json({
+      lobby: { id: lobby.id, name: lobby.name, status: lobby.status },
+      room: room ? { id: room.id, name: room.room_name, hidden: !!room.is_hidden } : null,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not read that lobby.' }, 500);
+  }
+});
 
 export default app;
