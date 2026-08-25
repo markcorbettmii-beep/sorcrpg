@@ -1236,7 +1236,7 @@
             ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; was hosted by ' + esc(l.commandeered_from) + '</span>'
             : '';
           var isCreatorOfLobby = currentUser && (l.creator_uid === currentUser.id);
-          var codeSnip = (isCreatorOfLobby || isPrivileged())
+          var codeSnip = (isCreatorOfLobby || isPrivileged()) && !l.is_private
             ? ' &nbsp;&middot;&nbsp; Code: <strong>' + esc(l.lobby_code) + '</strong>'
             : '';
           var isBanned = isLobbyBanned(l.id);
@@ -1264,7 +1264,9 @@
             btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();joinLobby(\'' + esc(l.id) + '\')">Join</button>';
             hintHtml = '<span class="lobby-hint">Join open lobby.</span>';
           }
-          var hostDrop = buildHostNameDrop(l.creator_uid, l.creator_name || 'Unknown', l.creator_username || l.creator_name, l.id);
+          var hostDrop = l.is_private && !isCreatorOfLobby
+            ? '<a href="inbox.html?to=' + esc(hostUid) + '" style="color:inherit;" onclick="event.stopPropagation()">' + esc(l.creator_name || 'Unknown') + '</a>'
+            : buildHostNameDrop(l.creator_uid, l.creator_name || 'Unknown', l.creator_username || l.creator_name, l.id);
           return '<div class="lobby-row" onclick="openLobby(\'' + esc(l.id) + '\')">' +
             '<div class="lobby-row-info">' +
               '<h3>' + esc(l.name) + (l.is_private ? ' ' : '') + '</h3>' +
