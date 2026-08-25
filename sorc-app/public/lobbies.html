@@ -101,6 +101,7 @@
     .detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .detail-header h2 { color: #e0cfc0; font-size: 1.2rem; margin: 0; }
     .detail-header .detail-meta { color: #555; font-size: 0.8rem; margin-top: 0.3rem; }
+    .beta-badge { display: inline-block; background: #1a3a1a; border: 1px solid #4caf50; color: #7ed957; font-size: 0.7rem; font-weight: bold; padding: 0.25rem 0.6rem; border-radius: 4px; margin-left: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
     .back-btn { padding: 6px 14px; background: none; border: 1px solid #333; color: #888; border-radius: 8px; cursor: pointer; font-size: 0.82rem; }
     .back-btn:hover { border-color: #888; color: #e0cfc0; }
     .invite-pool-wrap { border: 1px solid #252525; border-radius: 10px; overflow: hidden; margin-top: 0.75rem; }
@@ -143,12 +144,15 @@
     .chat-panel { background: #111; border: 2px solid #333; border-radius: 12px; display: flex; flex-direction: column; height: 420px; box-shadow: 0 4px 18px rgba(0,0,0,0.5); }
     .chat-panel-head { padding: 0.7rem 1rem; border-bottom: 2px solid #333; color: #b9aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; flex-shrink: 0; }
     .chat-tab-bar { display: flex; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; background: #0a0a0a; border-radius: 10px 10px 0 0; }
-    .chat-tab { flex: 1; padding: 0.55rem 0.4rem; background: none; border: none; border-bottom: 3px solid transparent; color: #888; font-size: 0.73rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; transition: color 0.15s, background 0.15s; }
+    .chat-tab { position: relative; flex: 1; padding: 0.55rem 0.4rem; background: none; border: none; border-bottom: 3px solid transparent; color: #888; font-size: 0.73rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; transition: color 0.15s, background 0.15s; }
     .chat-tab:hover:not(.active) { color: #bbb; background: #111; }
     .chat-tab.active { color: #b9aa00; background: #111; border-bottom: 3px solid #b9aa00; }
     .chat-tab-pane { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
     .chat-tab-pane.active { display: flex; }
-    .tab-badge { display:inline-block; width:6px; height:6px; border-radius:50%; background:#b9aa00; vertical-align:middle; margin-left:3px; animation: badge-pulse 1.6s ease-in-out infinite; }
+    /* The unread dot sits above the label, and is taken out of the flow so it
+       cannot grow its tab's line box — inline, it pushed that one tab's text
+       higher than the rest of the row. */
+    .tab-badge { position:absolute; top:4px; left:50%; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:#b9aa00; animation: badge-pulse 1.6s ease-in-out infinite; }
     @keyframes badge-pulse { 0%,100%{opacity:1;}50%{opacity:0.25;} }
     .lobby-pager { display:flex; align-items:center; justify-content:center; gap:1rem; padding:0.85rem 0 0.4rem; border-top:1px solid #1a1a1a; margin-top:0.25rem; }
     .lobby-pager-btn { background:none; border:1px solid #2a2a2a; color:#888; border-radius:6px; padding:5px 14px; font-size:1rem; cursor:pointer; transition:border-color 0.15s, color 0.15s; }
@@ -164,6 +168,10 @@
     .chat-msg .msg-name.gm { color: #c93f35; }
     .chat-msg .msg-body { color: #c0b0a0; }
     .chat-msg .msg-time { color: #333; font-size: 0.72rem; margin-left: 0.4rem; }
+    .msg-trade-tag { display: inline-block; font-weight: bold; font-size: 0.74rem; padding: 2px 6px; border-radius: 4px; margin-right: 0.2rem; }
+    .msg-trade-tag.msg-wts { background: #1a1200; color: #e0c040; border: 1px solid #5a4020; }
+    .msg-trade-tag.msg-wtb { background: #001428; color: #50a0e0; border: 1px solid #1a3a5a; }
+    .msg-trade-tag.msg-wtt { background: #0d1a0d; color: #70d080; border: 1px solid #2a5a2a; }
     .chat-input-row { display: flex; gap: 0.5rem; padding: 0.6rem 0.75rem; border-top: 2px solid #333; flex-shrink: 0; }
     .chat-input { flex: 1; padding: 7px 10px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; color: #e0cfc0; font-size: 0.85rem; }
     .chat-input:focus { outline: none; border-color: #555; }
@@ -320,6 +328,8 @@
     body.lawful-mode .detail-header h2 { color: #2c2c2c; }
     body.lawful-mode .l-input,
     body.lawful-mode .chat-input { background: #f5f5f5; border-color: #ccc; color: #2c2c2c; }
+    body.lawful-mode #diceType,
+    body.lawful-mode #diceCount { background: #f5f5f5; border-color: #ccc; color: #2c2c2c; }
     body.lawful-mode .chat-msg .msg-body { color: #555; }
 
     /* ===== SOLAR BG: transparent page wrapper so canvas shows through ===== */
@@ -454,6 +464,9 @@
     body.lawful-mode .wts-badge:hover { background: #f8e8b0; }
     body.lawful-mode .wtb-badge { background: #e0eefc; color: #1a5090; border-color: #7fb0e0; }
     body.lawful-mode .wtb-badge:hover { background: #c8e0f8; }
+    body.lawful-mode .msg-trade-tag.msg-wts { background: #fdf3d0; color: #8a6800; border-color: #d0a840; }
+    body.lawful-mode .msg-trade-tag.msg-wtb { background: #e0eefc; color: #1a5090; border-color: #7fb0e0; }
+    body.lawful-mode .msg-trade-tag.msg-wtt { background: #e3f7ea; color: #1a7a40; border-color: #7fcf9f; }
     body.lawful-mode .modal-box .modal-warn { color: #8a5800; background: #fdf3e0; border-color: #e0b060; }
     body.lawful-mode .needs-assess-note { background: #fdf3e0; border-color: #e0b060; color: #8a5800; }
     body.lawful-mode .rc-no-btn { background: #fbe6e4; }
@@ -474,7 +487,62 @@
     body.lawful-mode .member-name-menu a:hover, body.lawful-mode .member-name-menu button:hover { background: #f0ede6; color: #2c2c2c; }
     body.lawful-mode .member-name-menu button.summon-opt:hover { background: #efe8ff; color: #5a30b0; }
     body.lawful-mode .leave-btn:hover { background: #fbe6e4; }
-    </style>
+  
+    /* ── Card picker ─────────────────────────────────────────── */
+    /* At least 44px square: a tap target smaller than that is unreliable on a
+       phone, which reads as the button doing nothing at all. */
+    .card-pick-btn { flex:0 0 auto; background:#1a1505; border:1px solid #5a4a00; color:#b9aa00; font-size:1.25rem;
+                     min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;
+                     padding:0 0.55rem; border-radius:8px; cursor:pointer; line-height:1;
+                     -webkit-tap-highlight-color:rgba(185,170,0,0.35); touch-action:manipulation; user-select:none; }
+    .card-pick-btn:hover { background:#241d05; }
+    .card-pick-btn:active { background:#3a2f05; transform:scale(0.94); }
+    .cp-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.84); display:none; align-items:center;
+                  justify-content:center; padding:1rem; z-index:5000; }
+    .cp-overlay.open { display:flex; }
+    .cp-box { background:#121212; border:1px solid #2a2a2a; border-radius:14px; width:100%; max-width:640px;
+              max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+    .cp-head { padding:0.85rem 1rem 0.6rem; border-bottom:1px solid #222; }
+    .cp-head h3 { margin:0 0 0.55rem; color:#b9aa00; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.07em; }
+    .cp-verbs { display:flex; gap:0.35rem; margin-bottom:0.55rem; }
+    .cp-verb { flex:1; padding:0.34rem; border-radius:6px; border:1px solid #333; background:#181818; color:#888;
+               font-size:0.72rem; font-weight:bold; cursor:pointer; }
+    .cp-verb.active { background:#1a1505; border-color:#b9aa00; color:#b9aa00; }
+    .cp-search { width:100%; padding:0.45rem 0.65rem; border-radius:7px; border:1px solid #2a2a2a;
+                 background:#0d0d0d; color:#ddd; font-size:0.82rem; }
+    .cp-tabs { display:flex; gap:0.3rem; overflow-x:auto; padding:0.5rem 1rem 0; }
+    .cp-tab { flex:0 0 auto; padding:0.28rem 0.7rem; border-radius:20px; border:1px solid #2a2a2a; background:#161616;
+              color:#888; font-size:0.72rem; cursor:pointer; white-space:nowrap; }
+    .cp-tab.active { background:#1a1505; border-color:#b9aa00; color:#b9aa00; }
+    .cp-grid { flex:1; overflow-y:auto; padding:0.7rem 1rem; display:grid;
+               grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:0.55rem; }
+    .cp-card { background:#161616; border:1px solid #262626; border-radius:9px; overflow:hidden; cursor:pointer;
+               transition:border-color 0.15s, transform 0.1s; }
+    .cp-card:hover { border-color:#b9aa00; transform:translateY(-2px); }
+    .cp-card.locked { opacity:0.42; cursor:not-allowed; }
+    .cp-card.locked:hover { border-color:#262626; transform:none; }
+    .cp-art { width:100%; aspect-ratio:3/4; object-fit:cover; background:#0c0c0c; display:block; }
+    .cp-art-ph { width:100%; aspect-ratio:3/4; background:#0c0c0c; display:flex; align-items:center;
+                 justify-content:center; color:#333; font-size:1.7rem; }
+    .cp-meta { padding:0.4rem 0.5rem; }
+    .cp-name { color:#e0cfc0; font-size:0.76rem; font-weight:bold; line-height:1.25; }
+    .cp-ref { font-family:ui-monospace,Menlo,monospace; color:#8a7f00; font-size:0.66rem; margin-top:0.1rem; }
+    .cp-coin { color:#b9aa00; font-size:0.72rem; margin-top:0.15rem; }
+    .cp-lock { color:#c87d00; font-size:0.64rem; margin-top:0.15rem; }
+    .cp-foot { border-top:1px solid #222; padding:0.6rem 1rem; display:flex; align-items:center;
+               justify-content:space-between; gap:0.5rem; }
+    .cp-pager { display:flex; align-items:center; gap:0.5rem; color:#777; font-size:0.75rem; }
+    .cp-pager button { background:#181818; border:1px solid #333; color:#aaa; border-radius:6px;
+                       padding:0.2rem 0.6rem; cursor:pointer; font-size:0.8rem; }
+    .cp-pager button:disabled { opacity:0.35; cursor:not-allowed; }
+    .cp-close { background:#1a1a1a; border:1px solid #3a3a3a; color:#aaa; border-radius:7px;
+                padding:0.35rem 0.9rem; font-weight:bold; cursor:pointer; font-size:0.78rem; }
+    .cp-empty { grid-column:1/-1; text-align:center; color:#555; padding:2rem 1rem; font-size:0.84rem; line-height:1.6; }
+    body.lawful-mode .cp-box { background:#fff; border-color:#ddd; }
+    body.lawful-mode .cp-card { background:#fbfaf7; border-color:#e2ded4; }
+    body.lawful-mode .cp-name { color:#2c2c2c; }
+    body.lawful-mode .cp-search { background:#f7f5f0; color:#333; border-color:#ddd; }
+  </style>
 </head>
 <body>
   <script src="solar-bg.js"></script>
@@ -490,6 +558,7 @@
 
     <ul class="page-nav">
       <li><a href="index.html">&#8962;</a></li>
+      <li><a href="exchange.html">The Exchange</a></li>
     </ul>
 
     <div class="lobbies-wrap">
@@ -508,6 +577,27 @@
   </div>
 
   <!-- REPORT MODAL -->
+
+  <div class="cp-overlay" id="cardPicker" onclick="cpBackdrop(event, this)">
+    <div class="cp-box">
+      <div class="cp-head">
+        <h3 id="cpTitle">Which Card are you selling?</h3>
+        <div class="cp-verbs">
+          <button class="cp-verb active" data-verb="WTS" onclick="cpSetVerb('WTS')">Sell</button>
+          <button class="cp-verb" data-verb="WTB" onclick="cpSetVerb('WTB')">Buy</button>
+          <button class="cp-verb" data-verb="WTT" onclick="cpSetVerb('WTT')">Trade</button>
+        </div>
+        <input type="text" class="cp-search" id="cpSearch" placeholder="Search by name or ref #..."
+               oninput="cpSearch(this.value)" />
+      </div>
+      <div class="cp-tabs" id="cpTabs"></div>
+      <div class="cp-grid" id="cpGrid"></div>
+      <div class="cp-foot">
+        <div class="cp-pager" id="cpPager"></div>
+        <button class="cp-close" onclick="closeCardPicker()">Cancel</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="reportModal">
     <div class="modal-box">
       <h3>Report Member</h3>
@@ -668,6 +758,19 @@
     // ===== HELPERS =====
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
+    /* TEMPORARY - beta guest access. A guest has no profile: "Guest x" is a
+       chat name and nothing more. Anywhere a name would normally link to a
+       profile, character sheet or DM, a guest gets plain text instead. */
+    function isGuestName(n) { return /^Guest \d+$/.test(String(n || '').trim()); }
+
+    /* A chat name. Guests are plain text - no profile to link to. */
+    function chatNameHtml(username, isGM) {
+      var cls = 'msg-name' + (isGM ? ' gm' : '');
+      if (isGuestName(username)) return '<span class="' + cls + '">' + esc(username) + '</span>';
+      return '<a href="public-profile.html?username=' + encodeURIComponent(username || '') +
+        '" class="' + cls + '" style="text-decoration:none;">' + esc(username) + '</a>';
+    }
+
     function roleLabel(r) {
       if (!r) return 'Civilian';
       switch(r) {
@@ -762,19 +865,98 @@
     function render() {
       var app = document.getElementById('lobbiesApp');
       if (!currentUser || !currentUser.authKey) {
-        app.innerHTML = '<div style="text-align:center;padding:3rem;color:#555;">Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to access lobbies.</div>';
+        /* Signed out. The guest option lives here too - a beta tester with no
+           account has to be able to reach it from this screen, or guest access
+           is unreachable. Hidden until the server confirms guests are on. */
+        app.innerHTML =
+          '<div style="text-align:center;padding:3rem 1rem;color:#555;">' +
+            '<p>Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to access lobbies.</p>' +
+            '<div id="guestSignedOut" style="display:none;margin-top:2rem;padding-top:1.75rem;border-top:1px solid #2a2a2a;">' +
+              '<p style="margin-bottom:0.9rem;">Testing the beta? Join without an account.</p>' +
+              '<button class="l-btn red" style="max-width:240px;margin:0 auto;" onclick="joinAsGuest()">Join as Guest</button>' +
+              '<div id="guestMsg" class="l-msg" style="margin-top:0.5rem;"></div>' +
+            '</div>' +
+          '</div>';
+        refreshGuestCard();
         return;
       }
       var hasAssessed = !!(currentUser.sorc_role) || isPrivileged();
       if (!hasAssessed) {
-        window.location.replace('assess.html');
+        window.location.replace('take-assessment.html');
         return;
       }
       var badge = document.getElementById('assessClearedBadge');
       if (badge) { badge.style.display = 'block'; }
       renderListView();
+      /* One-time forced exit. Bump LOBBY_FORCE_EXIT whenever lobby rules change
+         and everyone sitting in a lobby should be dropped back to the list on
+         their next load so hosts can remake their lobbies under the new rules. */
+      var LOBBY_FORCE_EXIT = '2026-08-24-leave-abandon';
+      try {
+        if (localStorage.getItem('sorc_lobby_force_exit') !== LOBBY_FORCE_EXIT) {
+          localStorage.setItem('sorc_lobby_force_exit', LOBBY_FORCE_EXIT);
+          sessionStorage.removeItem('activeLobbyId');
+          localStorage.removeItem('sorc_joined_lobbies');
+          return;
+        }
+      } catch(e) {}
+      /* ?join=<lobby id> — the way back in from the Inbox note a Player gets
+         after declining a summon. It takes precedence over restoring whatever
+         lobby they were last sitting in. */
+      var joinParam = null;
+      try { joinParam = new URLSearchParams(window.location.search).get('join'); } catch(e) {}
+      if (joinParam) {
+        enterFromLink(joinParam);
+        return;
+      }
       var savedLobbyId = sessionStorage.getItem('activeLobbyId');
       if (savedLobbyId) openLobby(savedLobbyId);
+    }
+
+    /* A declined Player changing their mind. The lobby may since have launched
+       into a Campaign Room, in which case there is nothing to join — so we ask
+       the GM for entry instead of failing at them. */
+    async function enterFromLink(lobbyId) {
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/room', {
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var info = await readJson(res);
+        if (info.error) { showToast(info.error, true); return; }
+
+        if (info.lobby && info.lobby.status !== 'closed') {
+          var jr = await fetch(API_URL + '/api/lobbies/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ lobby_id: lobbyId })
+          });
+          var jd = await readJson(jr);
+          if (jd.success || jd.lobby_id) {
+            showToast('Welcome to ' + (info.lobby.name || 'the lobby') + '.');
+            openLobby(jd.lobby_id || lobbyId);
+          } else {
+            showToast(jd.error || 'Could not enter that lobby.', true);
+          }
+          return;
+        }
+
+        if (info.room && !info.room.hidden) {
+          var rr = await fetch(API_URL + '/api/rooms/' + info.room.id + '/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ request_type: 'join' })
+          });
+          var rd = await readJson(rr);
+          showToast(rd.success
+            ? 'That table is already in session — the GM has been asked to let you in.'
+            : (rd.error || 'Could not reach the GM of that Campaign Room.'), !rd.success);
+          return;
+        }
+
+        showToast('That lobby has closed and its table is no longer open.', true);
+      } catch(e) {
+        showToast('Could not reach the server.', true);
+      }
     }
 
     window.toggleThemeMore = function(btn) {
@@ -836,7 +1018,7 @@
         'GMs play module-paired audio inside the Campaign Room - every Player hears it live, whether at the table or joining remotely',
         'Campaign Rooms work just as well fully online as they do at a physical table - GMs set the audio, Players roll live dice, everyone follows the same session',
         'Set your lobby to Private so only Players with your invite code can join - ideal for pre-arranged Fellowship sessions',
-        'Campaign Rooms include live D4, D6, and D100 rolls, loot table generation, and compendium access for the whole party',
+        'Campaign Rooms include live D4, D6, D100 and Divine Roll results, loot table generation, and compendium access for the whole party',
         '&#129309; Find great Players through PUG lobbies - once you do, invite them directly to your next private session to skip the pickup queue',
         'Switch the Lobby Theme above to set the mood - Omnè Terminal and The Veilwood each have their own ambient soundscape',
         'If a host leaves their lobby, the next member in line becomes the new leader - the lobby stays open and keeps recruiting',
@@ -932,9 +1114,10 @@
             '<button class="section-scroll-btn" aria-label="Previous" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:-280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="36,9 9,24 36,39"></polygon></svg></button>' +
             '<div class="how-it-works-list" id="howItWorksScroll">' +
               '<div class="feature-card"><div class="feature-icon"></div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
-              '<div class="feature-card"><div class="feature-icon"></div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="assess.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon"></div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="lobbies.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
               '<div class="feature-card"><div class="feature-icon"></div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#b9aa00;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#b9aa00;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
-              '<div class="feature-card"><div class="feature-icon"></div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon"></div><h3>Leave vs. Abandon</h3><p><strong style="color:#b9aa00;">Leave</strong> is free for everyone, the lobby starter included. Step out whenever you like and walk back in at will, in the same role you left with.<br/><br/><strong style="color:#b9aa00;">Abandon</strong> belongs to the lobby starter alone. It gives the lobby up for good &mdash; they cannot rejoin without permission or a new code. The lobby passes to the next GM in it; with no GM present it passes to the next member who joined, until a GM arrives. There is no closing a lobby: one closes on its own once its last member is gone.</p></div>' +
+              '<div class="feature-card"><div class="feature-icon"></div><h3>Room Tools</h3><p>Campaign rooms give GMs voice chat, live dice (D4, D6, D100, and the Divine Roll), loot tables, compendium access, and character sheet integration. Each campaign shares the same Essentia world coordinates.</p></div>' +
             '</div>' +
             '<button class="section-scroll-btn" aria-label="Next" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="12,9 39,24 12,39"></polygon></svg></button>' +
           '</div>' +
@@ -962,6 +1145,14 @@
               '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
               '<div id="joinMsg" class="l-msg"></div>' +
             '</div>' +
+            /* TEMPORARY - beta guest access. Hidden until the server confirms
+               it is switched on (GUESTS_ENABLED); see refreshGuestCard(). */
+            '<div class="action-card" id="guestCard" style="display:none;">' +
+              '<h2 class="red">Guest Access</h2>' +
+              '<p>Join as a guest to test the lobby and features. You will be assigned a unique guest name.</p>' +
+              '<button class="l-btn red" onclick="joinAsGuest()">Join as Guest</button>' +
+              '<div id="guestMsg" class="l-msg"></div>' +
+            '</div>' +
             adminCodeGen +
           '</div>' +
         '</div>';
@@ -970,6 +1161,23 @@
       loadWorldChat();
       startWorldChatPoll();
       startSummonPoll();
+      refreshGuestCard();
+    }
+
+    /* TEMPORARY - beta guest access. The server owns the switch
+       (GUESTS_ENABLED); this only reveals the card when it says guests are on,
+       so flipping the flag removes the button site-wide with no site change.
+       Delete this along with the guest card when guest access is retired. */
+    async function refreshGuestCard() {
+      var els = [document.getElementById('guestCard'), document.getElementById('guestSignedOut')]
+        .filter(function(el) { return !!el; });
+      if (!els.length) return;
+      try {
+        var res = await fetch(API_URL + '/api/public-config');
+        var cfg = await readJson(res);
+        var on = !!(cfg && cfg.guests_enabled);
+        els.forEach(function(el) { el.style.display = on ? '' : 'none'; });
+      } catch(e) { /* leave hidden if we cannot confirm it is on */ }
     }
 
     async function loadLobbies() {
@@ -979,7 +1187,7 @@
         var res = await fetch(API_URL + '/api/lobbies', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await readJson(res);
         if (data.error && data.error.includes('assess')) {
-          listEl.innerHTML = '<div class="needs-assess-note">You must complete the <a href="assess.html">Role Assessment</a> before joining or creating lobbies.</div>';
+          listEl.innerHTML = '<div class="needs-assess-note">You must complete the <a href="lobbies.html">Role Assessment</a> before joining or creating lobbies.</div>';
           return;
         }
         var lobbies = data.lobbies || [];
@@ -1019,9 +1227,10 @@
           '</div>' +
         '</div>';
       }
+          var isClosed = l.status === 'closed';
           var isFull = l.member_count >= l.max_members;
-          var statusClass = isFull ? 'full' : 'open';
-          var statusLabel = isFull ? 'Full' : 'Open';
+          var statusClass = isClosed ? 'closed' : (isFull ? 'full' : 'open');
+          var statusLabel = isClosed ? 'Closed' : (isFull ? 'Full' : 'Open');
           var commandeeredNote = l.commandeered_from
             ? '<span style="color:#7a5a2a;font-size:0.72rem;font-style:italic;"> &nbsp;&middot;&nbsp; was hosted by ' + esc(l.commandeered_from) + '</span>'
             : '';
@@ -1037,6 +1246,9 @@
           var btnHtml, hintHtml;
           if (isBanned) {
             btnHtml = ''; hintHtml = '';
+          } else if (isClosed) {
+            btnHtml = '<span class="status-pip closed">Closed</span>';
+            hintHtml = '<span class="lobby-hint">This lobby has been closed.</span>';
           } else if (isJoined) {
             btnHtml = '<button class="row-join-btn" style="background:#1a5a1a;color:#fff;" onclick="event.stopPropagation();openLobby(\'' + esc(l.id) + '\')">Joined</button>';
             hintHtml = '<span class="lobby-hint">You are a member of this lobby. Enter at will.</span>';
@@ -1093,7 +1305,7 @@
 
     function buildHostNameDrop(uid, name, username, lobbyId) {
       var profileHref = 'public-profile.html?username=' + encodeURIComponent(username || name || '');
-      var items = '<a href="' + profileHref + '" onclick="event.stopPropagation()">Character Space</a>';
+      var items = '<a href="' + profileHref + '" onclick="event.stopPropagation()">Profile</a>';
       var isSelf = currentUser && currentUser.id === uid;
       var isPhUid = uid && uid.startsWith('ph-');
       if (!isSelf && !isPhUid) items += '<a href="inbox.html?to=' + encodeURIComponent(uid) + '" class="summon-opt" onclick="event.stopPropagation()">Message</a>';
@@ -1170,7 +1382,7 @@
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Lobby created! Code: ' + (data.lobby_code || '');
           setTimeout(function() { openLobby(data.lobby_id); }, 600);
         } else if (data.needs_reassess) {
-          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="lobbies.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
@@ -1228,8 +1440,37 @@
           msgEl.className = 'l-msg ok'; msgEl.textContent = 'Joined!';
           setTimeout(function() { openLobby(data.lobby_id); }, 400);
         } else if (data.needs_reassess) {
-          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="assess.html" style="color:#b9aa00;">Reassess now</a>';
+          msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="lobbies.html" style="color:#b9aa00;">Reassess now</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Could not join.'; }
+      } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
+    };
+
+    // ===== JOIN AS GUEST =====
+    window.joinAsGuest = async function() {
+      var msgEl = document.getElementById('guestMsg');
+      msgEl.className = 'l-msg'; msgEl.textContent = 'Creating guest account...';
+      try {
+        var res = await fetch(API_URL + '/api/auth/guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        var data = await readJson(res);
+        if (data.user && data.authKey) {
+          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Guest account created! Reloading...';
+          // Store guest credentials
+          localStorage.setItem('sorc_user', JSON.stringify({
+            id: data.user.id,
+            username: data.user.username,
+            email: data.user.email,
+            authKey: data.authKey,
+            display_name: data.user.display_name || data.user.username,
+            /* Both are needed or render() bounces the guest to the assessment */
+            role: data.user.role,
+            sorc_role: data.user.sorc_role
+          }));
+          setTimeout(function() { location.reload(); }, 800);
+        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create guest account.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
@@ -1342,10 +1583,10 @@
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report"></button>';
         }
         var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
-        var sheetHref = 'character_build_template.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
+        var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
         var menuItems = '';
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
-        menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Character Space</a>';
+        menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
         if (isCreator && !isSelf) {
           menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
           menuItems += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Promote to Host</button>';
@@ -1393,15 +1634,22 @@
         roomsHtml = '<div class="empty-state" style="padding:1rem;">No active rooms. The GM can launch one from inside the lobby.</div>';
       }
 
-      var launchBtn = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">Launch Room</button>' : '';
-      var inviteBtn = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
-      var readyCheckBtn = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var launchBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">Launch Room</button>' : '';
+      var inviteBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
+      var readyCheckBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      /* Whoever holds the lobby now sets whether it is open or private. */
+      var privacyBtn = (isCreator && lobby.status !== 'closed')
+        ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a1505;color:#b9aa00;border:1px solid #5a4a00;" onclick="toggleLobbyPrivacy()">' +
+            (lobby.is_private ? 'Private' : 'Open') +
+          '</button>'
+        : '';
+      /* Leave is for everyone, creator included - step out and come back at
+         will. Abandon is the creator's alone: it gives the lobby up for good
+         and hands it to the next host. There is no Close. */
       var leaveBtn = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
           '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
-        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>' +
-          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
-      var deleteBtn = '';
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>';
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
           + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
@@ -1412,17 +1660,21 @@
           + '</div>'
         : '';
 
+      var closedBadge = lobby.status === 'closed' ? '<span class="status-pip closed" style="margin-left:0.5rem;">Closed</span>' : '';
       app.innerHTML =
         '<div class="detail-header">' +
           '<div>' +
-            '<h2>' + esc(lobby.name) + (lobby.is_private ? ' ' : '') + '</h2>' +
-            '<div class="detail-meta">' + (hasGMRights ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
+            '<h2>' + esc(lobby.name) + (lobby.is_private ? ' ' : '') + '<span class="beta-badge">OPEN FOR BETA</span>' + closedBadge + '</h2>' +
+            '<div class="detail-meta">' + (hasGMRights && lobby.status !== 'closed' ? 'Code: <strong>' + esc(lobby.lobby_code) + '</strong> &nbsp;&middot;&nbsp; ' : '') + (lobby.member_count||1) + '/' + (lobby.max_members||20) + ' members</div>' +
           '</div>' +
           '<div id="lobbyHeaderBtns" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
-            launchBtn + readyCheckBtn + inviteBtn + leaveBtn + deleteBtn +
+            launchBtn + readyCheckBtn + inviteBtn + privacyBtn + leaveBtn +
           '</div>' +
         '</div>' +
         invitePanel +
+        '<div style="background:#1a1200;border:1px solid #5a3a00;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.25rem;color:#c87d00;font-size:0.85rem;line-height:1.5;">' +
+          '<strong>Role Assessment Requirement Skipped for Beta</strong> - We\'re testing lobbies and features with guests. Normally, members must complete the Role Assessment to join. This requirement is temporarily bypassed to allow broader testing.' +
+        '</div>' +
         '<div class="theme-selector" style="margin-bottom:1rem;">' +
           '<div class="theme-selector-label">Lobby Theme</div>' +
           '<div class="theme-grid">' +
@@ -1448,7 +1700,9 @@
               /* Tab bar - Recruit only shown to hosts */
               '<div class="chat-tab-bar">' +
                 '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="rolls" onclick="switchChatTab(\'rolls\')">Rolls <span class="tab-badge" id="badge-rolls" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="trade" onclick="switchChatTab(\'trade\')">Trade <span class="tab-badge" id="badge-trade" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="activity" onclick="switchChatTab(\'activity\')">Activity <span class="tab-badge" id="badge-activity" style="display:none;"></span></button>' +
               '</div>' +
@@ -1460,6 +1714,36 @@
                 '<div class="chat-input-row">' +
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
                   '<button class="chat-send" onclick="sendChat()">Send</button>' +
+                '</div>' +
+              '</div>' +
+              /* ROLLS: dice only. Rolls never touch Main — but a line typed
+                 here is ordinary lobby talk, so it posts to Main where the
+                 conversation actually lives. */
+              '<div class="chat-tab-pane" id="chatPane-rolls">' +
+                '<div class="chat-messages" id="rollMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No rolls yet.</div></div>' +
+                '<div style="padding:0.6rem 0.75rem;border-top:1px solid #333;flex-shrink:0;">' +
+                  '<div style="font-size:0.72rem;color:#555;margin-bottom:0.5rem;">Roll Dice <span style="color:#333;font-size:0.68rem;">(beta in lobbies • live in Campaign Rooms)</span></div>' +
+                  '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+                    '<select id="diceType" onchange="syncDiceCount()" style="padding:6px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0cfc0;font-size:0.84rem;cursor:pointer;">' +
+                      '<option value="d4">D4</option>' +
+                      '<option value="d6">D6</option>' +
+                      '<option value="d8">D8</option>' +
+                      '<option value="d10">D10</option>' +
+                      '<option value="d12">D12</option>' +
+                      '<option value="d20" selected>D20</option>' +
+                      '<option value="d100">D100</option>' +
+                      '<option value="divine">Divine Roll</option>' +
+                    '</select>' +
+                    '<div style="display:flex;align-items:center;gap:0.3rem;">' +
+                      '<label for="diceCount" style="font-size:0.75rem;color:#666;">×</label>' +
+                      '<input type="number" id="diceCount" value="1" min="1" max="100" style="width:40px;padding:6px 8px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0cfc0;font-size:0.84rem;text-align:center;" />' +
+                    '</div>' +
+                    '<button onclick="rollDice()" style="padding:6px 14px;background:#b9aa00;color:#111;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">Roll</button>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="chat-input-row">' +
+                  '<input type="text" class="chat-input" id="rollChatInput" placeholder="Say something (posts to Main)..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendRollTabChat()" />' +
+                  '<button class="chat-send" onclick="sendRollTabChat()">Send</button>' +
                 '</div>' +
               '</div>' +
               /* WORLD: world chat - read for all, post input for hosts */
@@ -1476,6 +1760,22 @@
               '<div class="chat-tab-pane" id="chatPane-msgs">' +
                 '<div class="chat-messages" id="lobbyMsgsList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet. Use a member\'s name menu to message them.</div></div>' +
               '</div>' +
+              /* TRADE: trade chat with WTB/WTS/WTT tags */
+              '<div class="chat-tab-pane" id="chatPane-trade">' +
+                '<div class="chat-messages" id="tradeMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div></div>' +
+                '<div class="chat-input-row">' +
+                  '<button type="button" class="card-pick-btn" id="cardPickBtn" title="Pick a Card from your collection"></button>' +
+                  '<input type="text" class="chat-input" id="tradeInput" list="tradeTagList" autocomplete="off" placeholder="Tap to pick a Card..." maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
+                  /* Real suggestions for the field, rather than whatever the
+                     keyboard happens to remember being typed before. */
+                  '<datalist id="tradeTagList">' +
+                    '<option value="WTS: ">Sell a Card</option>' +
+                    '<option value="WTB: ">Buy a Card</option>' +
+                    '<option value="WTT: ">Trade Card for Card</option>' +
+                  '</datalist>' +
+                  '<button class="chat-send" onclick="sendTradeChat()">Post</button>' +
+                '</div>' +
+              '</div>' +
               /* ACTIVITY: lobby action log */
               '<div class="chat-tab-pane" id="chatPane-activity">' +
                 '<div class="chat-messages" id="activityList"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No activity yet.</div></div>' +
@@ -1491,7 +1791,7 @@
             (hasGMRights
               ? '<div class="invite-pool-wrap">' +
                   '<button class="invite-pool-toggle" onclick="toggleInvitePool()" style="width:100%;">' +
-                    '<span>Invite Players</span>' +
+                    '<span>&#129309; Invite Fellows</span>' +
                     '<span id="invitePoolArrow" style="pointer-events:none;">&#9660;</span>' +
                   '</button>' +
                   '<div id="invitePoolPanel" style="display:none;background:#0d0d0d;">' +
@@ -1550,6 +1850,15 @@
         if (msgs.length === 0) { return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
         if (chatSelectMode) exitChatSelectMode();
+
+        /* Rolls live in the Rolls tab and nowhere else — a table that rolls a
+           lot would otherwise bury the conversation in Main. */
+        function isRoll(m) { return !!(m.body && m.body.indexOf('\uD83C\uDFB2') === 0); }
+        renderRollTab(msgs.filter(isRoll));
+        msgs = msgs.filter(function(m) { return !isRoll(m); });
+        if (msgs.length === 0) {
+          msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>';
+        } else {
         msgEl.innerHTML = msgs.map(function(m) {
           if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
             var themeName = m.body.replace('__sorc_theme__:', '').trim();
@@ -1563,16 +1872,35 @@
             return '<div class="chat-msg activity-notice" id="lmsg-' + m.id + '">&#8894; ' + esc(actBody) + '<span class="msg-time">' + timeAgo(m.created_at) + '</span></div>';
           }
           var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+          if (m.body && m.body.indexOf('') === 0) {
+            /* Dice results are stored as plain text. Strip any <strong> from
+               rolls posted by older clients, escape, then bold the total so
+               markup can never come out of the stored body. */
+            var rollSafe = esc(m.body.replace(/<\/?strong>/g, ''));
+            rollSafe = rollSafe.indexOf('= ') !== -1
+              ? rollSafe.replace(/=\s(\d+)/, '= <strong>$1</strong>')
+              : rollSafe.replace(/:\s(\d+)/, ': <strong>$1</strong>');
+            var rollDel = hasGMRights
+              ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
+              : '';
+            return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
+              chatNameHtml(m.username, isGM) + ':' +
+              '<span class="msg-body">' + rollSafe + '</span>' +
+              '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
+              rollDel +
+            '</div>';
+          }
           var delBtn = hasGMRights
             ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
             : '';
           return '<div class="chat-msg" id="lmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
-            '<a href="public-profile.html?username=' + encodeURIComponent(m.username||'') + '" class="msg-name' + (isGM ? ' gm' : '') + '" style="text-decoration:none;">' + esc(m.username) + '</a>:' +
+            chatNameHtml(m.username, isGM) + ':' +
             '<span class="msg-body">' + esc(m.body) + '</span>' +
             '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' +
             delBtn +
           '</div>';
         }).join('');
+        }
         if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
         var prevLastId = lastMsgId;
         if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id;
@@ -1620,6 +1948,72 @@
         if (data.error) { showToast(data.error, true); input.value = body; return; }
         loadChatMessages(currentLobby.id);
       } catch(e) { showToast('Could not send message. Check your connection.', true); input.value = body; }
+    };
+
+    /* The Divine Roll is always a single roll. Pin the count to 1 and lock the
+       field so the rule is visible, not just enforced on submit. */
+    window.syncDiceCount = function() {
+      var typeEl = document.getElementById('diceType');
+      var countEl = document.getElementById('diceCount');
+      if (!typeEl || !countEl) return;
+      var divine = typeEl.value === 'divine';
+      if (divine) { countEl.value = '1'; }
+      countEl.disabled = divine;
+      countEl.title = divine ? 'A Divine Roll is always a single roll.' : '';
+      countEl.style.opacity = divine ? '0.5' : '';
+      countEl.style.cursor = divine ? 'not-allowed' : '';
+    };
+
+    window.rollDice = async function() {
+      if (!currentLobby || !currentUser) return;
+      var diceTypeEl = document.getElementById('diceType');
+      var diceCountEl = document.getElementById('diceCount');
+      if (!diceTypeEl || !diceCountEl) return;
+
+      var rawType = diceTypeEl.value;
+      /* The Divine Roll is the rules' two-percentile roll (D100 + D100, 2-200)
+         used for Divine and Legendary items - it is named, never spelled out
+         as a die type. See Basic Rules Pg. 1. */
+      var isDivine = rawType === 'divine';
+      var diceType = isDivine ? 'Divine Roll' : rawType.toUpperCase();
+      /* A Divine Roll is always exactly one roll - not the player's to change. */
+      var count = isDivine ? 1 : (parseInt(diceCountEl.value) || 1);
+      if (count < 1 || count > 100) { showToast('Roll count must be between 1 and 100.', true); return; }
+
+      // Parse dice type (d4 -> 4, d20 -> 20, d100 -> 100)
+      var maxValue = isDivine ? 100 : parseInt(diceType.substring(1));
+      if (!maxValue) { showToast('Invalid dice type.', true); return; }
+
+      // Roll the dice
+      var rolls = [];
+      var total = 0;
+      for (var i = 0; i < count; i++) {
+        var roll = Math.floor(Math.random() * maxValue) + 1;
+        if (isDivine) roll += Math.floor(Math.random() * maxValue) + 1;
+        rolls.push(roll);
+        total += roll;
+      }
+
+      /* Roll messages are stored as PLAIN TEXT - chat bodies are escaped on
+         render, so any markup here would show up literally in the chat. The
+         total is bolded client-side in loadChatMessages instead. */
+      var rollsStr = rolls.join(', ');
+      if (count > 1) {
+        var body = '' + diceType + ' × ' + count + ': [' + rollsStr + '] = ' + total;
+      } else {
+        var body = '' + diceType + ': ' + total;
+      }
+
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        var data = await readJson(res);
+        if (data.error) { showToast(data.error, true); return; }
+        loadChatMessages(currentLobby.id);
+      } catch(e) { showToast('Could not post roll result. Check your connection.', true); }
     };
 
     window.clearLobbyChat = async function() {
@@ -1760,7 +2154,7 @@
         loadChatMessages(lobbyId);
         memberPollCount++;
         if (memberPollCount % 3 === 0) refreshMembers();
-      }, 5000);
+      }, 3000);
       startLobbyMsgPoll();
     }
 
@@ -1819,10 +2213,10 @@
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')"></button>';
           var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
-          var sheetHref = 'character_build_template.html?username=' + encodeURIComponent(m.username || '') + (currentLobby ? '&lobby=' + encodeURIComponent(currentLobby.id) : '');
+          var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
-          menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Character Space</a>';
+          menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
           if (isCreator && !isSelf) {
             menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
             menuItems2 += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Promote to Host</button>';
@@ -2016,7 +2410,7 @@
             '<div class="invite-row-name">' + esc(p.display_name || p.username) + '</div>' +
             '<div class="invite-row-sub">' + sub + '</div>' +
           '</div>' +
-          '<button class="invite-row-btn" onclick="inviteFromPool(\'' + esc(p.username) + '\')">Invite</button>' +
+          '<button class="invite-row-btn" data-uid="' + esc(p.id) + '" onclick="inviteFromPool(\'' + esc(p.id) + '\', \'' + esc(p.display_name || p.username) + '\')">Invite</button>' +
         '</div>';
       }).join('');
       var totalPages = Math.ceil(allItems.length / INVITE_PAGE_SIZE);
@@ -2042,29 +2436,291 @@
       renderInvitePool();
     };
 
-    window.inviteFromPool = async function(username) {
+    /* Invite sends a real summon, not a private message with a code to copy.
+       The Fellow gets a prompt with the lobby's details and accepts or denies
+       from there — the same flow the host gets from World Chat. */
+    window.inviteFromPool = async function(uid, name) {
       if (!currentLobby) return;
+      var btn = document.querySelector('.invite-row-btn[data-uid="' + uid + '"]');
+      function flash(text, bg, border) {
+        if (!btn) return;
+        btn.textContent = text; btn.style.background = bg || ''; btn.style.borderColor = border || '';
+        setTimeout(function() {
+          btn.textContent = 'Invite'; btn.style.background = ''; btn.style.borderColor = ''; btn.disabled = false;
+        }, 2500);
+      }
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
       try {
-        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/invite', {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/summon', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ username: username })
+          body: JSON.stringify({ to_uid: uid })
         });
         var data = await readJson(res);
-        var listEl = document.getElementById('invitePoolList');
         if (data.success) {
-          /* Flash the row green briefly */
-          var btns = listEl ? listEl.querySelectorAll('.invite-row-btn') : [];
-          btns.forEach(function(b) {
-            if (b.getAttribute('onclick') && b.getAttribute('onclick').indexOf(username) !== -1) {
-              b.textContent = 'Sent!'; b.style.background = '#1a5a1a'; b.style.borderColor = '#2a8a2a';
-              setTimeout(function() { b.textContent = 'Invite'; b.style.background = ''; b.style.borderColor = ''; }, 2500);
-            }
-          });
+          flash('Summoned!', '#1a5a1a', '#2a8a2a');
+          showToast((name || 'Player') + ' has been summoned to the lobby.');
+        } else if (data.already_invited) {
+          /* Not a failure — the invite is still standing. Say so on the button
+             and leave it disabled, so nobody taps it again out of doubt. */
+          flash('Invited', '#3a3000', '#6b5a00');
+          showToast(data.error, true);
+        } else if (data.declined) {
+          flash('Declined', '#3a1a1a', '#6b2020');
+          showToast(data.error, true);
         } else {
-          alert(data.error || 'Could not send invite.');
+          flash('Failed', '#5a1a1a', '#8a2a2a');
+          showToast(data.error || 'Could not send the invite.', true);
         }
-      } catch(e) { showToast('Could not reach server.', true); }
+      } catch(e) {
+        flash('Failed', '#5a1a1a', '#8a2a2a');
+        showToast('Could not reach server.', true);
+      }
+    };
+
+
+    /* ── Card picker ───────────────────────────────────────────
+       Nobody should have to remember "#MOB001". Tap the Card, the line
+       writes itself. WTS:/WTB: name one Card; WTT: is a barter, so it asks
+       for yours first and then what you want back — and that second Card
+       comes from the whole catalog, since you do not own it yet. */
+
+    /* ── Rolls tab ─────────────────────────────────────────────
+       Rolls are pulled out of Main and rendered here. Talk typed in this tab
+       is not a roll, so it posts to Main where the conversation lives — you
+       can roll and chat without leaving the tab, and Main stays readable. */
+    function renderRollTab(rolls) {
+      var el = document.getElementById('rollMessages');
+      if (!el) return;
+      if (!rolls.length) {
+        el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No rolls yet.</div>';
+        return;
+      }
+      var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+      el.innerHTML = rolls.map(function(m) {
+        var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+        var safe = esc(m.body.replace(/<\/?strong>/g, ''));
+        safe = safe.indexOf('= ') !== -1
+          ? safe.replace(/=\s(\d+)/, '= <strong>$1</strong>')
+          : safe.replace(/:\s(\d+)/, ': <strong>$1</strong>');
+        var del = hasGMRights
+          ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
+          : '';
+        return '<div class="chat-msg" id="rmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
+          chatNameHtml(m.username, isGM) + ':' +
+          '<span class="msg-body">' + safe + '</span>' +
+          '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' + del +
+        '</div>';
+      }).join('');
+      if (atBottom) el.scrollTop = el.scrollHeight;
+    }
+
+    window.sendRollTabChat = async function() {
+      var input = document.getElementById('rollChatInput');
+      if (!input || !currentLobby) return;
+      var body = (input.value || '').trim();
+      if (!body) return;
+      input.value = '';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        var data = await readJson(res);
+        if (data.error) { showToast(data.error, true); input.value = body; return; }
+        showToast('Posted to Main chat.');
+        loadChatMessages(currentLobby.id);
+      } catch(e) {
+        input.value = body;
+        showToast('Could not send. Check your connection.', true);
+      }
+    };
+
+
+    /* The picker button lives inside markup that is rebuilt on every chat
+       render, so its handler is delegated from the document rather than bound
+       to the element or written as an inline attribute. Both touch and click
+       are covered: some mobile browsers swallow a click on a freshly injected
+       button, but touchend always lands. */
+    (function bindCardPicker() {
+      function hit(e) {
+        var btn = e.target && e.target.closest && e.target.closest('.card-pick-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof openCardPicker === 'function') openCardPicker();
+      }
+      document.addEventListener('click', hit, true);
+      document.addEventListener('touchend', hit, true);
+    })();
+
+    var cpVerb = 'WTS';
+    var cpTab = 'all';
+    var cpQuery = '';
+    var cpPage = 1;
+    var cpStep = 'give';      // 'give' = your collection, 'want' = the catalog
+    var cpGive = null;        // the Card chosen in step one of a WTT
+    var cpSearchTimer = null;
+
+    var cpOpenedAt = 0;
+    window.openCardPicker = function() {
+      try {
+        cpVerb = 'WTS'; cpTab = 'all'; cpQuery = ''; cpPage = 1;
+        cpStep = 'give'; cpGive = null;
+        var box = document.getElementById('cardPicker');
+        if (!box) { showToast('Card picker failed to load - refresh the page.', true); return; }
+        var search = document.getElementById('cpSearch');
+        if (search) search.value = '';
+        cpOpenedAt = Date.now();
+        box.classList.add('open');
+        renderPickerChrome();
+        loadPickerCards();
+      } catch (err) {
+        showToast('Could not open the picker: ' + (err && err.message ? err.message : err), true);
+      }
+    };
+    /* The tap that opens the picker can land again on the backdrop underneath
+       it as a synthesized click. Ignore backdrop taps for a moment after
+       opening, or the picker closes the instant it appears. */
+    window.cpBackdrop = function(e, el) {
+      if (e.target !== el) return;
+      if (Date.now() - cpOpenedAt < 400) return;
+      closeCardPicker();
+    };
+    window.closeCardPicker = function() {
+      document.getElementById('cardPicker').classList.remove('open');
+    };
+    window.cpSetVerb = function(v) {
+      cpVerb = v; cpPage = 1; cpStep = 'give'; cpGive = null;
+      renderPickerChrome(); loadPickerCards();
+    };
+    window.cpSetTab = function(t) { cpTab = t; cpPage = 1; loadPickerCards(); };
+    window.cpSetPage = function(p) { cpPage = p; loadPickerCards(); };
+    window.cpSearch = function(v) {
+      cpQuery = v;
+      if (cpSearchTimer) clearTimeout(cpSearchTimer);
+      cpSearchTimer = setTimeout(function() { cpPage = 1; loadPickerCards(); }, 220);
+    };
+
+    function renderPickerChrome() {
+      var title = document.getElementById('cpTitle');
+      if (cpVerb === 'WTT') {
+        title.innerHTML = cpStep === 'give'
+          ? 'Step 1 of 2 &mdash; what are you giving?'
+          : 'Step 2 of 2 &mdash; what do you want for ' + esc(cpGive.item_name) + '?';
+      } else {
+        title.innerHTML = cpVerb === 'WTS'
+          ? 'Which Card are you selling?'
+          : 'Which Card do you want to buy?';
+      }
+      document.querySelectorAll('.cp-verb').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.verb === cpVerb);
+      });
+    }
+
+    // WTB: names a Card you do not hold, and WTT: step two likewise — both read
+    // the catalog. Everything else reads your own collection.
+    function pickerSource() {
+      if (cpVerb === 'WTB') return '/api/cards/catalog';
+      if (cpVerb === 'WTT' && cpStep === 'want') return '/api/cards/catalog';
+      return '/api/cards/mine';
+    }
+
+    async function loadPickerCards() {
+      var grid = document.getElementById('cpGrid');
+      grid.innerHTML = '<div class="cp-empty">Loading...</div>';
+      try {
+        var url = API_URL + pickerSource() +
+          '?tab=' + encodeURIComponent(cpTab) +
+          '&q=' + encodeURIComponent(cpQuery) +
+          '&page=' + cpPage + '&per_page=12';
+        var res = await fetch(url, { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await readJson(res);
+        renderPickerTabs(data.tabs || []);
+        renderPickerGrid(data);
+        renderPickerPager(data);
+      } catch(e) {
+        grid.innerHTML = '<div class="cp-empty">Could not load your Cards.<br/>' +
+          '<span style="color:#444;font-size:0.76rem;">' + esc(e && e.message ? e.message : e) + '</span></div>';
+      }
+    }
+
+    function renderPickerTabs(tabs) {
+      var el = document.getElementById('cpTabs');
+      var html = '<button class="cp-tab' + (cpTab === 'all' ? ' active' : '') +
+                 '" onclick="cpSetTab(\'all\')">All</button>';
+      tabs.forEach(function(t) {
+        if (!t.type || t.type === 'Unknown') return;
+        html += '<button class="cp-tab' + (cpTab === String(t.type).toLowerCase() ? ' active' : '') +
+                '" onclick="cpSetTab(\'' + esc(String(t.type).toLowerCase()) + '\')">' +
+                esc(t.type) + ' <span style="opacity:0.6;">' + t.count + '</span></button>';
+      });
+      el.innerHTML = html;
+    }
+
+    function renderPickerGrid(data) {
+      var grid = document.getElementById('cpGrid');
+      var cards = data.cards || [];
+      if (!cards.length) {
+        var msg = cpQuery
+          ? 'No Card matches &ldquo;' + esc(cpQuery) + '&rdquo;.'
+          : (pickerSource().indexOf('catalog') !== -1
+              ? 'No Cards in the catalog yet.'
+              : 'You hold no tradeable Cards yet.<br/><span style="color:#444;font-size:0.78rem;">Cards are earned in recorded Campaign Room sessions.</span>');
+        grid.innerHTML = '<div class="cp-empty">' + msg + '</div>';
+        return;
+      }
+      grid.innerHTML = cards.map(function(c) {
+        var locked = !c.tradeable;
+        var why = c.bound ? 'Bound' : (c.listed ? 'On the Exchange' : '');
+        var art = c.art
+          ? '<img class="cp-art" src="' + esc(c.art) + '" alt="" loading="lazy" />'
+          : '<div class="cp-art-ph"></div>';
+        return '<div class="cp-card' + (locked ? ' locked' : '') + '"' +
+          (locked ? '' : ' onclick="cpChoose(\'' + esc(c.ref_code) + '\',\'' + esc(c.item_name).replace(/'/g, "\\'") + '\')"') +
+          '>' + art +
+          '<div class="cp-meta">' +
+            '<div class="cp-name">' + esc(c.item_name) + '</div>' +
+            '<div class="cp-ref">#' + esc(c.ref_code) + '</div>' +
+            '<div class="cp-coin">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
+            (locked ? '<div class="cp-lock">' + why + '</div>' : '') +
+          '</div></div>';
+      }).join('');
+    }
+
+    function renderPickerPager(data) {
+      var el = document.getElementById('cpPager');
+      var pages = data.pages || 1;
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML =
+        '<button onclick="cpSetPage(' + (cpPage - 1) + ')"' + (cpPage <= 1 ? ' disabled' : '') + '>&#9664;</button>' +
+        '<span>Page ' + cpPage + ' of ' + pages + '</span>' +
+        '<button onclick="cpSetPage(' + (cpPage + 1) + ')"' + (cpPage >= pages ? ' disabled' : '') + '>&#9654;</button>';
+    }
+
+    // A Card was tapped. For WTT the first tap only records what you are
+    // giving and re-opens the picker against the catalog; the line is written
+    // on the second tap.
+    window.cpChoose = function(ref, name) {
+      if (cpVerb === 'WTT' && cpStep === 'give') {
+        cpGive = { ref_code: ref, item_name: name };
+        cpStep = 'want'; cpTab = 'all'; cpQuery = ''; cpPage = 1;
+        var box = document.getElementById('cpSearch');
+        if (box) box.value = '';
+        renderPickerChrome();
+        loadPickerCards();
+        return;
+      }
+      var line = cpVerb === 'WTT'
+        ? 'WTT: #' + cpGive.ref_code + '>#' + ref      // refs only: names blow the 60-char cap
+        : cpVerb + ': ' + name + ' #' + ref;
+      var input = document.getElementById('tradeInput');
+      if (input) {
+        input.value = line.slice(0, 60);
+        input.focus();
+      }
+      closeCardPicker();
     };
 
     /* ── Chat tab switcher ─────────────────────────────────── */
@@ -2083,6 +2739,9 @@
       } else if (tab === 'msgs') {
         stopWorldChatPoll();
         loadLobbyMsgs();
+      } else if (tab === 'trade') {
+        stopWorldChatPoll();
+        loadTradeChat();
       } else if (tab === 'activity') {
         stopWorldChatPoll();
         loadActivityMessages();
@@ -2128,10 +2787,27 @@
       } catch(e) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Connection error.'; }
     };
 
+    window.toggleLobbyPrivacy = async function() {
+      if (!currentLobby || !currentUser) return;
+      var next = !currentLobby.is_private;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/privacy', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ is_private: next })
+        });
+        var data = await readJson(res);
+        if (!data.success) { showToast(data.error || 'Could not change privacy.', true); return; }
+        currentLobby.is_private = next;
+        showToast(next ? 'Lobby is now private - the code is required to join.' : 'Lobby is now open - anyone can join.');
+        openLobby(currentLobby.id);
+      } catch(e) { showToast('Could not reach the server.', true); }
+    };
+
     window.confirmAbandon = function(btn) {
       btn.outerHTML =
         '<span style="display:inline-flex;align-items:center;gap:0.4rem;">' +
-          '<span style="font-size:0.75rem;color:#888;">Remove yourself?</span>' +
+          '<span style="font-size:0.75rem;color:#888;">Abandon for good? You cannot rejoin without permission or a new code.</span>' +
           '<button class="leave-btn" style="padding:4px 10px;font-size:0.75rem;" onclick="abandonLobby()">Yes</button>' +
           '<button class="leave-btn" style="border-color:#2a2a2a;color:#555;padding:4px 10px;font-size:0.75rem;" onclick="cancelAbandon(this)">No</button>' +
         '</span>';
@@ -2160,6 +2836,8 @@
       sessionStorage.removeItem('activeLobbyId');
       try {
         backToList();
+        // Refresh the lobby list to show updated joined status
+        loadLobbies();
       } catch(e) {
         window.location.reload();
         return;
@@ -2192,29 +2870,19 @@
       leftLobbyIds.add(lobbyId);
       removeJoinedLobby(lobbyId);
       backToList();
+      // Refresh the lobby list to show updated status
+      loadLobbies();
       try {
         var leaveRes = await fetch(API_URL + '/api/lobbies/' + lobbyId + '/leave', {
           method: 'POST',
-          headers: { 'X-Auth-Key': currentUser.authKey },
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ abandon: true }),
           keepalive: true
         });
         if (!leaveRes.ok) showToast('Warning: could not confirm abandon - refresh if needed.', true);
       } catch(e) {
         showToast('Warning: could not confirm abandon - refresh if needed.', true);
       }
-    };
-
-    window.deleteLobby = async function() {
-      if (!confirm('Close this lobby? A new lobby code will be generated, visible only to the new host. This cannot be undone.')) return;
-      if (!currentLobby) return;
-      sessionStorage.removeItem('activeLobbyId');
-      try {
-        await fetch(API_URL + '/api/lobbies/' + currentLobby.id, {
-          method: 'DELETE',
-          headers: { 'X-Auth-Key': currentUser.authKey }
-        });
-        backToList();
-      } catch(e) { backToList(); }
     };
 
     // ===== LAUNCH ROOM =====
@@ -2369,7 +3037,7 @@
                strip the prefix and trailing raw URL before rendering */
             var respondMatch = m.body && m.body.match(/public-profile\.html\?username=([^&\s\n"<]+)/);
             var sheetIcon = respondMatch
-              ? '<a href="character_build_template.html?username=' + respondMatch[1] + '" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;"></a>'
+              ? '<a href="https://sorcrpg.com/character-sheet-fem-musc" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;"></a>'
               : '';
             var rawBody = m.body || '';
             var isActivity = rawBody.startsWith('⬡ ');
@@ -2497,11 +3165,222 @@
 
     function startWorldChatPoll() {
       stopWorldChatPoll();
-      worldChatPollTimer = setInterval(loadWorldChat, 5000);
+      worldChatPollTimer = setInterval(loadWorldChat, 3000);
     }
 
     function stopWorldChatPoll() {
       if (worldChatPollTimer) { clearInterval(worldChatPollTimer); worldChatPollTimer = null; }
+    }
+
+    // ===== TRADE CHAT TAB =====
+    var lastTradeMsgId = null;
+    var tradeChatPollTimer = null;
+
+    async function loadTradeChat() {
+      if (!currentUser || !currentLobby) return;
+      var el = document.getElementById('tradeMessages');
+      if (!el) return;
+      try {
+        var res = await fetch(API_URL + '/api/trade-chat?lobby_id=' + currentLobby.id, {
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        var data = await readJson(res);
+        var msgs = data.messages || [];
+
+        if (msgs.length === 0) {
+          el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div>';
+        } else {
+          var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+          el.innerHTML = msgs.map(function(m) {
+            var isSelf = currentUser && m.sender_uid === currentUser.id;
+            var timeStr = timeAgo(m.created_at);
+            var nameEl = '<span class="msg-name">' + esc(m.sender_name || 'Unknown') + '</span>';
+
+            // Parse the trade tag (WTS:Item, WTB:Item, WTT:Give>Want)
+            var body = m.body || '';
+            var tagMatch = body.match(/^(WTS|WTB|WTT):(.+)$/i);
+            var tag = tagMatch ? tagMatch[1].toUpperCase() : '';
+            var content = tagMatch ? tagMatch[2].trim() : body;
+
+            var tagClass = 'msg-trade-tag msg-' + tag.toLowerCase();
+            var tagEl = '<span class="' + tagClass + '">' + tag + ':</span>';
+
+            // Make card names/refs clickable with WoW-style tooltips
+            var linkedContent = '';
+            if (tag === 'WTT') {
+              // WTT format: Give>Want - make both clickable
+              var wttMatch = content.match(/^(.+?)>(.+)$/);
+              if (wttMatch) {
+                var giveCard = wttMatch[1].trim();
+                var wantCard = wttMatch[2].trim();
+                linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(giveCard).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(giveCard) + '</span>' +
+                  ' > ' +
+                  '<span class="card-link" onclick="inspectTradeCard(\'' + esc(wantCard).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(wantCard) + '</span>';
+              } else {
+                linkedContent = esc(content);
+              }
+            } else {
+              // WTS/WTB: single card - make it clickable
+              linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(content).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(content) + '</span>';
+            }
+
+            return '<div class="chat-msg" data-msg-id="' + esc(m.id) + '">' +
+              nameEl +
+              ' ' + tagEl +
+              ' <span class="msg-body">' + linkedContent + '</span>' +
+              ' <a href="sorc-beyond.html#essentia-exchange" style="color:#4caf50;text-decoration:none;margin-left:0.5rem;font-size:0.8rem;">Open Exchange</a>' +
+              ' <span class="msg-time">' + timeStr + '</span>' +
+            '</div>';
+          }).join('');
+          if (atBottom) el.scrollTop = el.scrollHeight;
+          var activeTabEl = document.querySelector('.chat-tab.active');
+          if (!activeTabEl || activeTabEl.dataset.tab !== 'trade') {
+            var tb = document.getElementById('badge-trade');
+            if (tb) tb.style.display = '';
+          }
+        }
+        lastTradeMsgId = msgs.length > 0 ? msgs[msgs.length - 1].id : null;
+        startTradeChatPoll();
+      } catch(e) {}
+    }
+
+    // Inspect a trade card like WoW item links - show card details in a tooltip/modal
+    window.inspectTradeCard = function(cardRef) {
+      if (!cardRef) return;
+      try {
+        // Create a modal overlay
+        var existing = document.getElementById('tradeCardInspector');
+        if (existing) existing.remove();
+
+        var modal = document.createElement('div');
+        modal.id = 'tradeCardInspector';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+        var card = document.createElement('div');
+        card.style.cssText = 'background:#1a1a1a;border:2px solid #b9aa00;border-radius:12px;padding:1.5rem;max-width:500px;max-height:80vh;overflow-y:auto;color:#e0cfc0;box-shadow:0 8px 32px rgba(0,0,0,0.8);';
+
+        // Show loading while fetching
+        card.innerHTML = '<div style="text-align:center;color:#888;"><p>Loading card: ' + esc(cardRef) + '</p><p style="font-size:0.8rem;color:#666;">Searching catalog...</p></div>';
+
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+
+        // Close on background click
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) modal.remove();
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function closeOnEsc(e) {
+          if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', closeOnEsc);
+          }
+        });
+
+        // Fetch card from catalog by ref or name
+        fetch(API_URL + '/api/cards/catalog?search=' + encodeURIComponent(cardRef), {
+          headers: currentUser && currentUser.authKey ? { 'X-Auth-Key': currentUser.authKey } : {}
+        })
+        .then(res => readJson(res))
+        .then(data => {
+          if (!data || !data.cards || data.cards.length === 0) {
+            card.innerHTML = '<div style="text-align:center;"><p style="color:#c93f35;">Card not found: ' + esc(cardRef) + '</p><p style="font-size:0.8rem;color:#888;margin-top:1rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#b9aa00;color:#1a1a1a;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></p></div>';
+            return;
+          }
+
+          var foundCard = data.cards[0];
+
+          // Determine which Exchange section this card belongs to
+          var cardType = foundCard.card_type || '';
+          var exchangeSection = 'General Trade';
+          var exchangeColor = '#888';
+
+          if (cardType.toLowerCase().includes('creature') || cardType.toLowerCase().includes('companion') || cardType.toLowerCase().includes('mob') || cardType.toLowerCase().includes('encounter')) {
+            exchangeSection = 'Bazaar';
+            exchangeColor = '#b9aa00';
+          } else if (cardType.toLowerCase().includes('armament') || cardType.toLowerCase().includes('weapon') || cardType.toLowerCase().includes('armor')) {
+            exchangeSection = 'Black Market';
+            exchangeColor = '#c93f35';
+          }
+
+          var html = '<div style="border-bottom:1px solid #444;padding-bottom:1rem;margin-bottom:1rem;">';
+          html += '<div style="font-size:1.2rem;font-weight:bold;color:#b9aa00;margin-bottom:0.5rem;">' + esc(foundCard.item_name || foundCard.ref_num) + '</div>';
+          html += '<div style="font-size:0.85rem;color:#888;">#' + esc(foundCard.ref_num) + '</div>';
+          if (foundCard.rank) {
+            html += '<div style="font-size:0.9rem;color:#c93f35;margin-top:0.5rem;">Rank: ' + esc(foundCard.rank) + '</div>';
+          }
+          html += '<div style="font-size:0.85rem;color:' + exchangeColor + ';margin-top:0.5rem;font-weight:bold;">Exchange: ' + exchangeSection + '</div>';
+          html += '</div>';
+
+          if (foundCard.description) {
+            html += '<div style="margin-bottom:1rem;line-height:1.6;font-size:0.9rem;">' + esc(foundCard.description) + '</div>';
+          }
+
+          if (foundCard.stats) {
+            html += '<div style="background:#0a0a0a;border-left:2px solid #b9aa00;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;"><strong style="color:#b9aa00;">Stats</strong><div style="margin-top:0.5rem;color:#aaa;">' + esc(foundCard.stats) + '</div></div>';
+          }
+
+          if (foundCard.coin_value) {
+            var ridiculousPrice = (parseInt(foundCard.coin_value) || 0) * 999999;
+            html += '<div style="background:#0a0a0a;border-left:2px solid #ffd700;padding:0.75rem;margin-bottom:1rem;font-size:0.9rem;"><strong style="color:#ffd700;">Price</strong><div style="margin-top:0.25rem;color:#ffd700;font-weight:bold;font-size:1.1rem;">' + ridiculousPrice.toLocaleString() + ' Platinum</div></div>';
+          }
+
+          html += '<div style="text-align:center;margin-top:1.5rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#666;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></div>';
+
+          card.innerHTML = html;
+        })
+        .catch(err => {
+          card.innerHTML = '<div style="text-align:center;color:#c93f35;"><p>Error loading card</p><p style="font-size:0.8rem;color:#888;margin-top:1rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#b9aa00;color:#1a1a1a;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></p></div>';
+        });
+      } catch(e) {
+        console.error('Card inspect error:', e);
+      }
+    }
+
+    window.sendTradeChat = async function() {
+      var input = document.getElementById('tradeInput');
+      if (!input || !currentUser || !currentLobby) return;
+      var body = input.value.trim();
+      if (!body) return;
+
+      // Validate trade tag format
+      if (!/^(WTS|WTB|WTT):/i.test(body)) {
+        showToast('Trade messages must start with WTS:, WTB:, or WTT:', true);
+        return;
+      }
+
+      if (body.length > 60) {
+        showToast('Trade messages are limited to 60 characters.', true);
+        return;
+      }
+
+      input.value = '';
+      try {
+        var res = await fetch(API_URL + '/api/trade-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ lobby_id: currentLobby.id, body: body })
+        });
+        var data = await readJson(res);
+        if (data.error) {
+          showToast(data.error, true);
+          input.value = body;
+          return;
+        }
+        loadTradeChat();
+      } catch(e) {
+        showToast('Connection error.', true);
+      }
+    };
+
+    function startTradeChatPoll() {
+      stopTradeChatPoll();
+      tradeChatPollTimer = setInterval(loadTradeChat, 3000);
+    }
+
+    function stopTradeChatPoll() {
+      if (tradeChatPollTimer) { clearInterval(tradeChatPollTimer); tradeChatPollTimer = null; }
     }
 
     // ===== LOBBY MESSAGES TAB =====
@@ -2593,7 +3472,7 @@
         var activeTab = document.querySelector('.chat-tab.active');
         if (activeTab && activeTab.dataset.tab === 'msgs') { loadLobbyMsgs(); }
         else { loadLobbyMsgs(); } // always load to detect new count
-      }, 8000);
+      }, 4000);
     }
     function stopLobbyMsgPoll() {
       if (lobbyMsgPollTimer) { clearInterval(lobbyMsgPollTimer); lobbyMsgPollTimer = null; }
@@ -2725,7 +3604,7 @@
 
     function startSummonPoll() {
       stopSummonPoll();
-      summonPollTimer = setInterval(checkPendingSummons, 10000);
+      summonPollTimer = setInterval(checkPendingSummons, 5000);
       checkPendingSummons();
     }
 
@@ -2996,7 +3875,7 @@
       var ib = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
       var lvb = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
-        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>';
+        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>';
       container.innerHTML = lb + rcb + ib + lvb;
     }
 

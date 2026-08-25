@@ -3200,25 +3200,35 @@
             var body = m.body || '';
             var tagMatch = body.match(/^(WTS|WTB|WTT):(.+)$/i);
             var tag = tagMatch ? tagMatch[1].toUpperCase() : '';
-            var content = tagMatch ? tagMatch[2] : body;
-
-            // Link mob card references
-            var mobCardMap = {
-              'MobCard': '/content/sorc-cards/encounter-cards/Encounter-Card-Common-Mob-Skeleton-Soldier_20260610_104351_0000.png'
-            };
-            var linkedContent = esc(content);
-            for (var cardName in mobCardMap) {
-              var regex = new RegExp('\\b' + cardName + '\\b', 'g');
-              linkedContent = linkedContent.replace(regex, '<a href="' + mobCardMap[cardName] + '" target="_blank" style="color:#b9aa00;text-decoration:underline;">' + cardName + '</a>');
-            }
+            var content = tagMatch ? tagMatch[2].trim() : body;
 
             var tagClass = 'msg-trade-tag msg-' + tag.toLowerCase();
             var tagEl = '<span class="' + tagClass + '">' + tag + ':</span>';
+
+            // Make card names/refs clickable with WoW-style tooltips
+            var linkedContent = '';
+            if (tag === 'WTT') {
+              // WTT format: Give>Want - make both clickable
+              var wttMatch = content.match(/^(.+?)>(.+)$/);
+              if (wttMatch) {
+                var giveCard = wttMatch[1].trim();
+                var wantCard = wttMatch[2].trim();
+                linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(giveCard).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(giveCard) + '</span>' +
+                  ' > ' +
+                  '<span class="card-link" onclick="inspectTradeCard(\'' + esc(wantCard).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(wantCard) + '</span>';
+              } else {
+                linkedContent = esc(content);
+              }
+            } else {
+              // WTS/WTB: single card - make it clickable
+              linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(content).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(content) + '</span>';
+            }
 
             return '<div class="chat-msg" data-msg-id="' + esc(m.id) + '">' +
               nameEl +
               ' ' + tagEl +
               ' <span class="msg-body">' + linkedContent + '</span>' +
+              ' <a href="sorc-beyond.html#essentia-exchange" style="color:#4caf50;text-decoration:none;margin-left:0.5rem;font-size:0.8rem;">Open Exchange</a>' +
               ' <span class="msg-time">' + timeStr + '</span>' +
             '</div>';
           }).join('');
@@ -3232,6 +3242,100 @@
         lastTradeMsgId = msgs.length > 0 ? msgs[msgs.length - 1].id : null;
         startTradeChatPoll();
       } catch(e) {}
+    }
+
+    // Inspect a trade card like WoW item links - show card details in a tooltip/modal
+    window.inspectTradeCard = function(cardRef) {
+      if (!cardRef) return;
+      try {
+        // Create a modal overlay
+        var existing = document.getElementById('tradeCardInspector');
+        if (existing) existing.remove();
+
+        var modal = document.createElement('div');
+        modal.id = 'tradeCardInspector';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+        var card = document.createElement('div');
+        card.style.cssText = 'background:#1a1a1a;border:2px solid #b9aa00;border-radius:12px;padding:1.5rem;max-width:500px;max-height:80vh;overflow-y:auto;color:#e0cfc0;box-shadow:0 8px 32px rgba(0,0,0,0.8);';
+
+        // Show loading while fetching
+        card.innerHTML = '<div style="text-align:center;color:#888;"><p>Loading card: ' + esc(cardRef) + '</p><p style="font-size:0.8rem;color:#666;">Searching catalog...</p></div>';
+
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+
+        // Close on background click
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) modal.remove();
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function closeOnEsc(e) {
+          if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', closeOnEsc);
+          }
+        });
+
+        // Fetch card from catalog by ref or name
+        fetch(API_URL + '/api/cards/catalog?search=' + encodeURIComponent(cardRef), {
+          headers: currentUser && currentUser.authKey ? { 'X-Auth-Key': currentUser.authKey } : {}
+        })
+        .then(res => readJson(res))
+        .then(data => {
+          if (!data || !data.cards || data.cards.length === 0) {
+            card.innerHTML = '<div style="text-align:center;"><p style="color:#c93f35;">Card not found: ' + esc(cardRef) + '</p><p style="font-size:0.8rem;color:#888;margin-top:1rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#b9aa00;color:#1a1a1a;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></p></div>';
+            return;
+          }
+
+          var foundCard = data.cards[0];
+
+          // Determine which Exchange section this card belongs to
+          var cardType = foundCard.card_type || '';
+          var exchangeSection = 'General Trade';
+          var exchangeColor = '#888';
+
+          if (cardType.toLowerCase().includes('creature') || cardType.toLowerCase().includes('companion') || cardType.toLowerCase().includes('mob') || cardType.toLowerCase().includes('encounter')) {
+            exchangeSection = 'Bazaar';
+            exchangeColor = '#b9aa00';
+          } else if (cardType.toLowerCase().includes('armament') || cardType.toLowerCase().includes('weapon') || cardType.toLowerCase().includes('armor')) {
+            exchangeSection = 'Black Market';
+            exchangeColor = '#c93f35';
+          }
+
+          var html = '<div style="border-bottom:1px solid #444;padding-bottom:1rem;margin-bottom:1rem;">';
+          html += '<div style="font-size:1.2rem;font-weight:bold;color:#b9aa00;margin-bottom:0.5rem;">' + esc(foundCard.item_name || foundCard.ref_num) + '</div>';
+          html += '<div style="font-size:0.85rem;color:#888;">#' + esc(foundCard.ref_num) + '</div>';
+          if (foundCard.rank) {
+            html += '<div style="font-size:0.9rem;color:#c93f35;margin-top:0.5rem;">Rank: ' + esc(foundCard.rank) + '</div>';
+          }
+          html += '<div style="font-size:0.85rem;color:' + exchangeColor + ';margin-top:0.5rem;font-weight:bold;">Exchange: ' + exchangeSection + '</div>';
+          html += '</div>';
+
+          if (foundCard.description) {
+            html += '<div style="margin-bottom:1rem;line-height:1.6;font-size:0.9rem;">' + esc(foundCard.description) + '</div>';
+          }
+
+          if (foundCard.stats) {
+            html += '<div style="background:#0a0a0a;border-left:2px solid #b9aa00;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;"><strong style="color:#b9aa00;">Stats</strong><div style="margin-top:0.5rem;color:#aaa;">' + esc(foundCard.stats) + '</div></div>';
+          }
+
+          if (foundCard.coin_value) {
+            var ridiculousPrice = (parseInt(foundCard.coin_value) || 0) * 999999;
+            html += '<div style="background:#0a0a0a;border-left:2px solid #ffd700;padding:0.75rem;margin-bottom:1rem;font-size:0.9rem;"><strong style="color:#ffd700;">Price</strong><div style="margin-top:0.25rem;color:#ffd700;font-weight:bold;font-size:1.1rem;">' + ridiculousPrice.toLocaleString() + ' Platinum</div></div>';
+          }
+
+          html += '<div style="text-align:center;margin-top:1.5rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#666;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></div>';
+
+          card.innerHTML = html;
+        })
+        .catch(err => {
+          card.innerHTML = '<div style="text-align:center;color:#c93f35;"><p>Error loading card</p><p style="font-size:0.8rem;color:#888;margin-top:1rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#b9aa00;color:#1a1a1a;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></p></div>';
+        });
+      } catch(e) {
+        console.error('Card inspect error:', e);
+      }
     }
 
     window.sendTradeChat = async function() {
