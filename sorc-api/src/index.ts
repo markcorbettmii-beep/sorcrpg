@@ -4358,6 +4358,21 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
 
     let listingId: string | null = null;
     if (linkedCard && tag.kind !== 'WTB') {
+      // Listing from chat is still listing. It goes through exactly the same
+      // ownership gate as /api/exchange/list — holding is re-read from the
+      // server's own row, Bound Cards are refused, and the claim is conditional.
+      await ensureOwnershipColumns(c.env.sorc_db);
+      const held = await ownedCardRow(c.env.sorc_db, user.id, linkedCard.ref_code) as any;
+      if (!held) {
+        return c.json({ error: `You do not hold ${linkedCard.item_name} (#${linkedCard.ref_code}).` }, 403);
+      }
+      if (held.bound) {
+        return c.json({ error: `${linkedCard.item_name} is Bound and cannot be traded.` }, 403);
+      }
+      if (held.listing_id) {
+        return c.json({ error: `${linkedCard.item_name} is already listed on the Exchange.` }, 409);
+      }
+
       const max = await slotAllowance(c.env.sorc_db, user);
       const used = await slotsUsed(c.env.sorc_db, user.id);
       if (used >= max) {
@@ -4368,16 +4383,31 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
           slots_full: true, used, max,
         }, 403);
       }
+
       const listedAt = new Date().toISOString();
       listingId = crypto.randomUUID();
-      await c.env.sorc_db.prepare(
-        `INSERT INTO exchange_listings (id, tab, seller_uid, seller_name, ref_code, item_name, card_type, coin_price, status, created_at, updated_at)
-         VALUES (?, 'bazaar', ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
-      ).bind(
-        listingId, user.id, user.display_name || user.username,
-        linkedCard.ref_code, linkedCard.item_name, linkedCard.card_type,
-        linkedCard.coin_value, listedAt, listedAt
-      ).run();
+      const claim = await c.env.sorc_db.prepare(
+        `UPDATE member_inventory SET listing_id = ?
+         WHERE id = ? AND listing_id IS NULL AND qty > 0`
+      ).bind(listingId, held.id).run();
+      if (!claim.meta || claim.meta.changes !== 1) {
+        return c.json({ error: 'That Card was just listed elsewhere.' }, 409);
+      }
+      try {
+        await c.env.sorc_db.prepare(
+          `INSERT INTO exchange_listings (id, tab, seller_uid, seller_name, ref_code, item_name, card_type, coin_price, status, created_at, updated_at)
+           VALUES (?, 'bazaar', ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
+        ).bind(
+          listingId, user.id, user.display_name || user.username,
+          linkedCard.ref_code, linkedCard.item_name, linkedCard.card_type,
+          linkedCard.coin_value, listedAt, listedAt
+        ).run();
+      } catch (e) {
+        await c.env.sorc_db.prepare(
+          `UPDATE member_inventory SET listing_id = NULL WHERE id = ?`
+        ).bind(held.id).run();
+        throw e;
+      }
     }
 
     // Price is read off the card, never typed by the poster.
@@ -4433,10 +4463,19 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
 // returns you to the negotiation already in progress.
 app.post('/api/hand-trade/open', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'Hand Trade');
+  if (gated) return gated;
   try {
     await ensureTradeTables(c.env.sorc_db);
-    const { message_id } = await c.req.json() as any;
+    await ensureHandTradeRoomColumn(c.env.sorc_db);
+    const { message_id, room_id } = await c.req.json() as any;
     if (!message_id) return c.json({ error: 'Missing message_id.' }, 400);
+
+    // Hand Trade is face to face. It happens inside a Campaign Room and
+    // nowhere else — never in a lobby, never across the open board.
+    if (!room_id) {
+      return c.json({ error: 'Hand Trade only happens inside a Campaign Room.' }, 400);
+    }
 
     const msg = await c.env.sorc_db.prepare(
       `SELECT * FROM trade_messages WHERE id = ?`
@@ -4444,6 +4483,21 @@ app.post('/api/hand-trade/open', authMiddleware, async (c) => {
     if (!msg) return c.json({ error: 'That posting is gone.' }, 404);
     if (msg.sender_uid === user.id) return c.json({ error: 'That is your own posting.' }, 400);
     if (msg.status !== 'open') return c.json({ error: 'That posting has already been settled.' }, 400);
+
+    // Both parties must be sitting in that same Room. Membership is read from
+    // the server's own rows, never asserted by the caller.
+    const [mineInRoom, theirsInRoom] = await Promise.all([
+      c.env.sorc_db.prepare(
+        `SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`
+      ).bind(room_id, user.id).first(),
+      c.env.sorc_db.prepare(
+        `SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`
+      ).bind(room_id, msg.sender_uid).first(),
+    ]);
+    if (!mineInRoom) return c.json({ error: 'You are not in that Campaign Room.' }, 403);
+    if (!theirsInRoom) {
+      return c.json({ error: `${msg.sender_name} is not in that Campaign Room.` }, 403);
+    }
 
     const existing = await c.env.sorc_db.prepare(
       `SELECT * FROM hand_trades WHERE message_id = ? AND responder_uid = ?`
@@ -4454,14 +4508,14 @@ app.post('/api/hand-trade/open', authMiddleware, async (c) => {
     const now = new Date().toISOString();
     const tradeId = crypto.randomUUID();
     await c.env.sorc_db.prepare(
-      `INSERT INTO hand_trades (id, message_id, kind, poster_uid, poster_name, responder_uid, responder_name, give_item, want_item, coin, want_coin, poster_ok, responder_ok, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'pending', ?, ?)`
+      `INSERT INTO hand_trades (id, message_id, kind, poster_uid, poster_name, responder_uid, responder_name, give_item, want_item, coin, want_coin, poster_ok, responder_ok, status, created_at, updated_at, room_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'pending', ?, ?, ?)`
     ).bind(
       tradeId, message_id, msg.kind,
       msg.sender_uid, msg.sender_name,
       user.id, myName,
       msg.item, msg.want_item, msg.coin, msg.want_coin,
-      now, now
+      now, now, room_id
     ).run();
     await c.env.sorc_db.prepare(
       `INSERT INTO hand_trade_offers (id, trade_id, actor_uid, actor_name, action, give_item, want_item, coin, want_coin, note, created_at)
@@ -4609,14 +4663,34 @@ app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
     if (!isPoster && !isResponder) return c.json({ error: 'Not your trade.' }, 403);
     if (trade.status !== 'pending') return c.json({ error: 'This trade is already closed.' }, 400);
 
+    // Both parties must still be in the Room. Walking out cancels the deal —
+    // a Hand Trade cannot settle across an empty table.
+    if (trade.room_id) {
+      const [a, b] = await Promise.all([
+        c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`)
+          .bind(trade.room_id, trade.poster_uid).first(),
+        c.env.sorc_db.prepare(`SELECT id FROM room_members WHERE room_id = ? AND user_id = ?`)
+          .bind(trade.room_id, trade.responder_uid).first(),
+      ]);
+      if (!a || !b) {
+        return c.json({ error: 'Both traders must be in the Campaign Room.' }, 409);
+      }
+    }
+
     const now = new Date().toISOString();
     const posterOk = isPoster ? 1 : trade.poster_ok;
     const responderOk = isResponder ? 1 : trade.responder_ok;
     const settled = !!(posterOk && responderOk);
 
-    await c.env.sorc_db.prepare(
-      `UPDATE hand_trades SET poster_ok = ?, responder_ok = ?, status = ?, updated_at = ? WHERE id = ?`
+    // Conditional on the trade still being pending, so two accepts arriving at
+    // once cannot both settle it and move the goods twice.
+    const marked = await c.env.sorc_db.prepare(
+      `UPDATE hand_trades SET poster_ok = ?, responder_ok = ?, status = ?, updated_at = ?
+       WHERE id = ? AND status = 'pending'`
     ).bind(posterOk, responderOk, settled ? 'accepted' : 'pending', now, trade.id).run();
+    if (!marked.meta || marked.meta.changes !== 1) {
+      return c.json({ error: 'This trade is already closed.' }, 409);
+    }
     await c.env.sorc_db.prepare(
       `INSERT INTO hand_trade_offers (id, trade_id, actor_uid, actor_name, action, give_item, want_item, coin, want_coin, note, created_at)
        VALUES (?, ?, ?, ?, 'accept', ?, ?, ?, ?, ?, ?)`
@@ -4626,6 +4700,17 @@ app.post('/api/hand-trade/:id/accept', authMiddleware, async (c) => {
     ).run();
 
     if (settled) {
+      // Move the goods. Until this runs nothing has actually changed hands —
+      // an accepted trade that transfers nothing is worse than no trade at all.
+      const moved = await settleHandTrade(c.env.sorc_db, trade, now);
+      if (!moved.ok) {
+        // Roll the acceptance back so neither side is left thinking it closed.
+        await c.env.sorc_db.prepare(
+          `UPDATE hand_trades SET poster_ok = 0, responder_ok = 0, status = 'pending', updated_at = ? WHERE id = ?`
+        ).bind(now, trade.id).run();
+        return c.json({ error: moved.reason }, 409);
+      }
+
       // Close the posting and drop a public line so the board — and any GM
       // reading it — sees what changed hands.
       await c.env.sorc_db.prepare(
@@ -4851,6 +4936,8 @@ function extractCardRef(text: string): string | null {
 
 app.get('/api/exchange/wallet', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'The Exchange');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const coin = await walletBalance(c.env.sorc_db, user.id);
@@ -4862,6 +4949,8 @@ app.get('/api/exchange/wallet', authMiddleware, async (c) => {
 
 app.get('/api/exchange/slots', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'The Exchange');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const max = await slotAllowance(c.env.sorc_db, user);
@@ -4876,6 +4965,9 @@ app.get('/api/exchange/slots', authMiddleware, async (c) => {
 });
 
 app.get('/api/card', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'Card inspection');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const ref = c.req.query('ref') || null;
@@ -4906,6 +4998,9 @@ app.get('/api/card', authMiddleware, async (c) => {
 });
 
 app.get('/api/exchange/listings', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'The Exchange');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const tab = (c.req.query('tab') || 'bazaar').toLowerCase();
@@ -4924,6 +5019,8 @@ app.get('/api/exchange/listings', authMiddleware, async (c) => {
 
 app.post('/api/exchange/list', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'The Exchange');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const { ref_code, item_name, tab } = await c.req.json() as any;
@@ -4949,15 +5046,47 @@ app.post('/api/exchange/list', authMiddleware, async (c) => {
     const card = await findCard(c.env.sorc_db, ref_code || null, item_name || null) as any;
     if (!card) return c.json({ error: 'No Card with that ref #.' }, 404);
 
+    // You may only list a Card you actually hold. Ownership is re-read from the
+    // server's own row here — never taken from the request or a stale session.
+    await ensureOwnershipColumns(c.env.sorc_db);
+    const held = await ownedCardRow(c.env.sorc_db, user.id, card.ref_code) as any;
+    if (!held) {
+      return c.json({ error: `You do not hold ${card.item_name} (#${card.ref_code}).` }, 403);
+    }
+    if (held.bound) {
+      return c.json({ error: `${card.item_name} is Bound and cannot be traded.` }, 403);
+    }
+    if (held.listing_id) {
+      return c.json({ error: `${card.item_name} is already listed on the Exchange.` }, 409);
+    }
+
     const now = new Date().toISOString();
     const id = crypto.randomUUID();
-    await c.env.sorc_db.prepare(
-      `INSERT INTO exchange_listings (id, tab, seller_uid, seller_name, ref_code, item_name, card_type, coin_price, status, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
-    ).bind(
-      id, target, user.id, user.display_name || user.username,
-      card.ref_code, card.item_name, card.card_type, card.coin_value, now, now
-    ).run();
+    // Claim the Card first, and only if it is still unlisted. Two racing
+    // requests cannot both win this, so a Card can never be listed twice.
+    const claim = await c.env.sorc_db.prepare(
+      `UPDATE member_inventory SET listing_id = ?
+       WHERE id = ? AND listing_id IS NULL AND qty > 0`
+    ).bind(id, held.id).run();
+    if (!claim.meta || claim.meta.changes !== 1) {
+      return c.json({ error: 'That Card was just listed elsewhere.' }, 409);
+    }
+
+    try {
+      await c.env.sorc_db.prepare(
+        `INSERT INTO exchange_listings (id, tab, seller_uid, seller_name, ref_code, item_name, card_type, coin_price, status, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`
+      ).bind(
+        id, target, user.id, user.display_name || user.username,
+        card.ref_code, card.item_name, card.card_type, card.coin_value, now, now
+      ).run();
+    } catch (e) {
+      // Release the claim so the Card is not stranded.
+      await c.env.sorc_db.prepare(
+        `UPDATE member_inventory SET listing_id = NULL WHERE id = ?`
+      ).bind(held.id).run();
+      throw e;
+    }
 
     return c.json({
       success: true, listing_id: id, tab: target,
@@ -4973,6 +5102,8 @@ app.post('/api/exchange/list', authMiddleware, async (c) => {
 // told exactly that — the listing stays up and nothing moves.
 app.post('/api/exchange/buy', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'The Exchange');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const { listing_id } = await c.req.json() as any;
@@ -4988,34 +5119,61 @@ app.post('/api/exchange/buy', authMiddleware, async (c) => {
     }
 
     const price = listing.coin_price || 0;
-    const balance = await walletBalance(c.env.sorc_db, user.id);
-    if (balance < price) {
+    const now = new Date().toISOString();
+    await ensureOwnershipColumns(c.env.sorc_db);
+    await walletBalance(c.env.sorc_db, user.id); // ensure the purse row exists
+
+    // Claim the listing before any Coin moves. Conditional on it still being
+    // open, so two buyers racing for the same Card cannot both succeed.
+    const claim = await c.env.sorc_db.prepare(
+      `UPDATE exchange_listings SET status = 'settling', buyer_uid = ?, buyer_name = ?, updated_at = ?
+       WHERE id = ? AND status = 'open'`
+    ).bind(user.id, user.display_name || user.username, now, listing_id).run();
+    if (!claim.meta || claim.meta.changes !== 1) {
+      return c.json({ error: 'Someone just bought that Card.' }, 409);
+    }
+
+    // Debit conditionally. A purse that cannot cover the price is not touched,
+    // and the check and the write are the same statement — so no race can
+    // overdraw an account the way a read-then-write could.
+    const debit = await c.env.sorc_db.prepare(
+      `UPDATE user_wallets SET coin = coin - ?, updated_at = ? WHERE user_id = ? AND coin >= ?`
+    ).bind(price, now, user.id, price).run();
+    if (!debit.meta || debit.meta.changes !== 1) {
+      // Nothing was taken. Put the listing back exactly as it was.
+      await c.env.sorc_db.prepare(
+        `UPDATE exchange_listings SET status = 'open', buyer_uid = NULL, buyer_name = NULL, updated_at = ? WHERE id = ?`
+      ).bind(now, listing_id).run();
+      const balance = await walletBalance(c.env.sorc_db, user.id);
       return c.json({
         error: 'Insufficient Coin',
         insufficient: true, balance, price, short: price - balance,
       }, 402);
     }
 
-    const now = new Date().toISOString();
-    await c.env.sorc_db.prepare(
-      `UPDATE user_wallets SET coin = coin - ?, updated_at = ? WHERE user_id = ?`
-    ).bind(price, now, user.id).run();
     await c.env.sorc_db.prepare(
       `INSERT INTO user_wallets (user_id, coin, updated_at) VALUES (?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET coin = coin + ?, updated_at = ?`
     ).bind(listing.seller_uid, price, now, price, now).run();
-    await c.env.sorc_db.prepare(
-      `UPDATE exchange_listings SET status = 'sold', buyer_uid = ?, buyer_name = ?, updated_at = ? WHERE id = ?`
-    ).bind(user.id, user.display_name || user.username, now, listing_id).run();
-    // Digital ownership follows the Coin, per the card trading rules.
-    await c.env.sorc_db.prepare(
-      `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at)
-       VALUES (?, ?, ?, 1, 1, 'exchange', ?)`
-    ).bind(crypto.randomUUID(), user.id, listing.item_name, now).run();
 
+    // Digital ownership follows the Coin, per the card trading rules: the
+    // seller's copy is released, the buyer's is created.
+    await c.env.sorc_db.prepare(
+      `DELETE FROM member_inventory WHERE user_id = ? AND listing_id = ?`
+    ).bind(listing.seller_uid, listing_id).run();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at, ref_code, bound)
+       VALUES (?, ?, ?, 1, 1, 'exchange', ?, ?, 0)`
+    ).bind(crypto.randomUUID(), user.id, listing.item_name, now, listing.ref_code).run();
+
+    await c.env.sorc_db.prepare(
+      `UPDATE exchange_listings SET status = 'sold', updated_at = ? WHERE id = ?`
+    ).bind(now, listing_id).run();
+
+    const balance = await walletBalance(c.env.sorc_db, user.id);
     return c.json({
       success: true, item_name: listing.item_name,
-      paid: price, balance: balance - price,
+      ref_code: listing.ref_code, paid: price, balance,
     });
   } catch (error: any) {
     return c.json({ error: 'Could not complete that purchase.', details: error.message }, 500);
@@ -5024,6 +5182,8 @@ app.post('/api/exchange/buy', authMiddleware, async (c) => {
 
 app.post('/api/exchange/cancel', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'The Exchange');
+  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const { listing_id } = await c.req.json() as any;
@@ -5034,13 +5194,316 @@ app.post('/api/exchange/cancel', authMiddleware, async (c) => {
     if (listing.seller_uid !== user.id && !isPrivileged(user)) {
       return c.json({ error: 'That is not your listing.' }, 403);
     }
+    const now = new Date().toISOString();
+    // Only an open listing can be withdrawn — one already settling or sold is
+    // past the point of recall, and the conditional says so rather than trusting
+    // the row we read a moment ago.
+    const pulled = await c.env.sorc_db.prepare(
+      `UPDATE exchange_listings SET status = 'cancelled', updated_at = ?
+       WHERE id = ? AND status = 'open'`
+    ).bind(now, listing_id).run();
+    if (!pulled.meta || pulled.meta.changes !== 1) {
+      return c.json({ error: 'That listing is already settling or sold.' }, 409);
+    }
+    // Hand the Card back to its holder, or it would be stranded as listed.
+    await ensureOwnershipColumns(c.env.sorc_db);
     await c.env.sorc_db.prepare(
-      `UPDATE exchange_listings SET status = 'cancelled', updated_at = ? WHERE id = ?`
-    ).bind(new Date().toISOString(), listing_id).run();
+      `UPDATE member_inventory SET listing_id = NULL WHERE listing_id = ?`
+    ).bind(listing_id).run();
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Could not cancel.', details: error.message }, 500);
   }
 });
+
+// ─── CARD OWNERSHIP ──────────────────────────────────────────────────────────
+// Cards are property. Every path that moves one follows the same rules the
+// community_points award path follows:
+//
+//   1. Identity comes from the auth key, never from the request body.
+//   2. Eligibility is re-read fresh from the database immediately before the
+//      write — a stale session object is never trusted.
+//   3. The write is conditional (WHERE ... AND still_valid) and the row count
+//      is checked, so two racing callers cannot both win.
+//   4. Balances move by relative arithmetic (coin = coin - ?), never by
+//      setting an absolute the client supplied.
+//   5. Anything that must happen once is guarded by a consumed flag.
+
+async function ensureOwnershipColumns(db: any) {
+  for (const col of ['ref_code TEXT', 'bound INTEGER NOT NULL DEFAULT 0', 'listing_id TEXT']) {
+    try {
+      await db.prepare(`ALTER TABLE member_inventory ADD COLUMN ${col}`).run();
+    } catch (e) {
+      // Column already present — SQLite has no ADD COLUMN IF NOT EXISTS.
+    }
+  }
+}
+
+// The authoritative answer to "does this member hold this Card, free to trade?"
+// Read fresh, every time, from the row the server owns.
+async function ownedCardRow(db: any, userId: string, refCode: string) {
+  return await db.prepare(
+    `SELECT * FROM member_inventory
+     WHERE user_id = ? AND UPPER(ref_code) = UPPER(?) AND qty > 0
+     LIMIT 1`
+  ).bind(userId, refCode).first();
+}
+
+// ─── THE CARD PICKER ─────────────────────────────────────────────────────────
+// Backs the chat picker: tabs by card type, a search box over name and ref #,
+// and pages. Only ever returns cards this member actually holds.
+app.get('/api/cards/mine', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const gated = await exchangeGate(c, user, 'the card picker');
+  if (gated) return gated;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    await ensureOwnershipColumns(c.env.sorc_db);
+
+    const tab = (c.req.query('tab') || 'all').toLowerCase();
+    const q = (c.req.query('q') || '').trim();
+    const page = Math.max(1, parseInt(c.req.query('page') || '1', 10) || 1);
+    const perPage = Math.min(48, Math.max(1, parseInt(c.req.query('per_page') || '12', 10) || 12));
+
+    const where: string[] = ['inv.user_id = ?', 'inv.qty > 0'];
+    const args: any[] = [user.id];
+    if (tab !== 'all') {
+      where.push('LOWER(card.card_type) = LOWER(?)');
+      args.push(tab);
+    }
+    if (q) {
+      where.push('(card.item_name LIKE ? COLLATE NOCASE OR inv.ref_code LIKE ? COLLATE NOCASE)');
+      args.push(`%${q}%`, `%${q}%`);
+    }
+    const whereSql = where.join(' AND ');
+
+    const countRow = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) AS n FROM member_inventory inv
+       LEFT JOIN item_cards card ON UPPER(card.ref_code) = UPPER(inv.ref_code)
+       WHERE ${whereSql}`
+    ).bind(...args).first() as any;
+    const total = countRow?.n || 0;
+
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT inv.ref_code, inv.qty, inv.bound, inv.listing_id,
+              card.item_name, card.card_type, card.item_rank, card.coin_value, card.stats
+       FROM member_inventory inv
+       LEFT JOIN item_cards card ON UPPER(card.ref_code) = UPPER(inv.ref_code)
+       WHERE ${whereSql}
+       ORDER BY card.card_type ASC, card.item_name ASC
+       LIMIT ? OFFSET ?`
+    ).bind(...args, perPage, (page - 1) * perPage).all();
+
+    const cards = (rows.results || []).map((r: any) => {
+      let art = null;
+      try { art = JSON.parse(r.stats || '{}').art || null; } catch (e) { /* older rows */ }
+      return {
+        ref_code: r.ref_code,
+        item_name: r.item_name,
+        card_type: r.card_type,
+        item_rank: r.item_rank,
+        coin_value: r.coin_value,
+        qty: r.qty,
+        bound: !!r.bound,
+        listed: !!r.listing_id,
+        tradeable: !r.bound && !r.listing_id,
+        art,
+      };
+    });
+
+    const tabRows = await c.env.sorc_db.prepare(
+      `SELECT card.card_type AS t, COUNT(*) AS n FROM member_inventory inv
+       LEFT JOIN item_cards card ON UPPER(card.ref_code) = UPPER(inv.ref_code)
+       WHERE inv.user_id = ? AND inv.qty > 0 GROUP BY card.card_type`
+    ).bind(user.id).all();
+
+    return c.json({
+      cards, total, page, per_page: perPage,
+      pages: Math.max(1, Math.ceil(total / perPage)),
+      tabs: (tabRows.results || []).map((r: any) => ({ type: r.t || 'Unknown', count: r.n })),
+    });
+  } catch (error: any) {
+    return c.json({ cards: [], total: 0, page: 1, per_page: 12, pages: 1, tabs: [] });
+  }
+});
+
+// ─── ADMIN: GRANT CARDS ──────────────────────────────────────────────────────
+// Privileged only. Grants the whole live catalog, so it stays correct as cards
+// are added rather than freezing a hardcoded list. Idempotent — re-running it
+// tops a member up to one of each rather than stacking duplicates.
+app.post('/api/admin/grant-cards', authMiddleware, async (c) => {
+  const actor = c.get('user') as any;
+  if (!isPrivileged(actor)) return c.json({ error: 'Forbidden.' }, 403);
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    await ensureOwnershipColumns(c.env.sorc_db);
+
+    const { email } = await c.req.json().catch(() => ({})) as any;
+    // Identity is resolved server-side from the users table. The caller names a
+    // member; the server decides who that is.
+    const target = email
+      ? await c.env.sorc_db.prepare(
+          `SELECT id, email, display_name, username FROM users WHERE LOWER(email) = LOWER(?)`
+        ).bind(email).first() as any
+      : actor;
+    if (!target) return c.json({ error: 'No member with that email.' }, 404);
+
+    const catalog = await c.env.sorc_db.prepare(`SELECT * FROM item_cards`).all();
+    const cards = catalog.results || [];
+    const now = new Date().toISOString();
+    let granted = 0;
+
+    for (const card of cards as any[]) {
+      const held = await ownedCardRow(c.env.sorc_db, target.id, card.ref_code);
+      if (held) continue;
+      await c.env.sorc_db.prepare(
+        `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at, ref_code, bound)
+         VALUES (?, ?, ?, 1, 1, 'admin-grant', ?, ?, 0)`
+      ).bind(crypto.randomUUID(), target.id, card.item_name, now, card.ref_code).run();
+      granted++;
+    }
+
+    return c.json({
+      success: true,
+      member: target.display_name || target.username || target.email,
+      granted, catalog_size: cards.length,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not grant cards.', details: error.message }, 500);
+  }
+});
+
+async function ensureHandTradeRoomColumn(db: any) {
+  try {
+    await db.prepare(`ALTER TABLE hand_trades ADD COLUMN room_id TEXT`).run();
+  } catch (e) {
+    // Column already present.
+  }
+}
+
+// Hand off one Card from one member to another, and only if the giver really
+// holds it, it is not Bound, and it is not sitting on the Exchange. The take is
+// conditional on all three, so a Card cannot be handed to two people at once.
+async function handOverCard(db: any, fromUid: string, toUid: string, itemName: string, at: string) {
+  const row = await db.prepare(
+    `SELECT * FROM member_inventory
+     WHERE user_id = ? AND LOWER(item_name) = LOWER(?) AND qty > 0
+     LIMIT 1`
+  ).bind(fromUid, itemName).first() as any;
+  if (!row) return { ok: false, reason: `They no longer hold ${itemName}.` };
+  if (row.bound) return { ok: false, reason: `${itemName} is Bound and cannot be traded.` };
+  if (row.listing_id) return { ok: false, reason: `${itemName} is listed on the Exchange.` };
+
+  const taken = await db.prepare(
+    `DELETE FROM member_inventory WHERE id = ? AND listing_id IS NULL AND qty > 0`
+  ).bind(row.id).run();
+  if (!taken.meta || taken.meta.changes !== 1) {
+    return { ok: false, reason: `${itemName} just moved elsewhere.` };
+  }
+
+  await db.prepare(
+    `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at, ref_code, bound)
+     VALUES (?, ?, ?, 1, 1, 'hand-trade', ?, ?, 0)`
+  ).bind(crypto.randomUUID(), toUid, row.item_name, at, row.ref_code || null).run();
+  return { ok: true };
+}
+
+// Settle an accepted Hand Trade. WTT swaps two Cards; WTS/WTB moves one Card
+// against Coin. Every leg is checked before anything moves, and a failed leg
+// puts the first one back.
+async function settleHandTrade(db: any, trade: any, at: string) {
+  await ensureOwnershipColumns(db);
+
+  if (trade.kind === 'WTT') {
+    const first = await handOverCard(db, trade.poster_uid, trade.responder_uid, trade.give_item, at);
+    if (!first.ok) return first;
+    const second = await handOverCard(db, trade.responder_uid, trade.poster_uid, trade.want_item, at);
+    if (!second.ok) {
+      // Undo the first leg — a half-completed swap would be a theft.
+      await handOverCard(db, trade.responder_uid, trade.poster_uid, trade.give_item, at);
+      return second;
+    }
+    return { ok: true };
+  }
+
+  // Coin legs. WTS: the poster gives the Card and takes Coin. WTB: the poster
+  // pays Coin and takes the Card. Either way the payer is debited conditionally.
+  const price = trade.coin || 0;
+  const giverUid = trade.kind === 'WTB' ? trade.responder_uid : trade.poster_uid;
+  const takerUid = trade.kind === 'WTB' ? trade.poster_uid : trade.responder_uid;
+  const payerUid = takerUid;
+
+  if (price > 0) {
+    await walletBalance(db, payerUid);
+    const debit = await db.prepare(
+      `UPDATE user_wallets SET coin = coin - ?, updated_at = ? WHERE user_id = ? AND coin >= ?`
+    ).bind(price, at, payerUid, price).run();
+    if (!debit.meta || debit.meta.changes !== 1) {
+      return { ok: false, reason: 'Insufficient Coin' };
+    }
+  }
+
+  const handed = await handOverCard(db, giverUid, takerUid, trade.give_item, at);
+  if (!handed.ok) {
+    if (price > 0) {
+      await db.prepare(
+        `UPDATE user_wallets SET coin = coin + ?, updated_at = ? WHERE user_id = ?`
+      ).bind(price, at, payerUid).run();
+    }
+    return handed;
+  }
+
+  if (price > 0) {
+    await db.prepare(
+      `INSERT INTO user_wallets (user_id, coin, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(user_id) DO UPDATE SET coin = coin + ?, updated_at = ?`
+    ).bind(giverUid, price, at, price, at).run();
+  }
+  return { ok: true };
+}
+
+// ─── EXCHANGE ACCESS GATE ────────────────────────────────────────────────────
+// The Exchange is for assessed members. A Civilian cannot trade — they must
+// assess into Player or GM first, exactly as they must to enter a Lobby.
+//
+// Follows the community_points discipline: eligibility is re-read from the
+// database at call time, never taken from the session object the caller
+// presented, so a stale or edited local copy buys nothing.
+async function exchangeGate(c: any, user: any, what: string): Promise<any | null> {
+  if (isPrivileged(user)) return null;
+
+  const assessment = await c.env.sorc_db.prepare(
+    `SELECT role_granted, taken_at FROM assessments WHERE user_id = ? ORDER BY taken_at DESC LIMIT 1`
+  ).bind(user.id).first() as any;
+
+  if (!assessment || assessment.role_granted === 'FAIL') {
+    return c.json({
+      error: `You must assess into Player or GM to use ${what}.`,
+      needs_assess: true,
+    }, 403);
+  }
+
+  const age = Date.now() - new Date(assessment.taken_at).getTime();
+  if (age > ASSESSMENT_EXPIRY_MS) {
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`
+    ).bind(new Date().toISOString(), user.id).run();
+    return c.json({
+      error: `Your assessment has expired (30 days). Reassess to use ${what}.`,
+      needs_reassess: true,
+    }, 403);
+  }
+
+  const fresh = await c.env.sorc_db.prepare(
+    `SELECT needs_reassess FROM users WHERE id = ?`
+  ).bind(user.id).first() as any;
+  if (fresh && (fresh.needs_reassess === 1 || fresh.needs_reassess === true)) {
+    return c.json({
+      error: `You are flagged for reassessment. Reassess to use ${what}.`,
+      needs_reassess: true,
+    }, 403);
+  }
+  return null;
+}
 
 export default app;
