@@ -1782,19 +1782,39 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
     const pointsAwarded = firstTime ? (siteRole === 'MASTER' ? 200 : 100) : 0;
 
     const preserveRole = isPrivileged(user);
+    // Role first, and on its own. Setting a role twice is harmless; paying for
+    // it twice is not, so the two are no longer one statement.
     if (preserveRole) {
       await c.env.sorc_db.prepare(
-        `UPDATE users SET sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
-         community_points = community_points + ?, updated_at = ? WHERE id = ?`
-      ).bind(role, pointsAwarded, now, user.id).run();
+        `UPDATE users SET sorc_role = ?, needs_reassess = 0, updated_at = ? WHERE id = ?`
+      ).bind(role, now, user.id).run();
     } else {
       await c.env.sorc_db.prepare(
-        `UPDATE users SET role = ?, sorc_role = ?, needs_reassess = 0, assessment_rewarded = 1,
-         community_points = community_points + ?, updated_at = ? WHERE id = ?`
-      ).bind(siteRole, role, pointsAwarded, now, user.id).run();
+        `UPDATE users SET role = ?, sorc_role = ?, needs_reassess = 0, updated_at = ? WHERE id = ?`
+      ).bind(siteRole, role, now, user.id).run();
     }
 
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: pointsAwarded, wrong });
+    // The award is claimed by flipping assessment_rewarded, conditional on it
+    // still being unclaimed. Reading the flag and then writing was a race:
+    // two submissions firing together both saw it unset and both paid out.
+    // Now the flag IS the claim, so exactly one can win it.
+    let awarded = 0;
+    if (pointsAwarded > 0) {
+      const claim = await c.env.sorc_db.prepare(
+        `UPDATE users
+            SET assessment_rewarded = 1,
+                community_points = COALESCE(community_points, 0) + ?,
+                updated_at = ?
+          WHERE id = ? AND (assessment_rewarded IS NULL OR assessment_rewarded = 0)`
+      ).bind(pointsAwarded, now, user.id).run();
+      if (claim.meta && claim.meta.changes === 1) awarded = pointsAwarded;
+    } else {
+      await c.env.sorc_db.prepare(
+        `UPDATE users SET assessment_rewarded = 1, updated_at = ? WHERE id = ?`
+      ).bind(now, user.id).run();
+    }
+
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: awarded, wrong });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }
@@ -3704,11 +3724,17 @@ app.get('/api/achievements', authMiddleware, async (c) => {
       if (earnedMap.has(ach.id)) continue;
       if (await checkAchievement(c.env.sorc_db, user, ach.id)) {
         const now = new Date().toISOString();
-        await c.env.sorc_db.prepare(
+        // Award only if this row is genuinely new. Reading the earned list and
+        // then writing is a race: two requests firing together both see the
+        // achievement unearned, both reach here, and INSERT OR IGNORE quietly
+        // drops the second — but the old code still paid out for it. Checking
+        // the row count is what makes the insert the single source of truth,
+        // so points cannot be farmed by hammering this endpoint.
+        const inserted = await c.env.sorc_db.prepare(
           `INSERT OR IGNORE INTO user_achievements (id, user_id, achievement_id, earned_at) VALUES (?, ?, ?, ?)`
         ).bind(crypto.randomUUID(), user.id, ach.id, now).run();
         earnedMap.set(ach.id, now);
-        pointsAwarded += 25;
+        if (inserted.meta && inserted.meta.changes === 1) pointsAwarded += 25;
       }
     }
     if (pointsAwarded > 0) {
@@ -4101,11 +4127,17 @@ app.get('/api/achievements', authMiddleware, async (c) => {
       if (earnedMap.has(ach.id)) continue;
       if (await checkAchievement(c.env.sorc_db, user, ach.id)) {
         const now = new Date().toISOString();
-        await c.env.sorc_db.prepare(
+        // Award only if this row is genuinely new. Reading the earned list and
+        // then writing is a race: two requests firing together both see the
+        // achievement unearned, both reach here, and INSERT OR IGNORE quietly
+        // drops the second — but the old code still paid out for it. Checking
+        // the row count is what makes the insert the single source of truth,
+        // so points cannot be farmed by hammering this endpoint.
+        const inserted = await c.env.sorc_db.prepare(
           `INSERT OR IGNORE INTO user_achievements (id, user_id, achievement_id, earned_at) VALUES (?, ?, ?, ?)`
         ).bind(crypto.randomUUID(), user.id, ach.id, now).run();
         earnedMap.set(ach.id, now);
-        pointsAwarded += 25;
+        if (inserted.meta && inserted.meta.changes === 1) pointsAwarded += 25;
       }
     }
     if (pointsAwarded > 0) {
