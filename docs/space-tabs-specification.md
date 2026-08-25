@@ -77,13 +77,20 @@ See QUESTIONS.md section below.
 Supersedes the corresponding open questions. Verbatim source:
 `space-tabs-original-post.md` plus the follow-up answering points 1-5.
 
-## 1. Games — NOT its own tab
-Folded into **Leaderboards** as a sub-tab area. Opens with **Trials of
-Combat**; further games join as they open. Leaderboards also carries a link
-to the Character's Home **Trophy Room**, where wins and awards are displayed.
-*Implemented in `space.html` (`switchGameBoard`).*
+## 1. Game Modes — NOT its own tab
+"Games" is the wrong name. It is **Game Modes**, and it already exists on the
+home page. Folded into **Leaderboards** as a sub-tab area, with each mode a
+sub-category, taken from the live home-page list:
+
+  Campaign Mode · Trials of Combat · Trials of Zailister ·
+  Omne Chronicles · Crownmaster · Legend (Pro)
+
+Leaderboards also links to the Character's Home **Trophy Room**, where wins,
+ranks, and awards are displayed.
+*Implemented in `space.html` (`switchGameMode`, `GAME_MODES`).*
 
 ## 2. Contributions — REPLACED by "Family"
+Rules section is titled **Family**; Contributions is a sub-category inside it.
 Contributions had no clear origin and is removed. In its place a **Family**
 tab (PUBLIC), which separates Family from Home everywhere on the site.
 A Home is a place; a Family is people.

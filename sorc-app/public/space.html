@@ -147,18 +147,21 @@
 
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-    window.switchGameBoard = function(ev, board) {
-        var bar = ev.target.parentNode;
-        var btns = bar.querySelectorAll('.subtab');
+    var GAME_MODES = {
+        'campaign': 'Campaign Mode',
+        'trials-combat': 'Trials of Combat',
+        'trials-zailister': 'Trials of Zailister',
+        'omne': 'Omn\u00e9 Chronicles',
+        'crownmaster': 'Crownmaster',
+        'legend': 'Legend'
+    };
+
+    window.switchGameMode = function(ev, mode) {
+        var btns = ev.target.parentNode.querySelectorAll('.subtab');
         for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
         ev.target.classList.add('active');
         var out = document.getElementById('gameBoard');
-        if (!out) return;
-        if (board === 'trials') {
-            out.innerHTML = '<p>Trials of Combat standings loading...</p>';
-        } else {
-            out.innerHTML = '<p>Community Points standings loading...</p>';
-        }
+        if (out) out.innerHTML = '<p>' + (GAME_MODES[mode] || 'Mode') + ' standings loading...</p>';
     };
 
     function switchTab(tabId) {
@@ -273,19 +276,19 @@
                     case 'leaderboards':
                         html += '<h3>Leaderboards</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC (Top 100)</span><span class="access-badge PRO" style="margin-left:0.5rem;">PRO (Top 200+)</span>' +
-                            '<p>Ranked standings across SORC games. Trials of Combat leads; further games join this board as they open.</p>' +
+                            '<p>Ranked standings by Game Mode. Wins, ranks, and awards are displayed in your Home\'s Trophy Room.</p>' +
                             '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
-                                '<button class="subtab active" onclick="switchGameBoard(event, \'trials\')">Trials of Combat</button>' +
-                                '<button class="subtab" onclick="switchGameBoard(event, \'community\')">Community Points</button>' +
+                                '<button class="subtab active" onclick="switchGameMode(event, \'campaign\')">Campaign Mode</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'trials-combat\')">Trials of Combat</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'trials-zailister\')">Trials of Zailister</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'omne\')">Omn&eacute; Chronicles</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'crownmaster\')">Crownmaster</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'legend\')">Legend (Pro)</button>' +
                             '</div>' +
                             '<div id="gameBoard" style="padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
-                                '<p>Leaderboards loading...</p>' +
+                                '<p>Campaign Mode standings loading...</p>' +
                             '</div>' +
                             '<div class="card" style="margin-top:1rem;">' +
-                                '<h4>Lobbies &amp; Campaigns</h4>' +
-                                '<p><a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Join or create a lobby</a> to enter ranked play.</p>' +
-                            '</div>' +
-                            '<div class="card" style="margin-top:0.75rem;">' +
                                 '<h4>Trophy Room</h4>' +
                                 '<p>Wins, ranks, and tournament awards are displayed in your Home\'s Trophy Room. ' +
                                 '<a href="/home-and-family.html#trophy-room" style="color:#b9aa00;text-decoration:underline;">Open Trophy Room</a></p>' +
