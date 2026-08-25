@@ -570,7 +570,7 @@
 
   <!-- REPORT MODAL -->
 
-  <div class="cp-overlay" id="cardPicker" onclick="if(event.target===this)closeCardPicker()">
+  <div class="cp-overlay" id="cardPicker" onclick="cpBackdrop(event, this)">
     <div class="cp-box">
       <div class="cp-head">
         <h3 id="cpTitle">&#127183; Which Card are you selling?</h3>
@@ -2393,12 +2393,30 @@
     var cpGive = null;        // the Card chosen in step one of a WTT
     var cpSearchTimer = null;
 
+    var cpOpenedAt = 0;
     window.openCardPicker = function() {
-      cpVerb = 'WTS'; cpTab = 'all'; cpQuery = ''; cpPage = 1;
-      cpStep = 'give'; cpGive = null;
-      document.getElementById('cardPicker').classList.add('open');
-      renderPickerChrome();
-      loadPickerCards();
+      try {
+        cpVerb = 'WTS'; cpTab = 'all'; cpQuery = ''; cpPage = 1;
+        cpStep = 'give'; cpGive = null;
+        var box = document.getElementById('cardPicker');
+        if (!box) { showToast('Card picker failed to load - refresh the page.', true); return; }
+        var search = document.getElementById('cpSearch');
+        if (search) search.value = '';
+        cpOpenedAt = Date.now();
+        box.classList.add('open');
+        renderPickerChrome();
+        loadPickerCards();
+      } catch (err) {
+        showToast('Could not open the picker: ' + (err && err.message ? err.message : err), true);
+      }
+    };
+    /* The tap that opens the picker can land again on the backdrop underneath
+       it as a synthesized click. Ignore backdrop taps for a moment after
+       opening, or the picker closes the instant it appears. */
+    window.cpBackdrop = function(e, el) {
+      if (e.target !== el) return;
+      if (Date.now() - cpOpenedAt < 400) return;
+      closeCardPicker();
     };
     window.closeCardPicker = function() {
       document.getElementById('cardPicker').classList.remove('open');
@@ -2453,7 +2471,8 @@
         renderPickerGrid(data);
         renderPickerPager(data);
       } catch(e) {
-        grid.innerHTML = '<div class="cp-empty">Could not load your Cards.</div>';
+        grid.innerHTML = '<div class="cp-empty">Could not load your Cards.<br/>' +
+          '<span style="color:#444;font-size:0.76rem;">' + esc(e && e.message ? e.message : e) + '</span></div>';
       }
     }
 

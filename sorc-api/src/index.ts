@@ -5262,6 +5262,21 @@ app.get('/api/cards/mine', authMiddleware, async (c) => {
     await ensureExchangeTables(c.env.sorc_db);
     await ensureOwnershipColumns(c.env.sorc_db);
 
+    // Admin and Owner accounts hold the whole catalog for testing. Granting it
+    // on first look means there is never an empty picker to puzzle over, and
+    // it stays current as Cards are added.
+    if (isPrivileged(user)) {
+      const holds = await c.env.sorc_db.prepare(
+        `SELECT COUNT(*) AS n FROM member_inventory WHERE user_id = ?`
+      ).bind(user.id).first() as any;
+      const catalogCount = await c.env.sorc_db.prepare(
+        `SELECT COUNT(*) AS n FROM item_cards`
+      ).first() as any;
+      if ((holds?.n || 0) < (catalogCount?.n || 0)) {
+        await grantCatalogTo(c.env.sorc_db, user.id);
+      }
+    }
+
     const tab = (c.req.query('tab') || 'all').toLowerCase();
     const q = (c.req.query('q') || '').trim();
     const page = Math.max(1, parseInt(c.req.query('page') || '1', 10) || 1);
@@ -5350,20 +5365,9 @@ app.post('/api/admin/grant-cards', authMiddleware, async (c) => {
       : actor;
     if (!target) return c.json({ error: 'No member with that email.' }, 404);
 
-    const catalog = await c.env.sorc_db.prepare(`SELECT * FROM item_cards`).all();
-    const cards = catalog.results || [];
-    const now = new Date().toISOString();
-    let granted = 0;
-
-    for (const card of cards as any[]) {
-      const held = await ownedCardRow(c.env.sorc_db, target.id, card.ref_code);
-      if (held) continue;
-      await c.env.sorc_db.prepare(
-        `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at, ref_code, bound)
-         VALUES (?, ?, ?, 1, 1, 'admin-grant', ?, ?, 0)`
-      ).bind(crypto.randomUUID(), target.id, card.item_name, now, card.ref_code).run();
-      granted++;
-    }
+    const granted = await grantCatalogTo(c.env.sorc_db, target.id);
+    const catalog = await c.env.sorc_db.prepare(`SELECT COUNT(*) AS n FROM item_cards`).first() as any;
+    const cards = { length: catalog?.n || 0 };
 
     return c.json({
       success: true,
@@ -5573,5 +5577,26 @@ app.get('/api/cards/catalog', authMiddleware, async (c) => {
     return c.json({ cards: [], total: 0, page: 1, per_page: 12, pages: 1, tabs: [] });
   }
 });
+
+// Give a member one of every Card in the live catalog. Idempotent: a Card the
+// member already holds is skipped, so re-running tops up rather than stacking
+// duplicates. Used by the admin control and by the auto-grant for privileged
+// accounts.
+async function grantCatalogTo(db: any, userId: string): Promise<number> {
+  await ensureOwnershipColumns(db);
+  const catalog = await db.prepare(`SELECT * FROM item_cards`).all();
+  const now = new Date().toISOString();
+  let granted = 0;
+  for (const card of (catalog.results || []) as any[]) {
+    const held = await ownedCardRow(db, userId, card.ref_code);
+    if (held) continue;
+    await db.prepare(
+      `INSERT INTO member_inventory (id, user_id, item_name, qty, tradeable, source, created_at, ref_code, bound)
+       VALUES (?, ?, ?, 1, 1, 'admin-grant', ?, ?, 0)`
+    ).bind(crypto.randomUUID(), userId, card.item_name, now, card.ref_code).run();
+    granted++;
+  }
+  return granted;
+}
 
 export default app;
