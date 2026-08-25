@@ -4742,25 +4742,46 @@ async function ensureExchangeTables(db: any) {
 // with the Cards that ship in the rules; ref_code is the number printed on the
 // physical Card (the green half of mod-ref#pg.N), and is what Players type.
 async function seedItemCards(db: any) {
+  // Transcribed from the printed card faces. The ref # and Module line are read
+  // off the bottom of each card exactly as they appear.
   const seeds = [
     {
-      ref: '1001',
+      ref: 'MOB001',
       name: 'Skeleton Soldier',
       type: 'Mob',
       rank: 'Common',
       coin: 25,
-      stats: 'Common Mob Encounter Card',
-      lore: 'A risen footsoldier, bound to the order it died following.',
+      module: 'SFK v. 0.01',
+      lore: 'Each token represents one Skeleton Soldier. Remove a token as each is defeated. Skeleton Soldiers may be accompanied by 1d4 of each — guards, archers, soldiers, or others.',
+      stats: {
+        title: 'Common Skeleton',
+        race: 'Skeleton', species: 'Undead', size: 'Standard',
+        life: 28, prots: '26 (natural bone + iron helmet)',
+        speed: '30 ft/turn', tokens: '2d4',
+        equipment: 'Rusty Iron Sword, Iron Shield, Iron Helmet',
+        aptitude: 'Darkvision 60 ft.',
+        resistances: 'Immune to poison, disease, sleep, fear.',
+        vulnerable: 'Blunt',
+        loot: 'Rusty Iron Sword, Iron Shield, Iron Helmet, Bone Fragments, Silver Coin',
+      },
       art: '/content/sorc-cards/encounter-cards/Encounter-Card-Common-Mob-Skeleton-Soldier_20260610_104351_0000.png',
     },
     {
-      ref: '1002',
-      name: 'Divine Chimassu',
-      type: 'Boss',
-      rank: 'Divine',
+      ref: 'BSS001',
+      name: 'Wild Chimassu',
+      type: 'Divine',
+      rank: 'Boss',
       coin: 500,
-      stats: 'Divine Boss Encounter Card',
-      lore: 'A divine terror; few tables have ever put one down.',
+      module: 'SFK v. 0.01',
+      lore: 'Calls all feline and Winged Creatures within its realm. Speaks Celestial and Common.',
+      stats: {
+        title: 'Divine Chimassu',
+        species: 'Mythical Beast', size: 'Goliath',
+        life: 340, prots: '89 (natural armor)',
+        speed: '50 ft., fly 80 ft.',
+        aptitude: 'Darkvision 60 ft, Nature Senses, Passive Intuition 15, Call of the Wild',
+        languages: 'Celestial and Common',
+      },
       art: '/content/sorc-cards/encounter-cards/SORC-Card-Encounter-Card-Boss-Divine-Chimassu_20260610_111729_0000.png',
     },
   ];
@@ -4775,7 +4796,7 @@ async function seedItemCards(db: any) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       crypto.randomUUID(), s.name, s.type, s.rank, s.coin,
-      JSON.stringify({ summary: s.stats, art: s.art }), s.lore, s.ref, now
+      JSON.stringify({ ...s.stats, module: s.module, art: s.art }), s.lore, s.ref, now
     ).run();
   }
 }
@@ -4820,10 +4841,12 @@ async function findCard(db: any, ref: string | null, name: string | null) {
   return null;
 }
 
-// "Mob Card #1001", "Card #1001", or plain "#1001" — pull the ref # out.
+// Pull the ref # out of "Mob Card #MOB001", "Card #BSS001", or plain "#MOB001".
+// A SORC Card ref # is a type prefix plus a sequence, exactly as printed on the
+// card face: MOB001 (Mob), BSS001 (Boss). Never a bare number.
 function extractCardRef(text: string): string | null {
-  const m = (text || '').match(/#\s*([0-9]{3,8})/);
-  return m ? m[1] : null;
+  const m = (text || '').match(/#\s*([A-Za-z]{2,4}\s?[0-9]{1,4})/);
+  return m ? m[1].replace(/\s+/g, '').toUpperCase() : null;
 }
 
 app.get('/api/exchange/wallet', authMiddleware, async (c) => {
@@ -4859,12 +4882,11 @@ app.get('/api/card', authMiddleware, async (c) => {
     const name = c.req.query('name') || null;
     const card = await findCard(c.env.sorc_db, ref, name) as any;
     if (!card) return c.json({ error: 'No Card with that ref #.' }, 404);
-    let art = null, summary = null;
+    let stats: any = {};
     try {
-      const parsed = JSON.parse(card.stats || '{}');
-      art = parsed.art || null;
-      summary = parsed.summary || null;
+      stats = JSON.parse(card.stats || '{}');
     } catch (e) { /* stats may be plain text on older rows */ }
+    const { art, module: moduleName, ...printed } = stats;
     return c.json({
       card: {
         ref_code: card.ref_code,
@@ -4873,7 +4895,9 @@ app.get('/api/card', authMiddleware, async (c) => {
         item_rank: card.item_rank,
         coin_value: card.coin_value,
         lore: card.lore,
-        summary, art,
+        module: moduleName || null,
+        art: art || null,
+        stats: printed,
       },
     });
   } catch (error: any) {
