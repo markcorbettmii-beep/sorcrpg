@@ -685,7 +685,7 @@
         return html;
     }
 
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', function() {
         var container = document.getElementById('profileContainer');
         try {
             var saved = null;
@@ -704,22 +704,7 @@
 
             var isPro = user.pro_member === true || user.pro_member === 1;
 
-            // Fetch fresh data
-            try {
-                var freshRes = await fetch(API_URL + '/api/me', {
-                    headers: { 'X-Auth-Key': saved.authKey }
-                });
-                if (freshRes.ok) {
-                    var freshData = await freshRes.json();
-                    if (freshData.user) {
-                        user = Object.assign(user, freshData.user);
-                        isPro = user.pro_member === true || user.pro_member === 1;
-                        localStorage.setItem('sorc_user', JSON.stringify(user));
-                    }
-                }
-            } catch(e) { console.warn('Fresh data fetch failed:', e); }
-
-            // Render profile
+            // Render profile immediately with cached data
             if (!container) throw new Error('profileContainer not found');
 
             var headerHtml = '';
@@ -747,6 +732,18 @@
             try {
                 switchTab(initialTab);
             } catch(e) { throw new Error('switchTab failed: ' + e.message); }
+
+            // Fetch fresh data in background (non-blocking)
+            fetch(API_URL + '/api/me', {
+                headers: { 'X-Auth-Key': saved.authKey }
+            }).then(r => r.ok ? r.json() : null)
+            .then(freshData => {
+                if (freshData && freshData.user) {
+                    user = Object.assign(user, freshData.user);
+                    isPro = user.pro_member === true || user.pro_member === 1;
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                }
+            }).catch(e => console.warn('Background fetch failed:', e));
 
         } catch(err) {
             console.error('[Space] Error:', err);
