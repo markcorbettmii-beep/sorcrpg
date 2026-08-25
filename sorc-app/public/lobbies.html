@@ -3797,21 +3797,36 @@
         });
 
       } else {
-        /* Default - WoW-style alert: two sharp bursts with harmonics */
-        [1047, 1318].forEach(function(freq, burst) {
-          var t = now + burst * 0.35;
-          /* Primary tone + harmonics for bell-like quality */
-          [1, 1.5, 2].forEach(function(h, j) {
-            var osc = ctx.createOscillator(); osc.type = j === 0 ? 'sine' : 'sine'; osc.frequency.value = freq * h;
-            var g = ctx.createGain();
-            var pk = [0.50, 0.22, 0.10][j];
-            g.gain.setValueAtTime(pk, t);
-            g.gain.linearRampToValueAtTime(pk * 0.8, t + 0.08);
-            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
-            osc.connect(g); g.connect(master);
-            osc.start(t); osc.stop(t + 0.50);
-          });
+        /* WoW raid alert: sharp sword "schwing" + booming war drum */
+        /* The "Schwing" - high-pitched metallic sword clash */
+        var schwingStart = now;
+        [2800, 3600, 4400].forEach(function(freq, i) {
+          var osc = ctx.createOscillator(); osc.type = 'square'; osc.frequency.value = freq;
+          var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 5000;
+          var g = ctx.createGain();
+          g.gain.setValueAtTime([0.35, 0.18, 0.10][i], schwingStart);
+          g.gain.linearRampToValueAtTime([0.30, 0.15, 0.08][i], schwingStart + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.0001, schwingStart + 0.35);
+          osc.connect(lpf); lpf.connect(g); g.connect(master);
+          osc.start(schwingStart); osc.stop(schwingStart + 0.40);
         });
+
+        /* The "Thud" - deep bass drum beat overlapping schwing */
+        var drumStart = now + 0.05;
+        var drumOsc = ctx.createOscillator(); drumOsc.type = 'sine'; drumOsc.frequency.value = 60;
+        var drumEnv = ctx.createGain();
+        drumEnv.gain.setValueAtTime(0.65, drumStart);
+        drumEnv.gain.exponentialRampToValueAtTime(0.0001, drumStart + 0.85);
+        drumOsc.connect(drumEnv); drumEnv.connect(master);
+        drumOsc.start(drumStart); drumOsc.stop(drumStart + 0.90);
+
+        /* Sub-bass for resonance */
+        var subOsc = ctx.createOscillator(); subOsc.type = 'sine'; subOsc.frequency.value = 40;
+        var subEnv = ctx.createGain();
+        subEnv.gain.setValueAtTime(0.40, drumStart);
+        subEnv.gain.exponentialRampToValueAtTime(0.0001, drumStart + 1.0);
+        subOsc.connect(subEnv); subEnv.connect(master);
+        subOsc.start(drumStart); subOsc.stop(drumStart + 1.05);
       }
 
       setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
