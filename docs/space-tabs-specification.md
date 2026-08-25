@@ -148,3 +148,40 @@ Four decisions still needed from owner — see that doc's closing section.
   regularly
 - **Standing applies to Friends who party together and to neighbours** —
   written into the Basic Rules Contribution & Family section under Standing
+
+---
+
+## LOCKED IN: Standing numbers, Praise/Blowback, Contribution/Neglect, the Mark
+
+**Tier values** — Exalted +4, Cherished +3, Adored +2, Respected +1,
+Neutral 0, Tolerable −1, Disliked −2, Hated −3. This is "Standing LVL",
+which three rules referenced and none defined.
+
+**The ripple (Praise & Blowback)** — Praise and Blowback are DERIVED, not
+separately tracked. When Standing with a target moves, allies of that target
+move the same direction by half the tiers moved (rounded down, min 1);
+enemies move the opposite direction by the same amount; neutral parties do
+not move.
+
+**Contribution & Neglect** — one line per category, not two scores.
+Contribution up, Neglect down, ticking on its own like Wellness.
+
+**The Neglect floor** — Neglect can only carry a Character toward Neutral,
+never past it. Falling below Neutral takes a deliberate act. This is what
+lets drifting apart be told from betrayal.
+
+**The Mark** — the highest Standing ever held with a party, recorded beside
+current Standing, never decays. Not goodwill owed; the measure of the fall.
+
+**Betrayal scales with the Mark** — a deliberate act drops a party as far
+below Neutral as their Mark stood above it (Mark +2 → Disliked −2;
+Mark +4 → Hated). Minimum one tier below Neutral regardless of Mark.
+
+**Sealing** — a Mark is never erased, but a Bond Quest may seal it: the
+record stands, the GM stops applying it.
+
+*Written into: `rules_ref_002.html` (Prestige — Standing Tiers, Praise &
+Blowback, Contribution Neglect & the Mark), `rules_ref_appendix.html`,
+`rules_ref_006.html` glossary (6 new terms: Standing, Contribution, Neglect,
+Mark, Praise, Blowback), and the journal booklet's Standing Tracker, which
+gains Mark and Contribution columns.*
