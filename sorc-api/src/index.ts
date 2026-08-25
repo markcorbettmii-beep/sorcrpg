@@ -4950,7 +4950,13 @@ app.get('/api/exchange/wallet', authMiddleware, async (c) => {
 app.get('/api/exchange/slots', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const gated = await exchangeGate(c, user, 'The Exchange');
-  if (gated) return c.json({ used: 0, max: 0, free: 0, tier: 'Guest', can_trade: false });
+  if (gated) {
+    // Pass the gate's own reason through, so the page can say exactly why
+    // trading is closed rather than probing a write endpoint to find out.
+    let why: any = {};
+    try { why = await gated.clone().json(); } catch (e) { /* non-JSON gate */ }
+    return c.json({ used: 0, max: 0, free: 0, tier: 'Locked', can_trade: false, ...why });
+  }
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const max = await slotAllowance(c.env.sorc_db, user);

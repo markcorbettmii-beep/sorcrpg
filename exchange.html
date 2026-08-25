@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Exchange | Slayers of Rings &amp; Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .ex-wrap { max-width: 980px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .ex-wrap h1 { color: #c93f35; margin-bottom: 0.2rem; font-size: 1.6rem; }
+    .ex-sub { color: #777; font-size: 0.88rem; margin-bottom: 1.25rem; line-height: 1.5; }
+
+    /* Purse and slots */
+    .ex-bar { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.1rem; }
+    .ex-stat { flex: 1 1 150px; background: #141414; border: 1px solid #262626; border-radius: 10px; padding: 0.7rem 0.9rem; }
+    .ex-stat-label { color: #777; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; }
+    .ex-stat-value { color: #b9aa00; font-size: 1.15rem; font-weight: bold; margin-top: 0.15rem; }
+    .ex-stat-note { color: #666; font-size: 0.7rem; margin-top: 0.1rem; }
+    .slot-pips { display: flex; gap: 3px; margin-top: 0.35rem; flex-wrap: wrap; }
+    .pip { width: 13px; height: 13px; border-radius: 3px; background: #2a2a2a; border: 1px solid #3a3a3a; }
+    .pip.used { background: #b9aa00; border-color: #d8c700; }
+
+    /* Tabs */
+    .ex-tabs { display: flex; border-bottom: 1px solid #262626; margin-bottom: 1rem; overflow-x: auto; }
+    .ex-tab { flex: 1 0 auto; padding: 0.6rem 0.9rem; background: none; border: none; border-bottom: 3px solid transparent;
+              color: #888; font-size: 0.76rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; white-space: nowrap; }
+    .ex-tab:hover:not(.active) { color: #bbb; }
+    .ex-tab.active { color: #b9aa00; border-bottom-color: #b9aa00; }
+
+    /* Listings */
+    .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.8rem; }
+    .ex-card { background: #141414; border: 1px solid #262626; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+    .ex-card-art { width: 100%; aspect-ratio: 3/4; object-fit: cover; background: #0c0c0c; cursor: pointer; display: block; }
+    .ex-card-art.placeholder { display: flex; align-items: center; justify-content: center; color: #333; font-size: 2rem; }
+    .ex-card-body { padding: 0.6rem 0.7rem; flex: 1; display: flex; flex-direction: column; gap: 0.3rem; }
+    .ex-card-name { color: #e0cfc0; font-weight: bold; font-size: 0.88rem; line-height: 1.25; }
+    .ex-card-meta { color: #777; font-size: 0.72rem; }
+    .ex-ref { font-family: ui-monospace, Menlo, monospace; color: #8a7f00; font-size: 0.7rem; }
+    .ex-price { color: #b9aa00; font-weight: bold; font-size: 0.9rem; margin-top: auto; }
+    .ex-actions { display: flex; gap: 0.4rem; padding: 0 0.7rem 0.7rem; }
+    .ex-btn { flex: 1; padding: 0.42rem; border-radius: 7px; font-size: 0.78rem; font-weight: bold; cursor: pointer; border: 1px solid transparent; }
+    .ex-buy { background: #1a3a1a; border-color: #2f6e1f; color: #7ed957; }
+    .ex-buy:hover:not(:disabled) { background: #234a23; }
+    .ex-buy:disabled { opacity: 0.45; cursor: not-allowed; }
+    .ex-pass { background: #1a1a1a; border-color: #3a3a3a; color: #999; }
+    .ex-pass:hover { background: #242424; color: #ccc; }
+    .ex-cancel { background: #2a1010; border-color: #6b2020; color: #d98080; }
+
+    .ex-empty { color: #555; text-align: center; padding: 2.5rem 1rem; font-size: 0.9rem; }
+    .ex-note { background: #1a1505; border: 1px solid #5a4a00; border-radius: 10px; padding: 0.9rem 1.1rem;
+               color: #c9b400; font-size: 0.84rem; line-height: 1.55; margin-bottom: 1rem; }
+    .ex-note.blocked { background: #1a0d00; border-color: #5a3000; color: #c87d00; }
+    .ex-note a { color: inherit; font-weight: bold; }
+    .ex-admin { background: #101820; border: 1px solid #1a3a5a; border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 1rem; }
+    .ex-admin h4 { color: #9ecde8; margin: 0 0 0.4rem; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.07em; }
+    .ex-admin p { color: #7a93a8; font-size: 0.78rem; margin: 0 0 0.6rem; line-height: 1.5; }
+    .ex-admin button { background: #1a3a6b; border: 1px solid #1a5a8a; color: #9ecde8; padding: 0.45rem 1rem;
+                       border-radius: 7px; font-size: 0.8rem; font-weight: bold; cursor: pointer; }
+
+    /* Card inspector */
+    .ex-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.82); display: none; align-items: center;
+                justify-content: center; padding: 1rem; z-index: 4000; }
+    .ex-modal.open { display: flex; }
+    .ex-modal-inner { background: #121212; border: 1px solid #2a2a2a; border-radius: 14px; max-width: 780px;
+                      width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.1rem; }
+    .ex-modal-top { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .ex-modal-art { flex: 0 0 240px; max-width: 100%; border-radius: 8px; }
+    .ex-modal-info { flex: 1 1 260px; min-width: 220px; }
+    .ex-modal-info h3 { color: #b9aa00; margin: 0 0 0.15rem; font-size: 1.15rem; }
+    .ex-stat-row { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.28rem 0;
+                   border-bottom: 1px solid #1e1e1e; font-size: 0.82rem; }
+    .ex-stat-row dt { color: #7a7a7a; text-transform: capitalize; }
+    .ex-stat-row dd { color: #ccc; margin: 0; text-align: right; }
+    .ex-modal-close { margin-top: 0.9rem; width: 100%; padding: 0.55rem; background: #1a1a1a; border: 1px solid #3a3a3a;
+                      color: #aaa; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+    body.lawful-mode .ex-stat, body.lawful-mode .ex-card { background: #fbfaf7; border-color: #e2ded4; }
+    body.lawful-mode .ex-card-name { color: #2c2c2c; }
+    body.lawful-mode .ex-stat-value { color: #8a7f00; }
+    body.lawful-mode .ex-tabs { border-bottom-color: #e2ded4; }
+    body.lawful-mode .ex-note { background: #fdf8e0; border-color: #e0d060; color: #7a6a00; }
+    body.lawful-mode .ex-note.blocked { background: #fdf3e0; border-color: #e0b060; color: #8a5800; }
+    body.lawful-mode .ex-modal-inner { background: #fff; border-color: #ddd; }
+    body.lawful-mode .ex-stat-row dd { color: #333; }
+    body.lawful-mode .pip { background: #e6e2d8; border-color: #d5d0c4; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav><div id="navRoleBadge"></div></nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a href="lobbies.html">Lobbies</a></li>
+    </ul>
+
+    <div class="ex-wrap">
+      <h1>The Exchange</h1>
+      <p class="ex-sub">
+        SORC's auction house. Every Card carries a printed Coin value, and that value is the price &mdash;
+        there is no haggling. Settled in in-game currency only; real money never moves between Players.
+      </p>
+
+      <div id="exGate"></div>
+      <div id="exAdmin"></div>
+
+      <div class="ex-bar">
+        <div class="ex-stat">
+          <div class="ex-stat-label">Purse</div>
+          <div class="ex-stat-value" id="exCoin">&mdash;</div>
+          <div class="ex-stat-note">Coin, earned in recorded sessions</div>
+        </div>
+        <div class="ex-stat">
+          <div class="ex-stat-label">Trading Slots</div>
+          <div class="ex-stat-value" id="exSlots">&mdash;</div>
+          <div class="slot-pips" id="exPips"></div>
+          <div class="ex-stat-note" id="exTier"></div>
+        </div>
+      </div>
+
+      <div class="ex-tabs">
+        <button class="ex-tab active" data-tab="bazaar" onclick="switchTab('bazaar')">Bazaar</button>
+        <button class="ex-tab" data-tab="trade_post" onclick="switchTab('trade_post')">Trade Post</button>
+        <button class="ex-tab" data-tab="black_market" onclick="switchTab('black_market')">Black Market</button>
+      </div>
+
+      <div id="exTabNote"></div>
+      <div id="exListings" class="ex-grid"></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <div class="ex-modal" id="exModal" onclick="if(event.target===this)closeCard()">
+    <div class="ex-modal-inner" id="exModalInner"></div>
+  </div>
+
+  <script>
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'lawful';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    var currentTab = 'bazaar';
+    var canTrade = false;
+    var listings = [];
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(m) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m];
+      });
+    }
+    function authHeaders() {
+      return currentUser && currentUser.authKey ? { 'X-Auth-Key': currentUser.authKey } : {};
+    }
+    async function readJson(res) { try { return await res.json(); } catch(e) { return {}; } }
+
+    // Admin and Owner accounts get the catalog-grant control, the same way they
+    // get the code generators in the lobby. Nobody else sees it.
+    function isPrivileged() {
+      if (!currentUser) return false;
+      if (currentUser.role === 'ADMIN' || currentUser.role === 'OWNER') return true;
+      var OWNER_EMAILS = ['corbett@sorcrpg.com'];
+      var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+      return OWNER_EMAILS.indexOf(currentUser.email) !== -1 || ADMIN_EMAILS.indexOf(currentUser.email) !== -1;
+    }
+
+    window.switchTab = function(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.ex-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.tab === tab);
+      });
+      loadListings();
+    };
+
+    async function loadStats() {
+      if (!currentUser || !currentUser.authKey) {
+        document.getElementById('exCoin').textContent = '0';
+        document.getElementById('exSlots').textContent = '0 / 0';
+        document.getElementById('exTier').textContent = 'Sign in to trade';
+        return;
+      }
+      try {
+        var wRes = await fetch(API_URL + '/api/exchange/wallet', { headers: authHeaders() });
+        var w = await readJson(wRes);
+        document.getElementById('exCoin').textContent = (w.coin || 0).toLocaleString();
+
+        var sRes = await fetch(API_URL + '/api/exchange/slots', { headers: authHeaders() });
+        var s = await readJson(sRes);
+        canTrade = s.can_trade !== false && (s.max || 0) > 0;
+        document.getElementById('exSlots').textContent = (s.used || 0) + ' / ' + (s.max || 0);
+        document.getElementById('exTier').textContent = s.tier ? s.tier + ' member' : '';
+        var pips = '';
+        for (var i = 0; i < (s.max || 0); i++) {
+          pips += '<div class="pip' + (i < (s.used || 0) ? ' used' : '') + '"></div>';
+        }
+        document.getElementById('exPips').innerHTML = pips;
+      } catch(e) { /* leave the dashes */ }
+    }
+
+    async function loadGate() {
+      var el = document.getElementById('exGate');
+      if (!currentUser || !currentUser.authKey) {
+        el.innerHTML = '<div class="ex-note blocked">You are browsing as a visitor. ' +
+          '<a href="signin.html">Sign in</a> and assess into Player or GM to trade.</div>';
+        return;
+      }
+      // The slots call reports whether this account may trade, and carries the
+      // gate's own reason when it may not.
+      try {
+        var res = await fetch(API_URL + '/api/exchange/slots', { headers: authHeaders() });
+        var data = await readJson(res);
+        if (data.guest_blocked) {
+          el.innerHTML = '<div class="ex-note blocked">&#128274; Guests can browse the Bazaar and inspect Cards, but cannot buy or list. ' +
+            '<a href="signin.html">Create an account</a> to trade.</div>';
+          canTrade = false;
+        } else if (data.needs_assess) {
+          el.innerHTML = '<div class="ex-note blocked">&#128274; You must assess into Player or GM to use The Exchange. ' +
+            '<a href="take-assessment.html">Take the assessment</a>.</div>';
+          canTrade = false;
+        } else if (data.needs_reassess) {
+          el.innerHTML = '<div class="ex-note blocked">&#128274; ' + esc(data.error) +
+            ' <a href="take-assessment.html">Reassess</a>.</div>';
+          canTrade = false;
+        } else {
+          el.innerHTML = '';
+          canTrade = true;
+        }
+      } catch(e) { el.innerHTML = ''; }
+    }
+
+    function renderAdmin() {
+      var el = document.getElementById('exAdmin');
+      if (!isPrivileged()) { el.innerHTML = ''; return; }
+      el.innerHTML =
+        '<div class="ex-admin">' +
+          '<h4>&#128273; Admin &amp; Owner</h4>' +
+          '<p>Grant the full live Card catalog to an account for testing. Leave the field blank to grant to yourself. ' +
+             'Idempotent &mdash; running it again tops up to one of each rather than stacking duplicates.</p>' +
+          '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+            '<input type="text" id="grantEmail" placeholder="member email (blank = you)" ' +
+              'style="flex:1 1 200px;padding:0.45rem 0.7rem;border-radius:7px;border:1px solid #2a4a6a;background:#0c1218;color:#cfe4f0;font-size:0.8rem;" />' +
+            '<button onclick="grantCatalog()">Grant Catalog</button>' +
+          '</div>' +
+          '<div id="grantMsg" style="margin-top:0.5rem;font-size:0.78rem;"></div>' +
+        '</div>';
+    }
+
+    window.grantCatalog = async function() {
+      var msg = document.getElementById('grantMsg');
+      var email = (document.getElementById('grantEmail').value || '').trim();
+      msg.style.color = '#7a93a8'; msg.textContent = 'Granting...';
+      try {
+        var res = await fetch(API_URL + '/api/admin/grant-cards', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify(email ? { email: email } : {})
+        });
+        var data = await readJson(res);
+        if (data.success) {
+          msg.style.color = '#7ed957';
+          msg.textContent = 'Granted ' + data.granted + ' of ' + data.catalog_size +
+            ' Cards to ' + data.member + (data.granted === 0 ? ' (already held them all).' : '.');
+          loadStats();
+        } else {
+          msg.style.color = '#d98080';
+          msg.textContent = data.error || 'Could not grant.';
+        }
+      } catch(e) { msg.style.color = '#d98080'; msg.textContent = 'Could not reach the server.'; }
+    };
+
+    async function loadListings() {
+      var el = document.getElementById('exListings');
+      var note = document.getElementById('exTabNote');
+      el.innerHTML = '<div class="ex-empty">Loading...</div>';
+
+      if (currentTab === 'black_market') {
+        note.innerHTML = '<div class="ex-note">The Black Market is not open yet. It exists on the board, ' +
+          'but nothing has been assigned to it &mdash; no listings, no trade.</div>';
+      } else if (currentTab === 'bazaar') {
+        note.innerHTML = '<div class="ex-note">The Bazaar is where SORC Cards trade. Post ' +
+          '<strong>WTS: Mob Card #MOB001</strong> in a lobby\'s Trade tab and the Card drops straight in here.</div>';
+      } else {
+        note.innerHTML = '<div class="ex-note">The Trade Post is the Player-to-Player item hub. ' +
+          'Items earned in recorded Campaign Room sessions are eligible.</div>';
+      }
+
+      try {
+        var res = await fetch(API_URL + '/api/exchange/listings?tab=' + currentTab, { headers: authHeaders() });
+        var data = await readJson(res);
+        listings = data.listings || [];
+        if (!listings.length) {
+          el.innerHTML = '<div class="ex-empty">Nothing listed here yet.</div>';
+          return;
+        }
+        el.innerHTML = listings.map(renderListing).join('');
+      } catch(e) {
+        el.innerHTML = '<div class="ex-empty">Could not reach the Exchange.</div>';
+      }
+    }
+
+    function renderListing(l) {
+      var mine = currentUser && l.seller_uid === currentUser.id;
+      var art = l.art
+        ? '<img class="ex-card-art" src="' + esc(l.art) + '" alt="' + esc(l.item_name) + '" onclick="openCard(\'' + esc(l.ref_code) + '\')" />'
+        : '<div class="ex-card-art placeholder" onclick="openCard(\'' + esc(l.ref_code) + '\')">&#127183;</div>';
+      var actions = mine
+        ? '<button class="ex-btn ex-cancel" onclick="cancelListing(\'' + esc(l.id) + '\')">Withdraw</button>'
+        : '<button class="ex-btn ex-buy" ' + (canTrade ? '' : 'disabled title="Assess into Player or GM to buy"') +
+            ' onclick="buyListing(\'' + esc(l.id) + '\')">Buy</button>' +
+          '<button class="ex-btn ex-pass" onclick="passListing(\'' + esc(l.id) + '\')">Pass</button>';
+      return '<div class="ex-card" id="listing-' + esc(l.id) + '">' +
+        art +
+        '<div class="ex-card-body">' +
+          '<div class="ex-card-name">' + esc(l.item_name) + '</div>' +
+          '<div class="ex-ref">#' + esc(l.ref_code) + '</div>' +
+          '<div class="ex-card-meta">' + esc(l.card_type || 'Card') + ' &middot; ' + esc(l.seller_name) + '</div>' +
+          '<div class="ex-price">' + (l.coin_price || 0).toLocaleString() + ' Coin</div>' +
+        '</div>' +
+        '<div class="ex-actions">' + actions + '</div>' +
+      '</div>';
+    }
+
+    window.openCard = async function(ref) {
+      var modal = document.getElementById('exModal');
+      var inner = document.getElementById('exModalInner');
+      inner.innerHTML = '<div class="ex-empty">Loading Card...</div>';
+      modal.classList.add('open');
+      try {
+        var res = await fetch(API_URL + '/api/card?ref=' + encodeURIComponent(ref), { headers: authHeaders() });
+        var data = await readJson(res);
+        if (!data.card) { inner.innerHTML = '<div class="ex-empty">' + esc(data.error || 'Card not found.') + '</div>'; return; }
+        var c = data.card;
+        var rows = '';
+        Object.keys(c.stats || {}).forEach(function(k) {
+          rows += '<div class="ex-stat-row"><dt>' + esc(k.replace(/_/g, ' ')) + '</dt><dd>' + esc(c.stats[k]) + '</dd></div>';
+        });
+        inner.innerHTML =
+          '<div class="ex-modal-top">' +
+            (c.art ? '<img class="ex-modal-art" src="' + esc(c.art) + '" alt="' + esc(c.item_name) + '" />' : '') +
+            '<div class="ex-modal-info">' +
+              '<h3>' + esc(c.item_name) + '</h3>' +
+              '<div class="ex-ref">Ref #' + esc(c.ref_code) + (c.module ? ' &middot; ' + esc(c.module) : '') + '</div>' +
+              '<div class="ex-card-meta" style="margin:0.35rem 0 0.5rem;">' +
+                esc(c.card_type || '') + (c.item_rank ? ' &middot; ' + esc(c.item_rank) : '') + '</div>' +
+              '<div class="ex-price" style="margin-bottom:0.5rem;">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
+              rows +
+              (c.lore ? '<p style="color:#8a8a8a;font-size:0.8rem;line-height:1.55;margin-top:0.7rem;">' + esc(c.lore) + '</p>' : '') +
+            '</div>' +
+          '</div>' +
+          '<button class="ex-modal-close" onclick="closeCard()">Close</button>';
+      } catch(e) {
+        inner.innerHTML = '<div class="ex-empty">Could not load that Card.</div>';
+      }
+    };
+    window.closeCard = function() { document.getElementById('exModal').classList.remove('open'); };
+
+    // Pass simply dismisses the listing from this viewer's board. It is a
+    // local decision — nothing is told to the seller and nothing is recorded.
+    window.passListing = function(id) {
+      var el = document.getElementById('listing-' + id);
+      if (el) { el.style.transition = 'opacity 0.2s'; el.style.opacity = '0';
+                setTimeout(function() { el.remove(); }, 200); }
+    };
+
+    window.buyListing = async function(id) {
+      var card = document.getElementById('listing-' + id);
+      var btn = card ? card.querySelector('.ex-buy') : null;
+      if (btn) { btn.disabled = true; btn.textContent = 'Buying...'; }
+      try {
+        var res = await fetch(API_URL + '/api/exchange/buy', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ listing_id: id })
+        });
+        var data = await readJson(res);
+        if (data.success) {
+          if (btn) { btn.textContent = 'Bought!'; btn.style.background = '#2f6e1f'; btn.style.color = '#fff'; }
+          loadStats();
+          setTimeout(loadListings, 900);
+        } else if (data.insufficient) {
+          // The message the rules call for, with the shortfall spelled out.
+          if (btn) {
+            btn.textContent = 'Insufficient Coin';
+            btn.style.background = '#3a1010'; btn.style.borderColor = '#8a2a2a'; btn.style.color = '#ff9c9c';
+            setTimeout(function() {
+              btn.textContent = 'Buy'; btn.disabled = false;
+              btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+            }, 2600);
+          }
+        } else {
+          if (btn) { btn.textContent = 'Buy'; btn.disabled = false; }
+          alert(data.error || 'Could not complete that purchase.');
+        }
+      } catch(e) {
+        if (btn) { btn.textContent = 'Buy'; btn.disabled = false; }
+        alert('Could not reach the Exchange.');
+      }
+    };
+
+    window.cancelListing = async function(id) {
+      try {
+        var res = await fetch(API_URL + '/api/exchange/cancel', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ listing_id: id })
+        });
+        var data = await readJson(res);
+        if (data.success) { loadStats(); loadListings(); }
+        else alert(data.error || 'Could not withdraw that listing.');
+      } catch(e) { alert('Could not reach the Exchange.'); }
+    };
+
+    renderAdmin();
+    loadGate();
+    loadStats();
+    loadListings();
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+</body>
+</html>
