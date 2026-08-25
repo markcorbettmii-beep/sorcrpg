@@ -489,9 +489,14 @@
     body.lawful-mode .leave-btn:hover { background: #fbe6e4; }
   
     /* ── Card picker ─────────────────────────────────────────── */
-    .card-pick-btn { flex:0 0 auto; background:#1a1505; border:1px solid #5a4a00; color:#b9aa00; font-size:1.05rem;
-                     padding:0 0.6rem; border-radius:8px; cursor:pointer; line-height:1; }
+    /* At least 44px square: a tap target smaller than that is unreliable on a
+       phone, which reads as the button doing nothing at all. */
+    .card-pick-btn { flex:0 0 auto; background:#1a1505; border:1px solid #5a4a00; color:#b9aa00; font-size:1.25rem;
+                     min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;
+                     padding:0 0.55rem; border-radius:8px; cursor:pointer; line-height:1;
+                     -webkit-tap-highlight-color:rgba(185,170,0,0.35); touch-action:manipulation; user-select:none; }
     .card-pick-btn:hover { background:#241d05; }
+    .card-pick-btn:active { background:#3a2f05; transform:scale(0.94); }
     .cp-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.84); display:none; align-items:center;
                   justify-content:center; padding:1rem; z-index:5000; }
     .cp-overlay.open { display:flex; }
@@ -1759,7 +1764,7 @@
               '<div class="chat-tab-pane" id="chatPane-trade">' +
                 '<div class="chat-messages" id="tradeMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div></div>' +
                 '<div class="chat-input-row">' +
-                  '<button class="card-pick-btn" onclick="openCardPicker()" title="Pick a Card from your collection">&#127183;</button>' +
+                  '<button type="button" class="card-pick-btn" id="cardPickBtn" title="Pick a Card from your collection">&#127183;</button>' +
                   '<input type="text" class="chat-input" id="tradeInput" list="tradeTagList" autocomplete="off" placeholder="Tap &#127183; to pick a Card..." maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
                   /* Real suggestions for the field, rather than whatever the
                      keyboard happens to remember being typed before. */
@@ -2531,6 +2536,24 @@
         showToast('Could not send. Check your connection.', true);
       }
     };
+
+
+    /* The picker button lives inside markup that is rebuilt on every chat
+       render, so its handler is delegated from the document rather than bound
+       to the element or written as an inline attribute. Both touch and click
+       are covered: some mobile browsers swallow a click on a freshly injected
+       button, but touchend always lands. */
+    (function bindCardPicker() {
+      function hit(e) {
+        var btn = e.target && e.target.closest && e.target.closest('.card-pick-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof openCardPicker === 'function') openCardPicker();
+      }
+      document.addEventListener('click', hit, true);
+      document.addEventListener('touchend', hit, true);
+    })();
 
     var cpVerb = 'WTS';
     var cpTab = 'all';
