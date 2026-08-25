@@ -169,6 +169,12 @@ document.addEventListener('DOMContentLoaded', function() {
     menuToggle.addEventListener('click', function() {
       navLinks.classList.toggle('active');
     });
+    // Close menu when clicking anywhere outside it
+    document.addEventListener('click', function(e) {
+      if (!navLinks.contains(e.target) && !menuToggle.contains(e.target)) {
+        navLinks.classList.remove('active');
+      }
+    });
     if (closeLink) {
       closeLink.addEventListener('click', function(e) {
         e.preventDefault();
