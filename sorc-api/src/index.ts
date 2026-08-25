@@ -5518,4 +5518,60 @@ async function exchangeGate(c: any, user: any, what: string): Promise<any | null
   return null;
 }
 
+// The full Card catalog, for the second half of a WTT: — you cannot pick what
+// you want from your own collection, because you do not own it yet. Read-only
+// and open to anyone who can see the Exchange; it exposes nothing but what is
+// printed on the card faces.
+app.get('/api/cards/catalog', authMiddleware, async (c) => {
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    const tab = (c.req.query('tab') || 'all').toLowerCase();
+    const q = (c.req.query('q') || '').trim();
+    const page = Math.max(1, parseInt(c.req.query('page') || '1', 10) || 1);
+    const perPage = Math.min(48, Math.max(1, parseInt(c.req.query('per_page') || '12', 10) || 12));
+
+    const where: string[] = ['1 = 1'];
+    const args: any[] = [];
+    if (tab !== 'all') { where.push('LOWER(card_type) = LOWER(?)'); args.push(tab); }
+    if (q) {
+      where.push('(item_name LIKE ? COLLATE NOCASE OR ref_code LIKE ? COLLATE NOCASE)');
+      args.push(`%${q}%`, `%${q}%`);
+    }
+    const whereSql = where.join(' AND ');
+
+    const countRow = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) AS n FROM item_cards WHERE ${whereSql}`
+    ).bind(...args).first() as any;
+    const total = countRow?.n || 0;
+
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT ref_code, item_name, card_type, item_rank, coin_value, stats
+       FROM item_cards WHERE ${whereSql}
+       ORDER BY card_type ASC, item_name ASC LIMIT ? OFFSET ?`
+    ).bind(...args, perPage, (page - 1) * perPage).all();
+
+    const cards = (rows.results || []).map((r: any) => {
+      let art = null;
+      try { art = JSON.parse(r.stats || '{}').art || null; } catch (e) { /* older rows */ }
+      return {
+        ref_code: r.ref_code, item_name: r.item_name, card_type: r.card_type,
+        item_rank: r.item_rank, coin_value: r.coin_value,
+        bound: false, listed: false, tradeable: true, art,
+      };
+    });
+
+    const tabRows = await c.env.sorc_db.prepare(
+      `SELECT card_type AS t, COUNT(*) AS n FROM item_cards GROUP BY card_type`
+    ).all();
+
+    return c.json({
+      cards, total, page, per_page: perPage,
+      pages: Math.max(1, Math.ceil(total / perPage)),
+      tabs: (tabRows.results || []).map((r: any) => ({ type: r.t || 'Unknown', count: r.n })),
+    });
+  } catch (error: any) {
+    return c.json({ cards: [], total: 0, page: 1, per_page: 12, pages: 1, tabs: [] });
+  }
+});
+
 export default app;

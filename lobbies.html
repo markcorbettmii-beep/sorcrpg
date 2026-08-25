@@ -484,7 +484,57 @@
     body.lawful-mode .member-name-menu a:hover, body.lawful-mode .member-name-menu button:hover { background: #f0ede6; color: #2c2c2c; }
     body.lawful-mode .member-name-menu button.summon-opt:hover { background: #efe8ff; color: #5a30b0; }
     body.lawful-mode .leave-btn:hover { background: #fbe6e4; }
-    </style>
+  
+    /* ── Card picker ─────────────────────────────────────────── */
+    .card-pick-btn { flex:0 0 auto; background:#1a1505; border:1px solid #5a4a00; color:#b9aa00; font-size:1.05rem;
+                     padding:0 0.6rem; border-radius:8px; cursor:pointer; line-height:1; }
+    .card-pick-btn:hover { background:#241d05; }
+    .cp-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.84); display:none; align-items:center;
+                  justify-content:center; padding:1rem; z-index:5000; }
+    .cp-overlay.open { display:flex; }
+    .cp-box { background:#121212; border:1px solid #2a2a2a; border-radius:14px; width:100%; max-width:640px;
+              max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+    .cp-head { padding:0.85rem 1rem 0.6rem; border-bottom:1px solid #222; }
+    .cp-head h3 { margin:0 0 0.55rem; color:#b9aa00; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.07em; }
+    .cp-verbs { display:flex; gap:0.35rem; margin-bottom:0.55rem; }
+    .cp-verb { flex:1; padding:0.34rem; border-radius:6px; border:1px solid #333; background:#181818; color:#888;
+               font-size:0.72rem; font-weight:bold; cursor:pointer; }
+    .cp-verb.active { background:#1a1505; border-color:#b9aa00; color:#b9aa00; }
+    .cp-search { width:100%; padding:0.45rem 0.65rem; border-radius:7px; border:1px solid #2a2a2a;
+                 background:#0d0d0d; color:#ddd; font-size:0.82rem; }
+    .cp-tabs { display:flex; gap:0.3rem; overflow-x:auto; padding:0.5rem 1rem 0; }
+    .cp-tab { flex:0 0 auto; padding:0.28rem 0.7rem; border-radius:20px; border:1px solid #2a2a2a; background:#161616;
+              color:#888; font-size:0.72rem; cursor:pointer; white-space:nowrap; }
+    .cp-tab.active { background:#1a1505; border-color:#b9aa00; color:#b9aa00; }
+    .cp-grid { flex:1; overflow-y:auto; padding:0.7rem 1rem; display:grid;
+               grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:0.55rem; }
+    .cp-card { background:#161616; border:1px solid #262626; border-radius:9px; overflow:hidden; cursor:pointer;
+               transition:border-color 0.15s, transform 0.1s; }
+    .cp-card:hover { border-color:#b9aa00; transform:translateY(-2px); }
+    .cp-card.locked { opacity:0.42; cursor:not-allowed; }
+    .cp-card.locked:hover { border-color:#262626; transform:none; }
+    .cp-art { width:100%; aspect-ratio:3/4; object-fit:cover; background:#0c0c0c; display:block; }
+    .cp-art-ph { width:100%; aspect-ratio:3/4; background:#0c0c0c; display:flex; align-items:center;
+                 justify-content:center; color:#333; font-size:1.7rem; }
+    .cp-meta { padding:0.4rem 0.5rem; }
+    .cp-name { color:#e0cfc0; font-size:0.76rem; font-weight:bold; line-height:1.25; }
+    .cp-ref { font-family:ui-monospace,Menlo,monospace; color:#8a7f00; font-size:0.66rem; margin-top:0.1rem; }
+    .cp-coin { color:#b9aa00; font-size:0.72rem; margin-top:0.15rem; }
+    .cp-lock { color:#c87d00; font-size:0.64rem; margin-top:0.15rem; }
+    .cp-foot { border-top:1px solid #222; padding:0.6rem 1rem; display:flex; align-items:center;
+               justify-content:space-between; gap:0.5rem; }
+    .cp-pager { display:flex; align-items:center; gap:0.5rem; color:#777; font-size:0.75rem; }
+    .cp-pager button { background:#181818; border:1px solid #333; color:#aaa; border-radius:6px;
+                       padding:0.2rem 0.6rem; cursor:pointer; font-size:0.8rem; }
+    .cp-pager button:disabled { opacity:0.35; cursor:not-allowed; }
+    .cp-close { background:#1a1a1a; border:1px solid #3a3a3a; color:#aaa; border-radius:7px;
+                padding:0.35rem 0.9rem; font-weight:bold; cursor:pointer; font-size:0.78rem; }
+    .cp-empty { grid-column:1/-1; text-align:center; color:#555; padding:2rem 1rem; font-size:0.84rem; line-height:1.6; }
+    body.lawful-mode .cp-box { background:#fff; border-color:#ddd; }
+    body.lawful-mode .cp-card { background:#fbfaf7; border-color:#e2ded4; }
+    body.lawful-mode .cp-name { color:#2c2c2c; }
+    body.lawful-mode .cp-search { background:#f7f5f0; color:#333; border-color:#ddd; }
+  </style>
 </head>
 <body>
   <script src="solar-bg.js"></script>
@@ -518,6 +568,27 @@
   </div>
 
   <!-- REPORT MODAL -->
+
+  <div class="cp-overlay" id="cardPicker" onclick="if(event.target===this)closeCardPicker()">
+    <div class="cp-box">
+      <div class="cp-head">
+        <h3 id="cpTitle">&#127183; Which Card are you selling?</h3>
+        <div class="cp-verbs">
+          <button class="cp-verb active" data-verb="WTS" onclick="cpSetVerb('WTS')">Sell</button>
+          <button class="cp-verb" data-verb="WTB" onclick="cpSetVerb('WTB')">Buy</button>
+          <button class="cp-verb" data-verb="WTT" onclick="cpSetVerb('WTT')">Trade</button>
+        </div>
+        <input type="text" class="cp-search" id="cpSearch" placeholder="Search by name or ref #..."
+               oninput="cpSearch(this.value)" />
+      </div>
+      <div class="cp-tabs" id="cpTabs"></div>
+      <div class="cp-grid" id="cpGrid"></div>
+      <div class="cp-foot">
+        <div class="cp-pager" id="cpPager"></div>
+        <button class="cp-close" onclick="closeCardPicker()">Cancel</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay hidden" id="reportModal">
     <div class="modal-box">
       <h3>&#9888; Report Member</h3>
@@ -1618,7 +1689,8 @@
               '<div class="chat-tab-pane" id="chatPane-trade">' +
                 '<div class="chat-messages" id="tradeMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No trades yet. Post WTS:, WTB:, or WTT: messages to start trading.</div></div>' +
                 '<div class="chat-input-row">' +
-                  '<input type="text" class="chat-input" id="tradeInput" placeholder="WTT: MobCard, WTS: MobCard, WTB: MobCard" maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
+                  '<button class="card-pick-btn" onclick="openCardPicker()" title="Pick a Card from your collection">&#127183;</button>' +
+                  '<input type="text" class="chat-input" id="tradeInput" placeholder="Tap &#127183; to pick a Card..." maxlength="60" onkeydown="if(event.key===\'Enter\')sendTradeChat()" />' +
                   '<button class="chat-send" onclick="sendTradeChat()">Post</button>' +
                 '</div>' +
               '</div>' +
@@ -2304,6 +2376,161 @@
         flash('Failed', '#5a1a1a', '#8a2a2a');
         showToast('Could not reach server.', true);
       }
+    };
+
+
+    /* ── Card picker ───────────────────────────────────────────
+       Nobody should have to remember "#MOB001". Tap the Card, the line
+       writes itself. WTS:/WTB: name one Card; WTT: is a barter, so it asks
+       for yours first and then what you want back — and that second Card
+       comes from the whole catalog, since you do not own it yet. */
+    var cpVerb = 'WTS';
+    var cpTab = 'all';
+    var cpQuery = '';
+    var cpPage = 1;
+    var cpStep = 'give';      // 'give' = your collection, 'want' = the catalog
+    var cpGive = null;        // the Card chosen in step one of a WTT
+    var cpSearchTimer = null;
+
+    window.openCardPicker = function() {
+      cpVerb = 'WTS'; cpTab = 'all'; cpQuery = ''; cpPage = 1;
+      cpStep = 'give'; cpGive = null;
+      document.getElementById('cardPicker').classList.add('open');
+      renderPickerChrome();
+      loadPickerCards();
+    };
+    window.closeCardPicker = function() {
+      document.getElementById('cardPicker').classList.remove('open');
+    };
+    window.cpSetVerb = function(v) {
+      cpVerb = v; cpPage = 1; cpStep = 'give'; cpGive = null;
+      renderPickerChrome(); loadPickerCards();
+    };
+    window.cpSetTab = function(t) { cpTab = t; cpPage = 1; loadPickerCards(); };
+    window.cpSetPage = function(p) { cpPage = p; loadPickerCards(); };
+    window.cpSearch = function(v) {
+      cpQuery = v;
+      if (cpSearchTimer) clearTimeout(cpSearchTimer);
+      cpSearchTimer = setTimeout(function() { cpPage = 1; loadPickerCards(); }, 220);
+    };
+
+    function renderPickerChrome() {
+      var title = document.getElementById('cpTitle');
+      if (cpVerb === 'WTT') {
+        title.innerHTML = cpStep === 'give'
+          ? '&#127183; Step 1 of 2 &mdash; what are you giving?'
+          : '&#127183; Step 2 of 2 &mdash; what do you want for ' + esc(cpGive.item_name) + '?';
+      } else {
+        title.innerHTML = cpVerb === 'WTS'
+          ? '&#127183; Which Card are you selling?'
+          : '&#127183; Which Card do you want to buy?';
+      }
+      document.querySelectorAll('.cp-verb').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.verb === cpVerb);
+      });
+    }
+
+    // WTB: names a Card you do not hold, and WTT: step two likewise — both read
+    // the catalog. Everything else reads your own collection.
+    function pickerSource() {
+      if (cpVerb === 'WTB') return '/api/cards/catalog';
+      if (cpVerb === 'WTT' && cpStep === 'want') return '/api/cards/catalog';
+      return '/api/cards/mine';
+    }
+
+    async function loadPickerCards() {
+      var grid = document.getElementById('cpGrid');
+      grid.innerHTML = '<div class="cp-empty">Loading...</div>';
+      try {
+        var url = API_URL + pickerSource() +
+          '?tab=' + encodeURIComponent(cpTab) +
+          '&q=' + encodeURIComponent(cpQuery) +
+          '&page=' + cpPage + '&per_page=12';
+        var res = await fetch(url, { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var data = await readJson(res);
+        renderPickerTabs(data.tabs || []);
+        renderPickerGrid(data);
+        renderPickerPager(data);
+      } catch(e) {
+        grid.innerHTML = '<div class="cp-empty">Could not load your Cards.</div>';
+      }
+    }
+
+    function renderPickerTabs(tabs) {
+      var el = document.getElementById('cpTabs');
+      var html = '<button class="cp-tab' + (cpTab === 'all' ? ' active' : '') +
+                 '" onclick="cpSetTab(\'all\')">All</button>';
+      tabs.forEach(function(t) {
+        if (!t.type || t.type === 'Unknown') return;
+        html += '<button class="cp-tab' + (cpTab === String(t.type).toLowerCase() ? ' active' : '') +
+                '" onclick="cpSetTab(\'' + esc(String(t.type).toLowerCase()) + '\')">' +
+                esc(t.type) + ' <span style="opacity:0.6;">' + t.count + '</span></button>';
+      });
+      el.innerHTML = html;
+    }
+
+    function renderPickerGrid(data) {
+      var grid = document.getElementById('cpGrid');
+      var cards = data.cards || [];
+      if (!cards.length) {
+        var msg = cpQuery
+          ? 'No Card matches &ldquo;' + esc(cpQuery) + '&rdquo;.'
+          : (pickerSource().indexOf('catalog') !== -1
+              ? 'No Cards in the catalog yet.'
+              : 'You hold no tradeable Cards yet.<br/><span style="color:#444;font-size:0.78rem;">Cards are earned in recorded Campaign Room sessions.</span>');
+        grid.innerHTML = '<div class="cp-empty">' + msg + '</div>';
+        return;
+      }
+      grid.innerHTML = cards.map(function(c) {
+        var locked = !c.tradeable;
+        var why = c.bound ? 'Bound' : (c.listed ? 'On the Exchange' : '');
+        var art = c.art
+          ? '<img class="cp-art" src="' + esc(c.art) + '" alt="" loading="lazy" />'
+          : '<div class="cp-art-ph">&#127183;</div>';
+        return '<div class="cp-card' + (locked ? ' locked' : '') + '"' +
+          (locked ? '' : ' onclick="cpChoose(\'' + esc(c.ref_code) + '\',\'' + esc(c.item_name).replace(/'/g, "\\'") + '\')"') +
+          '>' + art +
+          '<div class="cp-meta">' +
+            '<div class="cp-name">' + esc(c.item_name) + '</div>' +
+            '<div class="cp-ref">#' + esc(c.ref_code) + '</div>' +
+            '<div class="cp-coin">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
+            (locked ? '<div class="cp-lock">&#128274; ' + why + '</div>' : '') +
+          '</div></div>';
+      }).join('');
+    }
+
+    function renderPickerPager(data) {
+      var el = document.getElementById('cpPager');
+      var pages = data.pages || 1;
+      if (pages <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML =
+        '<button onclick="cpSetPage(' + (cpPage - 1) + ')"' + (cpPage <= 1 ? ' disabled' : '') + '>&#9664;</button>' +
+        '<span>Page ' + cpPage + ' of ' + pages + '</span>' +
+        '<button onclick="cpSetPage(' + (cpPage + 1) + ')"' + (cpPage >= pages ? ' disabled' : '') + '>&#9654;</button>';
+    }
+
+    // A Card was tapped. For WTT the first tap only records what you are
+    // giving and re-opens the picker against the catalog; the line is written
+    // on the second tap.
+    window.cpChoose = function(ref, name) {
+      if (cpVerb === 'WTT' && cpStep === 'give') {
+        cpGive = { ref_code: ref, item_name: name };
+        cpStep = 'want'; cpTab = 'all'; cpQuery = ''; cpPage = 1;
+        var box = document.getElementById('cpSearch');
+        if (box) box.value = '';
+        renderPickerChrome();
+        loadPickerCards();
+        return;
+      }
+      var line = cpVerb === 'WTT'
+        ? 'WTT: #' + cpGive.ref_code + '>#' + ref      // refs only: names blow the 60-char cap
+        : cpVerb + ': ' + name + ' #' + ref;
+      var input = document.getElementById('tradeInput');
+      if (input) {
+        input.value = line.slice(0, 60);
+        input.focus();
+      }
+      closeCardPicker();
     };
 
     /* ── Chat tab switcher ─────────────────────────────────── */
