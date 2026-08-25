@@ -3747,104 +3747,55 @@
       master.connect(ctx.destination);
       var now = ctx.currentTime;
 
-      if (lobbyTheme === 'terminal') {
-        /* Sci-fi klaxon - three sharp two-tone bursts */
-        [0, 0.42, 0.84].forEach(function(off) {
-          [[880, 0], [660, 0.20]].forEach(function(pair) {
-            var t = now + off + pair[1];
-            var osc = ctx.createOscillator();
-            osc.type = 'square';
-            osc.frequency.value = pair[0];
-            var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 2200;
-            var g = ctx.createGain();
-            g.gain.setValueAtTime(0.42, t);
-            g.gain.linearRampToValueAtTime(0.36, t + 0.16);
-            g.gain.linearRampToValueAtTime(0, t + 0.19);
-            osc.connect(lpf); lpf.connect(g); g.connect(master);
-            osc.start(t); osc.stop(t + 0.22);
-          });
-        });
-        /* Sub-bass pulse on each burst */
-        [0, 0.42, 0.84].forEach(function(off) {
-          var osc = ctx.createOscillator();
-          osc.type = 'sine'; osc.frequency.value = 80;
-          var g = ctx.createGain();
-          g.gain.setValueAtTime(0.5, now + off);
-          g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.28);
-          osc.connect(g); g.connect(master);
-          osc.start(now + off); osc.stop(now + off + 0.30);
-        });
+      /* Ready Check is always the sword clash + war drum, on every lobby theme.
+         Theme ambience is separate and unaffected. */
 
-      } else if (lobbyTheme === 'veilwood') {
-        /* Fantasy horn fanfare - rising four-note call */
-        var hornNotes = [392, 523, 659, 784]; /* G4 C5 E5 G5 */
-        var cursor = now;
-        hornNotes.forEach(function(freq, i) {
-          var dur = i < 3 ? 0.24 : 0.75;
-          [1, 2, 3].forEach(function(h) {
-            var osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = freq * h;
-            var lpf = ctx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = i < 3 ? 2400 : 3200;
-            var g = ctx.createGain();
-            var vol = [0.30, 0.14, 0.07][h - 1];
-            g.gain.setValueAtTime(0, cursor);
-            g.gain.linearRampToValueAtTime(vol, cursor + 0.05);
-            g.gain.setValueAtTime(vol * 0.85, cursor + dur - 0.06);
-            g.gain.linearRampToValueAtTime(0, cursor + dur + 0.10);
-            osc.connect(lpf); lpf.connect(g); g.connect(master);
-            osc.start(cursor); osc.stop(cursor + dur + 0.15);
-          });
-          cursor += i < 3 ? 0.26 : 0;
-        });
+      /* Metallic sword clash - sharp and crisp */
+      var clashStart = now;
+      var clashOsc = ctx.createOscillator();
+      clashOsc.type = 'square';
+      clashOsc.frequency.setValueAtTime(3200, clashStart);
+      clashOsc.frequency.exponentialRampToValueAtTime(1600, clashStart + 0.3);
+      var clashFilter = ctx.createBiquadFilter();
+      clashFilter.type = 'highpass';
+      clashFilter.frequency.value = 2000;
+      var clashGain = ctx.createGain();
+      clashGain.gain.setValueAtTime(0.5, clashStart);
+      clashGain.gain.exponentialRampToValueAtTime(0.05, clashStart + 0.25);
+      clashGain.gain.exponentialRampToValueAtTime(0, clashStart + 0.35);
+      clashOsc.connect(clashFilter);
+      clashFilter.connect(clashGain);
+      clashGain.connect(master);
+      clashOsc.start(clashStart);
+      clashOsc.stop(clashStart + 0.35);
 
-      } else {
-        /* Battle alert: sharp metallic sword clash + war drum strike */
-        /* Metallic sword clash - sharp and crisp */
-        var clashStart = now;
-        var clashOsc = ctx.createOscillator();
-        clashOsc.type = 'square';
-        clashOsc.frequency.setValueAtTime(3200, clashStart);
-        clashOsc.frequency.exponentialRampToValueAtTime(1600, clashStart + 0.3);
-        var clashFilter = ctx.createBiquadFilter();
-        clashFilter.type = 'highpass';
-        clashFilter.frequency.value = 2000;
-        var clashGain = ctx.createGain();
-        clashGain.gain.setValueAtTime(0.5, clashStart);
-        clashGain.gain.exponentialRampToValueAtTime(0.05, clashStart + 0.25);
-        clashGain.gain.exponentialRampToValueAtTime(0, clashStart + 0.35);
-        clashOsc.connect(clashFilter);
-        clashFilter.connect(clashGain);
-        clashGain.connect(master);
-        clashOsc.start(clashStart);
-        clashOsc.stop(clashStart + 0.35);
+      /* War drum beat - deep resonant strike */
+      var drumStart = now + 0.15;
+      var drumOsc = ctx.createOscillator();
+      drumOsc.type = 'sine';
+      drumOsc.frequency.setValueAtTime(100, drumStart);
+      drumOsc.frequency.exponentialRampToValueAtTime(40, drumStart + 0.5);
+      var drumGain = ctx.createGain();
+      drumGain.gain.setValueAtTime(0.7, drumStart);
+      drumGain.gain.exponentialRampToValueAtTime(0.1, drumStart + 0.4);
+      drumGain.gain.exponentialRampToValueAtTime(0, drumStart + 0.7);
+      drumOsc.connect(drumGain);
+      drumGain.connect(master);
+      drumOsc.start(drumStart);
+      drumOsc.stop(drumStart + 0.75);
 
-        /* War drum beat - deep resonant strike */
-        var drumStart = now + 0.15;
-        var drumOsc = ctx.createOscillator();
-        drumOsc.type = 'sine';
-        drumOsc.frequency.setValueAtTime(100, drumStart);
-        drumOsc.frequency.exponentialRampToValueAtTime(40, drumStart + 0.5);
-        var drumGain = ctx.createGain();
-        drumGain.gain.setValueAtTime(0.7, drumStart);
-        drumGain.gain.exponentialRampToValueAtTime(0.1, drumStart + 0.4);
-        drumGain.gain.exponentialRampToValueAtTime(0, drumStart + 0.7);
-        drumOsc.connect(drumGain);
-        drumGain.connect(master);
-        drumOsc.start(drumStart);
-        drumOsc.stop(drumStart + 0.75);
-
-        /* Sub-bass rumble for impact */
-        var bassStart = now + 0.15;
-        var bassOsc = ctx.createOscillator();
-        bassOsc.type = 'sine';
-        bassOsc.frequency.value = 50;
-        var bassGain = ctx.createGain();
-        bassGain.gain.setValueAtTime(0.5, bassStart);
-        bassGain.gain.exponentialRampToValueAtTime(0, bassStart + 0.8);
-        bassOsc.connect(bassGain);
-        bassGain.connect(master);
-        bassOsc.start(bassStart);
-        bassOsc.stop(bassStart + 0.85);
-      }
+      /* Sub-bass rumble for impact */
+      var bassStart = now + 0.15;
+      var bassOsc = ctx.createOscillator();
+      bassOsc.type = 'sine';
+      bassOsc.frequency.value = 50;
+      var bassGain = ctx.createGain();
+      bassGain.gain.setValueAtTime(0.5, bassStart);
+      bassGain.gain.exponentialRampToValueAtTime(0, bassStart + 0.8);
+      bassOsc.connect(bassGain);
+      bassGain.connect(master);
+      bassOsc.start(bassStart);
+      bassOsc.stop(bassStart + 0.85);
 
       setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
     }
