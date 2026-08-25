@@ -4937,7 +4937,7 @@ function extractCardRef(text: string): string | null {
 app.get('/api/exchange/wallet', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const gated = await exchangeGate(c, user, 'The Exchange');
-  if (gated) return gated;
+  if (gated) return c.json({ coin: 0, can_trade: false });
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const coin = await walletBalance(c.env.sorc_db, user.id);
@@ -4950,7 +4950,7 @@ app.get('/api/exchange/wallet', authMiddleware, async (c) => {
 app.get('/api/exchange/slots', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const gated = await exchangeGate(c, user, 'The Exchange');
-  if (gated) return gated;
+  if (gated) return c.json({ used: 0, max: 0, free: 0, tier: 'Guest', can_trade: false });
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const max = await slotAllowance(c.env.sorc_db, user);
@@ -4966,8 +4966,6 @@ app.get('/api/exchange/slots', authMiddleware, async (c) => {
 
 app.get('/api/card', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  const gated = await exchangeGate(c, user, 'Card inspection');
-  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const ref = c.req.query('ref') || null;
@@ -4999,8 +4997,6 @@ app.get('/api/card', authMiddleware, async (c) => {
 
 app.get('/api/exchange/listings', authMiddleware, async (c) => {
   const user = c.get('user') as any;
-  const gated = await exchangeGate(c, user, 'The Exchange');
-  if (gated) return gated;
   try {
     await ensureExchangeTables(c.env.sorc_db);
     const tab = (c.req.query('tab') || 'bazaar').toLowerCase();
@@ -5255,7 +5251,7 @@ async function ownedCardRow(db: any, userId: string, refCode: string) {
 app.get('/api/cards/mine', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const gated = await exchangeGate(c, user, 'the card picker');
-  if (gated) return gated;
+  if (gated) return c.json({ cards: [], total: 0, page: 1, per_page: 12, pages: 1, tabs: [], can_trade: false });
   try {
     await ensureExchangeTables(c.env.sorc_db);
     await ensureOwnershipColumns(c.env.sorc_db);
@@ -5471,6 +5467,16 @@ async function settleHandTrade(db: any, trade: any, at: string) {
 // presented, so a stale or edited local copy buys nothing.
 async function exchangeGate(c: any, user: any, what: string): Promise<any | null> {
   if (isPrivileged(user)) return null;
+
+  // Guests may look, never touch. Browsing the Bazaar and inspecting a Card
+  // are open to them; anything that moves a Card or Coin is not, because a
+  // guest holds no real account for property to belong to.
+  if (isGuestUser(user)) {
+    return c.json({
+      error: `Guests can browse the Bazaar but cannot trade. Create an account and assess to use ${what}.`,
+      guest_blocked: true,
+    }, 403);
+  }
 
   const assessment = await c.env.sorc_db.prepare(
     `SELECT role_granted, taken_at FROM assessments WHERE user_id = ? ORDER BY taken_at DESC LIMIT 1`
