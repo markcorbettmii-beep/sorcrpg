@@ -64,6 +64,47 @@
     var OWNER_EMAILS = ['corbett@sorcrpg.com'];
     var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
 
+    /* Trophy & Collectables on the profile. Rendered only when the member has
+       opened theirs — a private collection is not advertised, not even as a
+       locked door, so nobody is prompted to go asking about it.
+
+       The Vault is deliberately absent. A vault is a safe, and publishing what
+       is in it is the opposite of what a safe is for. */
+    async function loadCollectionSection(uid, authKey) {
+        var el = document.getElementById('collectionSection');
+        if (!el || !uid) return;
+        try {
+            var res = await fetch(API_URL + '/api/collection/' + encodeURIComponent(uid), {
+                headers: authKey ? { 'X-Auth-Key': authKey } : {}
+            });
+            var data = await res.json();
+            if (!data || !data.cards || (!data.is_public && !data.is_mine)) return;
+
+            var art = data.cards.slice(0, 6).map(function(c) {
+                var img = c.art
+                    ? '<img src="' + escapeHtml(c.art) + '" alt="' + escapeHtml(c.item_name) + '" loading="lazy" ' +
+                      'style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:6px;display:block;" />'
+                    : '<div style="width:100%;aspect-ratio:3/4;background:#0c0c0c;border-radius:6px;display:flex;' +
+                      'align-items:center;justify-content:center;color:#333;font-size:1.3rem;">&#127183;</div>';
+                return '<div title="' + escapeHtml(c.item_name) + ' #' + escapeHtml(c.ref_code) + '">' + img + '</div>';
+            }).join('');
+
+            el.innerHTML =
+                '<div class="profile-section">'
+                  + '<h3 style="color:#b9aa00;font-size:0.92rem;margin:0 0 0.6rem;">&#127942; Trophy &amp; Collectables'
+                    + (data.is_mine && !data.is_public
+                        ? ' <span style="color:#c87d00;font-size:0.7rem;font-weight:normal;">(private &mdash; only you see this)</span>'
+                        : '')
+                  + '</h3>'
+                  + '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.4rem;">' + art + '</div>'
+                  + '<div style="margin-top:0.6rem;font-size:0.78rem;color:#777;">'
+                    + data.total + ' Card' + (data.total === 1 ? '' : 's')
+                    + (data.is_mine ? ' &middot; <a href="collection.html" style="color:#b9aa00;">Open your collection</a>' : '')
+                  + '</div>'
+                + '</div>';
+        } catch(e) { /* leave the section out entirely rather than show an error */ }
+    }
+
     function getRoleColor(role) {
         if (role === 'OWNER') return 'background:#b9aa00;color:#222;';
         if (role === 'ADMIN') return 'background:#c93f35;color:#fff;';
@@ -226,6 +267,7 @@
                     + '</div>'
                     + bioSection
                     + emailSection
+                    + '<div id="collectionSection"></div>'
                     + achievementsSection
                     + actionSection
                     + charSheetSection
@@ -234,6 +276,7 @@
             if (!isSelf && currentUser && currentUser.authKey) {
                 loadProfileActions(user.id, currentUser.authKey);
             }
+            loadCollectionSection(user.id, currentUser && currentUser.authKey);
 
         } catch(e) {
             document.getElementById('profileApp').innerHTML = '<div class="not-found">Could not load profile.</div>';

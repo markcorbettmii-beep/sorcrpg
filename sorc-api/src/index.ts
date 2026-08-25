@@ -5188,6 +5188,15 @@ app.post('/api/exchange/buy', authMiddleware, async (c) => {
     const price = listing.coin_price || 0;
     const now = new Date().toISOString();
     await ensureOwnershipColumns(c.env.sorc_db);
+
+    // No room, no purchase — checked before any Coin moves, so a full shelf
+    // costs nothing rather than taking payment for a Card with nowhere to go.
+    if (!(await collectionHasRoom(c.env.sorc_db, user))) {
+      return c.json({
+        error: 'Your Trophy & Collectables is full. Free a slot or add space before buying.',
+        collection_full: true,
+      }, 409);
+    }
     await walletBalance(c.env.sorc_db, user.id); // ensure the purse row exists
 
     // Claim the listing before any Coin moves. Conditional on it still being
@@ -5772,6 +5781,199 @@ app.post('/api/cards/lock', authMiddleware, async (c) => {
     });
   } catch (error: any) {
     return c.json({ error: 'Could not change that Card.', details: error.message }, 500);
+  }
+});
+
+// ─── TROPHY & COLLECTABLES: VISIBILITY AND SPACE ─────────────────────────────
+// How much room a member has to keep Cards, and whether anyone else may look.
+//
+// Basic members get a modest shelf, Pro members a larger one, and either can
+// buy more room with Community Points — Points are earned on the platform, so
+// space is something you work toward rather than something you purchase with
+// money.
+const COLLECTION_SLOTS_BASIC = 24;
+const COLLECTION_SLOTS_PRO = 72;
+const COLLECTION_SLOT_PACK = 12;      // Cards added per purchase
+const COLLECTION_SLOT_COST = 250;     // Community Points per pack
+const COLLECTION_SLOT_MAX_BONUS = 240; // Ceiling on bought space
+
+async function ensureCollectionColumns(db: any) {
+  for (const col of [
+    'collection_public INTEGER NOT NULL DEFAULT 0',
+    'collection_slot_bonus INTEGER NOT NULL DEFAULT 0',
+  ]) {
+    try { await db.prepare(`ALTER TABLE users ADD COLUMN ${col}`).run(); } catch (e) { /* present */ }
+  }
+}
+
+async function collectionCapacity(db: any, user: any): Promise<number> {
+  const base = (await isProMember(db, user)) ? COLLECTION_SLOTS_PRO : COLLECTION_SLOTS_BASIC;
+  const row = await db.prepare(
+    `SELECT collection_slot_bonus FROM users WHERE id = ?`
+  ).bind(user.id).first() as any;
+  return base + (row?.collection_slot_bonus || 0);
+}
+
+async function collectionHeld(db: any, userId: string): Promise<number> {
+  const row = await db.prepare(
+    `SELECT COUNT(*) AS n FROM member_inventory WHERE user_id = ? AND qty > 0`
+  ).bind(userId).first() as any;
+  return row?.n || 0;
+}
+
+// Is there room for one more Card? Privileged accounts hold the whole catalog
+// for testing and are not held to the shelf.
+async function collectionHasRoom(db: any, user: any): Promise<boolean> {
+  if (isPrivileged(user)) return true;
+  await ensureCollectionColumns(db);
+  const [held, cap] = await Promise.all([
+    collectionHeld(db, user.id),
+    collectionCapacity(db, user),
+  ]);
+  return held < cap;
+}
+
+app.get('/api/collection/settings', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    await ensureOwnershipColumns(c.env.sorc_db);
+    await ensureCollectionColumns(c.env.sorc_db);
+
+    const fresh = await c.env.sorc_db.prepare(
+      `SELECT collection_public, collection_slot_bonus, community_points FROM users WHERE id = ?`
+    ).bind(user.id).first() as any;
+
+    const isPro = await isProMember(c.env.sorc_db, user);
+    const base = isPro ? COLLECTION_SLOTS_PRO : COLLECTION_SLOTS_BASIC;
+    const bonus = fresh?.collection_slot_bonus || 0;
+    const held = await collectionHeld(c.env.sorc_db, user.id);
+
+    return c.json({
+      is_public: !!(fresh?.collection_public),
+      tier: isPro ? 'Pro' : 'Basic',
+      held, base_slots: base, bonus_slots: bonus, total_slots: base + bonus,
+      community_points: fresh?.community_points || 0,
+      pack_size: COLLECTION_SLOT_PACK,
+      pack_cost: COLLECTION_SLOT_COST,
+      bonus_cap: COLLECTION_SLOT_MAX_BONUS,
+      can_buy: bonus < COLLECTION_SLOT_MAX_BONUS,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not read your collection settings.' }, 500);
+  }
+});
+
+// Public or private. A public collection can be looked at by anyone; a private
+// one only by its owner. Off by default — a member opts in to being seen.
+app.post('/api/collection/visibility', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureCollectionColumns(c.env.sorc_db);
+    const { is_public } = await c.req.json() as any;
+    const wantPublic = is_public === true || is_public === 1 || is_public === 'true';
+    await c.env.sorc_db.prepare(
+      `UPDATE users SET collection_public = ? WHERE id = ?`
+    ).bind(wantPublic ? 1 : 0, user.id).run();
+    return c.json({ success: true, is_public: wantPublic });
+  } catch (error: any) {
+    return c.json({ error: 'Could not change that.' }, 500);
+  }
+});
+
+// Buy shelf space with Community Points. Follows the same discipline as every
+// other balance: the Points are read fresh, the debit is conditional on there
+// being enough, and the row count is checked — so a double-tap cannot buy two
+// packs for the price of one.
+app.post('/api/collection/slots/buy', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureCollectionColumns(c.env.sorc_db);
+    const fresh = await c.env.sorc_db.prepare(
+      `SELECT collection_slot_bonus, community_points FROM users WHERE id = ?`
+    ).bind(user.id).first() as any;
+    if (!fresh) return c.json({ error: 'Account not found.' }, 404);
+
+    const bonus = fresh.collection_slot_bonus || 0;
+    if (bonus >= COLLECTION_SLOT_MAX_BONUS) {
+      return c.json({ error: 'Your collection is already at its largest.' }, 409);
+    }
+    const points = fresh.community_points || 0;
+    if (points < COLLECTION_SLOT_COST) {
+      return c.json({
+        error: `That costs ${COLLECTION_SLOT_COST} Community Points — you have ${points}.`,
+        insufficient: true, points, cost: COLLECTION_SLOT_COST,
+      }, 402);
+    }
+
+    const paid = await c.env.sorc_db.prepare(
+      `UPDATE users
+         SET community_points = community_points - ?,
+             collection_slot_bonus = collection_slot_bonus + ?
+       WHERE id = ? AND community_points >= ? AND collection_slot_bonus < ?`
+    ).bind(
+      COLLECTION_SLOT_COST, COLLECTION_SLOT_PACK,
+      user.id, COLLECTION_SLOT_COST, COLLECTION_SLOT_MAX_BONUS
+    ).run();
+    if (!paid.meta || paid.meta.changes !== 1) {
+      return c.json({ error: 'Could not complete that purchase.' }, 409);
+    }
+
+    return c.json({
+      success: true,
+      added: COLLECTION_SLOT_PACK,
+      bonus_slots: bonus + COLLECTION_SLOT_PACK,
+      community_points: points - COLLECTION_SLOT_COST,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not complete that purchase.', details: error.message }, 500);
+  }
+});
+
+// Somebody else's collection. Only opens if they made it public.
+app.get('/api/collection/:uid', authMiddleware, async (c) => {
+  try {
+    await ensureExchangeTables(c.env.sorc_db);
+    await ensureOwnershipColumns(c.env.sorc_db);
+    await ensureCollectionColumns(c.env.sorc_db);
+    const uid = c.req.param('uid');
+    const viewer = c.get('user') as any;
+
+    const owner = await c.env.sorc_db.prepare(
+      `SELECT id, username, display_name, collection_public FROM users WHERE id = ?`
+    ).bind(uid).first() as any;
+    if (!owner) return c.json({ error: 'No such member.' }, 404);
+
+    const mine = viewer.id === owner.id;
+    if (!owner.collection_public && !mine && !isPrivileged(viewer)) {
+      return c.json({ error: 'That collection is private.', private: true }, 403);
+    }
+
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT inv.ref_code, inv.qty, inv.bound, inv.locked, inv.listing_id,
+              card.item_name, card.card_type, card.item_rank, card.coin_value, card.stats
+       FROM member_inventory inv
+       LEFT JOIN item_cards card ON UPPER(card.ref_code) = UPPER(inv.ref_code)
+       WHERE inv.user_id = ? AND inv.qty > 0
+       ORDER BY card.card_type ASC, card.item_name ASC LIMIT 200`
+    ).bind(uid).all();
+
+    const cards = (rows.results || []).map((r: any) => {
+      let art = null;
+      try { art = JSON.parse(r.stats || '{}').art || null; } catch (e) { /* older rows */ }
+      return {
+        ref_code: r.ref_code, item_name: r.item_name, card_type: r.card_type,
+        item_rank: r.item_rank, coin_value: r.coin_value, qty: r.qty,
+        bound: !!r.bound, locked: !!r.locked, listed: !!r.listing_id, art,
+      };
+    });
+
+    return c.json({
+      owner: { id: owner.id, name: owner.display_name || owner.username },
+      is_public: !!owner.collection_public, is_mine: mine, cards, total: cards.length,
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Could not open that collection.' }, 500);
   }
 });
 
