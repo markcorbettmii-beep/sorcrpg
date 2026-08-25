@@ -3795,18 +3795,19 @@
         });
 
       } else {
-        /* Default - bright bell chime trio */
-        [523, 659, 784].forEach(function(freq, i) {
-          var t = now + i * 0.20;
-          [1, 2.756, 5.404].forEach(function(h, j) {
-            var osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq * h;
+        /* Default - WoW-style alert: two sharp bursts with harmonics */
+        [1047, 1318].forEach(function(freq, burst) {
+          var t = now + burst * 0.35;
+          /* Primary tone + harmonics for bell-like quality */
+          [1, 1.5, 2].forEach(function(h, j) {
+            var osc = ctx.createOscillator(); osc.type = j === 0 ? 'sine' : 'sine'; osc.frequency.value = freq * h;
             var g = ctx.createGain();
-            var pk = [0.38, 0.15, 0.07][j];
-            var dec = [1.1, 0.55, 0.28][j];
+            var pk = [0.50, 0.22, 0.10][j];
             g.gain.setValueAtTime(pk, t);
-            g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+            g.gain.linearRampToValueAtTime(pk * 0.8, t + 0.08);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
             osc.connect(g); g.connect(master);
-            osc.start(t); osc.stop(t + dec + 0.05);
+            osc.start(t); osc.stop(t + 0.50);
           });
         });
       }
