@@ -2393,6 +2393,14 @@
         if (data.success) {
           flash('Summoned!', '#1a5a1a', '#2a8a2a');
           showToast((name || 'Player') + ' has been summoned to the lobby.');
+        } else if (data.already_invited) {
+          /* Not a failure — the invite is still standing. Say so on the button
+             and leave it disabled, so nobody taps it again out of doubt. */
+          flash('Invited', '#3a3000', '#6b5a00');
+          showToast(data.error, true);
+        } else if (data.declined) {
+          flash('Declined', '#3a1a1a', '#6b2020');
+          showToast(data.error, true);
         } else {
           flash('Failed', '#5a1a1a', '#8a2a2a');
           showToast(data.error || 'Could not send the invite.', true);

@@ -2372,6 +2372,11 @@ app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
   return c.json({ fellowships: fellowsRaw.results || [], others: othersRaw.results || [] });
 });
 
+// A declined summon holds off further invites from that host to that lobby for
+// a day — long enough to stop a host re-sending on a loop, short enough that a
+// misclicked Deny does not lock a Player out of a table they wanted.
+const DECLINE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
 const SUMMON_DDL = `CREATE TABLE IF NOT EXISTS lobby_summons (
   id TEXT PRIMARY KEY,
   lobby_id TEXT NOT NULL,
@@ -2399,18 +2404,46 @@ app.post('/api/lobbies/:id/summon', authMiddleware, async (c) => {
     if (to_uid === user.id) return c.json({ error: 'Cannot summon yourself.' }, 400);
 
     const target = await c.env.sorc_db.prepare(
-      `SELECT id FROM users WHERE id = ? AND (banned IS NULL OR banned = 0)`
+      `SELECT id, username, display_name FROM users WHERE id = ? AND (banned IS NULL OR banned = 0)`
     ).bind(to_uid).first() as any;
     if (!target) return c.json({ error: 'Player not found.' }, 404);
+    const targetName = target.display_name || target.username || 'That Player';
 
     const isMember = await c.env.sorc_db.prepare(
       `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
     ).bind(lobbyId, to_uid).first() as any;
     if (isMember) return c.json({ error: 'Player is already in this lobby.' }, 400);
 
-    await c.env.sorc_db.prepare(
-      `UPDATE lobby_summons SET status = 'superseded' WHERE lobby_id = ? AND from_uid = ? AND to_uid = ? AND status = 'pending'`
-    ).bind(lobbyId, user.id, to_uid).run();
+    // One invite at a time, and a "no" means no. Without these two checks a
+    // host can send the same person an unlimited stream of summons, which is
+    // the whole shape of the spam problem.
+    const priorSummon = await c.env.sorc_db.prepare(
+      `SELECT status, created_at FROM lobby_summons
+       WHERE lobby_id = ? AND from_uid = ? AND to_uid = ?
+       ORDER BY created_at DESC LIMIT 1`
+    ).bind(lobbyId, user.id, to_uid).first() as any;
+
+    if (priorSummon && priorSummon.status === 'pending') {
+      return c.json({
+        error: `${targetName} has already been invited — waiting on their answer.`,
+        already_invited: true,
+      }, 409);
+    }
+    if (priorSummon && priorSummon.status === 'denied') {
+      // A "no" holds for a day. That is long enough that a host cannot sit
+      // there re-sending, and short enough that a misclicked Deny does not
+      // lock someone out of a table they wanted. It only stops unsolicited
+      // summons either way — the Player can still join by code or answer an
+      // LFM: post whenever they like.
+      const since = Date.now() - new Date(priorSummon.created_at).getTime();
+      if (since < DECLINE_COOLDOWN_MS) {
+        const hoursLeft = Math.max(1, Math.ceil((DECLINE_COOLDOWN_MS - since) / (60 * 60 * 1000)));
+        return c.json({
+          error: `${targetName} declined your invite. You can invite them again in ${hoursLeft}h — they can still join on their own before then.`,
+          declined: true, hours_left: hoursLeft,
+        }, 409);
+      }
+    }
 
     const summonId = crypto.randomUUID();
     const fromName = user.display_name || user.username;
