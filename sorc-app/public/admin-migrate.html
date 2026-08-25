@@ -31,7 +31,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Bcrypt Migration Tool</h1>
+        <h1>Bcrypt Migration Tool</h1>
 
         <div class="status info">
             <strong>Purpose:</strong> This tool runs the password reset migration to force existing email/password users to reset their passwords as they transition to bcrypt hashing.
@@ -90,13 +90,13 @@
                 const testData = await testRes.json();
 
                 // If we get here, the server is responsive
-                statusDiv.innerHTML = '<div class="status warning">⚠️ Check the logs below for migration status</div>';
+                statusDiv.innerHTML = '<div class="status warning">Check the logs below for migration status</div>';
                 step1Div.innerHTML = '<div class="status info">Verifying migration state...</div>';
                 migrateBtn.disabled = false;
                 migrateBtn.textContent = 'Run Migration Now';
 
             } catch(e) {
-                statusDiv.innerHTML = '<div class="status error">❌ Could not connect to API: ' + e.message + '</div>';
+                statusDiv.innerHTML = '<div class="status error">Could not connect to API: ' + e.message + '</div>';
                 migrateBtn.disabled = true;
             }
         }
@@ -118,7 +118,7 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    step2Div.innerHTML = '<div class="status success">✅ Migration completed successfully!<br><br>' +
+                    step2Div.innerHTML = '<div class="status success">Migration completed successfully!<br><br>' +
                         '<strong>Result:</strong> ' + data.message + '<br><br>' +
                         (data.details && data.details.columnsAffected ? '<strong>Users affected:</strong> ' + data.details.columnsAffected + '<br><br>' : '') +
                         '<strong>Next Steps:</strong><br>' +
@@ -130,7 +130,7 @@
                 } else {
                     var errorMsg = data.error || 'Unknown error';
                     var errorDetails = data.details || '';
-                    step2Div.innerHTML = '<div class="status error">❌ Migration failed<br><br>' +
+                    step2Div.innerHTML = '<div class="status error">Migration failed<br><br>' +
                         '<strong>Error:</strong> ' + errorMsg + '<br>' +
                         (errorDetails ? '<strong>Details:</strong> ' + errorDetails + '<br>' : '') +
                         (data.errorType ? '<strong>Type:</strong> ' + data.errorType : '') +
@@ -139,7 +139,7 @@
                     migrateBtn.textContent = 'Retry Migration';
                 }
             } catch(e) {
-                step2Div.innerHTML = '<div class="status error">❌ Network error: ' + e.message + '</div>';
+                step2Div.innerHTML = '<div class="status error">Network error: ' + e.message + '</div>';
                 migrateBtn.disabled = false;
                 migrateBtn.textContent = 'Retry Migration';
             }

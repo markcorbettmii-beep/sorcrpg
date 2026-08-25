@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
   profileBtn.id = 'profileBtn';
   profileBtn.title = 'Profile';
   profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
-  profileBtn.innerHTML = '&#128100;';
+  profileBtn.innerHTML = '';
 
   window._updateProfileBtnColors = function() {
     var isLawful = document.body.classList.contains('lawful-mode');
@@ -94,9 +94,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window._profileBtn_loggedIn = function(avatarFilename) {
     if (avatarFilename) {
-      profileBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'&#128100;\'" />';
+      profileBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'\'" />';
     } else {
-      profileBtn.innerHTML = '&#128100;';
+      profileBtn.innerHTML = '';
     }
     profileBtn.onclick = function(e) {
       e.stopPropagation();
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window._profileBtn_loggedOut = function() {
-    profileBtn.innerHTML = '&#128100;';
+    profileBtn.innerHTML = '';
     profileBtn.onclick = function(e) {
       e.stopPropagation();
       window.location.href = '/signin.html';
@@ -204,8 +204,8 @@ window.showUserMiniPopup = function(e, uid, name) {
   popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
   popup.innerHTML =
     '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + escapeHtml(name) + '</div>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">👤 View Profile</a>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">✉ Send Message</a>';
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">View Profile</a>' +
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">Send Message</a>';
   document.body.appendChild(popup);
   setTimeout(function() {
     document.addEventListener('click', function removePopup() {
@@ -387,7 +387,7 @@ window.showRolePopup = function(username, userId, role) {
   popup.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">' +
       '<span style="color:#888;font-size:0.8rem;">ACCOUNT INFO</span>' +
-      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;">✕</button>' +
+      '<button id="closeRolePopup" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;padding:0;"></button>' +
     '</div>' +
     '<div style="font-weight:bold;font-size:1rem;color:#e0cfc0;">' + escapeHtml(username) + '</div>' +
     '<div style="color:#888;font-size:0.8rem;margin-top:2px;">' + escapeHtml(roleLabel) + '</div>' +
@@ -486,7 +486,7 @@ async function checkNotifications(user) {
     // ---- CP change toast ----
     var newCp = data.community_points || 0;
     if (_lastNotifCp !== null && newCp > _lastNotifCp) {
-      sorcToast('⚡ You earned ' + (newCp - _lastNotifCp) + ' Community Points!', '#b9aa00');
+      sorcToast('You earned ' + (newCp - _lastNotifCp) + ' Community Points!', '#b9aa00');
       // Update localStorage so profile page reflects new value
       try {
         var cached = JSON.parse(localStorage.getItem('sorc_user') || '{}');
@@ -499,7 +499,7 @@ async function checkNotifications(user) {
     // ---- Admin invite toast (once per session) ----
     if (data.admin_invite && !sessionStorage.getItem('sorc_invite_toasted')) {
       sessionStorage.setItem('sorc_invite_toasted', '1');
-      sorcToast('📜 You have an Admin invitation! Visit your Profile to respond.', '#c93f35');
+      sorcToast('You have an Admin invitation! Visit your Profile to respond.', '#c93f35');
     }
 
     // ---- Update nav badges ----
@@ -563,7 +563,7 @@ function showLoggedOutBadge() {
   // Default avatar icon (user circle) - mirror main login avatar colors
   var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
   var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
-  var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;">👤</span>';
+  var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;"></span>';
   existing.style.cssText = 'display:inline-flex!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;flex-wrap:wrap!important;margin:0.5rem 0 1rem 0!important;';
   existing.innerHTML = defaultAvatar + 'User · Lobbies† · Inbox · <a href="/signin.html" style="color:' + linkColor + ' !important;text-decoration:underline;">Login</a> (†Assess into role) · Fellowships · Forums · Content · Downloads';
 }

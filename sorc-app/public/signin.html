@@ -139,14 +139,14 @@
                     <label for="signupPassword">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="signupPassword" class="signin-input" placeholder="8-64 chars, 1 upper, 1 lower, 1 number" />
-                        <button class="toggle-pw" type="button" onclick="togglePassword('signupPassword', this)">👁</button>
+                        <button class="toggle-pw" type="button" onclick="togglePassword('signupPassword', this)"></button>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="signupConfirmPassword">Confirm Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="signupConfirmPassword" class="signin-input" placeholder="Confirm password" />
-                        <button class="toggle-pw" type="button" onclick="togglePassword('signupConfirmPassword', this)">👁</button>
+                        <button class="toggle-pw" type="button" onclick="togglePassword('signupConfirmPassword', this)"></button>
                     </div>
                 </div>
                 <button class="signin-btn signin-btn-primary" onclick="handleSignUp()">Create Account</button>
@@ -197,7 +197,7 @@
             // Show success message if redirected after verification
             var params = new URLSearchParams(window.location.search);
             if (params.get('verified') === 'true') {
-                showStatus('✅ Email verified! You can now sign in.', 'success');
+                showStatus('Email verified! You can now sign in.', 'success');
             }
             if (params.get('expired') === 'true') {
                 showStatus('Your session expired. Please sign in again.', 'error');
@@ -206,7 +206,7 @@
                 showStatus('That verification link is invalid or already used. Try signing in, or request a new verification email.', 'error');
             }
             if (params.get('reset') === 'true') {
-                showStatus('✅ Password updated! You can now sign in with your new password.', 'success');
+                showStatus('Password updated! You can now sign in with your new password.', 'success');
             }
             // Hide "Delve in now" link after K-ID verification
             if (params.get('kid_verified') === 'true') {
@@ -261,8 +261,8 @@
 
         window.togglePassword = function(inputId, btn) {
             var input = document.getElementById(inputId);
-            if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
-            else { input.type = 'password'; btn.textContent = '👁'; }
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = ''; }
+            else { input.type = 'password'; btn.textContent = ''; }
         };
 
         window.selectType = function(type, btn) {
@@ -395,7 +395,7 @@
                 });
                 var data = await res.json();
                 if (data.success) {
-                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                    showStatus('Verification email sent! Check your inbox and spam folder.', 'success');
                 } else {
                     showStatus(data.error || 'Could not resend email.', 'error');
                 }

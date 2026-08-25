@@ -42,7 +42,7 @@
 
             <!-- Email Verification Section -->
             <div class="verify-section">
-                <div class="email-icon">📧</div>
+                <div class="email-icon"></div>
                 <h2>Check Your Email</h2>
                 <p>We've sent a verification link to your email address. Click the link to verify your account and proceed to sign in.</p>
                 <p style="margin-bottom:0;"><span class="highlight">Check your spam folder if you don't see it.</span></p>
@@ -96,7 +96,7 @@
 
         window.handleResendVerification = async function() {
             var email = localStorage.getItem('signupEmail') || (JSON.parse(localStorage.getItem('sorc_user') || '{}').email);
-            if (!email) { showStatus('❌ Could not find email. Please sign up again.', 'error'); return; }
+            if (!email) { showStatus('Could not find email. Please sign up again.', 'error'); return; }
             try {
                 var res = await fetch(API_URL + '/api/auth/resend-verification', {
                     method: 'POST',
@@ -105,12 +105,12 @@
                 });
                 var data = await res.json();
                 if (data.success) {
-                    showStatus('✅ Verification email sent! Check your inbox and spam folder.', 'success');
+                    showStatus('Verification email sent! Check your inbox and spam folder.', 'success');
                 } else {
-                    showStatus('❌ ' + (data.error || 'Could not resend email.'), 'error');
+                    showStatus('' + (data.error || 'Could not resend email.'), 'error');
                 }
             } catch(e) {
-                showStatus('❌ Connection error. Please try again.', 'error');
+                showStatus('Connection error. Please try again.', 'error');
             }
         };
     </script>

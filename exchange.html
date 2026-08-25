@@ -219,15 +219,15 @@
         var res = await fetch(API_URL + '/api/exchange/slots', { headers: authHeaders() });
         var data = await readJson(res);
         if (data.guest_blocked) {
-          el.innerHTML = '<div class="ex-note blocked">&#128274; Guests can browse the Bazaar and inspect Cards, but cannot buy or list. ' +
+          el.innerHTML = '<div class="ex-note blocked">Guests can browse the Bazaar and inspect Cards, but cannot buy or list. ' +
             '<a href="signin.html">Create an account</a> to trade.</div>';
           canTrade = false;
         } else if (data.needs_assess) {
-          el.innerHTML = '<div class="ex-note blocked">&#128274; You must assess into Player or GM to use The Exchange. ' +
+          el.innerHTML = '<div class="ex-note blocked">You must assess into Player or GM to use The Exchange. ' +
             '<a href="take-assessment.html">Take the assessment</a>.</div>';
           canTrade = false;
         } else if (data.needs_reassess) {
-          el.innerHTML = '<div class="ex-note blocked">&#128274; ' + esc(data.error) +
+          el.innerHTML = '<div class="ex-note blocked">' + esc(data.error) +
             ' <a href="take-assessment.html">Reassess</a>.</div>';
           canTrade = false;
         } else {
@@ -242,7 +242,7 @@
       if (!isPrivileged()) { el.innerHTML = ''; return; }
       el.innerHTML =
         '<div class="ex-admin">' +
-          '<h4>&#128273; Admin &amp; Owner</h4>' +
+          '<h4>Admin &amp; Owner</h4>' +
           '<p>Grant the full live Card catalog to an account for testing. Leave the field blank to grant to yourself. ' +
              'Idempotent &mdash; running it again tops up to one of each rather than stacking duplicates.</p>' +
           '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
@@ -311,7 +311,7 @@
       var mine = currentUser && l.seller_uid === currentUser.id;
       var art = l.art
         ? '<img class="ex-card-art" src="' + esc(l.art) + '" alt="' + esc(l.item_name) + '" onclick="openCard(\'' + esc(l.ref_code) + '\')" />'
-        : '<div class="ex-card-art placeholder" onclick="openCard(\'' + esc(l.ref_code) + '\')">&#127183;</div>';
+        : '<div class="ex-card-art placeholder" onclick="openCard(\'' + esc(l.ref_code) + '\')"></div>';
       var actions = mine
         ? '<button class="ex-btn ex-cancel" onclick="cancelListing(\'' + esc(l.id) + '\')">Withdraw</button>'
         : '<button class="ex-btn ex-buy" ' + (canTrade ? '' : 'disabled title="Assess into Player or GM to buy"') +

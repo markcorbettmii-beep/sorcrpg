@@ -29,7 +29,7 @@ This keeps your branch synced with main and prevents divergence conflicts.
 If you try to push a branch that diverges from main:
 
 ```
-⚠️  CONFLICT WARNING: Your branch diverges from origin/main
+ CONFLICT WARNING: Your branch diverges from origin/main
 This push may create merge conflicts.
 
 Fix: Run 'git rebase origin/main' first to sync with latest changes

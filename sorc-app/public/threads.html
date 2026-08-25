@@ -138,10 +138,10 @@
                 <button class="btn btn-grey" onclick="backToThreads()" style="font-size:0.85rem;padding:6px 14px;">← Back to threads</button>
             </div>
             <div id="adminThreadBar" class="admin-thread-bar" style="display:none;">
-                <span>⚙️ Admin Tools:</span>
-                <button class="post-action-btn admin-btn" id="pinBtn" onclick="togglePin()">📌 Pin</button>
-                <button class="post-action-btn admin-btn" id="lockBtn" onclick="toggleLock()">🔒 Lock</button>
-                <button class="post-action-btn danger-btn" onclick="deleteThread()">🗑 Delete Thread</button>
+                <span>Admin Tools:</span>
+                <button class="post-action-btn admin-btn" id="pinBtn" onclick="togglePin()">Pin</button>
+                <button class="post-action-btn admin-btn" id="lockBtn" onclick="toggleLock()">Lock</button>
+                <button class="post-action-btn danger-btn" onclick="deleteThread()">Delete Thread</button>
             </div>
             <div id="threadContent"></div>
             <div id="replyFormContainer"></div>
@@ -153,7 +153,7 @@
         <div class="modal">
             <h2>Edit Post</h2>
             <div class="post-toolbar">
-                <button class="toolbar-btn" onclick="insertLink('editBody')">🔗 Add Link</button>
+                <button class="toolbar-btn" onclick="insertLink('editBody')">Add Link</button>
                 <span class="toolbar-hint">[text](url)</span>
                 <span class="char-counter" id="editCharCount">0 / 10,000</span>
             </div>
@@ -172,7 +172,7 @@
             <h2>New Thread</h2>
             <input type="text" id="threadTitle" placeholder="Thread title" maxlength="100" />
             <div class="post-toolbar">
-                <button class="toolbar-btn" onclick="insertLink('threadBody')">🔗 Add Link</button>
+                <button class="toolbar-btn" onclick="insertLink('threadBody')">Add Link</button>
                 <span class="toolbar-hint">[text](url) · 1 per post</span>
                 <span class="char-counter" id="threadBodyCount">0 / 10,000</span>
             </div>
@@ -333,10 +333,10 @@
                 var role = t.author_role || 'CIVILIAN';
                 var roleTag = '<span class="post-author-role" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>';
                 return '<div class="thread-card ' + (t.pinned ? 'pinned' : '') + ' ' + (t.locked ? 'locked' : '') + '" onclick="openThread(\'' + t.id + '\')">' 
-                    + '<div class="thread-icon">' + (t.pinned ? '📌' : t.locked ? '🔒' : '💬') + '</div>'
+                    + '<div class="thread-icon">' + (t.pinned ? 'Pinned' : t.locked ? 'Locked' : '') + '</div>'
                     + '<div class="thread-info">'
                         + '<div class="thread-title">' + escapeHtml(t.title) + (t.pinned ? '<span class="pin-badge">Pinned</span>' : '') + (t.locked ? '<span class="lock-badge">Locked</span>' : '') + '</div>'
-                        + '<div class="thread-meta">' + roleTag + ' <span>' + escapeHtml(t.author_name || 'Unknown') + '</span><span>·</span><span>' + timeAgo(t.created_at) + '</span><span>·</span><span>👁 ' + (t.views || 0) + '</span></div>'
+                        + '<div class="thread-meta">' + roleTag + ' <span>' + escapeHtml(t.author_name || 'Unknown') + '</span><span>·</span><span>' + timeAgo(t.created_at) + '</span><span>·</span><span>' + (t.views || 0) + '</span></div>'
                     + '</div>'
                     + '<div class="thread-stats"><b>' + (t.reply_count || 0) + ' replies</b><span style="font-size:0.7rem;color:#444;">Last: ' + timeAgo(t.last_reply_at) + '</span></div>'
                 + '</div>';
@@ -375,8 +375,8 @@
 
             if (canModerate()) {
                 document.getElementById('adminThreadBar').style.display = 'flex';
-                document.getElementById('pinBtn').textContent = thread.pinned ? '📌 Unpin' : '📌 Pin';
-                document.getElementById('lockBtn').textContent = thread.locked ? '🔒 Unlock' : '🔒 Lock';
+                document.getElementById('pinBtn').textContent = thread.pinned ? 'Unpin' : 'Pin';
+                document.getElementById('lockBtn').textContent = thread.locked ? 'Unlock' : 'Lock';
             }
 
             var myId = currentUser ? currentUser.id : null;
@@ -398,14 +398,14 @@
                             + '<div class="post-timestamp">' + timeAgo(post.created_at) + '</div>'
                         + '</div>'
                     + '</div>'
-                    + (post.quoted_text ? '<div class="quote-block">💬 <i>' + escapeHtml(post.quoted_author || '') + '</i>: ' + escapeHtml(post.quoted_text) + '</div>' : '')
+                    + (post.quoted_text ? '<div class="quote-block"><i>' + escapeHtml(post.quoted_author || '') + '</i>: ' + escapeHtml(post.quoted_text) + '</div>' : '')
                     + '<div class="post-body">' + renderPostBody(post.body || '') + '</div>'
                     + '<div class="post-actions">'
-                        + (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">💬 Quote</button>' : '')
-                        + (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">✏️ Edit</button>' : '')
-                        + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">🗑 Delete</button>' : '')
+                        + (myId && !thread.locked ? '<button class="post-action-btn quote-btn" data-postid="' + post.id + '" data-author="' + escapeAttr(post.author_name || '') + '" data-text="' + quoteText + '">Quote</button>' : '')
+                        + (isOwnPost && !thread.locked ? '<button class="post-action-btn" onclick="editPost(\'' + post.id + '\', ' + post.isOP + ')">Edit</button>' : '')
+                        + (isOwnPost ? '<button class="post-action-btn danger-btn" onclick="deletePost(\'' + post.id + '\', ' + post.isOP + ')">Delete</button>' : '')
                         + (canModerate() && !post.isOP ? '<button class="post-action-btn danger-btn" data-pid="' + post.id + '" onclick="modDeletePost(this.dataset.pid)">🛡 Remove</button>' : '')
-                        + (!isOwnPost && myId ? '<button class="post-action-btn" data-pid="' + post.id + '" onclick="reportPost(this.dataset.pid)">🚩 Report</button>' : '')
+                        + (!isOwnPost && myId ? '<button class="post-action-btn" data-pid="' + post.id + '" onclick="reportPost(this.dataset.pid)">Report</button>' : '')
                         + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\', \'x\')">𝕏 X</button>'
                         + '<button class="post-action-btn" onclick="shareThread(\'' + currentThread + '\', \'' + escapeAttr(thread.title || 'Check this out') + '\', \'youtube\')">▶ YouTube</button>'
                     + '</div>'
@@ -414,20 +414,20 @@
 
             document.getElementById('threadContent').innerHTML =
                 '<div class="thread-header"><h2>' + escapeHtml(thread.title) + '</h2>'
-                + '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>👁 ' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>'
+                + '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>'
                 + html;
 
             if (myId && !thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML =
                     '<div class="reply-form"><h3>Post a Reply</h3>'
                     + '<div class="quote-preview" id="quotePreview"></div>'
-                    + '<div class="post-toolbar"><button class="toolbar-btn" onclick="insertLink(\'replyBody\')">🔗 Add Link</button><span class="toolbar-hint">[text](url) · 1 per post</span><span class="char-counter" id="replyCharCount">0 / 10,000</span></div>'
+                    + '<div class="post-toolbar"><button class="toolbar-btn" onclick="insertLink(\'replyBody\')">Add Link</button><span class="toolbar-hint">[text](url) · 1 per post</span><span class="char-counter" id="replyCharCount">0 / 10,000</span></div>'
                     + '<textarea id="replyBody" placeholder="Write your reply..." oninput="updateCharCount(\'replyBody\',\'replyCharCount\')"></textarea>'
                     + '<div id="replyMsg" class="msg"></div>'
                     + '<div class="reply-actions"><button class="btn btn-grey" onclick="clearQuote()">Clear Quote</button><button class="btn btn-red" onclick="submitReply()">Post Reply</button></div>'
                     + '</div>';
             } else if (thread.locked) {
-                document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">🔒 This thread is locked.</div>';
+                document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice">This thread is locked.</div>';
             } else {
                 document.getElementById('replyFormContainer').innerHTML = '<div class="locked-notice"><a href="signin.html" style="color:#b9aa00;">Sign in</a> to reply.</div>';
             }
@@ -441,7 +441,7 @@
         if (!btn) return;
         quotedPost = { postId: btn.getAttribute('data-postid'), authorName: btn.getAttribute('data-author'), text: btn.getAttribute('data-text') };
         var preview = document.getElementById('quotePreview');
-        if (preview) { preview.innerHTML = '💬 Quoting <b>' + escapeHtml(quotedPost.authorName) + '</b>: ' + escapeHtml(quotedPost.text); preview.classList.add('active'); }
+        if (preview) { preview.innerHTML = 'Quoting <b>' + escapeHtml(quotedPost.authorName) + '</b>: ' + escapeHtml(quotedPost.text); preview.classList.add('active'); }
         var replyBody = document.getElementById('replyBody');
         if (replyBody) replyBody.focus();
     });
@@ -481,7 +481,7 @@
                 quotedPost = null;
                 document.getElementById('replyBody').value = '';
                 clearQuote();
-                msgEl.className = 'msg success'; msgEl.textContent = '✅ Reply posted!';
+                msgEl.className = 'msg success'; msgEl.textContent = 'Reply posted!';
                 setTimeout(function() { loadThreadContent(currentThread); }, 500);
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }
@@ -511,7 +511,7 @@
             var data;
             try { data = await res.json(); } catch(e) { data = { success: false, error: 'Server error (' + res.status + ')' }; }
             if (data.success) {
-                msgEl.className = 'msg success'; msgEl.textContent = '✅ Post updated!';
+                msgEl.className = 'msg success'; msgEl.textContent = 'Post updated!';
                 setTimeout(function() { closeEdit(); loadThreadContent(currentThread); }, 500);
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed (' + res.status + ').'; }
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Network error: ' + (e.message || 'check connection'); }
@@ -561,7 +561,7 @@
             var msgEl = document.getElementById('replyMsg');
             if (msgEl) {
                 msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
-                msgEl.textContent = data.success ? '✅ Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
+                msgEl.textContent = data.success ? 'Report submitted. Thank you.' : (data.error || 'Failed to submit report.');
             }
         } catch(e) {}
     };
@@ -605,7 +605,7 @@
         var html = '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:2px solid #c93f35;border-radius:10px;padding:1.5rem;max-width:500px;max-height:70vh;overflow-y:auto;z-index:1000;box-shadow:0 0 30px rgba(0,0,0,0.8);">'
             + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid #333;padding-bottom:0.75rem;">'
             + '<h3 style="margin:0;color:#e0cfc0;font-size:1.1rem;">Posts with ' + escapeHtml(hashtag) + ' (' + matchingPosts.length + ')</h3>'
-            + '<button onclick="this.closest(\'[data-hashtag-modal]\').remove();" style="background:#c93f35;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>'
+            + '<button onclick="this.closest(\'[data-hashtag-modal]\').remove();" style="background:#c93f35;color:#fff;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-weight:bold;"></button>'
             + '</div>'
             + matchingPosts.map(function(post) {
                 return '<div style="border-bottom:1px solid #222;padding:0.75rem 0;cursor:pointer;" onclick="this.closest(\'[data-hashtag-modal]\').remove();document.getElementById(\'post-\' + this.dataset.postid).scrollIntoView({behavior:\'smooth\'});document.getElementById(\'post-\' + this.dataset.postid).style.backgroundColor=\'#2a1a1a\';setTimeout(function(){document.getElementById(\'post-\' + arguments[0]).style.backgroundColor=\'\';},2000);" data-postid="' + post.element.id.replace('post-', '') + '">'
@@ -684,7 +684,7 @@
             });
             var data = await res.json();
             if (data.success) {
-                msgEl.className = 'msg success'; msgEl.textContent = '✅ Thread posted!';
+                msgEl.className = 'msg success'; msgEl.textContent = 'Thread posted!';
                 setTimeout(function() { closeNewThread(); openThread(data.threadId); }, 800);
             } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
         } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; }

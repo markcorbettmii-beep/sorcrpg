@@ -34,7 +34,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔧 Profile Fix Tool</h1>
+        <h1>Profile Fix Tool</h1>
 
         <div class="status info">
             <strong>Purpose:</strong> Diagnose and fix profile page "Loading..." issue
@@ -86,7 +86,7 @@
                 try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
 
                 if (!saved || !saved.authKey) {
-                    statusDiv.innerHTML = '<div class="status error">❌ Not logged in - please sign in first</div>';
+                    statusDiv.innerHTML = '<div class="status error">Not logged in - please sign in first</div>';
                     fixBtn.disabled = true;
                     fixBtn.textContent = 'Cannot run (not logged in)';
                     return;
@@ -98,7 +98,7 @@
                 });
 
                 if (!meRes.ok) {
-                    statusDiv.innerHTML = '<div class="status error">❌ API Error - /api/me returned ' + meRes.status + '</div>';
+                    statusDiv.innerHTML = '<div class="status error">API Error - /api/me returned ' + meRes.status + '</div>';
                     step1Div.innerHTML = '<div class="status error">API is not responding correctly</div>';
                     fixBtn.disabled = true;
                     return;
@@ -111,7 +111,7 @@
                 const missingFields = requiredFields.filter(f => !(f in (meData.user || {})));
 
                 if (missingFields.length > 0) {
-                    statusDiv.innerHTML = '<div class="status warning">⚠️ Some profile fields are missing: ' + missingFields.join(', ') + '</div>';
+                    statusDiv.innerHTML = '<div class="status warning">Some profile fields are missing: ' + missingFields.join(', ') + '</div>';
                     step1Div.innerHTML = '<div class="status warning">Missing fields detected - will attempt repair</div>';
                 } else {
                     statusDiv.innerHTML = '<div class="status success">✓ API responding with all required fields</div>';
@@ -124,7 +124,7 @@
                 const lsMissing = lsFields.filter(f => !(f in saved));
 
                 if (lsMissing.length > 0) {
-                    step2Div.innerHTML = '<div class="status warning">⚠️ localStorage missing: ' + lsMissing.join(', ') + '</div>';
+                    step2Div.innerHTML = '<div class="status warning">localStorage missing: ' + lsMissing.join(', ') + '</div>';
                 } else {
                     step2Div.innerHTML = '<div class="status success">✓ localStorage has all required fields</div>';
                 }
@@ -134,7 +134,7 @@
                 fixBtn.textContent = 'Run Profile Fix Now';
 
             } catch(e) {
-                statusDiv.innerHTML = '<div class="status error">❌ Error: ' + e.message + '</div>';
+                statusDiv.innerHTML = '<div class="status error">Error: ' + e.message + '</div>';
                 fixBtn.disabled = true;
             }
         }
@@ -152,7 +152,7 @@
                 try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
 
                 if (!saved || !saved.authKey) {
-                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div><div class="error-detail">Not logged in</div></div>';
+                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">Fix Failed</div><div class="error-detail">Not logged in</div></div>';
                     fixBtn.disabled = false;
                     fixBtn.textContent = 'Retry Fix';
                     return;
@@ -165,7 +165,7 @@
 
                 if (!meRes.ok) {
                     const errorData = await meRes.json().catch(() => ({}));
-                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div>' +
+                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">Fix Failed</div>' +
                         '<div class="error-detail">API Error: ' + meRes.status + '\n' + (errorData.error || 'Unknown error') + '</div>' +
                         '<div style="margin-top: 10px; font-size: 0.9rem;">Try refreshing the page and logging in again</div></div>';
                     fixBtn.disabled = false;
@@ -176,7 +176,7 @@
                 const meData = await meRes.json();
 
                 if (!meData.user) {
-                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div><div class="error-detail">No user data returned from API</div></div>';
+                    step3Div.innerHTML = '<div class="error-box"><div class="error-title">Fix Failed</div><div class="error-detail">No user data returned from API</div></div>';
                     fixBtn.disabled = false;
                     fixBtn.textContent = 'Retry Fix';
                     return;
@@ -186,7 +186,7 @@
                 saved = Object.assign(saved, meData.user);
                 localStorage.setItem('sorc_user', JSON.stringify(saved));
 
-                step3Div.innerHTML = '<div class="status success">✅ Profile data repaired successfully!<br><br>' +
+                step3Div.innerHTML = '<div class="status success">Profile data repaired successfully!<br><br>' +
                     '<strong>What was fixed:</strong><br>' +
                     '• Updated user profile from server<br>' +
                     '• Restored missing fields: ' + Object.keys(meData.user).join(', ') + '<br>' +
@@ -199,7 +199,7 @@
                 fixBtn.textContent = 'Fix Complete ✓';
 
             } catch(e) {
-                step3Div.innerHTML = '<div class="error-box"><div class="error-title">❌ Fix Failed</div>' +
+                step3Div.innerHTML = '<div class="error-box"><div class="error-title">Fix Failed</div>' +
                     '<div class="error-detail">Error: ' + e.message + '\n\nCheck browser console (F12) for more details</div></div>';
                 fixBtn.disabled = false;
                 fixBtn.textContent = 'Retry Fix';

@@ -79,7 +79,7 @@
             var token = params.get('token');
 
             if (!token) {
-                showStatus('❌ Invalid verification link. No token provided.', 'error');
+                showStatus('Invalid verification link. No token provided.', 'error');
                 return;
             }
 
@@ -96,13 +96,13 @@
                 var data = await res.json();
 
                 if (!res.ok || !data.success) {
-                    showStatus('❌ ' + (data.error || 'Verification failed. Link may have expired.'), 'error');
+                    showStatus('' + (data.error || 'Verification failed. Link may have expired.'), 'error');
                     btn.disabled = false;
                     btn.textContent = 'Try Again';
                     return;
                 }
 
-                showStatus('✅ Email verified! Sign in to choose your role...', 'success');
+                showStatus('Email verified! Sign in to choose your role...', 'success');
 
                 setTimeout(function() {
                     /* Sign in first, then land on Take Assessment Now, where a
@@ -111,7 +111,7 @@
                     window.location.href = 'signin-verified.html?next=' + encodeURIComponent('take-assessment.html');
                 }, 1500);
             } catch(e) {
-                showStatus('❌ Connection error. Please try again.', 'error');
+                showStatus('Connection error. Please try again.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'Try Again';
             }
