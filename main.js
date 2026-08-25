@@ -494,7 +494,7 @@ async function checkNotifications(user) {
     var newCp = data.community_points || 0;
     if (_lastNotifCp !== null && newCp > _lastNotifCp) {
       sorcToast('You earned ' + (newCp - _lastNotifCp) + ' Community Points!', '#b9aa00');
-      // Update localStorage so profile page reflects new value
+      // Update localStorage so space page reflects new value
       try {
         var cached = JSON.parse(localStorage.getItem('sorc_user') || '{}');
         cached.community_points = newCp;
@@ -506,7 +506,7 @@ async function checkNotifications(user) {
     // ---- Admin invite toast (once per session) ----
     if (data.admin_invite && !sessionStorage.getItem('sorc_invite_toasted')) {
       sessionStorage.setItem('sorc_invite_toasted', '1');
-      sorcToast('You have an Admin invitation! Visit your Profile to respond.', '#c93f35');
+      sorcToast('You have an Admin invitation! Visit your Space to respond.', '#c93f35');
     }
 
     // ---- Update nav badges ----
