@@ -4396,15 +4396,18 @@ app.post('/api/trade-chat', authMiddleware, async (c) => {
 
     // You can only offer up what you actually hold. WTB: is a request for
     // something you do not have yet, so nothing to check there.
-    if (tag.kind !== 'WTB' && !(await ownsItem(c.env.sorc_db, user.id, tag.item))) {
+    // A posting may name a Card by its ref # — "WTS: Skeleton Soldier #MOB001".
+    // Resolve that first: the text carries both a name and a ref, so matching
+    // the whole string against a stored item_name would never hit. Holding is
+    // then checked against the ref further down, which is the authority.
+    await ensureExchangeTables(c.env.sorc_db);
+    const postedRef = extractCardRef(tag.item);
+
+    // Only fall back to matching by name when no ref was given.
+    if (tag.kind !== 'WTB' && !postedRef && !(await ownsItem(c.env.sorc_db, user.id, tag.item))) {
       return c.json({ error: `You do not own "${tag.item}". Only items earned in a recorded session can be offered.` }, 403);
     }
 
-    // A posting may name a Card by its ref # — "WTT: Mob Card #1001". When it
-    // does, the Card is resolved from the catalog and dropped straight into the
-    // Bazaar, so the chat line and the Exchange listing are the same trade.
-    await ensureExchangeTables(c.env.sorc_db);
-    const postedRef = extractCardRef(tag.item);
     const linkedCard = postedRef
       ? await findCard(c.env.sorc_db, postedRef, null) as any
       : null;
