@@ -6012,4 +6012,232 @@ app.get('/api/collection/:uid', authMiddleware, async (c) => {
   }
 });
 
+// ===== FELLOWS SYSTEM (Friendship Model) =====
+
+// Create friends table if it doesn't exist
+async function ensureFriendsTables(db: any) {
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS friendships (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        friend_id TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        UNIQUE(user_id, friend_id)
+      )
+    `).run();
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS friend_activity (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        activity_type TEXT NOT NULL,
+        activity_data TEXT,
+        created_at TEXT NOT NULL,
+        expires_at TEXT
+      )
+    `).run();
+  } catch (e) {
+    // Tables likely exist
+  }
+}
+
+// GET /api/friends - Fetch current user's friend list with status
+app.get('/api/friends', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureFriendsTables(c.env.sorc_db);
+    const friendships = await c.env.sorc_db.prepare(`
+      SELECT f.*, u.username, u.display_name, u.avatar, u.last_seen
+      FROM friendships f
+      LEFT JOIN users u ON u.id = f.friend_id
+      WHERE f.user_id = ? AND f.status = 'accepted'
+      ORDER BY u.last_seen DESC
+    `).bind(user.id).all();
+
+    const friends = (friendships.results || []).map((f: any) => ({
+      id: f.friend_id,
+      username: f.username,
+      display_name: f.display_name || f.username,
+      avatar: f.avatar,
+      status: new Date(f.last_seen).getTime() > Date.now() - 300000 ? 'online' : 'offline',
+      last_seen: f.last_seen,
+    }));
+
+    return c.json({ friends, count: friends.length });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load friends list', details: error.message }, 500);
+  }
+});
+
+// GET /api/friend-requests - Fetch incoming friend requests
+app.get('/api/friend-requests', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureFriendsTables(c.env.sorc_db);
+    const requests = await c.env.sorc_db.prepare(`
+      SELECT f.*, u.username, u.display_name, u.avatar, u.community_points
+      FROM friendships f
+      LEFT JOIN users u ON u.id = f.user_id
+      WHERE f.friend_id = ? AND f.status = 'pending'
+      ORDER BY f.created_at DESC
+    `).bind(user.id).all();
+
+    const incoming = (requests.results || []).map((r: any) => ({
+      request_id: r.id,
+      from_id: r.user_id,
+      from_username: r.username,
+      from_display_name: r.display_name || r.username,
+      from_avatar: r.avatar,
+      from_community_points: r.community_points || 0,
+      requested_at: r.created_at,
+    }));
+
+    return c.json({ incoming_requests: incoming, count: incoming.length });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load friend requests', details: error.message }, 500);
+  }
+});
+
+// POST /api/friends - Send a friend request or accept one
+app.post('/api/friends', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const { friend_id, action } = await c.req.json();
+
+  if (!friend_id) return c.json({ error: 'friend_id required' }, 400);
+
+  try {
+    await ensureFriendsTables(c.env.sorc_db);
+
+    if (action === 'accept') {
+      // Accept incoming request
+      await c.env.sorc_db.prepare(`
+        UPDATE friendships SET status = 'accepted', updated_at = ?
+        WHERE friend_id = ? AND user_id = ? AND status = 'pending'
+      `).bind(new Date().toISOString(), user.id, friend_id).run();
+
+      // Also create reciprocal friendship
+      await c.env.sorc_db.prepare(`
+        INSERT OR IGNORE INTO friendships (id, user_id, friend_id, status, created_at, updated_at)
+        VALUES (?, ?, ?, 'accepted', ?, ?)
+      `).bind(
+        crypto.randomUUID(),
+        user.id,
+        friend_id,
+        new Date().toISOString(),
+        new Date().toISOString()
+      ).run();
+
+      return c.json({ success: true, message: 'Friend request accepted' });
+    } else {
+      // Send new friend request
+      await c.env.sorc_db.prepare(`
+        INSERT OR IGNORE INTO friendships (id, user_id, friend_id, status, created_at, updated_at)
+        VALUES (?, ?, ?, 'pending', ?, ?)
+      `).bind(
+        crypto.randomUUID(),
+        user.id,
+        friend_id,
+        new Date().toISOString(),
+        new Date().toISOString()
+      ).run();
+
+      return c.json({ success: true, message: 'Friend request sent' });
+    }
+  } catch (error: any) {
+    return c.json({ error: 'Failed to update friend status', details: error.message }, 500);
+  }
+});
+
+// DELETE /api/friends/:friend_id - Remove a friend
+app.delete('/api/friends/:friend_id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const friend_id = c.req.param('friend_id');
+
+  try {
+    await ensureFriendsTables(c.env.sorc_db);
+
+    await c.env.sorc_db.prepare(`
+      DELETE FROM friendships
+      WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)
+    `).bind(user.id, friend_id, friend_id, user.id).run();
+
+    return c.json({ success: true, message: 'Friend removed' });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to remove friend', details: error.message }, 500);
+  }
+});
+
+// ===== CANTINA MINI-GAMES SYSTEM =====
+
+// GET /api/cantina/games - List available mini-games
+app.get('/api/cantina/games', async (c) => {
+  try {
+    const games = [
+      {
+        id: 'dice-duel',
+        name: 'Dice Duel',
+        description: 'Quick dice rolling contests. Test your luck against Fellow adventurers.',
+        players: '2-4',
+        duration: '5-10 min',
+        rules_link: '/rules#cantina-dice-duel',
+        icon: '🎲',
+        access: 'PUBLIC'
+      },
+      {
+        id: 'cards-fortune',
+        name: 'Fortune\'s Cards',
+        description: 'Card games from the SORC Offline set. Compete for glory and bragging rights.',
+        players: '2-6',
+        duration: '10-20 min',
+        rules_link: '/rules#cantina-fortune-cards',
+        icon: '🃏',
+        access: 'PUBLIC'
+      },
+      {
+        id: 'coin-flip-tournament',
+        name: 'Coin Flip Tournament',
+        description: 'Single-elimination tournaments. Play quick matches and climb the bracket.',
+        players: '4-32',
+        duration: 'Variable',
+        rules_link: '/rules#cantina-coin-flip',
+        icon: '🪙',
+        access: 'PUBLIC'
+      }
+    ];
+
+    return c.json({ games, count: games.length });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load cantina games', details: error.message }, 500);
+  }
+});
+
+// GET /api/cantina/voice-integration - Voice channel setup (architecture for future)
+app.get('/api/cantina/voice-integration', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+
+  return c.json({
+    status: 'coming_soon',
+    message: 'Voice integration for Cantina and Online Rooms will be available soon.',
+    voice_api: null, // Will be populated when voice service is enabled
+    docs: '/docs#voice-integration',
+    user_id: user.id,
+  });
+});
+
+// GET /api/online-rooms/voice - Voice setup for Online Rooms/Campaign launches (GM feature)
+app.get('/api/online-rooms/voice', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+
+  return c.json({
+    status: 'coming_soon',
+    message: 'Voice channels for Online Rooms campaigns are coming.',
+    max_participants: null,
+    bitrate: null,
+    docs: '/docs#online-rooms-voice',
+    requires_pro: false,
+  });
+});
+
 export default app;
