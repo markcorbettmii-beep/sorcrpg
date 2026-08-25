@@ -64,12 +64,6 @@
             box-shadow: inset 0 1px 0 rgba(185,170,0,0.25), 0 -2px 4px rgba(0,0,0,0.3);
             z-index: 2;
         }
-        .tab-nav button.pro::after {
-            content: " PRO";
-            font-size: 0.52rem;
-            opacity: 0.75;
-            letter-spacing: 0.06em;
-        }
         .tab-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
         .tab-content { display: none; padding: 1.75rem 1.5rem; background: #1a1a1a; border-radius: 0 0 10px 10px; min-height: 300px; }
         .tab-content.active { display: block; }
@@ -78,12 +72,10 @@
         @media (min-width: 600px) {
             .tab-nav { gap: 4px 6px; padding: 8px 8px 0 8px; }
             .tab-nav button { font-size: 0.72rem; padding: 11px 10px 10px; letter-spacing: 0.05em; }
-            .tab-nav button.pro::after { font-size: 0.58rem; }
         }
         @media (min-width: 900px) {
             .tab-nav { gap: 5px 8px; padding: 10px 10px 0 10px; }
             .tab-nav button { font-size: 0.82rem; padding: 14px 14px 12px; border-radius: 11px 11px 0 0; }
-            .tab-nav button.pro::after { font-size: 0.62rem; }
         }
 
         /* Access Control */
@@ -181,9 +173,9 @@
         { id: 'fellows', label: 'Fellows', access: 'PUBLIC', pro: false },
         { id: 'vault', label: 'Vault', access: 'PRIVATE', pro: false },
         { id: 'online-journal', label: 'Online Journal', access: 'PRIVATE', pro: false },
-        { id: 'home', label: 'Home', access: 'PRO', pro: true },
+        { id: 'home', label: 'Home', access: 'PRO', pro: false },
         { id: 'standing', label: 'Standing', access: 'PUBLIC', pro: false },
-        { id: 'essentia-exchange', label: 'Essentia Exchange', access: 'PRO', pro: true },
+        { id: 'essentia-exchange', label: 'Essentia Exchange', access: 'PRIVATE', pro: false },
         { id: 'inbox', label: 'Inbox', access: 'PRIVATE', pro: false },
         { id: 'settings', label: 'Settings', access: 'PRIVATE', pro: false }
     ];
@@ -404,12 +396,18 @@
 
                     case 'essentia-exchange':
                         html += '<h3>Essentia Exchange</h3>' +
-                            '<span class="access-badge PRO">PRO ONLY</span>' +
-                            '<p>Trade SORC Cards through the Essentia Exchange. Three rooms: trading post (fixed prices), Bazaar (player prices), and Black Market (hand trades).</p>' +
+                            '<span class="access-badge PRIVATE">PRIVATE</span>' +
+                            '<p>Trade SORC Cards and items earned in recorded sessions. Three rooms: General Trade (fixed prices), the Bazaar (player-set prices), and the Black Market (hand trades and barter).</p>' +
                             '<div class="content-grid">' +
-                                '<div class="card"><h4>Trading Post</h4><p>Fixed-price SORC Card sales with official rates.</p></div>' +
+                                '<div class="card"><h4>General Trade</h4><p>Fixed-price SORC Card sales at official rates.</p></div>' +
                                 '<div class="card"><h4>Bazaar</h4><p>Player-set prices and seller negotiations.</p></div>' +
-                                '<div class="card"><h4>Black Market</h4><p>Direct hand trades and barter between players.</p></div>' +
+                                '<div class="card"><h4>Black Market</h4><p>Direct hand trades and barter between Players.</p></div>' +
+                            '</div>' +
+                            '<div class="card" style="margin-top:1rem;">' +
+                                '<h4>Your Trading Slots</h4>' +
+                                '<p id="slotLine">Slots in use: loading...</p>' +
+                                '<p style="margin-top:0.5rem;">A slot is held by each open listing and frees the moment that listing sells, closes, or is cancelled. ' +
+                                'See <a href="/sorc-beyond.html#exchange" style="color:#b9aa00;text-decoration:underline;">SORC Beyond</a> for how slot counts differ by membership.</p>' +
                             '</div>';
                         break;
 
