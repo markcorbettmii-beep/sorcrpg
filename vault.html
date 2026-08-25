@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>The Vault | Slayers of Rings &amp; Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .v-wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    .v-wrap h1 { color: #c93f35; margin-bottom: 0.2rem; font-size: 1.6rem; }
+    .v-sub { color: #777; font-size: 0.88rem; margin-bottom: 1.1rem; line-height: 1.55; }
+    .v-private { display:inline-block; background:#1a0d00; border:1px solid #5a3000; color:#c87d00;
+                 font-size:0.7rem; font-weight:bold; padding:0.2rem 0.6rem; border-radius:6px; margin-bottom:0.7rem; }
+
+    .v-purse { background:linear-gradient(160deg,#1a1505,#0f0c02); border:1px solid #5a4a00; border-radius:12px;
+               padding:1.1rem 1.25rem; margin-bottom:1.25rem; }
+    .v-purse-label { color:#8a7f00; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; }
+    .v-purse-value { color:#b9aa00; font-size:2rem; font-weight:bold; line-height:1.1; margin-top:0.2rem; }
+    .v-purse-note { color:#6a6250; font-size:0.74rem; margin-top:0.35rem; }
+
+    .v-stats { display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.25rem; }
+    .v-stat { flex:1 1 130px; background:#141414; border:1px solid #262626; border-radius:10px; padding:0.7rem 0.9rem; }
+    .v-stat-label { color:#777; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.09em; }
+    .v-stat-value { color:#e0cfc0; font-size:1.15rem; font-weight:bold; margin-top:0.15rem; }
+
+    .v-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:0.7rem; }
+    .v-card { background:#141414; border:1px solid #3a3000; border-radius:10px; overflow:hidden; }
+    .v-art { width:100%; aspect-ratio:3/4; object-fit:cover; background:#0c0c0c; display:block; cursor:pointer; }
+    .v-art-ph { width:100%; aspect-ratio:3/4; background:#0c0c0c; display:flex; align-items:center;
+                justify-content:center; color:#333; font-size:2rem; cursor:pointer; }
+    .v-meta { padding:0.5rem 0.6rem; }
+    .v-name { color:#e0cfc0; font-size:0.8rem; font-weight:bold; line-height:1.25; }
+    .v-ref { font-family:ui-monospace,Menlo,monospace; color:#8a7f00; font-size:0.68rem; margin-top:0.12rem; }
+    .v-coin { color:#b9aa00; font-size:0.74rem; margin-top:0.18rem; }
+    .v-unlock { margin-top:0.45rem; width:100%; padding:0.3rem; border-radius:6px; border:1px solid #5a4a00;
+                background:#1a1505; color:#b9aa00; font-size:0.7rem; font-weight:bold; cursor:pointer; }
+    .v-unlock:hover { background:#241d05; }
+
+    .v-empty { color:#555; text-align:center; padding:2.5rem 1rem; font-size:0.9rem; line-height:1.75; }
+    .v-note { background:#1a1505; border:1px solid #5a4a00; border-radius:10px; padding:0.9rem 1.1rem;
+              color:#c9b400; font-size:0.84rem; line-height:1.55; margin-bottom:1rem; }
+    .v-note.locked { background:#1a0d00; border-color:#5a3000; color:#c87d00; }
+    .v-note a { color:inherit; font-weight:bold; }
+
+    body.lawful-mode .v-stat, body.lawful-mode .v-card { background:#fbfaf7; border-color:#e2ded4; }
+    body.lawful-mode .v-name, body.lawful-mode .v-stat-value { color:#2c2c2c; }
+    body.lawful-mode .v-purse { background:#fdf8e0; border-color:#e0d060; }
+    body.lawful-mode .v-purse-value { color:#8a7f00; }
+    body.lawful-mode .v-note { background:#fdf8e0; border-color:#e0d060; color:#7a6a00; }
+    body.lawful-mode .v-note.locked { background:#fdf3e0; border-color:#e0b060; color:#8a5800; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav><div id="navRoleBadge"></div></nav>
+
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a href="collection.html">Trophy &amp; Collectables</a></li>
+      <li><a href="exchange.html">The Exchange</a></li>
+    </ul>
+
+    <div class="v-wrap">
+      <span class="v-private">&#128274; PRIVATE &middot; ONLY YOU CAN SEE THIS</span>
+      <h1>The Vault</h1>
+      <p class="v-sub">
+        Your purse, and the Cards you have put beyond reach. A locked Card cannot be listed on the Exchange
+        or handed over at a table until you unlock it here. The Vault is never public and is not linked from
+        your profile &mdash; a safe you advertise is not a safe.
+      </p>
+
+      <div id="vGate"></div>
+
+      <div class="v-purse">
+        <div class="v-purse-label">Purse</div>
+        <div class="v-purse-value" id="vCoin">&mdash;</div>
+        <div class="v-purse-note">Coin, earned in recorded sessions. Never bought with money.</div>
+      </div>
+
+      <div class="v-stats">
+        <div class="v-stat">
+          <div class="v-stat-label">Locked Away</div>
+          <div class="v-stat-value" id="vLocked">&mdash;</div>
+        </div>
+        <div class="v-stat">
+          <div class="v-stat-label">Value Held</div>
+          <div class="v-stat-value" id="vWorth">&mdash;</div>
+        </div>
+      </div>
+
+      <div class="v-grid" id="vGrid"></div>
+    </div>
+
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'lawful';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(m) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m];
+      });
+    }
+    function authHeaders() {
+      return currentUser && currentUser.authKey ? { 'X-Auth-Key': currentUser.authKey } : {};
+    }
+    async function readJson(res) { try { return await res.json(); } catch(e) { return {}; } }
+
+    /* There is no uid parameter here on purpose. The Vault reads whoever is
+       signed in and nobody else — there is no address that opens someone
+       else's, because none should exist. */
+    async function loadVault() {
+      var grid = document.getElementById('vGrid');
+      if (!currentUser || !currentUser.authKey) {
+        document.getElementById('vGate').innerHTML =
+          '<div class="v-note locked">Your Vault is private. <a href="signin.html">Sign in</a> to open it.</div>';
+        grid.innerHTML = '';
+        return;
+      }
+      grid.innerHTML = '<div class="v-empty">Opening the Vault...</div>';
+      try {
+        var wRes = await fetch(API_URL + '/api/exchange/wallet', { headers: authHeaders() });
+        var w = await readJson(wRes);
+        document.getElementById('vCoin').textContent = (w.coin || 0).toLocaleString();
+
+        var res = await fetch(API_URL + '/api/cards/mine?locked=1&per_page=48', { headers: authHeaders() });
+        var data = await readJson(res);
+        var cards = data.cards || [];
+
+        document.getElementById('vLocked').textContent = data.total || 0;
+        var worth = 0;
+        cards.forEach(function(c) { worth += (c.coin_value || 0) * (c.qty || 1); });
+        document.getElementById('vWorth').textContent = worth.toLocaleString() + ' Coin';
+
+        if (!cards.length) {
+          grid.innerHTML = '<div class="v-empty">Nothing locked away.<br/>' +
+            '<span style="color:#444;font-size:0.8rem;">Lock a Card from ' +
+            '<a href="collection.html" style="color:#b9aa00;">Trophy &amp; Collectables</a> ' +
+            'and it cannot be traded until you unlock it here.</span></div>';
+          return;
+        }
+
+        grid.innerHTML = cards.map(function(c) {
+          var art = c.art
+            ? '<img class="v-art" src="' + esc(c.art) + '" alt="" loading="lazy" onclick="openCard(\'' + esc(c.ref_code) + '\')" />'
+            : '<div class="v-art-ph" onclick="openCard(\'' + esc(c.ref_code) + '\')">&#127183;</div>';
+          return '<div class="v-card">' + art +
+            '<div class="v-meta">' +
+              '<div class="v-name">' + esc(c.item_name) + (c.qty > 1 ? ' &times;' + c.qty : '') + '</div>' +
+              '<div class="v-ref">#' + esc(c.ref_code) + '</div>' +
+              '<div class="v-coin">' + (c.coin_value || 0).toLocaleString() + ' Coin</div>' +
+              '<button class="v-unlock" onclick="unlockCard(\'' + esc(c.ref_code) + '\')">&#128275; Take out of the Vault</button>' +
+            '</div></div>';
+        }).join('');
+      } catch(e) {
+        grid.innerHTML = '<div class="v-empty">Could not open your Vault.<br/><span style="color:#444;font-size:0.78rem;">' +
+          esc(e && e.message ? e.message : e) + '</span></div>';
+      }
+    }
+
+    window.unlockCard = async function(ref) {
+      try {
+        var res = await fetch(API_URL + '/api/cards/lock', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+          body: JSON.stringify({ ref_code: ref, locked: false })
+        });
+        var data = await readJson(res);
+        if (data.success) loadVault();
+        else alert(data.error || 'Could not unlock that Card.');
+      } catch(e) { alert('Could not reach the server.'); }
+    };
+
+    window.openCard = function(ref) {
+      window.location.href = 'collection.html?ref=' + encodeURIComponent(ref);
+    };
+
+    loadVault();
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=25"></script>
+</body>
+</html>

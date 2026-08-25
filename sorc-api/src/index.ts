@@ -5366,6 +5366,9 @@ app.get('/api/cards/mine', authMiddleware, async (c) => {
       where.push('(card.item_name LIKE ? COLLATE NOCASE OR inv.ref_code LIKE ? COLLATE NOCASE)');
       args.push(`%${q}%`, `%${q}%`);
     }
+    // ?locked=1 narrows to what is locked away — this is what the Vault reads.
+    const lockedOnly = c.req.query('locked');
+    if (lockedOnly === '1' || lockedOnly === 'true') where.push('inv.locked = 1');
     const whereSql = where.join(' AND ');
 
     const countRow = await c.env.sorc_db.prepare(
