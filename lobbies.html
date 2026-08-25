@@ -1637,6 +1637,7 @@
               /* Tab bar - Recruit only shown to hosts */
               '<div class="chat-tab-bar">' +
                 '<button class="chat-tab active" data-tab="main" onclick="switchChatTab(\'main\')">Main <span class="tab-badge" id="badge-main" style="display:none;"></span></button>' +
+                '<button class="chat-tab" data-tab="rolls" onclick="switchChatTab(\'rolls\')">Rolls <span class="tab-badge" id="badge-rolls" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="msgs" onclick="switchChatTab(\'msgs\')">Messages <span class="tab-badge" id="badge-msgs" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="trade" onclick="switchChatTab(\'trade\')">Trade <span class="tab-badge" id="badge-trade" style="display:none;"></span></button>' +
                 '<button class="chat-tab" data-tab="world" onclick="switchChatTab(\'world\')">World <span class="tab-badge" id="badge-world" style="display:none;"></span></button>' +
@@ -1651,6 +1652,12 @@
                   '<input type="text" class="chat-input" id="chatInput" placeholder="Message..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendChat()" />' +
                   '<button class="chat-send" onclick="sendChat()">Send</button>' +
                 '</div>' +
+              '</div>' +
+              /* ROLLS: dice only. Rolls never touch Main — but a line typed
+                 here is ordinary lobby talk, so it posts to Main where the
+                 conversation actually lives. */
+              '<div class="chat-tab-pane" id="chatPane-rolls">' +
+                '<div class="chat-messages" id="rollMessages"><div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No rolls yet.</div></div>' +
                 '<div style="padding:0.6rem 0.75rem;border-top:1px solid #333;flex-shrink:0;">' +
                   '<div style="font-size:0.72rem;color:#555;margin-bottom:0.5rem;">🎲 Roll Dice <span style="color:#333;font-size:0.68rem;">(beta in lobbies • live in Campaign Rooms)</span></div>' +
                   '<div style="display:flex;gap:0.5rem;align-items:center;">' +
@@ -1670,6 +1677,10 @@
                     '</div>' +
                     '<button onclick="rollDice()" style="padding:6px 14px;background:#b9aa00;color:#111;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">Roll</button>' +
                   '</div>' +
+                '</div>' +
+                '<div class="chat-input-row">' +
+                  '<input type="text" class="chat-input" id="rollChatInput" placeholder="Say something (posts to Main)..." maxlength="400" onkeydown="if(event.key===\'Enter\')sendRollTabChat()" />' +
+                  '<button class="chat-send" onclick="sendRollTabChat()">Send</button>' +
                 '</div>' +
               '</div>' +
               /* WORLD: world chat - read for all, post input for hosts */
@@ -1769,6 +1780,15 @@
         if (msgs.length === 0) { return; }
         var atBottom = msgEl.scrollHeight - msgEl.scrollTop <= msgEl.clientHeight + 40;
         if (chatSelectMode) exitChatSelectMode();
+
+        /* Rolls live in the Rolls tab and nowhere else — a table that rolls a
+           lot would otherwise bury the conversation in Main. */
+        function isRoll(m) { return !!(m.body && m.body.indexOf('\uD83C\uDFB2') === 0); }
+        renderRollTab(msgs.filter(isRoll));
+        msgs = msgs.filter(function(m) { return !isRoll(m); });
+        if (msgs.length === 0) {
+          msgEl.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No messages yet.</div>';
+        } else {
         msgEl.innerHTML = msgs.map(function(m) {
           if (m.body && m.body.indexOf('__sorc_theme__:') === 0) {
             var themeName = m.body.replace('__sorc_theme__:', '').trim();
@@ -1810,6 +1830,7 @@
             delBtn +
           '</div>';
         }).join('');
+        }
         if (atBottom || !lastMsgId) msgEl.scrollTop = msgEl.scrollHeight;
         var prevLastId = lastMsgId;
         if (msgs.length > 0) lastMsgId = msgs[msgs.length-1].id;
@@ -2385,6 +2406,59 @@
        writes itself. WTS:/WTB: name one Card; WTT: is a barter, so it asks
        for yours first and then what you want back — and that second Card
        comes from the whole catalog, since you do not own it yet. */
+
+    /* ── Rolls tab ─────────────────────────────────────────────
+       Rolls are pulled out of Main and rendered here. Talk typed in this tab
+       is not a roll, so it posts to Main where the conversation lives — you
+       can roll and chat without leaving the tab, and Main stays readable. */
+    function renderRollTab(rolls) {
+      var el = document.getElementById('rollMessages');
+      if (!el) return;
+      if (!rolls.length) {
+        el.innerHTML = '<div style="color:#444;font-size:0.82rem;text-align:center;padding:1rem;">No rolls yet.</div>';
+        return;
+      }
+      var atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+      el.innerHTML = rolls.map(function(m) {
+        var isGM = m.sorc_role && m.sorc_role.startsWith('GM');
+        var safe = esc(m.body.replace(/<\/?strong>/g, ''));
+        safe = safe.indexOf('= ') !== -1
+          ? safe.replace(/=\s(\d+)/, '= <strong>$1</strong>')
+          : safe.replace(/:\s(\d+)/, ': <strong>$1</strong>');
+        var del = hasGMRights
+          ? '<button onclick="deleteLobbyMsg(\'' + m.id + '\')" style="margin-left:0.3rem;background:none;border:none;color:#444;font-size:0.75rem;cursor:pointer;padding:0 3px;line-height:1;vertical-align:middle;" title="Delete">&#215;</button>'
+          : '';
+        return '<div class="chat-msg" id="rmsg-' + m.id + '" data-msg-id="' + m.id + '">' +
+          chatNameHtml(m.username, isGM) + ':' +
+          '<span class="msg-body">' + safe + '</span>' +
+          '<span class="msg-time">' + timeAgo(m.created_at) + '</span>' + del +
+        '</div>';
+      }).join('');
+      if (atBottom) el.scrollTop = el.scrollHeight;
+    }
+
+    window.sendRollTabChat = async function() {
+      var input = document.getElementById('rollChatInput');
+      if (!input || !currentLobby) return;
+      var body = (input.value || '').trim();
+      if (!body) return;
+      input.value = '';
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ body: body })
+        });
+        var data = await readJson(res);
+        if (data.error) { showToast(data.error, true); input.value = body; return; }
+        showToast('Posted to Main chat.');
+        loadChatMessages(currentLobby.id);
+      } catch(e) {
+        input.value = body;
+        showToast('Could not send. Check your connection.', true);
+      }
+    };
+
     var cpVerb = 'WTS';
     var cpTab = 'all';
     var cpQuery = '';
