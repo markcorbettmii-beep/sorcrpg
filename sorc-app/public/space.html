@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Deployment: 2026-08-25 -->
+    <!-- Deployment: 2026-08-25 13:33 -->
     <title>Character Space | Slayers of Rings § Crowns</title>
     <link rel="stylesheet" href="styles.css?v=10" />
     <style>
@@ -687,70 +687,96 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         var container = document.getElementById('profileContainer');
+
+        // Immediate error display function
+        function showError(msg) {
+            if (container) {
+                container.innerHTML = '<div class="not-logged-in" style="padding:2rem;"><h2 style="color:#c93f35;">ERROR</h2><p style="color:#e0cfc0;font-size:0.9rem;background:#1a1a1a;padding:1rem;border-radius:6px;border-left:3px solid #c93f35;word-break:break-all;">' + String(msg).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p></div>';
+            }
+        }
+
         try {
+            showError('Loading...');
+
             var saved = null;
-            try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+            try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {
+                showError('localStorage parse error: ' + e);
+                return;
+            }
 
             if (!saved || !saved.authKey) {
-                container.innerHTML =
-                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
+                container.innerHTML = '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
                 return;
             }
 
             var user = saved;
             var role = user.role || 'CIVILIAN';
-            if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
-            else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
+
+            if (OWNER_EMAILS && OWNER_EMAILS.includes(user.email)) role = 'OWNER';
+            else if (ADMIN_EMAILS && ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
 
             var isPro = user.pro_member === true || user.pro_member === 1;
 
-            // Render profile immediately with cached data
-            if (!container) throw new Error('profileContainer not found');
+            if (!container) {
+                showError('profileContainer not found');
+                return;
+            }
 
+            // Render header
             var headerHtml = '';
-            var navHtml = '';
-            var contentHtml = '';
-
             try {
                 headerHtml = renderProfileHeader(user, role, isPro);
-            } catch(e) { throw new Error('Header render failed: ' + e.message); }
+            } catch(e) {
+                showError('Header render: ' + String(e).substring(0, 200));
+                return;
+            }
 
+            // Render nav
+            var navHtml = '';
             try {
                 navHtml = renderTabNav(user, role, isPro);
-            } catch(e) { throw new Error('Nav render failed: ' + e.message); }
+            } catch(e) {
+                showError('Nav render: ' + String(e).substring(0, 200));
+                return;
+            }
 
+            // Render content
+            var contentHtml = '';
             try {
                 contentHtml = renderTabContent(user, role, isPro);
-            } catch(e) { throw new Error('Content render failed: ' + e.message); }
+            } catch(e) {
+                showError('Content render: ' + String(e).substring(0, 200));
+                return;
+            }
 
-            container.innerHTML = headerHtml + navHtml + contentHtml;
+            // Set HTML
+            try {
+                container.innerHTML = headerHtml + navHtml + contentHtml;
+            } catch(e) {
+                showError('innerHTML set: ' + String(e).substring(0, 200));
+                return;
+            }
 
-            // Set initial active tab from URL
+            // Switch tab
             var params = new URLSearchParams(window.location.search);
             var initialTab = params.get('tab') || 'overview';
-
             try {
                 switchTab(initialTab);
-            } catch(e) { throw new Error('switchTab failed: ' + e.message); }
+            } catch(e) {
+                showError('switchTab: ' + String(e).substring(0, 200));
+                return;
+            }
 
-            // Fetch fresh data in background (non-blocking)
-            fetch(API_URL + '/api/me', {
-                headers: { 'X-Auth-Key': saved.authKey }
-            }).then(r => r.ok ? r.json() : null)
-            .then(freshData => {
-                if (freshData && freshData.user) {
-                    user = Object.assign(user, freshData.user);
-                    isPro = user.pro_member === true || user.pro_member === 1;
-                    localStorage.setItem('sorc_user', JSON.stringify(user));
-                }
-            }).catch(e => console.warn('Background fetch failed:', e));
+            // Background API refresh
+            if (saved.authKey && API_URL) {
+                fetch(API_URL + '/api/me', { headers: { 'X-Auth-Key': saved.authKey }, timeout: 5000 })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => { if (d && d.user) { localStorage.setItem('sorc_user', JSON.stringify(Object.assign(user, d.user))); } })
+                    .catch(e => console.warn('BG fetch:', e));
+            }
 
         } catch(err) {
-            console.error('[Space] Error:', err);
-            if (container) {
-                var errMsg = (err && err.message) ? String(err.message) : 'Unknown error loading profile';
-                container.innerHTML = '<div class="not-logged-in" style="padding:2rem;"><h2 style="color:#c93f35;">⚠️ Error</h2><p style="color:#e0cfc0;white-space:pre-wrap;word-break:break-word;font-size:0.9rem;background:#1a1a1a;padding:1rem;border-radius:6px;border-left:3px solid #c93f35;">' + esc(errMsg) + '</p><p><a href="signin.html" style="color:#b9aa00;">Sign in again</a></p></div>';
-            }
+            showError('Outer: ' + String(err).substring(0, 200));
         }
     });
     </script>
