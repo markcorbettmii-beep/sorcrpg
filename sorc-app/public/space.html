@@ -716,9 +716,11 @@
             var initialTab = params.get('tab') || 'overview';
             switchTab(initialTab);
         } catch(err) {
+            console.error('[Space] Error:', err);
             var container = document.getElementById('profileContainer');
             if (container) {
-                container.innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>' + err.message + '</p><p><a href="signin.html">Start over</a></p></div>';
+                var errMsg = (err && err.message) ? String(err.message) : 'Unknown error loading profile';
+                container.innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>' + errMsg + '</p><p><a href="signin.html">Sign in again</a></p></div>';
             }
         }
     });
