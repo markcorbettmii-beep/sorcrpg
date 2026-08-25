@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css?v=9" />
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; }
-        .profile-container { max-width: 680px; margin: 2rem auto; padding: 2rem; }
+        .profile-container { max-width: 1000px; margin: 2rem auto; padding: 2rem; }
         .profile-card { background: #1a1a1a; border-radius: 1rem; border: 1px solid #333; overflow: hidden; margin-bottom: 1rem; }
         .profile-banner { width: 100%; height: 120px; background: linear-gradient(135deg, #1a0a0a, #2a0808, #c93f3522); display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.8rem; position: relative; }
         .profile-info-row { display: flex; align-items: flex-end; gap: 1rem; padding: 0 1.5rem; margin-top: -40px; margin-bottom: 1rem; position: relative; z-index: 1; }
@@ -17,56 +17,58 @@
         .profile-role-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 3px; }
         .profile-section { padding: 1rem 1.5rem; border-top: 1px solid #2a2a2a; }
         .profile-section h3 { color: #b9aa00; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem 0; }
-        .profile-field { margin-bottom: 0.75rem; }
-        .profile-field label { font-size: 0.75rem; color: #888; display: block; margin-bottom: 1px; }
-        .profile-input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; font-size: 0.9rem; box-sizing: border-box; }
-        .profile-input:focus { outline: none; border-color: #c93f35; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
         .stat-box { background: #222; border-radius: 8px; padding: 0.75rem; text-align: center; border: 1px solid #333; }
         .stat-box .stat-val { font-size: 1.2rem; font-weight: bold; color: #b9aa00; }
         .stat-box .stat-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
+
+        /* Tab Navigation */
+        .tab-nav { display: flex; gap: 0; border-bottom: 2px solid #2a2a2a; background: #0f0f0f; border-radius: 8px 8px 0 0; flex-wrap: wrap; }
+        .tab-nav button { flex: 0 0 auto; min-width: 100px; padding: 12px 16px; background: #1a1a1a; border: none; color: #888; font-weight: bold; cursor: pointer; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
+        .tab-nav button:hover { background: #222; color: #b9aa00; }
+        .tab-nav button.active { color: #b9aa00; border-bottom-color: #b9aa00; background: #222; }
+        .tab-nav button.pro { color: #888; }
+        .tab-nav button.pro::after { content: " 👑"; font-size: 0.9rem; }
+        .tab-nav button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tab-content { display: none; padding: 2rem 1.5rem; background: #1a1a1a; border-radius: 0 0 8px 8px; min-height: 300px; }
+        .tab-content.active { display: block; }
+
+        /* Access Control */
+        .access-badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; margin-bottom: 1rem; }
+        .access-badge.PUBLIC { background: #1a3a6b; color: #fff; }
+        .access-badge.PRIVATE { background: #3a1a1a; color: #fff; }
+        .access-badge.PRO { background: #3a3a1a; color: #fff; }
+        .locked-section { background: #2a1a1a; border: 1px solid #c93f35; border-radius: 8px; padding: 2rem; text-align: center; }
+        .locked-section h4 { color: #c93f35; margin: 0 0 0.5rem 0; }
+        .locked-section p { color: #888; font-size: 0.9rem; margin: 0.5rem 0; }
+        .upgrade-btn { background: #b9aa00; color: #111; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
+        .upgrade-btn:hover { background: #d4c70a; }
+
+        /* Content Grid */
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+        .card { background: #222; border: 1px solid #333; border-radius: 8px; padding: 1rem; transition: border-color 0.2s; }
+        .card:hover { border-color: #b9aa00; }
+        .card h4 { color: #e0cfc0; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
+        .card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.5; }
+
+        .not-logged-in { text-align: center; padding: 3rem; }
+        .not-logged-in a { color: #c93f35; }
+
         .btn { padding: 8px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-red { background: #c93f35; color: #fff; }
         .btn-gold { background: #b9aa00; color: #222; }
         .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
-        .msg { margin-top: 0.5rem; font-size: 0.85rem; }
-        .msg.success { color: #4caf50; }
-        .msg.error { color: #c93f35; }
-        .not-logged-in { text-align: center; padding: 3rem; }
-        .not-logged-in a { color: #c93f35; }
-        .avatar-preview-box { width: 120px; height: 120px; border-radius: 50%; border: 3px solid #c93f35; background: #2a2a2a; overflow: hidden; margin: 0 auto 1rem auto; display: flex; align-items: center; justify-content: center; }
-        .avatar-preview-box img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-scroll { max-height: 260px; overflow-y: auto; padding-right: 4px; }
-        .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
-        @media (max-width: 600px) { .avatar-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; } }
-        .avatar-option { border: 3px solid transparent; border-radius: 8px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; background: #2a2a2a; aspect-ratio: 1; }
-        .avatar-option:hover { border-color: #b9aa00; }
-        .avatar-option.selected { border-color: #c93f35; }
-        .avatar-option img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .points-bar-bg { background: #2a2a2a; border-radius: 8px; height: 8px; margin-top: 4px; overflow: hidden; }
-        .points-bar-fill { background: linear-gradient(90deg, #c93f35, #b9aa00); height: 100%; border-radius: 8px; }
-        .unlock-feature-card { background: #1a1a2a; border: 1px solid #333; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
-        .unlock-feature-card.unlocked { border-color: #1a6b1a; }
-        .unlock-feature-info h4 { color: #e0cfc0; margin: 0 0 4px 0; font-size: 0.9rem; }
-        .unlock-feature-info p { color: #555; margin: 0; font-size: 0.78rem; }
-        .upgrade-section { margin-top: 1rem; padding: 1rem 1.5rem; background: #1a1a2a; border: 1px solid #444; border-radius: 8px; }
-        .upgrade-section h3 { color: #b9aa00; margin-bottom: 0.5rem; font-size: 0.85rem; }
-        .upgrade-btn { display: block; width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 2px solid #444; background: #222; color: #e0cfc0; font-weight: bold; cursor: pointer; font-size: 0.9rem; text-align: left; }
-        .upgrade-btn:hover { border-color: #b9aa00; }
-        .upgrade-info { display: none; background: #2a1a00; border: 1px solid #b9aa00; color: #b9aa00; border-radius: 8px; padding: 1rem; margin-top: 0.5rem; font-size: 0.85rem; line-height: 1.6; }
-    
+
         body.lawful-mode .profile-card { background: #ffffff; border-color: #e0e0e0; }
-        body.lawful-mode .profile-avatar-large { background: #f0ede6; }
-    
-        body.lawful-mode .avatar-option { background: #f0ede6; }
-        body.lawful-mode .avatar-preview-box { background: #f0ede6; }
-        body.lawful-mode .points-bar-bg { background: #e6e0d0; }
-        body.lawful-mode .profile-input { background: #f9f5f1; border-color: #ccc; color: #2c2c2c; }
+        body.lawful-mode .tab-nav { background: #f5f5f0; border-bottom-color: #e0e0e0; }
+        body.lawful-mode .tab-nav button { background: #ffffff; color: #888; border-bottom-color: transparent; }
+        body.lawful-mode .tab-nav button:hover { background: #f9f5f1; color: #c93f35; }
+        body.lawful-mode .tab-nav button.active { color: #c93f35; border-bottom-color: #c93f35; background: #f9f5f1; }
+        body.lawful-mode .tab-content { background: #ffffff; }
+        body.lawful-mode .card { background: #f9f5f1; border-color: #e0e0e0; }
+        body.lawful-mode .card h4 { color: #2c2c2c; }
+        body.lawful-mode .card p { color: #666; }
         body.lawful-mode .stat-box { background: #f9f5f1; border-color: #e0e0e0; }
-        body.lawful-mode .unlock-feature-card { background: #eef0fa; border-color: #ccd; }
-        body.lawful-mode .upgrade-btn { background: #f9f5f1; border-color: #ccc; color: #2c2c2c; }
-        body.lawful-mode .upgrade-info { background: #fdf3e0; }
-        body.lawful-mode .upgrade-section { background: #eef0fa; border-color: #ccd; }
     </style>
 </head>
 <body>
@@ -81,31 +83,40 @@
     <ul class="page-nav">
       <li><a href="index.html">&#8962;</a></li>
     </ul>
-    <div id="profileApp"><div style="text-align:center;padding:3rem;color:#555;">Loading...</div></div>
+
+    <div id="profileApp">
+        <!-- Profile Header -->
+        <div class="profile-container" id="profileContainer"></div>
+    </div>
+
     <div id="footer"></div>
     <script src="main.js?v=25"></script>
     <script>
     var API_URL = 'https://api.sorcrpg.com';
     var OWNER_EMAILS = ['corbett@sorcrpg.com'];
     var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
-    var selectedAvatar = null;
 
-    var AVATARS = [
-        '01deb0d8-fb1e-4e18-8048-020d8ea56272.png','037b9199-2abf-47a3-9b34-0b912a0675a6.png',
-        '1dc7c652-c366-4ed6-babb-50e9db131cf6.png','1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png',
-        '2855038f-8581-4061-b60a-e0629ec1f683.png','2e98fc95-753a-4aaa-855b-79dd6bb17c09.png',
-        '3631e3d3-79bd-4fd2-b588-ec80fabc5ae4.png','3dba5b21-7dcc-4e9a-a309-1f42d010d58f.png',
-        '3ff4851b-f3ee-4f23-9a1d-57c88547a1c6.png','45cc24a0-0873-48da-aeb5-afad6c36d887.png',
-        '4c16641d-eee1-4bd5-bd8a-ec0611f928b7.png','5142b751-8cb6-4f19-ac2b-6880c241ab56.png',
-        '51cb2423-194f-4bd1-8229-7fe356f17c32.png','6a04a2c0-ab6a-4fb7-8f2e-f29a5241095e.png',
-        '6a955b49-f706-4e8d-a04c-af0daca538f0.png','6b87456a-88d9-4535-9f45-4f7274865156.png',
-        '6c37d5d1-76c4-4391-ac12-6ca2a1109026.png','7ad2053e-a2a7-4f23-af8e-902b2d243fa2.png',
-        '8368be40-e509-4f84-8ff4-b41cb8e6b263.png','8ea1641c-5cdf-4e58-b28a-60f2f7822d7a.png',
-        '953d2b9a-3239-485b-b725-6a8ec7b198a6.png','9900c8e6-3b22-4926-924c-63995c96f50b.png',
-        'aba62c03-4bae-49e8-a8bb-88b00459b241.png','b4d464f7-1923-409f-883a-1648018b9483.png'
+    // Tab definitions with access control
+    var PROFILE_TABS = [
+        { id: 'overview', label: 'Overview', access: 'PUBLIC', pro: false },
+        { id: 'achievements', label: 'Achievements', access: 'PUBLIC', pro: false },
+        { id: 'characters', label: 'Characters', access: 'PUBLIC', pro: false },
+        { id: 'leaderboards', label: 'Leaderboards', access: 'PUBLIC', pro: false },
+        { id: 'fellowship', label: 'Fellowship', access: 'PUBLIC', pro: false },
+        { id: 'inventory', label: 'Inventory', access: 'PRIVATE', pro: false },
+        { id: 'session-history', label: 'Session History', access: 'PRIVATE', pro: false },
+        { id: 'character-home', label: "Character's Home", access: 'PRO', pro: true },
+        { id: 'essentia-exchange', label: 'General Trade', access: 'PRO', pro: true },
+        { id: 'contributions', label: 'Contributions', access: 'PUBLIC', pro: false },
+        { id: 'settings', label: 'Settings', access: 'PRIVATE', pro: false }
     ];
 
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+    function canViewTab(tab, isOwner, isPro) {
+        if (tab.access === 'PUBLIC') return true;
+        if (tab.access === 'PRIVATE') return isOwner;
+        if (tab.access === 'PRO') return isOwner && isPro;
+        return false;
+    }
 
     function getRoleColor(role) {
         if (role === 'OWNER') return 'background:#b9aa00;color:#222;';
@@ -114,6 +125,7 @@
         if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
         return 'background:#333;color:#e0cfc0;';
     }
+
     function getRoleAbbr(role) {
         if (role === 'OWNER') return '[OWN]';
         if (role === 'ADMIN') return '[AD]';
@@ -122,603 +134,241 @@
         return '[CIV]';
     }
 
-    window.pickAvatar = function(el, filename) {
-        document.querySelectorAll('.avatar-option').forEach(function(o) { o.classList.remove('selected'); });
-        el.classList.add('selected');
-        selectedAvatar = filename;
-        var preview = document.getElementById('avatarPreviewImg');
-        if (preview) {
-            preview.src = 'images/avatars/' + filename;
-            preview.style.display = 'block';
-        }
-    };
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-    window.saveAvatar = async function() {
-        var msgEl = document.getElementById('avatarMsg');
-        if (!selectedAvatar) { msgEl.className = 'msg error'; msgEl.textContent = 'Please select an avatar.'; return; }
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) { msgEl.className = 'msg error'; msgEl.textContent = 'Not logged in.'; return; }
-        try {
-            var res = await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ avatar: selectedAvatar })
-            });
-            var data = await res.json();
-            if (data.success) {
-                saved.avatar = selectedAvatar;
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-                msgEl.className = 'msg success'; msgEl.textContent = '✅ Avatar saved!';
-                if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(selectedAvatar);
-                setTimeout(function() { location.reload(); }, 1000);
-            } else {
-                msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed to save.';
-            }
-        } catch(e) {
-            msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.';
-        }
-    };
-
-    window.saveSignature = async function() {
-        var sig = document.getElementById('sigInput').value.trim();
-        var msgEl = document.getElementById('sigMsg');
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) return;
-        try {
-            var res = await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ signature: sig })
-            });
-            var data = await res.json();
-            msgEl.className = data.success ? 'msg success' : 'msg error';
-            msgEl.textContent = data.success ? '✅ Signature saved!' : (data.error || 'Failed.');
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
-    };
-
-    window.saveSocials = async function() {
-        var website = document.getElementById('socialWebsite').value.trim();
-        var twitter = document.getElementById('socialTwitter').value.trim();
-        var twitch = document.getElementById('socialTwitch').value.trim();
-        var msgEl = document.getElementById('socialsMsg');
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) return;
-        try {
-            var res = await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ website: website, social_twitter: twitter, social_twitch: twitch })
-            });
-            var data = await res.json();
-            msgEl.className = data.success ? 'msg success' : 'msg error';
-            msgEl.textContent = data.success ? '✅ Socials saved!' : (data.error || 'Failed.');
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
-    };
-
-    window.saveBio = async function() {
-        var bio = document.getElementById('bioInput').value.trim();
-        var msgEl = document.getElementById('bioMsg');
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) return;
-        try {
-            var res = await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ bio: bio })
-            });
-            var data = await res.json();
-            msgEl.className = data.success ? 'msg success' : 'msg error';
-            msgEl.textContent = data.success ? '✅ Bio saved!' : (data.error || 'Failed.');
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
-    };
-
-    function applyPrivacyToggleVisual(isPublic) {
-        var slider = document.getElementById('emailPrivacySlider');
-        var label = document.getElementById('emailPrivacyLabel');
-        if (slider) {
-            slider.style.background = isPublic ? '#1a6b1a' : '#333';
-            slider.children[0].style.left = isPublic ? '23px' : '3px';
-        }
-        if (label) label.textContent = isPublic ? 'Email visible on your profile' : 'Email hidden from others';
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-nav button').forEach(function(btn) { btn.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+        var btn = document.querySelector('.tab-nav button[data-tab="' + tabId + '"]');
+        if (btn) btn.classList.add('active');
+        var panel = document.getElementById('tab-' + tabId);
+        if (panel) panel.classList.add('active');
+        window.history.replaceState(null, null, '?tab=' + tabId);
     }
 
-    window.saveEmailPrivacy = async function() {
-        var toggle = document.getElementById('emailPrivacyToggle');
-        var msgEl = document.getElementById('emailPrivacyMsg');
-        var isPublic = toggle ? toggle.checked : false;
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) return;
-        applyPrivacyToggleVisual(isPublic);
-        try {
-            var res = await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ privacy_email: isPublic ? 0 : 1 })
-            });
-            var data = await res.json();
-            if (data.success) {
-                saved.privacy_email = isPublic ? 0 : 1;
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-                msgEl.className = 'msg success';
-                msgEl.textContent = isPublic ? '✅ Email is now public.' : '✅ Email is now hidden.';
-            } else {
-                msgEl.className = 'msg error';
-                msgEl.textContent = data.error || 'Failed to save.';
-                if (toggle) toggle.checked = !isPublic;
-                applyPrivacyToggleVisual(!isPublic);
-            }
-        } catch(e) {
-            msgEl.className = 'msg error';
-            msgEl.textContent = 'Could not save. Please try again.';
-            if (toggle) toggle.checked = !isPublic;
-            applyPrivacyToggleVisual(!isPublic);
-        }
-    };
-
-    window.saveDisplayName = async function() {
-        var name = document.getElementById('displayNameInput').value.trim();
-        var msgEl = document.getElementById('nameMsg');
-        if (!name || name.length < 3) { msgEl.className = 'msg error'; msgEl.textContent = 'Name must be at least 3 characters.'; return; }
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) return;
-        try {
-            var res = await fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ display_name: name })
-            });
-            var data = await res.json();
-            if (data.success) {
-                saved.display_name = name;
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-                msgEl.className = 'msg success'; msgEl.textContent = '✅ Name saved!';
-                var btn = document.getElementById('saveNameBtn');
-                if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; btn.style.cursor = 'not-allowed'; btn.title = 'Already saved'; }
-            } else { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
-        } catch(e) { msgEl.className = 'msg error'; msgEl.textContent = 'Could not save. Please try again.'; }
-    };
-
-    window.toggleInfo = function(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    };
-
-    window.redeemGmCode = async function() {
-        var input = document.getElementById('gmCodeInput');
-        var msgEl = document.getElementById('gmCodeMsg');
-        if (!input || !msgEl) return;
-        var code = input.value.trim();
-        if (!code) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Enter a GM code.'; return; }
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Not signed in.'; return; }
-        msgEl.style.color = '#888'; msgEl.textContent = 'Redeeming...';
-        try {
-            var res = await fetch(API_URL + '/api/gm-codes/redeem', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ code: code })
-            });
-            var data = await res.json();
-            if (data.success) {
-                msgEl.style.color = '#4caf50';
-                msgEl.textContent = '✓ Upgraded to MASTER (GM)! +' + (data.points_awarded || 500) + ' CP. Refreshing...';
-                saved.role = 'MASTER'; saved.sorc_role = 'GM-ADV';
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-                setTimeout(function() { window.location.reload(); }, 1800);
-            } else {
-                msgEl.style.color = '#c93f35';
-                msgEl.textContent = data.error || 'Could not redeem code.';
-            }
-        } catch(e) { msgEl.style.color = '#c93f35'; msgEl.textContent = 'Connection error.'; }
-    };
-
-    window.unlockFeature = async function(feature, cost) {
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!saved || !saved.authKey) return;
-
-        var cp = saved.community_points || 0;
-        if (cp < cost) { alert('Not enough Community Points. Need ' + cost + ' CP.'); return; }
-
-        try {
-            var res = await fetch(API_URL + '/api/unlock', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
-                body: JSON.stringify({ feature: feature })
-            });
-            var data = await res.json();
-            if (data.success) {
-                saved.community_points = data.community_points;
-                saved.unlocked_features = data.unlocked_features;
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-                location.reload();
-            } else {
-                alert(data.error || 'Could not unlock. Please try again.');
-            }
-        } catch(e) { alert('Could not connect. Please try again.'); }
-    };
-
-    window.doSignOut = function() {
-        localStorage.removeItem('sorc_user');
-        window.location.href = 'index.html';
-    };
-
-    document.addEventListener('DOMContentLoaded', async function() {
-        console.log('[PROFILE] DOMContentLoaded fired');
-        var saved = null;
-        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {
-            console.log('[PROFILE] Error parsing sorc_user from localStorage:', e);
-        }
-
-        console.log('[PROFILE] saved user:', saved ? saved.username : 'null');
-
-        if (!saved || !saved.authKey) {
-            console.log('[PROFILE] No auth key found');
-            document.getElementById('profileApp').innerHTML =
-                '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
-            return;
-        }
-
-        // Always fetch fresh data from server so role/points stay current
-        try {
-            console.log('[PROFILE] Fetching fresh data from /api/me');
-            var freshRes = await fetch(API_URL + '/api/me', {
-                headers: { 'X-Auth-Key': saved.authKey }
-            });
-            console.log('[PROFILE] /api/me response status:', freshRes.status);
-            var freshData = await freshRes.json();
-            console.log('[PROFILE] /api/me response:', freshData);
-            if (freshData.user) {
-                console.log('[PROFILE] Updating saved user with fresh data');
-                saved = Object.assign(saved, freshData.user);
-                localStorage.setItem('sorc_user', JSON.stringify(saved));
-            }
-        } catch(e) {
-            console.log('[PROFILE] Error fetching fresh data:', e);
-        }
-
-        var user = saved;
-        console.log('[PROFILE] Starting to render profile for user:', user.username);
-        var role = user.role || 'CIVILIAN';
-        if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
-        else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
-
+    function renderProfileHeader(user, role, isPro) {
         var displayName = user.display_name || user.username || 'Adventurer';
-        var avatar = user.avatar || null;
-        var communityPoints = user.community_points || 0;
-        var postCount = user.post_count || 0;
-
-        var unlockedFeatures = user.unlocked_features || [];
-        if (typeof unlockedFeatures === 'string') { try { unlockedFeatures = JSON.parse(unlockedFeatures); } catch(e) { unlockedFeatures = []; } }
-
-        console.log('[PROFILE] Rendering profile - role:', role, 'displayName:', displayName, 'communityPoints:', communityPoints);
-
-        if ((role === 'OWNER' || role === 'ADMIN') && communityPoints < 10000) {
-            communityPoints = 10000;
-            user.community_points = 10000;
-            localStorage.setItem('sorc_user', JSON.stringify(user));
-            fetch(API_URL + '/api/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
-                body: JSON.stringify({ community_points: 10000 })
-            }).catch(function(){});
-        }
-
+        var avatar = user.avatar;
         var avatarDisplay = avatar
             ? '<img src="images/avatars/' + avatar + '" style="width:100%;height:100%;object-fit:cover;" />'
             : '<span style="font-size:1.5rem;">👤</span>';
 
-        var avatarGridHtml = AVATARS.map(function(filename) {
-            var sel = filename === avatar ? ' selected' : '';
-            return '<div class="avatar-option' + sel + '" onclick="pickAvatar(this, \'' + filename + '\')">' +
-                '<img src="images/avatars/' + filename + '" loading="lazy" />' +
-                '</div>';
-        }).join('');
+        var communityPoints = user.community_points || 0;
+        var postCount = user.post_count || 0;
+        var membershipBadge = isPro ? '<span class="profile-role-tag" style="background:#b9aa00;color:#222;">👑 PRO</span>' : '';
 
-        var upgradeSection = '';
-        if (role === 'CIVILIAN') {
-            upgradeSection = '<div class="upgrade-section">' +
-                '<h3>Upgrade Your Account</h3>' +
-                '<button class="upgrade-btn" onclick="toggleInfo(\'pc-info\')">▶ Upgrade to PLAYER</button>' +
-                '<div class="upgrade-info" id="pc-info"><a href="/assess.html" style="color:#b9aa00;text-decoration:underline;">Take the PC Assessment</a> to unlock PLAYER status and access <a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Lobbies</a>. Upon upgrading you will receive <b>500 community points</b>.</div>' +
-                '<button class="upgrade-btn" onclick="toggleInfo(\'gm-info\')">▶ Upgrade to MASTER (GM)</button>' +
-                '<div class="upgrade-info" id="gm-info"><a href="/assess.html" style="color:#b9aa00;text-decoration:underline;">Take the GM Assessment</a> to unlock MASTER status. GM Codex under development. Upon upgrading you will receive <b>1,000 community points</b>.</div>' +
-            '</div>';
-        } else if (role === 'PLAYER') {
-            upgradeSection = '<div class="upgrade-section">' +
-                '<h3>&#128081; Upgrade to MASTER (GM)</h3>' +
-                '<p style="color:#888;font-size:0.82rem;margin:0 0 0.75rem 0;"><a href="/assess.html" style="color:#b9aa00;text-decoration:underline;">Take the GM Assessment</a> to unlock Game Master status. GM Codex under development. If approved, redeem your GM code below to complete the upgrade.</p>' +
-                '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
-                    '<input type="text" id="gmCodeInput" placeholder="Enter GM code..." maxlength="20" style="flex:1;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:#e0cfc0;font-size:0.88rem;" />' +
-                    '<button onclick="redeemGmCode()" style="padding:8px 18px;background:#b9aa00;color:#111;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.88rem;">Redeem</button>' +
-                '</div>' +
-                '<div id="gmCodeMsg" style="min-height:1.2em;font-size:0.8rem;margin-top:0.4rem;"></div>' +
-                '<p style="color:#888;font-size:0.82rem;margin:0.75rem 0 0 0;"><a href="/lobbies.html" style="color:#b9aa00;text-decoration:underline;">Access Lobbies</a> (PLAYER only)</p>' +
-            '</div>';
-        }
-
-        console.log('[PROFILE] About to render profile HTML');
-        try {
-        console.log('[PROFILE] Rendering profile card and sections...');
-        document.getElementById('profileApp').innerHTML =
-            '<div class="profile-container">' +
-                '<div class="profile-card">' +
-                    '<div class="profile-banner"></div>' +
-                    '<div class="profile-info-row">' +
-                        '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
-                        '<div class="profile-name-block">' +
-                            '<div class="profile-username">' + esc(displayName) + '</div>' +
-                            '<span class="profile-role-tag" style="' + getRoleColor(role) + '">' + role + ' ' + getRoleAbbr(role) + '</span>' +
-                            (user.id ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + user.user_id + '</div>' : '') +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="profile-section">' +
-                        '<div class="stat-grid">' +
-                            '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div><a href="#unlocks" style="font-size:0.7rem;color:#b9aa00;text-decoration:underline;display:block;margin-top:3px;">Spend Points</a></div>' +
-                            '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>' +
-                            '<div class="stat-box"><div class="stat-val">' + (user.email_verified ? '✅' : '❌') + '</div><div class="stat-label">Email Verified</div></div>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-
-                '<div class="profile-card" id="unlocks">' +
-                    '<div class="profile-section">' +
-                        '<h3>Edit Profile</h3>' +
-
-                        '<div class="profile-field">' +
-                            '<label>DISPLAY NAME</label>' +
-                            '<input type="text" id="displayNameInput" class="profile-input" value="' + displayName + '" maxlength="30" oninput="var btn=document.getElementById(\'saveNameBtn\');btn.disabled=this.value.trim()===\'' + displayName.replace(/'/g,"\\'") + '\';btn.style.opacity=btn.disabled?\'0.4\':\'1\';btn.style.cursor=btn.disabled?\'not-allowed\':\'pointer\';" />' +
-                            '<button id="saveNameBtn" class="btn btn-gold btn-sm" onclick="saveDisplayName()" style="margin-top:6px;opacity:0.4;cursor:not-allowed;" disabled>Save Name</button>' +
-                            '<div id="nameMsg" class="msg"></div>' +
-                        '</div>' +
-
-                        '<div class="profile-field">' +
-                            '<label>AVATAR</label>' +
-                            '<div class="avatar-preview-box">' +
-                                (avatar ? '<img id="avatarPreviewImg" src="images/avatars/' + avatar + '" />' : '<img id="avatarPreviewImg" src="" style="display:none;" />') +
-                            '</div>' +
-                            '<div class="avatar-scroll"><div class="avatar-grid">' + avatarGridHtml + '</div></div>' +
-                            '<button class="btn btn-gold btn-sm" onclick="saveAvatar()" style="margin-top:6px;">Save Avatar</button>' +
-                            '<div id="avatarMsg" class="msg"></div>' +
-                        '</div>' +
-
-                        '<div class="profile-field">' +
-                            '<label>BIO</label>' +
-                            '<textarea id="bioInput" class="profile-input" rows="3" maxlength="300" placeholder="Tell Essentia about yourself...">' + esc(user.bio) + '</textarea>' +
-                            '<button class="btn btn-gold btn-sm" onclick="saveBio()" style="margin-top:6px;">Save Bio</button>' +
-                            '<div id="bioMsg" class="msg"></div>' +
-                        '</div>' +
-
-                        (function() {
-                            var locked = !unlockedFeatures.includes('fellowships');
-                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Send Fellowship Requests</h4><p>Unlock the ability to send Fellowship requests to other members.</p></div>' +
-                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 50 CP') + '</span>' +
-                                    (locked
-                                        ? (communityPoints >= 50
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'fellowships\',50)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (50 - communityPoints) + ' more CP</span>')
-                                        : '') +
-                                '</div>' +
-                            '</div>';
-                        })() +
-
-                        (function() {
-                            var locked = !unlockedFeatures.includes('signature');
-                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Signature</h4><p>A short line shown below your forum posts.</p></div>' +
-                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 100 CP') + '</span>' +
-                                    (locked
-                                        ? (communityPoints >= 100
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'signature\',100)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (100 - communityPoints) + ' more CP</span>')
-                                        : '') +
-                                '</div>' +
-                            '</div>' +
-                            (!locked
-                                ? '<div class="profile-field" style="margin-top:0.5rem;">' +
-                                    '<input type="text" id="sigInput" class="profile-input" value="' + esc(user.signature) + '" maxlength="80" placeholder="Short signature shown on your posts..." />' +
-                                    '<button class="btn btn-gold btn-sm" onclick="saveSignature()" style="margin-top:6px;">Save Signature</button>' +
-                                    '<div id="sigMsg" class="msg"></div>' +
-                                '</div>'
-                                : '');
-                        })() +
-
-                        (function() {
-                            var locked = !unlockedFeatures.includes('socials');
-                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Social Links</h4><p>Website, Twitter/X, and Twitch on your profile.</p></div>' +
-                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 250 CP') + '</span>' +
-                                    (locked
-                                        ? (communityPoints >= 250
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'socials\',250)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (250 - communityPoints) + ' more CP</span>')
-                                        : '') +
-                                '</div>' +
-                            '</div>' +
-                            (!locked
-                                ? '<div class="profile-field" style="margin-top:0.5rem;">' +
-                                    '<input type="text" id="socialWebsite" class="profile-input" value="' + esc(user.website) + '" placeholder="Website URL" style="margin-bottom:4px;" />' +
-                                    '<input type="text" id="socialTwitter" class="profile-input" value="' + esc(user.social_twitter) + '" placeholder="Twitter / X handle" style="margin-bottom:4px;" />' +
-                                    '<input type="text" id="socialTwitch" class="profile-input" value="' + esc(user.social_twitch) + '" placeholder="Twitch handle" />' +
-                                    '<button class="btn btn-gold btn-sm" onclick="saveSocials()" style="margin-top:6px;">Save Socials</button>' +
-                                    '<div id="socialsMsg" class="msg"></div>' +
-                                '</div>'
-                                : '');
-                        })() +
-
-                        (function() {
-                            var locked = !unlockedFeatures.includes('banner');
-                            return '<div class="unlock-feature-card' + (!locked ? ' unlocked' : '') + '">' +
-                                '<div class="unlock-feature-info"><h4>Profile Banner</h4><p>Custom banner image at the top of your profile.</p></div>' +
-                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<span style="font-size:0.8rem;color:' + (!locked ? '#1a6b1a' : '#b9aa00') + ';font-weight:bold;">' + (!locked ? '✅ Unlocked' : '🔒 500 CP') + '</span>' +
-                                    (locked
-                                        ? (communityPoints >= 500
-                                            ? '<button class="btn btn-gold btn-sm" onclick="unlockFeature(\'banner\',500)">Unlock</button>'
-                                            : '<span style="font-size:0.75rem;color:#555;">Need ' + (500 - communityPoints) + ' more CP</span>')
-                                        : '<span style="font-size:0.75rem;color:#555;">Contact an admin to upload your banner.</span>') +
-                                '</div>' +
-                            '</div>';
-                        })() +
-
-                        (function() {
-                            var emailIsPublic = user.privacy_email === 0 || user.privacy_email === false;
-                            return '<div class="profile-field">' +
-                                '<label>EMAIL</label>' +
-                                '<div style="font-size:0.85rem;color:#888;margin-bottom:8px;">' + (user.email || '') + '</div>' +
-                                '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-                                    '<label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">' +
-                                        '<input type="checkbox" id="emailPrivacyToggle" ' + (emailIsPublic ? 'checked' : '') + ' onchange="saveEmailPrivacy()" style="opacity:0;width:0;height:0;position:absolute;" />' +
-                                        '<span id="emailPrivacySlider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;border-radius:24px;transition:0.2s;background:' + (emailIsPublic ? '#1a6b1a' : '#333') + ';">' +
-                                            '<span style="position:absolute;height:18px;width:18px;left:' + (emailIsPublic ? '23px' : '3px') + ';bottom:3px;border-radius:50%;background:#e0cfc0;transition:0.2s;"></span>' +
-                                        '</span>' +
-                                    '</label>' +
-                                    '<span id="emailPrivacyLabel" style="font-size:0.82rem;color:#888;">' + (emailIsPublic ? 'Email visible on your profile' : 'Email hidden from others') + '</span>' +
-                                '</div>' +
-                                '<div id="emailPrivacyMsg" class="msg" style="margin-top:4px;"></div>' +
-                            '</div>';
-                        })() +
-                    '</div>' +
-                '</div>' +
-
-                upgradeSection +
-
-                '<div style="margin-top:2rem;padding:1.5rem;background:#1a1a2a;border:1px solid #444;border-radius:8px;text-align:center;">' +
-                    '<h3 style="color:#b9aa00;margin-bottom:1rem;font-size:0.9rem;">Create Your Character Sheet</h3>' +
-                    '<a href="empty-char-sheet.html" class="btn btn-gold" style="display:inline-block;text-decoration:none;font-size:1rem;padding:12px 32px;margin-bottom:0.5rem;">📋 Finalize Sheet</a>' +
-                    '<p style="font-size:0.8rem;color:#888;margin-top:0.75rem;">Start building your character profile with a blank character sheet template.</p>' +
-                '</div>' +
-
-                '<div style="margin-top:1rem;display:flex;gap:1rem;flex-wrap:wrap;">' +
-                    '<a href="character-customizer/creation-overview.html" class="btn btn-gold" style="text-decoration:none;">Character Sheet</a>' +
-                    '<button class="btn btn-red" onclick="doSignOut()">Logout</button>' +
+        return '<div class="profile-card">' +
+            '<div class="profile-banner"></div>' +
+            '<div class="profile-info-row">' +
+                '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
+                '<div class="profile-name-block">' +
+                    '<div class="profile-username">' + esc(displayName) + '</div>' +
+                    '<span class="profile-role-tag" style="' + getRoleColor(role) + '">' + role + ' ' + getRoleAbbr(role) + '</span>' +
+                    membershipBadge +
                 '</div>' +
             '</div>' +
-            '<div id="adminInviteNotice"></div>' +
-            '<div id="gmInviteNotice"></div>';
+            '<div class="profile-section">' +
+                '<div class="stat-grid">' +
+                    '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div></div>' +
+                    '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>' +
+                    '<div class="stat-box"><div class="stat-val">' + (user.email_verified ? '✅' : '❌') + '</div><div class="stat-label">Email Verified</div></div>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
 
-        console.log('[PROFILE] Profile HTML rendered successfully');
-        } catch(renderError) {
-            console.log('[PROFILE] Error rendering profile:', renderError);
-            document.getElementById('profileApp').innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>Could not load profile. Error: ' + renderError.message + '</p><p><a href="signin.html">Sign in again</a></p></div>';
+    function renderTabNav(user, role, isPro) {
+        var html = '<div class="tab-nav">';
+        PROFILE_TABS.forEach(function(tab) {
+            var canView = canViewTab(tab, true, isPro);
+            var disabled = !canView ? ' disabled' : '';
+            var proClass = tab.pro ? ' pro' : '';
+            html += '<button class="tab-btn' + proClass + '" data-tab="' + tab.id + '" onclick="switchTab(\'' + tab.id + '\')"' + disabled + '>' + tab.label + '</button>';
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function renderTabContent(user, role, isPro) {
+        var html = '';
+        PROFILE_TABS.forEach(function(tab) {
+            var canView = canViewTab(tab, true, isPro);
+            var active = tab.id === 'overview' ? ' active' : '';
+
+            html += '<div class="tab-content' + active + '" id="tab-' + tab.id + '">';
+
+            if (!canView) {
+                html += '<div class="locked-section">' +
+                    '<h4>🔒 ' + (tab.access === 'PRO' ? 'Pro Feature' : 'Private') + '</h4>' +
+                    '<p>';
+                if (tab.access === 'PRO') {
+                    html += 'Upgrade to Pro to unlock this feature.';
+                } else {
+                    html += 'This section is private to your profile.';
+                }
+                html += '</p>';
+                if (tab.access === 'PRO') {
+                    html += '<button class="upgrade-btn" onclick="">Upgrade to Pro</button>';
+                }
+                html += '</div>';
+            } else {
+                // Render tab content based on ID
+                switch (tab.id) {
+                    case 'overview':
+                        html += '<h3>Your Profile Overview</h3>' +
+                            '<span class="access-badge PUBLIC">PUBLIC</span>' +
+                            '<p>Welcome to your SORC Beyond profile, ' + esc(user.display_name) + '! Here you can manage your achievements, characters, and community presence.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card"><h4>📊 Profile Completeness</h4><p>Fill out your bio, socials, and avatar to complete your profile.</p></div>' +
+                                '<div class="card"><h4>🏆 Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
+                                '<div class="card"><h4>📋 Active Characters</h4><p>You have 0 active characters. Create one to start playing.</p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'achievements':
+                        html += '<h3>Achievements & Trophies</h3>' +
+                            '<span class="access-badge PUBLIC">PUBLIC (Basic)</span><span class="access-badge PRO" style="margin-left:0.5rem;">PRO (Full)</span>' +
+                            '<p>Your achievements and trophies are tracked here. Earn badges by playing campaigns, winning tournaments, and completing quests.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card"><h4>🥇 First Step</h4><p>Create your first character</p></div>' +
+                                '<div class="card"><h4>⚔️ First Blood</h4><p>Win your first combat</p></div>' +
+                                '<div class="card"><h4>🎯 Quest Master</h4><p>Complete 5 quests (Pro unlock)</p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'characters':
+                        html += '<h3>Your Characters</h3>' +
+                            '<span class="access-badge PUBLIC">PUBLIC (Summary)</span>' +
+                            '<p>View summaries of your characters. Only public character profiles are visible to others.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card" style="text-align:center;padding:2rem;"><h4>No Characters Yet</h4><p><a href="character-customizer/creation-overview.html" style="color:#b9aa00;text-decoration:underline;">Create your first character</a></p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'leaderboards':
+                        html += '<h3>Leaderboards</h3>' +
+                            '<span class="access-badge PUBLIC">PUBLIC (Top 100)</span><span class="access-badge PRO" style="margin-left:0.5rem;">PRO (Top 200+)</span>' +
+                            '<p>Trials of Combat leaderboards. Compete against other adventurers and claim your rank.</p>' +
+                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
+                                '<p>Leaderboards loading...</p>' +
+                            '</div>';
+                        break;
+
+                    case 'fellowship':
+                        html += '<h3>Fellowship</h3>' +
+                            '<span class="access-badge PUBLIC">PUBLIC (Members)</span>' +
+                            '<p>Your Fellowship members and group status. Invite friends to adventure together.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card" style="text-align:center;padding:2rem;"><h4>No Fellowship Yet</h4><p>Start a Fellowship or join an existing one to adventure together.</p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'inventory':
+                        html += '<h3>Inventory</h3>' +
+                            '<span class="access-badge PRIVATE">PRIVATE</span>' +
+                            '<p>Your SORC Cards collection and in-game currency.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card"><h4>💰 Gold</h4><p>0 gold</p></div>' +
+                                '<div class="card"><h4>🃏 SORC Cards</h4><p>0 cards in collection</p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'session-history':
+                        html += '<h3>Session History</h3>' +
+                            '<span class="access-badge PRIVATE">PRIVATE</span>' +
+                            '<p>Your completed sessions and campaign records.</p>' +
+                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;color:#666;">No sessions yet.</div>';
+                        break;
+
+                    case 'character-home':
+                        html += '<h3>Character\'s Home</h3>' +
+                            '<span class="access-badge PRO">PRO ONLY</span>' +
+                            '<p>Your personal sanctuary in Essentia. Customize your Trophy Room, Collections, Garden, Kennel, Workspace, Vault, and Family Tree.</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card"><h4>🏛️ Trophy Room</h4><p>Display your achievements and combat victories.</p></div>' +
+                                '<div class="card"><h4>📦 Collections</h4><p>Organize and display collectible SORC Cards.</p></div>' +
+                                '<div class="card"><h4>🌱 Garden</h4><p>Grow rare plants and magical flora.</p></div>' +
+                                '<div class="card"><h4>🐕 Kennel</h4><p>Companion creatures and pets.</p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'essentia-exchange':
+                        html += '<h3>General Trade</h3>' +
+                            '<span class="access-badge PRO">PRO ONLY</span>' +
+                            '<p>Buy, sell, and trade SORC Cards. Access the trading post (fixed prices), Bazaar (player prices), and Black Market (direct trades).</p>' +
+                            '<div class="content-grid">' +
+                                '<div class="card"><h4>📊 Trading Post</h4><p>Fixed-price SORC Card sales.</p></div>' +
+                                '<div class="card"><h4>🏪 Bazaar</h4><p>Player-set prices and negotiations.</p></div>' +
+                                '<div class="card"><h4>🌙 Black Market</h4><p>Direct player-to-player trades.</p></div>' +
+                            '</div>';
+                        break;
+
+                    case 'contributions':
+                        html += '<h3>Community Contributions</h3>' +
+                            '<span class="access-badge PUBLIC">PUBLIC</span>' +
+                            '<p>Share maps, campaign recaps, character art, and house rules with the SORC community.</p>' +
+                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;color:#666;">No contributions yet. <a href="#" style="color:#b9aa00;">Share your creations</a></div>';
+                        break;
+
+                    case 'settings':
+                        html += '<h3>Profile Settings</h3>' +
+                            '<span class="access-badge PRIVATE">PRIVATE</span>' +
+                            '<p>Manage your profile visibility and preferences.</p>' +
+                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;">' +
+                                '<p style="color:#888;margin:0;">Profile settings are coming soon.</p>' +
+                            '</div>';
+                        break;
+                }
+            }
+
+            html += '</div>';
+        });
+        return html;
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+        if (!saved || !saved.authKey) {
+            document.getElementById('profileContainer').innerHTML =
+                '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
             return;
         }
 
-        checkAdminInvitation(user);
-        checkGmInvitation(user);
+        var user = saved;
+        var role = user.role || 'CIVILIAN';
+        if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
+        else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
+
+        var isPro = user.pro_member === true || user.pro_member === 1;
+
+        // Fetch fresh data
+        try {
+            var freshRes = await fetch(API_URL + '/api/me', {
+                headers: { 'X-Auth-Key': saved.authKey }
+            });
+            if (freshRes.ok) {
+                var freshData = await freshRes.json();
+                if (freshData.user) {
+                    user = Object.assign(user, freshData.user);
+                    isPro = user.pro_member === true || user.pro_member === 1;
+                    localStorage.setItem('sorc_user', JSON.stringify(user));
+                }
+            }
+        } catch(e) {}
+
+        // Render profile
+        var container = document.getElementById('profileContainer');
+        container.innerHTML = renderProfileHeader(user, role, isPro) +
+            renderTabNav(user, role, isPro) +
+            renderTabContent(user, role, isPro);
+
+        // Set initial active tab from URL
+        var params = new URLSearchParams(window.location.search);
+        var initialTab = params.get('tab') || 'overview';
+        switchTab(initialTab);
     });
-
-    async function checkAdminInvitation(user) {
-        try {
-            var res = await fetch(API_URL + '/api/admin/invitations/pending', {
-                headers: { 'X-Auth-Key': user.authKey }
-            });
-            var data = await res.json();
-            if (!data.invitation) return;
-            var el = document.getElementById('adminInviteNotice');
-            if (!el) return;
-            el.innerHTML =
-                '<div style="background:#1a0a0a;border:2px solid #b9aa00;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1rem;">' +
-                '<div style="font-size:0.72rem;color:#b9aa00;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">Admin Invitation</div>' +
-                '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.75rem 0;">You\'ve been invited to become a <strong>SORC Admin [AD]</strong>. Upon accepting, you will receive <strong style="color:#b9aa00;">10,000 Community Points</strong>.</p>' +
-                '<div style="display:flex;gap:0.75rem;">' +
-                '<button class="btn btn-gold" onclick="respondAdminInvite(true)">Accept</button>' +
-                '<button class="btn btn-dark" onclick="respondAdminInvite(false)">Decline</button>' +
-                '</div>' +
-                '<div id="inviteMsg" class="msg" style="margin-top:0.5rem;"></div>' +
-                '</div>';
-        } catch(e) {}
-    }
-
-    async function checkGmInvitation(user) {
-        try {
-            var res = await fetch(API_URL + '/api/notifications', {
-                headers: { 'X-Auth-Key': user.authKey }
-            });
-            var data = await res.json();
-            if (!data.gm_invite) return;
-            var el = document.getElementById('gmInviteNotice');
-            if (!el) return;
-            el.innerHTML =
-                '<div style="background:#050f1a;border:2px solid #b9aa00;border-radius:12px;padding:1.25rem 1.5rem;margin-top:1rem;">' +
-                '<div style="font-size:0.72rem;color:#b9aa00;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem;">&#128081; GM Invitation</div>' +
-                '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.75rem 0;">You\'ve been invited to become a <strong>Game Master [GM]</strong>. Upon accepting you will receive <strong style="color:#b9aa00;">+500 Community Points</strong> and full GM access.</p>' +
-                '<div style="display:flex;gap:0.75rem;">' +
-                '<button class="btn btn-gold" onclick="respondGmInvite(true)">Accept</button>' +
-                '<button class="btn btn-dark" onclick="respondGmInvite(false)">Decline</button>' +
-                '</div>' +
-                '<div id="gmInviteMsg" class="msg" style="margin-top:0.5rem;"></div>' +
-                '</div>';
-        } catch(e) {}
-    }
-
-    window.respondGmInvite = async function(accept) {
-        var user = null;
-        try { user = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!user) return;
-        var msgEl = document.getElementById('gmInviteMsg');
-        try {
-            var res = await fetch(API_URL + '/api/gm/invitations/respond', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
-                body: JSON.stringify({ accept: accept })
-            });
-            var data = await res.json();
-            if (data.success) {
-                if (accept) {
-                    user.role = 'MASTER'; user.sorc_role = 'GM-ADV';
-                    user.community_points = (user.community_points || 0) + 500;
-                    localStorage.setItem('sorc_user', JSON.stringify(user));
-                    document.getElementById('gmInviteNotice').innerHTML =
-                        '<div style="background:#0a1a0a;border:1px solid #1a6b1a;border-radius:8px;padding:1rem 1.25rem;margin-top:1rem;color:#4caf50;font-size:0.9rem;">✅ You are now a Game Master [GM]. Refreshing...</div>';
-                    setTimeout(function() { window.location.reload(); }, 1800);
-                } else {
-                    document.getElementById('gmInviteNotice').innerHTML = '';
-                }
-            } else {
-                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
-            }
-        } catch(e) { if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; } }
-    };
-
-    window.respondAdminInvite = async function(accept) {
-        var user = null;
-        try { user = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
-        if (!user) return;
-        var msgEl = document.getElementById('inviteMsg');
-        try {
-            var res = await fetch(API_URL + '/api/admin/invitations/respond', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': user.authKey },
-                body: JSON.stringify({ accept: accept })
-            });
-            var data = await res.json();
-            if (data.success) {
-                if (accept) {
-                    user.role = 'ADMIN';
-                    user.community_points = (user.community_points || 0) + 10000;
-                    localStorage.setItem('sorc_user', JSON.stringify(user));
-                    document.getElementById('adminInviteNotice').innerHTML =
-                        '<div style="background:#0a1a0a;border:1px solid #1a6b1a;border-radius:8px;padding:1rem 1.25rem;margin-top:1rem;color:#4caf50;font-size:0.9rem;">✅ You are now a SORC Admin [AD]. Reload the page to see your updated role.</div>';
-                } else {
-                    document.getElementById('adminInviteNotice').innerHTML = '';
-                }
-            } else {
-                if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = data.error || 'Failed.'; }
-            }
-        } catch(e) { if (msgEl) { msgEl.className = 'msg error'; msgEl.textContent = 'Connection error.'; } }
-    };
     </script>
 </body>
 </html>
