@@ -1,2 +1,2 @@
 # sorcrpg
-Repository for my ttrpg, SorC
+Repository for my ttrpg, SORC

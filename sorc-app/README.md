@@ -1,4 +1,4 @@
-# SorC RPG - Cloudflare Workers Backend
+# SORC RPG - Cloudflare Workers Backend
 
 Complete backend replacement for Firebase using Cloudflare Workers, D1, and R2.
 
