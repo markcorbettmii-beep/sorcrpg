@@ -154,8 +154,19 @@
 
     <div id="profileApp">
         <!-- Space Header -->
-        <div class="profile-container" id="profileContainer"></div>
+        <div class="profile-container" id="profileContainer">
+            <div class="not-logged-in"><p>Loading...</p></div>
+        </div>
     </div>
+    <script>
+        // Failsafe: if DOMContentLoaded doesn't fire or stalls, show error after 3 seconds
+        setTimeout(function() {
+            var container = document.getElementById('profileContainer');
+            if (container && container.innerHTML.includes('Loading')) {
+                container.innerHTML = '<div class="not-logged-in"><h2>Unable to Load</h2><p>Profile failed to load. <a href="signin.html">Sign in again</a></p></div>';
+            }
+        }, 3000);
+    </script>
 
     <div id="footer"></div>
     <script src="main.js?v=26"></script>
