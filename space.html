@@ -778,25 +778,31 @@
             // Initialize avatar system
             (function() {
                 var AVATAR_POINTS_REQUIRED = 100;
-                var defaultAvatarColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
-                var defaultAvatarInitials = ['A', 'B', 'C', 'D', 'E', 'F'];
+                var defaultAvatars = [
+                    { url: '/images/avatars/037b9199-2abf-47a3-9b34-0b912a0675a6.png', id: '1' },
+                    { url: '/images/avatars/01deb0d8-fb1e-4e18-8048-020d8ea56272.png', id: '2' },
+                    { url: '/images/avatars/1dc7c652-c366-4ed6-babb-50e9db131cf6.png', id: '3' },
+                    { url: '/images/avatars/1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png', id: '4' },
+                    { url: '/images/avatars/2e98fc95-753a-4aaa-855b-79dd6bb17c09.png', id: '5' },
+                    { url: '/images/avatars/3ff4851b-f3ee-4f23-9a1d-57c88547a1c6.png', id: '6' }
+                ];
                 var grid = document.getElementById('defaultAvatarGrid');
 
                 if (grid) {
-                    // Create default avatar options
-                    for (var i = 0; i < 6; i++) {
+                    // Create default avatar options from repo images
+                    for (var i = 0; i < defaultAvatars.length; i++) {
                         var btn = document.createElement('button');
                         btn.style.width = '50px';
                         btn.style.height = '50px';
                         btn.style.borderRadius = '50%';
                         btn.style.border = '2px solid #333';
-                        btn.style.background = defaultAvatarColors[i];
-                        btn.style.color = '#fff';
-                        btn.style.fontSize = '1.2rem';
-                        btn.style.fontWeight = 'bold';
+                        btn.style.background = '#2a2a2a';
+                        btn.style.backgroundImage = 'url(' + defaultAvatars[i].url + ')';
+                        btn.style.backgroundSize = 'cover';
+                        btn.style.backgroundPosition = 'center';
                         btn.style.cursor = 'pointer';
                         btn.style.transition = 'all 0.2s';
-                        btn.textContent = defaultAvatarInitials[i];
+                        btn.style.padding = '0';
                         btn.onmouseover = function() {
                             this.style.borderColor = '#b9aa00';
                             this.style.boxShadow = '0 0 8px rgba(185, 170, 0, 0.5)';
@@ -805,11 +811,11 @@
                             this.style.borderColor = '#333';
                             this.style.boxShadow = 'none';
                         };
-                        btn.onclick = (function(color, initial) {
+                        btn.onclick = (function(url) {
                             return function() {
-                                selectDefaultAvatar(color, initial);
+                                selectDefaultAvatar(url);
                             };
-                        })(defaultAvatarColors[i], defaultAvatarInitials[i]);
+                        })(defaultAvatars[i].url);
                         grid.appendChild(btn);
                     }
                 }
@@ -840,13 +846,15 @@
     });
 
     // Global avatar functions
-    function selectDefaultAvatar(color, initial) {
+    function selectDefaultAvatar(imageUrl) {
         var preview = document.getElementById('avatarPreview');
         if (preview) {
-            preview.style.background = color;
-            preview.textContent = initial;
+            preview.style.backgroundImage = 'url(' + imageUrl + ')';
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+            preview.textContent = '';
         }
-        console.log('[Avatar] Selected default avatar:', color, initial);
+        console.log('[Avatar] Selected default avatar:', imageUrl);
     }
 
     function uploadCustomAvatar() {
