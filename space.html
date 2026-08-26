@@ -190,7 +190,7 @@
         { id: 'home', label: 'Home', access: 'PRO', pro: false },
         { id: 'standing', label: 'Standing', access: 'PUBLIC', pro: false },
         { id: 'essentia-exchange', label: 'Essentia Exchange', access: 'PRIVATE', pro: false },
-        { id: 'inbox', label: 'Inbox', access: 'PRIVATE', pro: false },
+        { id: 'mailbox', label: 'Mailbox', access: 'PRIVATE', pro: false },
         { id: 'settings', label: 'Settings', access: 'PRIVATE', pro: false }
     ];
 
@@ -594,8 +594,10 @@
                             'Your Home and its rooms live in <a href="/home-and-family.html" style="color:#b9aa00;text-decoration:underline;">Home &amp; Family</a>.</p>';
                         break;
 
-                    case 'inbox':
-                        html += '<h3>Inbox</h3>' +
+                    case 'mailbox':
+                        // IMPORTANT: When implementing mailbox message loading, fetch from /api/mailbox or /api/me/messages
+                        // NOT from /api/lobbies/{id}/messages - keep lobby messages separate from Space mailbox
+                        html += '<h3>Mailbox</h3>' +
                             '<span class="access-badge PRIVATE">PRIVATE</span>' +
                             '<p>Private messages, fellowship requests, and notifications.</p>' +
                             '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;border-left:3px solid #b9aa00;">' +
@@ -738,6 +740,18 @@
             container.innerHTML = renderProfileHeader(user, role, isPro) +
                 renderTabNav(user, role, isPro) +
                 renderTabContent(user, role, isPro);
+
+            // Add event delegation for tab buttons (handles disabled buttons too)
+            var tabNav = document.querySelector('.tab-nav');
+            if (tabNav) {
+                tabNav.addEventListener('click', function(e) {
+                    var btn = e.target.closest('button[data-tab]');
+                    if (btn && !btn.disabled) {
+                        var tabId = btn.getAttribute('data-tab');
+                        switchTab(tabId);
+                    }
+                }, false);
+            }
 
             // Set initial active tab from URL
             var params = new URLSearchParams(window.location.search);
