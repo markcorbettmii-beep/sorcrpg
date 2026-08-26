@@ -1307,8 +1307,8 @@
     };
 
     function buildHostNameDrop(uid, name, username, lobbyId) {
-      var profileHref = 'public-profile.html?username=' + encodeURIComponent(username || name || '');
-      var items = '<a href="' + profileHref + '" onclick="event.stopPropagation()">Profile</a>';
+      var spaceHref = 'space.html?username=' + encodeURIComponent(username || name || '');
+      var items = '<a href="' + spaceHref + '" onclick="event.stopPropagation()">Space</a>';
       var isSelf = currentUser && currentUser.id === uid;
       var isPhUid = uid && uid.startsWith('ph-');
       if (!isSelf && !isPhUid) items += '<a href="inbox.html?to=' + encodeURIComponent(uid) + '" class="summon-opt" onclick="event.stopPropagation()">Message</a>';
@@ -1585,11 +1585,11 @@
         if (!isSelf) {
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report"></button>';
         }
-        var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+        var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
         var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
         var menuItems = '';
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
-        menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+        menuItems += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
         if (isCreator && !isSelf) {
           menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
           menuItems += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Promote to Host</button>';
@@ -2002,9 +2002,9 @@
          total is bolded client-side in loadChatMessages instead. */
       var rollsStr = rolls.join(', ');
       if (count > 1) {
-        var body = '' + diceType + ' × ' + count + ': [' + rollsStr + '] = ' + total;
+        var body = '🎲 ' + diceType + ' × ' + count + ': [' + rollsStr + '] = ' + total;
       } else {
-        var body = '' + diceType + ': ' + total;
+        var body = '🎲 ' + diceType + ': ' + total;
       }
 
       try {
@@ -2215,11 +2215,11 @@
             actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')">Kick</button>';
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')"></button>';
-          var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+          var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
-          menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
+          menuItems2 += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
           if (isCreator && !isSelf) {
             menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
             menuItems2 += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Promote to Host</button>';
@@ -3739,65 +3739,9 @@
     }
 
     function playReadyCheckSound() {
-      var ctx;
-      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
-      if (ctx.state === 'suspended') ctx.resume();
-      var master = ctx.createGain();
-      master.gain.value = 1.0;
-      master.connect(ctx.destination);
-      var now = ctx.currentTime;
-
-      /* Ready Check is always the sword clash + war drum, on every lobby theme.
-         Theme ambience is separate and unaffected. */
-
-      /* Metallic sword clash - sharp and crisp */
-      var clashStart = now;
-      var clashOsc = ctx.createOscillator();
-      clashOsc.type = 'square';
-      clashOsc.frequency.setValueAtTime(3200, clashStart);
-      clashOsc.frequency.exponentialRampToValueAtTime(1600, clashStart + 0.3);
-      var clashFilter = ctx.createBiquadFilter();
-      clashFilter.type = 'highpass';
-      clashFilter.frequency.value = 2000;
-      var clashGain = ctx.createGain();
-      clashGain.gain.setValueAtTime(0.5, clashStart);
-      clashGain.gain.exponentialRampToValueAtTime(0.05, clashStart + 0.25);
-      clashGain.gain.exponentialRampToValueAtTime(0.0001, clashStart + 0.35);
-      clashOsc.connect(clashFilter);
-      clashFilter.connect(clashGain);
-      clashGain.connect(master);
-      clashOsc.start(clashStart);
-      clashOsc.stop(clashStart + 0.35);
-
-      /* War drum beat - deep resonant strike */
-      var drumStart = now + 0.15;
-      var drumOsc = ctx.createOscillator();
-      drumOsc.type = 'sine';
-      drumOsc.frequency.setValueAtTime(100, drumStart);
-      drumOsc.frequency.exponentialRampToValueAtTime(40, drumStart + 0.5);
-      var drumGain = ctx.createGain();
-      drumGain.gain.setValueAtTime(0.7, drumStart);
-      drumGain.gain.exponentialRampToValueAtTime(0.1, drumStart + 0.4);
-      drumGain.gain.exponentialRampToValueAtTime(0.0001, drumStart + 0.7);
-      drumOsc.connect(drumGain);
-      drumGain.connect(master);
-      drumOsc.start(drumStart);
-      drumOsc.stop(drumStart + 0.75);
-
-      /* Sub-bass rumble for impact */
-      var bassStart = now + 0.15;
-      var bassOsc = ctx.createOscillator();
-      bassOsc.type = 'sine';
-      bassOsc.frequency.value = 50;
-      var bassGain = ctx.createGain();
-      bassGain.gain.setValueAtTime(0.5, bassStart);
-      bassGain.gain.exponentialRampToValueAtTime(0.0001, bassStart + 0.8);
-      bassOsc.connect(bassGain);
-      bassGain.connect(master);
-      bassOsc.start(bassStart);
-      bassOsc.stop(bassStart + 0.85);
-
-      setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
+      var audio = new Audio('/audio/sorc-rc-trump.ogg');
+      audio.volume = 1.0;
+      try { audio.play().catch(function(e) {}); } catch(e) {}
     }
 
     window.initiateReadyCheck = async function() {

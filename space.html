@@ -190,7 +190,7 @@
         { id: 'home', label: 'Home', access: 'PRO', pro: false },
         { id: 'standing', label: 'Standing', access: 'PUBLIC', pro: false },
         { id: 'essentia-exchange', label: 'Essentia Exchange', access: 'PRIVATE', pro: false },
-        { id: 'inbox', label: 'Inbox', access: 'PRIVATE', pro: false },
+        { id: 'mailbox', label: 'Mailbox', access: 'PRIVATE', pro: false },
         { id: 'settings', label: 'Settings', access: 'PRIVATE', pro: false }
     ];
 
@@ -312,7 +312,7 @@
                     '</div>' +
                     '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(friend.display_name) + '</p>' +
                     '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + (friend.status === 'online' ? '🟢 Online' : '⚫ Offline') + '</p>' +
-                    '<button class="btn btn-sm btn-gold" onclick="alert(\'Fellow profile coming soon\')">View Profile</button>' +
+                    '<button class="btn btn-sm btn-gold" onclick="alert(\'Fellow Space coming soon\')">View Space</button>' +
                 '</div>';
             });
             fellowsList.innerHTML = html;
@@ -407,7 +407,7 @@
                 if (tab.access === 'PRO') {
                     html += 'Upgrade to Pro to unlock this feature.';
                 } else {
-                    html += 'This section is private to your profile.';
+                    html += 'This section is private to your Space.';
                 }
                 html += '</p>';
                 if (tab.access === 'PRO') {
@@ -420,9 +420,9 @@
                     case 'overview':
                         html += '<h3>Your Space</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC</span>' +
-                            '<p>Your Space is your corner of Essentia. Build your reputation, showcase your treasures, and chart your path. What you see here is what others see on your public profile.</p>' +
+                            '<p>Your Space is your corner of Essentia. Build your reputation, showcase your treasures, and chart your path. What you see here is what others see on your public Space.</p>' +
                             '<div class="content-grid">' +
-                                '<div class="card"><h4>Profile Completeness</h4><p>Your avatar, display name, bio, and social links. ' +
+                                '<div class="card"><h4>Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' +
                                 '<a href="javascript:void(0);" onclick="switchTab(\'settings\');return false;" style="color:#b9aa00;text-decoration:underline;">Edit in Settings</a></p></div>' +
                                 '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
                                 '<div class="card"><h4>Active Characters</h4><p>You have <span id="overviewCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_ref_001" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a></p></div>' +
@@ -443,9 +443,9 @@
                     case 'characters':
                         html += '<h3>Your Characters</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC (Summary)</span>' +
-                            '<p>View summaries of your characters. Only public character profiles are visible to others.</p>' +
+                            '<p>View summaries of your characters. Only public character Spaces are visible to others.</p>' +
                             '<div class="content-grid">' +
-                                '<div class="card" style="text-align:center;padding:2rem;"><h4>No Characters Yet</h4><p><a href="character-customizer/creation-overview.html" style="color:#b9aa00;text-decoration:underline;">Create your first character</a></p></div>' +
+                                '<div class="card" style="text-align:center;padding:2rem;"><h4>No Characters Yet</h4><p><a href="https://sorcrpg.com/library" style="color:#b9aa00;text-decoration:underline;">Create your first character</a></p></div>' +
                             '</div>';
                         break;
 
@@ -594,8 +594,10 @@
                             'Your Home and its rooms live in <a href="/home-and-family.html" style="color:#b9aa00;text-decoration:underline;">Home &amp; Family</a>.</p>';
                         break;
 
-                    case 'inbox':
-                        html += '<h3>Inbox</h3>' +
+                    case 'mailbox':
+                        // IMPORTANT: When implementing mailbox message loading, fetch from /api/mailbox or /api/me/messages
+                        // NOT from /api/lobbies/{id}/messages - keep lobby messages separate from Space mailbox
+                        html += '<h3>Mailbox</h3>' +
                             '<span class="access-badge PRIVATE">PRIVATE</span>' +
                             '<p>Private messages, fellowship requests, and notifications.</p>' +
                             '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;border-left:3px solid #b9aa00;">' +
@@ -609,35 +611,56 @@
                     case 'settings':
                         html += '<h3>Settings</h3>' +
                             '<span class="access-badge PRIVATE">PRIVATE</span>' +
-                            '<p>Edit your Character Space, avatar, bio, social links, and preferences. Changes are saved to your profile.</p>' +
+                            '<p>Edit and save your Character Space, avatar, bio, social links, and preferences.</p>' +
                             '<div style="margin-top:1.5rem;">' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Active Characters</h4>' +
                                     '<p style="color:#e0cfc0;margin:0 0 0.5rem 0;">You have <span id="activeCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_ref_001" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a></p>' +
                                 '</div>' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
-                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Profile Picture</h4>' +
-                                    '<div style="display:flex;gap:1rem;align-items:flex-start;">' +
-                                        '<div style="flex-shrink:0;">' +
-                                            '<div style="width:80px;height:80px;border-radius:50%;border:2px solid #b9aa00;background:#2a2a2a;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:1rem;">' +
-                                                '<span style="font-size:1.2rem;color:#666;">M</span>' +
-                                            '</div>' +
+                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Avatar</h4>' +
+                                    '<div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">' +
+                                        '<div id="avatarPreview" style="width:80px;height:80px;border-radius:50%;border:2px solid #b9aa00;background:#2a2a2a;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;align-self:flex-start;">' +
+                                            '<span style="font-size:1.2rem;color:#666;">M</span>' +
                                         '</div>' +
-                                        '<div style="flex:1;">' +
-                                            '<input type="file" id="avatarUpload" accept="image/*" style="display:block;margin-bottom:0.5rem;padding:0.5rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#888;font-size:0.85rem;width:100%;box-sizing:border-box;" />' +
-                                            '<p style="color:#888;font-size:0.85rem;margin:0;">JPG or PNG, max 2MB. Square format recommended.</p>' +
+                                        '<div style="flex:1;width:100%;">' +
+                                            '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.5rem 0;font-weight:bold;">Select from Default Avatars (Free)</p>' +
+                                            '<div id="defaultAvatarGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:0.75rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;"></div>' +
+                                            '<p style="color:#e0cfc0;font-size:0.9rem;margin:0.5rem 0 0.5rem 0;font-weight:bold;">Upload Custom Avatar (<span id="cpRequired">100</span> Community Points)</p>' +
+                                            '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
+                                                '<input type="file" id="avatarUpload" accept="image/*" style="flex:1;min-width:200px;padding:0.5rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#888;font-size:0.85rem;box-sizing:border-box;" />' +
+                                                '<button id="uploadAvatarBtn" onclick="uploadCustomAvatar()" style="padding:0.5rem 1rem;background:#b9aa00;color:#1a1a1a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:0.85rem;white-space:nowrap;flex-shrink:0;">Upload</button>' +
+                                            '</div>' +
+                                            '<p style="color:#888;font-size:0.8rem;margin:0.3rem 0 0 0;">JPG or PNG, max 2MB. Square format recommended.</p>' +
+                                            '<p id="uploadStatus" style="color:#f44;font-size:0.8rem;margin:0.3rem 0 0 0;display:none;"></p>' +
                                         '</div>' +
                                     '</div>' +
                                 '</div>' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Display Name</h4>' +
                                     '<input type="text" placeholder="Your display name" value="' + esc(displayName) + '" style="width:100%;padding:0.75rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0cfc0;box-sizing:border-box;font-size:0.95rem;" />' +
-                                    '<p style="color:#888;font-size:0.85rem;margin:0.5rem 0 0 0;">This is visible on your public profile.</p>' +
+                                    '<p style="color:#888;font-size:0.85rem;margin:0.5rem 0 0 0;">This is visible on your public Space.</p>' +
                                 '</div>' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
-                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Bio</h4>' +
+                                    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">' +
+                                        '<h4 style="color:#e0cfc0;margin:0;">Email</h4>' +
+                                        '<label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.8rem;color:#888;">' +
+                                            '<input type="checkbox" style="width:16px;height:16px;cursor:pointer;" />' +
+                                            '<span>Public</span>' +
+                                        '</label>' +
+                                    '</div>' +
+                                    '<input type="email" placeholder="Your email address" style="width:100%;padding:0.75rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0cfc0;box-sizing:border-box;font-size:0.95rem;" />' +
+                                '</div>' +
+                                '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
+                                    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">' +
+                                        '<h4 style="color:#e0cfc0;margin:0;">Bio</h4>' +
+                                        '<label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.8rem;color:#888;">' +
+                                            '<input type="checkbox" checked style="width:16px;height:16px;cursor:pointer;" />' +
+                                            '<span>Public</span>' +
+                                        '</label>' +
+                                    '</div>' +
                                     '<textarea placeholder="Tell others about yourself..." style="width:100%;padding:0.75rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0cfc0;box-sizing:border-box;font-size:0.95rem;min-height:100px;font-family:inherit;resize:vertical;"></textarea>' +
-                                    '<p style="color:#888;font-size:0.85rem;margin:0.5rem 0 0 0;">Keep it under 500 characters. This appears on your public profile.</p>' +
+                                    '<p style="color:#888;font-size:0.85rem;margin:0.5rem 0 0 0;">Keep it under 500 characters.</p>' +
                                 '</div>' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Social Links</h4>' +
@@ -652,27 +675,6 @@
                                     '<div>' +
                                         '<label style="display:block;font-size:0.85rem;color:#888;margin-bottom:0.3rem;">Website</label>' +
                                         '<input type="text" placeholder="Your website or blog" style="width:100%;padding:0.75rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0cfc0;box-sizing:border-box;font-size:0.9rem;" />' +
-                                    '</div>' +
-                                '</div>' +
-                                '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
-                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Preferences</h4>' +
-                                    '<div style="margin-bottom:1rem;">' +
-                                        '<label style="display:flex;align-items:center;gap:0.75rem;cursor:pointer;">' +
-                                            '<input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;" />' +
-                                            '<span style="color:#e0cfc0;font-size:0.95rem;">Make my Standing publicly visible</span>' +
-                                        '</label>' +
-                                    '</div>' +
-                                    '<div style="margin-bottom:1rem;">' +
-                                        '<label style="display:flex;align-items:center;gap:0.75rem;cursor:pointer;">' +
-                                            '<input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;" />' +
-                                            '<span style="color:#e0cfc0;font-size:0.95rem;">Show my achievements on my profile</span>' +
-                                        '</label>' +
-                                    '</div>' +
-                                    '<div>' +
-                                        '<label style="display:flex;align-items:center;gap:0.75rem;cursor:pointer;">' +
-                                            '<input type="checkbox" checked style="width:18px;height:18px;cursor:pointer;" />' +
-                                            '<span style="color:#e0cfc0;font-size:0.95rem;">Receive notifications for Fellowship invitations</span>' +
-                                        '</label>' +
                                     '</div>' +
                                 '</div>' +
                                 '<div style="display:flex;gap:1rem;">' +
@@ -739,6 +741,18 @@
                 renderTabNav(user, role, isPro) +
                 renderTabContent(user, role, isPro);
 
+            // Add event delegation for tab buttons (handles disabled buttons too)
+            var tabNav = document.querySelector('.tab-nav');
+            if (tabNav) {
+                tabNav.addEventListener('click', function(e) {
+                    var btn = e.target.closest('button[data-tab]');
+                    if (btn && !btn.disabled) {
+                        var tabId = btn.getAttribute('data-tab');
+                        switchTab(tabId);
+                    }
+                }, false);
+            }
+
             // Set initial active tab from URL
             var params = new URLSearchParams(window.location.search);
             var initialTab = params.get('tab') || 'overview';
@@ -767,6 +781,85 @@
                     console.error('[Space] Failed to fetch character count:', e);
                 }
             })();
+
+            // Initialize avatar system
+            (function() {
+                var AVATAR_POINTS_REQUIRED = 100;
+                var defaultAvatars = [
+                    { url: '/images/avatars/953d2b9a-3239-485b-b725-6a8ec7b198a6.png', id: '1' },
+                    { url: '/images/avatars/6c37d5d1-76c4-4391-ac12-6ca2a1109026.png', id: '2' },
+                    { url: '/images/avatars/b4d464f7-1923-409f-883a-1648018b9483.png', id: '3' },
+                    { url: '/images/avatars/3ff4851b-f3ee-4f23-9a1d-57c88547a1c6.png', id: '4' },
+                    { url: '/images/avatars/8ea1641c-5cdf-4e58-b28a-60f2f7822d7a.png', id: '5' },
+                    { url: '/images/avatars/6a955b49-f706-4e8d-a04c-af0daca538f0.png', id: '6' },
+                    { url: '/images/avatars/01deb0d8-fb1e-4e18-8048-020d8ea56272.png', id: '7' },
+                    { url: '/images/avatars/037b9199-2abf-47a3-9b34-0b912a0675a6.png', id: '8' },
+                    { url: '/images/avatars/1dc7c652-c366-4ed6-babb-50e9db131cf6.png', id: '9' },
+                    { url: '/images/avatars/1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png', id: '10' },
+                    { url: '/images/avatars/2855038f-8581-4061-b60a-e0629ec1f683.png', id: '11' },
+                    { url: '/images/avatars/2e98fc95-753a-4aaa-855b-79dd6bb17c09.png', id: '12' },
+                    { url: '/images/avatars/3631e3d3-79bd-4fd2-b588-ec80fabc5ae4.png', id: '13' },
+                    { url: '/images/avatars/3dba5b21-7dcc-4e9a-a309-1f42d010d58f.png', id: '14' },
+                    { url: '/images/avatars/45cc24a0-0873-48da-aeb5-afad6c36d887.png', id: '15' },
+                    { url: '/images/avatars/4c16641d-eee1-4bd5-bd8a-ec0611f928b7.png', id: '16' },
+                    { url: '/images/avatars/5142b751-8cb6-4f19-ac2b-6880c241ab56.png', id: '17' },
+                    { url: '/images/avatars/51cb2423-194f-4bd1-8229-7fe356f17c32.png', id: '18' },
+                    { url: '/images/avatars/6a04a2c0-ab6a-4fb7-8f2e-f29a5241095e.png', id: '19' },
+                    { url: '/images/avatars/6b87456a-88d9-4535-9f45-4f7274865156.png', id: '20' },
+                    { url: '/images/avatars/7ad2053e-a2a7-4f23-af8e-902b2d243fa2.png', id: '21' },
+                    { url: '/images/avatars/8368be40-e509-4f84-8ff4-b41cb8e6b263.png', id: '22' },
+                    { url: '/images/avatars/9900c8e6-3b22-4926-924c-63995c96f50b.png', id: '23' },
+                    { url: '/images/avatars/aba62c03-4bae-49e8-a8bb-88b00459b241.png', id: '24' }
+                ];
+                var grid = document.getElementById('defaultAvatarGrid');
+
+                if (grid) {
+                    // Create default avatar options from repo images
+                    for (var i = 0; i < defaultAvatars.length; i++) {
+                        var btn = document.createElement('button');
+                        btn.style.width = '80px';
+                        btn.style.height = '80px';
+                        btn.style.borderRadius = '50%';
+                        btn.style.border = '2px solid #333';
+                        btn.style.background = '#2a2a2a';
+                        btn.style.backgroundImage = 'url(' + defaultAvatars[i].url + ')';
+                        btn.style.backgroundSize = 'cover';
+                        btn.style.backgroundPosition = 'center';
+                        btn.style.cursor = 'pointer';
+                        btn.style.transition = 'all 0.2s';
+                        btn.style.padding = '0';
+                        btn.onmouseover = function() {
+                            this.style.borderColor = '#b9aa00';
+                            this.style.boxShadow = '0 0 8px rgba(185, 170, 0, 0.5)';
+                        };
+                        btn.onmouseout = function() {
+                            this.style.borderColor = '#333';
+                            this.style.boxShadow = 'none';
+                        };
+                        btn.onclick = (function(url) {
+                            return function() {
+                                selectDefaultAvatar(url);
+                            };
+                        })(defaultAvatars[i].url);
+                        grid.appendChild(btn);
+                    }
+                }
+
+                // Update community points display
+                var cpRequiredEl = document.getElementById('cpRequired');
+                if (cpRequiredEl) {
+                    cpRequiredEl.textContent = AVATAR_POINTS_REQUIRED;
+                }
+
+                // Upload button state
+                var uploadBtn = document.getElementById('uploadAvatarBtn');
+                var fileInput = document.getElementById('avatarUpload');
+                if (uploadBtn && fileInput) {
+                    fileInput.onchange = function() {
+                        uploadBtn.textContent = this.files.length > 0 ? 'Upload (' + AVATAR_POINTS_REQUIRED + ' CP)' : 'Upload';
+                    };
+                }
+            })();
         } catch(err) {
             console.error('[Space] Error:', err);
             var container = document.getElementById('profileContainer');
@@ -776,6 +869,86 @@
             }
         }
     });
+
+    // Global avatar functions
+    function selectDefaultAvatar(imageUrl) {
+        var preview = document.getElementById('avatarPreview');
+        if (preview) {
+            preview.style.backgroundImage = 'url(' + imageUrl + ')';
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+            preview.textContent = '';
+        }
+        console.log('[Avatar] Selected default avatar:', imageUrl);
+    }
+
+    function uploadCustomAvatar() {
+        var fileInput = document.getElementById('avatarUpload');
+        var statusEl = document.getElementById('uploadStatus');
+
+        if (!fileInput || !fileInput.files.length) {
+            if (statusEl) {
+                statusEl.textContent = 'Please select a file';
+                statusEl.style.display = 'block';
+            }
+            return;
+        }
+
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+        if (!saved || !saved.authKey) {
+            if (statusEl) {
+                statusEl.textContent = 'Not authenticated';
+                statusEl.style.display = 'block';
+            }
+            return;
+        }
+
+        var userCP = saved.community_points || 0;
+        if (userCP < 100) {
+            if (statusEl) {
+                statusEl.textContent = 'Requires 100 Community Points. You have ' + userCP + '.';
+                statusEl.style.display = 'block';
+                statusEl.style.color = '#f44';
+            }
+            return;
+        }
+
+        var file = fileInput.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            if (statusEl) {
+                statusEl.textContent = 'File size exceeds 2MB limit';
+                statusEl.style.display = 'block';
+            }
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var preview = document.getElementById('avatarPreview');
+            if (preview) {
+                preview.style.backgroundImage = 'url(' + e.target.result + ')';
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                preview.textContent = '';
+            }
+
+            if (statusEl) {
+                statusEl.textContent = 'Avatar uploaded (will save with profile)';
+                statusEl.style.color = '#4ECDC4';
+                statusEl.style.display = 'block';
+            }
+
+            // Reset file input
+            fileInput.value = '';
+            var uploadBtn = document.getElementById('uploadAvatarBtn');
+            if (uploadBtn) {
+                uploadBtn.textContent = 'Upload';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
     </script>
 </body>
 </html>
