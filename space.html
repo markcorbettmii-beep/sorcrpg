@@ -616,16 +616,23 @@
                                     '<p style="color:#e0cfc0;margin:0 0 0.5rem 0;">You have <span id="activeCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_ref_001" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a></p>' +
                                 '</div>' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
-                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Profile Picture</h4>' +
-                                    '<div style="display:flex;gap:1rem;align-items:flex-start;">' +
+                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Avatar</h4>' +
+                                    '<div style="display:flex;gap:1rem;align-items:flex-start;margin-bottom:1.5rem;">' +
                                         '<div style="flex-shrink:0;">' +
-                                            '<div style="width:80px;height:80px;border-radius:50%;border:2px solid #b9aa00;background:#2a2a2a;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:1rem;">' +
+                                            '<div id="avatarPreview" style="width:80px;height:80px;border-radius:50%;border:2px solid #b9aa00;background:#2a2a2a;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:1rem;flex-shrink:0;">' +
                                                 '<span style="font-size:1.2rem;color:#666;">M</span>' +
                                             '</div>' +
                                         '</div>' +
                                         '<div style="flex:1;">' +
-                                            '<input type="file" id="avatarUpload" accept="image/*" style="display:block;margin-bottom:0.5rem;padding:0.5rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#888;font-size:0.85rem;width:100%;box-sizing:border-box;" />' +
-                                            '<p style="color:#888;font-size:0.85rem;margin:0;">JPG or PNG, max 2MB. Square format recommended.</p>' +
+                                            '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.75rem 0;font-weight:bold;">Select from Default Avatars (Free)</p>' +
+                                            '<div id="defaultAvatarGrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1rem;"></div>' +
+                                            '<p style="color:#e0cfc0;font-size:0.9rem;margin:0.75rem 0 0.75rem 0;font-weight:bold;">Upload Custom Avatar (<span id="cpRequired">100</span> Community Points)</p>' +
+                                            '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+                                                '<input type="file" id="avatarUpload" accept="image/*" style="flex:1;padding:0.5rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#888;font-size:0.85rem;box-sizing:border-box;" />' +
+                                                '<button id="uploadAvatarBtn" onclick="uploadCustomAvatar()" style="padding:0.5rem 1rem;background:#b9aa00;color:#1a1a1a;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Upload</button>' +
+                                            '</div>' +
+                                            '<p style="color:#888;font-size:0.8rem;margin:0.5rem 0 0 0;">JPG or PNG, max 2MB. Square format recommended.</p>' +
+                                            '<p id="uploadStatus" style="color:#f44;font-size:0.8rem;margin:0.5rem 0 0 0;display:none;"></p>' +
                                         '</div>' +
                                     '</div>' +
                                 '</div>' +
@@ -767,6 +774,61 @@
                     console.error('[Space] Failed to fetch character count:', e);
                 }
             })();
+
+            // Initialize avatar system
+            (function() {
+                var AVATAR_POINTS_REQUIRED = 100;
+                var defaultAvatarColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+                var defaultAvatarInitials = ['A', 'B', 'C', 'D', 'E', 'F'];
+                var grid = document.getElementById('defaultAvatarGrid');
+
+                if (grid) {
+                    // Create default avatar options
+                    for (var i = 0; i < 6; i++) {
+                        var btn = document.createElement('button');
+                        btn.style.width = '50px';
+                        btn.style.height = '50px';
+                        btn.style.borderRadius = '50%';
+                        btn.style.border = '2px solid #333';
+                        btn.style.background = defaultAvatarColors[i];
+                        btn.style.color = '#fff';
+                        btn.style.fontSize = '1.2rem';
+                        btn.style.fontWeight = 'bold';
+                        btn.style.cursor = 'pointer';
+                        btn.style.transition = 'all 0.2s';
+                        btn.textContent = defaultAvatarInitials[i];
+                        btn.onmouseover = function() {
+                            this.style.borderColor = '#b9aa00';
+                            this.style.boxShadow = '0 0 8px rgba(185, 170, 0, 0.5)';
+                        };
+                        btn.onmouseout = function() {
+                            this.style.borderColor = '#333';
+                            this.style.boxShadow = 'none';
+                        };
+                        btn.onclick = (function(color, initial) {
+                            return function() {
+                                selectDefaultAvatar(color, initial);
+                            };
+                        })(defaultAvatarColors[i], defaultAvatarInitials[i]);
+                        grid.appendChild(btn);
+                    }
+                }
+
+                // Update community points display
+                var cpRequiredEl = document.getElementById('cpRequired');
+                if (cpRequiredEl) {
+                    cpRequiredEl.textContent = AVATAR_POINTS_REQUIRED;
+                }
+
+                // Upload button state
+                var uploadBtn = document.getElementById('uploadAvatarBtn');
+                var fileInput = document.getElementById('avatarUpload');
+                if (uploadBtn && fileInput) {
+                    fileInput.onchange = function() {
+                        uploadBtn.textContent = this.files.length > 0 ? 'Upload (' + AVATAR_POINTS_REQUIRED + ' CP)' : 'Upload';
+                    };
+                }
+            })();
         } catch(err) {
             console.error('[Space] Error:', err);
             var container = document.getElementById('profileContainer');
@@ -776,6 +838,84 @@
             }
         }
     });
+
+    // Global avatar functions
+    function selectDefaultAvatar(color, initial) {
+        var preview = document.getElementById('avatarPreview');
+        if (preview) {
+            preview.style.background = color;
+            preview.textContent = initial;
+        }
+        console.log('[Avatar] Selected default avatar:', color, initial);
+    }
+
+    function uploadCustomAvatar() {
+        var fileInput = document.getElementById('avatarUpload');
+        var statusEl = document.getElementById('uploadStatus');
+
+        if (!fileInput || !fileInput.files.length) {
+            if (statusEl) {
+                statusEl.textContent = 'Please select a file';
+                statusEl.style.display = 'block';
+            }
+            return;
+        }
+
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+        if (!saved || !saved.authKey) {
+            if (statusEl) {
+                statusEl.textContent = 'Not authenticated';
+                statusEl.style.display = 'block';
+            }
+            return;
+        }
+
+        var userCP = saved.community_points || 0;
+        if (userCP < 100) {
+            if (statusEl) {
+                statusEl.textContent = 'Requires 100 Community Points. You have ' + userCP + '.';
+                statusEl.style.display = 'block';
+                statusEl.style.color = '#f44';
+            }
+            return;
+        }
+
+        var file = fileInput.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            if (statusEl) {
+                statusEl.textContent = 'File size exceeds 2MB limit';
+                statusEl.style.display = 'block';
+            }
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var preview = document.getElementById('avatarPreview');
+            if (preview) {
+                preview.style.backgroundImage = 'url(' + e.target.result + ')';
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                preview.textContent = '';
+            }
+
+            if (statusEl) {
+                statusEl.textContent = 'Avatar uploaded (will save with profile)';
+                statusEl.style.color = '#4ECDC4';
+                statusEl.style.display = 'block';
+            }
+
+            // Reset file input
+            fileInput.value = '';
+            var uploadBtn = document.getElementById('uploadAvatarBtn');
+            if (uploadBtn) {
+                uploadBtn.textContent = 'Upload';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
     </script>
 </body>
 </html>
