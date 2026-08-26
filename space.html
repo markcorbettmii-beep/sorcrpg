@@ -425,7 +425,7 @@
                                 '<div class="card"><h4>Profile Completeness</h4><p>Your avatar, display name, bio, and social links. ' +
                                 '<a href="javascript:void(0);" onclick="switchTab(\'settings\');return false;" style="color:#b9aa00;text-decoration:underline;">Edit in Settings</a></p></div>' +
                                 '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
-                                '<div class="card"><h4>Active Characters</h4><p>You have 0 active characters. <a href="character-customizer/creation-overview.html" style="color:#b9aa00;text-decoration:underline;">Create your first character</a></p></div>' +
+                                '<div class="card"><h4>Active Characters</h4><p>You have <span id="overviewCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_ref_001" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a></p></div>' +
                             '</div>';
                         break;
 
@@ -612,6 +612,10 @@
                             '<p>Edit your Character Space, avatar, bio, social links, and preferences. Changes are saved to your profile.</p>' +
                             '<div style="margin-top:1.5rem;">' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
+                                    '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Active Characters</h4>' +
+                                    '<p style="color:#e0cfc0;margin:0 0 0.5rem 0;">You have <span id="activeCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_ref_001" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a></p>' +
+                                '</div>' +
+                                '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Profile Picture</h4>' +
                                     '<div style="display:flex;gap:1rem;align-items:flex-start;">' +
                                         '<div style="flex-shrink:0;">' +
@@ -739,6 +743,30 @@
             var params = new URLSearchParams(window.location.search);
             var initialTab = params.get('tab') || 'overview';
             switchTab(initialTab);
+
+            // Fetch and display active character count
+            (async function() {
+                try {
+                    var charRes = await fetch(API_URL + '/api/characters', {
+                        headers: { 'X-Auth-Key': saved.authKey }
+                    });
+                    if (charRes.ok) {
+                        var charData = await charRes.json();
+                        var charCount = Array.isArray(charData) ? charData.length : (charData.characters ? charData.characters.length : 0);
+                        // Update both the Settings tab and Overview tab character counts
+                        var settingsCountEl = document.getElementById('activeCharacterCount');
+                        if (settingsCountEl) {
+                            settingsCountEl.textContent = charCount;
+                        }
+                        var overviewCountEl = document.getElementById('overviewCharacterCount');
+                        if (overviewCountEl) {
+                            overviewCountEl.textContent = charCount;
+                        }
+                    }
+                } catch(e) {
+                    console.error('[Space] Failed to fetch character count:', e);
+                }
+            })();
         } catch(err) {
             console.error('[Space] Error:', err);
             var container = document.getElementById('profileContainer');
