@@ -3739,65 +3739,9 @@
     }
 
     function playReadyCheckSound() {
-      var ctx;
-      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return; }
-      if (ctx.state === 'suspended') ctx.resume();
-      var master = ctx.createGain();
-      master.gain.value = 1.0;
-      master.connect(ctx.destination);
-      var now = ctx.currentTime;
-
-      /* Ready Check is always the sword clash + war drum, on every lobby theme.
-         Theme ambience is separate and unaffected. */
-
-      /* Metallic sword clash - sharp and crisp */
-      var clashStart = now;
-      var clashOsc = ctx.createOscillator();
-      clashOsc.type = 'square';
-      clashOsc.frequency.setValueAtTime(3200, clashStart);
-      clashOsc.frequency.exponentialRampToValueAtTime(1600, clashStart + 0.3);
-      var clashFilter = ctx.createBiquadFilter();
-      clashFilter.type = 'highpass';
-      clashFilter.frequency.value = 2000;
-      var clashGain = ctx.createGain();
-      clashGain.gain.setValueAtTime(0.5, clashStart);
-      clashGain.gain.exponentialRampToValueAtTime(0.05, clashStart + 0.25);
-      clashGain.gain.exponentialRampToValueAtTime(0.0001, clashStart + 0.35);
-      clashOsc.connect(clashFilter);
-      clashFilter.connect(clashGain);
-      clashGain.connect(master);
-      clashOsc.start(clashStart);
-      clashOsc.stop(clashStart + 0.35);
-
-      /* War drum beat - deep resonant strike */
-      var drumStart = now + 0.15;
-      var drumOsc = ctx.createOscillator();
-      drumOsc.type = 'sine';
-      drumOsc.frequency.setValueAtTime(100, drumStart);
-      drumOsc.frequency.exponentialRampToValueAtTime(40, drumStart + 0.5);
-      var drumGain = ctx.createGain();
-      drumGain.gain.setValueAtTime(0.7, drumStart);
-      drumGain.gain.exponentialRampToValueAtTime(0.1, drumStart + 0.4);
-      drumGain.gain.exponentialRampToValueAtTime(0.0001, drumStart + 0.7);
-      drumOsc.connect(drumGain);
-      drumGain.connect(master);
-      drumOsc.start(drumStart);
-      drumOsc.stop(drumStart + 0.75);
-
-      /* Sub-bass rumble for impact */
-      var bassStart = now + 0.15;
-      var bassOsc = ctx.createOscillator();
-      bassOsc.type = 'sine';
-      bassOsc.frequency.value = 50;
-      var bassGain = ctx.createGain();
-      bassGain.gain.setValueAtTime(0.5, bassStart);
-      bassGain.gain.exponentialRampToValueAtTime(0.0001, bassStart + 0.8);
-      bassOsc.connect(bassGain);
-      bassGain.connect(master);
-      bassOsc.start(bassStart);
-      bassOsc.stop(bassStart + 0.85);
-
-      setTimeout(function() { try { ctx.close(); } catch(e) {} }, 3500);
+      var audio = new Audio('/audio/sorc-rc-trump.ogg');
+      audio.volume = 1.0;
+      try { audio.play().catch(function(e) {}); } catch(e) {}
     }
 
     window.initiateReadyCheck = async function() {
