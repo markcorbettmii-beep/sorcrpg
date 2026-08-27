@@ -13,6 +13,7 @@
     .result-card h2 { color: #b9aa00; margin-bottom: 0.5rem; }
     .result-role { font-size: 2rem; font-weight: bold; margin: 0.5rem 0; }
     .result-score { color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+    .lobby-info { margin-top: 1rem; padding: 1rem; background: #222; color: #ccc; font-size: 0.9rem; border-radius: 8px; }
     .error-message { color: #c93f35; font-size: 1rem; margin-top: 1.5rem; }
     .reload-btn { margin-top: 1rem; background: #c93f35; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
     .reload-btn:hover { background: #a11d1b; }
@@ -181,8 +182,27 @@
           <h2>Assessment Complete</h2>
           <div class="result-role" style="color: ${color};">${roleText}</div>
           <div class="result-score">${assessment.score}/10 correct</div>
+          <div class="lobby-info">
+            ${generateLobbyInfo(role)}
+            <br><br>
+            Note: Only a GM can launch a room.
+          </div>
         </div>
       `;
+    }
+
+    // Generate lobby information
+    function generateLobbyInfo(role) {
+      switch (role) {
+        case '[PC] Novice':
+          return 'You can join or create Beginner lobbies.';
+        case '[PC] Journeyman':
+          return 'You can join Beginner lobbies or create Intermediate lobbies.';
+        case '[PC] Master':
+          return 'You can join Beginner and Intermediate lobbies or create Advanced lobbies.';
+        default:
+          return 'No lobby information available.';
+      }
     }
 
     // Role labels
