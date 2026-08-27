@@ -167,6 +167,8 @@
       const role = assessment.role_granted || 'PC-BEG'; // Fallback to Beginner role
       const roleText = roleLabel(role);
       const color = roleColor(role);
+      const lobbyType = determineLobbyType(role); // Determine lobby type
+      const lobbyLink = `<a href="https://sorcrpg.com/lobbies" target="_blank" style="color: #b9aa00; text-decoration: underline;">Sign in as Guest</a>`;
 
       app.innerHTML = `
         <div class="result-card">
@@ -174,7 +176,7 @@
           <div class="result-role" style="color: ${color};">${roleText}</div>
           <div class="result-score">${assessment.score}/10 correct</div>
           <div class="lobby-info">
-            ${generateLobbyInfo(role)}
+            You assessed into the ${lobbyType} lobby. ${lobbyLink}
             <br><br>
             Note: Only a GM can launch a room.
           </div>
@@ -182,17 +184,17 @@
       `;
     }
 
-    // Generate lobby information
-    function generateLobbyInfo(role) {
+    // Generate lobby type based on role
+    function determineLobbyType(role) {
       switch (role) {
-        case '[PC] Novice':
-          return 'You can join or create Beginner lobbies.';
-        case '[PC] Journeyman':
-          return 'You can join Beginner lobbies or create Intermediate lobbies.';
-        case '[PC] Master':
-          return 'You can join Beginner and Intermediate lobbies or create Advanced lobbies.';
+        case 'PC-BEG':
+          return 'Beginner';
+        case 'PC-INT':
+          return 'Intermediate';
+        case 'PC-ADV':
+          return 'Advanced';
         default:
-          return 'No lobby information available.';
+          return 'Unknown';
       }
     }
 
