@@ -1,195 +1,617 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Role Assessment | Slayers of Rings § Crowns</title>
-    <link rel="stylesheet" href="styles.css?v=9" />
-    <!-- Additional styling... -->
-  </head>
-  <body>
-    <div class="page-wrapper">
-      <header class="header-container">
-        <span class="sorc-letters">S O R C</span>
-        <img
-          src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png"
-          class="sorc-letters-img evil-only"
-          alt="SORC"
-        />
-        <img
-          src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png"
-          class="sorc-letters-img lawful-only"
-          alt="SORC"
-        />
-      </header>
-      <nav>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Role Assessment | Slayers of Rings § Crowns</title>
+  <link rel="stylesheet" href="styles.css?v=9" />
+  <style>
+    .assess-wrap { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .assess-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
+    .assess-sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .role-track { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+    .track-btn { flex: 1; padding: 0.9rem; border-radius: 10px; border: 2px solid #2a2a2a; background: #1a1a1a;
+      color: #888; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .track-btn:hover { border-color: #555; color: #e0cfc0; }
+    .track-btn.active.pc { border-color: #c93f35; color: #c93f35; background: #1a0505; }
+    .track-btn.active.gm { border-color: #b9aa00; color: #b9aa00; background: #1a1505; }
+    .track-note { font-size: 0.8rem; color: #555; margin-top: -1rem; margin-bottom: 1.5rem; }
+    .q-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+    .q-num { color: #555; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .q-text { color: #e0cfc0; font-size: 0.97rem; margin-bottom: 1rem; line-height: 1.5; }
+    .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    @media (max-width: 480px) { .q-options { grid-template-columns: 1fr; } }
+    .opt-btn { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
+      color: #aaa; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+    .opt-btn:hover { border-color: #555; color: #e0cfc0; }
+    .opt-btn.selected { border-color: #c93f35; color: #e0cfc0; background: #1a0505; }
+    .opt-btn.selected.gm-track { border-color: #b9aa00; background: #1a1505; }
+    .submit-row { margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .submit-btn { padding: 0.85rem 2rem; background: #c93f35; color: #fff; border: none; border-radius: 8px;
+      font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .submit-btn:hover { background: #c93f35; }
+    .submit-btn:disabled { background: #333; color: #555; cursor: default; }
+    .assess-msg { font-size: 0.88rem; color: #c93f35; }
+    .result-card { background: #1a1a1a; border: 2px solid #b9aa00; border-radius: 14px; padding: 2rem; text-align: center; }
+    .result-card h2 { color: #b9aa00; margin-bottom: 0.5rem; }
+    .result-role { font-size: 2rem; font-weight: bold; color: #e0cfc0; margin: 0.5rem 0; }
+    .result-score { color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+    .result-note { color: #aaa; font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    .result-links { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .result-links a, .result-links button { padding: 0.7rem 1.4rem; border-radius: 8px; font-size: 0.9rem;
+      font-weight: bold; text-decoration: none; cursor: pointer; }
+    .btn-go { background: #c93f35; color: #fff; border: none; }
+    .btn-go:hover { background: #c93f35; }
+    .btn-reassess { background: none; border: 1px solid #444; color: #888; }
+    .btn-reassess:hover { border-color: #888; color: #e0cfc0; }
+    .already-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.5rem; }
+    .already-card h3 { color: #b9aa00; margin-bottom: 0.5rem; }
+    .scroll-qa { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 1rem 1.25rem;
+      max-height: 260px; overflow-y: auto; margin-bottom: 2rem; }
+    .scroll-qa-item { padding: 0.5rem 0; border-bottom: 1px solid #1e1e1e; }
+    .scroll-qa-item:last-child { border-bottom: none; }
+    .scroll-qa-q { color: #888; font-size: 0.8rem; }
+    .scroll-qa-a { color: #b9aa00; font-size: 0.82rem; font-weight: bold; }
+    .review-wrap { margin-top: 1.5rem; text-align: left; }
+    .review-wrap h3 { color: #b9aa00; font-size: 1rem; margin-bottom: 0.75rem; }
+    .review-q { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.9rem; }
+    .review-q-text { color: #e0cfc0; font-size: 0.9rem; margin-bottom: 0.6rem; line-height: 1.4; }
+    .review-opt { padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.85rem; color: #888; margin-bottom: 0.25rem; }
+    .review-opt.wrong-pick { color: #e08080; background: rgba(192,57,43,0.15); }
+    .review-opt.right-answer { color: #7bc47f; background: rgba(46,125,50,0.15); }
+    .review-q-link { font-size: 0.78rem; margin-top: 0.4rem; }
+    .review-q-link a { color: #b9aa00; text-decoration: none; }
+    body.lawful-mode .review-q { background: #f9f9f9; border-color: #e0e0e0; }
+    body.lawful-mode .review-q-text { color: #2c2c2c; }
+    body.lawful-mode .review-opt { color: #777; }
+    body.lawful-mode .review-opt.wrong-pick { color: #a02020; background: rgba(192,57,43,0.08); }
+    body.lawful-mode .review-opt.right-answer { color: #1e6b23; background: rgba(46,125,50,0.08); }
+    body.lawful-mode .assess-wrap h1 { color: #c93f35; }
+    body.lawful-mode .q-card { background: #f5f5f0; border-color: #ddd; }
+    body.lawful-mode .q-text { color: #2c2c2c; }
+    body.lawful-mode .opt-btn { background: #fff; border-color: #ccc; color: #555; }
+    body.lawful-mode .opt-btn:hover { border-color: #888; color: #2c2c2c; }
+    body.lawful-mode .opt-btn.selected { border-color: #c93f35; background: #fff0f0; color: #2c2c2c; }
+    body.lawful-mode .result-card, body.lawful-mode .already-card { background: #fff; border-color: #ddd; }
+    body.lawful-mode .result-role { color: #2c2c2c; }
+    body.lawful-mode .scroll-qa { background: #f9f9f9; border-color: #e0e0e0; }
+    body.lawful-mode .track-btn { background: #fff; border-color: #ddd; color: #555; }
+  
+        body.lawful-mode .submit-btn:disabled { background: #eee; color: #999; }
+    </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
+      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
+    </header>
+    <nav>
         <div id="navRoleBadge"></div>
-      </nav>
+    </nav>
 
-      <ul class="page-nav">
-        <li><a href="index.html">&#8962;</a></li>
-      </ul>
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+    </ul>
 
-      <div class="assess-wrap">
-        <h1>Role Assessment</h1>
-        <p class="assess-sub">
-          Answer 10 questions drawn from the SORC Basic Rules to unlock lobby
-          access. Score 6–7 for PC Beginner, 8 for PC Intermediate, 9–10 for PC
-          Advanced. GMs must score 9 or higher.
-        </p>
-        <div id="assessApp">
-          <p style="color:#555;">Loading...</p>
-        </div>
-      </div>
-
-      <div id="footer"></div>
+    <div class="assess-wrap">
+      <h1>Role Assessment</h1>
+      <p class="assess-sub">Answer 10 questions drawn from the SORC Basic Rules to unlock lobby access. Score 6–7 for PC Beginner, 8 for PC Intermediate, 9–10 for PC Advanced. GMs must score 9 or higher.</p>
+      <div id="assessApp"><p style="color:#555;">Loading...</p></div>
     </div>
 
-    <script>
-      var API_URL = "https://api.sorcrpg.com";
-      var currentUser = null;
+    <div id="footer"></div>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var currentUser = null;
+    try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+    (function() {
+      var theme = localStorage.getItem('themeSelected') || 'lawful';
+      if (theme === 'lawful') document.body.classList.add('lawful-mode');
+    })();
+
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+    var gmTrack = false;
+    var selectedAnswers = {};
+    var questions = [];
+
+    var urlParams = new URLSearchParams(window.location.search);
+    var trackParam = urlParams.get('track'); // 'pc' | 'gm', preselects the track from take-assessment.html
+    var fromJoin = urlParams.get('from') === 'join'; // came here to join/log in, not just reassess
+
+    function roleLabel(r) {
+      switch(r) {
+        case 'PC-BEG': return 'PC · Beginner';
+        case 'PC-INT': return 'PC · Intermediate';
+        case 'PC-ADV': return 'PC · Advanced';
+        case 'GM-ADV': return 'GM · Advanced';
+        default: return r;
+      }
+    }
+
+    function roleColor(r) {
+      if (r && r.startsWith('GM')) return '#b9aa00';
+      if (r === 'PC-ADV') return '#4caf50';
+      if (r === 'PC-INT') return '#64b5f6';
+      return '#e0cfc0';
+    }
+
+    var betaMode = false; // anonymous visitor taking the no-account Player preview
+
+    async function init() {
+      var app = document.getElementById('assessApp');
+      if (!currentUser || !currentUser.authKey) {
+        betaMode = true;
+        loadBetaQuiz();
+        return;
+      }
+      app.innerHTML = '<p style="color:#555;">Checking assessment status...</p>';
       try {
-        currentUser = JSON.parse(localStorage.getItem("sorc_user"));
-      } catch (e) {
-        console.error("Error parsing localStorage:", e);
-        currentUser = null;
-      }
-
-      (function () {
-        var theme = localStorage.getItem("themeSelected") || "lawful";
-        if (theme === "lawful") document.body.classList.add("lawful-mode");
-      })();
-
-      function esc(s) {
-        return String(s || "")
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      }
-
-      var gmTrack = false;
-      var selectedAnswers = {};
-      var questions = [];
-      var betaMode = false;
-
-      async function init() {
-        var app = document.getElementById("assessApp");
-        if (!currentUser || !currentUser.authKey) {
-          console.log("Guest mode detected. Starting beta quiz...");
-          betaMode = true;
-          loadBetaQuiz();
-          return;
-        }
-        app.innerHTML = '<p style="color:#555;">Checking assessment status...</p>';
-        try {
-          var res = await fetch(API_URL + "/api/assess?t=" + Date.now(), {
-            headers: { "X-Auth-Key": currentUser.authKey },
-            cache: "no-store",
-          });
-          var data = await res.json();
-          if (data.assessment) {
-            try {
-              var saved = JSON.parse(localStorage.getItem("sorc_user") || "{}");
-              saved.sorc_role = data.assessment.role_granted;
-              localStorage.setItem("sorc_user", JSON.stringify(saved));
-            } catch (e) {
-              console.error("Error saving role to localStorage:", e);
-            }
-            if (data.expired || data.needs_reassess) {
-              showResult(data.assessment, true, true);
-            } else {
-              showResult(data.assessment, true, false);
-            }
+        var res = await fetch(API_URL + '/api/assess?t=' + Date.now(), {
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          cache: 'no-store'
+        });
+        var data = await res.json();
+        if (data.assessment) {
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = data.assessment.role_granted;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          if (data.expired || data.needs_reassess) {
+            showResult(data.assessment, true, true);
           } else {
-            loadQuiz(trackParam === "gm");
+            showResult(data.assessment, true, false);
           }
-        } catch (e) {
-          app.innerHTML =
-            '<p style="color:#c93f35;">Connection error. Please try again.</p>';
+        } else {
+          loadQuiz(trackParam === 'gm');
         }
+      } catch(e) {
+        app.innerHTML = '<p style="color:#c93f35;">Connection error. Please try again.</p>';
+      }
+    }
+
+    async function loadQuiz(isGM) {
+      var app = document.getElementById('assessApp');
+      app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+      gmTrack = !!isGM;
+      try {
+        /* Cache-busted, no-store fetch: the server reshuffles on every request, so
+           each page load, refresh, or return to the page draws a new set of questions.
+           gm_track=1 pulls the GM Codex section on top of Basic Rules (20 total). */
+        var url = API_URL + '/api/assess/questions?t=' + Date.now() + (gmTrack ? '&gm_track=1' : '');
+        var res = await fetch(url, {
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          cache: 'no-store'
+        });
+        if (!res.ok) {
+          throw new Error('Server error: ' + res.status);
+        }
+        var data = await res.json();
+        if (!data.questions) {
+          throw new Error('No questions in response');
+        }
+        questions = data.questions || [];
+        selectedAnswers = {};
+        renderQuiz();
+      } catch(e) {
+        console.error('Error loading questions:', e);
+        app.innerHTML = '<p style="color:#c93f35;">Could not load questions. <button onclick="location.reload()" style="background:#c93f35;color:white;border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;">Reload Page</button></p>';
+      }
+    }
+
+    async function loadBetaQuiz() {
+      var app = document.getElementById('assessApp');
+      app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+      gmTrack = false; // beta is Player-only, no account, no GM
+      try {
+        var res = await fetch(API_URL + '/api/assess/beta-questions?t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error('Server error: ' + res.status);
+        }
+        var data = await res.json();
+        if (!data.questions) {
+          throw new Error('No questions in response');
+        }
+        questions = data.questions || [];
+        selectedAnswers = {};
+        renderQuiz();
+      } catch(e) {
+        console.error('Error loading beta questions:', e);
+        app.innerHTML = '<p style="color:#c93f35;">Could not load questions. <button onclick="location.reload()" style="background:#c93f35;color:white;border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;">Reload Page</button></p>';
+      }
+    }
+
+    function renderQuestionCard(q, displayIdx, total) {
+      var page3 = ('00' + q.page).slice(-3);
+      var rulesHref = q.section === 'gm_codex'
+        ? '/content/gm_essentials/gm_ref_' + page3 + '.html'
+        : '/content/essentia_core/rules_ref_' + page3 + '.html';
+      return '<div class="q-card" id="qcard-' + q.id + '">' +
+        '<div class="q-num">Question ' + (displayIdx + 1) + ' of ' + total + '</div>' +
+        '<div class="q-text">' + esc(q.q) + '</div>' +
+        '<div class="q-options">' +
+          q.options.map(function(opt, oi) {
+            return '<button class="opt-btn" id="opt-' + q.id + '-' + oi + '" onclick="selectAnswer(' + q.id + ',' + oi + ')">' +
+              '<strong>' + ['A','B','C','D'][oi] + '.</strong> ' + esc(opt) + '</button>';
+          }).join('') +
+        '</div>' +
+        '<div style="margin-top:0.75rem;text-align:right;">' +
+          '<a href="' + rulesHref + '" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">Read Rules Pg. ' + q.page + '</a>' +
+        '</div>' +
+      '</div>';
+    }
+
+    /* wrongList entries come from the server's grading pass: { id, answer? }.
+       answer is present for Basic Rules misses (large, mostly-unseen pool -
+       safe to reveal) and omitted for GM Codex misses (the fixed 10-question
+       pool IS every GM Codex question shown, so revealing one would burn it
+       for every future attempt) - those just highlight the wrong pick. The
+       user's own pick comes from selectedAnswers, still in memory from the
+       submit that just happened. */
+    function renderWrongReview(wrongList) {
+      if (!wrongList || !wrongList.length) return '';
+      var letters = ['A', 'B', 'C', 'D'];
+      var html = '<div class="review-wrap"><h3>Review Your Missed Questions</h3>';
+      wrongList.forEach(function(w) {
+        var q = questions.filter(function(qq) { return qq.id === w.id; })[0];
+        if (!q) return;
+        var chosen = selectedAnswers[w.id];
+        var page3 = ('00' + q.page).slice(-3);
+        var rulesHref = q.section === 'gm_codex'
+          ? '/content/gm_essentials/gm_ref_' + page3 + '.html'
+          : '/content/essentia_core/rules_ref_' + page3 + '.html';
+        html += '<div class="review-q"><div class="review-q-text">' + esc(q.q) + '</div>';
+        q.options.forEach(function(opt, oi) {
+          var cls = '', mark = '';
+          if (w.answer !== undefined && oi === w.answer) { cls = 'right-answer'; mark = ' &#10003;'; }
+          else if (oi === chosen) { cls = 'wrong-pick'; mark = ' &#10007;'; }
+          html += '<div class="review-opt ' + cls + '"><strong>' + letters[oi] + '.</strong> ' + esc(opt) + mark + '</div>';
+        });
+        if (w.answer === undefined) {
+          html += '<div class="review-q-link" style="opacity:0.7;">GM Codex questions repeat every attempt, so the correct answer isn\'t shown here - check the rules page below.</div>';
+        }
+        html += '<div class="review-q-link"><a href="' + rulesHref + '" target="_blank">Read Rules Pg. ' + q.page + '</a></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function renderQuiz() {
+      var app = document.getElementById('assessApp');
+      var basicQs = questions.filter(function(q) { return q.section !== 'gm_codex'; });
+      var codexQs = questions.filter(function(q) { return q.section === 'gm_codex'; });
+
+      /* GM track is two graded sections in one continuous form: Basic Rules
+         then GM Codex, each under its own heading and <hr>. PC track is just
+         the single Basic Rules section, unchanged from before. */
+      var qHtml = '<h3 style="margin-top:1.5rem;">Basic Rules</h3><hr style="border-color:#2a2a2a;margin-bottom:1rem;">' +
+        basicQs.map(function(q, idx) { return renderQuestionCard(q, idx, questions.length); }).join('');
+      if (codexQs.length) {
+        qHtml += '<h3 style="margin-top:2rem;">GM Codex</h3><hr style="border-color:#2a2a2a;margin-bottom:1rem;">' +
+          codexQs.map(function(q, idx) { return renderQuestionCard(q, basicQs.length + idx, questions.length); }).join('');
       }
 
-      async function loadBetaQuiz() {
-        var app = document.getElementById("assessApp");
-        app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
-        gmTrack = false; // beta is Player-only, no account, no GM
-        console.log("Beta Quiz: Starting to load questions...");
-        try {
-          var res = await fetch(
-            API_URL + "/api/assess/beta-questions?t=" + Date.now(),
-            { cache: "no-store" }
-          );
-          console.log("Beta Quiz: API response status:", res.status);
+      var topSection = betaMode
+        ? '<div style="background:#1a1505;border:1px solid #5a4a00;border-radius:10px;padding:0.85rem 1.1rem;margin-bottom:1.25rem;color:#c9b400;font-size:0.85rem;">' +
+            '<strong>BETA:</strong> The Player Assessment is open to visitors during beta &mdash; no account needed to try it. ' +
+            'This is a preview only: your score isn\'t saved. <a href="signin.html?track=pc" style="color:#b9aa00;">Create an account</a> to make a passing result official. ' +
+            'The GM Assessment still requires a Basic Member account.' +
+          '</div>'
+        : '<div class="role-track">' +
+            '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">Player Character (PC)</button>' +
+            '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">Game Master (GM)</button>' +
+          '</div>' +
+          '<p class="track-note" id="trackNote">Choose your track before answering - it locks in on your first answer and cannot be changed.</p>';
 
-          // Check for errors
-          if (!res.ok) {
-            console.error("Error: API response failed with status", res.status);
-            app.innerHTML =
-              '<p style="color:#c93f35;">Could not load questions. Please try again later.</p>';
-            return;
-          }
-
-          var data = await res.json();
-          console.log("Beta Quiz: API response data:", data);
-
-          // Ensure questions are available
-          if (!data.questions || data.questions.length === 0) {
-            console.error("Error: No questions returned in API response");
-            app.innerHTML =
-              '<p style="color:#c93f35;">No questions were found for the beta assessment. Please try again later.</p>';
-            return;
-          }
-
-          questions = data.questions || [];
-          selectedAnswers = {};
-          renderQuiz();
-        } catch (e) {
-          console.error("Error loading beta questions:", e);
-          app.innerHTML =
-            '<p style="color:#c93f35;">Could not load questions. <button onclick="location.reload()" style="background:#c93f35;color:white;border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;">Reload Page</button></p>';
-        }
-      }
-
-      function renderQuiz() {
-        var app = document.getElementById("assessApp");
-        var basicQs = questions.filter(function (q) {
-          return q.section !== "gm_codex";
-        });
-        var codexQs = questions.filter(function (q) {
-          return q.section === "gm_codex";
-        });
-
-        var qHtml =
-          '<h3 style="margin-top:1.5rem;">Basic Rules</h3><hr style="border-color:#2a2a2a;margin-bottom:1rem;">' +
-          basicQs
-            .map(function (q, idx) {
-              return renderQuestionCard(q, idx, questions.length);
-            })
-            .join("");
-        if (codexQs.length) {
-          qHtml +=
-            '<h3 style="margin-top:2rem;">GM Codex</h3><hr style="border-color:#2a2a2a;margin-bottom:1rem;">' +
-            codexQs
-              .map(function (q, idx) {
-                return renderQuestionCard(q, basicQs.length + idx, questions.length);
-              })
-              .join("");
-        }
-
-        app.innerHTML =
-          qHtml +
-          '<div class="submit-row">' +
+      app.innerHTML =
+        topSection +
+        qHtml +
+        '<div class="submit-row">' +
           '<button class="submit-btn" id="submitBtn" onclick="submitAssessment()" disabled>Submit Assessment</button>' +
           '<span class="assess-msg" id="assessMsg"></span>' +
-          "</div>" +
-          '<div id="assessReview"></div>';
+        '</div>' +
+        '<div id="assessReview"></div>';
 
-        if (!betaMode) updateTrackUI(gmTrack);
+      if (!betaMode) updateTrackUI(gmTrack);
+    }
+
+    /* Switching tracks changes how many questions there are (GM is 20, PC is
+       10), so it re-fetches instead of just re-rendering. Only reachable
+       pre-first-answer anyway (see lockTrack). */
+    function setTrack(isGM) {
+      if (isGM !== gmTrack) { loadQuiz(isGM); return; }
+      updateTrackUI(isGM);
+    }
+
+    function updateTrackUI(isGM) {
+      gmTrack = isGM;
+      document.getElementById('trackPC').classList.toggle('active', !isGM);
+      document.getElementById('trackGM').classList.toggle('active', isGM);
+      document.getElementById('trackNote').textContent = isGM
+        ? 'GM track selected. You must score a perfect 20/20 across both sections (Basic Rules + GM Codex) to qualify as GM-ADV.'
+        : 'PC track selected. Score 6+ to pass and receive a PC role.';
+      questions.forEach(function(q) {
+        var sel = selectedAnswers[q.id];
+        if (sel !== undefined) {
+          for (var i = 0; i < q.options.length; i++) {
+            var btn = document.getElementById('opt-' + q.id + '-' + i);
+            if (btn) {
+              btn.classList.remove('selected', 'gm-track');
+              if (i === sel) {
+                btn.classList.add('selected');
+                if (isGM) btn.classList.add('gm-track');
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function selectAnswer(qId, optIdx) {
+      selectedAnswers[qId] = optIdx;
+      for (var i = 0; i < 4; i++) {
+        var btn = document.getElementById('opt-' + qId + '-' + i);
+        if (btn) {
+          btn.classList.remove('selected', 'gm-track');
+          if (i === optIdx) {
+            btn.classList.add('selected');
+            if (gmTrack) btn.classList.add('gm-track');
+          }
+        }
+      }
+      var answered = Object.keys(selectedAnswers).length;
+      var submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) submitBtn.disabled = answered < questions.length;
+      /* Lock track selection once first answer is given */
+      if (answered === 1) lockTrack();
+    }
+
+    function lockTrack() {
+      var pcBtn = document.getElementById('trackPC');
+      var gmBtn = document.getElementById('trackGM');
+      var note = document.getElementById('trackNote');
+      if (pcBtn) { pcBtn.disabled = true; pcBtn.style.opacity = '0.45'; pcBtn.style.cursor = 'default'; }
+      if (gmBtn) { gmBtn.disabled = true; gmBtn.style.opacity = '0.45'; gmBtn.style.cursor = 'default'; }
+      if (note) note.textContent = (gmTrack ? 'GM track locked in.' : 'PC track locked in.') + ' Complete all questions to submit.';
+    }
+
+    async function submitAssessment() {
+      var submitBtn = document.getElementById('submitBtn');
+      var msgEl = document.getElementById('assessMsg');
+      if (Object.keys(selectedAnswers).length < questions.length) {
+        msgEl.textContent = 'Please answer all questions.';
+        return;
+      }
+      submitBtn.disabled = true;
+      msgEl.textContent = 'Grading...';
+
+      var answers = questions.map(function(q) { return { id: q.id, answer: selectedAnswers[q.id] }; });
+
+      if (betaMode) {
+        try {
+          var betaRes = await fetch(API_URL + '/api/assess/beta-submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answers: answers })
+          });
+          var betaData = await betaRes.json();
+          showBetaResult(betaData);
+        } catch(e) {
+          msgEl.textContent = 'Connection error. Please try again.';
+          submitBtn.disabled = false;
+        }
+        return;
       }
 
-      init();
-    </script>
-  </body>
+      try {
+        var res = await fetch(API_URL + '/api/assess/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ answers: answers, gm_track: gmTrack })
+        });
+        var data = await res.json();
+        if (data.passed) {
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = data.role;
+            saved.role = data.site_role || saved.role;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          showResult({ score: data.score, basic_score: data.basic_score, codex_score: data.codex_score, role_granted: data.role, gm_track: gmTrack ? 1 : 0, wrong: data.wrong }, false, false);
+        } else if (data.role === 'FAIL') {
+          /* Downgraded to Civilian - update local cache and reload quiz for retry */
+          try {
+            var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
+            saved.sorc_role = null;
+            saved.role = 'CIVILIAN';
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+          } catch(e) {}
+          msgEl.style.color = '#c0392b';
+          var failMsg = data.message || 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess.';
+          if (fromJoin) {
+            failMsg += ' <a href="sorc-beyond.html#basic-member" style="color:#b9aa00;">Join As A Civilian</a> &middot; ' +
+              '<a href="library.html#character-sheets" style="color:#b9aa00;">Download Your Character Sheet Now</a>';
+          }
+          msgEl.innerHTML = failMsg;
+          var reviewEl = document.getElementById('assessReview');
+          if (reviewEl) reviewEl.innerHTML = renderWrongReview(data.wrong);
+          submitBtn.disabled = false;
+        } else {
+          msgEl.textContent = data.error || 'Submission failed.';
+          submitBtn.disabled = false;
+        }
+      } catch(e) {
+        msgEl.textContent = 'Connection error. Please try again.';
+        submitBtn.disabled = false;
+      }
+    }
+
+    function showBetaResult(betaData) {
+      var app = document.getElementById('assessApp');
+      var role = betaData.role;
+      var passed = !!betaData.passed;
+      var roleText = passed ? roleLabel(role) : 'Civilian';
+
+      app.innerHTML =
+        '<div class="result-card">' +
+          '<div style="background:#1a1505;border:1px solid #5a4a00;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;color:#c9b400;font-size:0.85rem;">' +
+            '<strong>BETA preview</strong> &mdash; this result is not saved. Create an account to make it official.' +
+          '</div>' +
+          '<h2>Beta Assessment Complete</h2>' +
+          '<div class="result-role" style="color:' + (passed ? roleColor(role) : '#e0cfc0') + ';">' + esc(roleText) + '</div>' +
+          '<div class="result-score">' + betaData.score + '/10 correct</div>' +
+          (passed
+            ? '<p class="result-note">Sign up as Player Role now.</p>' +
+              '<p class="result-note" style="opacity:0.75;">Already have an account? Login, updated as a Player Role Now.</p>'
+            : '<p class="result-note">Score too low to pass as Player this time - study the Basic Rules and try again anytime during beta.</p>') +
+          '<div class="result-links">' +
+            '<a href="signin.html?track=pc" class="choice-btn pc btn-go">Join As A Player</a>' +
+            '<a href="signin.html?next=' + encodeURIComponent('sorc-beyond.html#basic-member') + '" class="btn-go" style="background:#333;">Join As A Civilian</a>' +
+            '<button class="btn-reassess" onclick="loadBetaQuiz()">Try Again</button>' +
+          '</div>' +
+        '</div>' +
+        renderWrongReview(betaData.wrong);
+    }
+
+    function showResult(assessment, existing, expired) {
+      var app = document.getElementById('assessApp');
+      var role = assessment.role_granted;
+      var score = assessment.score;
+      var wasGmTrack = !!assessment.gm_track;
+      var scoreMax = wasGmTrack ? 20 : 10;
+      var isGM = role && role.startsWith('GM');
+
+      var scoreBreakdown = '';
+      if (wasGmTrack && assessment.basic_score !== undefined && assessment.codex_score !== undefined) {
+        scoreBreakdown = ' <span style="color:#555;">(Basic Rules ' + assessment.basic_score + '/10, GM Codex ' + assessment.codex_score + '/10)</span>';
+      }
+
+      /* Study reference for every question asked, not an answer key - points
+         at the rules page each one came from instead of the answer itself.
+         The separate wrong-answer review below (renderWrongReview) does
+         reveal correct answers, but only for misses, and only where it's
+         safe to (see that function's comment on the Basic Rules/GM Codex
+         split). */
+      var qaHtml = '';
+      if (questions.length > 0) {
+        qaHtml = '<div class="scroll-qa" style="margin-bottom:1.5rem;">' +
+          '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Questions you were asked, and where to study them</p>' +
+          questions.map(function(q, i) {
+            var page3 = ('00' + q.page).slice(-3);
+            var rulesHref = q.section === 'gm_codex'
+              ? '/content/gm_essentials/gm_ref_' + page3 + '.html'
+              : '/content/essentia_core/rules_ref_' + page3 + '.html';
+            var label = q.section === 'gm_codex' ? 'GM Codex' : 'Basic Rules';
+            return '<div class="scroll-qa-item">' +
+              '<div class="scroll-qa-q">Q' + (i+1) + ': ' + esc(q.q) + '</div>' +
+              '<div class="scroll-qa-a"><a href="' + rulesHref + '" target="_blank" style="color:#b9aa00;text-decoration:none;">' + label + ' Pg. ' + q.page + '</a></div>' +
+            '</div>';
+          }).join('') +
+        '</div>';
+      }
+
+      var expiryBanner = expired
+        ? '<div style="background:#3a0d0d;border:1px solid #c0392b;border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;color:#e08080;font-size:0.88rem;">Your assessment has expired. You must reassess to re-enter lobbies. Your role has been paused - reassess now to restore it.</div>'
+        : '';
+      var gmNote = isGM ? '<p class="result-note">GM Advanced role granted. You may now create and join lobbies as a GM (a valid box set code is still required to create one).</p>' : '';
+      var pcNote = (!isGM && role !== 'FAIL') ? '<p class="result-note">You have been assessed as <strong style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</strong>. You may now join lobbies. Study more and reassess to advance your rating.</p>' : '';
+      var reassessLabel = expired ? 'Reassess Now' : 'Reassess';
+
+      var roleForJoin = isGM ? 'GM' : 'Player';
+      var primaryLink = fromJoin
+        ? '<a href="sorc-beyond.html#basic-member" class="btn-go">Join As A ' + roleForJoin + '</a>'
+        : (expired ? '' : '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>');
+      var secondaryLobbies = (fromJoin && !expired)
+        ? '<a href="lobbies.html" class="btn-go" style="background:#333;">Enter Lobbies</a>'
+        : '';
+      var downloadSheetLink = '<a href="library.html#character-sheets" class="btn-go" style="background:none;border:1px solid #b9aa00;color:#b9aa00;">Download Your Character Sheet Now</a>';
+
+      app.innerHTML =
+        '<div class="result-card">' +
+          expiryBanner +
+          '<h2>' + (existing ? 'Your Current Role' : 'Assessment Complete') + '</h2>' +
+          '<div class="result-role" style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</div>' +
+          '<div class="result-score">' + score + '/' + scoreMax + ' correct' + scoreBreakdown + '</div>' +
+          gmNote + pcNote +
+          '<div class="result-links">' +
+            primaryLink + secondaryLobbies + downloadSheetLink +
+            '<button class="btn-reassess" id="reassessBtn" onclick="reassess(this)" style="' + (expired ? 'border-color:#b9aa00;color:#b9aa00;' : '') + '">' + reassessLabel + '</button>' +
+          '</div>' +
+        '</div>' +
+        renderWrongReview(assessment.wrong) +
+        (qaHtml ? '<div style="margin-top:1.5rem;"><p style="color:#555;font-size:0.85rem;margin-bottom:0.5rem;">Review what you were asked:</p>' + qaHtml + '</div>' : '');
+    }
+
+    async function reassess(btn) {
+      if (!btn) return;
+      if (btn.dataset.confirm !== '1') {
+        btn.dataset.confirm = '1';
+        btn.textContent = 'Confirm?';
+        setTimeout(function() {
+          if (btn.dataset.confirm === '1') {
+            btn.dataset.confirm = '';
+            btn.textContent = 'Reassess';
+          }
+        }, 3000);
+        return;
+      }
+      btn.dataset.confirm = '';
+      try {
+        await fetch(API_URL + '/api/assess', {
+          method: 'DELETE',
+          headers: { 'X-Auth-Key': currentUser.authKey }
+        });
+        selectedAnswers = {};
+        questions = [];
+        loadQuiz();
+      } catch(e) {
+        btn.textContent = 'Reassess';
+      }
+    }
+
+    init();
+
+    /* ─── Re-randomize whenever the page is left and returned to ───
+       A plain reload always re-runs init(). These handlers cover the cases a
+       reload does not: back/forward navigation restored from the browser's
+       bfcache, and the tab being switched away from and returned to. In both
+       cases the quiz is torn down and re-fetched, so the character never sees
+       the same ten questions twice. An in-progress quiz is discarded on leave
+       by design, questions are drawn fresh on return. */
+    var assessLeft = false;
+
+    function markLeft() { assessLeft = true; }
+
+    function reshuffleOnReturn() {
+      if (!assessLeft) return;
+      assessLeft = false;
+      /* Only re-draw while the quiz is actually on screen. A displayed result
+         card is a saved record, not a live quiz, and must not be replaced. */
+      if (!document.getElementById('submitBtn')) return;
+      selectedAnswers = {};
+      questions = [];
+      loadQuiz();
+    }
+
+    window.addEventListener('pagehide', markLeft);
+    window.addEventListener('beforeunload', markLeft);
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') markLeft();
+      else reshuffleOnReturn();
+    });
+    window.addEventListener('pageshow', function(e) {
+      /* e.persisted marks a bfcache restore, the page never re-ran its scripts */
+      if (e.persisted) { assessLeft = true; reshuffleOnReturn(); }
+    });
+  </script>
+  <script src="nav.js?v=2"></script>
+  <script type="module" src="main.js?v=26"></script>
+</body>
 </html>
