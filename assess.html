@@ -60,10 +60,10 @@
 
     // Show result
     function showResult(assessment) {
-      var app = document.getElementById('assessApp');
-      var role = assessment.role_granted;
-      var roleText = roleLabel(role);
-      var color = roleColor(role);
+      const app = document.getElementById('assessApp');
+      const role = assessment.role_granted;
+      const roleText = roleLabel(role);
+      const color = roleColor(role);
 
       app.innerHTML = `
         <div class="result-card">
@@ -74,54 +74,75 @@
       `;
     }
 
-    // Handle loading questions from API (with error handling)
+    // Load questions or show result based on beta mode or login status
+    async function init() {
+      const app = document.getElementById('assessApp');
+
+      // Check if the user is logged in (simulate with currentUser for now)
+      if (!currentUser) {
+        loadBetaQuiz(); // Load beta quiz for non-logged-in users
+        return;
+      }
+
+      // Check if the user has completed the assessment
+      try {
+        const res = await fetch(`${API_URL}/api/assess?t=${Date.now()}`, {
+          headers: { 'X-Auth-Key': currentUser.authKey },
+          cache: 'no-store',
+        });
+        const data = await res.json();
+
+        if (data.assessment) {
+          showResult(data.assessment); // Show the result if assessment exists
+        } else {
+          loadQuiz(); // Otherwise, load the quiz
+        }
+      } catch (e) {
+        console.error('Error fetching assessment status:', e);
+        app.innerHTML = `
+          <p class="error-message">Could not load assessment status. Please try again later.</p>
+        `;
+      }
+    }
+
+    // Load the beta quiz
     async function loadBetaQuiz() {
-      var app = document.getElementById("assessApp");
+      const app = document.getElementById('assessApp');
       app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
-      gmTrack = false; // beta is Player-only, no account, no GM
 
       try {
-        var res = await fetch(API_URL + "/api/assess/beta-questions?t=" + Date.now(), { cache: "no-store" });
+        const res = await fetch(`${API_URL}/api/assess/beta-questions?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok) {
-          throw new Error("Server error: " + res.status);
+          throw new Error(`Server error: ${res.status}`);
         }
-        var data = await res.json();
-        if (!data.questions) {
-          throw new Error("No questions in response");
+        const data = await res.json();
+
+        if (!data.questions || data.questions.length === 0) {
+          throw new Error('No questions available.');
         }
-        questions = data.questions || [];
+
+        questions = data.questions;
         selectedAnswers = {};
         renderQuiz();
       } catch (e) {
-        console.error("Error loading beta questions:", e);
+        console.error('Error loading beta quiz:', e);
         app.innerHTML = `
-          <p class="error-message">
-            Could not load questions: ${e.message}
-          </p>
+          <p class="error-message">Could not load beta quiz. ${e.message}</p>
           <button class="reload-btn" onclick="location.reload()">Reload Page</button>
         `;
       }
     }
 
-    // Render the quiz questions
+    // Placeholder function for rendering the quiz
     function renderQuiz() {
-      var app = document.getElementById("assessApp");
-
-      if (!questions || questions.length === 0) {
-        app.innerHTML = `
-          <p class="error-message">
-            No questions available at this time. Please try again later.
-          </p>
-        `;
-        return;
-      }
-
-      var qHtml = questions.map((q, idx) => renderQuestionCard(q, idx, questions.length)).join("");
-      app.innerHTML = qHtml;
+      const app = document.getElementById('assessApp');
+      app.innerHTML = `
+        <p style="color:#555;">Quiz questions will be displayed here.</p>
+      `;
     }
 
-    // Simulate an assessment result for testing
-    showResult({ role_granted: 'PC-BEG', score: 7 }); // Change 'PC-BEG' to 'GM-ADV' or others to test
+    // Initiate the page
+    init();
   </script>
 </body>
 </html>
