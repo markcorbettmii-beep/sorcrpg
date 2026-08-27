@@ -16,27 +16,43 @@
     .error-message { color: #c93f35; font-size: 1rem; margin-top: 1.5rem; }
     .reload-btn { margin-top: 1rem; background: #c93f35; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
     .reload-btn:hover { background: #a11d1b; }
+    .debug-output { background: #111; color: #e0cfc0; padding: 1rem; margin-top: 1rem; border-radius: 8px; }
+    .q-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+    .q-num { color: #555; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .q-text { color: #e0cfc0; font-size: 0.97rem; margin-bottom: 1rem; line-height: 1.5; }
+    .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    @media (max-width: 480px) { .q-options { grid-template-columns: 1fr; } }
+    .opt-btn { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
+      color: #aaa; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+    .opt-btn:hover { border-color: #555; color: #e0cfc0; }
+    .opt-btn.selected { border-color: #c93f35; color: #e0cfc0; background: #1a0505; }
   </style>
 </head>
 <body>
   <div class="page-wrapper">
     <header class="header-container">
       <span class="sorc-letters">S O R C</span>
-      <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-letters-img evil-only" alt="SORC" />
-      <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-letters-img lawful-only" alt="SORC" />
     </header>
     <div class="assess-wrap">
       <h1>Role Assessment</h1>
       <p class="assess-sub">Answer 10 questions to find out your rank!</p>
       <div id="assessApp"><p style="color:#555;">Loading...</p></div>
+      <div id="debugOutput" class="debug-output">Debugging output will appear here.</div>
     </div>
   </div>
 
   <script>
     var API_URL = 'https://api.sorcrpg.com';
-    var currentUser = null;
+    var questions = [];
+    var selectedAnswers = {};
 
-    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    // Function to update debug output
+    function debugLog(message) {
+      const debugOutput = document.getElementById("debugOutput");
+      debugOutput.innerHTML += `<p>${message}</p>`;
+    }
+
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
     // Role labels
     function roleLabel(r) {
@@ -61,6 +77,7 @@
     // Show result
     function showResult(assessment) {
       const app = document.getElementById('assessApp');
+      debugLog('Displaying result for assessment.');
       const role = assessment.role_granted;
       const roleText = roleLabel(role);
       const color = roleColor(role);
@@ -74,48 +91,22 @@
       `;
     }
 
-    // Load questions or show result based on beta mode or login status
-    async function init() {
-      const app = document.getElementById('assessApp');
-
-      // Check if the user is logged in (simulate with currentUser for now)
-      if (!currentUser) {
-        loadBetaQuiz(); // Load beta quiz for non-logged-in users
-        return;
-      }
-
-      // Check if the user has completed the assessment
-      try {
-        const res = await fetch(`${API_URL}/api/assess?t=${Date.now()}`, {
-          headers: { 'X-Auth-Key': currentUser.authKey },
-          cache: 'no-store',
-        });
-        const data = await res.json();
-
-        if (data.assessment) {
-          showResult(data.assessment); // Show the result if assessment exists
-        } else {
-          loadQuiz(); // Otherwise, load the quiz
-        }
-      } catch (e) {
-        console.error('Error fetching assessment status:', e);
-        app.innerHTML = `
-          <p class="error-message">Could not load assessment status. Please try again later.</p>
-        `;
-      }
-    }
-
-    // Load the beta quiz
+    // Fetch and load the beta quiz
     async function loadBetaQuiz() {
-      const app = document.getElementById('assessApp');
+      const app = document.getElementById("assessApp");
       app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+      debugLog('Fetching beta questions...');
 
       try {
         const res = await fetch(`${API_URL}/api/assess/beta-questions?t=${Date.now()}`, { cache: 'no-store' });
+        debugLog(`API Response Status: ${res.status}`);
+
         if (!res.ok) {
-          throw new Error(`Server error: ${res.status}`);
+          throw new Error(`Error fetching questions. Status: ${res.status}`);
         }
+
         const data = await res.json();
+        debugLog(`API Response Data: ${JSON.stringify(data)}`);
 
         if (!data.questions || data.questions.length === 0) {
           throw new Error('No questions available.');
@@ -124,25 +115,45 @@
         questions = data.questions;
         selectedAnswers = {};
         renderQuiz();
-      } catch (e) {
-        console.error('Error loading beta quiz:', e);
+      } catch (error) {
+        console.error(error);
+        debugLog(`Error: ${error.message}`);
         app.innerHTML = `
-          <p class="error-message">Could not load beta quiz. ${e.message}</p>
-          <button class="reload-btn" onclick="location.reload()">Reload Page</button>
+          <p class="error-message">Failed to load quiz: ${error.message}</p>
+          <button class="reload-btn" onclick="location.reload()">Retry</button>
         `;
       }
     }
 
-    // Placeholder function for rendering the quiz
+    // Render quiz questions
     function renderQuiz() {
-      const app = document.getElementById('assessApp');
-      app.innerHTML = `
-        <p style="color:#555;">Quiz questions will be displayed here.</p>
-      `;
+      const app = document.getElementById("assessApp");
+      debugLog('Rendering quiz questions...');
+      if (!questions.length) {
+        debugLog('No questions found to render.');
+        app.innerHTML = `<p class="error-message">No questions found. Please try again later.</p>`;
+        return;
+      }
+
+      const quizHtml = questions.map((question, index) => `
+        <div class="q-card">
+          <div class="q-num">Question ${index + 1} of ${questions.length}</div>
+          <div class="q-text">${esc(question.q)}</div>
+          <div class="q-options">
+            ${question.options.map((opt, i) => `
+              <button class="opt-btn" onclick="selectAnswer(${question.id}, ${i})">
+                ${String.fromCharCode(65 + i)}. ${esc(opt)}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join("");
+
+      app.innerHTML = quizHtml;
     }
 
-    // Initiate the page
-    init();
+    // Initialize the page
+    loadBetaQuiz();
   </script>
 </body>
 </html>
