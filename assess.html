@@ -26,6 +26,8 @@
       color: #aaa; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
     .opt-btn:hover { border-color: #555; color: #e0cfc0; }
     .opt-btn.selected { border-color: #c93f35; color: #e0cfc0; background: #1a0505; }
+    .submit-btn { margin: 2rem 0; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: bold; background: #c93f35; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .submit-btn:disabled { background: #555; color: #aaa; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -46,50 +48,12 @@
     var questions = [];
     var selectedAnswers = {};
 
-    // Function to update debug output
     function debugLog(message) {
       const debugOutput = document.getElementById("debugOutput");
       debugOutput.innerHTML += `<p>${message}</p>`;
     }
 
     function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-    // Role labels
-    function roleLabel(r) {
-      switch (r) {
-        case 'PC-BEG': return '[PC] Novice';
-        case 'PC-INT': return '[PC] Journeyman';
-        case 'PC-ADV': return '[PC] Master';
-        case 'GM-BEG': return '[GM] Novice';
-        case 'GM-INT': return '[GM] Journeyman';
-        case 'GM-ADV': return '[GM] Master';
-        default: return r;
-      }
-    }
-
-    // Role colors
-    function roleColor(r) {
-      if (r.startsWith('[PC]')) return 'blue'; // PC roles in blue
-      if (r.startsWith('[GM]')) return 'purple'; // GM roles in purple
-      return '#e0cfc0'; // Default color
-    }
-
-    // Show result
-    function showResult(assessment) {
-      const app = document.getElementById('assessApp');
-      debugLog('Displaying result for assessment.');
-      const role = assessment.role_granted;
-      const roleText = roleLabel(role);
-      const color = roleColor(role);
-
-      app.innerHTML = `
-        <div class="result-card">
-          <h2>Assessment Complete</h2>
-          <div class="result-role" style="color: ${color};">${roleText}</div>
-          <div class="result-score">${assessment.score}/10 correct</div>
-        </div>
-      `;
-    }
 
     // Fetch and load the beta quiz
     async function loadBetaQuiz() {
@@ -125,7 +89,7 @@
       }
     }
 
-    // Render quiz questions
+    // Render the quiz
     function renderQuiz() {
       const app = document.getElementById("assessApp");
       debugLog('Rendering quiz questions...');
@@ -141,7 +105,7 @@
           <div class="q-text">${esc(question.q)}</div>
           <div class="q-options">
             ${question.options.map((opt, i) => `
-              <button class="opt-btn" onclick="selectAnswer(${question.id}, ${i})">
+              <button class="opt-btn" onclick="selectAnswer(${question.id}, ${i}, this)">
                 ${String.fromCharCode(65 + i)}. ${esc(opt)}
               </button>
             `).join('')}
@@ -150,6 +114,89 @@
       `).join("");
 
       app.innerHTML = quizHtml;
+
+      // Add a submit button at the end of the quiz
+      app.innerHTML += `
+        <button class="submit-btn" onclick="submitQuiz()" id="submitQuizButton" disabled>
+          Submit
+        </button>
+      `;
+    }
+
+    // Handle answer selection
+    function selectAnswer(questionId, optionIndex, buttonElement) {
+      selectedAnswers[questionId] = optionIndex;
+
+      // Highlight the selected button and unselect others in the same question group
+      const buttons = buttonElement.parentNode.querySelectorAll('.opt-btn');
+      buttons.forEach((btn) => btn.classList.remove('selected'));
+      buttonElement.classList.add('selected');
+
+      debugLog(`Selected answer for question ${questionId}: Option ${String.fromCharCode(65 + optionIndex)}`);
+
+      // Enable the submit button if all questions are answered
+      const allAnswered = Object.keys(selectedAnswers).length === questions.length;
+      const submitButton = document.getElementById("submitQuizButton");
+      submitButton.disabled = !allAnswered;
+    }
+
+    // Submit the quiz
+    function submitQuiz() {
+      debugLog('Submitting quiz answers...');
+      debugLog(`Answers: ${JSON.stringify(selectedAnswers)}`);
+
+      // Example scoring logic
+      let correctAnswers = 0;
+      questions.forEach((q) => {
+        if (selectedAnswers[q.id] === q.answer) {
+          correctAnswers++;
+        }
+      });
+
+      // Determine role based on score
+      let role = 'PC-BEG'; // Default role
+      if (correctAnswers >= 9) role = 'PC-ADV';
+      else if (correctAnswers >= 8) role = 'PC-INT';
+      else if (correctAnswers >= 6) role = 'PC-BEG';
+
+      showResult({ role_granted: role, score: correctAnswers });
+    }
+
+    // Show result
+    function showResult(assessment) {
+      const app = document.getElementById('assessApp');
+      debugLog('Displaying result for assessment.');
+      const role = assessment.role_granted;
+      const roleText = roleLabel(role);
+      const color = roleColor(role);
+
+      app.innerHTML = `
+        <div class="result-card">
+          <h2>Assessment Complete</h2>
+          <div class="result-role" style="color: ${color};">${roleText}</div>
+          <div class="result-score">${assessment.score}/10 correct</div>
+        </div>
+      `;
+    }
+
+    // Role labels
+    function roleLabel(r) {
+      switch (r) {
+        case 'PC-BEG': return '[PC] Novice';
+        case 'PC-INT': return '[PC] Journeyman';
+        case 'PC-ADV': return '[PC] Master';
+        case 'GM-BEG': return '[GM] Novice';
+        case 'GM-INT': return '[GM] Journeyman';
+        case 'GM-ADV': return '[GM] Master';
+        default: return r;
+      }
+    }
+
+    // Role colors
+    function roleColor(r) {
+      if (r.startsWith('[PC]')) return 'blue'; // PC roles in blue
+      if (r.startsWith('[GM]')) return 'purple'; // GM roles in purple
+      return '#e0cfc0'; // Default color
     }
 
     // Initialize the page
