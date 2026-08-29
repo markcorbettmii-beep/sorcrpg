@@ -3220,21 +3220,35 @@
 
             // Make card names/refs clickable with card inspector tooltips
             var linkedContent = '';
+            var getCardLinkColor = function(cardRef) {
+              // Try to detect rank from card ref/name (Divine Chimassu, Rare Card, etc.)
+              var ref = (cardRef || '').toLowerCase();
+              if (ref.includes('divine')) return '#92793a';
+              if (ref.includes('legendary')) return '#8c06a3';
+              if (ref.includes('elite')) return '#be0500';
+              if (ref.includes('heroic')) return '#be3f00';
+              if (ref.includes('unique')) return '#c57500';
+              if (ref.includes('rare')) return '#0058aa';
+              return '#b9aa00'; // default gold
+            };
             if (tag === 'WTT') {
               // WTT format: Give>Want - make both clickable
               var wttMatch = content.match(/^(.+?)>(.+)$/);
               if (wttMatch) {
                 var giveCard = wttMatch[1].trim();
                 var wantCard = wttMatch[2].trim();
-                linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(giveCard).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(giveCard) + '</span>' +
+                var giveColor = getCardLinkColor(giveCard);
+                var wantColor = getCardLinkColor(wantCard);
+                linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(giveCard).replace(/'/g, "\\'") + '\')" style="color:' + giveColor + ';cursor:pointer;text-decoration:underline;">' + esc(giveCard) + '</span>' +
                   ' > ' +
-                  '<span class="card-link" onclick="inspectTradeCard(\'' + esc(wantCard).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(wantCard) + '</span>';
+                  '<span class="card-link" onclick="inspectTradeCard(\'' + esc(wantCard).replace(/'/g, "\\'") + '\')" style="color:' + wantColor + ';cursor:pointer;text-decoration:underline;">' + esc(wantCard) + '</span>';
               } else {
                 linkedContent = esc(content);
               }
             } else {
               // WTS/WTB: single card - make it clickable
-              linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(content).replace(/'/g, "\\'") + '\')" style="color:#b9aa00;cursor:pointer;text-decoration:underline;">' + esc(content) + '</span>';
+              var cardColor = getCardLinkColor(content);
+              linkedContent = '<span class="card-link" onclick="inspectTradeCard(\'' + esc(content).replace(/'/g, "\\'") + '\')" style="color:' + cardColor + ';cursor:pointer;text-decoration:underline;">' + esc(content) + '</span>';
             }
 
             return '<div class="chat-msg" data-msg-id="' + esc(m.id) + '">' +
