@@ -59,7 +59,7 @@
     .action-card p { color: #666; font-size: 0.82rem; margin: 0; line-height: 1.5; }
     .l-input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #333; background: #222; color: #e0cfc0; font-size: 0.88rem; box-sizing: border-box; }
     .l-input:focus { outline: none; border-color: #c93f35; }
-    .l-btn { padding: 9px 18px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.88rem; width: 100%; transition: background 0.15s; }
+    .l-btn { padding: 6px 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.82rem; width: auto; transition: background 0.15s; }
     .l-btn.gold { background: #b9aa00; color: #111; }
     .l-btn.gold:hover { background: #b9aa00; }
     .l-btn.red { background: #c93f35; color: #fff; }
@@ -246,7 +246,7 @@
     .modal-cancel:hover { border-color: #888 !important; color: #e0cfc0; }
 
     /* ===== LEAVE BTN ===== */
-    .leave-btn { padding: 10px 16px; min-height: 44px; background: none; border: 1px solid #5a1a1a; color: #c93f35; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: bold; white-space: nowrap; }
+    .leave-btn { padding: 6px 16px; background: none; border: 1px solid #5a1a1a; color: #c93f35; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: bold; white-space: nowrap; }
     .leave-btn:hover { background: #1a0505; }
     #lobbyHeaderBtns { flex-wrap: wrap; }
 
@@ -1519,6 +1519,15 @@
       if (x < 50 || x > window.innerWidth - 50) e.preventDefault();
     }, { passive: false });
 
+    /* Whether the signed-in user is really in this lobby's member list. The
+       only trustworthy answer: is_member is forced true for privileged
+       accounts, and the crown renders off a member row, so a host who is not
+       in the list gets no crown no matter what the flag says. */
+    function isSelfInMembers(data) {
+      if (!currentUser || !data || !Array.isArray(data.members)) return false;
+      return data.members.some(function(m) { return m.user_id === currentUser.id; });
+    }
+
     window.openLobby = async function(lobbyId) {
       stopChatPoll();
       leftLobbyIds.delete(lobbyId); // allow rejoining a lobby the user just left
@@ -1535,9 +1544,16 @@
           sessionStorage.removeItem('activeLobbyId');
           showToast(data.error || 'Could not load lobby.', true); renderListView(); return;
         }
-        /* Auto-join if not confirmed as a member - handles D1 lag and missing field */
-        var selfIsCreator = currentUser && data.lobby.creator_uid === currentUser.id;
-        if (!selfIsCreator && data.is_member !== true) {
+        /* Auto-join if not actually standing in the lobby - handles D1 lag and
+           missing field. The host is not exempt: leaving deleted their
+           lobby_members row, so walking back in has to put it back. Skip them
+           and they hold the lobby without standing in it - absent from the
+           member list, and no member row for the crown to sit on.
+           Read the member list rather than is_member: the API reports
+           is_member true for any privileged account whether or not they are
+           really in the lobby, which would skip the re-join for exactly the
+           admins and owners most likely to be moving between lobbies. */
+        if (!isSelfInMembers(data)) {
           await fetch(API_URL + '/api/lobbies/join', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
@@ -1589,7 +1605,7 @@
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report"></button>';
         }
         var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
-        var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
+        var sheetHref = 'https://sorcrpg.com/character-sheet-male-musc';
         var menuItems = '';
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
         menuItems += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
@@ -1610,7 +1626,7 @@
           '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">👑</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
           '<div class="member-name-menu">' + menuItems + '</div>' +
           '<span class="member-sheet-hint">for stats &#8250;</span>' +
-          '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;"></a>' +
+          '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
         '</span>';
         return '<div class="member-row">' +
           '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
@@ -1640,22 +1656,18 @@
         roomsHtml = '<div class="empty-state" style="padding:1rem;">No active rooms. The GM can launch one from inside the lobby.</div>';
       }
 
-      var launchBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">Launch Room</button>' : '';
-      var inviteBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
+      var launchBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">Launch Room</button>' : '';
+      var inviteBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
       var readyCheckBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
-      /* Whoever holds the lobby now sets whether it is open or private. */
-      var privacyBtn = (isCreator && lobby.status !== 'closed')
-        ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a1505;color:#b9aa00;border:1px solid #5a4a00;" onclick="toggleLobbyPrivacy()">' +
-            (lobby.is_private ? 'Private' : 'Open') +
-          '</button>'
-        : '';
+      /* Show lobby privacy status as text label, not as a button. */
+      var privacyBtn = '<span style="font-size:0.82rem;color:#b9aa00;font-weight:bold;">' + (lobby.is_private ? 'Priv. Lobby' : 'Open Lobby') + '</span>';
       /* Leave is for everyone, creator included - step out and come back at
          will. Abandon is the creator's alone: it gives the lobby up for good
          and hands it to the next host. There is no Close. */
       var leaveBtn = isCreator
-        ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button>' +
-          '<button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
-        : '<button class="leave-btn" onclick="leaveLobby()">Leave</button>';
+        ? '<button class="leave-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="leaveLobby()">Leave Lobby</button>' +
+          '<button class="leave-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'
+        : '<button class="leave-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="leaveLobby()">Leave</button>';
       var invitePanel = hasGMRights
         ? '<div id="invitePanel" style="display:none;flex-wrap:wrap;gap:0.6rem;align-items:center;background:#060e1a;border:1px solid #1a3a6b;border-radius:10px;padding:0.75rem 1rem;margin:0.5rem 0;">'
           + '<span style="color:#7a9eaf;font-size:0.8rem;">Code: <strong style="color:#e0cfc0;letter-spacing:0.08em;">' + esc(lobby.lobby_code) + '</strong></span>'
@@ -2219,7 +2231,7 @@
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')"></button>';
           var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
-          var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
+          var sheetHref = 'https://sorcrpg.com/character-sheet-male-musc';
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
           menuItems2 += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
@@ -2237,10 +2249,10 @@
           }
           var isLobbyHost2 = currentLobby && m.user_id === currentLobby.creator_uid;
           var nameWrap2 = '<span class="member-name-wrap">' +
-            '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost2 ? '<span style="color:#b9aa00;font-size:0.72rem;margin-right:0.2rem;"></span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
+            '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost2 ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
             '<div class="member-name-menu">' + menuItems2 + '</div>' +
             '<span class="member-sheet-hint">for stats &#8250;</span>' +
-            '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;"></a>' +
+            '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
           '</span>';
           return '<div class="member-row">' +
             '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
@@ -2854,7 +2866,13 @@
           headers: { 'X-Auth-Key': currentUser.authKey },
           keepalive: true
         });
-        if (!leaveRes.ok) showToast('Warning: could not confirm leave - refresh if needed.', true);
+        /* 404 means the lobby is no longer there, which is the very thing
+           leaving was for - the walk-out succeeded, there is just nothing left
+           to walk out of. Warning about it sends people back to a lobby that
+           does not exist. Only a real failure is worth a toast. */
+        if (!leaveRes.ok && leaveRes.status !== 404) {
+          showToast('Warning: could not confirm leave - refresh if needed.', true);
+        }
       } catch(e) {
         showToast('Warning: could not confirm leave - refresh if needed.', true);
       }
@@ -2885,7 +2903,11 @@
           body: JSON.stringify({ abandon: true }),
           keepalive: true
         });
-        if (!leaveRes.ok) showToast('Warning: could not confirm abandon - refresh if needed.', true);
+        /* As with leaving: a lobby that is already gone is the outcome
+           abandoning was after, not a failure to report. */
+        if (!leaveRes.ok && leaveRes.status !== 404) {
+          showToast('Warning: could not confirm abandon - refresh if needed.', true);
+        }
       } catch(e) {
         showToast('Warning: could not confirm abandon - refresh if needed.', true);
       }
@@ -3043,7 +3065,7 @@
                strip the prefix and trailing raw URL before rendering */
             var respondMatch = m.body && m.body.match(/public-profile\.html\?username=([^&\s\n"<]+)/);
             var sheetIcon = respondMatch
-              ? '<a href="https://sorcrpg.com/character-sheet-fem-musc" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;"></a>'
+              ? '<a href="https://sorcrpg.com/character-sheet-male-musc" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128195;</a>'
               : '';
             var rawBody = m.body || '';
             var isActivity = rawBody.startsWith('⬡ ');

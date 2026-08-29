@@ -1940,6 +1940,252 @@ async function isProMember(db: D1Database, user: any): Promise<boolean> {
   return !!owned;
 }
 
+// ─── CHARACTER SHEETS (a player's Space, Characters tab) ────────────────────
+// Not to be confused with /api/characters-home further down: Character's Home
+// is a Pro game feature. These are the sheets a player keeps in their own
+// Space, which is where the sheet glyph beside a name in a lobby leads.
+//
+// Field values are stored as JSON, not as a picture, so a sheet is always
+// current and readable on a phone. Exporting a still image stays a
+// client-side action on the sheet itself, the same html2canvas path the PDF
+// export already uses.
+//
+// Security follows the same shape as the rest of this file: authMiddleware has
+// already re-read the user from D1 by auth_key, so identity is never a client
+// claim; ownership is enforced in the WHERE clause of every write, so a forged
+// id cannot reach another player's sheet; and the cap, the Pro check and the
+// GM check are all counted from the database rather than taken from the body.
+
+const SHEET_CAP_BASIC = 2;
+const SHEET_CAP_PRO = 5;
+// A sheet is a few hundred short text fields. The ceiling is here so a sheet
+// cannot be used to push arbitrary weight into D1 one save at a time.
+const MAX_SHEET_BYTES = 256 * 1024;
+
+async function ensureCharactersTable(db: D1Database) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS characters (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      name TEXT,
+      data TEXT,
+      is_public INTEGER DEFAULT 1,
+      is_default INTEGER DEFAULT 0,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  `).run();
+  await db.prepare(`CREATE INDEX IF NOT EXISTS idx_characters_user ON characters(user_id)`).run().catch(() => {});
+}
+
+// Serialise a sheet body, refusing one that is over the ceiling.
+function packSheetData(data: any): { ok: true; json: string } | { ok: false; size: number } {
+  const json = JSON.stringify(data || {});
+  const size = new TextEncoder().encode(json).length;
+  if (size > MAX_SHEET_BYTES) return { ok: false, size };
+  return { ok: true, json };
+}
+
+// A GM running a session can always read a player's sheet, public or not.
+// Checking it server-side against live lobby membership means the sheet link
+// carries no lobby context to forge, and the reach ends on its own the moment
+// either of them leaves - there is no standing grant left behind to revoke.
+// Scope: the viewer hosts, or holds GM rights in, an open lobby that the
+// sheet's owner is a member of.
+async function canGmViewSheet(db: D1Database, viewerId: string, ownerId: string): Promise<boolean> {
+  if (!viewerId || !ownerId || viewerId === ownerId) return false;
+  const row = await db.prepare(
+    `SELECT 1 AS ok
+       FROM lobbies l
+       JOIN lobby_members target ON target.lobby_id = l.id AND target.user_id = ?
+       LEFT JOIN lobby_members viewer ON viewer.lobby_id = l.id AND viewer.user_id = ?
+      WHERE l.status != 'closed'
+        AND (l.creator_uid = ? OR viewer.sorc_role LIKE 'GM-%')
+      LIMIT 1`
+  ).bind(ownerId, viewerId, viewerId).first();
+  return !!row;
+}
+
+function shapeCharacter(row: any) {
+  let parsed: any = {};
+  try { parsed = row.data ? JSON.parse(row.data) : {}; } catch (_) { parsed = {}; }
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    name: row.name || 'Unnamed Character',
+    data: parsed,
+    is_public: row.is_public === 1,
+    is_default: row.is_default === 1,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+// The signed-in player's own sheets - always all of them, public or not. The
+// privacy toggle governs other people's eyes, never the owner's.
+app.get('/api/characters', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureCharactersTable(c.env.sorc_db);
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT * FROM characters WHERE user_id = ? ORDER BY is_default DESC, created_at ASC`
+    ).bind(user.id).all();
+    const isPro = await isProMember(c.env.sorc_db, user);
+    return c.json({
+      characters: (rows.results || []).map(shapeCharacter),
+      cap: isPro ? SHEET_CAP_PRO : SHEET_CAP_BASIC,
+      is_pro: isPro
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load characters.', details: error.message }, 500);
+  }
+});
+
+app.post('/api/characters', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  try {
+    await ensureCharactersTable(c.env.sorc_db);
+    const isPro = await isProMember(c.env.sorc_db, user);
+    const cap = isPro ? SHEET_CAP_PRO : SHEET_CAP_BASIC;
+    const countRow = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) AS n FROM characters WHERE user_id = ?`
+    ).bind(user.id).first() as any;
+    const held = Number(countRow?.n || 0);
+    if (held >= cap) {
+      return c.json({
+        error: isPro
+          ? 'You already hold ' + cap + ' character sheets, the most a Pro Membership carries. Delete one to make room.'
+          : 'A Basic Membership carries ' + cap + ' character sheets. Pro Membership raises that to ' + SHEET_CAP_PRO + '.',
+        cap, held
+      }, 400);
+    }
+    const body = await c.req.json().catch(() => ({})) as any;
+    const packed = packSheetData(body.data);
+    if (!packed.ok) return c.json({ error: 'That character sheet is too large to save.' }, 413);
+
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    await c.env.sorc_db.prepare(
+      `INSERT INTO characters (id, user_id, name, data, is_public, is_default, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      id, user.id,
+      String(body.name || 'Unnamed Character').slice(0, 120),
+      packed.json,
+      body.is_public === false ? 0 : 1,
+      held === 0 ? 1 : 0,
+      now, now
+    ).run();
+    return c.json({ success: true, id, cap, held: held + 1 });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to create character.', details: error.message }, 500);
+  }
+});
+
+app.put('/api/characters/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const id = c.req.param('id');
+  try {
+    await ensureCharactersTable(c.env.sorc_db);
+    // Ownership is part of the lookup and of every write below, so an id
+    // belonging to someone else simply does not resolve.
+    const owned = await c.env.sorc_db.prepare(
+      `SELECT id FROM characters WHERE id = ? AND user_id = ?`
+    ).bind(id, user.id).first();
+    if (!owned) return c.json({ error: 'Character not found.' }, 404);
+
+    const body = await c.req.json().catch(() => ({})) as any;
+    const setParts: string[] = [];
+    const values: any[] = [];
+    if (body.name !== undefined) { setParts.push('name = ?'); values.push(String(body.name).slice(0, 120)); }
+    if (body.data !== undefined) {
+      const packed = packSheetData(body.data);
+      if (!packed.ok) return c.json({ error: 'That character sheet is too large to save.' }, 413);
+      setParts.push('data = ?'); values.push(packed.json);
+    }
+    if (body.is_public !== undefined) { setParts.push('is_public = ?'); values.push(body.is_public ? 1 : 0); }
+    if (setParts.length === 0 && body.is_default !== true) {
+      return c.json({ error: 'Nothing to update.' }, 400);
+    }
+    if (setParts.length > 0) {
+      setParts.push('updated_at = ?'); values.push(new Date().toISOString());
+      values.push(id, user.id);
+      await c.env.sorc_db.prepare(
+        `UPDATE characters SET ${setParts.join(', ')} WHERE id = ? AND user_id = ?`
+      ).bind(...values).run();
+    }
+    // Exactly one sheet is the default - the one the sheet glyph opens.
+    if (body.is_default === true) {
+      await c.env.sorc_db.prepare(`UPDATE characters SET is_default = 0 WHERE user_id = ?`).bind(user.id).run();
+      await c.env.sorc_db.prepare(`UPDATE characters SET is_default = 1 WHERE id = ? AND user_id = ?`).bind(id, user.id).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to save character.', details: error.message }, 500);
+  }
+});
+
+app.delete('/api/characters/:id', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const id = c.req.param('id');
+  try {
+    await ensureCharactersTable(c.env.sorc_db);
+    const row = await c.env.sorc_db.prepare(
+      `SELECT is_default FROM characters WHERE id = ? AND user_id = ?`
+    ).bind(id, user.id).first() as any;
+    if (!row) return c.json({ error: 'Character not found.' }, 404);
+    await c.env.sorc_db.prepare(`DELETE FROM characters WHERE id = ? AND user_id = ?`).bind(id, user.id).run();
+    // Deleting the default promotes the oldest survivor, so the sheet glyph
+    // never points at nothing while the player still holds a sheet.
+    if (row.is_default === 1) {
+      const next = await c.env.sorc_db.prepare(
+        `SELECT id FROM characters WHERE user_id = ? ORDER BY created_at ASC LIMIT 1`
+      ).bind(user.id).first() as any;
+      if (next) await c.env.sorc_db.prepare(`UPDATE characters SET is_default = 1 WHERE id = ?`).bind(next.id).run();
+    }
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to delete character.', details: error.message }, 500);
+  }
+});
+
+// Someone else's Characters tab. Two path segments after /api/characters, so
+// it cannot collide with /api/characters/:id above.
+// Reports private:true rather than erroring when the sheets are hidden: the
+// tab then shows the "this tab is private" note over an empty default sheet,
+// which is a different thing from the player holding no sheets at all.
+app.get('/api/characters/space/:username', authMiddleware, async (c) => {
+  const viewer = c.get('user') as any;
+  try {
+    await ensureCharactersTable(c.env.sorc_db);
+    const owner = await c.env.sorc_db.prepare(
+      `SELECT id, username, display_name FROM users WHERE username = ?`
+    ).bind(c.req.param('username')).first() as any;
+    if (!owner) return c.json({ error: 'No such player.' }, 404);
+
+    const isSelf = owner.id === viewer.id;
+    const gmMayView = isSelf ? false : await canGmViewSheet(c.env.sorc_db, viewer.id, owner.id);
+    const seesEverything = isSelf || gmMayView || isPrivileged(viewer);
+
+    const rows = await c.env.sorc_db.prepare(
+      `SELECT * FROM characters WHERE user_id = ? ORDER BY is_default DESC, created_at ASC`
+    ).bind(owner.id).all();
+    const all = (rows.results || []) as any[];
+    const visible = seesEverything ? all : all.filter((r: any) => r.is_public === 1);
+
+    return c.json({
+      owner: { username: owner.username, display_name: owner.display_name || owner.username },
+      characters: visible.map(shapeCharacter),
+      // Private only when they hold sheets and none are open to this viewer -
+      // not when they simply have not made one yet.
+      private: !seesEverything && all.length > 0 && visible.length === 0,
+      via_gm: gmMayView
+    });
+  } catch (error: any) {
+    return c.json({ error: 'Failed to load characters.', details: error.message }, 500);
+  }
+});
+
 app.post('/api/box-codes/generate', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   if (!isPrivileged(user)) return c.json({ error: 'Forbidden.' }, 403);
@@ -2208,7 +2454,13 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   }
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
   if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
-  if (!privileged && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
+
+  // The host walking back into their own lobby is not a join request to weigh
+  // up - the lobby is already theirs. They kept creator_uid when they left, so
+  // they come back through the door they own: no code, no full check.
+  const isOwnLobby = lobby.creator_uid === user.id;
+
+  if (!privileged && !isOwnLobby && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
 
   // Nobody is barred from a lobby. Entry is decided by the lobby itself: an
   // open one takes anyone, a private one takes the code - which is also how an
@@ -2216,7 +2468,7 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   // lobby exactly as it does to anyone else; what they lost by abandoning is
   // the lobby itself, since creator_uid moved on the moment they left, so they
   // come back as an ordinary member rather than the host.
-  if (lobby.is_private && !lobby_code && !privileged) {
+  if (lobby.is_private && !lobby_code && !privileged && !isOwnLobby) {
     return c.json({ error: 'This lobby is private. Join with its code, or ask the host for an invite.' }, 403);
   }
 
@@ -2276,7 +2528,7 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
 
     await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
 
-    if (lobby.creator_uid === user.id) {
+    if (isAbandon && lobby.creator_uid === user.id) {
       // Look for next GM first (sorc_role = 'GM-ADV' or 'GM-INT' or 'GM-BEG')
       const nextGM = await c.env.sorc_db.prepare(
         `SELECT lm.user_id FROM lobby_members lm
@@ -2756,8 +3008,29 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
   if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
   if (targetUid === user.id) return c.json({ error: 'Cannot kick yourself.' }, 400);
   await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).run();
+  const now = new Date().toISOString();
+
+  // Kicking the host leaves the lobby with no owner. Hand it on the same way
+  // an abandon does - next GM in, else next member in - so the crown always
+  // sits on someone who is actually here.
+  if (lobby.creator_uid === targetUid) {
+    const nextGM = await c.env.sorc_db.prepare(
+      `SELECT user_id FROM lobby_members WHERE lobby_id = ? AND sorc_role LIKE 'GM-%' ORDER BY joined_at ASC LIMIT 1`
+    ).bind(lobbyId).first() as any;
+    const nextHost = nextGM || await c.env.sorc_db.prepare(
+      `SELECT user_id FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC LIMIT 1`
+    ).bind(lobbyId).first() as any;
+    if (nextHost) {
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
+        .bind(nextHost.user_id, now, lobbyId).run();
+    } else {
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
+        .bind(now, lobbyId).run();
+    }
+  }
+
   const newCount = Math.max(1, (lobby.member_count || 1) - 1);
-  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, new Date().toISOString(), lobbyId).run();
+  await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
   return c.json({ success: true });
 });
 
