@@ -3307,15 +3307,25 @@
             exchangeColor = '#c93f35';
           }
 
+          // Map rank to color
+          var rankColor = '#888';
+          var rankLower = (foundCard.rank || '').toLowerCase();
+          if (rankLower.includes('divine')) rankColor = '#92793a';
+          else if (rankLower.includes('legendary')) rankColor = '#8c06a3';
+          else if (rankLower.includes('elite')) rankColor = '#be0500';
+          else if (rankLower.includes('heroic')) rankColor = '#be3f00';
+          else if (rankLower.includes('unique')) rankColor = '#c57500';
+          else if (rankLower.includes('rare')) rankColor = '#0058aa';
+
           var html = '';
           if (foundCard.art) {
             html += '<div style="margin-bottom:1rem;text-align:center;"><img src="' + esc(foundCard.art) + '" alt="' + esc(foundCard.item_name || foundCard.ref_num) + '" style="max-width:100%;height:auto;border-radius:8px;max-height:300px;"></div>';
           }
           if (foundCard.coin_value) {
             var ridiculousPrice = (parseInt(foundCard.coin_value) || 0) * 999;
-            html += '<div style="font-size:0.9rem;color:#ffd700;margin-bottom:0.75rem;">' + ridiculousPrice.toLocaleString() + ' P. (placeholder val.)</div>';
+            html += '<div style="font-size:0.9rem;color:' + rankColor + ';margin-bottom:0.75rem;">' + ridiculousPrice.toLocaleString() + ' P. (placeholder val.)</div>';
           }
-          html += '<div style="font-size:0.85rem;color:' + exchangeColor + ';">Search in the Exchange - ' + exchangeSection + ' tab for details.</div>';
+          html += '<div style="font-size:0.85rem;color:' + rankColor + ';">Search in the Exchange - ' + exchangeSection + ' tab for details.</div>';
 
           html += '<div style="text-align:center;margin-top:1.5rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#666;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></div>';
 
