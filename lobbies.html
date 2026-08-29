@@ -3336,9 +3336,12 @@
 
           // Map rank to color - check multiple sources
           var rankColor = '#888';
-          var rankText = (foundCard.rank || foundCard.card_rank || foundCard.rarity || '').toLowerCase();
+          var rankText = (foundCard.rank || foundCard.card_rank || foundCard.rarity || foundCard.class || foundCard.card_class || foundCard.type || foundCard.companion_type || '').toLowerCase();
           if (!rankText && foundCard.item_name) {
             rankText = foundCard.item_name.toLowerCase();
+          }
+          if (!rankText && foundCard.description) {
+            rankText = foundCard.description.toLowerCase().split(' ')[0];
           }
           if (rankText.includes('divine')) rankColor = '#92793a';
           else if (rankText.includes('legendary')) rankColor = '#8c06a3';
