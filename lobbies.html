@@ -3307,13 +3307,17 @@
             exchangeColor = '#c93f35';
           }
 
-          var html = '<div style="border-bottom:1px solid #444;padding-bottom:1rem;margin-bottom:1rem;">';
+          var html = '';
+          if (foundCard.art) {
+            html += '<div style="margin-bottom:1rem;text-align:center;"><img src="' + esc(foundCard.art) + '" alt="' + esc(foundCard.item_name || foundCard.ref_num) + '" style="max-width:100%;height:auto;border-radius:8px;max-height:300px;"></div>';
+          }
+          html += '<div style="border-bottom:1px solid #444;padding-bottom:1rem;margin-bottom:1rem;">';
           html += '<div style="font-size:1.2rem;font-weight:bold;color:#b9aa00;margin-bottom:0.5rem;">' + esc(foundCard.item_name || foundCard.ref_num) + '</div>';
           html += '<div style="font-size:0.85rem;color:#888;">#' + esc(foundCard.ref_num) + '</div>';
           if (foundCard.rank) {
             html += '<div style="font-size:0.9rem;color:#c93f35;margin-top:0.5rem;">Rank: ' + esc(foundCard.rank) + '</div>';
           }
-          html += '<div style="font-size:0.85rem;color:' + exchangeColor + ';margin-top:0.5rem;font-weight:bold;">Exchange: ' + exchangeSection + '</div>';
+          html += '<div style="font-size:0.85rem;color:' + exchangeColor + ';margin-top:0.5rem;font-weight:bold;">Open in ' + exchangeSection + '</div>';
           html += '</div>';
 
           if (foundCard.description) {
@@ -3326,7 +3330,7 @@
 
           if (foundCard.coin_value) {
             var ridiculousPrice = (parseInt(foundCard.coin_value) || 0) * 999999;
-            html += '<div style="background:#0a0a0a;border-left:2px solid #ffd700;padding:0.75rem;margin-bottom:1rem;font-size:0.9rem;"><strong style="color:#ffd700;">Price</strong><div style="margin-top:0.25rem;color:#ffd700;font-weight:bold;font-size:1.1rem;">' + ridiculousPrice.toLocaleString() + ' Platinum</div></div>';
+            html += '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #444;text-align:center;"><div style="color:#ffd700;font-weight:bold;font-size:0.8rem;">' + ridiculousPrice.toLocaleString() + ' Platinum</div></div>';
           }
 
           html += '<div style="text-align:center;margin-top:1.5rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#666;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></div>';
