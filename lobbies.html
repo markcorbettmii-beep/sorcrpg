@@ -3320,9 +3320,8 @@
             return;
           }
 
-          var foundCard = data.cards[0];
-
-          // Find best match by reference number or exact name match
+          // Find exact match by reference number
+          var foundCard = null;
           var searchLower = cardRef.toLowerCase();
           for (var i = 0; i < data.cards.length; i++) {
             var refNum = (data.cards[i].ref_num || '').toLowerCase();
@@ -3332,9 +3331,10 @@
               break;
             }
           }
-          // If no exact match, use first result
-          if (foundCard === data.cards[0] && (data.cards[0].ref_num || '').toLowerCase() !== searchLower && (data.cards[0].item_name || '').toLowerCase() !== searchLower) {
-            // First result doesn't match exactly, keep it but it might be wrong
+          // If no exact match found, card not in catalog
+          if (!foundCard) {
+            card.innerHTML = '<div style="text-align:center;"><p style="color:#c93f35;">Card not found in catalog: ' + esc(cardRef) + '</p><p style="font-size:0.8rem;color:#888;margin-top:1rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#b9aa00;color:#1a1a1a;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></p></div>';
+            return;
           }
 
           // Determine which Exchange section this card belongs to
