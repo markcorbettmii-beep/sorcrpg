@@ -1668,7 +1668,7 @@ app.post('/api/assess/beta-submit', async (c) => {
   const allowed = await checkRateLimit(c.env.sorc_db, `assess-beta:${ip}`, 10, 3600);
   if (!allowed) return c.json({ error: 'Too many assessment attempts. Please try again later.' }, 429);
 
-  const { answers } = await c.req.json() as any;
+  const { answers } = await c.req.json();
   if (!Array.isArray(answers) || answers.length !== 10) {
     return c.json({ error: 'Must answer all 10 questions.' }, 400);
   }
@@ -1684,8 +1684,11 @@ app.post('/api/assess/beta-submit', async (c) => {
     const chosen = typeof entry === 'object' ? entry.answer : entry;
     if (qId !== null && qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
       const correct = ASSESSMENT_QUESTIONS[qId].answer;
-      if (chosen === correct) score++;
-      else wrong.push({ id: qId, answer: correct });
+      if (chosen === correct) {
+        score++;
+      } else {
+        wrong.push({ id: qId, answer: correct });
+      }
     }
   }
 
