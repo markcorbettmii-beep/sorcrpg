@@ -3197,7 +3197,17 @@
           el.innerHTML = msgs.map(function(m) {
             var isSelf = currentUser && m.sender_uid === currentUser.id;
             var timeStr = timeAgo(m.created_at);
-            var nameEl = '<span class="msg-name">' + esc(m.sender_name || 'Unknown') + '</span>';
+            var playerRankColor = '#888';
+            if (m.sender_rank) {
+              var sRank = m.sender_rank.toLowerCase();
+              if (sRank.includes('divine')) playerRankColor = '#92793a';
+              else if (sRank.includes('legendary')) playerRankColor = '#8c06a3';
+              else if (sRank.includes('elite')) playerRankColor = '#be0500';
+              else if (sRank.includes('heroic')) playerRankColor = '#be3f00';
+              else if (sRank.includes('unique')) playerRankColor = '#c57500';
+              else if (sRank.includes('rare')) playerRankColor = '#0058aa';
+            }
+            var nameEl = '<span class="msg-name" style="color:' + playerRankColor + ';">' + esc(m.sender_name || 'Unknown') + '</span>';
 
             // Parse the trade tag (WTS:Item, WTB:Item, WTT:Give>Want)
             var body = m.body || '';
@@ -3307,15 +3317,18 @@
             exchangeColor = '#c93f35';
           }
 
-          // Map rank to color
+          // Map rank to color - check multiple sources
           var rankColor = '#888';
-          var rankLower = (foundCard.rank || '').toLowerCase();
-          if (rankLower.includes('divine')) rankColor = '#92793a';
-          else if (rankLower.includes('legendary')) rankColor = '#8c06a3';
-          else if (rankLower.includes('elite')) rankColor = '#be0500';
-          else if (rankLower.includes('heroic')) rankColor = '#be3f00';
-          else if (rankLower.includes('unique')) rankColor = '#c57500';
-          else if (rankLower.includes('rare')) rankColor = '#0058aa';
+          var rankText = (foundCard.rank || foundCard.card_rank || foundCard.rarity || '').toLowerCase();
+          if (!rankText && foundCard.item_name) {
+            rankText = foundCard.item_name.toLowerCase();
+          }
+          if (rankText.includes('divine')) rankColor = '#92793a';
+          else if (rankText.includes('legendary')) rankColor = '#8c06a3';
+          else if (rankText.includes('elite')) rankColor = '#be0500';
+          else if (rankText.includes('heroic')) rankColor = '#be3f00';
+          else if (rankText.includes('unique')) rankColor = '#c57500';
+          else if (rankText.includes('rare')) rankColor = '#0058aa';
 
           var html = '';
           if (foundCard.art) {
