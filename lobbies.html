@@ -3322,6 +3322,23 @@
 
           var foundCard = data.cards[0];
 
+          // Validate the search result - find best match if first result doesn't match query
+          var searchTerms = cardRef.toLowerCase().split(' ');
+          var bestMatch = foundCard;
+          var bestScore = 0;
+          for (var i = 0; i < data.cards.length; i++) {
+            var cardName = (data.cards[i].item_name || '').toLowerCase();
+            var matchScore = 0;
+            for (var j = 0; j < searchTerms.length; j++) {
+              if (cardName.includes(searchTerms[j])) matchScore++;
+            }
+            if (matchScore > bestScore) {
+              bestScore = matchScore;
+              bestMatch = data.cards[i];
+            }
+          }
+          foundCard = bestMatch;
+
           // Determine which Exchange section this card belongs to
           var cardType = foundCard.card_type || '';
           var exchangeSection = 'General Trade';
