@@ -171,9 +171,9 @@
       <li><a href="index.html">&#8962;</a></li>
     </ul>
 
-    <div id="profileApp">
+    <div id="spaceApp">
         <!-- Space Header -->
-        <div class="space-container" id="profileContainer">
+        <div class="space-container" id="spaceContainer">
             <div class="not-logged-in">
                 <p>Loading...</p>
                 <button onclick="alert('JS is working');" style="padding:10px 20px;margin-top:1rem;background:#b9aa00;color:#222;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Test JS</button>
@@ -183,9 +183,9 @@
     <script>
         // Failsafe: if DOMContentLoaded doesn't fire or stalls, show error after 10 seconds
         var loadTimeoutId = setTimeout(function() {
-            var container = document.getElementById('profileContainer');
+            var container = document.getElementById('spaceContainer');
             if (container && container.innerHTML.includes('Loading')) {
-                container.innerHTML = '<div class="not-logged-in"><h2>Unable to Load</h2><p>Profile failed to load. <a href="signin.html">Sign in again</a></p><button onclick="location.reload();" style="padding:10px 20px;margin-top:1rem;background:#b9aa00;color:#222;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Retry</button></div>';
+                container.innerHTML = '<div class="not-logged-in"><h2>Unable to Load</h2><p>Space failed to load. <a href="signin.html">Sign in again</a></p><button onclick="location.reload();" style="padding:10px 20px;margin-top:1rem;background:#b9aa00;color:#222;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Retry</button></div>';
             }
         }, 10000);
     </script>
@@ -366,7 +366,7 @@
         .catch(e => console.error('Failed to decline fellow:', e));
     }
 
-    function renderProfileHeader(user, role, isPro) {
+    function renderSpaceHeader(user, role, isPro) {
         var displayName = user.display_name || user.username || 'Adventurer';
         var avatar = user.avatar;
         var avatarDisplay = avatar
@@ -597,7 +597,7 @@
                     case 'home':
                         html += '<h3>Home</h3>' +
                             '<span class="access-badge PRIVATE">PRIVATE</span>' +
-                            '<p>Your in-game sanctuary in Essentia that you can show off on your profile. Customize and decorate your home across multiple rooms.</p>' +
+                            '<p>Your in-game sanctuary in Essentia that you can show off on your Space. Customize and decorate your home across multiple rooms.</p>' +
                             '<div class="content-grid">' +
                                 '<div class="card"><h4>Trophy Room</h4><p>Display your achievements and combat victories for others to admire.</p></div>' +
                                 '<div class="card"><h4>Collections</h4><p>Organize and showcase your rarest SORC Cards and collectibles.</p></div>' +
@@ -621,7 +621,7 @@
                                 '<h4>Your Trading Slots</h4>' +
                                 '<p id="slotLine">Slots in use: loading...</p>' +
                                 '<p style="margin-top:0.5rem;">A slot is held by each open listing and frees the moment that listing sells, closes, or is cancelled. ' +
-                                'See <a href="/sorc-beyond.html#exchange" style="color:#b9aa00;text-decoration:underline;">SORC Beyond</a> for how slot counts differ by membership.</p>' +
+                                'See <a href="/sorc-web.html#exchange" style="color:#b9aa00;text-decoration:underline;">SORC Web</a> for how slot counts differ by membership.</p>' +
                             '</div>';
                         break;
 
@@ -741,7 +741,7 @@
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Social Links</h4>' +
                                     '<div style="margin-bottom:1rem;">' +
                                         '<label style="display:block;font-size:0.85rem;color:#888;margin-bottom:0.3rem;">Twitter / X</label>' +
-                                        '<input type="text" placeholder="Your Twitter username or profile URL" style="width:100%;padding:0.75rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0cfc0;box-sizing:border-box;font-size:0.9rem;" />' +
+                                        '<input type="text" placeholder="Your Twitter username or Space URL" style="width:100%;padding:0.75rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#e0cfc0;box-sizing:border-box;font-size:0.9rem;" />' +
                                     '</div>' +
                                     '<div style="margin-bottom:1rem;">' +
                                         '<label style="display:block;font-size:0.85rem;color:#888;margin-bottom:0.3rem;">Twitch</label>' +
@@ -753,7 +753,7 @@
                                     '</div>' +
                                 '</div>' +
                                 '<div style="display:flex;gap:1rem;">' +
-                                    '<button class="btn btn-gold" onclick="alert(\'Profile updated (save coming soon)\')">Save Changes</button>' +
+                                    '<button class="btn btn-gold" onclick="alert(\'Space updated (save coming soon)\')">Save Changes</button>' +
                                     '<button class="btn" style="background:#333;color:#e0cfc0;" onclick="">Cancel</button>' +
                                 '</div>' +
                             '</div>';
@@ -777,8 +777,8 @@
             }
 
             if (!saved || !saved.authKey) {
-                document.getElementById('profileContainer').innerHTML =
-                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
+                document.getElementById('spaceContainer').innerHTML =
+                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your Space</a></p></div>';
                 return;
             }
 
@@ -808,11 +808,11 @@
                 console.error('[Space] API fetch failed:', e);
             }
 
-            // Render profile
-            var container = document.getElementById('profileContainer');
-            if (!container) throw new Error('profileContainer not found');
+            // Render space
+            var container = document.getElementById('spaceContainer');
+            if (!container) throw new Error('spaceContainer not found');
 
-            container.innerHTML = renderProfileHeader(user, role, isPro) +
+            container.innerHTML = renderSpaceHeader(user, role, isPro) +
                 renderTabNav(user, role, isPro) +
                 renderTabContent(user, role, isPro);
 
@@ -937,9 +937,9 @@
             })();
         } catch(err) {
             console.error('[Space] Error:', err);
-            var container = document.getElementById('profileContainer');
+            var container = document.getElementById('spaceContainer');
             if (container) {
-                var errMsg = (err && err.message) ? String(err.message) : 'Unknown error loading profile';
+                var errMsg = (err && err.message) ? String(err.message) : 'Unknown error loading Space';
                 container.innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>' + errMsg + '</p><p><a href="signin.html">Sign in again</a></p></div>';
             }
         }
@@ -1010,7 +1010,7 @@
             }
 
             if (statusEl) {
-                statusEl.textContent = 'Avatar uploaded (will save with profile)';
+                statusEl.textContent = 'Avatar uploaded (will save with Space)';
                 statusEl.style.color = '#4ECDC4';
                 statusEl.style.display = 'block';
             }
