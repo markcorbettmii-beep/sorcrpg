@@ -1602,16 +1602,34 @@ async function alreadyLeadsALobby(db: D1Database, userId: string, exceptLobbyId:
   return !!row;
 }
 
-// GMs are tried first, then everyone in join order. A GM who already leads is
-// simply passed over rather than blocking the hand-off.
+/* Who may take a lobby that is changing hands. GMs first, then everyone else in
+   join order, and a candidate must clear two bars:
+
+   - They must hold a rank. Leading takes a PC or GM role, the same rank hosting
+     takes ("Only PCs and GMs can create a lobby"), so a table left with nobody
+     but Civilians has nobody who can lead it and closes instead of handing the
+     crown to someone the rules do not let hold it.
+   - They must not already lead a lobby, since a player leads one at a time.
+
+   Read live from users rather than trusting lobby_members.sorc_role, which is a
+   snapshot taken when they joined and may be stale by now - a player can have
+   reassessed since, in either direction. */
 async function pickNextHost(db: D1Database, lobbyId: string): Promise<string | null> {
   const rows = await db.prepare(
-    `SELECT user_id, sorc_role FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC`
+    `SELECT lm.user_id, COALESCE(u.sorc_role, lm.sorc_role) AS rank_role
+       FROM lobby_members lm
+       LEFT JOIN users u ON u.id = lm.user_id
+      WHERE lm.lobby_id = ?
+      ORDER BY lm.joined_at ASC`
   ).bind(lobbyId).all();
   const members = (rows.results || []) as any[];
-  const gmsFirst = members
-    .filter((m) => String(m.sorc_role || '').toUpperCase().indexOf('GM-') === 0)
-    .concat(members);
+  const ranked = members.filter((m) => {
+    const r = String(m.rank_role || '').toUpperCase();
+    return r.indexOf('PC-') === 0 || r.indexOf('GM-') === 0;
+  });
+  const gmsFirst = ranked
+    .filter((m) => String(m.rank_role || '').toUpperCase().indexOf('GM-') === 0)
+    .concat(ranked);
   for (const m of gmsFirst) {
     if (!(await alreadyLeadsALobby(db, m.user_id, lobbyId))) return m.user_id;
   }
@@ -2829,6 +2847,7 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const body = await c.req.json() as any;
   const isAbandon = body?.abandon === true;
+  const privilegedActor = isPrivileged(user);
 
   try {
     const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
@@ -2857,11 +2876,22 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
     // ordinary member under the same entry rules as anyone else. No record of
     // the abandonment is kept, because nothing downstream depends on one.
 
-    await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
+    /* Whether this actually removed anyone decides the count below. An Admin
+       winding up a lobby they were never in must not decrement it. */
+    const removed = await c.env.sorc_db.prepare(
+      `DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+    ).bind(lobbyId, user.id).run();
+    const wasMember = !!(removed?.meta && removed.meta.changes > 0);
 
-    if (isAbandon && lobby.creator_uid === user.id) {
-      // Next GM in, else next member in, skipping anyone who already leads a
-      // lobby of their own - nobody ends up the lead of two.
+    /* Abandoning is how a lobby is wound up - there is no separate Close.
+       Owner and Admin may abandon any lobby, not only one they created, because
+       a lobby can strand itself beyond its own members' reach: creator_uid
+       points at someone no longer in the room - a host kicked before the
+       hand-off existed - and then nobody present is the creator, so nobody sees
+       Abandon and the room cannot be wound up from inside it at all. */
+    if (isAbandon && (lobby.creator_uid === user.id || privilegedActor)) {
+      // Next GM in, else next ranked member in, skipping anyone who already
+      // leads a lobby - and if nobody qualifies, the lobby closes.
       const nextHost = await pickNextHost(c.env.sorc_db, lobbyId);
       if (nextHost) {
         await c.env.sorc_db.prepare(
@@ -2874,8 +2904,10 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       }
     }
 
-    const newCount = Math.max(0, (lobby.member_count || 1) - 1);
-    await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
+    if (wasMember) {
+      const newCount = Math.max(0, (lobby.member_count || 1) - 1);
+      await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
+    }
     return c.json({ success: true });
   } catch (error: any) {
     return c.json({ error: 'Failed to leave lobby.', details: error.message }, 500);
