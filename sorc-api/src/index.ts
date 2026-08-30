@@ -1086,17 +1086,16 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   const { threadId, body } = await c.req.json();
   const user = c.get('user') as any;
   if (!body) return c.json({ error: 'Body required' }, 400);
-  // Guests can reply but are limited to 10 posts per day
+  // Guests read the forums and write nothing in them, the same rule the rest
+  // of this file already applies to hosting, trading and fellowships. Replies
+  // were the one hole: thread creation was refused above while replies were
+  // allowed at ten a day, so a guest could not start a conversation but could
+  // fill one.
   if (isGuestUser(user)) {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const todayStart = today + 'T00:00:00.000Z';
-    const todayEnd = today + 'T23:59:59.999Z';
-    const guestPostsToday = await c.env.sorc_db.prepare(
-      `SELECT COUNT(*) as count FROM posts WHERE author_uid = ? AND created_at >= ? AND created_at <= ?`
-    ).bind(user.id, todayStart, todayEnd).first() as any;
-    if ((guestPostsToday?.count || 0) >= 10) {
-      return c.json({ error: 'Guest reply limit reached. You can reply up to 10 times per day. Create an account for unlimited access.', requires_login: true }, 429);
-    }
+    return c.json({
+      error: 'Posting requires a registered account. Guests can read the forums; create an account or sign in to reply.',
+      requires_login: true
+    }, 403);
   }
   try {
     const postId = crypto.randomUUID();

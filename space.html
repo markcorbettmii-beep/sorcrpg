@@ -118,6 +118,36 @@
         .sheet-thumb:hover { border-color: #6a6320; }
         .sheet-thumb.selected { border-color: #b9aa00; box-shadow: 0 0 0 2px rgba(185,170,0,0.28); }
 
+        /* Who may read this sheet. Public is the useful setting for anyone
+           looking for a table, so the recommendation sits with the control
+           rather than in a help page nobody opens. */
+        .sheet-privacy { display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;
+            margin: 0 0 0.75rem; }
+        .privacy-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a;
+            color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+        .privacy-btn:hover:not(:disabled) { border-color: #8e44ad; color: #8e44ad; }
+        .privacy-btn.active { background: rgba(142,68,173,0.15); border-color: rgba(142,68,173,0.35); color: #8e44ad; }
+        .privacy-btn:disabled { opacity: 0.45; cursor: default; }
+        .sheet-privacy-note { text-align: center; font-size: 0.78rem; color: #8e44ad; margin: 0 0 1.25rem; }
+        body.lawful-mode .privacy-btn { background: #f5f2ec; border-color: #ddd; color: #666; }
+        body.lawful-mode .privacy-btn.active { background: rgba(142,68,173,0.15); border-color: rgba(142,68,173,0.35); color: #8e44ad; }
+
+        /* Someone else's Characters tab, reached from the sheet glyph in a lobby. */
+        .visitor-sheet { background: #222; border: 1px solid #333; border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 0.85rem; }
+        .visitor-sheet h4 { color: #b9aa00; font-size: 0.95rem; margin: 0 0 0.7rem 0; }
+        .visitor-default-tag { display: inline-block; background: #1a1505; color: #b9aa00; border: 1px solid #b9aa00;
+            font-size: 0.62rem; font-weight: bold; padding: 1px 7px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+        .visitor-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 0.55rem; }
+        .visitor-field { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 0.5rem 0.65rem; }
+        .visitor-field label { display: block; font-size: 0.65rem; color: #777; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+        .visitor-field p { margin: 0; font-size: 0.86rem; color: #c0b090; word-break: break-word; }
+        .visitor-empty { color: #666; font-size: 0.88rem; line-height: 1.6; margin: 0; }
+        .visitor-note { background: rgba(142,68,173,0.15); border: 1px solid rgba(142,68,173,0.35); border-radius: 8px;
+            padding: 0.55rem 0.9rem; margin-bottom: 0.85rem; color: #8e44ad; font-size: 0.82rem; line-height: 1.5; }
+        body.lawful-mode .visitor-sheet { background: #ffffff; border-color: #e0e0e0; }
+        body.lawful-mode .visitor-field { background: #f9f5f1; border-color: #e0e0e0; }
+        body.lawful-mode .visitor-field p { color: #333; }
+
         .fam-tags { margin: 0.6rem 0 0 0; display: flex; gap: 0.35rem; flex-wrap: wrap; }
         .fam-tag { font-size: 0.68rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; background: #2c2c1a; color: #b9aa00; border: 1px solid #4a4420; }
         body.lawful-mode .fam-tag { background: #f5f1e0; color: #7a6a00; border-color: #ddd5b0; }
@@ -253,6 +283,180 @@
         ev.target.classList.add('active');
         var out = document.getElementById('gameBoard');
         if (out) out.innerHTML = '<p>' + (GAME_MODES[mode] || 'Mode') + ' standings loading...</p>';
+    };
+
+    /* ?username= turns this page around: it shows that player's Space instead
+       of the reader's own. The sheet glyph beside a name in a lobby lands here
+       with tab=characters, which is the whole point of the link - it used to
+       lead to the reader's own sheet from every row on the list.
+       Only the Characters tab is turned around so far. The other tabs still
+       read the signed-in player's own data, so a visitor is shown the one tab
+       that is genuinely theirs rather than the reader's data under their name. */
+    var VIEW_USERNAME = (function() {
+        try { return new URLSearchParams(window.location.search).get('username') || ''; } catch(e) { return ''; }
+    })();
+
+    function esc2(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderVisitorSheet(ch) {
+        var data = (ch && ch.data && typeof ch.data === 'object') ? ch.data : {};
+        var keys = Object.keys(data).filter(function(k) {
+            var v = data[k];
+            return v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0);
+        });
+        var fields = keys.length
+            ? '<div class="visitor-fields">' + keys.map(function(k) {
+                var v = data[k];
+                var text = (typeof v === 'object') ? JSON.stringify(v) : String(v);
+                var label = String(k).replace(/[_-]+/g, ' ').replace(/\b\w/g, function(ch2) { return ch2.toUpperCase(); });
+                return '<div class="visitor-field"><label>' + esc2(label) + '</label><p>' + esc2(text) + '</p></div>';
+              }).join('') + '</div>'
+            : '<p style="margin:0;color:#666;font-size:0.85rem;">This sheet has no stats filled in yet.</p>';
+        return '<div class="visitor-sheet">' +
+            '<h4>' + esc2(ch.name || 'Unnamed Character') +
+                (ch.is_default ? '<span class="visitor-default-tag">DEFAULT</span>' : '') + '</h4>' +
+            fields +
+        '</div>';
+    }
+
+    async function renderVisitorSpace(username, authKey) {
+        var container = document.getElementById('profileContainer');
+        if (!container) return;
+
+        var owner = null, sheets = null;
+        try {
+            var pRes = await fetch(API_URL + '/api/profile/' + encodeURIComponent(username));
+            var pData = await pRes.json().catch(function() { return {}; });
+            owner = pData && pData.user ? pData.user : null;
+        } catch(e) { /* the sheet call below still names the owner */ }
+
+        try {
+            var sRes = await fetch(API_URL + '/api/characters/space/' + encodeURIComponent(username), {
+                headers: { 'X-Auth-Key': authKey }
+            });
+            sheets = await sRes.json().catch(function() { return {}; });
+        } catch(e) {
+            container.innerHTML = '<div class="not-logged-in"><h2>Could not reach the server</h2>' +
+                '<p><a href="lobbies.html">Back to lobbies</a></p></div>';
+            return;
+        }
+
+        if (sheets && sheets.error) {
+            container.innerHTML = '<div class="not-logged-in"><h2>' + esc2(sheets.error) + '</h2>' +
+                '<p><a href="lobbies.html">Back to lobbies</a></p></div>';
+            return;
+        }
+
+        var ownerName = (sheets && sheets.owner && (sheets.owner.display_name || sheets.owner.username)) ||
+            (owner && (owner.display_name || owner.username)) || username;
+        var avatar = owner && owner.avatar
+            ? '<img src="images/avatars/' + esc2(owner.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
+            : '<span style="font-size:1.5rem;">' + esc2(String(ownerName).charAt(0).toUpperCase()) + '</span>';
+
+        var body;
+        var list = (sheets && sheets.characters) || [];
+        /* A guest account holds no sheets - character sheets start at Civilian.
+           Saying so beats "has not made one yet", which reads as though one
+           might turn up later. Guests may still read everyone else's. */
+        var ownerIsGuest = /^Guest \d+$/.test(String(ownerName).trim()) ||
+            /^Guest \d+$/.test(String(username).trim());
+        if (sheets && sheets['private']) {
+            body = '<p class="visitor-empty">' + esc2(ownerName) + ' keeps their character sheets private.</p>';
+        } else if (!list.length && ownerIsGuest) {
+            body = '<p class="visitor-empty">Guests do not hold character sheets. A character sheet starts at Civilian.</p>';
+        } else if (!list.length) {
+            body = '<p class="visitor-empty">' + esc2(ownerName) + ' has not made a character sheet yet.</p>';
+        } else {
+            body = list.map(renderVisitorSheet).join('');
+        }
+
+        /* Reading a private sheet as the GM of their lobby is worth saying out
+           loud - they did not open it to the room, and the reader should know
+           which hat they are wearing while they read it. */
+        var gmNote = (sheets && sheets.via_gm)
+            ? '<div class="visitor-note">You are reading this as the Game Master of a lobby this player is in.</div>'
+            : '';
+
+        container.innerHTML =
+            '<a href="javascript:void(0)" onclick="if(history.length>1){history.back();}else{window.location=\'lobbies.html\';}" ' +
+              'style="display:inline-block;color:#b9aa00;text-decoration:none;font-size:0.85rem;margin-bottom:1rem;">&#8592; Back</a>' +
+            '<div class="space-banner-title">' + esc2(ownerName) + '</div>' +
+            '<div class="space-card">' +
+                '<div class="space-banner"></div>' +
+                '<div class="space-info-row">' +
+                    '<div class="space-avatar-large">' + avatar + '</div>' +
+                    '<div class="space-name-block">' +
+                        '<div class="space-username">' + esc2(ownerName) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="space-section">' +
+                    '<h3>Characters</h3>' +
+                    gmNote +
+                    body +
+                '</div>' +
+            '</div>';
+    }
+
+    /* Who may read the character sheet. The setting lives on the sheet itself
+       (is_public), so the toggle governs the default sheet - the one the glyph
+       beside a name in a lobby opens. Until a sheet exists there is nothing to
+       set, and the buttons say so rather than pretending to save. */
+    var privacySheet = null;
+
+    function renderSheetPrivacy() {
+        var pub = document.getElementById('sheetPublicBtn');
+        var priv = document.getElementById('sheetPrivateBtn');
+        var note = document.getElementById('sheetPrivacyNote');
+        if (!pub || !priv) return;
+        if (!privacySheet) {
+            pub.disabled = true; priv.disabled = true;
+            pub.classList.remove('active'); priv.classList.remove('active');
+            var me = '';
+            try { me = String((JSON.parse(localStorage.getItem('sorc_user') || '{}') || {}).username || ''); } catch(e) {}
+            if (note) {
+                note.textContent = /^Guest \d+$/.test(me.trim())
+                    ? 'A character sheet starts at Civilian. Sign up to keep one.'
+                    : 'Make a character sheet to set whether it is public or private.';
+            }
+            return;
+        }
+        pub.disabled = false; priv.disabled = false;
+        pub.classList.toggle('active', !!privacySheet.is_public);
+        priv.classList.toggle('active', !privacySheet.is_public);
+        if (note) note.textContent = 'Recommend public in lobbies for GM recruiting.';
+    }
+
+    window.setSheetPrivacy = async function(makePublic) {
+        if (!privacySheet || !!privacySheet.is_public === !!makePublic) return;
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+        if (!saved || !saved.authKey) return;
+        var pub = document.getElementById('sheetPublicBtn');
+        var priv = document.getElementById('sheetPrivateBtn');
+        var note = document.getElementById('sheetPrivacyNote');
+        if (pub) pub.disabled = true;
+        if (priv) priv.disabled = true;
+        try {
+            var res = await fetch(API_URL + '/api/characters/' + encodeURIComponent(privacySheet.id), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-Auth-Key': saved.authKey },
+                body: JSON.stringify({ is_public: !!makePublic })
+            });
+            var data = await res.json().catch(function() { return {}; });
+            if (!res.ok || data.error) {
+                if (note) note.textContent = data.error || 'Could not save that setting.';
+                renderSheetPrivacy();
+                return;
+            }
+            privacySheet.is_public = !!makePublic;
+            renderSheetPrivacy();
+        } catch(e) {
+            if (note) note.textContent = 'Could not reach the server.';
+            renderSheetPrivacy();
+        }
     };
 
     function switchTab(tabId) {
@@ -497,6 +701,11 @@
                             '<span class="access-badge PUBLIC">PUBLIC (Summary)</span>' +
                             '<p>View summaries of your characters. Only public character Spaces are visible to others.</p>' +
                             '<div style="margin:2rem auto;max-width:600px;text-align:center;">' +
+                                '<div class="sheet-privacy">' +
+                                    '<button type="button" class="privacy-btn" id="sheetPublicBtn" onclick="setSheetPrivacy(true)" disabled>Public</button>' +
+                                    '<button type="button" class="privacy-btn" id="sheetPrivateBtn" onclick="setSheetPrivacy(false)" disabled>Private</button>' +
+                                '</div>' +
+                                '<p class="sheet-privacy-note" id="sheetPrivacyNote">Recommend public in lobbies for GM recruiting.</p>' +
                                 '<div style="margin-bottom:1.5rem;">' +
                                     '<a href="https://sorcrpg.com/library" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Edit Character stats</a>' +
                                 '</div>' +
@@ -782,6 +991,16 @@
                 return;
             }
 
+            /* Someone else's Space. Their own name in the address is not a
+               claim about who is reading - the sheets come back from the API
+               under the reader's own key, which is what decides whether a
+               private sheet is theirs to see. */
+            if (VIEW_USERNAME &&
+                VIEW_USERNAME.toLowerCase() !== String(saved.username || '').toLowerCase()) {
+                await renderVisitorSpace(VIEW_USERNAME, saved.authKey);
+                return;
+            }
+
             var user = saved;
             var role = user.role || 'CIVILIAN';
             if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
@@ -851,6 +1070,9 @@
                         if (overviewCountEl) {
                             overviewCountEl.textContent = charCount;
                         }
+                        var list = Array.isArray(charData) ? charData : (charData.characters || []);
+                        privacySheet = list.filter(function(ch) { return ch.is_default; })[0] || list[0] || null;
+                        renderSheetPrivacy();
                     }
                 } catch(e) {
                     console.error('[Space] Failed to fetch character count:', e);
