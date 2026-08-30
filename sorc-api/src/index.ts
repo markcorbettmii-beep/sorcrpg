@@ -2665,6 +2665,25 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   const existing = await c.env.sorc_db.prepare(`SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobby.id, user.id).first();
   if (existing) return c.json({ error: 'You are already in this lobby.' }, 400);
 
+  /* One lobby per player, member or host alike. Belonging to two at once was
+     possible for everyone except a host, who was stopped only at creation -
+     so the rule existed for hosting and nowhere else. Abandoning is the way
+     out, and it is open to every member now, not just the creator. */
+  if (!privileged) {
+    const elsewhere = await c.env.sorc_db.prepare(
+      `SELECT l.name FROM lobby_members lm
+         JOIN lobbies l ON l.id = lm.lobby_id
+        WHERE lm.user_id = ? AND l.id != ? AND l.status != 'closed'
+        LIMIT 1`
+    ).bind(user.id, lobby.id).first() as any;
+    if (elsewhere) {
+      return c.json({
+        error: 'You are already a member of Lobby ' + (elsewhere.name || '') + '. Please Abandon your lobby to enter a new one.',
+        already_in_lobby: true
+      }, 400);
+    }
+  }
+
   const memberId = crypto.randomUUID();
   const now = new Date().toISOString();
   const memberRole = privileged ? user.role : (assessment?.role_granted || user.sorc_role);
@@ -2742,13 +2761,16 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
 
     const now = new Date().toISOString();
 
-    // Abandon belongs to the lobby's creator alone. Everyone else only ever
-    // leaves, and leaving is free - they can walk back in at will. Reject an
-    // abandon from a non-creator outright rather than quietly downgrading it
-    // to a leave, so the client can never strand someone on a wrong rule.
-    if (isAbandon && lobby.creator_uid !== user.id) {
-      return c.json({ error: 'Only the lobby creator can abandon a lobby. You can leave and return at will.' }, 403);
-    }
+    /* Abandon is everyone's, not the creator's alone. A player belongs to one
+       lobby at a time, so abandoning is how any member frees themselves to
+       enter another - not a power that only a host holds. It used to be
+       refused outright to non-creators, which left an ordinary member with no
+       way out of the one lobby they were allowed.
+
+       What it means still differs by who does it: for the creator it gives up
+       the lobby, and the handover below moves creator_uid to the next in line;
+       for anyone else it is simply leaving. Both free the player to join
+       elsewhere, which is the point. */
 
     // What abandoning costs is the lobby, not access to it: the handover below
     // moves creator_uid to the next in line, so the abandoner comes back as an
