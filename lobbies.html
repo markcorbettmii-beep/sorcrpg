@@ -1234,13 +1234,20 @@
     /* One of the three is always selected; there is no unfiltered view. Absent
        a ?tier=, the board opens on Beginner - the tier open to everyone, so it
        is never a view the reader has no business in. */
+    /* Whether the tier on screen is the reader's own choice - a ?tier= they
+       arrived with, or a tab they pressed. Until it is, the board is free to
+       open on the tier their own lobby sits in, which is the tab they wanted
+       nine times in ten. Once they choose, it never moves under them again. */
+    var tierChosen = false;
     var currentTier = (function() {
       var t = (new URLSearchParams(location.search).get('tier') || '').toUpperCase();
-      return TIER_NAMES[t] ? t : 'BEG';
+      if (TIER_NAMES[t]) { tierChosen = true; return t; }
+      return 'BEG';
     })();
     var allowedTiers = ['BEG'];
 
     function setTier(t) {
+      tierChosen = true;
       currentTier = t || '';
       var url = new URL(location.href);
       if (currentTier) url.searchParams.set('tier', currentTier);
@@ -1363,28 +1370,44 @@
         }
         if (Array.isArray(data.allowed_tiers) && data.allowed_tiers.length) allowedTiers = data.allowed_tiers;
         currentMembership = data.current_lobby || null;
+
+        /* Open on the tier holding their own lobby. This runs once, before
+           anything is drawn: the first fetch went out on Beginner, and if that
+           is not where their lobby lives it came back without it - so fetch
+           again on the right tier rather than render a board missing the one
+           row they came for. tierChosen is set first, so this can fire only
+           once however the second load turns out. */
+        if (!tierChosen) {
+          tierChosen = true;
+          var memberTier = String((currentMembership && currentMembership.tier) || '').toUpperCase();
+          if (TIER_NAMES[memberTier] && memberTier !== currentTier) {
+            currentTier = memberTier;
+            var mUrl = new URL(location.href);
+            mUrl.searchParams.set('tier', currentTier);
+            history.replaceState(null, '', mUrl);
+            return loadLobbies();
+          }
+        }
+
         renderMembershipBanner();
         renderTierBar();
         var lobbies = data.lobbies || [];
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
         if (myLobby) { myActiveLobbyId = myLobby.id; loadWorldChat(); }
-        // Sort lobbies: lobbies user is member of first (sticky), then by most recent activity
+        /* The lobby they are in rides at the top, whatever its last activity;
+           the rest fall in most-recently-active first. is_member comes from the
+           board, which knows the membership - a creator_uid test would miss
+           every lobby they joined rather than opened. */
+        var myId = currentMembership ? currentMembership.id : null;
         lobbies.sort(function(a, b) {
-          var aIsMember = a.is_member ? 1 : 0;
-          var bIsMember = b.is_member ? 1 : 0;
+          var aIsMember = (a.is_member || (myId && a.id === myId)) ? 1 : 0;
+          var bIsMember = (b.is_member || (myId && b.id === myId)) ? 1 : 0;
           if (aIsMember !== bIsMember) return bIsMember - aIsMember;
           var aTime = new Date(a.updated_at || 0).getTime();
           var bTime = new Date(b.updated_at || 0).getTime();
           return bTime - aTime;
         });
-        // If user is a member of a lobby, default to that lobby's tier
-        if (currentMembership && currentMembership.tier && !currentTier) {
-          currentTier = currentMembership.tier;
-          var url = new URL(window.location);
-          url.searchParams.set('tier', currentTier);
-          window.history.replaceState({}, '', url);
-        }
         allLobbies = lobbies.concat(PLACEHOLDER_LOBBIES);
         lobbyPage = 0;
         renderLobbyPage();

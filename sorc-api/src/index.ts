@@ -2535,12 +2535,15 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
      time, so the board can say so standing rather than only refusing them when
      they reach for a second. Pin the current lobby to the top of the list if
      the player is in one. */
+  /* tier rides along so the board can open on the tab the player's own lobby
+     lives in - without it the page has no way to know, and opens on Beginner
+     with their lobby filtered out of the list entirely. */
   const currentLobby = await c.env.sorc_db.prepare(
-    `SELECT l.id, l.name, l.lobby_code FROM lobby_members lm
+    `SELECT l.id, l.name, l.lobby_code, COALESCE(l.tier, ?) AS tier FROM lobby_members lm
        JOIN lobbies l ON l.id = lm.lobby_id
       WHERE lm.user_id = ? AND l.status != 'closed'
       LIMIT 1`
-  ).bind(user.id).first() as any;
+  ).bind(DEFAULT_LOBBY_TIER, user.id).first() as any;
 
   const lobbies = wantTier
     ? await c.env.sorc_db.prepare(
@@ -2562,8 +2565,15 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
   const rankOk = isPrivileged(user) || (!!assessment && !user.needs_reassess);
   const ceiling = rankOk ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
 
+  /* The page stickies the player's own lobby to the top, and cannot do it
+     without being told which row that is. A player holds one lobby at a time,
+     so the one current_lobby id settles it. */
+  const rows = (lobbies.results || []).map(function (l: any) {
+    return Object.assign({}, l, { is_member: !!currentLobby && l.id === currentLobby.id });
+  });
+
   return c.json({
-    lobbies: lobbies.results || [],
+    lobbies: rows,
     assessed: !!assessment || isPrivileged(user),
     sorc_role: user.sorc_role || assessment?.role_granted || null,
     is_privileged: isPrivileged(user),
