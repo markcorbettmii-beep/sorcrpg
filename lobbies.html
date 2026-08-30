@@ -72,6 +72,15 @@
 
     /* ===== LOBBY LIST ===== */
     .section-head { color: #b9aa00; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid #2a2a2a; }
+    /* Tier filter. A locked tier stays visible and says so - hiding it would
+       leave the ladder invisible and the Advanced table looking absent. */
+    .tier-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .tier-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a;
+      color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.15s; }
+    .tier-btn:hover { border-color: #b9aa00; color: #b9aa00; }
+    .tier-btn.active { background: #222; border-color: #b9aa00; color: #b9aa00; }
+    .tier-btn.locked { opacity: 0.5; }
+    .tier-btn.locked:hover { border-color: #c93f35; color: #c93f35; }
     .lobby-row { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; cursor: pointer; transition: border-color 0.15s; }
     .lobby-row:hover { border-color: #444; }
     .lobby-row-info h3 { color: #e0cfc0; font-size: 0.92rem; margin: 0 0 0.2rem 0; }
@@ -1129,6 +1138,7 @@
         buildWorldChat() +
         buildTicker() +
         '<div class="section-head">Open Lobbies</div>' +
+        '<div id="tierBar" class="tier-bar"></div>' +
         '<div id="lobbyList"><div class="empty-state">Loading...</div></div>' +
         '<div class="lobby-actions">' +
           '<div class="action-card create">' +
@@ -1184,16 +1194,57 @@
       } catch(e) { /* leave hidden if we cannot confirm it is on */ }
     }
 
+    /* The three lobbies. One page filtered by tier, not three pages: the tier
+       is a property of a lobby, and what may actually be entered is decided by
+       the API on join - a filtered list is a convenience, never the gate.
+       ?tier= picks one; absent, the whole board shows. */
+    var TIER_NAMES = { BEG: 'Beginner', INT: 'Intermediate', ADV: 'Advanced' };
+    var currentTier = (function() {
+      var t = (new URLSearchParams(location.search).get('tier') || '').toUpperCase();
+      return TIER_NAMES[t] ? t : '';
+    })();
+    var allowedTiers = ['BEG'];
+
+    function setTier(t) {
+      currentTier = t || '';
+      var url = new URL(location.href);
+      if (currentTier) url.searchParams.set('tier', currentTier);
+      else url.searchParams.delete('tier');
+      history.replaceState(null, '', url);
+      loadLobbies();
+    }
+
+    /* Tiers above the player's rank still show, and say why they are shut.
+       Hiding them would leave the ladder invisible and the Advanced table
+       looking like it does not exist. */
+    function renderTierBar() {
+      var bar = document.getElementById('tierBar');
+      if (!bar) return;
+      var html = '<button class="tier-btn' + (currentTier ? '' : ' active') +
+        '" onclick="setTier(\'\')">All</button>';
+      ['BEG', 'INT', 'ADV'].forEach(function(t) {
+        var open = allowedTiers.indexOf(t) !== -1;
+        html += '<button class="tier-btn' + (currentTier === t ? ' active' : '') +
+          (open ? '' : ' locked') + '" onclick="setTier(\'' + t + '\')"' +
+          (open ? '' : ' title="Above your rank - assess higher to join"') + '>' +
+          TIER_NAMES[t] + (open ? '' : ' &#128274;') + '</button>';
+      });
+      bar.innerHTML = html;
+    }
+
     async function loadLobbies() {
       var listEl = document.getElementById('lobbyList');
       if (!listEl) return;
       try {
-        var res = await fetch(API_URL + '/api/lobbies', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var res = await fetch(API_URL + '/api/lobbies' + (currentTier ? '?tier=' + encodeURIComponent(currentTier) : ''),
+          { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await readJson(res);
         if (data.error && data.error.includes('assess')) {
           listEl.innerHTML = '<div class="needs-assess-note">You must complete the <a href="lobbies.html">Role Assessment</a> before joining or creating lobbies.</div>';
           return;
         }
+        if (Array.isArray(data.allowed_tiers) && data.allowed_tiers.length) allowedTiers = data.allowed_tiers;
+        renderTierBar();
         var lobbies = data.lobbies || [];
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });

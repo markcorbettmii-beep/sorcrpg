@@ -1470,6 +1470,50 @@ function genLobbyCode(): string {
   return code;
 }
 
+/* Lobby tiers. Three lobbies - Beginner, Intermediate, Advanced - held as a
+   column on the lobby rather than as three pages, so there is one page, one
+   list query, and one place where entry is decided. A separate page per tier
+   would enforce nothing: anyone can open a URL, so the gate has to live here
+   regardless.
+
+   The ladder is a ceiling, not a pigeonhole. A player's earned rank is the
+   highest tier they may enter, and they may enter anything at or below it:
+   an Advanced player joins any lobby they choose, an Intermediate joins
+   Beginner or Intermediate, and a Civilian - failed or unranked - gets
+   Beginner. That lets a ranked player drop into a lower table to run or help
+   a game, which is the point of letting them choose.
+
+   Suffix-matched so the GM roles ride the same ladder as their PC
+   counterparts (GM-ADV with PC-ADV, and so on) without a second table. */
+const LOBBY_TIERS = ['BEG', 'INT', 'ADV'];
+const DEFAULT_LOBBY_TIER = 'BEG';
+
+function tierRank(tier: string): number {
+  const i = LOBBY_TIERS.indexOf(String(tier || '').toUpperCase());
+  return i === -1 ? 0 : i;
+}
+
+// The highest tier this player may enter. Privileged accounts are not bound by
+// the ladder, the same way they are not bound by the assessment itself.
+function playerTierCeiling(user: any): string {
+  if (isPrivileged(user)) return 'ADV';
+  const role = String(user?.sorc_role || '').toUpperCase();
+  if (role.endsWith('-ADV')) return 'ADV';
+  if (role.endsWith('-INT')) return 'INT';
+  return DEFAULT_LOBBY_TIER;
+}
+
+function normalizeTier(tier: any): string | null {
+  const t = String(tier || '').toUpperCase();
+  return LOBBY_TIERS.indexOf(t) === -1 ? null : t;
+}
+
+// Added lazily, like the other late columns here, so a live database picks it
+// up without a separate migration step. Existing lobbies read as Beginner.
+async function ensureLobbyTierColumn(db: D1Database) {
+  await db.prepare(`ALTER TABLE lobbies ADD COLUMN tier TEXT DEFAULT '${DEFAULT_LOBBY_TIER}'`).run().catch(() => {});
+}
+
 function isPrivileged(user: any): boolean {
   const OWNER_EMAILS = ['corbett@sorcrpg.com'];
   const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
@@ -2307,19 +2351,37 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
 
-  const lobbies = await c.env.sorc_db.prepare(
-    `SELECT l.*, u.username as creator_name, u.display_name as creator_display
-     FROM lobbies l JOIN users u ON l.creator_uid = u.id
-     WHERE l.is_private = 0
-     ORDER BY l.created_at DESC LIMIT 50`
-  ).all();
+  await ensureLobbyTierColumn(c.env.sorc_db);
 
+  /* ?tier= narrows the list to one of the three lobbies. Absent, the whole
+     board comes back and the page decides what to show - the filter is a view,
+     not the gate. What may actually be entered is settled in /join. */
+  const wantTier = normalizeTier(c.req.query('tier'));
+  const lobbies = wantTier
+    ? await c.env.sorc_db.prepare(
+        `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+         FROM lobbies l JOIN users u ON l.creator_uid = u.id
+         WHERE l.is_private = 0 AND COALESCE(l.tier, ?) = ?
+         ORDER BY l.created_at DESC LIMIT 50`
+      ).bind(DEFAULT_LOBBY_TIER, wantTier).all()
+    : await c.env.sorc_db.prepare(
+        `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+         FROM lobbies l JOIN users u ON l.creator_uid = u.id
+         WHERE l.is_private = 0
+         ORDER BY l.created_at DESC LIMIT 50`
+      ).all();
+
+  const ceiling = playerTierCeiling(user);
   return c.json({
     lobbies: lobbies.results || [],
     assessed: !!assessment || isPrivileged(user),
     sorc_role: user.sorc_role || assessment?.role_granted || null,
     is_privileged: isPrivileged(user),
-    needs_reassess: !!(user.needs_reassess)
+    needs_reassess: !!(user.needs_reassess),
+    // What this player may enter: their ceiling, and everything at or below it.
+    tier: wantTier,
+    tier_ceiling: ceiling,
+    allowed_tiers: LOBBY_TIERS.filter(function (t) { return tierRank(t) <= tierRank(ceiling); })
   });
 });
 
@@ -2352,8 +2414,22 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
     return c.json({ error: 'You are flagged for reassessment. Please reassess before creating lobbies.', needs_reassess: true }, 403);
   }
 
-  const { name, box_set_code, is_private } = await c.req.json() as any;
+  const { name, box_set_code, is_private, tier } = await c.req.json() as any;
   if (!name || !name.trim()) return c.json({ error: 'Lobby name required.' }, 400);
+
+  await ensureLobbyTierColumn(c.env.sorc_db);
+
+  /* A host opens a table at their own tier or below - the same ceiling that
+     governs joining, so nobody can host a room they could not themselves walk
+     into. Naming no tier opens one at their own rank. */
+  const hostCeiling = playerTierCeiling(user);
+  const requestedTier = normalizeTier(tier) || hostCeiling;
+  if (tierRank(requestedTier) > tierRank(hostCeiling)) {
+    return c.json({
+      error: 'That lobby is above your rank. Assess higher to host there.',
+      tier_ceiling: hostCeiling
+    }, 403);
+  }
 
   const existingLobby = await c.env.sorc_db.prepare(
     `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed'`
@@ -2377,9 +2453,9 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
     }
 
     await c.env.sorc_db.prepare(
-      `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?)`
-    ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, now, now).run();
+      `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, tier, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?, ?)`
+    ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, requestedTier, now, now).run();
 
     const creatorRole = assessment?.role_granted || user.sorc_role || user.role;
     await c.env.sorc_db.prepare(
@@ -2481,6 +2557,26 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   // up - the lobby is already theirs. They kept creator_uid when they left, so
   // they come back through the door they own: no code, no full check.
   const isOwnLobby = lobby.creator_uid === user.id;
+
+  /* The tier gate, and the only one that counts - a page or a filtered list can
+     be walked around, this cannot. A player enters their own tier or anything
+     below it, so someone who failed still gets Beginner and can play, while the
+     Advanced table stays Advanced. Lobbies predating the column read as
+     Beginner, which is open to everyone and so changes nothing for them.
+
+     The host is exempt, on the same reasoning as the checks above: the lobby is
+     already theirs. It matters now that anyone may reassess freely - a host who
+     slips a rank would otherwise be locked out of the table they are running. */
+  const lobbyTier = normalizeTier(lobby.tier) || DEFAULT_LOBBY_TIER;
+  const ceiling = playerTierCeiling(user);
+  if (!privileged && !isOwnLobby && tierRank(lobbyTier) > tierRank(ceiling)) {
+    const TIER_NAMES: any = { BEG: 'Beginner', INT: 'Intermediate', ADV: 'Advanced' };
+    return c.json({
+      error: 'The ' + TIER_NAMES[lobbyTier] + ' lobby is above your rank. Assess higher to join it.',
+      tier: lobbyTier,
+      tier_ceiling: ceiling
+    }, 403);
+  }
 
   if (!privileged && !isOwnLobby && lobby.member_count >= lobby.max_members) return c.json({ error: 'This lobby is full.' }, 400);
 
