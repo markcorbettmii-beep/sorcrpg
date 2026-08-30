@@ -2371,7 +2371,11 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
          ORDER BY l.created_at DESC LIMIT 50`
       ).all();
 
-  const ceiling = playerTierCeiling(user);
+  /* Mirrors the gate in /join, so the padlocks on the tier bar say the same
+     thing the door will. An absent or lapsed rank is worth Beginner: it is
+     never a reason to show nothing. */
+  const rankOk = isPrivileged(user) || (!!assessment && !user.needs_reassess);
+  const ceiling = rankOk ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
   return c.json({
     lobbies: lobbies.results || [],
     assessed: !!assessment || isPrivileged(user),
@@ -2524,22 +2528,33 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const privileged = isPrivileged(user);
 
-  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
-  if (!assessment && !privileged) return c.json({ error: 'You must complete the assessment before joining a lobby.', needs_reassess: true }, 403);
+  /* Beginner asks for no assessment at all. Registering makes you a Civilian,
+     and a Civilian - like a signed-in guest - can sit down at a Beginner table
+     straight away. The assessment is how you advance past it, into
+     Intermediate or Advanced as a PC or a GM, not a toll on entering at all.
+     This used to refuse every lobby to anyone unassessed.
 
+     So rank is weighed against the lobby actually being joined, below, once its
+     tier is known - not up front against every lobby alike. Everything that
+     invalidates a rank drops the player to Beginner rather than shutting them
+     out: no assessment, an expired one, or a reassessment flag all leave
+     Beginner open and only close what sits above it. */
+  const assessment = await c.env.sorc_db.prepare(`SELECT * FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
+
+  let rankValid = !!assessment;
+  let rankLapsed = '';
   if (!privileged && assessment) {
     const age = Date.now() - new Date(assessment.taken_at).getTime();
     if (age > ASSESSMENT_EXPIRY_MS) {
+      // Still flagged on expiry, as before - it just no longer bars the door.
       await c.env.sorc_db.prepare(`UPDATE users SET needs_reassess = 1, updated_at = ? WHERE id = ?`).bind(new Date().toISOString(), user.id).run();
-      return c.json({ error: 'Your assessment has expired (30 days). Please reassess to rejoin lobbies.', needs_reassess: true }, 403);
+      rankValid = false;
+      rankLapsed = 'Your assessment has expired (30 days).';
     }
   }
-
-  if (user.needs_reassess && !privileged) {
-    return c.json({
-      error: 'You are flagged for reassessment. Please reassess before joining lobbies.',
-      needs_reassess: true
-    }, 403);
+  if (!privileged && user.needs_reassess) {
+    rankValid = false;
+    rankLapsed = rankLapsed || 'You are flagged for reassessment.';
   }
 
   const { lobby_id, lobby_code } = await c.req.json() as any;
@@ -2568,13 +2583,20 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
      already theirs. It matters now that anyone may reassess freely - a host who
      slips a rank would otherwise be locked out of the table they are running. */
   const lobbyTier = normalizeTier(lobby.tier) || DEFAULT_LOBBY_TIER;
-  const ceiling = playerTierCeiling(user);
+  // A rank that never existed or has lapsed is worth Beginner, not nothing.
+  const ceiling = rankValid ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
   if (!privileged && !isOwnLobby && tierRank(lobbyTier) > tierRank(ceiling)) {
     const TIER_NAMES: any = { BEG: 'Beginner', INT: 'Intermediate', ADV: 'Advanced' };
+    const why = rankLapsed
+      ? rankLapsed + ' Reassess to reach the ' + TIER_NAMES[lobbyTier] + ' lobby.'
+      : (assessment
+          ? 'The ' + TIER_NAMES[lobbyTier] + ' lobby is above your rank. Assess higher to join it.'
+          : 'The ' + TIER_NAMES[lobbyTier] + ' lobby needs an assessment. Take it to rank up, or join a Beginner lobby now.');
     return c.json({
-      error: 'The ' + TIER_NAMES[lobbyTier] + ' lobby is above your rank. Assess higher to join it.',
+      error: why,
       tier: lobbyTier,
-      tier_ceiling: ceiling
+      tier_ceiling: ceiling,
+      needs_reassess: !!rankLapsed
     }, 403);
   }
 
