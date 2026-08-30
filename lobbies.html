@@ -1355,7 +1355,35 @@
 
     // Reads a response as JSON, but never lets a non-JSON body (a plain-text
     // 500, an HTML error page) surface as a misleading "Connection error".
+    /* A dead session, explained once and cleared.
+
+       An account holds a single auth key, and every sign-in replaces it, so
+       signing in on another tab, phone or browser leaves this page holding a
+       key that matches nothing. The API then answers 401 to everything.
+       Without this, each call site surfaced its own raw message - the world
+       chat box alerted "Invalid auth key" - and the page carried on looking
+       signed in, so every following action failed the same way.
+
+       Clearing the stored credentials lets the signed-out view above render
+       on reload, which is the same path a visitor with no account takes. */
+    var sessionEndedNoticed = false;
+    function noteSessionEnded() {
+      if (sessionEndedNoticed) return;  // one notice, however many calls are in flight
+      sessionEndedNoticed = true;
+      try {
+        localStorage.removeItem('sorc_user');
+        sessionStorage.removeItem('activeLobbyId');
+      } catch (e) {}
+      alert('You have been signed out.\n\nSigning in somewhere else ends the previous session, so this tab is no longer connected. Sign in again to carry on.');
+      window.location.reload();
+    }
+
     async function readJson(res) {
+      /* 401 is the session dying, not a fault in whatever was being asked. */
+      if (res && res.status === 401) {
+        noteSessionEnded();
+        return { error: 'Signed out.' };
+      }
       var text = await res.text();
       try { return JSON.parse(text); }
       catch (e) {
@@ -1605,7 +1633,7 @@
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report"></button>';
         }
         var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
-        var sheetHref = 'https://sorcrpg.com/character-sheet-male-musc';
+        var sheetHref = 'https://sorcrpg.com/space?tab=characters';
         var menuItems = '';
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
         menuItems += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
@@ -1625,7 +1653,6 @@
         var nameWrap = '<span class="member-name-wrap">' +
           '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">👑</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
           '<div class="member-name-menu">' + menuItems + '</div>' +
-          '<span class="member-sheet-hint">for stats &#8250;</span>' +
           '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
         '</span>';
         return '<div class="member-row">' +
@@ -2231,7 +2258,7 @@
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')"></button>';
           var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
-          var sheetHref = 'https://sorcrpg.com/character-sheet-male-musc';
+          var sheetHref = 'https://sorcrpg.com/space?tab=characters';
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
           menuItems2 += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
@@ -2251,7 +2278,6 @@
           var nameWrap2 = '<span class="member-name-wrap">' +
             '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost2 ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
             '<div class="member-name-menu">' + menuItems2 + '</div>' +
-            '<span class="member-sheet-hint">for stats &#8250;</span>' +
             '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
           '</span>';
           return '<div class="member-row">' +
@@ -3065,7 +3091,7 @@
                strip the prefix and trailing raw URL before rendering */
             var respondMatch = m.body && m.body.match(/public-profile\.html\?username=([^&\s\n"<]+)/);
             var sheetIcon = respondMatch
-              ? '<a href="https://sorcrpg.com/character-sheet-male-musc" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128195;</a>'
+              ? '<a href="https://sorcrpg.com/space?tab=characters" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128195;</a>'
               : '';
             var rawBody = m.body || '';
             var isActivity = rawBody.startsWith('⬡ ');

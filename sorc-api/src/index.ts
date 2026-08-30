@@ -1065,6 +1065,10 @@ app.post('/api/forum/thread', authMiddleware, async (c) => {
   const { categoryId, title, body } = await c.req.json();
   const user = c.get('user') as any;
   if (!title || !body) return c.json({ error: 'Title and body required' }, 400);
+  // Guests cannot create threads - must register first
+  if (isGuestUser(user)) {
+    return c.json({ error: 'Thread creation requires a registered account. Create an account or sign in to start discussions.', requires_login: true }, 403);
+  }
   try {
     const threadId = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -1082,6 +1086,18 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   const { threadId, body } = await c.req.json();
   const user = c.get('user') as any;
   if (!body) return c.json({ error: 'Body required' }, 400);
+  // Guests can reply but are limited to 10 posts per day
+  if (isGuestUser(user)) {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayStart = today + 'T00:00:00.000Z';
+    const todayEnd = today + 'T23:59:59.999Z';
+    const guestPostsToday = await c.env.sorc_db.prepare(
+      `SELECT COUNT(*) as count FROM posts WHERE author_uid = ? AND created_at >= ? AND created_at <= ?`
+    ).bind(user.id, todayStart, todayEnd).first() as any;
+    if ((guestPostsToday?.count || 0) >= 10) {
+      return c.json({ error: 'Guest reply limit reached. You can reply up to 10 times per day. Create an account for unlimited access.', requires_login: true }, 429);
+    }
+  }
   try {
     const postId = crypto.randomUUID();
     const now = new Date().toISOString();
@@ -1780,9 +1796,11 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
 
     // Update both the site role (PLAYER/MASTER) and the sorc_role (PC-BEG/INT/ADV/GM-ADV)
     // Award community points only on first-ever assessment (assessment_rewarded = 0)
+    // Guests do not earn community points - they must register a real account first
     const fullUser = await c.env.sorc_db.prepare(`SELECT assessment_rewarded, needs_reassess FROM users WHERE id = ?`).bind(user.id).first() as any;
     const firstTime = !fullUser?.assessment_rewarded;
-    const pointsAwarded = firstTime ? (siteRole === 'MASTER' ? 200 : 100) : 0;
+    const isGuest = isGuestUser(user);
+    const pointsAwarded = (firstTime && !isGuest) ? (siteRole === 'MASTER' ? 200 : 100) : 0;
 
     const preserveRole = isPrivileged(user);
     // Role first, and on its own. Setting a role twice is harmless; paying for
@@ -2488,6 +2506,45 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
       const newCount = (lobby.member_count || 1) + 1;
       const newStatus = newCount >= lobby.max_members ? 'full' : 'open';
       await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, status = ?, updated_at = ? WHERE id = ?`).bind(newCount, newStatus, now, lobby.id).run();
+    }
+
+    /* A lobby that fell to a Player on an abandon is stuck: a room cannot be
+       launched without a GM (see /launch, which rejects a designated GM who
+       holds no GM role), so the crown has to move for the lobby to be playable
+       again. The first GM through the door takes it.
+
+       A lobby whose host can already run a room is left alone - there is no
+       limit on how many GMs sit in a lobby, and every GM after the first is
+       there to play. The two sides are deliberately not the same test:
+
+       - the host KEEPS the crown if they could launch a room at all, which
+         includes an Admin or Owner who created the lobby themselves;
+       - an arriving player only TAKES it on a real GM role, so being an Admin
+         is never by itself enough to inherit someone else's lobby.
+
+       Kept in step with /launch's gmRoleOk by hand: if that check changes,
+       this one has to change with it, or a lobby can end up holding a crown
+       that cannot launch anything. */
+    const joinerHoldsGmRole = typeof memberRole === 'string'
+      && (memberRole.startsWith('GM') || memberRole === 'MASTER');
+    if (joinerHoldsGmRole && lobby.creator_uid !== user.id) {
+      const host = await c.env.sorc_db.prepare(
+        `SELECT id, role, email, sorc_role FROM users WHERE id = ?`
+      ).bind(lobby.creator_uid).first() as any;
+      const hostCanRunARoom = !!host && (
+        (typeof host.sorc_role === 'string' && host.sorc_role.startsWith('GM'))
+        || host.role === 'MASTER'
+        || isPrivileged(host)
+      );
+      if (!hostCanRunARoom) {
+        await c.env.sorc_db.prepare(
+          `UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`
+        ).bind(user.id, now, lobby.id).run();
+        return c.json({
+          success: true, lobby_name: lobby.name, lobby_id: lobby.id,
+          became_host: true
+        });
+      }
     }
 
     return c.json({ success: true, lobby_name: lobby.name, lobby_id: lobby.id });

@@ -98,6 +98,15 @@
                     <img src="images/goo-sign_20260816_003011_0000.png" alt="Google" style="width:200px;height:40px;" />
                 </a>
 
+                <div class="signin-divider"></div>
+
+                <!-- Guest Access -->
+                <div style="text-align:center;">
+                    <p style="color:#2c2c2c;font-size:0.9rem;margin-bottom:1rem;">Want to try it out first?</p>
+                    <button class="signin-btn signin-btn-primary" onclick="joinAsGuestFromSignin()" style="background:#b9aa00;color:#111;">Join as Guest</button>
+                    <div id="guestMsg" class="status-msg" style="margin-top:0.75rem;"></div>
+                </div>
+
                 <div class="signup-link-text">
                     <div style="margin-bottom: 0.5rem;"><a href="signin-email.html" style="color: #b9aa00; text-decoration: underline;">Sign In with email</a></div>
                     <div>New to Essentia? <a href="javascript:void(0)" onclick="checkKIDVerification(function() { showSignupForm(); }, '/signin.html?signup=true');">Delve into SORC Beyond now to become a Basic Member!</a></div>
@@ -476,6 +485,44 @@
             document.getElementById('signupForm').style.display = 'none';
             document.getElementById('oauthSection').style.display = 'block';
         };
+
+        window.joinAsGuestFromSignin = function() {
+            // Check K-ID verification first, then create guest account
+            checkKIDVerification(function() {
+                createGuestAccount();
+            }, '/signin.html');
+        };
+
+        async function createGuestAccount() {
+            var msgEl = document.getElementById('guestMsg');
+            msgEl.className = 'status-msg'; msgEl.style.display = 'block'; msgEl.textContent = 'Creating guest account...';
+            try {
+                var res = await fetch(API_URL + '/api/auth/guest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                var data = await res.json();
+                if (data.user && data.authKey) {
+                    msgEl.className = 'status-msg success'; msgEl.textContent = 'Guest account created! Redirecting...';
+                    // Store guest credentials
+                    localStorage.setItem('sorc_user', JSON.stringify({
+                        id: data.user.id,
+                        username: data.user.username,
+                        email: data.user.email,
+                        authKey: data.authKey,
+                        display_name: data.user.display_name || data.user.username,
+                        role: data.user.role,
+                        sorc_role: data.user.sorc_role
+                    }));
+                    setTimeout(function() { window.location.href = 'lobbies.html'; }, 800);
+                } else {
+                    msgEl.className = 'status-msg error'; msgEl.textContent = data.error || 'Failed to create guest account.';
+                }
+            } catch(e) {
+                msgEl.className = 'status-msg error'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e);
+            }
+        }
 
         // Check if returning from K-ID verification
         // (Don't auto-show signup - let user choose by clicking "Delve in now")
