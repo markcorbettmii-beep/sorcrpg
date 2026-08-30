@@ -2530,35 +2530,37 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
      board comes back and the page decides what to show - the filter is a view,
      not the gate. What may actually be entered is settled in /join. */
   const wantTier = normalizeTier(c.req.query('tier'));
-  const lobbies = wantTier
-    ? await c.env.sorc_db.prepare(
-        `SELECT l.*, u.username as creator_name, u.display_name as creator_display
-         FROM lobbies l JOIN users u ON l.creator_uid = u.id
-         WHERE l.is_private = 0 AND COALESCE(l.tier, ?) = ?
-         ORDER BY l.updated_at DESC LIMIT 50`
-      ).bind(DEFAULT_LOBBY_TIER, wantTier).all()
-    : await c.env.sorc_db.prepare(
-        `SELECT l.*, u.username as creator_name, u.display_name as creator_display
-         FROM lobbies l JOIN users u ON l.creator_uid = u.id
-         WHERE l.is_private = 0
-         ORDER BY l.updated_at DESC LIMIT 50`
-      ).all();
-
-  /* Mirrors the gate in /join, so the padlocks on the tier bar say the same
-     thing the door will. An absent or lapsed rank is worth Beginner: it is
-     never a reason to show nothing. */
-  const rankOk = isPrivileged(user) || (!!assessment && !user.needs_reassess);
-  const ceiling = rankOk ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
 
   /* The lobby this player is already in, if any. A player belongs to one at a
      time, so the board can say so standing rather than only refusing them when
-     they reach for a second. */
+     they reach for a second. Pin the current lobby to the top of the list if
+     the player is in one. */
   const currentLobby = await c.env.sorc_db.prepare(
     `SELECT l.id, l.name, l.lobby_code FROM lobby_members lm
        JOIN lobbies l ON l.id = lm.lobby_id
       WHERE lm.user_id = ? AND l.status != 'closed'
       LIMIT 1`
   ).bind(user.id).first() as any;
+
+  const lobbies = wantTier
+    ? await c.env.sorc_db.prepare(
+        `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+         FROM lobbies l JOIN users u ON l.creator_uid = u.id
+         WHERE l.is_private = 0 AND COALESCE(l.tier, ?) = ?
+         ORDER BY CASE WHEN l.id = ? THEN 0 ELSE 1 END, l.updated_at DESC LIMIT 50`
+      ).bind(DEFAULT_LOBBY_TIER, wantTier, currentLobby?.id || null).all()
+    : await c.env.sorc_db.prepare(
+        `SELECT l.*, u.username as creator_name, u.display_name as creator_display
+         FROM lobbies l JOIN users u ON l.creator_uid = u.id
+         WHERE l.is_private = 0
+         ORDER BY CASE WHEN l.id = ? THEN 0 ELSE 1 END, l.updated_at DESC LIMIT 50`
+      ).bind(currentLobby?.id || null).all();
+
+  /* Mirrors the gate in /join, so the padlocks on the tier bar say the same
+     thing the door will. An absent or lapsed rank is worth Beginner: it is
+     never a reason to show nothing. */
+  const rankOk = isPrivileged(user) || (!!assessment && !user.needs_reassess);
+  const ceiling = rankOk ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
 
   return c.json({
     lobbies: lobbies.results || [],
