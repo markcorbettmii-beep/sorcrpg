@@ -1702,7 +1702,12 @@
         }
         var isLobbyHost = currentLobby && m.user_id === currentLobby.creator_uid;
         var nameWrap = '<span class="member-name-wrap">' +
-          '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">👑</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
+          /* Entity, not the literal glyph: the two renderers wrote this crown
+             two different ways, and the site-wide emoji sweep that emptied it
+             once already takes the literal and leaves the entity. Written the
+             same in both places, it cannot appear on load and vanish on the
+             next poll. */
+          '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
           '<div class="member-name-menu">' + menuItems + '</div>' +
           '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
         '</span>';

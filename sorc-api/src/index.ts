@@ -1514,6 +1514,40 @@ async function ensureLobbyTierColumn(db: D1Database) {
   await db.prepare(`ALTER TABLE lobbies ADD COLUMN tier TEXT DEFAULT '${DEFAULT_LOBBY_TIER}'`).run().catch(() => {});
 }
 
+/* The lead of one lobby at a time - the same rule creation already enforces
+   ("You already have an active lobby. Close it before creating a new one."),
+   applied to the three paths that MOVE creator_uid rather than set it:
+   abandoning, kicking the host, and promoting. None of them checked it, so a
+   lobby handed to someone who already hosts made them the lead of two at once,
+   wearing the crown in both - and, because creation still refused them a
+   second, a state they could not have reached by their own hand.
+
+   A player already holding an open lobby is skipped and the lobby passes to the
+   next in line: next GM in by join order, then next member in, else it closes.
+   Abandoning frees them to make another, as the rules intend. */
+async function alreadyLeadsALobby(db: D1Database, userId: string, exceptLobbyId: string): Promise<boolean> {
+  const row = await db.prepare(
+    `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed' AND id != ?`
+  ).bind(userId, exceptLobbyId).first();
+  return !!row;
+}
+
+// GMs are tried first, then everyone in join order. A GM who already leads is
+// simply passed over rather than blocking the hand-off.
+async function pickNextHost(db: D1Database, lobbyId: string): Promise<string | null> {
+  const rows = await db.prepare(
+    `SELECT user_id, sorc_role FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC`
+  ).bind(lobbyId).all();
+  const members = (rows.results || []) as any[];
+  const gmsFirst = members
+    .filter((m) => String(m.sorc_role || '').toUpperCase().indexOf('GM-') === 0)
+    .concat(members);
+  for (const m of gmsFirst) {
+    if (!(await alreadyLeadsALobby(db, m.user_id, lobbyId))) return m.user_id;
+  }
+  return null;
+}
+
 function isPrivileged(user: any): boolean {
   const OWNER_EMAILS = ['corbett@sorcrpg.com'];
   const ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
@@ -2724,37 +2758,17 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, user.id).run();
 
     if (isAbandon && lobby.creator_uid === user.id) {
-      // Look for next GM first (sorc_role = 'GM-ADV' or 'GM-INT' or 'GM-BEG')
-      const nextGM = await c.env.sorc_db.prepare(
-        `SELECT lm.user_id FROM lobby_members lm
-         WHERE lm.lobby_id = ? AND lm.sorc_role LIKE 'GM-%'
-         ORDER BY lm.joined_at ASC
-         LIMIT 1`
-      ).bind(lobbyId).first() as any;
-
-      if (nextGM) {
-        // Transfer to next GM
+      // Next GM in, else next member in, skipping anyone who already leads a
+      // lobby of their own - nobody ends up the lead of two.
+      const nextHost = await pickNextHost(c.env.sorc_db, lobbyId);
+      if (nextHost) {
         await c.env.sorc_db.prepare(
           `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
-        ).bind(nextGM.user_id, user.username, now, lobbyId).run();
+        ).bind(nextHost, user.username, now, lobbyId).run();
       } else {
-        // No GMs remaining, pass to next member who joined
-        const nextMember = await c.env.sorc_db.prepare(
-          `SELECT lm.user_id FROM lobby_members lm
-           WHERE lm.lobby_id = ?
-           ORDER BY lm.joined_at ASC
-           LIMIT 1`
-        ).bind(lobbyId).first() as any;
-
-        if (nextMember) {
-          await c.env.sorc_db.prepare(
-            `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, updated_at = ? WHERE id = ?`
-          ).bind(nextMember.user_id, user.username, now, lobbyId).run();
-        } else {
-          // No members left, close the lobby
-          await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
-            .bind(now, lobbyId).run();
-        }
+        // Nobody eligible left to take it, so the lobby closes.
+        await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
+          .bind(now, lobbyId).run();
       }
     }
 
@@ -3209,15 +3223,13 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
   // an abandon does - next GM in, else next member in - so the crown always
   // sits on someone who is actually here.
   if (lobby.creator_uid === targetUid) {
-    const nextGM = await c.env.sorc_db.prepare(
-      `SELECT user_id FROM lobby_members WHERE lobby_id = ? AND sorc_role LIKE 'GM-%' ORDER BY joined_at ASC LIMIT 1`
-    ).bind(lobbyId).first() as any;
-    const nextHost = nextGM || await c.env.sorc_db.prepare(
-      `SELECT user_id FROM lobby_members WHERE lobby_id = ? ORDER BY joined_at ASC LIMIT 1`
-    ).bind(lobbyId).first() as any;
+    // Same hand-off as an abandon, and it skips anyone already leading a lobby:
+    // kicking the host was the one path that could quietly make the kicker -
+    // usually the next in line - the lead of two at once.
+    const nextHost = await pickNextHost(c.env.sorc_db, lobbyId);
     if (nextHost) {
       await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
-        .bind(nextHost.user_id, now, lobbyId).run();
+        .bind(nextHost, now, lobbyId).run();
     } else {
       await c.env.sorc_db.prepare(`UPDATE lobbies SET status = 'closed', updated_at = ? WHERE id = ?`)
         .bind(now, lobbyId).run();
@@ -3246,6 +3258,11 @@ app.post('/api/lobbies/:id/transfer-host', authMiddleware, async (c) => {
   ).bind(lobbyId, new_host_uid).first() as any;
   if (!member) return c.json({ error: 'That player is not in this lobby.' }, 404);
   if (isAdmin && !isOwner && member.live_role === 'OWNER') return c.json({ error: 'Admins cannot promote over an Owner.' }, 403);
+  // One lobby each. Promoting someone who already hosts would leave them the
+  // lead of two, which they could not have arranged themselves.
+  if (await alreadyLeadsALobby(c.env.sorc_db, new_host_uid, lobbyId)) {
+    return c.json({ error: 'That player already leads a lobby of their own. They must abandon it before taking this one.' }, 400);
+  }
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`UPDATE lobbies SET creator_uid = ?, updated_at = ? WHERE id = ?`)
     .bind(new_host_uid, now, lobbyId).run();
