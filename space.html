@@ -286,7 +286,7 @@
             if (!requestsList) return;
 
             if (!data || data.count === 0) {
-                requestsList.innerHTML = '<p style="color:#888;font-size:0.9rem;">No pending fellow requests.</p>';
+                requestsList.innerHTML = '<p style="color:#888;font-size:0.9rem;">No pending friend requests.</p>';
                 return;
             }
 
@@ -300,13 +300,13 @@
                         '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;">' + esc(req.from_display_name) + '</p>' +
                         '<p style="color:#888;font-size:0.85rem;margin:0;">' + req.from_community_points + ' Community Points</p>' +
                     '</div>' +
-                    '<button class="btn btn-sm btn-gold" onclick="acceptFellow(\'' + req.from_id + '\')">Accept</button>' +
-                    '<button class="btn btn-sm" style="background:#333;color:#e0cfc0;margin-left:0.25rem;" onclick="declineFellow(\'' + req.from_id + '\')">Decline</button>' +
+                    '<button class="btn btn-sm btn-gold" onclick="acceptFriend(\'' + req.from_id + '\')">Accept</button>' +
+                    '<button class="btn btn-sm" style="background:#333;color:#e0cfc0;margin-left:0.25rem;" onclick="declineFriend(\'' + req.from_id + '\')">Decline</button>' +
                 '</div>';
             });
             requestsList.innerHTML = html;
         })
-        .catch(e => console.error('Failed to load fellow requests:', e));
+        .catch(e => console.error('Failed to load friend requests:', e));
 
         // Load online Fellows
         fetch(API_URL + '/api/friends', {
@@ -318,44 +318,44 @@
             if (!fellowsList) return;
 
             if (!data || data.count === 0) {
-                fellowsList.innerHTML = '<p style="color:#888;font-size:0.9rem;grid-column:1/-1;">No Fellows yet. <a href="#" onclick="alert(\'Fellow search coming soon\');return false;" style="color:#b9aa00;text-decoration:underline;">Add a Fellow</a></p>';
+                fellowsList.innerHTML = '<p style="color:#888;font-size:0.9rem;grid-column:1/-1;">No Friends yet. <a href="#" onclick="alert(\'Friend search coming soon\');return false;" style="color:#b9aa00;text-decoration:underline;">Add a Fellow</a></p>';
                 return;
             }
 
             var html = '';
-            data.friends.forEach(function(fellow) {
-                var statusColor = fellow.status === 'online' ? '#1a6b1a' : '#666';
+            data.friends.forEach(function(friend) {
+                var statusColor = friend.status === 'online' ? '#1a6b1a' : '#666';
                 html += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:all 0.2s;hover:border-color:#b9aa00;">' +
                     '<div style="width:64px;height:64px;border-radius:50%;margin:0 auto 0.75rem;background:#333;border:3px solid ' + statusColor + ';display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
-                    (fellow.avatar ? '<img src="images/avatars/' + fellow.avatar + '" style="width:100%;height:100%;object-fit:cover;" />' : '<span style="font-size:1.5rem;color:#666;">' + fellow.display_name.charAt(0) + '</span>') +
+                    (friend.avatar ? '<img src="images/avatars/' + friend.avatar + '" style="width:100%;height:100%;object-fit:cover;" />' : '<span style="font-size:1.5rem;color:#666;">' + friend.display_name.charAt(0) + '</span>') +
                     '</div>' +
-                    '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(fellow.display_name) + '</p>' +
-                    '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + (fellow.status === 'online' ? '🟢 Online' : '⚫ Offline') + '</p>' +
+                    '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(friend.display_name) + '</p>' +
+                    '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + (friend.status === 'online' ? '🟢 Online' : '⚫ Offline') + '</p>' +
                     '<button class="btn btn-sm btn-gold" onclick="alert(\'Fellow Space coming soon\')">View Space</button>' +
                 '</div>';
             });
             fellowsList.innerHTML = html;
         })
-        .catch(e => console.error('Failed to load fellows:', e));
+        .catch(e => console.error('Failed to load friends:', e));
     }
 
-    function acceptFellow(fellowId) {
+    function acceptFriend(friendId) {
         var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
         fetch(API_URL + '/api/friends', {
             method: 'POST',
             headers: { 'X-Auth-Key': saved.authKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ friend_id: fellowId, action: 'accept' })
+            body: JSON.stringify({ friend_id: friendId, action: 'accept' })
         })
         .then(r => r.json())
         .then(() => {
             loadFellowsData();
         })
-        .catch(e => console.error('Failed to accept fellow:', e));
+        .catch(e => console.error('Failed to accept friend:', e));
     }
 
-    function declineFellow(fellowId) {
+    function declineFriend(friendId) {
         var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
-        fetch(API_URL + '/api/friends?friend_id=' + fellowId, {
+        fetch(API_URL + '/api/friends?friend_id=' + friendId, {
             method: 'DELETE',
             headers: { 'X-Auth-Key': saved.authKey }
         })
@@ -363,7 +363,7 @@
         .then(() => {
             loadFellowsData();
         })
-        .catch(e => console.error('Failed to decline fellow:', e));
+        .catch(e => console.error('Failed to decline friend:', e));
     }
 
     function renderProfileHeader(user, role, isPro) {
@@ -549,10 +549,10 @@
                     case 'fellows':
                         html += '<h3>Fellows</h3>' +
                             '<span class="access-badge PUBLIC">PUBLIC (Members)</span>' +
-                            '<p>Your network of adventurers. See who\'s online, send fellow requests, and join Fellow campaigns.</p>' +
+                            '<p>Your network of adventurers. See who\'s online, send friend requests, and join Fellow campaigns.</p>' +
 
                             '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;margin-bottom:1.5rem;">' +
-                                '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Fellow Requests</h4>' +
+                                '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Friend Requests</h4>' +
                                 '<div id="friendRequestsList" style="margin-bottom:1rem;"><p style="color:#888;font-size:0.9rem;">Loading friend requests...</p></div>' +
                             '</div>' +
 
