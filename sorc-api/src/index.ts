@@ -1339,7 +1339,7 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
   }
 });
 
-app.get('/api/profile/:userId', async (c) => {
+app.get('/api/space/:userId', async (c) => {
   const userId = c.req.param('userId');
   try {
     await ensureProfileColumns(c.env.sorc_db);
@@ -1378,7 +1378,7 @@ app.get('/api/me', authMiddleware, async (c) => {
   }
 });
 
-app.put('/api/profile', authMiddleware, async (c) => {
+app.put('/api/space', authMiddleware, async (c) => {
   const updates = await c.req.json();
   const user = c.get('user') as any;
   await ensureProfileColumns(c.env.sorc_db);
