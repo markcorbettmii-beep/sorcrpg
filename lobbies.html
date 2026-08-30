@@ -1368,6 +1368,15 @@
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
         if (myLobby) { myActiveLobbyId = myLobby.id; loadWorldChat(); }
+        // Sort lobbies: user's lobby first (sticky), then by most recent activity
+        lobbies.sort(function(a, b) {
+          var aIsUser = currentUser && a.creator_uid === currentUser.id ? 1 : 0;
+          var bIsUser = currentUser && b.creator_uid === currentUser.id ? 1 : 0;
+          if (aIsUser !== bIsUser) return bIsUser - aIsUser;
+          var aTime = new Date(a.updated_at || 0).getTime();
+          var bTime = new Date(b.updated_at || 0).getTime();
+          return bTime - aTime;
+        });
         allLobbies = lobbies.concat(PLACEHOLDER_LOBBIES);
         lobbyPage = 0;
         renderLobbyPage();
