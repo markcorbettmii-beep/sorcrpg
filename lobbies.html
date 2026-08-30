@@ -1221,9 +1221,16 @@
        the API on join - a filtered list is a convenience, never the gate.
        ?tier= picks one; absent, the whole board shows. */
     var TIER_NAMES = { BEG: 'Beginner', INT: 'Intermediate', ADV: 'Advanced' };
+    /* Tab labels are shorter than the prose names - three tabs have to sit on
+       one line on a phone, and 'Intermediate' is what breaks it. TIER_NAMES
+       stays long for sentences. */
+    var TIER_TABS = { BEG: 'Beginner', INT: 'Inter.', ADV: 'Advanced' };
+    /* One of the three is always selected; there is no unfiltered view. Absent
+       a ?tier=, the board opens on Beginner - the tier open to everyone, so it
+       is never a view the reader has no business in. */
     var currentTier = (function() {
       var t = (new URLSearchParams(location.search).get('tier') || '').toUpperCase();
-      return TIER_NAMES[t] ? t : '';
+      return TIER_NAMES[t] ? t : 'BEG';
     })();
     var allowedTiers = ['BEG'];
 
@@ -1242,14 +1249,13 @@
     function renderTierBar() {
       var bar = document.getElementById('tierBar');
       if (!bar) return;
-      var html = '<button class="tier-btn' + (currentTier ? '' : ' active') +
-        '" onclick="setTier(\'\')">All</button>';
+      var html = '';
       ['BEG', 'INT', 'ADV'].forEach(function(t) {
         var open = allowedTiers.indexOf(t) !== -1;
         html += '<button class="tier-btn' + (currentTier === t ? ' active' : '') +
           (open ? '' : ' locked') + '" onclick="setTier(\'' + t + '\')"' +
           (open ? '' : ' title="Above your rank - assess higher to join"') + '>' +
-          TIER_NAMES[t] + (open ? '' : ' &#128274;') + '</button>';
+          TIER_TABS[t] + (open ? '' : ' &#128274;') + '</button>';
       });
       bar.innerHTML = html;
     }
