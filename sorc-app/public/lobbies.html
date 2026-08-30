@@ -768,7 +768,7 @@
     function chatNameHtml(username, isGM) {
       var cls = 'msg-name' + (isGM ? ' gm' : '');
       if (isGuestName(username)) return '<span class="' + cls + '">' + esc(username) + '</span>';
-      return '<a href="public-profile.html?username=' + encodeURIComponent(username || '') +
+      return '<a href="public-space.html?username=' + encodeURIComponent(username || '') +
         '" class="' + cls + '" style="text-decoration:none;">' + esc(username) + '</a>';
     }
 
@@ -1307,7 +1307,7 @@
     };
 
     function buildHostNameDrop(uid, name, username, lobbyId) {
-      var profileHref = 'public-profile.html?username=' + encodeURIComponent(username || name || '');
+      var profileHref = 'public-space.html?username=' + encodeURIComponent(username || name || '');
       var items = '<a href="' + profileHref + '" onclick="event.stopPropagation()">Profile</a>';
       var isSelf = currentUser && currentUser.id === uid;
       var isPhUid = uid && uid.startsWith('ph-');
@@ -1585,7 +1585,7 @@
         if (!isSelf) {
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report"></button>';
         }
-        var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+        var profileHref = 'public-space.html?username=' + encodeURIComponent(m.username || '');
         var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
         var menuItems = '';
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
@@ -2215,7 +2215,7 @@
             actBtns += '<button class="member-act-btn danger" onclick="kickMember(\'' + esc(m.user_id) + '\')">Kick</button>';
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')"></button>';
-          var profileHref = 'public-profile.html?username=' + encodeURIComponent(m.username || '');
+          var profileHref = 'public-space.html?username=' + encodeURIComponent(m.username || '');
           var sheetHref = 'https://sorcrpg.com/character-sheet-fem-musc';
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
@@ -3038,7 +3038,7 @@
             var lobbyTag = m.sender_lobby_name ? '<span class="wmsg-lobby">[' + esc(m.sender_lobby_name) + ']</span>' : '';
             /* Respond messages: extract username from embedded URL for char-sheet link,
                strip the prefix and trailing raw URL before rendering */
-            var respondMatch = m.body && m.body.match(/public-profile\.html\?username=([^&\s\n"<]+)/);
+            var respondMatch = m.body && m.body.match(/public-space\.html\?username=([^&\s\n"<]+)/);
             var sheetIcon = respondMatch
               ? '<a href="https://sorcrpg.com/character-sheet-fem-musc" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;"></a>'
               : '';
