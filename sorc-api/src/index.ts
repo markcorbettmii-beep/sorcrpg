@@ -1655,7 +1655,8 @@ async function alreadyLeadsALobby(db: D1Database, userId: string, exceptLobbyId:
    reassessed since, in either direction. */
 async function pickNextHost(db: D1Database, lobbyId: string): Promise<string | null> {
   const rows = await db.prepare(
-    `SELECT lm.user_id, COALESCE(u.sorc_role, lm.sorc_role) AS rank_role
+    `SELECT lm.user_id, u.email AS email, u.role AS site_role,
+            COALESCE(u.sorc_role, lm.sorc_role) AS rank_role
        FROM lobby_members lm
        LEFT JOIN users u ON u.id = lm.user_id
       WHERE lm.lobby_id = ?
@@ -1663,7 +1664,15 @@ async function pickNextHost(db: D1Database, lobbyId: string): Promise<string | n
   ).bind(lobbyId).all();
   const members = (rows.results || []) as any[];
   const ranked = members.filter((m) => {
+    /* Guests never host, by inheritance any more than by creation. A guest
+       account carries PC-BEG, so a plain rank test let one take a lobby that
+       creation would have refused them outright - which is how a lobby ended up
+       hosted by a guest after its host abandoned. Checked by the same email
+       domain /api/auth/guest assigns, which cannot be claimed by registering. */
+    if (isGuestUser(m)) return false;
     const r = String(m.rank_role || '').toUpperCase();
+    const priv = String(m.site_role || '').toUpperCase();
+    if (priv === 'ADMIN' || priv === 'OWNER') return true;
     return r.indexOf('PC-') === 0 || r.indexOf('GM-') === 0;
   });
   const gmsFirst = ranked
@@ -2540,12 +2549,24 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
      never a reason to show nothing. */
   const rankOk = isPrivileged(user) || (!!assessment && !user.needs_reassess);
   const ceiling = rankOk ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
+
+  /* The lobby this player is already in, if any. A player belongs to one at a
+     time, so the board can say so standing rather than only refusing them when
+     they reach for a second. */
+  const currentLobby = await c.env.sorc_db.prepare(
+    `SELECT l.id, l.name, l.lobby_code FROM lobby_members lm
+       JOIN lobbies l ON l.id = lm.lobby_id
+      WHERE lm.user_id = ? AND l.status != 'closed'
+      LIMIT 1`
+  ).bind(user.id).first() as any;
+
   return c.json({
     lobbies: lobbies.results || [],
     assessed: !!assessment || isPrivileged(user),
     sorc_role: user.sorc_role || assessment?.role_granted || null,
     is_privileged: isPrivileged(user),
     needs_reassess: !!(user.needs_reassess),
+    current_lobby: currentLobby || null,
     // What this player may enter: their ceiling, and everything at or below it.
     tier: wantTier,
     tier_ceiling: ceiling,

@@ -74,6 +74,10 @@
     .section-head { color: #b9aa00; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid #2a2a2a; }
     /* Tier filter. A locked tier stays visible and says so - hiding it would
        leave the ladder invisible and the Advanced table looking absent. */
+    /* Standing note above the tabs while the player holds a lobby. */
+    .membership-banner { background: #1a1200; border: 1px solid #5a3a00; border-radius: 8px;
+      padding: 0.55rem 0.9rem; margin-bottom: 0.6rem; color: #c87d00; font-size: 0.82rem; line-height: 1.5; }
+    body.lawful-mode .membership-banner { background: #fdf3e0; border-color: #e0b060; color: #8a5800; }
     .tier-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
     .tier-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a;
       color: #888; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.15s; }
@@ -1160,6 +1164,7 @@
         buildWorldChat() +
         buildTicker() +
         '<div class="section-head">Open Lobbies</div>' +
+        '<div id="membershipBanner" class="membership-banner" style="display:none;"></div>' +
         '<div id="tierBar" class="tier-bar"></div>' +
         '<div id="lobbyList"><div class="empty-state">Loading...</div></div>' +
         '<div class="lobby-actions">' +
@@ -1246,6 +1251,51 @@
     /* Tiers above the player's rank still show, and say why they are shut.
        Hiding them would leave the ladder invisible and the Advanced table
        looking like it does not exist. */
+    /* The lobby this player is already in, as reported by the board. Null when
+       they are in none. */
+    var currentMembership = null;
+
+    /* One sentence, two places: standing above the tabs while they hold a
+       lobby, and again in the popup when they reach for a second. Saying the
+       same thing in both means the refusal is not new information - it is the
+       line they have already been reading, now with a reason to act on it. */
+    function membershipLine(m, onJoin, onAbandon) {
+      return 'Currently member of Lobby <strong>' + esc(m.lobby_code || '?') + '</strong> &mdash; ' +
+        '<a href="javascript:void(0);" onclick="' + onJoin + ';return false;" style="color:#b9aa00;text-decoration:underline;">join now</a>' +
+        ' or <a href="javascript:void(0);" onclick="' + onAbandon + ';return false;" style="color:#b9aa00;text-decoration:underline;">abandon</a>' +
+        ' to join a new lobby.';
+    }
+
+    function renderMembershipBanner() {
+      var el = document.getElementById('membershipBanner');
+      if (!el) return;
+      if (!currentMembership) { el.style.display = 'none'; el.innerHTML = ''; return; }
+      el.style.display = 'block';
+      el.innerHTML = membershipLine(currentMembership,
+        "openLobby('" + esc(currentMembership.id) + "')",
+        "abandonCurrentMembership()");
+    }
+
+    /* Abandon from the banner frees the player and leaves them on the board to
+       choose - there is no lobby in hand to send them to, unlike the popup. */
+    window.abandonCurrentMembership = async function() {
+      if (!currentMembership) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + encodeURIComponent(currentMembership.id) + '/leave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({ abandon: true })
+        });
+        var out = await readJson(res);
+        // A 404 means it is already gone, which is what abandoning was after.
+        if (out.error && res.status !== 404) { showToast(out.error, true); return; }
+        showToast('Lobby abandoned. You can join another now.');
+        currentMembership = null;
+        renderMembershipBanner();
+        loadLobbies();
+      } catch(e) { showToast('Could not reach the server.', true); }
+    };
+
     function renderTierBar() {
       var bar = document.getElementById('tierBar');
       if (!bar) return;
@@ -1311,6 +1361,8 @@
           return;
         }
         if (Array.isArray(data.allowed_tiers) && data.allowed_tiers.length) allowedTiers = data.allowed_tiers;
+        currentMembership = data.current_lobby || null;
+        renderMembershipBanner();
         renderTierBar();
         var lobbies = data.lobbies || [];
         // Track the user's own active lobby so summon works from list view too
@@ -1650,11 +1702,14 @@
       var swap = document.getElementById('joinConflictSwapBtn');
       if (!m || !t || !go || !swap) { showToast(data.error || 'You are already in a lobby.', true); return; }
 
-      var code = data.active_lobby_code || '';
-      var name = data.active_lobby_name ? ' - ' + data.active_lobby_name : '';
-      t.textContent = 'You are a member of Lobby ' + code + name +
-        '. Join it now, or abandon it and join this new lobby instead.';
+      /* Same sentence as the banner above the tabs. Here abandon carries on
+         into the lobby they were reaching for, since there is one in hand. */
+      t.innerHTML = membershipLine(
+        { lobby_code: data.active_lobby_code, id: data.active_lobby_id },
+        'joinConflictGo()', 'joinConflictSwap()');
 
+      window.joinConflictGo = function() { closeJoinConflict(); openLobby(data.active_lobby_id); };
+      window.joinConflictSwap = function() { swap.click(); };
       go.onclick = function() { closeJoinConflict(); openLobby(data.active_lobby_id); };
       swap.onclick = async function() {
         swap.disabled = true; swap.textContent = 'Abandoning...';
