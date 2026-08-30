@@ -1595,6 +1595,45 @@ async function hostVoteState(db: D1Database, lobby: any, viewerId: string) {
   };
 }
 
+/* An empty lobby closes itself. A room with nobody in it was still listed as
+   open and joinable: closing only ever happened as a side effect of the creator
+   abandoning, so the last ordinary member walking out simply decremented the
+   counter and left the lobby standing, hosted by someone who was not there.
+
+   Counted from lobby_members rather than the member_count column, which is a
+   stored tally and drifts - it is what said a lobby had members when it had
+   none. Returns whether it closed. */
+async function closeIfEmpty(db: D1Database, lobbyId: string): Promise<boolean> {
+  const row = await db.prepare(
+    `SELECT COUNT(*) AS n FROM lobby_members WHERE lobby_id = ?`
+  ).bind(lobbyId).first() as any;
+  if ((row?.n || 0) > 0) return false;
+  const now = new Date().toISOString();
+  await db.prepare(
+    `UPDATE lobbies SET status = 'closed', member_count = 0, updated_at = ? WHERE id = ? AND status != 'closed'`
+  ).bind(now, lobbyId).run();
+  return true;
+}
+
+/* The same rule applied to every open lobby at once, run when the board is
+   listed. Lobbies already emptied before the rule existed are swept up on the
+   next listing rather than lingering until someone happens to open them.
+
+   Skips anything created in the last few minutes: a lobby is written a moment
+   before its creator is written as its first member, and a sweep landing in
+   that gap would close a lobby the instant it was made. */
+async function closeEmptyLobbies(db: D1Database) {
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const now = new Date().toISOString();
+  await db.prepare(
+    `UPDATE lobbies
+        SET status = 'closed', member_count = 0, updated_at = ?
+      WHERE status != 'closed'
+        AND created_at < ?
+        AND NOT EXISTS (SELECT 1 FROM lobby_members lm WHERE lm.lobby_id = lobbies.id)`
+  ).bind(now, cutoff).run().catch(() => {});
+}
+
 async function alreadyLeadsALobby(db: D1Database, userId: string, exceptLobbyId: string): Promise<boolean> {
   const row = await db.prepare(
     `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed' AND id != ?`
@@ -2474,6 +2513,9 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
   ).bind(user.id).first() as any;
 
   await ensureLobbyTierColumn(c.env.sorc_db);
+  // Sweep up lobbies that emptied before the rule existed, so none is listed
+  // as open with nobody in it.
+  await closeEmptyLobbies(c.env.sorc_db);
 
   /* ?tier= narrows the list to one of the three lobbies. Absent, the whole
      board comes back and the page decides what to show - the filter is a view,
@@ -2908,7 +2950,9 @@ app.post('/api/lobbies/:id/leave', authMiddleware, async (c) => {
       const newCount = Math.max(0, (lobby.member_count || 1) - 1);
       await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
     }
-    return c.json({ success: true });
+    // Last one out closes the lobby, whether they abandoned or merely left.
+    const closed = await closeIfEmpty(c.env.sorc_db, lobbyId);
+    return c.json({ success: true, lobby_closed: closed });
   } catch (error: any) {
     return c.json({ error: 'Failed to leave lobby.', details: error.message }, 500);
   }
@@ -3370,9 +3414,11 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
     }
   }
 
-  const newCount = Math.max(1, (lobby.member_count || 1) - 1);
+  const newCount = Math.max(0, (lobby.member_count || 1) - 1);
   await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
-  return c.json({ success: true });
+  // Kicking the last member empties the lobby, and an empty lobby closes.
+  const emptied = await closeIfEmpty(c.env.sorc_db, lobbyId);
+  return c.json({ success: true, lobby_closed: emptied });
 });
 
 /* Vote to pass the crown on from a host who has gone quiet. Two gates, not
