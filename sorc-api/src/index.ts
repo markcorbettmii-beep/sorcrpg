@@ -2404,7 +2404,23 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   const assessment = await c.env.sorc_db.prepare(
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
-  if (!assessment && !isPrivileged(user)) return c.json({ error: 'You must complete the assessment before creating a lobby.', needs_reassess: true }, 403);
+  /* "Only PCs and GMs can create a lobby" - Campaign Mode, trials-of-combat.
+     A Civilian is neither, so holding a rank is the test, not merely having sat
+     the assessment. Checking only that an assessment row existed let a failed
+     attempt through: failing still writes its row, with role_granted FAIL and
+     sorc_role cleared, so a Civilian with a box set code could host a table the
+     rules do not let them host. Joining is unaffected - Beginner stays open to
+     everyone; this governs hosting alone, alongside the box set code below. */
+  const hostRank = String(user.sorc_role || '').toUpperCase();
+  const isRankedToHost = hostRank.indexOf('PC-') === 0 || hostRank.indexOf('GM-') === 0;
+  if (!isRankedToHost && !isPrivileged(user)) {
+    return c.json({
+      error: assessment
+        ? 'Only Players and GMs can host a lobby. Assess into a rank to create one.'
+        : 'You must complete the assessment before creating a lobby.',
+      needs_reassess: true
+    }, 403);
+  }
 
   if (!isPrivileged(user) && assessment) {
     const age = Date.now() - new Date(assessment.taken_at).getTime();
