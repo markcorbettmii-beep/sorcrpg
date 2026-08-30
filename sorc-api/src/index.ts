@@ -2535,13 +2535,13 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
         `SELECT l.*, u.username as creator_name, u.display_name as creator_display
          FROM lobbies l JOIN users u ON l.creator_uid = u.id
          WHERE l.is_private = 0 AND COALESCE(l.tier, ?) = ?
-         ORDER BY l.created_at DESC LIMIT 50`
+         ORDER BY l.updated_at DESC LIMIT 50`
       ).bind(DEFAULT_LOBBY_TIER, wantTier).all()
     : await c.env.sorc_db.prepare(
         `SELECT l.*, u.username as creator_name, u.display_name as creator_display
          FROM lobbies l JOIN users u ON l.creator_uid = u.id
          WHERE l.is_private = 0
-         ORDER BY l.created_at DESC LIMIT 50`
+         ORDER BY l.updated_at DESC LIMIT 50`
       ).all();
 
   /* Mirrors the gate in /join, so the padlocks on the tier bar say the same
