@@ -1722,14 +1722,18 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
   const allowed = await checkRateLimit(c.env.sorc_db, `assess:${user.id}:${ip}`, 5, 3600);
   if (!allowed) return c.json({ error: 'Too many assessment attempts. Please try again later.' }, 429);
 
-  const existing = await c.env.sorc_db.prepare(
-    `SELECT id FROM assessments WHERE user_id = ?`
-  ).bind(user.id).first();
-  /* Allow overwrite when flagged for reassessment (expiry or incompetence) */
-  if (existing && !user.needs_reassess) return c.json({ error: 'Already assessed. Use reassess to retake.' }, 400);
-  if (existing && user.needs_reassess) {
-    await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
-  }
+  /* Anyone may assess whenever they like, and the latest score is the one that
+     counts - it replaces the standing role outright, upward or downward. This
+     used to refuse a second attempt outright unless an admin had flagged
+     needs_reassess, which contradicted the page offering the retake. The flag
+     still forces a reassessment; it is no longer what permits one.
+
+     The previous attempt is deleted rather than kept alongside, so a player
+     holds exactly one standing assessment. Repeat attempts are bounded by the
+     rate limit above (5 an hour), not by a one-shot gate, and community points
+     are unaffected either way - assessment_rewarded is claimed once, so a
+     retake re-grades without paying out again. */
+  await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
 
   const { answers, gm_track } = await c.req.json() as any;
   const expectedCount = gm_track ? 20 : 10;

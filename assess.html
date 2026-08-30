@@ -179,9 +179,33 @@
     // Show result
     function showResult(assessment) {
       const app = document.getElementById('assessApp');
-      const role = assessment.role_granted || 'PC-BEG'; // Fallback to Beginner role
+      /* Both /api/assess/submit and the beta endpoint name this field `role`.
+         `role_granted` is the assessments table column, not a response field,
+         so reading it always fell through to the fallback and every result
+         announced '[PC] Novice' no matter what was scored. */
+      const role = assessment.role || assessment.role_granted || 'PC-BEG';
       const roleText = roleLabel(role);
       const color = roleColor(role);
+
+      /* Under 6 of 10 the server grants no role and returns FAIL. That earns
+         no lobby, so it gets its own card rather than being run through
+         determineLobbyType, which would invite the reader into 'the Unknown
+         lobby'. Reachable only now that the real role is being read. */
+      if (role === 'FAIL') {
+        app.innerHTML = `
+          <div class="result-card">
+            <h2>Assessment Complete</h2>
+            <div class="result-role" style="color: ${color};">Not yet</div>
+            <div class="result-score">${assessment.score}/10 correct</div>
+            <div class="lobby-info">
+              A score of 6 or better earns a lobby role.
+              Study the Basic Rules and assess again.
+            </div>
+          </div>
+        ` + renderWrongReview(assessment);
+        return;
+      }
+
       const lobbyType = determineLobbyType(role); // Determine lobby type
       const lobbyLink = `<a href="https://sorcrpg.com/lobbies" target="_blank" style="color: #b9aa00; text-decoration: underline;">Sign in as Guest</a>`;
 
@@ -290,8 +314,13 @@
     // Role colors
     function roleColor(r) {
       if (!r) return '#e0cfc0'; // Default color if role is undefined
-      if (r.startsWith('[PC]')) return 'blue'; // PC roles in blue
-      if (r.startsWith('[GM]')) return 'purple'; // GM roles in purple
+      if (r === 'FAIL') return '#c93f35';
+      /* Raw role codes arrive here - PC-BEG, GM-ADV - not the bracketed text
+         roleLabel produces, so testing for '[PC]' never matched and every rank
+         rendered in the default cream. Hex rather than the named 'blue' and
+         'purple', which are close to unreadable on the card's dark ground. */
+      if (r.indexOf('PC-') === 0) return '#6fa8dc'; // PC roles in blue
+      if (r.indexOf('GM-') === 0) return '#b085e0'; // GM roles in purple
       return '#e0cfc0'; // Default color
     }
 
