@@ -820,6 +820,10 @@
 
     // ===== STATE =====
     var currentLobby = null;
+    /* Standing vote to pass the crown on from an absent host, as reported by
+       the lobby endpoint: how long they have been quiet, how many have voted,
+       and how many it takes. Null until a lobby is open. */
+    var hostVoteState = null;
     var chatPollTimer = null;
     var lastMsgId = null;
     var currentReadyCheckId = null;
@@ -1230,6 +1234,45 @@
           TIER_NAMES[t] + (open ? '' : ' &#128274;') + '</button>';
       });
       bar.innerHTML = html;
+    }
+
+    /* An absent host. Shown only to the other players at the table, and only
+       once the host has actually gone quiet - it is never dangled in front of
+       a room whose leader is present. The host returning clears the votes
+       server-side, so a banner cannot outlive their absence. */
+    function buildHostVoteBanner() {
+      var v = hostVoteState;
+      if (!v || !v.host_idle || isCreator || !v.eligible) return '';
+      var mins = Math.floor((v.idle_ms || 0) / 60000);
+      var carried = v.votes >= v.needed;
+      return '<div style="background:#1a1200;border:1px solid #5a3a00;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;color:#c87d00;font-size:0.85rem;line-height:1.5;">' +
+        '<strong>The host has been away ' + mins + ' minutes.</strong> ' +
+        'The table can pass the crown to the next leader. ' +
+        '<span style="color:#e0cfc0;">' + v.votes + ' of ' + v.needed + ' needed</span>' +
+        (carried ? '' :
+          ' &nbsp;<button onclick="voteRemoveHost()" style="padding:4px 12px;background:#5a3a00;color:#f0d090;border:1px solid #8a5a00;border-radius:6px;font-size:0.78rem;cursor:pointer;"' +
+          (v.you_voted ? ' disabled title="You have already voted"' : '') + '>' +
+          (v.you_voted ? 'Voted' : 'Vote to pass the crown') + '</button>') +
+      '</div>';
+    }
+
+    async function voteRemoveHost() {
+      if (!currentLobby) return;
+      try {
+        var res = await fetch(API_URL + '/api/lobbies/' + encodeURIComponent(currentLobby.id) + '/host-vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+          body: JSON.stringify({})
+        });
+        var data = await readJson(res);
+        if (data.error) { alert(data.error); return; }
+        if (data.host_vote) hostVoteState = data.host_vote;
+        if (data.transferred) alert('The crown has passed to the next leader.');
+        else if (data.no_eligible_host) alert('Nobody here can take the lobby - everyone else already leads one.');
+        openLobby(currentLobby.id);
+      } catch(e) {
+        alert('Could not record your vote. Please try again.');
+      }
     }
 
     async function loadLobbies() {
@@ -1654,6 +1697,7 @@
         (data.members || []).forEach(function(m) { prevMemberMap[m.user_id] = m; });
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
         hasGMRights = isCreator || isPrivileged();
+        hostVoteState = data.host_vote || null;
         document.documentElement.classList.add('lobby-locked');
         renderLobbyDetail(data);
         startChatPoll(lobbyId);
@@ -1773,6 +1817,7 @@
           '</div>' +
         '</div>' +
         invitePanel +
+        buildHostVoteBanner() +
         '<div style="background:#1a1200;border:1px solid #5a3a00;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.25rem;color:#c87d00;font-size:0.85rem;line-height:1.5;">' +
           '<strong>Beginner lobbies need no assessment</strong> - Civilians and guests can sit down at a Beginner table straight away. The Role Assessment is how you rank up into the Intermediate and Advanced lobbies.' +
         '</div>' +

@@ -1525,6 +1525,76 @@ async function ensureLobbyTierColumn(db: D1Database) {
    A player already holding an open lobby is skipped and the lobby passes to the
    next in line: next GM in by join order, then next member in, else it closes.
    Abandoning frees them to make another, as the rules intend. */
+/* An absent host. A table should not be held by someone who has walked away,
+   but nor should a leader lose the lobby over a meal break, so removal takes
+   two things and not one: the host has to have gone quiet, AND the players
+   still at the table have to agree to it. Idleness alone removes nobody.
+
+   Thirty minutes. A tabletop session breaks for food and bio far more often
+   than an MMO party does, so this sits well above an ordinary pause, while an
+   hour would leave a table stuck for most of a session before anyone could
+   act. It is one constant.
+
+   The pattern is the usual MMO one, split down the middle: parties in WoW and
+   FFXIV pass lead automatically the moment a leader drops, and group finders
+   settle the harder cases by member vote. Automatic hand-off alone is wrong
+   here, because a SORC host stepping out for ten minutes is ordinary and their
+   lobby should still be theirs when they sit back down. Hence the vote. */
+const HOST_IDLE_MS = 30 * 60 * 1000; // 30 minutes before a vote may be opened
+
+async function ensureHostVoteSchema(db: D1Database) {
+  await db.prepare(`ALTER TABLE lobbies ADD COLUMN host_seen_at TEXT`).run().catch(() => {});
+  await db.prepare(
+    `CREATE TABLE IF NOT EXISTS lobby_host_votes (
+       lobby_id TEXT NOT NULL,
+       voter_uid TEXT NOT NULL,
+       created_at TEXT NOT NULL,
+       PRIMARY KEY (lobby_id, voter_uid)
+     )`
+  ).run().catch(() => {});
+}
+
+// How long the host has been quiet. A lobby that has never stamped falls back
+// to its own updated_at, so an existing lobby is not treated as idle forever.
+function hostIdleMs(lobby: any): number {
+  const stamp = lobby?.host_seen_at || lobby?.updated_at || lobby?.created_at;
+  if (!stamp) return 0;
+  const t = new Date(stamp).getTime();
+  return isNaN(t) ? 0 : Math.max(0, Date.now() - t);
+}
+
+/* The host is here. Stamping also clears any votes standing against them:
+   coming back settles the question, and a vote gathered while they were away
+   must not carry over to remove a host who is now at the table. */
+async function markHostSeen(db: D1Database, lobbyId: string) {
+  const now = new Date().toISOString();
+  await db.prepare(`UPDATE lobbies SET host_seen_at = ? WHERE id = ?`).bind(now, lobbyId).run().catch(() => {});
+  await db.prepare(`DELETE FROM lobby_host_votes WHERE lobby_id = ?`).bind(lobbyId).run().catch(() => {});
+}
+
+// Everyone at the table except the host, and what it takes to carry: more than
+// half of them. A lobby holding only its absent host has no electorate at all.
+async function hostVoteState(db: D1Database, lobby: any, viewerId: string) {
+  const members = await db.prepare(
+    `SELECT user_id FROM lobby_members WHERE lobby_id = ? AND user_id != ?`
+  ).bind(lobby.id, lobby.creator_uid).all();
+  const eligible = (members.results || []).length;
+  const votes = await db.prepare(
+    `SELECT voter_uid FROM lobby_host_votes WHERE lobby_id = ?`
+  ).bind(lobby.id).all().catch(() => ({ results: [] as any[] }));
+  const cast = (votes.results || []) as any[];
+  const idleMs = hostIdleMs(lobby);
+  return {
+    idle_ms: idleMs,
+    idle_threshold_ms: HOST_IDLE_MS,
+    host_idle: idleMs >= HOST_IDLE_MS,
+    eligible,
+    votes: cast.length,
+    needed: eligible > 0 ? Math.floor(eligible / 2) + 1 : 0,
+    you_voted: cast.some((v) => v.voter_uid === viewerId)
+  };
+}
+
 async function alreadyLeadsALobby(db: D1Database, userId: string, exceptLobbyId: string): Promise<boolean> {
   const row = await db.prepare(
     `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed' AND id != ?`
@@ -2535,6 +2605,15 @@ app.get('/api/lobbies/:id', authMiddleware, async (c) => {
 
   const privileged = isPrivileged(user);
 
+  /* The host reading their own lobby is the host being present - this endpoint
+     is what the page polls, so it is the truest signal of someone still at the
+     table without inventing a heartbeat. Stamping clears any standing votes. */
+  await ensureHostVoteSchema(c.env.sorc_db);
+  if (lobby.creator_uid === user.id) {
+    await markHostSeen(c.env.sorc_db, lobby.id);
+    lobby.host_seen_at = new Date().toISOString();
+  }
+
   if (lobby.is_private && lobby.creator_uid !== user.id && !privileged) {
     const isMember = await c.env.sorc_db.prepare(
       `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
@@ -2570,7 +2649,8 @@ app.get('/api/lobbies/:id', authMiddleware, async (c) => {
 
   return c.json({
     lobby, members: memberList, is_member: isMember || privileged,
-    is_creator: isCreator, is_privileged: privileged
+    is_creator: isCreator, is_privileged: privileged,
+    host_vote: await hostVoteState(c.env.sorc_db, lobby, user.id)
   });
 });
 
@@ -3261,6 +3341,60 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
   const newCount = Math.max(1, (lobby.member_count || 1) - 1);
   await c.env.sorc_db.prepare(`UPDATE lobbies SET member_count = ?, updated_at = ? WHERE id = ?`).bind(newCount, now, lobbyId).run();
   return c.json({ success: true });
+});
+
+/* Vote to pass the crown on from a host who has gone quiet. Two gates, not
+   one: the host must have been idle past HOST_IDLE_MS, and a majority of the
+   other members must agree. The host returning clears the votes, so this can
+   only ever remove someone who is genuinely gone. When it carries, the lobby
+   changes hands by the same rule as an abandon - next GM in, then next member
+   in, skipping anyone who already leads a lobby - so one player never ends up
+   holding two. The deposed host stays in the lobby as an ordinary member. */
+app.post('/api/lobbies/:id/host-vote', authMiddleware, async (c) => {
+  const user = c.get('user') as any;
+  const lobbyId = c.req.param('id');
+  await ensureHostVoteSchema(c.env.sorc_db);
+
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
+  if (lobby.status === 'closed') return c.json({ error: 'This lobby is closed.' }, 400);
+  if (lobby.creator_uid === user.id) return c.json({ error: 'The host cannot vote to remove themselves. Abandon the lobby instead.' }, 400);
+
+  const member = await c.env.sorc_db.prepare(
+    `SELECT id FROM lobby_members WHERE lobby_id = ? AND user_id = ?`
+  ).bind(lobbyId, user.id).first();
+  if (!member) return c.json({ error: 'Only members of this lobby can vote.' }, 403);
+
+  const idleMs = hostIdleMs(lobby);
+  if (idleMs < HOST_IDLE_MS) {
+    const mins = Math.ceil((HOST_IDLE_MS - idleMs) / 60000);
+    return c.json({
+      error: 'The host is still active. A vote can be opened after ' + Math.round(HOST_IDLE_MS / 60000) +
+        ' minutes of quiet - about ' + mins + ' more.',
+      host_idle: false
+    }, 400);
+  }
+
+  const now = new Date().toISOString();
+  await c.env.sorc_db.prepare(
+    `INSERT OR REPLACE INTO lobby_host_votes (lobby_id, voter_uid, created_at) VALUES (?, ?, ?)`
+  ).bind(lobbyId, user.id, now).run();
+
+  const state = await hostVoteState(c.env.sorc_db, lobby, user.id);
+  if (state.needed > 0 && state.votes >= state.needed) {
+    const nextHost = await pickNextHost(c.env.sorc_db, lobbyId);
+    if (nextHost) {
+      await c.env.sorc_db.prepare(
+        `UPDATE lobbies SET creator_uid = ?, commandeered_from = ?, host_seen_at = ?, updated_at = ? WHERE id = ?`
+      ).bind(nextHost, lobby.creator_name || '', now, now, lobbyId).run();
+      await c.env.sorc_db.prepare(`DELETE FROM lobby_host_votes WHERE lobby_id = ?`).bind(lobbyId).run();
+      return c.json({ success: true, transferred: true, new_host_uid: nextHost, host_vote: { ...state, votes: 0 } });
+    }
+    // Nobody eligible to take it - everyone left already leads a lobby.
+    return c.json({ success: true, transferred: false, no_eligible_host: true, host_vote: state });
+  }
+
+  return c.json({ success: true, transferred: false, host_vote: state });
 });
 
 app.post('/api/lobbies/:id/transfer-host', authMiddleware, async (c) => {
