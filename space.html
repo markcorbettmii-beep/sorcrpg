@@ -104,6 +104,20 @@
         .card h4 { color: #e0cfc0; margin: 0 0 0.5rem 0; font-size: 0.95rem; }
         .card p { color: #666; font-size: 0.85rem; margin: 0; line-height: 1.5; }
 
+        /* Other Characters - sheet thumbnails. Static pictures of a sheet, not
+           sheets in miniature: nothing in them is editable. The one interaction
+           is choosing which sheet fills the big frame above, and the chosen
+           thumbnail carries the highlight. */
+        .sheet-tier { color: #b9aa00; font-size: 0.72rem; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.06em; margin: 1.1rem 0 0.4rem; }
+        .sheet-thumbs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .sheet-thumb { width: 62px; height: 89px; flex: 0 0 auto; padding: 0; cursor: pointer;
+            border: 2px solid #333; border-radius: 6px; background-color: #f5f5f5;
+            background-repeat: no-repeat; background-position: center; background-size: contain;
+            transition: border-color 0.15s, box-shadow 0.15s; }
+        .sheet-thumb:hover { border-color: #6a6320; }
+        .sheet-thumb.selected { border-color: #b9aa00; box-shadow: 0 0 0 2px rgba(185,170,0,0.28); }
+
         .fam-tags { margin: 0.6rem 0 0 0; display: flex; gap: 0.35rem; flex-wrap: wrap; }
         .fam-tag { font-size: 0.68rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; background: #2c2c1a; color: #b9aa00; border: 1px solid #4a4420; }
         body.lawful-mode .fam-tag { background: #f5f1e0; color: #7a6a00; border-color: #ddd5b0; }
@@ -384,6 +398,39 @@
         '</div>';
     }
 
+    /* Sheet thumbnails under Other Characters. Basic holds two slots, Pro five.
+       Every slot is a static picture of a sheet - none of them is a sheet you can
+       type into, the same way an armory page shows what the game already decided.
+       Per-user sheet art does not exist yet, so each slot shows the default male
+       frame; once sheets are stored per player this reads their own art instead. */
+    var SHEET_FRAME = 'images/frame-male-musc_20260822_235531_0000.png';
+    var selectedSheet = 0;
+
+    function sheetThumbs(startIndex, count) {
+        var html = '';
+        for (var i = 0; i < count; i++) {
+            var idx = startIndex + i;
+            var isSel = (idx === selectedSheet) ? ' selected' : '';
+            html += '<button type="button" class="sheet-thumb' + isSel + '" data-sheet="' + idx + '"' +
+                ' title="Show this sheet" onclick="selectSheet(' + idx + ')"' +
+                ' style="background-image:url(\'' + SHEET_FRAME + '\');"></button>';
+        }
+        return html;
+    }
+
+    /* The one interaction a thumbnail has: choose which sheet fills the big frame.
+       The chosen slot keeps the highlight so it is clear which one is on show. */
+    function selectSheet(index) {
+        selectedSheet = index;
+        var big = document.getElementById('bigSheet');
+        if (big) big.src = SHEET_FRAME;
+        var thumbs = document.querySelectorAll('.sheet-thumb');
+        for (var i = 0; i < thumbs.length; i++) {
+            var owns = String(index) === thumbs[i].getAttribute('data-sheet');
+            thumbs[i].classList.toggle('selected', owns);
+        }
+    }
+
     function renderTabNav(user, role, isPro) {
         var html = '<div class="tab-nav">';
         PROFILE_TABS.forEach(function(tab) {
@@ -456,7 +503,7 @@
                                 /* Static sheet - stats are not editable in the field. Editing goes
                                    through the Edit Character stats link above. Male is the default. */
                                 '<div style="margin:1.5rem 0;">' +
-                                    '<img src="images/frame-male-musc_20260822_235531_0000.png" alt="SORC Character Sheet" style="display:block;width:100%;height:auto;border-radius:8px;border:1px solid #333;background:#f5f5f5;" />' +
+                                    '<img id="bigSheet" src="images/frame-male-musc_20260822_235531_0000.png" alt="SORC Character Sheet" style="display:block;width:100%;height:auto;border-radius:8px;border:1px solid #333;background:#f5f5f5;" />' +
                                 '</div>' +
                                 '<div style="margin:1.5rem 0;">' +
                                     '<a href="https://sorcrpg.com/character-customizer/cc-default.html" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Customize Portrait</a>' +
@@ -465,8 +512,15 @@
                                     '<a href="https://sorcrpg.com/content/essentia_core/rules_ref_002.html#character-creation" target="_blank" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Refer to character creation</a>' +
                                 '</div>' +
                             '</div>' +
-                            '<div class="content-grid" style="margin-top:2rem;">' +
-                                '<div class="card" style="text-align:center;padding:2rem;"><h4>No Characters Yet</h4><p><a href="https://sorcrpg.com/library" style="color:#b9aa00;text-decoration:underline;">Create your first character</a></p></div>' +
+                            /* Other Characters. Character creation is linked once, above, where
+                               Refer to character creation sits - the old 'Create your first
+                               character' card pointed at the same rules page and is gone. */
+                            '<div style="margin:2.5rem auto 0;max-width:600px;">' +
+                                '<h3>Other Characters</h3>' +
+                                '<div class="sheet-tier">Basic</div>' +
+                                '<div class="sheet-thumbs">' + sheetThumbs(0, 2) + '</div>' +
+                                '<div class="sheet-tier">Pro</div>' +
+                                '<div class="sheet-thumbs">' + sheetThumbs(2, 5) + '</div>' +
                             '</div>';
                         break;
 
