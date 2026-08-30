@@ -658,6 +658,21 @@
     </div>
   </div>
 
+  <!-- Already in a lobby, trying to enter another. A player belongs to one at a
+       time, so this offers both ways forward rather than only refusing: go to
+       the lobby they are in, or abandon it and take the new one in one step. -->
+  <div id="joinConflictModal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
+    <div style="background:#0f0f0f;border:1px solid #2a2a2a;border-radius:12px;padding:1.5rem;max-width:420px;width:90%;display:flex;flex-direction:column;gap:0.9rem;">
+      <h3 style="margin:0;color:#b9aa00;font-size:0.95rem;">You are already in a lobby</h3>
+      <p id="joinConflictText" style="margin:0;color:#e0cfc0;font-size:0.85rem;line-height:1.5;"></p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end;">
+        <button onclick="closeJoinConflict()" style="padding:6px 16px;background:none;border:1px solid #333;color:#666;border-radius:6px;cursor:pointer;font-size:0.8rem;">Cancel</button>
+        <button id="joinConflictGoBtn" style="padding:6px 16px;background:none;border:1px solid #b9aa00;color:#b9aa00;border-radius:6px;cursor:pointer;font-size:0.8rem;">Join now</button>
+        <button id="joinConflictSwapBtn" style="padding:6px 16px;background:#b9aa00;color:#111;border:none;border-radius:6px;cursor:pointer;font-weight:bold;font-size:0.8rem;">Abandon and join</button>
+      </div>
+    </div>
+  </div>
+
   <div id="summonInModal" style="display:none;" class="summon-modal-overlay">
     <div class="summon-modal incoming-summon-modal">
       <h3>You have been summoned!</h3>
@@ -1612,6 +1627,56 @@
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
+    /* A player belongs to one lobby at a time, so being refused entry to a
+       second is not a dead end - it is a choice between two lobbies. Both are
+       offered: go to the one they are in, or abandon it and take this one.
+       'Abandon and join' does both steps, since doing them by hand means
+       leaving one lobby and hoping the other still has room. */
+    window.closeJoinConflict = function() {
+      var m = document.getElementById('joinConflictModal');
+      if (m) m.style.display = 'none';
+    };
+
+    function showJoinConflict(data, wantedLobbyId) {
+      var m = document.getElementById('joinConflictModal');
+      var t = document.getElementById('joinConflictText');
+      var go = document.getElementById('joinConflictGoBtn');
+      var swap = document.getElementById('joinConflictSwapBtn');
+      if (!m || !t || !go || !swap) { showToast(data.error || 'You are already in a lobby.', true); return; }
+
+      var code = data.active_lobby_code || '';
+      var name = data.active_lobby_name ? ' - ' + data.active_lobby_name : '';
+      t.textContent = 'You are a member of Lobby ' + code + name +
+        '. Join it now, or abandon it and join this new lobby instead.';
+
+      go.onclick = function() { closeJoinConflict(); openLobby(data.active_lobby_id); };
+      swap.onclick = async function() {
+        swap.disabled = true; swap.textContent = 'Abandoning...';
+        try {
+          var res = await fetch(API_URL + '/api/lobbies/' + encodeURIComponent(data.active_lobby_id) + '/leave', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
+            body: JSON.stringify({ abandon: true })
+          });
+          var out = await readJson(res);
+          /* A 404 means the lobby is already gone, which is the outcome
+             abandoning was after - carry on into the new one either way. */
+          if (out.error && res.status !== 404) {
+            showToast(out.error, true);
+            swap.disabled = false; swap.textContent = 'Abandon and join';
+            return;
+          }
+          closeJoinConflict();
+          swap.disabled = false; swap.textContent = 'Abandon and join';
+          joinLobby(wantedLobbyId);
+        } catch(e) {
+          showToast('Could not reach the server.', true);
+          swap.disabled = false; swap.textContent = 'Abandon and join';
+        }
+      };
+      m.style.display = 'flex';
+    }
+
     window.joinLobby = async function(lobbyId) {
       if (!currentUser || !currentUser.authKey) { showToast('Sign in to join a lobby.', true); return; }
       try {
@@ -1621,6 +1686,13 @@
           body: JSON.stringify({ lobby_id: lobbyId })
         });
         var data = await readJson(res);
+        /* Checked before the 'already' test below, which reads any error
+           mentioning "already" as being in this lobby - a different situation
+           from being in a different one. */
+        if (data.already_in_lobby && data.active_lobby_id) {
+          showJoinConflict(data, lobbyId);
+          return;
+        }
         if (data.success || (data.error && data.error.toLowerCase().indexOf('already') !== -1)) {
           trackJoinedLobby(lobbyId);
           setTimeout(function() { openLobby(lobbyId); }, 900);

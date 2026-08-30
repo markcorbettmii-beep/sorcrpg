@@ -2824,15 +2824,21 @@ app.post('/api/lobbies/join', authMiddleware, async (c) => {
      out, and it is open to every member now, not just the creator. */
   if (!privileged) {
     const elsewhere = await c.env.sorc_db.prepare(
-      `SELECT l.name FROM lobby_members lm
+      `SELECT l.id, l.name, l.lobby_code FROM lobby_members lm
          JOIN lobbies l ON l.id = lm.lobby_id
         WHERE lm.user_id = ? AND l.id != ? AND l.status != 'closed'
         LIMIT 1`
     ).bind(user.id, lobby.id).first() as any;
     if (elsewhere) {
+      /* Named by Lobby Number, and handed back with its id so the page can
+         offer both ways out rather than only naming the obstacle: go to the
+         lobby they are already in, or abandon it and take this one instead. */
       return c.json({
-        error: 'You are already a member of Lobby ' + (elsewhere.name || '') + '. Please Abandon your lobby to enter a new one.',
-        already_in_lobby: true
+        error: 'You are a member of Lobby ' + (elsewhere.lobby_code || '?') + '.',
+        already_in_lobby: true,
+        active_lobby_id: elsewhere.id,
+        active_lobby_name: elsewhere.name,
+        active_lobby_code: elsewhere.lobby_code
       }, 400);
     }
   }
