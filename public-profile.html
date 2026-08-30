@@ -53,9 +53,9 @@
         <div id="navRoleBadge"></div>
     </nav>
     <script>(function(){var t=localStorage.getItem('themeSelected')||'lawful';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
-    <div class="space-container">
+    <div class="profile-container">
         <a href="javascript:void(0)" onclick="if(history.length>1){history.back();}else{window.location='lobbies.html';}" class="back-link">← Back</a>
-        <div id="spaceApp"><div class="loading">Loading Space...</div></div>
+        <div id="profileApp"><div class="loading">Loading profile...</div></div>
     </div>
     <div id="footer"></div>
     <script type="module" src="main.js?v=26"></script>
@@ -90,7 +90,7 @@
             }).join('');
 
             el.innerHTML =
-                '<div class="space-section">'
+                '<div class="profile-section">'
                   + '<h3 style="color:#b9aa00;font-size:0.92rem;margin:0 0 0.6rem;">Trophy &amp; Collectables'
                     + (data.is_mine && !data.is_public
                         ? ' <span style="color:#c87d00;font-size:0.7rem;font-weight:normal;">(private &mdash; only you see this)</span>'
@@ -133,7 +133,7 @@
         var userId = params.get('uid') || params.get('username');
 
         if (!userId) {
-            document.getElementById('spaceApp')').innerHTML = '<div class="not-found">No Char. Sheet Specified.</div>';
+            document.getElementById('profileApp').innerHTML = '<div class="not-found">No Char. Sheet Specified.</div>';
             return;
         }
 
@@ -142,7 +142,7 @@
             var data = await res.json();
 
             if (data.error || !data.user) {
-                document.getElementById('spaceApp')').innerHTML = '<div class="not-found">Profile not found.</div>';
+                document.getElementById('profileApp').innerHTML = '<div class="not-found">Profile not found.</div>';
                 return;
             }
 
@@ -159,7 +159,7 @@
             var avatar = user.avatar || null;
             var bio = user.bio || null;
 
-            var titleDisplay = titles.length > 0 ? '<div class="space-title">' + titles.map(function(t){return escapeHtml(t);}).join(' · ') + '</div>' : '';
+            var titleDisplay = titles.length > 0 ? '<div class="profile-title">' + titles.map(function(t){return escapeHtml(t);}).join(' · ') + '</div>' : '';
             var statusBadge = (user.membership === 'pro' || user.pro_member || user.box_set_redeemed)
                 ? '<span class="pro-badge">SORC Pro</span>'
                 : '<span class="basic-badge">SORC Basic</span>';
@@ -169,15 +169,15 @@
                 : username.charAt(0).toUpperCase();
 
             var bioSection = bio
-                ? '<div class="space-section"><h3>About</h3><div class="space-field"><p>' + escapeHtml(bio) + '</p></div></div>'
+                ? '<div class="profile-section"><h3>About</h3><div class="profile-field"><p>' + escapeHtml(bio) + '</p></div></div>'
                 : '';
 
             var emailSection = (user.email && !user.privacy_email)
-                ? '<div class="space-section"><h3>Contact</h3><div class="space-field"><p style="font-size:0.88rem;color:#c0b090;">' + escapeHtml(user.email) + '</p></div></div>'
+                ? '<div class="profile-section"><h3>Contact</h3><div class="profile-field"><p style="font-size:0.88rem;color:#c0b090;">' + escapeHtml(user.email) + '</p></div></div>'
                 : '';
 
             var achievementsSection =
-                '<div class="space-section"><h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">(SORC Web Pro)</span></h3>'
+                '<div class="profile-section"><h3>Achievements <span style="font-size:0.7rem;color:#555;font-weight:normal;">(SORC Web Pro)</span></h3>'
                 + '<div class="locked-achievements" style="display:flex;flex-wrap:wrap;gap:0.5rem;">'
                 + '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">???</div>'
                 + '<div style="background:#222;border:1px solid #333;border-radius:8px;padding:6px 12px;font-size:0.8rem;color:#555;">???</div>'
@@ -185,7 +185,7 @@
                 + '<div style="font-size:0.72rem;color:#444;margin-top:6px;">Unlocks with SORC Web Pro</div></div>';
 
             var charSheetSection = isSelf
-                ? '<div class="space-section">'
+                ? '<div class="profile-section">'
                   + '<h3>Customize Character</h3>'
                   + '<div style="text-align:center;">'
                   + '<img src="images/sorc-char-sheet_20260529_230132_0000.png" '
@@ -201,9 +201,9 @@
 
             var actionSection = '';
             if (isSelf) {
-                actionSection = '<div class="space-section"><a href="space.html" style="display:block;text-align:center;background:#b9aa00;color:#222;padding:12px;border-radius:8px;font-weight:bold;text-decoration:none;">Edit Your Space</a></div>';
+                actionSection = '<div class="profile-section"><a href="profile.html" style="display:block;text-align:center;background:#b9aa00;color:#222;padding:12px;border-radius:8px;font-weight:bold;text-decoration:none;">Edit Your Profile</a></div>';
             } else if (!currentUser) {
-                actionSection = '<div class="space-section"><p style="font-size:0.85rem;color:#555;"><a href="signin.html" style="color:#b9aa00;">Sign in</a> to connect with ' + escapeHtml(username) + '.</p></div>';
+                actionSection = '<div class="profile-section"><p style="font-size:0.85rem;color:#555;"><a href="signin.html" style="color:#b9aa00;">Sign in</a> to connect with ' + escapeHtml(username) + '.</p></div>';
             } else {
                 var viewerEmail = currentUser.email || '';
                 var isOwnerViewer = OWNER_EMAILS.includes(viewerEmail);
@@ -233,7 +233,7 @@
                         + '</div>';
                 }
 
-                actionSection = '<div class="space-section">'
+                actionSection = '<div class="profile-section">'
                     + '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">'
                         + '<button onclick="startMessage()" style="padding:9px 18px;background:#c93f35;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Message</button>'
                         + '<button id="fellowshipBtn" onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Add Fellowship</button>'
@@ -245,19 +245,19 @@
                 + '</div>';
             }
 
-            document.getElementById('spaceApp')').innerHTML =
-                '<div class="space-card">'
-                    + '<div class="space-banner"' + (user.banner ? ' style="background-image:url(&quot;' + escapeHtml(user.banner) + '&quot;);background-size:cover;background-position:center;"' : '') + '></div>'
-                    + '<div class="space-info-row">'
-                        + '<div class="space-avatar-large">' + avatarDisplay + '</div>'
-                        + '<div class="space-name-block">'
-                            + '<div class="space-username">' + escapeHtml(username) + statusBadge + '</div>'
-                            + '<span class="space-role-tag" style="' + getRoleColor(role) + ';cursor:pointer;user-select:none;-webkit-user-select:none;" data-username="' + escapeHtml(username) + '" data-uid="' + escapeHtml(String(user.user_id || user.id || '')) + '" data-role="' + role + '" onclick="var el=this;window.showRolePopup&&window.showRolePopup(el.dataset.username,el.dataset.uid,el.dataset.role)">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>'
+            document.getElementById('profileApp').innerHTML =
+                '<div class="profile-card">'
+                    + '<div class="profile-banner"' + (user.banner ? ' style="background-image:url(&quot;' + escapeHtml(user.banner) + '&quot;);background-size:cover;background-position:center;"' : '') + '></div>'
+                    + '<div class="profile-info-row">'
+                        + '<div class="profile-avatar-large">' + avatarDisplay + '</div>'
+                        + '<div class="profile-name-block">'
+                            + '<div class="profile-username">' + escapeHtml(username) + statusBadge + '</div>'
+                            + '<span class="profile-role-tag" style="' + getRoleColor(role) + ';cursor:pointer;user-select:none;-webkit-user-select:none;" data-username="' + escapeHtml(username) + '" data-uid="' + escapeHtml(String(user.user_id || user.id || '')) + '" data-role="' + role + '" onclick="var el=this;window.showRolePopup&&window.showRolePopup(el.dataset.username,el.dataset.uid,el.dataset.role)">' + getRoleLabel(role) + ' ' + getRoleAbbr(role) + '</span>'
                             + titleDisplay
                             + (user.user_id ? '<div style="font-size:0.7rem;color:#444;margin-top:3px;">ID: #' + user.user_id + '</div>' : '')
                         + '</div>'
                     + '</div>'
-                    + '<div class="space-section">'
+                    + '<div class="profile-section">'
                         + '<div class="stat-grid">'
                             + '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div></div>'
                             + '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>'
@@ -279,7 +279,7 @@
             loadCollectionSection(user.id, currentUser && currentUser.authKey);
 
         } catch(e) {
-            document.getElementById('spaceApp')').innerHTML = '<div class="not-found">Could not load Space.</div>';
+            document.getElementById('profileApp').innerHTML = '<div class="not-found">Could not load profile.</div>';
         }
     });
 

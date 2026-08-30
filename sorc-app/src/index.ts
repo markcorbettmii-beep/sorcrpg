@@ -1720,7 +1720,7 @@ app.get('/api/lobbies/:id', authMiddleware, async (c) => {
       id: m.id, lobby_id: m.lobby_id, user_id: m.user_id,
       role: displayRole, sorc_role: m.live_sorc_role || m.sorc_role, username: m.username, display_name: m.display_name,
       joined_at: m.joined_at, is_muted: m.is_muted, avatar: m.avatar,
-      profile_url: 'public-space.html?u=' + encodeURIComponent(m.username)
+      profile_url: 'public-profile.html?u=' + encodeURIComponent(m.username)
     };
     if (privileged) out.public_uid = m.public_uid;
     return out;
@@ -2108,7 +2108,7 @@ app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
     if (!original) return c.json({ error: 'Message not found.' }, 404);
 
     const myName = user.display_name || user.username;
-    const profileUrl = `https://sorcrpg.com/public-space.html?username=${encodeURIComponent(user.username)}`;
+    const profileUrl = `https://sorcrpg.com/public-profile.html?username=${encodeURIComponent(user.username)}`;
     const { type } = await c.req.json().catch(() => ({ type: 'LFM' })) as any;
     const responseBody = type === 'SUM'
       ? `SUM: ${myName} confirmed - ${profileUrl}`

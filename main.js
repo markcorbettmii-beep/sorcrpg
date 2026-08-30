@@ -211,8 +211,8 @@ window.showUserMiniPopup = function(e, uid, name) {
   popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
   popup.innerHTML =
     '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + escapeHtml(name) + '</div>' +
-    '<a href="public-space.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">ViewSpace</a>' +
-    '<a href="public-space.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">Send Message</a>';
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">ViewSpace</a>' +
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">Send Message</a>';
   document.body.appendChild(popup);
   setTimeout(function() {
     document.addEventListener('click', function removePopup() {

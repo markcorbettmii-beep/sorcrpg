@@ -152,9 +152,9 @@
       <li><a href="index.html">&#8962;</a></li>
     </ul>
 
-    <div id="spaceApp">
+    <div id="profileApp">
         <!-- Space Header -->
-        <div class="space-container" id="spaceContainer">
+        <div class="profile-container" id="profileContainer">
             <div class="not-logged-in">
                 <p>Loading...</p>
                 <button onclick="alert('JS is working');" style="padding:10px 20px;margin-top:1rem;background:#b9aa00;color:#222;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Test JS</button>
@@ -164,7 +164,7 @@
     <script>
         // Failsafe: if DOMContentLoaded doesn't fire or stalls, show error after 3 seconds
         setTimeout(function() {
-            var container = document.getElementById('spaceContainer');
+            var container = document.getElementById('profileContainer');
             if (container && container.innerHTML.includes('Loading')) {
                 container.innerHTML = '<div class="not-logged-in"><h2>Unable to Load</h2><p>Profile failed to load. <a href="signin.html">Sign in again</a></p><button onclick="alert(\'JS is working\');" style="padding:10px 20px;margin-top:1rem;background:#b9aa00;color:#222;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Test JS</button></div>';
             }
@@ -312,7 +312,7 @@
                     '</div>' +
                     '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(friend.display_name) + '</p>' +
                     '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + (friend.status === 'online' ? '🟢 Online' : '⚫ Offline') + '</p>' +
-                    '<button class="btn btn-sm btn-gold" onclick="alert(\'Fellow space coming soon\')">View Space</button>' +
+                    '<button class="btn btn-sm btn-gold" onclick="alert(\'Fellow profile coming soon\')">View Profile</button>' +
                 '</div>';
             });
             fellowsList.innerHTML = html;
@@ -356,20 +356,20 @@
 
         var communityPoints = user.community_points || 0;
         var postCount = user.post_count || 0;
-        var membershipBadge = isPro ? '<span class="space-role-tag" style="background:#b9aa00;color:#222;">PRO</span>' : '';
+        var membershipBadge = isPro ? '<span class="profile-role-tag" style="background:#b9aa00;color:#222;">PRO</span>' : '';
 
-        return '<div class="space-banner-title">Your Space</div>' +
-            '<div class="space-card">' +
-            '<div class="space-banner"></div>' +
-            '<div class="space-info-row">' +
-                '<div class="space-avatar-large">' + avatarDisplay + '</div>' +
-                '<div class="space-name-block">' +
-                    '<div class="space-username">' + esc(displayName) + '</div>' +
-                    '<span class="space-role-tag" style="' + getRoleColor(role) + '">' + role + ' ' + getRoleAbbr(role) + '</span>' +
+        return '<div class="profile-banner-title">Your Space</div>' +
+            '<div class="profile-card">' +
+            '<div class="profile-banner"></div>' +
+            '<div class="profile-info-row">' +
+                '<div class="profile-avatar-large">' + avatarDisplay + '</div>' +
+                '<div class="profile-name-block">' +
+                    '<div class="profile-username">' + esc(displayName) + '</div>' +
+                    '<span class="profile-role-tag" style="' + getRoleColor(role) + '">' + role + ' ' + getRoleAbbr(role) + '</span>' +
                     membershipBadge +
                 '</div>' +
             '</div>' +
-            '<div class="space-section">' +
+            '<div class="profile-section">' +
                 '<div class="stat-grid">' +
                     '<div class="stat-box"><div class="stat-val">' + communityPoints + '</div><div class="stat-label">Community Points</div></div>' +
                     '<div class="stat-box"><div class="stat-val">' + postCount + '</div><div class="stat-label">Forum Posts</div></div>' +
@@ -691,8 +691,8 @@
             try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
 
             if (!saved || !saved.authKey) {
-                document.getElementById('spaceContainer').innerHTML =
-                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your Space</a></p></div>';
+                document.getElementById('profileContainer').innerHTML =
+                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="signin.html">Sign in to view your profile</a></p></div>';
                 return;
             }
 
@@ -719,7 +719,7 @@
             } catch(e) {}
 
             // Render profile
-            var container = document.getElementById('spaceContainer');
+            var container = document.getElementById('profileContainer');
             if (!container) throw new Error('profileContainer not found');
 
             container.innerHTML = renderProfileHeader(user, role, isPro) +
@@ -732,7 +732,7 @@
             switchTab(initialTab);
         } catch(err) {
             console.error('[Space] Error:', err);
-            var container = document.getElementById('spaceContainer');
+            var container = document.getElementById('profileContainer');
             if (container) {
                 var errMsg = (err && err.message) ? String(err.message) : 'Unknown error loading profile';
                 container.innerHTML = '<div class="not-logged-in"><h2>Error</h2><p>' + errMsg + '</p><p><a href="signin.html">Sign in again</a></p></div>';
