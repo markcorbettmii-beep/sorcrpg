@@ -30,6 +30,21 @@
     .rules-link:hover { color: #d8c85a; }
     .submit-btn { margin: 2rem 0; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: bold; background: #c93f35; color: white; border: none; border-radius: 6px; cursor: pointer; }
     .submit-btn:disabled { background: #555; color: #aaa; cursor: not-allowed; }
+
+    /* Wrong-answer review. Options here are static - the quiz is over, so they
+       are divs rather than buttons and carry no click target. */
+    .review-head { color: #b9aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;
+      margin: 2rem 0 0.75rem; text-align: left; }
+    .review-wrap { text-align: left; }
+    .rev-opt { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
+      color: #777; font-size: 0.88rem; text-align: left; }
+    .rev-opt.correct { border-color: #4a9d5f; background: #0d1f13; color: #cfe8d6; }
+    .rev-opt.chosen-wrong { border-color: #c93f35; background: #1f0b0a; color: #f0cfcc; }
+    .rev-tag { float: right; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: bold; }
+    .rev-opt.correct .rev-tag { color: #6fc98a; }
+    .rev-opt.chosen-wrong .rev-tag { color: #e07a72; }
+    .rev-note { color: #7a7a7a; font-size: 0.8rem; margin-top: 0.7rem; font-style: italic; }
+    .q-card.was-wrong { border-color: #4a1f1c; }
   </style>
 </head>
 <body>
@@ -181,7 +196,68 @@
             Note: Only a GM can launch a room.
           </div>
         </div>
-      `;
+      ` + renderWrongReview(assessment);
+    }
+
+    /* Per-question breakdown under the result card: what you picked, what was
+       right. The server decides how much to reveal - a miss comes back as
+       { id, answer } when the correct option can be shown, or as { id } alone
+       for the GM Codex, whose pool is the same ten questions every attempt and
+       would be burned by publishing its answer key. A Codex miss therefore
+       marks your pick red and stops there. An older API that sends no `wrong`
+       array at all drops the review rather than guessing at it. */
+    function renderWrongReview(assessment) {
+      const wrong = assessment && assessment.wrong;
+      if (!Array.isArray(wrong) || !questions.length) return '';
+
+      const missById = {};
+      wrong.forEach((w) => { if (w && w.id !== undefined) missById[w.id] = w; });
+
+      const cards = questions.map((question, index) => {
+        const chosen = selectedAnswers[question.id];
+        const miss = missById[question.id];
+        const wasWrong = !!miss;
+        // A question answered correctly has no entry, so the pick is the answer.
+        // A miss names the answer only when the server chose to reveal it.
+        const correctIdx = wasWrong
+          ? (miss.answer === undefined ? null : miss.answer)
+          : chosen;
+
+        const opts = question.options.map((opt, i) => {
+          const letter = String.fromCharCode(65 + i) + '. ' + esc(opt);
+          if (correctIdx !== null && i === correctIdx) {
+            const mine = (i === chosen) ? ' &middot; your answer' : '';
+            return `<div class="rev-opt correct"><span class="rev-tag">Correct${mine}</span>${letter}</div>`;
+          }
+          if (wasWrong && i === chosen) {
+            return `<div class="rev-opt chosen-wrong"><span class="rev-tag">Your answer</span>${letter}</div>`;
+          }
+          return `<div class="rev-opt">${letter}</div>`;
+        }).join('');
+
+        const note = (wasWrong && correctIdx === null)
+          ? '<div class="rev-note">The correct answer for this one is not shown - GM Codex questions keep their answer key.</div>'
+          : '';
+
+        return `
+          <div class="q-card${wasWrong ? ' was-wrong' : ''}">
+            <div class="q-num">Question ${index + 1} of ${questions.length}</div>
+            <div class="q-text">${esc(question.q)}</div>
+            <div class="q-options">${opts}</div>
+            ${note}
+            <a href="https://sorcrpg.com/content/essentia_core/rules_ref_00${question.page}" target="_blank" class="rules-link">
+              See rules pg. ${question.page}
+            </a>
+          </div>
+        `;
+      }).join('');
+
+      const missed = wrong.length;
+      const heading = missed === 0
+        ? 'Review &mdash; every answer correct'
+        : `Review &mdash; ${missed} missed`;
+
+      return `<div class="review-wrap"><div class="review-head">${heading}</div>${cards}</div>`;
     }
 
     // Generate lobby type based on role
