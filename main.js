@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ==========Space BUTTON (site-wide, floats/follows scroll) ==========
+// ========== PROFILE BUTTON (site-wide, floats/follows scroll) ==========
 document.addEventListener('DOMContentLoaded', function() {
   if (document.getElementById('headerControls')) return;
 
@@ -72,55 +72,55 @@ document.addEventListener('DOMContentLoaded', function() {
   headerControls.id = 'headerControls';
   headerControls.style.cssText = 'position:fixed;top:1.2rem;right:1.5rem;display:flex;gap:0.75rem;align-items:center;z-index:500;';
 
-  varSpaceBtn = document.createElement('button');
- SpaceBtn.id = SpaceBtn';
- SpaceBtn.title = 'Space';
- SpaceBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
- SpaceBtn.textContent = 'S';
+  var profileBtn = document.createElement('button');
+  profileBtn.id = 'profileBtn';
+  profileBtn.title = 'Space';
+  profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
+  profileBtn.textContent = 'S';
 
-  window._updatSpaceBtnColors = function() {
+  window._updateProfileBtnColors = function() {
     var isLawful = document.body.classList.contains('lawful-mode');
     if (isLawful) {
-     SpaceBtn.style.backgroundColor = '#2196f3';
-     SpaceBtn.style.borderColor = '#b9aa00';
-     SpaceBtn.style.color = '#b9aa00';
+      profileBtn.style.backgroundColor = '#2196f3';
+      profileBtn.style.borderColor = '#b9aa00';
+      profileBtn.style.color = '#b9aa00';
     } else {
-     SpaceBtn.style.backgroundColor = '#c93f35';
-     SpaceBtn.style.borderColor = '#c93f35';
-     SpaceBtn.style.color = '#9889e0';
+      profileBtn.style.backgroundColor = '#c93f35';
+      profileBtn.style.borderColor = '#c93f35';
+      profileBtn.style.color = '#9889e0';
     }
   };
-  window._updatSpaceBtnColors();
+  window._updateProfileBtnColors();
 
-  window.SpaceBtn_loggedIn = function(avatarFilename, displayName) {
+  window._profileBtn_loggedIn = function(avatarFilename, displayName) {
     var initial = (displayName || '').trim().charAt(0).toUpperCase() || 'S';
     if (avatarFilename) {
-     SpaceBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.textContent=\'' + initial + '\'" />';
+      profileBtn.innerHTML = '<img src="/images/avatars/' + avatarFilename + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.textContent=\'' + initial + '\'" />';
     } else {
-     SpaceBtn.textContent = initial;
+      profileBtn.textContent = initial;
     }
-   SpaceBtn.onclick = function(e) {
+    profileBtn.onclick = function(e) {
       e.stopPropagation();
       window.location.href = '/space.html';
     };
   };
 
-  window.SpaceBtn_loggedOut = function() {
-   SpaceBtn.textContent = 'S';
-   SpaceBtn.onclick = function(e) {
+  window._profileBtn_loggedOut = function() {
+    profileBtn.textContent = 'S';
+    profileBtn.onclick = function(e) {
       e.stopPropagation();
       window.location.href = '/signin.html';
     };
   };
 
- SpaceBtn.addEventListener('click', function(e) {
+  profileBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
     window.location.href = (saved && saved.authKey) ? '/space.html' : '/signin.html';
   });
 
-  headerControls.appendChildSpaceBtn);
+  headerControls.appendChild(profileBtn);
   document.body.appendChild(headerControls);
 });
 
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '<a href="/privacy.html">Privacy Policy</a>' +
         '<a href="/conduct.html">Code of Conduct</a>' +
         '<a href="/forum.html">Forums</a>' +
-        '<a href="/sorc-web.html">SORC Web</a>' +
+        '<a href="/sorc-beyond.html">SORC Beyond</a>' +
         '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
       '</nav>' +
     '</div>' +
@@ -211,7 +211,7 @@ window.showUserMiniPopup = function(e, uid, name) {
   popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
   popup.innerHTML =
     '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + escapeHtml(name) + '</div>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">ViewSpace</a>' +
+    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">View Profile</a>' +
     '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">Send Message</a>';
   document.body.appendChild(popup);
   setTimeout(function() {
@@ -320,7 +320,7 @@ function getAvatarPath(avatarId) {
 // ========== SIGN OUT ==========
 window.sorcSignOut = function() {
   localStorage.removeItem('sorc_user');
-  if (window.SpaceBtn_loggedOut) window.SpaceBtn_loggedOut();
+  if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
   window.location.reload();
 };
 
@@ -530,11 +530,11 @@ async function checkNotifications(user) {
           ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
           : 'Fellowships';
       }
-      varSpaceLink = badgeEl.querySelector('a[href="/space.html"]');
-      if SpaceLink) {
-       SpaceLink.innerHTML = data.admin_invite
-          ? Space <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
-          : Space';
+      var profileLink = badgeEl.querySelector('a[href="/space.html"]');
+      if (profileLink) {
+        profileLink.innerHTML = data.admin_invite
+          ? 'Profile <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
+          : 'Profile';
       }
     }
   } catch(e) {}
@@ -587,19 +587,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Second check after 3s to catch D1 replica lag on fresh requests
         setTimeout(function() { checkNotifications(user); }, 3000);
         setInterval(function() { checkNotifications(user); }, 15000);
-        if (window.SpaceBtn_loggedIn) window.SpaceBtn_loggedIn(user.avatar || null);
+        if (window._profileBtn_loggedIn) window._profileBtn_loggedIn(user.avatar || null);
       } else {
         showLoggedOutBadge();
-        if (window.SpaceBtn_loggedOut) window.SpaceBtn_loggedOut();
+        if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
       }
     } else {
       showLoggedOutBadge();
-      if (window.SpaceBtn_loggedOut) window.SpaceBtn_loggedOut();
+      if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
     }
   } catch(e) {
     localStorage.removeItem('sorc_user');
     showLoggedOutBadge();
-    if (window.SpaceBtn_loggedOut) window.SpaceBtn_loggedOut();
+    if (window._profileBtn_loggedOut) window._profileBtn_loggedOut();
   }
 });
 
