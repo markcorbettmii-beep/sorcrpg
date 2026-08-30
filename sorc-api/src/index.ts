@@ -2615,10 +2615,23 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
     }, 403);
   }
 
+  /* Name the lobby that is in the way. 'You already have an active lobby' sent
+     a host hunting through every page of the board for a room they could not
+     identify - and told them to Close it, which is not a thing: abandoning is
+     how a lobby is wound up. Both the name and the Lobby Number come back, so
+     the one blocking them can actually be found. */
   const existingLobby = await c.env.sorc_db.prepare(
-    `SELECT id FROM lobbies WHERE creator_uid = ? AND status != 'closed'`
-  ).bind(user.id).first();
-  if (existingLobby) return c.json({ error: 'You already have an active lobby. Close it before creating a new one.' }, 400);
+    `SELECT id, name, lobby_code FROM lobbies WHERE creator_uid = ? AND status != 'closed'`
+  ).bind(user.id).first() as any;
+  if (existingLobby) {
+    return c.json({
+      error: 'You already lead "' + (existingLobby.name || 'a lobby') + '" (Lobby Number ' +
+        (existingLobby.lobby_code || '?') + '). Abandon it before creating a new one.',
+      active_lobby_id: existingLobby.id,
+      active_lobby_name: existingLobby.name,
+      active_lobby_code: existingLobby.lobby_code
+    }, 400);
+  }
 
   if (!isPrivileged(user)) {
     if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);

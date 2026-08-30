@@ -1511,6 +1511,13 @@
           setTimeout(function() { openLobby(data.lobby_id); }, 600);
         } else if (data.needs_reassess) {
           msgEl.className = 'l-msg err'; msgEl.innerHTML = (data.error || 'Assessment required.') + ' <a href="lobbies.html" style="color:#b9aa00;">Reassess now</a>';
+        } else if (data.active_lobby_id) {
+          /* Blocked by a lobby they already lead. The board runs to pages, so
+             hunting for it by name is no help - link straight to it, where the
+             Abandon button is. */
+          msgEl.className = 'l-msg err';
+          msgEl.innerHTML = esc(data.error || 'You already lead a lobby.') +
+            ' <a href="javascript:void(0);" onclick="openLobby(\'' + esc(data.active_lobby_id) + '\');return false;" style="color:#b9aa00;text-decoration:underline;">Open it</a>';
         } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create lobby.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
