@@ -1234,13 +1234,20 @@
     /* One of the three is always selected; there is no unfiltered view. Absent
        a ?tier=, the board opens on Beginner - the tier open to everyone, so it
        is never a view the reader has no business in. */
+    /* Whether the tier on screen is the reader's own choice - a ?tier= they
+       arrived with, or a tab they pressed. Until it is, the board is free to
+       open on the tier their own lobby sits in, which is the tab they wanted
+       nine times in ten. Once they choose, it never moves under them again. */
+    var tierChosen = false;
     var currentTier = (function() {
       var t = (new URLSearchParams(location.search).get('tier') || '').toUpperCase();
-      return TIER_NAMES[t] ? t : 'BEG';
+      if (TIER_NAMES[t]) { tierChosen = true; return t; }
+      return 'BEG';
     })();
     var allowedTiers = ['BEG'];
 
     function setTier(t) {
+      tierChosen = true;
       currentTier = t || '';
       var url = new URL(location.href);
       if (currentTier) url.searchParams.set('tier', currentTier);
@@ -1363,28 +1370,44 @@
         }
         if (Array.isArray(data.allowed_tiers) && data.allowed_tiers.length) allowedTiers = data.allowed_tiers;
         currentMembership = data.current_lobby || null;
+
+        /* Open on the tier holding their own lobby. This runs once, before
+           anything is drawn: the first fetch went out on Beginner, and if that
+           is not where their lobby lives it came back without it - so fetch
+           again on the right tier rather than render a board missing the one
+           row they came for. tierChosen is set first, so this can fire only
+           once however the second load turns out. */
+        if (!tierChosen) {
+          tierChosen = true;
+          var memberTier = String((currentMembership && currentMembership.tier) || '').toUpperCase();
+          if (TIER_NAMES[memberTier] && memberTier !== currentTier) {
+            currentTier = memberTier;
+            var mUrl = new URL(location.href);
+            mUrl.searchParams.set('tier', currentTier);
+            history.replaceState(null, '', mUrl);
+            return loadLobbies();
+          }
+        }
+
         renderMembershipBanner();
         renderTierBar();
         var lobbies = data.lobbies || [];
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
         if (myLobby) { myActiveLobbyId = myLobby.id; loadWorldChat(); }
-        // Sort lobbies: lobbies user is member of first (sticky), then by most recent activity
+        /* The lobby they are in rides at the top, whatever its last activity;
+           the rest fall in most-recently-active first. is_member comes from the
+           board, which knows the membership - a creator_uid test would miss
+           every lobby they joined rather than opened. */
+        var myId = currentMembership ? currentMembership.id : null;
         lobbies.sort(function(a, b) {
-          var aIsMember = a.is_member ? 1 : 0;
-          var bIsMember = b.is_member ? 1 : 0;
+          var aIsMember = (a.is_member || (myId && a.id === myId)) ? 1 : 0;
+          var bIsMember = (b.is_member || (myId && b.id === myId)) ? 1 : 0;
           if (aIsMember !== bIsMember) return bIsMember - aIsMember;
           var aTime = new Date(a.updated_at || 0).getTime();
           var bTime = new Date(b.updated_at || 0).getTime();
           return bTime - aTime;
         });
-        // If user is a member of a lobby, default to that lobby's tier
-        if (currentMembership && currentMembership.tier && !currentTier) {
-          currentTier = currentMembership.tier;
-          var url = new URL(window.location);
-          url.searchParams.set('tier', currentTier);
-          window.history.replaceState({}, '', url);
-        }
         allLobbies = lobbies.concat(PLACEHOLDER_LOBBIES);
         lobbyPage = 0;
         renderLobbyPage();
@@ -1888,7 +1911,17 @@
           actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')" title="Report"></button>';
         }
         var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
-        var sheetHref = 'https://sorcrpg.com/space?tab=characters';
+        /* The glyph opens the Characters tab of the member it sits beside. It
+           carried no username at all, so every row on the list led back to the
+           same place - the reader's own sheet.
+           A guest holds no sheets, so their row carries no glyph: the link
+           could only ever land on an empty tab. Guests may still read everyone
+           else's, which is most of what they joined to do. */
+        var sheetLink = isGuestName(m.username)
+          ? ''
+          : '<a href="space.html?username=' + encodeURIComponent(m.username || '') + '&amp;tab=characters"' +
+            ' title="View Character Sheet" onclick="event.stopPropagation()"' +
+            ' style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>';
         var menuItems = '';
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
         menuItems += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
@@ -1913,7 +1946,7 @@
              next poll. */
           '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
           '<div class="member-name-menu">' + menuItems + '</div>' +
-          '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
+          sheetLink +
         '</span>';
         return '<div class="member-row">' +
           '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
@@ -2529,7 +2562,11 @@
           }
           if (!isSelf) actBtns += '<button class="member-act-btn danger" onclick="openReportModal(\'' + esc(m.user_id) + '\',\'' + esc(m.username) + '\')"></button>';
           var spaceHref = 'space.html?username=' + encodeURIComponent(m.username || '');
-          var sheetHref = 'https://sorcrpg.com/space?tab=characters';
+          var sheetLink2 = isGuestName(m.username)
+            ? ''
+            : '<a href="space.html?username=' + encodeURIComponent(m.username || '') + '&amp;tab=characters"' +
+              ' title="View Character Sheet" onclick="event.stopPropagation()"' +
+              ' style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>';
           var menuItems2 = '';
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
           menuItems2 += '<a href="' + esc(spaceHref) + '" onclick="event.stopPropagation()">Space</a>';
@@ -2549,7 +2586,7 @@
           var nameWrap2 = '<span class="member-name-wrap">' +
             '<button class="member-name-btn" onclick="toggleMemberMenu(event,this)">' + (isLobbyHost2 ? '<span style="color:#b9aa00;font-size:0.82rem;margin-right:0.3rem;">&#128081;</span>' : '') + esc(m.display_name || m.username) + ' &#8964;</button>' +
             '<div class="member-name-menu">' + menuItems2 + '</div>' +
-            '<a href="' + esc(sheetHref) + '" title="View Character Sheet" onclick="event.stopPropagation()" style="color:#555;font-size:0.8rem;text-decoration:none;vertical-align:middle;">&#128195;</a>' +
+            sheetLink2 +
           '</span>';
           return '<div class="member-row">' +
             '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
@@ -2643,7 +2680,11 @@
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
         var data = await readJson(res);
-        if (data.success) openLobby(currentLobby.id);
+        /* Redraw the member list where it stands. Re-opening the lobby blanked
+           the page to its loading screen and rebuilt the whole view, which read
+           as another page flashing past for what is a one-word change to one
+           row. */
+        if (data.success) refreshMembers();
         else alert(data.error || 'Could not mute member.');
       } catch(e) { showToast('Could not reach server.', true); }
     };
@@ -2657,7 +2698,7 @@
           headers: { 'X-Auth-Key': currentUser.authKey }
         });
         var data = await readJson(res);
-        if (data.success) openLobby(currentLobby.id);
+        if (data.success) refreshMembers();
         else alert(data.error || 'Could not remove member.');
       } catch(e) { showToast('Could not reach server.', true); }
     };
@@ -3361,8 +3402,11 @@
             /* Respond messages: extract username from embedded URL for char-sheet link,
                strip the prefix and trailing raw URL before rendering */
             var respondMatch = m.body && m.body.match(/public-profile\.html\?username=([^&\s\n"<]+)/);
+            /* The username was already pulled out of the embedded URL and then
+               thrown away - the glyph led to the reader's own sheet instead of
+               the poster's. It is the poster's sheet the responder wants. */
             var sheetIcon = respondMatch
-              ? '<a href="https://sorcrpg.com/space?tab=characters" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128195;</a>'
+              ? '<a href="space.html?username=' + esc(respondMatch[1]) + '&amp;tab=characters" title="View Character Sheet" style="color:#9370db;font-size:0.72rem;margin:0 0.15rem;text-decoration:none;vertical-align:middle;opacity:0.75;">&#128195;</a>'
               : '';
             var rawBody = m.body || '';
             var isActivity = rawBody.startsWith('⬡ ');
@@ -3628,8 +3672,24 @@
           }
         });
 
-        // Fetch card from catalog by ref or name
-        fetch(API_URL + '/api/cards/catalog?search=' + encodeURIComponent(cardRef), {
+        /* A trade line reads "Skeleton Soldier #MOB001" - a name and a
+           reference, not one string the catalog holds under either. Split it
+           and search on the reference when there is one, since a reference
+           picks out a single card where a name may not. */
+        var refPart = '', namePart = String(cardRef).trim();
+        var refMatch = namePart.match(/#\s*([A-Za-z0-9_-]+)\s*$/);
+        if (refMatch) {
+          refPart = refMatch[1];
+          namePart = namePart.slice(0, refMatch.index).trim();
+        }
+        var query = refPart || namePart;
+
+        /* The catalog reads ?q=, not ?search=: the old parameter was ignored,
+           so every lookup searched for nothing and got the first page of the
+           whole catalog back - which is why cards reported themselves missing
+           from a catalog they are in. per_page is raised so a name shared by
+           several cards still has its reference among the results. */
+        fetch(API_URL + '/api/cards/catalog?per_page=48&q=' + encodeURIComponent(query), {
           headers: currentUser && currentUser.authKey ? { 'X-Auth-Key': currentUser.authKey } : {}
         })
         .then(res => readJson(res))
@@ -3639,17 +3699,30 @@
             return;
           }
 
-          // Find exact match by reference number
+          /* The catalog returns ref_code; this read ref_num, which is never a
+             field on the response, so the reference arm of the test compared
+             an empty string and only a bare name could ever match.
+             ref_num is kept as a fallback in case an older shape turns up. */
           var foundCard = null;
-          var searchLower = cardRef.toLowerCase();
-          for (var i = 0; i < data.cards.length; i++) {
-            var refNum = (data.cards[i].ref_num || '').toLowerCase();
-            var itemName = (data.cards[i].item_name || '').toLowerCase();
-            if (refNum === searchLower || itemName === searchLower) {
-              foundCard = data.cards[i];
-              break;
+          var wantRef = refPart.toLowerCase().replace(/^#/, '');
+          var wantName = namePart.toLowerCase();
+          var i, c, cRef, cName;
+          if (wantRef) {
+            for (i = 0; i < data.cards.length; i++) {
+              c = data.cards[i];
+              cRef = String(c.ref_code || c.ref_num || '').toLowerCase().replace(/^#/, '');
+              if (cRef && cRef === wantRef) { foundCard = c; break; }
             }
           }
+          if (!foundCard && wantName) {
+            for (i = 0; i < data.cards.length; i++) {
+              c = data.cards[i];
+              cName = String(data.cards[i].item_name || '').toLowerCase();
+              if (cName === wantName) { foundCard = c; break; }
+            }
+          }
+          // One result for a specific search is that card, however it was written.
+          if (!foundCard && data.cards.length === 1) foundCard = data.cards[0];
           // If no exact match found, card not in catalog
           if (!foundCard) {
             card.innerHTML = '<div style="text-align:center;"><p style="color:#c93f35;">Card not found in catalog: ' + esc(cardRef) + '</p><p style="font-size:0.8rem;color:#888;margin-top:1rem;"><button onclick="document.getElementById(\'tradeCardInspector\').remove()" style="background:#b9aa00;color:#1a1a1a;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;">Close</button></p></div>';
@@ -3685,9 +3758,28 @@
           else if (rankText.includes('unique')) rankColor = '#c57500';
           else if (rankText.includes('rare')) rankColor = '#0058aa';
 
+          /* The card face: what it is, then what it costs. The name, reference
+             and rank were stripped out of this popup, leaving art over a bare
+             price and a line telling the reader to go and search for a card
+             they had just clicked on by name. Only fields the catalog really
+             returns are read here. */
+          var cardName = foundCard.item_name || '';
+          var cardRefCode = String(foundCard.ref_code || foundCard.ref_num || '').replace(/^#/, '');
+
           var html = '';
           if (foundCard.art) {
-            html += '<div style="margin-bottom:1rem;text-align:center;"><img src="' + esc(foundCard.art) + '" alt="' + esc(foundCard.item_name || foundCard.ref_num) + '" style="max-width:100%;height:auto;border-radius:8px;max-height:300px;"></div>';
+            html += '<div style="margin-bottom:1rem;text-align:center;"><img src="' + esc(foundCard.art) + '" alt="' + esc(cardName || cardRefCode) + '" style="max-width:100%;height:auto;border-radius:8px;max-height:300px;"></div>';
+          }
+
+          /* Named the way the Card Picker names it: art, then name and
+             reference under it. Stripping the name left art over a bare price
+             and a line telling the reader to search for the card they had just
+             clicked on by name. */
+          if (cardName) {
+            html += '<div style="font-size:1.2rem;font-weight:bold;color:#b9aa00;margin-bottom:0.25rem;">' + esc(cardName) + '</div>';
+          }
+          if (cardRefCode) {
+            html += '<div style="font-size:0.85rem;color:#888;margin-bottom:0.75rem;">#' + esc(cardRefCode) + '</div>';
           }
           if (foundCard.coin_value) {
             var ridiculousPrice = (parseInt(foundCard.coin_value) || 0) * 999;

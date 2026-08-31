@@ -417,7 +417,15 @@
                 + '<div class="thread-header-meta"><span>by ' + escapeHtml(thread.author_name || '') + '</span><span>·</span><span>' + timeAgo(thread.created_at) + '</span><span>·</span><span>' + (thread.views || 0) + ' views</span><span>·</span><span>' + posts.length + ' replies</span></div></div>'
                 + html;
 
-            if (myId && !thread.locked) {
+            /* Guests read the forums and write nothing in them. Showing them
+               the box and refusing the post at the server is a worse way to
+               say so than not showing the box. */
+            var isGuestReader = /^Guest \d+$/.test(String((currentUser && currentUser.username) || '').trim());
+            if (myId && isGuestReader && !thread.locked) {
+                document.getElementById('replyFormContainer').innerHTML =
+                    '<div class="locked-notice">Guests can read the forums. ' +
+                    '<a href="signin.html" style="color:#b9aa00;">Create an account</a> to reply.</div>';
+            } else if (myId && !thread.locked) {
                 document.getElementById('replyFormContainer').innerHTML =
                     '<div class="reply-form"><h3>Post a Reply</h3>'
                     + '<div class="quote-preview" id="quotePreview"></div>'

@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '<a href="/privacy.html">Privacy Policy</a>' +
         '<a href="/conduct.html">Code of Conduct</a>' +
         '<a href="/forum.html">Forums</a>' +
-        '<a href="/sorc-beyond.html">SORC Beyond</a>' +
+        '<a href="/sorc-beyond.html">SORC Web</a>' +
         '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
       '</nav>' +
     '</div>' +

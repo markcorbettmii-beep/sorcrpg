@@ -1017,7 +1017,7 @@ app.get('/api/forum/categories', async (c) => {
       { id: 'announcements', name: 'News & Announcements', icon: '📣', desc: null, color: '#d0021b', readOnly: true, adminOnly: true },
       { id: 'conduct', name: 'Conduct & Rules', icon: '⚖️', desc: 'The laws of Essentia and the SORC community. Read before you post.', color: '#8B0000', readOnly: true, adminOnly: true },
       { id: 'general', name: 'General Discussion', icon: '💬', desc: 'The heart of the SORC community.', color: '#333' },
-      { id: 'sorc-beyond', name: 'SORC Beyond', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Beyond platform.', color: '#1a3a6b' },
+      { id: 'sorc-beyond', name: 'SORC Web', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Web platform.', color: '#1a3a6b' },
       { id: 'x-roads', name: 'The X Roads', icon: '🗺', desc: "Where lore, legend, and mystery converge.", color: '#4a1a6b' },
       { id: 'rules', name: 'Rules & Gameplay Advice', icon: '📖', desc: 'Questions and discussions about SORC mechanics.', color: '#1a4a1a' },
       { id: 'majestic-worlds', name: 'The Majestic Worlds of Essentia', icon: '🌍', desc: 'The thirteen worlds of Essentia.', color: '#1a3a1a' },
@@ -1086,17 +1086,16 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   const { threadId, body } = await c.req.json();
   const user = c.get('user') as any;
   if (!body) return c.json({ error: 'Body required' }, 400);
-  // Guests can reply but are limited to 10 posts per day
+  // Guests read the forums and write nothing in them, the same rule the rest
+  // of this file already applies to hosting, trading and fellowships. Replies
+  // were the one hole: thread creation was refused above while replies were
+  // allowed at ten a day, so a guest could not start a conversation but could
+  // fill one.
   if (isGuestUser(user)) {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const todayStart = today + 'T00:00:00.000Z';
-    const todayEnd = today + 'T23:59:59.999Z';
-    const guestPostsToday = await c.env.sorc_db.prepare(
-      `SELECT COUNT(*) as count FROM posts WHERE author_uid = ? AND created_at >= ? AND created_at <= ?`
-    ).bind(user.id, todayStart, todayEnd).first() as any;
-    if ((guestPostsToday?.count || 0) >= 10) {
-      return c.json({ error: 'Guest reply limit reached. You can reply up to 10 times per day. Create an account for unlimited access.', requires_login: true }, 429);
-    }
+    return c.json({
+      error: 'Posting requires a registered account. Guests can read the forums; create an account or sign in to reply.',
+      requires_login: true
+    }, 403);
   }
   try {
     const postId = crypto.randomUUID();
@@ -2535,12 +2534,15 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
      time, so the board can say so standing rather than only refusing them when
      they reach for a second. Pin the current lobby to the top of the list if
      the player is in one. */
+  /* tier rides along so the board can open on the tab the player's own lobby
+     lives in - without it the page has no way to know, and opens on Beginner
+     with their lobby filtered out of the list entirely. */
   const currentLobby = await c.env.sorc_db.prepare(
-    `SELECT l.id, l.name, l.lobby_code FROM lobby_members lm
+    `SELECT l.id, l.name, l.lobby_code, COALESCE(l.tier, ?) AS tier FROM lobby_members lm
        JOIN lobbies l ON l.id = lm.lobby_id
       WHERE lm.user_id = ? AND l.status != 'closed'
       LIMIT 1`
-  ).bind(user.id).first() as any;
+  ).bind(DEFAULT_LOBBY_TIER, user.id).first() as any;
 
   const lobbies = wantTier
     ? await c.env.sorc_db.prepare(
@@ -2562,8 +2564,15 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
   const rankOk = isPrivileged(user) || (!!assessment && !user.needs_reassess);
   const ceiling = rankOk ? playerTierCeiling(user) : DEFAULT_LOBBY_TIER;
 
+  /* The page stickies the player's own lobby to the top, and cannot do it
+     without being told which row that is. A player holds one lobby at a time,
+     so the one current_lobby id settles it. */
+  const rows = (lobbies.results || []).map(function (l: any) {
+    return Object.assign({}, l, { is_member: !!currentLobby && l.id === currentLobby.id });
+  });
+
   return c.json({
-    lobbies: lobbies.results || [],
+    lobbies: rows,
     assessed: !!assessment || isPrivileged(user),
     sorc_role: user.sorc_role || assessment?.role_granted || null,
     is_privileged: isPrivileged(user),
