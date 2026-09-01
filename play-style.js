@@ -44,6 +44,20 @@
         ? 'Enthusiastic Play - Baseline to Improvised Play'
         : 'Casual Play - Base Features';
     }
+
+    // The sections this affects are usually far below the fold, so say plainly
+    // what just happened instead of leaving the reader to scroll and guess.
+    var hint = document.querySelector('.play-style-hint');
+    if (hint) {
+      var n = toggles.length;
+      if (!n) {
+        hint.textContent = 'No Enthusiastic sections on this page.';
+      } else {
+        hint.textContent = enthusiastic
+          ? n + ' Enthusiastic section' + (n === 1 ? '' : 's') + ' shown on this page. Set once, holds across every page.'
+          : n + ' Enthusiastic section' + (n === 1 ? '' : 's') + ' collapsed on this page. Set once, holds across every page.';
+      }
+    }
   }
 
   function build() {
@@ -71,7 +85,6 @@
 
     var hint = document.createElement('span');
     hint.className = 'play-style-hint';
-    hint.textContent = 'Set once, holds across every page.';
 
     wrap.appendChild(btn);
     wrap.appendChild(hint);
