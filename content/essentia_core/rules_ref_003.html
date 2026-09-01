@@ -186,6 +186,9 @@
     body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
     body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
 
+
+    /* Play Style. Casual is the default view; the switch opens every Enthusiastic
+       section at once. data-style is the source of truth for the PDF build. */
     p.style-note { font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase;
                    font-weight: bold; color: #92793a; margin: 0.6rem 0 0.2rem; opacity: 1; }
     details.play-toggle { margin: 0.3rem 0 1.2rem; }
@@ -201,8 +204,26 @@
     details.play-toggle > summary::after { content: "Expand for Enthusiastic"; }
     details.play-toggle[open] > summary::after { content: "Collapse for Casual"; }
     details.play-toggle[open] > summary { background: rgba(146,121,58,0.20); color: #92793a; }
+    .casual-lead { background: rgba(0,88,170,0.10); border: 2px solid rgba(140,6,163,0.32);
+                   border-radius: 3px; padding: 0.7rem 1rem 0.3rem; margin: 0.5rem 0; }
+    details.play-toggle[open] { background: rgba(146,121,58,0.15); border: 2px solid rgba(140,6,163,0.32);
+                                border-radius: 3px; padding: 0.7rem 1rem; }
+    body.lawful-mode .casual-lead { background: rgba(0,88,170,0.10); }
+    body.lawful-mode details.play-toggle[open] { background: rgba(146,121,58,0.15); }
+    .play-style-bar { text-align: center; margin: 0.5rem 0 1.5rem; }
+    .play-style-switch {
+      cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: bold;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 0.4rem 1rem; border-radius: 3px;
+      border: 2px solid rgba(140,6,163,0.45);
+      background: rgba(0,88,170,0.13); color: #0058aa;
+    }
+    body.enthusiastic-mode .play-style-switch { background: rgba(146,121,58,0.22); color: #92793a; }
+    .play-style-hint { display: block; font-size: 0.72rem; letter-spacing: 1px;
+                       opacity: 0.6; margin-top: 0.35rem; }
     @media print {
       details.play-toggle > summary { border-color: #666; background: none; color: #000; }
+      .play-style-bar { display: none; }
     }
   </style>
 </head>
@@ -9229,7 +9250,11 @@
 
       <div class="rules-section">
         <h2>Fallen and Risen Classes</h2>
+        <div class="casual-lead">
         <p>Only Paths bound to a Higher Power are capable of falling or rising, not Classes as a whole. These are Paths whose Abilities are granted by an external force; the patron's relationship with the character is the foundation of everything they can do. A single Class Tree can hold a mix, some Paths eligible to Fall, others to Rise, others neither, depending on each Path's own Higher Power.</p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
         <h3>Which Paths Can Fall or Rise</h3>
         <p><strong>Lawful and Moral Paths</strong> may Fall. These Paths are bound to divine or virtuous Higher Powers who have strict standards for devotion and conduct. Neglect of devotion or betrayal of the patron's values causes the bond to weaken.</p>
         <p><strong>Amoral and Evil Paths</strong> may Rise. These Paths are bound to corrupting or self-interested Higher Powers. A character who turns away from the patron's values, pursuing righteousness, mercy, or redemption, causes the bond to weaken.</p>
@@ -9264,13 +9289,16 @@
         <p><strong>Armaments and the Spectrum.</strong> The moment you sit outside a holy Armament's own alignment Spectrum, its bonuses stop. Carry it past the far side of Ambivalent, into the opposing half of the spectrum, and you cannot bear it at all without being <strong>Burdened</strong>.</p>
         <h3>Recovery and Redemption</h3>
         <p>A character whose bond with a Higher Power is broken may seek to restore it by returning to proper devotion (for Fallen characters) or recommitting to the patron's will (for Risen characters). The path to recovery depends on the patron's nature and the severity of the character's betrayal. The GM determines what atonement, quest, or trial is required, and whether the patron is willing to forgive.</p>
+        </details>
       </div>
 
       <div class="rules-section">
         <h2 id="prestige">Prestige: The Umbrella System</h2>
+        <div class="casual-lead">
         <p>Prestige is the living record of a character's legacy in the world. It encompasses every way a character shapes their reputation, Standing, relationships, and destiny as they progress. Prestige is not a single score, but an interconnected web of systems that track who a character has become, what factions they belong to, what titles they have earned or been cursed with, and ultimately, what they leave behind when they retire. Prestige systems are tracked in a character's Journal booklet and Space, and ripple outward to affect how the world treats them.</p>
         <p class="style-note">Enthusiastic Play Style only.</p>
-        <details class="play-toggle"><summary></summary>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
 
         <h3>Affiliation: Joining Factions</h3>
         <p><strong>Affiliation is formal membership in a faction that a character chooses to join.</strong> A character may belong to multiple affiliations simultaneously, and each carries its own Standing, Contributions, obligations, and consequences. To become affiliated with a faction, a character must first achieve <strong>Respected</strong> Standing (LVL +1) or higher with that faction. Meeting this threshold opens the door to recruitment, and accepting that invitation formally marks the character as a member.</p>
@@ -9368,5 +9396,6 @@
   </div>
   <script src="../../nav.js?v=2"></script>
   <script src="../../main.js?v=26"></script>
+  <script src="../../play-style.js?v=1"></script>
 </body>
 </html>

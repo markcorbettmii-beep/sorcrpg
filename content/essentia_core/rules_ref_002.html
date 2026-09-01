@@ -36,6 +36,45 @@
     body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
     body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
     body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+
+    /* Play Style. Casual is the default view; the switch opens every Enthusiastic
+       section at once. data-style is the source of truth for the PDF build. */
+    p.style-note { font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase;
+                   font-weight: bold; color: #92793a; margin: 0.6rem 0 0.2rem; opacity: 1; }
+    details.play-toggle { margin: 0.3rem 0 1.2rem; }
+    details.play-toggle > summary {
+      cursor: pointer; list-style: none; display: inline-block;
+      font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; font-weight: bold;
+      padding: 0.3rem 0.75rem; border-radius: 3px;
+      border: 2px solid rgba(140,6,163,0.32);
+      background: rgba(0,88,170,0.13); color: #0058aa;
+    }
+    details.play-toggle > summary::-webkit-details-marker { display: none; }
+    details.play-toggle > summary::marker { content: ""; }
+    details.play-toggle > summary::after { content: "Expand for Enthusiastic"; }
+    details.play-toggle[open] > summary::after { content: "Collapse for Casual"; }
+    details.play-toggle[open] > summary { background: rgba(146,121,58,0.20); color: #92793a; }
+    .casual-lead { background: rgba(0,88,170,0.10); border: 2px solid rgba(140,6,163,0.32);
+                   border-radius: 3px; padding: 0.7rem 1rem 0.3rem; margin: 0.5rem 0; }
+    details.play-toggle[open] { background: rgba(146,121,58,0.15); border: 2px solid rgba(140,6,163,0.32);
+                                border-radius: 3px; padding: 0.7rem 1rem; }
+    body.lawful-mode .casual-lead { background: rgba(0,88,170,0.10); }
+    body.lawful-mode details.play-toggle[open] { background: rgba(146,121,58,0.15); }
+    .play-style-bar { text-align: center; margin: 0.5rem 0 1.5rem; }
+    .play-style-switch {
+      cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: bold;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 0.4rem 1rem; border-radius: 3px;
+      border: 2px solid rgba(140,6,163,0.45);
+      background: rgba(0,88,170,0.13); color: #0058aa;
+    }
+    body.enthusiastic-mode .play-style-switch { background: rgba(146,121,58,0.22); color: #92793a; }
+    .play-style-hint { display: block; font-size: 0.72rem; letter-spacing: 1px;
+                       opacity: 0.6; margin-top: 0.35rem; }
+    @media print {
+      details.play-toggle > summary { border-color: #666; background: none; color: #000; }
+      .play-style-bar { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -93,11 +132,19 @@
         <p><strong>Age</strong> is the character's numerical age at the start of play. At creation, choose a character's starting age from a range centered on their race's Starting Age, two years below it to two years above it, a five-year spread in total (see each race's entry, below, and the Lifespan, Starting Age, and Retirement Age table, pg. 6). A character must always be portrayed as an adult. Whatever age is chosen becomes the Character's actual Beginning Age going forward. All characters retire after 40 years of adventuring (see Retirement, pg. 5). Characters gain no mechanical advantages from age alone; age is purely narrative and establishes the character's life stage, maturity, and starting point in the story.</p>
         <p><strong>Growth</strong> is the system where characters establish racial and inherited advantages as they age through play. As characters live years during the campaign, Growth milestones trigger automatically (see Growth and Character Progression, below). Growth is measured separately from mere age: the two scale at different speeds. A character might be 40 years old (their age number) but only at Growth 4 (if the campaign started them already advanced in age). Growth milestones grant increases to Vitality scores (Life, Mana, Stamina, Endurance), Aura points, and Innate Aptitude selections. Some of these changes happen annually, others every five years. Growth is gated by the escalating schedule explained under Character Progression, below, not by the player's choice. See the full Growth table and procedures in the GM Codex, Ch. II, for race-specific details about what changes when.</p>
         <h3>Birthday</h3>
+        <div class="casual-lead">
         <p>A character's birthday anchors them to Essentia's seasonal calendar. During character creation, choose a specific date within one of the six seasons. The format is: <b>Season Day, Current Year EA</b></p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
         <p><strong>Example:</strong> <code>Aut 15, <a href="../../library.html">10,023 EA</a></code> (Autumn, Day 15 of the current <a href="../../library.html">Eon of Adoria</a>)</p>
         <p>Each season contains 61 days. Use the season abbreviations: <b>Spr</b> (Spring), <b>Sum</b> (Summer), <b>Aut</b> (Autumn), <b>Win</b> (Winter), <b>Sol</b> (Solstice), <b>Vei</b> (Veil). Days range from 1–61 for each season. See <i><a href="../../library.html">Tomes of Essentia</a></i> for complete seasonal calendar details.</p>
+        </details>
         <h3>Character UID</h3>
+        <div class="casual-lead">
         <p>Character ID's are RNG numbers provided by our servers and no two ID's are alike, to avoid conflict between online Characters that have the same name and to keep track of acquisitions.</p>
+        <p class="style-note" data-style="enthusiastic">Enthusiastic Play Style only.</p>
+        </div>
         <h3>Race</h3>
         <p>Upon creation, characters will choose between 40 races and subraces from three size categories; Goliath, Standard and Small. See races below.</p>
         <h3>Alignment</h3>
@@ -118,7 +165,11 @@
         <p><strong>Alignment has nothing to do with your Mission Statement or your Background</strong>, and no Prestige affects either of those two. What your decisions do affect is <strong>Reputation and Standing</strong>: you earn Praise and Blowback as they shift, and those are what govern how the living world regards you, beginning with the alignment you chose (see Standing &amp; Mission Statement, below).</p>
         <p><strong>Player Knowledge vs. Character Knowledge:</strong> While all Players at the table know each other's chosen alignments at character creation (to coordinate party composition and narrative), the Characters themselves do not yet know each other's alignments. Each character discovers the moral stance of their companions through roleplay, actions, and choices made during play. This separation allows alignment to remain a dynamic element of interaction and discovery within the game world.</p>
         <h3 id="higher-power">Higher Power</h3>
+        <div class="casual-lead">
         <p>Every Path is bound to a Higher Power, a divine or otherwise transcendent force. At LVL 4, when a character commits to their first Path, they choose to bind to that Path's Higher Power or remain unbound. This choice is permanent: binding is a lifetime commitment that applies across every Class Tree the character invests in thereafter. A second Path taken later in another Class does not grant a second patron; a character holds one Higher Power across all their classes, or remains unbound in all of them.</p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
 
         <p><strong>Choosing to Bind:</strong> A character who binds to a Higher Power gains access to Abilities from that Path and all three Branches beneath it (if reached). The Higher Power grants a Benefit on Abilities drawn from that Path and any checks made in its service or in its places. However, binding comes with a cost: the character must practice devotion to the Higher Power's religion or cult.</p>
 
@@ -133,6 +184,7 @@
         <p><strong>Forbidden Paths:</strong> A Higher Power will not share a character with rival traditions. While bound, a character cannot learn new Abilities from any Path their patron forbids, whatever their alignment. Abilities already learned remain usable; the forbidden Path simply closes to further picks while the bond holds. Each patron's forbidden Paths are listed in its own Path entry.</p>
 
         <p><strong>Higher Power Categories:</strong> Lawful and Moral Higher Powers are divine or otherwise virtuous, Lawful the more institutional and oath-bound, Moral the more personally-driven. Evil and Amoral Higher Powers are corrupting or self-interested, Evil the more overtly malicious, Amoral the more pragmatic. Only Lawful and Moral Higher Powers carry the risk of Falling; only Amoral and Evil Higher Powers carry the risk of Rising.</p>
+        </details>
         <h3>Class</h3>
         <p>Choose between 16 distinct Class Trees, each starting with a shared Tier before splitting into 3 Paths (48 total) and, further in, 3 Branches per Path (144 total)-all filtered by the chosen alignment. Characters can select multiple Class Trees freely, as long as they meet Trait Prerequisites (for instance, the Strength needed to wield a 2H giant's sword in the Barbarian tree) and alignment requirements. A character's LVL (LVL) is unified across all trees they adopt, so when they reach LVL 20, they unlock the LVL 20 Abilities in every class they've taken Abilities from. Abilities grow more powerful the deeper into a tree a character climbs, not evenly, each one further in is a meaningful jump over the last. Only one Class Tree, ever, may reach its LVL 30 Ability, the capstone, and the single most powerful one a Character will ever wield. Any other tree they've invested in stops at its LVL 29 Ability instead, one short of its own capstone. A character can divvy their picks across trees however they like, one tree capped at 30 and a second at 29, or spread thinner across several trees for diversity, but every weapon-specific Ability still requires its class's proper Armament readied to activate (see Weapons Carried, pg. 4). Innate Aptitude and Inaptitude are the exception, passive and requiring no weapon of their own, see Innate Aptitude and Inaptitude, pg. 2. Note: Only Paths bound to a Higher Power (Lawful, Moral, Amoral, or Evil Paths) can Fall or Rise at Growth 20, transitioning into unique new Class Trees with different mechanics and progression, Ambivalent Paths have no Higher Power to Fall from or Rise toward. See Fallen and Risen Classes on Page 3 for details. Classes are covered in detail below.</p>
         <h3>Armaments and Class Progression</h3>
@@ -155,9 +207,14 @@
         <p><strong>Custom Backgrounds:</strong> Players can also create their own custom Background with the GM. The GM must verify that the custom Background fits the character's established concept and narrative. Once a Background is chosen or created and verified, it becomes part of the Character's locked-in foundation and cannot be changed.</p>
         <p>Backgrounds answer questions like: Were you a stowaway, runaway, escapee, or sent on a pilgrimage? How did the party find one another? What experiences shaped who you are? What is your Mission Statement (see below)? Characters may create a detailed version of their story in their Journal.</p>
         <h3>Mission Statement</h3>
+        <div class="casual-lead">
         <p>The Mission Statement defines a character's concrete, actionable goals and purpose. It must adhere to the character's Background. <strong>Mission Statements are not abstract philosophical values or beliefs, they are specific, tangible objectives that the character will actively pursue and accomplish through play.</strong> Examples of proper mission statements: <strong>"Establish a dwarven trade outpost and defend it"</strong> (concrete objective), <strong>"Hunt down and destroy the draconic bloodline council"</strong> (specific goal), <strong>"Locate the legendary Wayfarer's Map to control hidden trade routes"</strong> (actionable target). The GM must verify that custom mission statements involve concrete, actionable goals aligned with the Character's Background before character creation is finalized.</p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
         <p>A character's mission statement ties them to factions, NPCs, and their Standing with them. Every Background and mission statement connects a character to other people and organizations in the world. Whether a Player pursues, ignores, or completes their mission statement, that connection carries consequences and rewards, playing out before, during, and after any attempt at completion. Mission progress and changes are recorded in a character's Journal. Mission statements do not need to be completed; they define a character's throughline, not a checklist.</p>
         <p><strong>Praise and Blowback on a Mission Statement:</strong> A mission statement is watched by NPCs and factions. Some want the Character to accomplish it; others want them to fail. Both are always present, and the Character earns from both at once. <strong>Working towards a mission statement</strong> draws Praise from those who expect or hope the Character will see it done, and Blowback from those who do not want it done. <strong>Neglecting a mission statement</strong> reverses this exactly: Blowback from those who expected the Character to act, and Praise from those who are glad they did not. There is no way to sit still and avoid both. Both Praise and Blowback directly affect Standing with factions and NPCs (see Standing &amp; Mission Statement and Standing Tiers, below). See Praise &amp; Blowback under Prestige, below.</p>
+        </details>
       </div>
 
       <div class="rules-section">
@@ -728,7 +785,11 @@
         <h2 id="character-progression" class="chapter">Character Progression: Growth, Character Level and Rank</h2>
         <p>In SORC, a character advances along three separate tracks that move at different speeds, Growth, Character LVL, and Rank. This section is a summary of each; see the GM Codex, Ch. II, for the full tables, schedules, and procedures.</p>
         <h3>Growth</h3>
+        <div class="casual-lead">
         <p>Growth is a character's maturity and aging, measured in Eons of Adoria (EA), or "years" (see Time, above). Growth is purely time-based, there is no Experience (XP) or XP involved. A character ages every year they're played, but Growth milestones don't arrive every year: the wait grows each time, with each Growth milestone requiring one more year than the last (Growth 1 at year 1, Growth 2 at year 3, Growth 3 at year 6, and so on). Every Growth milestone increases a character's Vitality (Life, Mana, Stamina, Endurance) at the same per-LVL rate Character LVL uses (see Vitality Progression, above), so age feeds directly into those figures rather than sitting apart from them. Because the wait keeps growing and Retirement is a hard 40-year cap for every race (see Retirement, below), Growth 8 is about as far as most characters will ever reach. Innate Aptitude is directly tied to Growth progression: it advances one pick every year of age lived, running alongside the Growth milestone schedule (see Innate Aptitude and Inaptitude, pg. 2). See the GM Codex, Ch. II, for the full Growth table and the year-tracking procedure.</p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
         <h4>Companion Development Through Growth</h4>
         <p>Companions develop and mature alongside the Character through the Growth system. Every Companion exists in three development stages (Young, Adult, and Elder), representing different points in the Companion's maturity. As a Character ages through Growth milestones, they may choose to transition their bonded Companion to a more mature stage, or retire an aging Companion and bond with a younger version of that type.</p>
         <p><strong>Stage Transitions:</strong> A Companion's development stage is separate from the Character's Growth progression, but tied to it narratively. A Character may keep their Young Companion through their entire adventuring life, or upgrade to an Adult stage at any Growth milestone to reflect that Companion's maturation. At advanced Growth milestones (Growth 5 and beyond), Characters may bond with Elder stage Companions, who have enhanced stats and abilities reflecting decades of experience. Each stage carries different stat values, size categories, and visual appearance, but the same Companion identity across all three.</p>
@@ -736,9 +797,15 @@
         <p><strong>Lifespan and Retirement:</strong> Companion lifespans vary by rank and type. Young Companions have shorter potential lifespans, particularly Common and Uncommon ranks, which cannot be resurrected and may pass during a Character's earlier years. Adult Companions have moderate lifespans spanning decades. Elder Companions are often significantly longer-lived, and higher-rank Companions (Rare and above) can be extraordinarily long-lived, potentially outlasting the Character. A Character may retire an aging Companion at their safe keep with a caretaker, allowing them to live out their natural lifespan in comfort, while the Character bonds with a fresh Young Companion to continue their adventures.</p>
         <p><strong>Companion Succession:</strong> As Characters advance through Growth and near Retirement Age, they may establish succession plans for their Companions. A Companion bonded to a retiring Character can be inherited by that Character's descendants or passed to another party member, carrying with them the history and bonds developed over years of adventuring. Rare and higher-rank Companions may even survive multiple generations of Characters, becoming living legends passed down through families.</p>
         <h4 id="retirement">Retirement</h4>
+        <div class="casual-lead">
         <p>Every character retires. Starting Age varies by race, roughly a quarter of a race's natural lifespan, or an effective 400 years for Immortal races (see each race's entry, pg. 2, and Time, above), but the adventuring window itself is the same 40 years for every character regardless of race. Retirement Age is simply Starting Age plus 40, and when a character reaches it, their story as a played character ends.</p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
         <p>A character retires at whatever Rank they've reached the moment they hit the Retirement Age, nothing is granted retroactively, and there is no rushing it. A character who has climbed all the way to Legend retires a Legend, and the world treats them like one: monuments raised, statues carved, and songs written of the Character they became, the journey they took to get there, and the retirement itself. A character who never reached Legend still retires, just without that same recognition. Legend is not handed out for showing up; it is earned exactly the way it always was, through Rank PTS, and most characters who retire will not have reached it.</p>
         <p>Retirement removes the Character from active play for good, there is no unretiring. What happens to them afterward depends on their nature. Immortal characters carry on in the world as living legend NPCs, encounterable, though never again playable, in future campaigns. Mortal characters eventually pass on after retirement and live on only in the world's memory: the monuments, statues, and songs above, or simply the stories other Players' characters hear told of them. Either way, a retired character isn't erased. They become part of Essentia's history, and the Player's next character starts their own story from there.</p>
+        </details>
+        </details>
         <h3>Character Level</h3>
         <p>Character LVL (LVL) is where a build actually takes shape, it governs Remnant (REM) PTS spending on ATTR SCRs, Talents, Skills, and Traits (TST), and grants Ability (Nature/Spell) picks from a character's Class Tree(s), one pick at each LVL and a second at the midpoint toward the next LVL (see Slots and Prerequisites, Basic Rules pg. 3, and Character LVL Experience (XP) Progression, GM Codex Ch. II, for the exact midpoint XP math). Apex and Spirit are independent Vitality scores that grow through age and Growth progression, not through Character LVL. They need no separate spending on their own. A new character reaches LVL 1 almost immediately, and each Class Tree offers exactly 30 Slots worth of Abilities, ending at LVL 30 (see When the Class Tree Runs Out, below). Table talk will often shorten this to just "LVL," but it always means LVL unless Growth is specified. Note: <a href="#retirement">Retirement</a> is determined by Growth (aging), not Character LVL. See the GM Codex, Ch. II, for the full XP table.</p>
         <h3>Rank</h3>
@@ -752,13 +819,18 @@
         </table>
         <div class="callout">Growth, Character LVL, and Rank are fully covered, tables, schedules, and procedures, including every race's age-based Rank requirements, in the GM's Codex, Ch. II.</div>
         <h3 id="archetypes">Archetypes</h3>
+        <div class="casual-lead">
         <p>An <strong>Archetype</strong> is what a character does with the years Growth measures. Adventuring fills the sessions, but Growth counts whole years, and most of those years are spent somewhere doing something. The Archetype is that something, and it is chosen once and lived out over a lifetime rather than bought with Remnant (REM) PTS. A character has one.</p>
+        <p class="style-note">Enthusiastic Play Style only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
         <p>There are three, and none of them touch a Character's Traits or Stats. What each one changes is what a character does between adventures, what they carry, and what the world offers them when they pass through it.</p>
         <ul>
           <li><strong>Hobbyist</strong>, keeps a pastime and returns to it whenever there is an hour free.</li>
           <li><strong>Hermit</strong>, keeps to their own company, apart from settlement and crowd.</li>
           <li><strong>Wanderer</strong>, keeps moving, and settles nowhere long enough to be from there.</li>
         </ul>
+        </details>
         <h3>Hobbyist</h3>
         <p>Hobbies define a character outside of their Class, Reputation, Profession, and other systems. A hobbyist is never paid for their hobby, full stop, they pursue it purely for self-gratification, relaxation, and the chance to work in their own personal style, not for coin or commission. A character can still hold the same subject as an actual paid Profession, a Blacksmith who also hammers out trinkets on the side for no one but themselves is both at once, but the hobby side of that never earns a wage; the moment coin changes hands, it's the Profession doing the work, not the hobby. A hobby can come from a character's own background or culture, or be picked up from someone else's entirely, and it can come up during downtime while the Player isn't the one at the table, or get woven directly into play itself. Like an archetype, a hobby says something about who a character is, and many carry a small, thematically appropriate benefit tied to what the hobby actually trains, though never as significant as a Talent, Skill, or dedicated Profession.</p>
         <p>For example, a Card Player used to running a bluff at the table may find that same instinct sharpens their Deceit outside of it too. A Collector who has spent years cataloguing curiosities may be quicker to Appraise an item's true worth. A GM is free to grant a small, situational bonus like this when a character's hobby genuinely applies, it's a narrative hook first and a mechanical nudge second.</p>
@@ -3233,5 +3305,6 @@
   </div>
   <script src="../../nav.js?v=2"></script>
   <script src="../../main.js?v=26"></script>
+  <script src="../../play-style.js?v=1"></script>
 </body>
 </html>
