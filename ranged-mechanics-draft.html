@@ -36,19 +36,21 @@
 
     <div class="draft-banner">
       <strong>Draft.</strong> Standalone working copy. The highlighted rows are the new
-      <strong>Stabilized Point</strong> bands for Mid Range and Long Range.
+      <strong>Stabilized</strong> bands for Mid Range and Long Range.
+      <br/><br/>
+      I'm currently editing this in real time, implementing the hit and damage systems.
     </div>
 
     <h2 id="ranged-mechanics">SORC Ranged Mechanics</h2>
 
     <h3 id="ranged-attacks">Ranged Attacks</h3>
-    <p>Ranged combat covers any attack delivered from a distance using projectiles, energy, or magical effects. All ranged attacks use the d100 roll-over system where your relevant Trait SCR (Agility for ranged weapons, Acuity for spells, Strength for Melee, etc) is added directly to your hit roll against a target's Protection Score (PROTS).</p>
+    <p>Ranged combat covers any attack delivered from a distance using projectiles or spells. All ranged attacks use the d100 roll-over system where your relevant Trait SCR (Agility for ranged weapons, Acuity for spells, Strength for Melee, etc) is added directly to your hit roll against a target's Protection Score (PROTS).</p>
     <p>Ranged attacks fall into four primary categories based on their origin: <strong>Earthborn</strong> (bows, crossbows, thrown weapons, and black powder firearms), <strong>Technologically Advanced Weapons (TAW)</strong> (manufactured technology, splitting into TAW Ballistic and TAW Charged), <strong>Energy</strong> (elemental substance carried around a real primal weapon, neither cast nor built), and <strong>Spell</strong> (magical effects cast, in this case from a distance). Each type uses different range bands, damage calculations, and armor interactions.</p>
 
-    <h3 id="earthborn-ranged">Earthborn Ranged</h3>
-    <p>Earthborn projectiles operate under physics-based range mechanics where distance, projectile velocity, and stability directly affect accuracy and damage. Distance is measured in feet. <em>Given: 1 sq. = 5 ft.</em> Every ranged shot, whether arrow, bolt, or hand weapon, falls into one of four velocity states based on how far it travels: <strong>Point Blank (0–5 ft.)</strong>, <strong>Transition (stabilization zone)</strong>, <strong>Stabilized Point</strong>, and <strong>Velocity Drop (gravity and air resistance, out to the weapon's maximum range)</strong>. Band distances past Point Blank vary by weapon class and are read off the table below.</p>
+    <h3 id="earthborn-ranged">Earthborn - Ranged</h3>
+    <p>Earthborn projectiles operate under physics-based range mechanics where distance, projectile velocity drops, and stability directly affect accuracy and damage. Distance is measured in feet. <em>(Given: 1 sq. = 5 ft).</em> Every ranged shot, whether arrow, bolt, hand thrown or slung, falls into one of four velocity states based on how far it travels: <strong><a href="#point-blank">Point Blank</a> (0–5 ft.)</strong>, <strong>Oscillation</strong>, <strong>Stabilized</strong>, and <strong><a href="#velocity-drop">Velocity Drop</a></strong> (gravity and air resistance, out to the weapon's maximum range). Band distances past Point Blank vary by weapon class and are read off the table below.</p>
 
-    <p>At Point Blank range (0–5 ft.), if the attacker's d100 roll is a <strong>Critical Hit</strong> (96-100), it lands automatically; and a defensive roll from the target, called a <strong>Botch (grapple)</strong>, is waived off. The Crit deals 2x damage dice + Agility Score of the attacker (see Critical Hit Formula, Combat, Hit Results, pg. 5). If the attacker's hit roll is a non-critical hit that meets or exceeds the defender's Protection Score (PROTS), the defender may attempt a Point Blank Botch (grapple) to avoid or reduce damage. The defender rolls d100 and adds the higher of their Agility Score or Strength Score, plus their Defense Trait Score, stacked with their PROTS. If this roll meets or exceeds the attacker's total roll (including modifiers), the defender successfully botches the attack. In this case, the target only sustains partial damage (how much is pending).</p>
+    <p>At <a href="#point-blank">Point Blank</a> range (0–5 ft.), if the attacker's d100 roll is a <strong>Critical Hit</strong> (96-100), it lands automatically; and a defensive roll from the target, called a <strong><a href="content/essentia_core/rules_ref_005.html#botch">Botch</a> (grapple)</strong>, is waived off. The Crit deals 2x damage dice + Agility Score of the attacker (see <a href="content/essentia_core/rules_ref_005.html#critical-hit">Critical Hit Formula</a>, Combat, Hit Results, pg. 5). If the attacker's hit roll is a non-critical hit that meets or exceeds the defender's Protection Score (PROTS), the defender may attempt a Point Blank <a href="content/essentia_core/rules_ref_005.html#botch">Botch</a> (grapple) to avoid or reduce damage. The defender rolls d100 and adds the higher of their Agility Score or Strength Score, plus their Defense Trait Score, stacked with their PROTS. If this roll meets or exceeds the attacker's total roll (including modifiers), the defender successfully botches the attack. In this case, the target only sustains partial damage (how much is pending).</p>
 
     <p><em>Note: Innate Aptitude and Inaptitude apply to this roll; for example, a Gnome with an innate -5 Strength (STR) Inaptitude would add their Agility Score instead of Strength when calculating their defense roll.</em> If the defender's roll fails to meet the attacker's roll, the shot lands uncontested and deals full damage.</p>
 
@@ -57,42 +59,44 @@
     <p><strong>Black Powder:</strong> Earthborn covers black powder firearms as well as drawn and thrown weapons. Hand cannons, blunderbusses, muskets and pistols burn black powder to drive a lead ball, slug or shot, and that charge is what separates them from Technologically Advanced Weapons, which never use black powder. A black powder firearm reads off the same table as every other Earthborn projectile, taking the same velocity states, band distances, and hit and damage columns as a bow or crossbow of its reach.</p>
 
     <div class="table-scroll">
-    <table class="rules-table">
-      <thead><tr><th>Weapon Type (Earthborn)</th><th>Dist. (ft.)</th><th>Velocity Drop Hit Mod.</th><th>Damage Calc.</th><th>Stabilized Pt.</th><th>Velocity State</th></tr></thead>
+    <table class="rules-table" id="earthborn-table">
+      <thead><tr><th>Weapon<br/>(Earthborn)</th><th>Dist. (ft.)</th><th>Hit MOD.</th><th>DMG. MOD.</th><th>Base DMG.</th><th>Velocity Curve</th></tr></thead>
       <tbody>
-        <tr><td><strong>CLOSE QTR.</strong></td><td>0–5 ft.</td><td>—</td><td>Base + STR</td><td>—</td><td>Melee</td></tr>
-        <tr><td><strong>THROW</strong></td><td>0–25 ft.</td><td>—</td><td>Base + AGI</td><td>Hit/Miss</td><td>Point Blank†</td></tr>
+        <tr><td><strong>CLOSE QTR.</strong></td><td>0–5 ft.</td><td>—</td><td>STR</td><td>—</td><td>Melee</td></tr>
 
-        <tr><td rowspan="4"><strong>MID RANGE</strong><br/>(Shortbow)</td><td>0–5 ft.</td><td>+0</td><td>Base + AGI</td><td>No Wob</td><td>Point Blank†</td></tr>
-        <tr><td>6–25 ft.</td><td>+0</td><td>Base + AGI</td><td>Max DMG.</td><td>Transition Zone</td></tr>
-        <tr class="new-row"><td>26–45 ft.</td><td>+0</td><td>Base + AGI</td><td><strong>Stabilized Point</strong></td><td>Transition Zone</td></tr>
-        <tr><td>46–75 ft.</td><td>–15</td><td>Base + AGI – 5</td><td>No (decay)</td><td>Velocity Drop†</td></tr>
+        <tr><td rowspan="2"><strong>THROW</strong><br/>(axe - knife)</td><td>0–5 ft.</td><td>—</td><td>AGI</td><td>Max DMG.</td><td>Pt. Blank✦</td></tr>
+        <tr><td>6–25 ft.</td><td>—</td><td>AGI</td><td>Base DMG.</td><td>Oscillation</td></tr>
 
-        <tr><td rowspan="4"><strong>LONG RANGE</strong><br/>(Longbow)</td><td>0–5 ft.</td><td>+0</td><td>Base + AGI</td><td>Max DMG.</td><td>Point Blank†</td></tr>
-        <tr><td>6–45 ft.</td><td>+0</td><td>Base + AGI</td><td>Standard</td><td>Transition Zone</td></tr>
-        <tr class="new-row"><td>46–100 ft.</td><td>+0</td><td>Base + AGI</td><td><strong>Stabilized Point</strong></td><td>Transition Zone</td></tr>
-        <tr><td>101–150 ft.</td><td>–20</td><td>Base + AGI – 7</td><td>No (decay) ➡️</td><td>Velocity Drop†</td></tr>
+        <tr><td rowspan="4"><strong>MID RANGE</strong><br/>(Shortbow)</td><td>0–5 ft.</td><td>+0</td><td>AGI</td><td>Max DMG.</td><td>Pt. Blank✦</td></tr>
+        <tr><td>6–25 ft.</td><td>+0</td><td>AGI</td><td>Base DMG.</td><td>Oscillation</td></tr>
+        <tr class="new-row"><td>26–45 ft.</td><td>+0</td><td>AGI</td><td>Max DMG.</td><td>Stabilized</td></tr>
+        <tr><td>46–75 ft.</td><td>–15</td><td>AGI – 5</td><td>Less DMG.</td><td>Velocity Drop✧</td></tr>
+
+        <tr><td rowspan="4"><strong>LONG RANGE</strong><br/>(Longbow)</td><td>0–5 ft.</td><td>+0</td><td>AGI</td><td>Max DMG.</td><td>Pt. Blank✦</td></tr>
+        <tr><td>6–45 ft.</td><td>+0</td><td>AGI</td><td>Base DMG.</td><td>Oscillation</td></tr>
+        <tr class="new-row"><td>46–100 ft.</td><td>+0</td><td>AGI</td><td>Max DMG.</td><td>Stabilized</td></tr>
+        <tr><td>101–150 ft.</td><td>–20</td><td>AGI – 7</td><td>Decay</td><td>Velocity Drop✧</td></tr>
       </tbody>
     </table>
     </div>
 
     <div class="callout"><strong>Note:</strong> Fired black powder weapons and compound bows will be on a separate chart. The table above covers drawn and thrown Earthborn weapons.</div>
 
-    <p>†<strong>Point Blank.</strong> A d100 roll of 96-100 is a Critical Hit and lands automatically; the defender gets no roll against it. Any other hit that meets or exceeds the defender's PROTS is a normal hit, and a normal hit at this range opens the defender to a Point Blank Botch (grapple).</p>
+    <p id="point-blank">✦<strong>Point Blank.</strong> A d100 roll of 96-100 is a Critical Hit and lands automatically; the defender gets no roll against it. Any other hit that meets or exceeds the defender's PROTS is a normal hit, and a normal hit at this range opens the defender to a Point Blank <a href="content/essentia_core/rules_ref_005.html#botch">Botch</a> (grapple).</p>
 
-    <p><strong>Velocity Drop.</strong> The band runs to the weapon's maximum range, 75 ft. for Compact weapons and 150 ft. for Extended weapons. Damage decays across the band at the rate shown in the Damage Calc. column, and nothing may be fired past the maximum.</p>
+    <p id="velocity-drop">✧<strong>Velocity Drop.</strong> The band runs to the weapon's maximum range, 75 ft. for Compact weapons and 150 ft. for Extended weapons. Damage decays across the band at the rate shown in the DMG. MOD. column, and nothing may be fired past the maximum.</p>
 
-    <p>The <strong>Stabilized (High Velocity Point)</strong> column tracks projectile physics and identifies the physical sweet spot where ammunition reaches peak velocity and damage potential.</p>
+    <p>The <strong>Velocity Curve</strong> column tracks projectile physics and identifies the physical sweet spot where ammunition reaches peak velocity and damage potential.</p>
 
-    <p><strong>Abbreviations:</strong> "Hit/Miss" (thrown weapons) means the projectile is at its hardest the moment it leaves your hand. "No Wob" at Point Blank indicates wobbling instability from being fired at extreme close range, preventing Critical Hits unless the attacker rolls 96-100. "Max DMG." marks a peak damage band. "Standard" is ordinary flight, neither peak nor decay. "Stabilized Point" marks the second peak, where the shaft has finished settling out of the paradox and flies true. "No (decay)" at Velocity Drop shows the projectile losing energy and accuracy as gravity and air resistance accumulate. This column directly informs tactical positioning: engage at the Stabilized Point, 26–45 ft. with a shortbow and 46–100 ft. with a longbow, for the highest damage output.</p>
+    <p><strong>Abbreviations:</strong> "Melee" is a Close Quarters strike, not a shot, and uses Strength. "Pt. Blank" is the shaft at full launch energy but still unsettled, devastating at contact and the only band where a <a href="content/essentia_core/rules_ref_005.html#botch">Botch</a> (grapple) may be attempted. "Oscillation" is the shaft still flexing out of the archer's paradox, flying at Base DMG. rather than a peak. "Stabilized" is the second peak, where the shaft has finished settling and flies true. "Velocity Drop" shows the projectile losing energy and accuracy as gravity and air resistance accumulate, reading "Less DMG." on a shortbow and "Decay" on a longbow. This column directly informs tactical positioning: engage at the Stabilized band, 26–45 ft. with a shortbow and 46–100 ft. with a longbow, for the highest damage output at range.</p>
 
-    <p>Thrown weapons use the Throw band, a 0–25 ft. range, and Agility alone applies to hit and defense. With the exception of Point Blank, a throw reaches its hardest at 11–15 ft. and drops away past that.</p>
+    <p>Thrown weapons use the Throw band, a 0–25 ft. range, and Agility alone applies to hit and defense. A throw is at its hardest inside Point Blank and flies at Base DMG. through the rest of its range; it reaches no Stabilized band and takes no Velocity Drop within 25 ft.</p>
 
-    <p><strong>Improvised Projectile:</strong> A projectile driven by hand rather than launched, an arrow punched into a target or a bolt used as a spike, is a Close Quarters attack and not a ranged attack. It uses Strength for both hit and damage, Base + STR, and follows standard melee rules. Velocity state, the Stabilized column and Agility Score play no part in it. The projectile's Grade sets its base damage the same as it would when launched, see Projectiles below.</p>
+    <p id="improvised-projectile"><strong>Improvised Projectile:</strong> A projectile driven by hand rather than launched, an arrow punched into a target or a bolt used as a spike, is a Close Quarters attack and not a ranged attack. It uses Strength for both hit and damage, Base + STR, and follows standard melee rules. Velocity state, the Velocity Curve column and Agility Score play no part in it. The projectile's Grade sets its base damage the same as it would when launched, see <a href="#earthborn-projectiles">Projectiles</a> below.</p>
 
-    <p><strong>Projectile Recovery:</strong> Earthborn projectiles may be recovered after combat. Typically, 50% of arrows or bolts fired land recoverable. Recovered projectiles can be salvaged for crafting materials or sold. Ballistic projectiles (slugs, pellets, stones) may also be recovered and used for materials. Technologically Advanced Weapons (TAW) and Energy projectiles cannot be recovered; they are expended on use.</p>
+    <p id="projectile-recovery"><strong>Projectile Recovery:</strong> Earthborn projectiles may be recovered after combat. Typically, 50% of arrows or bolts fired land recoverable. Recovered projectiles can be salvaged for crafting materials or sold. Ballistic projectiles (slugs, pellets, stones) may also be recovered and used for materials. Technologically Advanced Weapons (TAW) and Energy projectiles cannot be recovered; they are expended on use.</p>
 
-    <p><strong>Weapon Families.</strong> Earthborn, Technologically Advanced Weapons (TAW) and Energy are the three power sources a ranged weapon can draw on, and the distinction governs range bands, armor interaction and planetary penalties alike. Earthborn is forged or knapped and driven by muscle or mechanism. TAW is technologically manufactured and tuned to the sun of its native planet, losing range off-world. Energy draws on the elemental energy of the universe rather than either sun, which is why it alone takes no planetary Bonus or Penalty. All three are defined under Tech and Magic Across Essentia (Planetary Markets, Basic Rules pg. 4).</p>
+    <p id="weapon-families"><strong>Weapon Families.</strong> Earthborn, Technologically Advanced Weapons (TAW) and Energy are the three power sources a ranged weapon can draw on, and the distinction governs range bands, armor interaction and planetary penalties alike. Earthborn is forged or knapped and driven by muscle or mechanism. TAW is technologically manufactured and tuned to the sun of its native planet, losing range off-world. Energy draws on the elemental energy of the universe rather than either sun, which is why it alone takes no planetary Bonus or Penalty. All three are defined under <a href="content/essentia_core/rules_ref_004.html#tech-and-magic">Tech and Magic Across Essentia</a> (Planetary Markets, Basic Rules pg. 4).</p>
 
     <p>Reach weapons do not use range bands; they simply extend melee reach to 10 ft. and follow standard melee rules.</p>
 
@@ -104,7 +108,7 @@
       <li><strong>Light metals:</strong> Silver, Mithril, Refined Steel, worked for the cut rather than the weight.</li>
       <li><strong>Dense and legendary:</strong> Tungsten, Osmium, Iridium, Platinum, Ruthenium, Titanium, Vibranium, Adamantium, Dragon Scale, heads that punish the drawing arm as much as the target.</li>
     </ul>
-    <p>Slope Mod belongs to whatever launches the projectile, the arm or the bow, and is read off the launcher's own rules. Full Grades, damage, bundle sizes and costs are on each Projectile's Card (see Projectile Grade, pg. 4).</p>
+    <p>Slope Mod belongs to whatever launches the projectile, the arm or the bow, and is read off the launcher's own rules (see <a href="#slope-conditions">Slope Conditions</a> below). Full Grades, damage, bundle sizes and costs are on each Projectile's Card (see Projectile Grade, pg. 4).</p>
 
     <h3 id="slope-conditions">Slope Conditions</h3>
     <p><strong>High Ground.</strong></p>
@@ -112,7 +116,7 @@
     <p>Rules for Slope Conditions are still being adjusted.</p>
 
     <h3 id="taw-ranged">TAW Ranged</h3>
-    <p>Technologically Advanced Weapons (TAW) are rail guns, mini guns, high velocity sniper rifles, laser pistols, plasma pistols and rifles, plasma grenades that stick, and other technologically advanced weaponry originally manufactured on the planets further out from Adoria. TAW splits into two: <strong>TAW Ballistic</strong>, which fires a physical round, and <strong>TAW Charged</strong>, which fires light or plasma. A laser pistol or a plasma cannon is TAW Charged, not Energy, because it was built (see Energy Weapons, pg. 4).</p>
+    <p>Technologically Advanced Weapons (TAW) are rail guns, mini guns, high velocity sniper rifles, laser pistols, plasma pistols and rifles, plasma grenades that stick, and other technologically advanced weaponry originally manufactured on the planets further out from Adoria. TAW splits into two: <strong>TAW Ballistic</strong>, which fires a physical round, and <strong>TAW Charged</strong>, which fires light or plasma. A laser pistol or a plasma cannon is TAW Charged, not Energy, because it was built (see <a href="content/essentia_core/rules_ref_004.html#energy-weapons">Energy Weapons</a>, pg. 4).</p>
     <p>TAW also fields shotguns, and they fire more than plasma. A TAW shotgun will throw minerals much the way lead is thrown from an Earthborn gun, but it never burns black powder to do it. The propellant for any TAW round that is not light or plasma is one of two systems: <strong>nuclear pulse propulsion</strong> or an <strong>electrothermal-chemical (ETC)</strong> charge. That distinction, powder against
       <span style="opacity:0.6">[your text ends here]</span></p>
 
