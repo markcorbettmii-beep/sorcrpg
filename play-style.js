@@ -41,8 +41,8 @@
     if (btn) {
       btn.setAttribute('aria-pressed', String(enthusiastic));
       btn.textContent = enthusiastic
-        ? 'Play Style: Enthusiastic'
-        : 'Play Style: Casual';
+        ? 'Enthusiastic Play - Baseline to Improvised Play'
+        : 'Casual Play - Base Features';
     }
   }
 
