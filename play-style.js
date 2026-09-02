@@ -1,13 +1,13 @@
-/* SORC Play Style switch.
+/* SORC Rule Set switch.
  *
- * One choice, held for the campaign, applied to the whole book. Casual is the
- * default view: every Enthusiastic section shows its heading, its opening
- * paragraph and its note, with the rest collapsed. Enthusiastic opens them all.
+ * One choice, held for the campaign, applied to the whole book. Bare Bones is the
+ * default view: every Complex section shows its heading, its opening
+ * paragraph and its note, with the rest collapsed. Complex opens them all.
  *
  * Sections are marked in the HTML with data-style="enthusiastic" on a
  * <details class="play-toggle">. That attribute is the source of truth, so the
- * PDF and box set builds can read the same markup and emit the Casual book and
- * the Enthusiastic book from this one file.
+ * PDF and box set builds can read the same markup and emit the Bare Bones book and
+ * the Complex book from this one file.
  *
  * The choice persists per reader in localStorage and carries across pages.
  */
@@ -41,8 +41,8 @@
     if (btn) {
       btn.setAttribute('aria-pressed', String(enthusiastic));
       btn.textContent = enthusiastic
-        ? 'Enthusiastic Play - Baseline to Improvised Play'
-        : 'Casual Play - Base Features';
+        ? 'Complex - Baseline to Modular'
+        : 'Bare Bones - Base Features';
     }
 
     // The sections this affects are usually far below the fold, so say plainly
@@ -51,17 +51,17 @@
     if (hint) {
       var n = toggles.length;
       if (!n) {
-        hint.textContent = 'No Enthusiastic sections on this page.';
+        hint.textContent = 'No Complex sections on this page.';
       } else {
         hint.textContent = enthusiastic
-          ? n + ' Enthusiastic section' + (n === 1 ? '' : 's') + ' shown on this page. Set once, holds across every page.'
-          : n + ' Enthusiastic section' + (n === 1 ? '' : 's') + ' collapsed on this page. Set once, holds across every page.';
+          ? n + ' Complex section' + (n === 1 ? '' : 's') + ' shown on this page. Set once, holds across every page.'
+          : n + ' Complex section' + (n === 1 ? '' : 's') + ' collapsed on this page. Set once, holds across every page.';
       }
     }
   }
 
   function build() {
-    // Only on pages that actually carry Play Style sections.
+    // Only on pages that actually carry Rule Set sections.
     if (!document.querySelector('details.play-toggle')) return;
 
     var nav = document.querySelector('.page-nav');
@@ -75,7 +75,7 @@
     btn.type = 'button';
     btn.className = 'play-style-switch';
     btn.setAttribute('aria-pressed', 'false');
-    btn.title = 'Switch the whole book between Casual and Enthusiastic';
+    btn.title = 'Switch the whole book between Bare Bones and Complex';
 
     btn.addEventListener('click', function () {
       var next = read() === ENTHUSIASTIC ? CASUAL : ENTHUSIASTIC;
