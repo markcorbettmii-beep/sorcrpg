@@ -94,6 +94,17 @@
                                           border-color: rgba(140,6,163,0.45); }
     body.lawful-mode.enthusiastic-mode .play-style-switch { background: rgba(146,121,58,0.22); color: #92793a; }
 
+    /* Earthborn Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    #earthborn-table { min-width: 760px; }
+    #earthborn-table th, #earthborn-table td { text-align: center; white-space: nowrap; }
+    #earthborn-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #earthborn-table td[rowspan],
+    #earthborn-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+
     /* Portrait phones: the Enthusiastic label is long, so shrink it enough to
        hold one line. Landscape and desktop keep the full size. */
     @media (max-width: 600px) {
@@ -507,7 +518,8 @@
 
         <h3 id="range-chart">Range Chart, Earthborn Ranged</h3>
         <p>Bands, hit modifiers and damage for every drawn or thrown Earthborn weapon. Rules and worked detail live under <a href="rules_ref_005.html#earthborn-ranged">Earthborn Ranged</a>, Combat. A shot from a Stabilized band widens the Critical Window by 2 (see <a href="#crit-chart">Crit Chart</a>).</p>
-        <table class="rules-table">
+        <div class="table-scroll">
+        <table class="rules-table" id="earthborn-table">
           <thead><tr><th>Weapon<br/>(Earthborn)</th><th>Dist. (ft.)</th><th>Velocity Curve</th><th>Hit MOD.</th><th>DMG. MOD.</th><th>Base DMG.</th></tr></thead>
           <tbody>
             <tr><td><strong>CLOSE QTR.</strong></td><td>0&#8211;5 ft.</td><td>Melee</td><td>&#8212;</td><td>STR</td><td>&#8212;</td></tr>
@@ -523,6 +535,7 @@
             <tr><td>201&#8211;300 ft.</td><td>Velocity Drop&#10023;</td><td>&ndash;25</td><td>AGI</td><td>Decay (&frac12; dice)</td></tr>
           </tbody>
         </table>
+        </div>
         <p>&#10035;<strong>Oscillation.</strong> Short Bow: +10 to hit in the first 10 ft. of the band. Long Bow: +10 hit through the first 10 ft. of launch point.</p>
         <p>&#10022;<strong>Point Blank.</strong> From distance 0 ft. through 10 ft. the shot is Point Blank. A d100 roll of 96-100 is a Critical Hit and lands automatically; the defender gets no Botch attempt. Any other roll result that meets or exceeds the defender's PROTS is a normal hit; where a Botch (grapple) is then attempted by the defender. At this range the Hit MOD. is +0, and +10 only if the target cannot move; otherwise, refer to the Botch chance for target rule. From 6 ft. to 10 ft., the target automatically charges to attempt the Botch.</p>
         <p>✧<strong>Velocity Drop.</strong> The band runs to the weapon's maximum range, 200 ft. for Compact weapons and 300 ft. for Extended weapons. Damage decays across the band at the rate shown in the Base DMG. column, and nothing may be fired past the maximum.</p>
