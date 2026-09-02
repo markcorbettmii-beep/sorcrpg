@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Melee Mechanics (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode    body.lawful-mode      background: rgba(0,88,170,0.13) !important; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+<main>
+  <div class="rules-section">
+
+    <div class="callout" id="how-to-read">
+      <strong>How to read this page.</strong>
+      <br/><br/>
+      <strong>Melee is close work.</strong> Everything here resolves inside the Melee Range Chart's
+      three bands, Touch, Reach and Throw. There is no velocity curve in melee: a blade at the end
+      of its reach cuts as hard as one at the start, and only Throw carries a curve of its own.
+      <br/><br/>
+      <strong>Three families.</strong> Earthborn melee runs on Strength. TAW melee runs on Agility.
+      Energy melee is its own category and its governing Trait is still being decided. Unarmed and
+      Improvised sit alongside them, both on Strength, neither carrying a weapon Rank.
+      <br/><br/>
+      <strong>Armaments and Armor.</strong> The second half of this page is what a melee strike is
+      read against: the Cards, a weapon's Grade, Quality and Condition, the damage a Weapon Type
+      does against a given Armor Mould or creature, and the Armor Grades that answer it.
+      <br/><br/>
+      <strong>Rule Sets.</strong> Sections marked Complex are not in play at a Bare Bones table.
+      Blue is in play at every Rule Set, gold is Complex only, and a purple border marks anything
+      a Modular table may keep or drop.
+    </div>
+
+    <h2>Melee Attacks</h2>
+
+        <h3 id="earthborn-melee">Earthborn Melee</h3>
+        <p>Earthborn melee weapons, blades, blunt weapons, polearms, and other forged or crafted arms, follow standard melee rules using Strength SCR for both hit and damage. Strength is the governing Trait for all Earthborn melee.</p>
+        <ul>
+          <li><strong>Hit:</strong> d100 + weapon rank + Strength SCR vs PROTS</li>
+          <li><strong>Damage:</strong> weapon rank dice + Strength SCR + modifiers</li>
+          <li><strong>Reach:</strong> 1 square (5 ft.) default unless the card specifies otherwise; Reach weapons extend to 2 squares (10 ft.)</li>
+        </ul>
+        <p>Graze, Critical Hit, Botch, and all other standard melee rules apply as normal.</p>
+        <h3>Technologically Advanced Weapons Melee</h3>
+        <p>TAW melee weapons, shock batons, pulse blades, nano-edge swords, follow standard melee rules with one exception: Agility SCR replaces Strength SCR for both hit and damage, reflecting the precision and speed required over raw physical power.</p>
+        <table class="rules-table">
+          <thead><tr><th></th><th>Traditional Melee</th><th>TAW Melee</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hit stat</strong></td><td>Strength</td><td>Agility</td></tr>
+            <tr><td><strong>Damage</strong></td><td>Weapon rank + Strength</td><td>Weapon rank + Agility</td></tr>
+            <tr><td><strong>Armor penetration</strong></td><td>Standard</td><td>Bypasses some resistances</td></tr>
+            <tr><td><strong>Power required</strong></td><td>None</td><td>Yes, charge dependent</td></tr>
+            <tr><td><strong>Works anywhere</strong></td><td>Yes</td><td>Disrupted by EMP, magic interference</td></tr>
+            <tr><td><strong>Maintenance</strong></td><td>Standard</td><td>Standard + power source</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li><strong>Hit:</strong> d100 + weapon rank + Agility SCR vs PROTS</li>
+          <li><strong>Damage:</strong> weapon rank dice + Agility SCR + modifiers</li>
+          <li><strong>Reach:</strong> 1 square (5 ft.) default unless the card specifies otherwise</li>
+        </ul>
+        <p>Graze, Critical Hit, Botch, and all other standard melee rules apply as normal.</p>
+        <h3>Energy Melee</h3>
+        <p>An Energy melee weapon is a real blade or haft with elemental substance held around its edge, an energy blade or a plasma edge, drawn from the same six sources as Energy Ranged. It is not a powered device and nothing about it is manufactured; the weapon is ordinary and the energy around it is what strikes. Energy melee is its own category alongside Earthborn and TAW. Like Energy Ranged, they bypass certain armor types that resist ballistic damage and are disrupted by EMP interference and magical effects. They carry no planetary Penalty and Slope Mod does not touch them (see Energy Weapons, pg. 4, and Slope Conditions, above).</p>
+        <div class="callout"><strong>Note:</strong> The governing Trait for Energy Melee hit and damage is still being decided and will be confirmed in a later pass. Until then, Graze, Critical Hit, Botch, reach, and all other standard melee rules apply as normal.</div>
+        <h3>Unarmed Combat</h3>
+        <p>Unarmed attacks use no weapon rank. Strength replaces the rank hit bonus.</p>
+        <p><strong>Hit:</strong> d100 + Strength vs PROTS</p>
+        <p><strong>Damage (main):</strong> 1d4 + Strength</p>
+        <p><strong>Damage (off):</strong> 1d2 + Strength</p>
+        <p>Graze and Critical Hit rules apply as normal. Grapple rules apply as normal.</p>
+        <p>Certain class paths, such as Fighter, Brawler, prefer their bare hands, grappling, and improvising with objects from their environment as weapons. Characters with innate unarmed abilities may have class-specific bonuses that override or stack with these base values.</p>
+
+        <h3 id="improvised-weapon">Improvised Weapon</h3>
+        <p>Any time a weapon is used outside the use it was designed for, or an everyday object is picked up and swung, thrown or driven into a target, it is an <strong>Improvised Weapon</strong>. A sword thrown, an arrow held in the fist, a bar stool, a rock, a beer mug: they are all resolved the same way.</p>
+        <p>An Improvised Weapon has no Rank and no Grade. Its damage is read off its <strong>Improvised Class</strong>, which is a question of mass and how it is held, not of craft. Because it carries no Rank, improvised damage never scales; it is the same at Divine as it is at Common, which is why it is a thing a Character reaches for when they have nothing better, not a build.</p>
+        <div class="table-scroll">
+        <table class="rules-table" id="improvised-chart">
+          <thead><tr><th>Improvised Class</th><th>DMG.</th><th>Hands</th><th>Examples</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Light</strong></td><td>1d6 + STR</td><td>1h</td><td>Beer mug, bottle, rock, plate, candlestick, book, hand tool, boot</td></tr>
+            <tr><td><strong>Medium</strong></td><td>2d6 + STR</td><td>1h</td><td>Lamp, frying pan, chair leg, wrench, shovel, fire iron, tree branch</td></tr>
+            <tr><td><strong>Heavy</strong></td><td>3d6 + STR</td><td>2h</td><td>Chair, table leg, ladder, barrel, shop sign, cart wheel, anvil</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p><strong>Hit:</strong> d100 + Strength vs PROTS. An Improvised Weapon has no Rank, so Strength replaces the rank hit bonus, the same way it does Unarmed.</p>
+        <p><strong>Thrown:</strong> An object thrown rather than swung uses the Throw band, 0&#8211;25 ft., and Agility to hit, the same as any thrown weapon (see Earthborn Ranged, above). Its damage is still its Improvised Class.</p>
+        <p><strong>Breaking:</strong> A <strong>fragile</strong> object, glass, ceramic, or thin wood, breaks on any hit that lands and is gone after one strike. A <strong>solid</strong> object, stone, metal, or thick wood, breaks only on a Botch. A broken object deals its damage on the strike that breaks it.</p>
+        <p><strong>A real weapon used wrongly</strong> is improvised too. A blade thrown, a bow swung, a polearm used in a stairwell: the Armament deals its Improvised Class damage in place of its Rank dice, and keeps none of its Rank scaling for that strike. Its Grade, its Abilities and its Enchantments do not apply while it is being misused.</p>
+        <div class="callout">
+          <strong>Brawlers</strong> - a <a href="content/essentia_core/rules_ref_003.html#brawler">Path of the Fighter Main Class</a> - get bonuses to everyday items into used as weapons. They prefer hand to hand combat and get bonuses to grappling, gouging and so forth, but still have basic proficiency from their Fighter Tiers.
+        </div>
+        <p><em>On the Races and Classes pages, any Race or Class shown at low opacity is not playable in the Starter Set.</em></p>
+
+        <h3 id="grapple-and-grab">Grapple and Grab</h3>
+        <div class="casual-lead">
+        <p>On a successful grapple or grab attack, the target is held until they break free or the attacker releases. To escape, the target rolls d100 + Strength vs the attacker's PROTS (Encounter DIFS). One escape attempt is allowed per turn. Drop damage applies if released or escaped at height. Specific grab rules, carry height limits, and drop damage values are module specific.</p>
+        <p class="style-note">Complex Rule Set only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
+        </details>
+
+        <h3 id="limb-specific-targeting-lst">Limb-Specific Targeting (LST)</h3>
+        <div class="casual-lead">
+        <p>LST allows a character to aim at a specific body part, head, groin, limbs, or torso, for increased damage at the risk of full exposure.</p>
+        <p class="style-note">Complex Rule Set only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
+        <p><strong>Hit Penalty:</strong> Determined by the attacker's Weapon Rank and the area targeted (see <a href="content/essentia_core/rules_ref_appendix.html#lst-chart">LST Chart</a>).</p>
+        <p><strong>On Hit:</strong> Deal bonus damage equal to twice the hit penalty value.</p>
+        <p><strong>On Miss:</strong> The attacker loses all defenses through their next turn and rolls 1d10 for stumble distance (feet). The stumble leaves them open to a counter attack from their target and attacks of opportunity from every enemy adjacent to any square they stumble into, including the square they occupied when the LST was attempted.</p>
+        <p><em>Example: A 1d10 result of 1 while surrounded on all 4 sides, the attacker stumbles 1 foot but must defend all 4 attacks of opportunity from the surrounding enemies.</em></p>
+        <p>There is no Graze or Critical Hit on an LST attack. Refer to the GM Codex for more on LST.</p>
+
+        <h4>LST Chart, Hit Penalty / Damage Bonus</h4>
+        <table class="rules-table">
+          <thead>
+            <tr><th>Weapon Rank</th><th>Head</th><th>Groin</th><th>Limb</th><th>Torso</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="rank-common">Common</span></td><td>-3 / +6</td><td>-2 / +4</td><td>-2 / +4</td><td>-1 / +2</td></tr>
+            <tr><td><span class="rank-uncommon">Uncommon</span></td><td>-6 / +12</td><td>-4 / +8</td><td>-4 / +8</td><td>-2 / +4</td></tr>
+            <tr><td><span class="rank-rare">Rare</span></td><td>-9 / +18</td><td>-7 / +14</td><td>-6 / +12</td><td>-4 / +8</td></tr>
+            <tr><td><span class="rank-unique">Unique</span></td><td>-13 / +26</td><td>-10 / +20</td><td>-8 / +16</td><td>-6 / +12</td></tr>
+            <tr><td><span class="rank-heroic">Heroic</span></td><td>-17 / +34</td><td>-13 / +26</td><td>-11 / +22</td><td>-8 / +16</td></tr>
+            <tr><td><span class="rank-elite">Elite</span></td><td>-21 / +42</td><td>-17 / +34</td><td>-14 / +28</td><td>-11 / +22</td></tr>
+            <tr><td><span class="rank-legendary">Legendary</span></td><td>-25 / +50</td><td>-21 / +42</td><td>-18 / +36</td><td>-14 / +28</td></tr>
+            <tr><td><span class="rank-divine">Divine</span></td><td>-30 / +60</td><td>-24 / +48</td><td>-21 / +42</td><td>-17 / +34</td></tr>
+          </tbody>
+        </table>
+        <p><em>Hit Penalty = modifier to the attack roll. Damage Bonus = bonus damage dealt on a successful hit. Miss = lose all defenses through next turn + 1d10 ft stumble, counter attack + AoO apply.</em></p>
+        </details>
+
+    <h2>Armaments</h2>
+
+        <h3 id="armor-cards">Armor Cards</h3>
+        <p>Below are examples of a <span class="rank-common">Common</span> Full Plate Set included in a LVL 1-5 Box Set, followed by a Crimson (Red) Scale <span class="rank-legendary">Legendary</span> Set included in a LVL 24-28 Box Set as the Rules state.</p>
+        <div class="callout"><a href="content/cards/rusty-iron-plate.html" target="_blank">Rusty Iron Plate, Common Armor Card (Ref #ARM001) →</a></div>
+        <div class="callout">[Image placeholder: Crimson Plate, Legendary Armor Card, front &amp; back. Pending redesign to match current rules, see Ref #ARM142.]</div>
+        <h3 id="weapon-cards">Weapon Cards</h3>
+        <p>The weapon choices below require class Prerequisites. For instance, a one handed magic dagger can only be used by certain classes, at certain LVLs or their class path, such as; LVL 1 main class mage.</p>
+        <p>Below are the sets of punchout Common Weapon Cards included in this box set.</p>
+        <div class="callout"><a href="content/cards/rusty-iron-sword.html" target="_blank">Rusty Iron Sword, Common Weapon Card (Ref #WPN001) →</a></div>
+        <div class="callout">[Image placeholder: Voltaic Fang, Legendary Weapon Card, front &amp; back. Pending card art, see Ref #WPN142.]</div>
+
+        <h3>Weapon Grade &amp; Materials</h3>
+        <table class="rules-table">
+          <thead><tr><th>Category</th><th>Weapons</th></tr></thead>
+          <tbody>
+            <tr><td>Tactical Melee</td><td>1h Hammer (main), 2h Hammer, 1h Short Staff (may dual-wield), 2h Quarterstaff, 2h Long Staff, 1h B&#333;, 1h J&#333;, 1h Mace, 2h Mace</td></tr>
+            <tr><td>Tactical Range</td><td>1h Short Bow, 2h Heavy Crossbow, 2h Slug Launcher</td></tr>
+            <tr><td>Caster Weapons</td><td>2h Stave, 1h Magic Scepter, 1h Orb, 1h Tome, 1h Magic Dagger</td></tr>
+            <tr><td>TAW Melee</td><td>1h Plasma Knife, 1h Shock Baton, 1h Nano-Edge Sword, 2h Nano-Edge, 1h Pulse Blade, 2h Pulse Blade</td></tr>
+            <tr><td>TAW Range</td><td>1h Laser Pistol, 1h Plasma Thrower, 1h Throwing Grenade (smoke, gas, blinder, sticky plas, explosive), 1h Shock Dart, 2h Plasma Cannon, 2h Railgun, 1h Pistol, Clip, 1h Pistol, Revolver, 1h Mini Sprayer, 2h Shotgun, 2h Assault Rifle, 2h Sniper, 2h Chain Gun</td></tr>
+            <tr><td>Energy Melee</td><td>1h Flame Brand, 2h Flame Brand, 1h Energy Dagger, 1h Lightning Lash, 1h Tide Edge, 1h Gale Talon, 1h Plasma Fang, 2h Wave Maul</td></tr>
+            <tr><td>Energy Range</td><td>1h Ember Sling, 2h Storm Caster, 1h Tide Lance, 1h Energy Bow, 2h Gale Bow, 1h Plasma Spitter, 2h Waveform Cannon</td></tr>
+          </tbody>
+        </table>
+        <p>Common rank weapon attack values are calibrated so that a baseline attacker (no character modifiers) hits each armor grade at the rates listed in the Base Hit Rate table in the Combat section. All weapon types share the same base hit rates, advantages and disadvantages between weapon types come from armor Vulnerabilities and Resistances, not from the base rate. A blunt weapon benefits from chain's vulnerability to blunt; a piercing weapon benefits from leather's vulnerability to pierce. These interactions are listed in the Armor Grades table.</p>
+        <p><strong>Type and Ability Gating:</strong> A weapon's Type gates which Class Abilities may be readied with it, and that gate is the main work the four Types do. A <strong>Martial</strong> Ability requires a Tactical weapon, and a <strong>Spell</strong> Ability requires a Magic weapon. TAW and Energy sit outside this rule entirely: neither answers the Martial or the Spell requirement, and neither takes a Blessing. A TAW piece may be <strong>Modified</strong> but never <strong>Enchanted</strong>, there being no magic in it to enchant.</p>
+        <p><strong>Alignment Requirement:</strong> TAW and Energy Armaments and Equipment require an <strong>Ambivalent</strong> alignment to carry and use. Neither family answers the Martial or the Spell gate on Class Abilities, neither takes a Blessing, and a wielder of either draws no Higher Power Benefit toward Class development (see <a href="content/essentia_core/rules_ref_002.html#higher-power">Higher Power</a>, pg. 2). The refusal belongs to the Higher Power rather than to the one carrying the weapon: a Power sanctions nothing drawn from outside its own universal elements, and both of these are drawn from outside them. Ambivalence is what lets a Character carry them without standing in that contradiction.</p>
+        <p><strong>Cultural Bonuses:</strong> TAW and Energy are Cultural Armaments like any other, and the rule is the same as for every Culture: a Character native to one gets its bonuses when using its Armaments, the six Tawdry Dwarf-lit worlds with TAW and Ignis with Energy. Both are rare outside their culture's reach and common within it (see <a href="content/essentia_core/rules_ref_002.html#cultural-armaments">Cultural Armaments</a>, pg. 2).</p>
+        <p><strong>Devotion:</strong> Each keeps its own practice in place of a Higher Power. The races native to Ignis have only Adoria to pray to, the inner sun being the one power near enough to answer. The worlds out near Tawdry Dwarf do not pray to the Goddess at all; they meditate, and give respect to everything that still provides sustainable life in their part of the universe, which with Tawdry dying is growing thin.</p>
+        <p>Weapons use the same eleven Grades and the same four Types (Tactical, Magic, TAW, Energy) as armor, and draw from the same Materials lists above, Steel and Iron for Medium, Osmium and Tungsten for Dense, Mithril for Half Light, and so on. This covers two separate things, and they are not the same:</p>
+        <p><strong>Recipe Manufacturing:</strong> A weapon's full crafting recipe lists every component that goes into building it, head, haft, grip, guard, fletching, whatever the weapon has. Each component can be crafted from its own material, at its own Grade, and the recipe's full material list is what determines crafting cost, weight, and what a Blacksmith or other crafter actually needs on hand to build it.</p>
+        <p><strong>The Damage-Dealing Part:</strong> Separate from the recipe, a weapon's Grade for damage, DMG Mods, and Weapon Prerequisite purposes is set ONLY by whatever material makes up the part that actually strikes the target, a hammer's head, a sword's blade, a spear's tip, an arrow's point. Every other component in the recipe (Grip, Haft, Hilt, fletching) can be a different, usually lesser Grade without changing the weapon's Grade, DMG Mods row, or Weapon Prerequisite standing at all, those parts exist in the recipe, but they don't count toward what the weapon IS.</p>
+        <p><strong>Example:</strong> A war hammer's recipe calls for a Dense Grade (Osmium) head and a Half Medium Grade (reinforced leather-wrapped wood) haft. The recipe needs both materials to build it and prices/weighs accordingly, but for damage, DMG Mods, and Weapon/Hand Proficiency purposes, this is a Dense Grade weapon, full stop, the haft never enters that math.</p>
+        <h3>Tactical and Magic Weapons</h3>
+        <p><strong>Tactical</strong> is the oldest of the four and the only one every people on every world can make. It is ordinary craft, forged, sewn, carved or knapped, and it asks nothing of a sun. <strong>Primal</strong> peoples hold the longest unbroken line of it, bone, stone and hide worked by hand, changed less in an age than any other tradition has changed in a generation. <strong>Humans</strong> built the modular pattern that most of Essentia now copies, panels and mounts reconfigured for the job instead of committed at the forge, which is why a Human kit turns up on worlds Humans never settled. <strong>Orcus</strong> smiths work grave-iron and salvage into tunnel-fighting arms, hooded against a sun their skin cannot take and left open at the ear so Stonesense is never blinded. <strong>Dwarves</strong> hold the mountain-hall standard for Steel and Iron, <strong>Ogres</strong> the two-handed weight nobody else can carry well, and <strong>Elves</strong> the bow. Tactical is full strength on Adoria-lit and Tawdry Dwarf-lit worlds alike and falls off only out past the thirteen, where ordinary steel finally meets conditions ordinary craft was never asked about.</p>
+        <p><strong>Magic</strong> answers to Adoria. Her light carries sorcery as well as warmth, so an Enchanted weapon and a caster's implement both do their best work on the eight inner worlds, Ignis through Zailister, and both weaken the further out they are carried. <strong>Elves</strong> keep the deepest tradition of it, nature magic and the Enchanting of ordinary arms, and <strong>Halflings</strong> the luckiest, small charms worked into everyday things. Zailister sits at the balance point, the one world equally at home with a Stave and a rifle. On the six Tawdry Dwarf-lit worlds magic still works and is simply weaker, never absent, and past the thirteen it is weaker still. A caster who travels outward learns to carry steel.</p>
+
+        <h3>Weapon Quality</h3>
+        <p>Weapon quality is rolled on receipt using d100, assigned by the GM, or determined by the item's source. Quality affects value only, it does not change damage or combat stats.</p>
+        <table class="rules-table">
+          <thead><tr><th>Weapon Quality</th><th>Roll d100</th><th>Value Change</th></tr></thead>
+          <tbody>
+            <tr><td>Poor</td><td>1-7</td><td>-5%</td></tr>
+            <tr><td>Good</td><td>8-30</td><td>0% (no adjustment, value stays as Base × Rank)</td></tr>
+            <tr><td>Extravagant</td><td>31-60</td><td>+3%</td></tr>
+            <tr><td>Exquisite</td><td>61-80</td><td>+4%</td></tr>
+            <tr><td>Masterful</td><td>81-100</td><td>+5%</td></tr>
+          </tbody>
+        </table>
+        <p>Value = Base Price × Rank Multiplier. When quality is not Good (0%), apply the percentage adjustment to that result. Good quality leaves the value unchanged. Example: 2h Melee (25 Gold) at Heroic rank (x25) = 625 Gold. At Masterful quality: 625 + 5% = 656.25 Gold. At Good quality: 625 Gold (no adjustment).</p>
+        <div class="callout" id="kaida-sheet-link"><strong>Example Character Sheet:</strong> See <em>Kaida</em>, a Growth 8, LVL 30, Legend-rank Dr&#257;co Blood (Red) Barbarian, as a fully completed character profile with all fields filled in. <a href="kaida_build.html" target="_blank" style="color:#c8a96e;">View Kaida's Character Sheet &rarr;</a></div>
+        <h3>Weapon Condition</h3>
+        <p>Weapon condition is rolled on receipt and can degrade during play. Broken weapons require a blacksmith to restore, see Armament Repair below. Three conditions apply:</p>
+        <table class="rules-table">
+          <thead><tr><th>Condition</th><th>Roll d100</th><th>Damage Effect</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Excellent</td><td>81-100</td><td>Full damage, no penalties</td><td>No restrictions</td></tr>
+            <tr><td>Fair (Damaged)</td><td>11-80</td><td>-Xd4 damage by rank (see below)</td><td>No restrictions</td></tr>
+            <tr><td>Broken</td><td>1-10</td><td>Cannot be used in combat</td><td>No enhancement bonuses apply; adds 2 lbs. per rank (warped/collapsed shape)</td></tr>
+          </tbody>
+        </table>
+        <table class="rules-table">
+          <thead><tr><th>Rank Tier</th><th>Fair Damage Penalty</th><th>Example Rolls</th></tr></thead>
+          <tbody>
+            <tr><td>Common / Uncommon</td><td>Roll 1d4; penalty = -(4 - roll)</td><td>Roll 1: -3 | Roll 2: -2 | Roll 3: -1 | Roll 4: 0</td></tr>
+            <tr><td>Rare / Unique</td><td>Roll 2d4; penalty = -(8 - sum of rolls)</td><td>Roll 2-8: -6 to 0</td></tr>
+            <tr><td>Heroic / Elite</td><td>Roll 3d4; penalty = -(12 - sum of rolls)</td><td>Roll 3-12: -9 to 0</td></tr>
+            <tr><td>Legendary / Divine</td><td>Roll 4d4; penalty = -(16 - sum of rolls)</td><td>Roll 4-16: -12 to 0</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Fair (Damaged) Damage Penalty Clarification:</strong> When a Fair (Damaged) weapon hits in combat, roll the indicated number of d4s and calculate the damage reduction using the formula shown. For example, with a Common-rank weapon, if you roll a 3 on the d4, the damage reduction is -(4-3) = -1, meaning the weapon does 1 less damage than its normal roll. If you roll a 4, the damage reduction is -(4-4) = 0, meaning the Fair (Damaged) condition incurs no penalty on that particular hit.</p>
+        <p><strong>Condition in Play:</strong> All armament condition, weapons and armor alike, degrades by the same rule. If a character is taking damage during an encounter, it is presumed their weapons were being used defensively or offensively. Condition is resolved at the end of each encounter: if the Character was incapacitated (reached 0 Life) at any point, all carried armaments drop one condition tier. If the Character was killed, all carried armaments drop one additional tier. Condition does not regenerate when Life does, armaments remain at their degraded condition until maintained at a blacksmith. Armaments cannot be repaired mid-session.</p>
+        <h3>Weapons Carried</h3>
+        <p>Characters may have up to 3 weapons <strong>readied</strong> at any time, drawn (Main Hand / Off Hand) or sheathed for quick access. Only readied weapons can activate weapon-specific abilities, so weapon sets should be readied that adhere to a character's Ability choices matching main class, path and later branch.
+Additional weapons may be packed, stored in a backpack, on certain Companion types, such as draft/pack animals, or in a wagon used for transport, sale, or trade. Packed weapons cannot be drawn or used in combat. All carried weapons (readied + packed) count toward the Character's total carry weight; exceeding 50% of capacity triggers Burdened/Encumbered penalties (see Encumbrance, pg. 5).
+Swapping the Armament Set: Characters set their full Armament Set at the start of each long rest (8 hours). Mid-adventure, characters may drop or pick up weapons from their packed inventory, but cannot ready them for combat use until the next long rest.</p>
+
+        <h2 class="subtopic">Weapon Type Damage Modifiers</h2>
+        <p>These flat damage modifiers apply when a weapon hits its target. Positive values add to total damage dealt; negative values reduce it. These modifiers stack with rank, Trait bonuses, and enhancements. Refer to the GM Codex or specific Module for all instances.</p>
+        <p>Slashing, Blunt, Piercing, Chop, Flexible, Grab, Chain, and Range rows below cover the <strong>Tactical</strong> Type of each Style (see Weapon Type vs. Weapon Style, Appendix), a hammer or a bow uses its own row. Any <strong>Magic</strong>-Type weapon, regardless of Style, a Stave, an enchanted blade, an orb, uses the Magic row instead. <strong>TAW</strong> and <strong>Energy</strong> are separate rows, TAW is manufactured tech, Energy is a physical weapon surrounded by energy, plasma, flame, lightning, and the like. <strong>Grab</strong> weapons don't roll for standard attack damage at all, their modifier below applies to a Grapple or Grab check instead (see Grapple and Grab, Basic Rules pg. 5). <strong>Chain</strong> is the one Style forged into more than one shape, a Chain weapon uses whichever row its specific form calls for, Flexible for a chain-whip, Slashing for a chain-sword, or Blunt for a chain-and-weight flail mounted on a pole, stated on that weapon's own Card.</p>
+        <h3>vs. Armor Mould</h3>
+        <table class="rules-table">
+          <thead><tr><th>Weapon Type/Style</th><th>Cloth</th><th>Leather</th><th>Chain</th><th>Plate</th><th>Dense</th><th>Composite</th></tr></thead>
+          <tbody>
+            <tr><td>Slashing</td><td>+4</td><td>+2</td><td>-2</td><td>-3</td><td>-4</td><td>-4</td></tr>
+            <tr><td>Chop</td><td>+3</td><td>+1</td><td>+1</td><td>+2</td><td>0</td><td>-1</td></tr>
+            <tr><td>Blunt</td><td>-2</td><td>0</td><td>+3</td><td>+5</td><td>+4</td><td>+3</td></tr>
+            <tr><td>Piercing</td><td>+2</td><td>+3</td><td>-2</td><td>0</td><td>-2</td><td>-2</td></tr>
+            <tr><td>Flexible</td><td>+3</td><td>+2</td><td>-1</td><td>-3</td><td>-4</td><td>-3</td></tr>
+            <tr><td>Grab</td><td>+2</td><td>+1</td><td>0</td><td>-2</td><td>-3</td><td>-2</td></tr>
+            <tr><td>Range</td><td>+4</td><td>-2</td><td>0</td><td>-4</td><td>-5</td><td>-5</td></tr>
+            <tr><td>Magic</td><td>+2</td><td>0</td><td>+2</td><td>+5</td><td>+6</td><td>+4</td></tr>
+            <tr><td>TAW</td><td>+3</td><td>+2</td><td>+2</td><td>+2</td><td>+2</td><td>-3</td></tr>
+            <tr><td>Energy</td><td>+3</td><td>+2</td><td>+2</td><td>+1</td><td>0</td><td>-2</td></tr>
+          </tbody>
+        </table>
+        <h3>vs. Monsters, Animals and Creatures Types</h3>
+        <table class="rules-table">
+          <thead><tr><th>Weapon Type/Style</th><th>Beast</th><th>Undead</th><th>Construct</th><th>Spirit</th></tr></thead>
+          <tbody>
+            <tr><td>Slashing</td><td>+3</td><td>-2</td><td>-4</td><td>-4</td></tr>
+            <tr><td>Chop</td><td>+2</td><td>+1</td><td>0</td><td>-4</td></tr>
+            <tr><td>Blunt</td><td>+1</td><td>+4</td><td>+4</td><td>-4</td></tr>
+            <tr><td>Piercing</td><td>+2</td><td>-2</td><td>-3</td><td>-4</td></tr>
+            <tr><td>Flexible</td><td>+2</td><td>0</td><td>-2</td><td>-4</td></tr>
+            <tr><td>Grab</td><td>+1</td><td>+2</td><td>0</td><td>-4</td></tr>
+            <tr><td>Range</td><td>+2</td><td>0</td><td>-2</td><td>-4</td></tr>
+            <tr><td>Magic</td><td>0</td><td>+4</td><td>+3</td><td>+6</td></tr>
+            <tr><td>TAW</td><td>+1</td><td>+2</td><td>+6</td><td>+1</td></tr>
+            <tr><td>Energy</td><td>+1</td><td>+4</td><td>+3</td><td>+5</td></tr>
+          </tbody>
+        </table>
+        <p><em>Refer to the GM Codex or specific Module for all instances.</em></p>
+
+        <h3>Stave vs. Staff</h3>
+        <p>These are two separate weapon families, not two spellings of the same thing. A <strong>Staff</strong> is Tactical, part of the same weapon family as the Quarterstaff, B&#333;, J&#333;, Long Staff, and Short Staff (see Weapon Cards, above), a plain length of wood or metal, no Type restriction beyond Tactical. A <strong>Stave</strong> is the dedicated caster implement, Magic by its own nature the same way an orb or wand is (see Weapon Type vs. Weapon Style, Appendix), never Tactical, and the one that can carry a Crown (see Special Weapons, below). Wielding a Staff never satisfies a Stave requirement, and wielding a Stave never satisfies a Staff requirement, even though both are, at a glance, a long stick.</p>
+
+    <h2>Armor</h2>
+
+        <h3>Protection Score (PROTS)</h3>
+        <p id="armor-condition"><strong>Condition:</strong> Every piece of armor carries a Condition, rolled on d100 when it is found or acquired, and Condition adjusts Armor Score as a percentage of the piece's Grade rather than as flat points, so wear costs the same share of protection at every Grade.</p>
+        <table class="rules-table">
+          <thead><tr><th>Condition</th><th>Roll d100</th><th>Armor Score Effect</th><th>Movement</th></tr></thead>
+          <tbody>
+            <tr><td>Excellent</td><td>81-100</td><td>+5% &times; Grade</td><td>No penalty</td></tr>
+            <tr><td>Fair (Damaged)</td><td>11-80</td><td>-30% &times; Grade</td><td>-3 sq.</td></tr>
+            <tr><td>Broken</td><td>1-10</td><td>-50% &times; Grade (Armor Score halved)</td><td>Movement halved. No enhancement bonuses.</td></tr>
+          </tbody>
+        </table>
+        <p id="as-formula"><strong>Armor Score Formula:</strong> A piece of armor starts at its Grade's Base Armor Score and is adjusted by its Quality, its Condition and any Enhancement. Those four, Grade, Quality, Condition and Enhanced, are the whole of it:</p>
+        <p style="margin-left:1.5rem"><strong>AS = Grade &minus; (Quality % &times; Grade) &minus; (Condition % &times; Grade) + Enhanced</strong></p>
+        <p>Quality and Condition are percentages <em>of the Grade</em>, not flat points, so a worn set loses the same share of its protection at every Grade. Enhancement is added last, in flat points. Quality and Condition are percentages <em>of the Grade</em>, not flat points, so wear and workmanship cost the same share of protection at every Grade. Enhancement is added last, in flat points. Worked example, the Skeleton Soldier: Half Heavy Plate at Grade 40, Poor quality at &minus;5%, Damaged condition at &minus;30%, no Enhancement. 40 &minus; 2 &minus; 12 = <strong>Armor Score 26</strong>. Quality also adjusts the piece's value by the same percentage (see Armor Quality, Appendix).</p>
+        <p><strong>PROTS Formula:</strong> PROTS = Base AS + Defense or Resistance Trait (depending on attack source) + shield AS + all other modifiers (buffs, debuffs, environmental effects). Against martial or Nature-sourced attacks, use Defense Trait. Against Spell-sourced attacks, use Resistance Trait. These two never stack on the same attack, exactly one applies based on the attack's source.</p>
+        <p>Every entity in SORC has a Base Armor Score (<a href="content/essentia_core/rules_ref_006.html#term-as">AS</a>), a number between 1 and 100 representing the raw protection of any armored or unarmored entity. AS is the starting point, not the full picture. PROTS (Protection Score) is AS plus every permanent Enhancement or Impairment, temporary buff or debuff, and Trait bonus or penalty applied to it. PROTS = AS + all modifiers, positive and negative. AS never changes unless the armor itself changes. PROTS fluctuates with buffs, debuffs, Enhancements, Impairments, and situational modifiers.</p>
+        <p>Example: Ice Dragon, on the ground, has a base AS of 80 (AS 80) and has 12 bonuses to Protection, so its PROTS 92. Rolling 1D100 would need a result of 92 to Hit the dragon and roll for damage. In the air, the Ice Dragon gets a +10 bonus, now giving it +22 (12 + 10) bonus to its base AS 80. Flying, the Ice Dragon has a PROTS of 102.</p>
+        <p>Conversely, a Commoner is wearing cloth and has a base AS of 10, AS 10, but has part of a wooden gate he's used as a shield giving him +2, however he doesn't have a strong foothold because of the environment, -1 (strong winds). His total PROTS is AS 10 + 2 - 1 = 11. The Commoner is easy to Hit. In comparison, a Paladin in Osmium Plate has a base AS of 60. If he's holding Bracers, a 2h Weapon or a Shield he can add his Defense score (Defense is a Trait) representing; Parry or Block respectively he'll add his Protection, in this case 4. He also gets the base AS of a Shield (AS 10) or the lighter option, Bracers (AS 5). Let's say he's holding the shield and has a score of 5 on the Trait Defense. Base AS is 60, plus 10 for shield, plus 5 because he has Defense (5).</p>
+        <h3>Defense Roll</h3>
+        <p>Defense Trait is passively included in PROTS and does not require a roll. If the attacker's score meets or exceeds the target's total PROTS (which includes the Defense Trait, Base AS, shield AS, and all other modifiers), the attack lands. Defense type is determined by equipped gear:</p>
+        <ul>
+          <li><strong>Parry</strong>, 2H Weapon, Bracers of Defense, or Dual Wield (melee only, excludes orbs, tomes, special items, and environmental objects)</li>
+          <li><strong>Block</strong>, Shield</li>
+          <li><strong>Dodge</strong>, Light Armor</li>
+        </ul>
+        <p>Characters without the Defense Trait or qualifying gear cannot use Defense. See Defense under Traits (pg. 2).</p>
+        <h4>Defense Example, Omnè Crystal Lock Difficulty Score Check</h4>
+        <p><strong>Setup:</strong> Kael (Elf, Thief, Shadowblade, LVL 11, Rank Uncommon) attempts to pick an ancient crystal lock guarding a vault on Omnè's floating platform. The lock has a PROTS of 45 (representing its structural integrity). Kael has the Disarm Trap talent with a score of 8 and Dexterity Trait of 6.</p>
+        <p><strong>Attempt:</strong> Kael rolls to disable: d100 + 8 (talent) + 6 (Dexterity) = [62] + 14 = 76 versus DIFS of 45. Success! He carefully manipulates the crystalline mechanism, feeling the subtle shifts in energy. The lock clicks open, revealing the chamber beyond. No damage taken.</p>
+        <p><strong>Comparison, If He Failed:</strong> If his roll had been [28] + 14 = 42 (below 45), the trap would trigger. Standard trap damage on failure might be 16 Life damage. But if Kael had chosen to destroy the lock instead (attacking its PROTS directly), failure would deal 2x that damage (32 Life) back to him. The Disarm Trap approach was clearly safer.</p>
+        <h4>Defense Example, Zailister Spaceship Security Code Difficulty Score</h4>
+        <p><strong>Setup:</strong> Tyx (Goliath, Hacker, DataMind, LVL 13, Rank Rare) tries to bypass a security panel on a Zailister orbital station. The system's defensive DIFS is 58 (representing firewall strength). Tyx has the Hack talent with score 12, Intellect Trait of 10, and a +5 bonus from their specialized hacking equipment.</p>
+        <p><strong>Attempt:</strong> Tyx rolls: d100 + 12 (Hack talent) + 10 (Intellect) + 5 (equipment) = [71] + 27 = 98 versus DIFS of 58. Critical success! The panel sparks briefly as Tyx gains access, bypassing multiple layers of encryption in seconds. The security override code unlocks adjacent doors. Tyx's Hack talent makes this look easy.</p>
+
+        <h3>Armor Grades</h3>
+        <p><strong>Armor Taxonomy.</strong> Grade, Mould, Material and Type are four separate things, and an armor is only fully described once all four are named. The <strong>Armor Mould</strong> (often just <strong>Mould</strong>) is the specific build a piece of armor is worked into, Plate, Leather, Chain, Dragon Scale, Osmium Plate. The <strong>Material</strong> is what it is made from, Hide for Leather and Fur Moulds, Steel and Iron, Osmium and Tungsten, Mithril, Dragon Scale and so on, and the material is what sets the <strong>Grade</strong>. The same Mould can sit at different Grades depending on its Material, a Steel Plate is Heavy Grade while an Osmium Plate is Dense Grade. Names in the rules read Grade + Material + Mould, so a "Composite Dragon Scale Plate" is Composite Grade, Dragon Scale Material, Plate Mould. <strong>Type</strong> is a fourth and separate axis entirely, Martial, Magic, TAW, and Energy.</p>
+        <table class="rules-table">
+          <thead><tr><th>Armor Grade</th><th>Mould</th><th>Material</th><th>Base AS</th><th>Vulnerable To (AS Penalty)</th><th>Resistant To (AS Bonus)</th><th>Movement Penalty (sq.)</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td>Delicate</td><td>Robes</td><td>Silk</td><td>10</td><td>Slashing, Ranged (-4)</td><td>Magic (+2)</td><td>0 sq.</td><td>5 lbs</td></tr>
+            <tr><td>Light</td><td>Leather</td><td>Hide</td><td>25</td><td>Piercing (-3)</td><td>Ranged (+2)</td><td>-1 sq.</td><td>15 lbs</td></tr>
+            <tr><td>Medium</td><td>Chainmail</td><td>Steel</td><td>35</td><td>Blunt (-3)</td><td>Piercing (+2)</td><td>-3 sq.</td><td>30 lbs</td></tr>
+            <tr><td>Heavy</td><td>Plate</td><td>Steel</td><td>45</td><td>Blunt, Magic (-5)</td><td>Slashing (+3)</td><td>-5 sq.</td><td>50 lbs</td></tr>
+            <tr><td>Dense</td><td>Plate</td><td>Osmium</td><td>60</td><td>Magic (-6), Corrosive (-4)</td><td>Slashing (+4), Piercing (+2)</td><td>-6 sq.</td><td>65 lbs</td></tr>
+            <tr><td>Composite</td><td>Exosuits</td><td>Dragon Scale</td><td>55</td><td>Corrosive (-4)</td><td>Ranged (+4)</td><td>-4 sq.</td><td>40 lbs</td></tr>
+          </tbody>
+        </table>
+        <p><em>Movement penalties are in squares (sq.), each square equals 5 ft. Divide base speed by 5 to get squares for tile movement. Example: 30 ft. base speed = 6 sq. per turn. Chain mail at -3 sq. = 3 sq. (15 ft.) per turn.</em></p>
+
+        <h3>Armor Grades &amp; Materials</h3>
+        <p>Armor is categorized into six main areas: condition, quality, rank (all mentioned above), grades, materials, and Armor Moulds. These factors collectively determine its default weight, armor score, and overall characteristics.</p>
+        <p>The armor grade defines the overall strength and durability of the armor. It indicates how well-protected the wearer is and influences its weight and mobility. The materials used to craft armor influence its strength, weight, flexibility, and magical properties. Ranging from mythical metals to natural fibers, each material offers unique advantages suited for different warriors, environments, and combat styles.</p>
+        <p><strong>Material Compatibility:</strong> Each armor grade is associated with specific materials suitable for its design, strength, and purpose. Materials are restricted to particular armor grades, and cannot be used interchangeably across all grades. This ensures consistency in armor crafting and maintains the distinctiveness of each grade's characteristics. Mithril is the clearest example: it is Half Light Grade, and Half Light in turn is defined by Mithril, Mould and Grade are one and the same for it, it does not appear at any other Grade.</p>
+        <p>Armor splits the same two ways weapons do, and they are not the same thing:</p>
+        <p><strong>Recipe Manufacturing:</strong> A full armor set's crafting recipe lists every component that goes into it, the Cuirass, pauldrons, greaves, boots, gloves, plus secondary materials like leather straps, mesh lining, padding, and buckles. Each component can be crafted from its own material, at its own Grade, and the recipe's full material list is what determines crafting cost, weight, and what a Blacksmith or other crafter actually needs on hand to build it.</p>
+        <p><strong>The Main Piece:</strong> Separate from the recipe, the armor's Grade, Armor Score (AS), and Armor Grade Threshold standing are set ONLY by the material of its <strong>Cuirass</strong>, the main structural piece covering the torso. Every other component in the recipe (straps, lining, padding, buckles) can be a different, usually lesser Grade without changing the armor's Grade, AS, or Threshold at all, those parts exist in the recipe, but they don't count toward what the armor IS.</p>
+        <p><strong>Example:</strong> A cuirass's recipe calls for Heavy Grade (Steel) plate over leather straps and cloth lining. The recipe needs all three to build and price it, but for AS, Armor Grade Threshold, and Set purposes, this is a Heavy Grade armor, full stop, the straps and lining never enter that math.</p>
+        <p>The table below covers <strong>Tactical</strong> Armor Type specifically, ordinary craft rather than magic, technology, or elemental substance. See Magic Armor, TABA, and Energy Armor below for the Materials and Armor Moulds unique to those three Types.</p>
+        <p>The Armor Mould describes its style and pattern, including design elements like plate, beaded, stitched, scale, or studded configurations. These structural choices affect both the appearance and functional properties of the armor.</p>
+        <p>Characters' movement is affected by their armor grade and condition. Movement penalties and bonuses are measured in squares (sq.), each square equals 5 ft. Base character speed is measured in feet (ft.); divide by 5 to get squares for tile movement. Each armor grade carries a specific movement penalty in sq. (see Armor Grades table in the Combat section). Additional penalties from armor condition and bonuses from buffs, gear, or abilities stack accordingly.</p>
+        <p>For example, a Character with a base speed of 30 ft. (6 sq.) wearing full plate armor (-5 sq.) moves 1 sq. (5 ft.) per turn. If the armor is broken, an additional -1 sq. is added for a total of -6 sq. Conversely, movement bonuses (e.g., +2 sq.) are added separately and can offset or negate penalties if specified.</p>
+        <div class="callout">
+          All penalties and bonuses stack unless explicitly stated otherwise. Maximum Armor Score (AS) for each armor type is set by its Common base AS plus any rank-tier bonuses, see the Common Base AS table and rank bonus list above. Enhancements such as magic bonuses (+2 to AS) do not affect movement penalties, as they are considered magical effects, not weight or bulk.
+        </div>
+        <p>While characters can still move with penalties or bonuses, if their armor or gear is broken or heavily encumbered, they may be able to move but cannot fight effectively or at all, depending on severity. Heavy encumbrance that exceeds the Character's capacity results in total incapacitation, meaning they cannot move or fight at all until their load is reduced. Additionally, damage to gear, such as broken weapons or armor, can severely impair combat. For example, a broken armament prevents a character from fighting, regardless of their movement ability.</p>
+        <p>Cloth armor's default AS is 10, but it can be enhanced to improve its AS without incurring movement penalties. Cloth is often used as under armor or for concealment, and such items (faulds, gambesons) may also be enhanced within their respective caps.</p>
+        <table class="rules-table">
+          <thead><tr><th>Grade</th><th>Description</th><th>Materials</th><th>Moulds</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Composite</strong></td><td>The most legendary and powerful armor in existence. Composite weight varies by material, lighter exotic materials such as Dragon Scale weigh significantly less than denser composites like Adamantium or Titanium. This row covers Composite's Tactical materials, see Magic Armor below for its Magic-Type Composite materials.</td><td>Dragon Scale, Adamantium, Vibranium, Titanium</td><td>Plate, Chainmail, Scale, Studded, Exosuits</td></tr>
+            <tr><td><strong>Half Composite</strong></td><td>A cross between Composite and Dense, carrying some of Composite's legendary properties without its full weight or cost.</td><td>Dragon Scale fragments, partial Adamantium, partial Vibranium</td><td>Reinforced Exosuits, Rnfcd. Plt.</td></tr>
+            <tr><td><strong>Dense</strong></td><td>Heavy-duty armor designed for maximum protection in the most dangerous environments.</td><td>Osmium, Iridium, Platinum, Tungsten, Ruthenium</td><td>Heavy types: Plate, Exosuits, Reinforced Chainmail</td></tr>
+            <tr><td><strong>Half Dense</strong></td><td>A cross between Dense and Heavy, more protection than Heavy without the full bulk of Dense.</td><td>Refined Steel, Chromium alloy, partial Osmium, partial Tungsten</td><td>Reinforced Plate (Rnfcd. Plt.), Reinforced Chain</td></tr>
+            <tr><td><strong>Heavy</strong></td><td>Bulky, high-coverage armor suited for front-line combat and extreme threats.</td><td>Chromium, Steel, Inconel (nickel based), Hadfield (magnesium based)</td><td>Plate, Scale, Chainmail, Hvy. Techmat, Tactical Armor</td></tr>
+            <tr><td><strong>Half Heavy</strong></td><td>A cross between Heavy and Medium, extra coverage over Medium without the full bulk of Heavy.</td><td>Hardened Steel, Bronze alloy, partial Iron, reinforced Bone Plate</td><td>Reinforced Half-Plate, Heavy Brigandine, Reinforced Lamellar</td></tr>
+            <tr><td><strong>Medium</strong></td><td>Balanced armor trading some mobility for real protection, the standard front-line coverage for a character not fully committed to either speed or bulk.</td><td>Steel, Bronze, Iron, Hardened Leather, Bone Plate</td><td>Chainmail, Scale, Half-Plate, Med. Techmat, Brigandine, Lamellar</td></tr>
+            <tr><td><strong>Half Medium</strong></td><td>A cross between Medium and Light, more coverage than Light without giving up all of its mobility, favored by characters who need to stay light on their feet but can't afford to go without real protection.</td><td>Reinforced Leather, Hide, Light Chain, Bone</td><td>Reinforced Studded, Partial Chain, Light Brigandine, Hybrid Gear</td></tr>
+            <tr><td><strong>Light</strong></td><td>Flexible and agile armor ideal for stealth, reconnaissance, and quick movement.</td><td>Hide, Bone, Wood</td><td>Leather, Fur, Studded, Chain, Lt. Techmat, Hybrid Light Gear, Stealth Armor, Tactical Gear</td></tr>
+            <tr><td><strong>Half Light</strong></td><td>A cross between Light and Delicate, defined chiefly by Mithril, its signature Mould and Grade both at once, tougher than Delicate without giving up Delicate's near-weightlessness.</td><td>Mithril</td><td>Mithril Weave, Reinforced Robes, Light Ceremonial Plate</td></tr>
+            <tr><td><strong>Delicate</strong></td><td>Lightweight and finely crafted armor for ceremonial, stealth, or concealment purposes.</td><td>Hemp, Silk, Cloth, Nylon</td><td>Robes, Ceremonial Attire, Stealth Suits, Lightweight Body Armor</td></tr>
+          </tbody>
+        </table>
+
+        <h3 id="armor-grade-vulnerabilities-and-resistances">Armor Grade Vulnerabilities &amp; Resistances</h3>
+        <div class="casual-lead">
+        <p>Vulnerabilities and resistances directly adjust a character's AS for that attack type. Vulnerability: Subtract the penalty from AS. Resistance: Add the bonus to AS.</p>
+        <p class="style-note">Complex Rule Set only.</p>
+        </div>
+        <details class="play-toggle" data-style="enthusiastic"><summary></summary>
+        <table class="rules-table">
+          <thead><tr><th>Armor Grade</th><th>Mould</th><th>Material</th><th>Base AS</th><th>Vulnerable To (AS Penalty)</th><th>Resistant To (AS Bonus)</th><th>Movement Penalty (sq.)</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td>Delicate</td><td>Robes</td><td>Silk</td><td>10</td><td>Slashing, Range (-4)</td><td>Magic (+2)</td><td>0 sq.</td><td>5 lbs</td></tr>
+            <tr><td>Half Light</td><td>Mithril Weave</td><td>Mithril</td><td>18</td><td>Slashing (-2)</td><td>Magic (+3), Range (+1)</td><td>0 sq.</td><td>10 lbs</td></tr>
+            <tr><td>Light</td><td>Leather</td><td>Hide</td><td>25</td><td>Piercing (-3)</td><td>Range (+2)</td><td>-1 sq.</td><td>15 lbs</td></tr>
+            <tr><td>Half Medium</td><td>Reinforced Studded</td><td>Hide</td><td>30</td><td>Piercing (-2)</td><td>Range, Piercing (+1)</td><td>-2 sq.</td><td>22 lbs</td></tr>
+            <tr><td>Medium</td><td>Chainmail</td><td>Steel</td><td>35</td><td>Blunt (-3)</td><td>Piercing (+2)</td><td>-3 sq.</td><td>30 lbs</td></tr>
+            <tr><td>Half Heavy</td><td>Reinforced Half-Plate</td><td>Hardened Steel</td><td>40</td><td>Blunt (-4)</td><td>Piercing, Slashing (+2)</td><td>-4 sq.</td><td>40 lbs</td></tr>
+            <tr><td>Heavy</td><td>Plate</td><td>Steel</td><td>45</td><td>Blunt, Magic (-5)</td><td>Slashing (+3)</td><td>-5 sq.</td><td>50 lbs</td></tr>
+            <tr><td>Half Dense</td><td>Reinforced Plate</td><td>Refined Steel</td><td>52</td><td>Magic (-6), Corrosive (-2)</td><td>Slashing (+4), Piercing (+1)</td><td>-5 sq.</td><td>57 lbs</td></tr>
+            <tr><td>Dense</td><td>Plate</td><td>Osmium</td><td>60</td><td>Magic (-6), Corrosive (-4)</td><td>Slashing (+4), Piercing (+2)</td><td>-6 sq.</td><td>65 lbs</td></tr>
+            <tr><td>Half Composite</td><td>Rnfcd. Plt.</td><td>Dragon Scale fragments</td><td>58</td><td>Corrosive (-4), Magic (-3)</td><td>Slashing (+2), Range (+3)</td><td>-5 sq.</td><td>52 lbs</td></tr>
+            <tr><td>Composite</td><td>Exosuits</td><td>Dragon Scale</td><td>55</td><td>Corrosive (-4)</td><td>Range (+4)</td><td>-4 sq.</td><td>40 lbs</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          Example: A character wears plate armor (AS 45). A blunt attack targets them. Plate is vulnerable to blunt (-5 AS): their AS is 40 for this attack. A slashing attack targets them. Plate is resistant to slashing (+3 AS): their AS is 48 for this attack. The attacker rolls d100 and compares the result to the defender's modified AS, Protection Score (<a href="content/essentia_core/rules_ref_006.html#term-prots">PROTS</a>). Note: These values are for basic, common armor. Higher tier, magical, or enhanced armor can have higher AS or different resistance/vulnerability modifiers.
+        </div>
+        </details>
+
+    <h2 id="charts">Charts</h2>
+
+        <h3 id="melee-range-chart">Melee Range Chart</h3>
+        <p>Melee range comes in three bands. No to-hit penalty applies within any of them, and melee does not fall off with distance the way a shot does, a blade at the end of its reach cuts as hard as one at the start. Throw is the exception and carries its own curve.</p>
+        <table class="rules-table">
+          <thead><tr><th>Band</th><th>Penalty</th><th>Damage</th><th>Dist.</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Touch</td><td>None</td><td>Full</td><td>5 ft. (1 square)</td><td>Standard melee range; the same "Touch" band used by touch-cast Spells, see Range Bands, Spells below</td></tr>
+            <tr><td>Reach</td><td>None</td><td>Full</td><td>10 ft. (2 squares)</td><td>Reach weapons only (e.g., spears, polearms), no range bands</td></tr>
+            <tr><td>Throw&#10020; &#8211; Pt. Blank&#10022;</td><td>+0 (+10&#10022;)</td><td>Base DMG. (full dice)</td><td>0&#8211;5 ft.</td><td>Thrown weapons, AGI only, a throw trades STR for AGI to hit.</td></tr>
+            <tr><td>Throw&#10020; &#8211; Oscillation</td><td>&plusmn;10 1st/last 10ft.&#10035;</td><td>Base DMG. (full dice)</td><td>6&#8211;25 ft.</td><td>&#8212;</td></tr>
+          </tbody>
+        </table>
+
+  </div>
+</main>
+</div>
+</body>
+</html>
