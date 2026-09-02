@@ -7,6 +7,7 @@ draft pages:
 
 - `ranged-mechanics-draft.html`
 - `melee-mechanics-draft.html`
+- `unarmed-mechanics-draft.html`
 
 Do **not** edit the live chapters while drafting is open:
 
