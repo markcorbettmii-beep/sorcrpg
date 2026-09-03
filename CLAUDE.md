@@ -32,6 +32,8 @@ is not an exception.
 - No em dashes in prose. `<td>&mdash;</td>` in a table cell is fine.
 - Use `Poor`, never `Shoddy`.
 - Keep repo and process commentary short. He wants the answer.
+- Two choices of anything get separated. Two options, two rules, two
+  readings, two numbers. Never run them together in one paragraph.
 
 ## The vocabulary, current
 
