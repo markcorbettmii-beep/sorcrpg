@@ -34,6 +34,9 @@ is not an exception.
 - Keep repo and process commentary short. He wants the answer.
 - Two choices of anything get separated. Two options, two rules, two
   readings, two numbers. Never run them together in one paragraph.
+- No corrective text in the rules. Anywhere. Write the rule and stop. No
+  "not to be confused with", no "the same way X does", no restating a
+  thing that was already said, no explaining why a number is what it is.
 
 ## The vocabulary, current
 
