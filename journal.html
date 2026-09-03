@@ -10,8 +10,8 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
+      width: 100%; min-height: 100%;
+      overflow-x: hidden; overflow-y: auto;
       background: #111;
       font-size: 13px;
       margin: 0;
@@ -20,7 +20,7 @@
     body { display: flex; flex-direction: column; align-items: stretch; }
 
     .sheet-viewport {
-      flex: 1;
+      flex: 1; min-height: 100vh;
       display: flex;
       align-items: flex-start;
       justify-content: center;
@@ -782,43 +782,67 @@
   <button id="printBtn">Print All</button>
 </div>
 
-<section id="how-to-use" style="max-width:52rem;margin:2.5rem auto 3.5rem;padding:0 1.4rem;
-         font-family:Georgia,'Times New Roman',serif;line-height:1.75;">
-  <h2 style="color:#c5a042;font-size:1.15rem;letter-spacing:2px;text-transform:uppercase;
-             border-bottom:1px solid rgba(160,140,200,0.3);padding-bottom:0.4rem;margin-bottom:1rem;">
-    How to Use the Journal</h2>
+<style>
+  /* How to Use the Journal, following the Basic Rules pattern.
+     Evil is the dark ground with light text, Lawful the light ground with dark text.
+     Lawful is the default. */
+  #how-to-use { max-width:52rem; margin:2.5rem auto 3.5rem; padding:0 1.4rem;
+                font-family:Georgia,'Times New Roman',serif; line-height:1.75;
+                color:#2c2c2c; }
+  #how-to-use h2 { color:#92793a; font-size:1.15rem; letter-spacing:2px;
+                   text-transform:uppercase; border-bottom:1px solid rgba(100,60,0,0.25);
+                   padding-bottom:.4rem; margin:0 0 1rem; }
+  #how-to-use h3 { color:#8c06a3; font-size:1rem; letter-spacing:1px; margin:1.4rem 0 .4rem; }
+  #how-to-use p, #how-to-use li { font-size:.97rem; color:#2c2c2c; }
+  #how-to-use ul { padding-left:1.4rem; }
 
-  <p style="font-size:0.95rem;">The Journal is where a Character's story is kept. Nothing in it
-  is a stat. The Character Sheet holds what a Character <em>is</em>; the Journal holds what they
-  have <em>done</em>, who remembers it, and what it cost them. Lore is a category of pages in
-  here, not a sheet of its own.</p>
+  body.evil-mode #how-to-use, body:not(.lawful-mode) #how-to-use { color:#e8e8e8; }
+  body.evil-mode #how-to-use p, body:not(.lawful-mode) #how-to-use p,
+  body.evil-mode #how-to-use li, body:not(.lawful-mode) #how-to-use li { color:#e8e8e8; }
+  body.evil-mode #how-to-use h2, body:not(.lawful-mode) #how-to-use h2 {
+    color:#c5a042; border-bottom-color:rgba(160,140,200,0.3); }
+  body.evil-mode #how-to-use h3, body:not(.lawful-mode) #how-to-use h3 { color:#ba55d3; }
 
-  <p style="font-size:0.95rem;">Ten pages in three parts, plus a roster.</p>
+  body.lawful-mode #how-to-use { color:#2c2c2c; }
+  body.lawful-mode #how-to-use p, body.lawful-mode #how-to-use li { color:#2c2c2c; }
+  body.lawful-mode #how-to-use h2 { color:#92793a; border-bottom-color:rgba(100,60,0,0.25); }
+  body.lawful-mode #how-to-use h3 { color:#8c06a3; }
+</style>
 
-  <h3 style="color:#9c27b0;font-size:1rem;letter-spacing:1px;margin:1.4rem 0 0.4rem;">Lore, pages 1 to 4</h3>
-  <p style="font-size:0.95rem;">Where the Character came from and what they have gathered since.
-  Background and Alignment open it. The Mission Statement follows, and it matters mechanically:
-  how it is pursued or neglected moves Standing with every faction and NPC who has a stake in it.
-  Quest Logs and Items track what is open and what was carried for it. Maps and Sentimental Value
-  hold places, landmarks and the objects that are worth more than their price.</p>
+<section id="how-to-use">
+  <h2>How to Use the Journal</h2>
 
-  <h3 style="color:#9c27b0;font-size:1rem;letter-spacing:1px;margin:1.4rem 0 0.4rem;">Prestige, pages 5 to 7</h3>
-  <p style="font-size:0.95rem;">How the world answers. Titles and Reputation record what a
-  Character is called: Boasted Titles are earned and displayed one at a time, Shamed Titles are
-  given by the GM, always Exposed, and only ever replaced by another of lower value. Standing and
-  Affiliation track every faction and NPC separately, by tier and by number. Legacy is what
-  outlasts the Character.</p>
+  <p>The Journal is where a Character's story is kept. Nothing in it is a stat. The Character
+  Sheet holds what a Character <em>is</em>; the Journal holds what they have <em>done</em>, who
+  remembers it, and what it cost them. Lore is a category of pages in here, not a sheet of its
+  own.</p>
 
-  <h3 style="color:#9c27b0;font-size:1rem;letter-spacing:1px;margin:1.4rem 0 0.4rem;">Rank, pages 8 and 9</h3>
-  <p style="font-size:0.95rem;">Rank and Advancement, then Growth, Retirement and Becoming a
-  Legend. These pages are filled slowly, a line at a time across a campaign, not in a single sitting.</p>
+  <p>Ten pages in three parts, plus a roster.</p>
 
-  <h3 style="color:#9c27b0;font-size:1rem;letter-spacing:1px;margin:1.4rem 0 0.4rem;">Companions Roster, page 10</h3>
-  <p style="font-size:0.95rem;">One line per Companion. Everything that changes after acquisition
-  lives on the Companion Booklet instead; this page is the index of who is bound to the Character.</p>
+  <h3>Lore, pages 1 to 4</h3>
+  <p>Where the Character came from and what they have gathered since. Background and Alignment
+  open it. The Mission Statement follows, and it matters mechanically: how it is pursued or
+  neglected moves Standing with every faction and NPC who has a stake in it. Quest Logs and
+  Items track what is open and what was carried for it. Maps and Sentimental Value hold places,
+  landmarks and the objects that are worth more than their price.</p>
 
-  <h3 style="color:#9c27b0;font-size:1rem;letter-spacing:1px;margin:1.4rem 0 0.4rem;">At the table</h3>
-  <ul style="font-size:0.95rem;padding-left:1.4rem;">
+  <h3>Prestige, pages 5 to 7</h3>
+  <p>How the world answers. Titles and Reputation record what a Character is called: Boasted
+  Titles are earned and displayed one at a time, Shamed Titles are given by the GM, always
+  Exposed, and only ever replaced by another of lower value. Standing and Affiliation track
+  every faction and NPC separately, by tier and by number. Legacy is what outlasts the
+  Character.</p>
+
+  <h3>Rank, pages 8 and 9</h3>
+  <p>Rank and Advancement, then Growth, Retirement and Becoming a Legend. These pages are
+  filled slowly, a line at a time across a campaign, not in a single sitting.</p>
+
+  <h3>Companions Roster, page 10</h3>
+  <p>One line per Companion. Everything that changes after acquisition lives on the Companion
+  Booklet instead; this page is the index of who is bound to the Character.</p>
+
+  <h3>At the table</h3>
+  <ul>
     <li>Write in the moment, not after. A deed nobody wrote down is a deed nobody can prove.</li>
     <li>Note who witnessed a thing. An unwitnessed deed travels as a rumor and behaves differently.</li>
     <li>When Standing moves, write what moved it. Factions talk, and one drop can ripple into others.</li>
@@ -826,14 +850,16 @@
     <li>Home and family logs are not kept here. They have their own Booklet.</li>
   </ul>
 
-  <p style="font-size:0.95rem;">The physical Journal in the box set is a tear-away pad, so a full
-  page comes free and goes in the campaign archive. Tear it when it is done, not before.</p>
+  <p>The physical Journal in the box set is a tear-away pad, so a full page comes free and goes
+  in the campaign archive. Tear it when it is done, not before.</p>
 </section>
 
 <script>
   if (new URLSearchParams(window.location.search).get('embed') === '1') {
     var ab = document.querySelector('.action-bar');
     if (ab) ab.style.display = 'none';
+    var htu = document.getElementById('how-to-use');
+    if (htu) htu.style.display = 'none';
     var hint = document.getElementById('embedHint');
     if (hint) hint.style.display = 'block';
   }
