@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Ranged Mechanics (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* Telluric Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode #telluric-table td[rowspan],
+    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,88,170,0.13) !important; }
+    #telluric-table { min-width: 760px; }
+    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
+    #telluric-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+<main>
+  <div class="rules-section">
+
+    <div class="callout"><strong>Draft.</strong> Enhancements, Sunder and Salvage, pulled out of Armaments (Basic Rules pg. 4) so they can be worked on in one place. Nothing here goes back into the chapter until it is settled.</div>
+
+    <div class="callout" id="by-family"><strong>What each family gets.</strong><br/>
+      <strong>Telluric</strong> has the most paths: Enchanting, Inscribing, Modifying, Nesting, Reforging, Resonating, Socketing, Upgrading. It may also be Salvaged or Sundered.<br/>
+      <strong>TAW</strong> has one, Modification. It may also be Salvaged or Sundered.<br/>
+      <strong>Chthonic</strong> has none. A Chthonic Armament is worked from Ignis ore and gem and cannot be added to, so Sunder is the only thing that can be done to one.<br/>
+      This is the one advantage Telluric holds over the other two.</div>
+
+        <h2 class="subtopic">Enhancing and Modification Armaments</h2>
+        <p>There are several methods of Enhancements and each uses a different process to apply. For instance, salvaging or sundering plate armor uses different techniques that require skills of a blacksmith, while unweaving or burning cloth requires the skills of a stitcher.</p>
+        <p>Enhancing Armaments is done in many ways, including:</p>
+        <ul>
+          <li>Combining</li>
+          <li>Enchanting</li>
+          <li>Inscribing (including colors)</li>
+          <li>Modifying</li>
+          <li>Nesting (lining)</li>
+          <li>Reforging</li>
+          <li>Resonating</li>
+          <li>Socketing (placement of Jewels, Runes and more)</li>
+          <li>Sundering (Armorer skill, extracts materials from Excellent armaments at rank equal to or above the armament's rank; see below)</li>
+          <li>Upgrading (augmenting Armaments)</li>
+        </ul>
+        <p>If armor is broken during enhancements, most of the materials drop and it can be reforged. Some easier than others so be careful, otherwise the Armor Card goes to the boneyard until it's reforged. All enhancements are lost upon armor breaking and the chance of it breaking increases with every enhancement.</p>
+        <p>For example, if a weapon has been upgraded to +3, the chance of upgrading it to +4 is lower than it was to reach +3. If the armor breaks while attempting a +4 upgrade, it is destroyed and sent to the boneyard, and most of its materials are harvested. The amount of mats harvested is random.</p>
+        <p>When the armor breaks, it loses all of its previous enhancements, such as socketed gems, upgrades and nested fur, and all the materials used to enhance it, such as the gem socketed, vanishes as well. The broken armor stays in the boneyard until all the necessary materials to reforge it have been gathered.</p>
+        <p><strong>Sundering:</strong> Sundering is an Armorer skill performed on an Excellent condition armament. The piece is required and is consumed. A Sunder returns a recipe one step back down: what was worked into bars returns as ore, what was worked into rings returns as ore, and so on to the raw material the recipe began from. A successful Sunder extracts at a rank equal to or above the armament's rank, something ordinary Salvage does not guarantee, and carries a chance at exclusive materials available no other way.</p>
+        <p><strong>What a Sunder returns.</strong> Roll one <strong>Divine Roll</strong> (d100 + d100, 2 to 200) for each line of the recipe. Never more than half of what that line called for comes back, rounded down, and the roll decides how much of that half is recovered:</p>
+        <p><strong>Recovered = (Divine Roll &minus; Value Mod) &divide; 200 &times; (recipe quantity &divide; 2)</strong>, rounded down, minimum 0.</p>
+        <p><em>Value Mod by the material's Value: Common 0, Uncommon 20, Rare 40, Unique 60, Heroic 80, Elite 100, Legendary 130, Divine 160.</em></p>
+        <p><strong>A single unit never returns.</strong> Half of one, rounded down, is none. Any recipe line calling for exactly one of something is lost to the Sunder, every time, and the rarest component of a high-rank piece is usually the line that calls for one.</p>
+        <p><strong>Salvage</strong> is the ordinary version, taken when a piece is destroyed rather than deliberately broken down. It drops from the same recipe under the same half cap and the same Value Mods, but it does not guarantee rank and it has no chance at exclusive materials. Telluric and TAW armaments may be Salvaged or Sundered. A Chthonic armament has no enhancement path of its own, so Sunder is the only thing that can be done to one</p>
+        <p><strong><span class="rank-divine">Divine</span> Armaments have their Enhancements baked in.</strong> Nothing further may be added to one, by any Enhancement or Modification.</p>
+        <div class="callout"><strong>Note:</strong> Refer to each module's ref # (displayed on cards) for further details on salvage and sunder drops, their percentages, enhancement information, and lore.</div>
+        <p>These techniques can only be done by craftsmen trained in Professions aligned with these skills. For instance, Upgrading requires a Blacksmith Proficient in the Upgrading process of the Armament. Crafting requires a recipe (and the proficiency in the respective Profession), the materials and at least a makeshift workshop.</p>
+      </div>
+<div class="rules-section">
+
+  </div>
+</main>
+</div>
+</body>
+</html>
