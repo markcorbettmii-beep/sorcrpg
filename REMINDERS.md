@@ -69,8 +69,9 @@ This is the list we are resolving now. Numbering is stable, do not renumber.
   any helmet?
 - **`rules_ref_appendix:989`** still carries the old set penalty, 25% per
   replacement and 50% if both, which contradicts the new five-part set.
-- **Favored Higher Power on race cards.** 42 of 46 have Tree, Path and Branch.
-  Missing on dwarf-snow, skrath, caelen, ossein. No card names a Higher Power.
+- **Favored Higher Power on race cards.** 41 of 46 have Tree, Path and Branch.
+  Missing on **draco-blood**, dwarf-snow, caelen, ossein, skrath. Race cards
+  name no Higher Power; the class tree pages do.
 - **Class Variant lock table.** Cleric Telluric only, Monk Telluric only,
   Priest Telluric or Chthonic. Needs the other 13 classes.
 
@@ -179,13 +180,11 @@ This is the list we are resolving now. Numbering is stable, do not renumber.
     card.** Its planet was never settled either, since Angeligla went to the
     Aberrations
 
-23. **Grafted Variant row is not live.** Approved by name only. Needs the
-    `rules_ref_004:661` row, the Gear & Item row, the Enhancements callout
-    line ("Grafted has one, Modification. It may be Salvaged"), and the DMG
-    Mod chart row
+23. **CLOSED.** Grafted is fully live: the Variant row and Gear & Item row in
+    `rules_ref_004`, both DMG Mod charts, the combined chart in
+    `rules_ref_appendix:837`, and the Enhancements callout.
 
-24. **Caelen race card is live** in `rules_ref_002`. It references a Grafted
-    Armament that does not exist yet, see 23
+24. **CLOSED** by 23. The Grafted Armament the Caelen card references exists.
 
 25. **`into-essentia.html:176` and `:297`** still read "not a playable race in
     these rules" for the Cyborgs
@@ -208,3 +207,75 @@ This is the list we are resolving now. Numbering is stable, do not renumber.
 32. Site-wide rank palette conversion, 5,615 literals across 225 files
 33. Chthonic and TAW materials tables do not exist
 34. "Biotics" at `rules_ref_004:1095` is now meaningless
+
+## Alignment, settled 2026-09-05
+
+Decisions made in session. Written here because the reasoning is not obvious
+from the diffs alone.
+
+- **The Spectrum is Class-anchored.** Every Main Class occupies a Spectrum,
+  Ambivalent plus the two alignments leaning to one side, never both. Within
+  it each Path keeps a base Alignment, and that base **is** the Higher Power's
+  requirement. Class Spectrum decides what you may learn; the Path's exact
+  base decides whether its patron pays you. Live on pg. 2 and pg. 3.
+- **A Class holds no alignment of its own.** The Path does, through its Higher
+  Power. Seven class labels stripped from the Starter Set list.
+- **Alignment is a mechanic only for player characters.** A Higher Power's
+  Lawful or Evil is a description of its lifestyle, not a gate. Races and
+  factions carry the words as lore, never as a stat. No race card has an
+  alignment field and none should.
+- **Race never sets alignment; faction membership does**, because joining is
+  an action. Purge Forces or the Omne Astral Cabal Empire means Evil, Noble
+  Forces means Lawful, the Neutral Feral Alliance means anywhere on the
+  spectrum. NOT YET WRITTEN, and it is the only concrete alignment-shift
+  trigger anyone has stated.
+- **Evil belongs to factions, not races.** The Purge Forces list in zail.html
+  is the worked example: Hell Orcus, Uber Goblins, Mighty Goliaths, Elite
+  Ogres, Fiendish Undead, a modifier on a race name marking the faction drawn
+  from it. Principle NOT YET WRITTEN.
+- **Church-mates are lore, not mechanics.** Others bound to your patron may
+  drift and be punished by the church and the Higher Power, but only the
+  player character's alignment is tracked.
+- **Gear, Armaments and Items are three things.** No Armament is ever
+  off-limits to carry; Class and Alignment decide which Abilities may be
+  performed with it. Gear carries no such requirement. Items may require an
+  alignment, from the Higher Power, religion or class they serve.
+
+## Open, blocking
+
+- **What shifts alignment.** Still unwritten anywhere. Searched Prestige, all
+  of `rules_ref_002`, Fallen and Risen on pg. 3 and the appendix. The book
+  says only "your choices during play can change your alignment" and never
+  says which choices, by how much, or on what scale. Fallen and Risen is
+  entirely consequence sitting on a trigger that does not exist. This blocks
+  the scope statement, the faction rule and Ossein's patron.
+- **The Class-anchored Spectrum contradicts the class data.** The Avenger's
+  Paths run Cleric Lawful, Monk Moral, Priest Amoral, four steps wide, and no
+  Spectrum is wider than three. All 15 class Alignment fields on pg. 3 still
+  read "Path and Branch Dependent", which is the old Path-anchored model.
+  Either retag the Paths per Class lean, or narrow the claim.
+- **Ossein's Higher Power.** They are Undead of Hexagonum, stated on the card
+  now. Their necromancy guild is named on the card and nowhere else. Hexagonum
+  has no Book, so there is no tome for them, and that same wall blocks 20, 21
+  and the Malign Variant.
+- **Evil-side focus Items do not exist.** Lawful has Holy Symbol, Prayer Beads
+  and Reliquary Case; Shaman has the Ancestor Totem. Doom Knight, Warlock,
+  Witch and Tyrant have none, and the Items rule now names a cursed symbol
+  that cannot be bought.
+
+## Broken, not yet repaired
+
+- **All 15 non-Avenger class tree pages are copies of the Avenger page.**
+  `main-class-tree-barbarian.html` carries 51 mentions of Avenger, 3 of
+  Barbarian, and none of its own Paths. Caused by `5c57bca5`, "Convert all 15
+  class trees to Avenger format structure", 2026-09-05. The real content is
+  intact at **`d224e51f`** (barbarian there has Cimmerian x21, Avenger x2).
+  Repair is not a checkout: the formatted shell differs at the wrapper, using
+  a class-tree-nav footer where `d224e51f` used skip-links, so the content
+  region must be swapped into the current shell and the web-starter rename
+  re-applied on top.
+- **Three stray `</strong>` closers in `rules_ref_002`**, 466 open to 469
+  close. Pre-existing, present at every commit.
+- **`_redirects` never shipped until today.** It lived at the repo root while
+  the deploy workflow copied only `*.html`, so `/lobbies/beg`, `/int` and
+  `/adv` were dead in production. Fixed, worth checking after next deploy.
