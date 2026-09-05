@@ -292,7 +292,7 @@ app.get('/api/forum/categories', async (c) => {
       { id: 'announcements', name: 'News & Announcements', icon: '📣', desc: null, color: '#d0021b', readOnly: true, adminOnly: true },
       { id: 'conduct', name: 'Conduct & Rules', icon: '⚖️', desc: 'The laws of Essentia and the SORC community. Read before you post.', color: '#8B0000', readOnly: true, adminOnly: true },
       { id: 'general', name: 'General Discussion', icon: '💬', desc: 'The heart of the SORC community. Talk about anything and everything.', color: '#333' },
-      { id: 'sorc-beyond', name: 'SORC Beyond', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Beyond platform.', color: '#1a3a6b' },
+      { id: 'sorc-web', name: 'SORC Beyond', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Beyond platform.', color: '#1a3a6b' },
       { id: 'x-roads', name: 'The X Roads', icon: '🗺', desc: "Where lore, legend, and mystery converge. Share campaign stories, discuss Essentia's history, prophecies, and secrets.", color: '#4a1a6b' },
       { id: 'rules', name: 'Rules & Gameplay Advice', icon: '📖', desc: 'Questions, clarifications, and discussions about SORC mechanics and rules.', color: '#1a4a1a' },
       { id: 'majestic-worlds', name: 'The Majestic Worlds of Essentia', icon: '🌍', desc: 'Harnessing the powers of Adoria, the thirteen worlds of Essentia breathe with magic, war, and wonder.', color: '#1a3a1a' },
@@ -1012,7 +1012,7 @@ app.post('/api/gm/invitations/respond', authMiddleware, async (c) => {
 });
 
 // STUB: Trials leaderboard. Basic members see the top 100, Pro Members (a
-// registered box set) see the top 200 - per sorc-beyond.html's own Basic vs.
+// registered box set) see the top 200 - per sorc-web.html's own Basic vs.
 // Pro comparison table. Ranking metric/computation TBD; this wires up the
 // depth gate ahead of the actual feature.
 app.get('/api/leaderboard', authMiddleware, async (c) => {
@@ -2423,7 +2423,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
 
-  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-beyond.html's
+  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-web.html's
      Basic vs. Pro table). Lobby *creation* already requires a box code for
      non-privileged creators, but that doesn't cover a non-Pro member who
      was recruited in and is now the designated GM launching the room

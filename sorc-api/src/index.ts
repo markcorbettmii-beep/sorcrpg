@@ -131,7 +131,7 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 const AUTH_KEY_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, matches sorc-app's existing session length
-const FELLOWSHIP_CAP = 25; // Basic members; Pro Membership is unlimited (see sorc-beyond.html's table)
+const FELLOWSHIP_CAP = 25; // Basic members; Pro Membership is unlimited (see sorc-web.html's table)
 const TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours, matches the verification/reset emails' own "expires in 24 hours" text
 
 async function ensureAuthColumns(db: D1Database) {
@@ -139,7 +139,7 @@ async function ensureAuthColumns(db: D1Database) {
   await db.prepare(`ALTER TABLE users ADD COLUMN verification_token_created_at TEXT`).run().catch(() => {});
 }
 
-// Custom profile banner (see sorc-beyond.html's Basic vs. Pro table: "Custom
+// Custom profile banner (see sorc-web.html's Basic vs. Pro table: "Custom
 // profile banner" is Pro-exclusive, same tier as signature/website/socials).
 async function ensureProfileColumns(db: D1Database) {
   await db.prepare(`ALTER TABLE users ADD COLUMN banner TEXT`).run().catch(() => {});
@@ -1017,7 +1017,7 @@ app.get('/api/forum/categories', async (c) => {
       { id: 'announcements', name: 'News & Announcements', icon: '📣', desc: null, color: '#d0021b', readOnly: true, adminOnly: true },
       { id: 'conduct', name: 'Conduct & Rules', icon: '⚖️', desc: 'The laws of Essentia and the SORC community. Read before you post.', color: '#8B0000', readOnly: true, adminOnly: true },
       { id: 'general', name: 'General Discussion', icon: '💬', desc: 'The heart of the SORC community.', color: '#333' },
-      { id: 'sorc-beyond', name: 'SORC Web', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Web platform.', color: '#1a3a6b' },
+      { id: 'sorc-web', name: 'SORC Web', icon: '⚡', desc: 'Discuss digital features, online lobbies, and the SORC Web platform.', color: '#1a3a6b' },
       { id: 'x-roads', name: 'The X Roads', icon: '🗺', desc: "Where lore, legend, and mystery converge.", color: '#4a1a6b' },
       { id: 'rules', name: 'Rules & Gameplay Advice', icon: '📖', desc: 'Questions and discussions about SORC mechanics.', color: '#1a4a1a' },
       { id: 'majestic-worlds', name: 'The Majestic Worlds of Essentia', icon: '🌍', desc: 'The thirteen worlds of Essentia.', color: '#1a3a1a' },
@@ -1199,7 +1199,7 @@ app.post('/api/fellowships/:id/accept', authMiddleware, async (c) => {
 
     // Fellowship cap: Basic members top out at 25 accepted fellowships
     // (remove one to add another); Pro Membership is unlimited, per
-    // sorc-beyond.html's Basic vs. Pro table.
+    // sorc-web.html's Basic vs. Pro table.
     if (!(await isProMember(c.env.sorc_db, user))) {
       const count = await c.env.sorc_db.prepare(
         `SELECT COUNT(*) as cnt FROM fellowships WHERE status = 'accepted' AND (sender_uid = ? OR receiver_uid = ?)`
@@ -1382,7 +1382,7 @@ app.put('/api/profile', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   await ensureProfileColumns(c.env.sorc_db);
   const allowedFields = ['display_name', 'first_name', 'surname', 'prefix', 'suffix', 'bio', 'avatar', 'privacy_email'];
-  // Pro Membership perks (see sorc-beyond.html's comparison table): a signature,
+  // Pro Membership perks (see sorc-web.html's comparison table): a signature,
   // personal website link, social links, and a custom banner are Pro-only. Not
   // purchasable with Community Points, and not settable at all without a
   // claimed box set code.
@@ -3638,7 +3638,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
   if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
 
-  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-beyond.html's
+  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-web.html's
      Basic vs. Pro table). Lobby *creation* already requires a box code for
      non-privileged creators, but that doesn't cover a non-Pro member who
      was recruited in and is now the designated GM launching the room
@@ -4330,13 +4330,13 @@ app.post('/api/admin/invitations/respond', authMiddleware, async (c) => {
 
 // ─── TRIALS LEADERBOARD (stub) ──────────────────────────────────────────────
 // Ported from sorc-app (2026-08-24). Basic members see the top 100, Pro
-// Members (a registered box set) see the top 200 - per sorc-beyond.html's
+// Members (a registered box set) see the top 200 - per sorc-web.html's
 // own Basic vs. Pro comparison table. Ranking metric/computation TBD; this
 // wires up the depth gate ahead of the actual feature.
 // Ranked by community_points (the only real, comparable metric that exists
 // today - Trials of Combat win/loss ranking is a separate, not-yet-built
 // feature; once it ships this can add a `metric=trials` mode alongside).
-// Depth (top 100 Basic / top 200 Pro) matches sorc-beyond.html's table.
+// Depth (top 100 Basic / top 200 Pro) matches sorc-web.html's table.
 app.get('/api/leaderboard', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const isPro = await isProMember(c.env.sorc_db, user);
@@ -4379,7 +4379,7 @@ app.get('/api/leaderboard', authMiddleware, async (c) => {
 });
 
 // ─── PRO MEMBERSHIP FEATURE STUBS ───────────────────────────────────────────
-// Per sorc-beyond.html's Basic vs. Pro comparison table. None of these have
+// Per sorc-web.html's Basic vs. Pro comparison table. None of these have
 // a real implementation yet - each wires up the correct access gate ahead
 // of the actual feature, same pattern as the leaderboard stub above.
 
@@ -4450,7 +4450,7 @@ const ACHIEVEMENT_CATALOG: { id: string; tier: 'basic' | 'pro'; name: string; de
   { id: 'game_master', tier: 'basic', name: 'Behind the Screen', description: 'Passed the GM Assessment.' },
   { id: 'into_the_fray', tier: 'basic', name: 'Into the Fray', description: 'Joined your first private Room session.' },
   // Pro-exclusive: not shown or earnable at all for Basic members, per the
-  // 'Full achievements system' row on sorc-beyond.html's table.
+  // 'Full achievements system' row on sorc-web.html's table.
   { id: 'pro_initiate', tier: 'pro', name: 'Pro Initiate', description: 'Registered a SORC box set.' },
   { id: 'community_pillar', tier: 'pro', name: 'Community Pillar', description: 'Pro Membership with 500+ Community Points.' },
 ];
@@ -4491,7 +4491,7 @@ app.get('/api/achievements', authMiddleware, async (c) => {
 
     // Awarding a new achievement grants +25 Community Points, matching the
     // 'Earning an in-game achievement: +25 pts, awarded automatically upon
-    // achievement unlock' rule already documented on sorc-beyond.html.
+    // achievement unlock' rule already documented on sorc-web.html.
     let pointsAwarded = 0;
     for (const ach of visibleCatalog) {
       if (earnedMap.has(ach.id)) continue;
@@ -4531,7 +4531,7 @@ app.get('/api/achievements', authMiddleware, async (c) => {
 
 // SORC Store access via Community Points is Pro-exclusive per the table;
 // Lottery raffle tickets remain a separate, open-to-all purchase (see
-// sorc-beyond.html: 'The SORC Lottery is open to all members, Basic and Pro').
+// sorc-web.html: 'The SORC Lottery is open to all members, Basic and Pro').
 app.get('/api/sorc-store', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   if (!(await isProMember(c.env.sorc_db, user))) {
@@ -4541,7 +4541,7 @@ app.get('/api/sorc-store', authMiddleware, async (c) => {
 });
 
 // ─── GROUP FELLOWSHIP CHAT (Pro) ────────────────────────────────────────────
-// Per sorc-beyond.html's table: 1:1 fellowship messaging is free for everyone
+// Per sorc-web.html's table: 1:1 fellowship messaging is free for everyone
 // (see /api/conversations above), but a multi-fellow group thread is a Pro
 // perk. Hosting (creating a group, adding members) requires the OWNER to be
 // Pro - same pattern as Lobbies (creator needs a box code, joiners don't).
@@ -4832,7 +4832,7 @@ app.post('/api/world-chat/:msgId/respond', authMiddleware, async (c) => {
 });
 
 // ─── PRO MEMBERSHIP FEATURE STUBS ───────────────────────────────────────────
-// Per sorc-beyond.html's Basic vs. Pro comparison table. None of these have
+// Per sorc-web.html's Basic vs. Pro comparison table. None of these have
 // a real implementation yet - each wires up the correct access gate ahead
 // of the actual feature, same pattern as the leaderboard stub above.
 
@@ -4894,7 +4894,7 @@ app.get('/api/achievements', authMiddleware, async (c) => {
 
     // Awarding a new achievement grants +25 Community Points, matching the
     // 'Earning an in-game achievement: +25 pts, awarded automatically upon
-    // achievement unlock' rule already documented on sorc-beyond.html.
+    // achievement unlock' rule already documented on sorc-web.html.
     let pointsAwarded = 0;
     for (const ach of visibleCatalog) {
       if (earnedMap.has(ach.id)) continue;
@@ -4934,7 +4934,7 @@ app.get('/api/achievements', authMiddleware, async (c) => {
 
 // SORC Store access via Community Points is Pro-exclusive per the table;
 // Lottery raffle tickets remain a separate, open-to-all purchase (see
-// sorc-beyond.html: 'The SORC Lottery is open to all members, Basic and Pro').
+// sorc-web.html: 'The SORC Lottery is open to all members, Basic and Pro').
 app.get('/api/sorc-store', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   if (!(await isProMember(c.env.sorc_db, user))) {
