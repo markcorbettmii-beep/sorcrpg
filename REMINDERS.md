@@ -6,15 +6,14 @@ Working list. Nothing here is live unless it says so.
 
 This is the list we are resolving now. Numbering is stable, do not renumber.
 
-1. **The Hexagonum curse Variant has no name.** Described in full: their own
-   Telluric Armaments Enhanced with curses, iron that is red, purple, black or
-   green, dark even when shiny. The Grafted Variant text points at it by name,
-   so nothing ships until it is named. BLOCKED on Mark.
+1. **CLOSED.** Named **Malign** and live. Variant row and Gear & Item row in
+   `rules_ref_004:661`, and "Malign has one, Cursing. It may be Salvaged" in
+   the Enhancements callout. Five Variants now: Telluric, Advanced, Chthonic,
+   Grafted, Malign.
 
-2. **The Hexagonum undead playable race has no name and no card.** Skin tight
-   to the bone but not corroded, narcissistic, intelligent, not wraiths. Dark
-   magic and necromancy. Wasteful with material, greedy with it, collect only
-   to build. One variant of this undead type only. BLOCKED on Mark.
+2. **CLOSED.** Named **Ossein** and live at `rules_ref_002:3303`, in Playable
+   Races from Afar. Carries Spirit 9 / Apex 5, Undying, the Scrip rule, and
+   points at Malign under Race Culture.
 
 3. **The Angeligla alchemy race has no name, no card, and no planet.**
    Apothecary, alchemy, corrosion. Human-passing, diverse, versatile. Magic
@@ -41,6 +40,39 @@ This is the list we are resolving now. Numbering is stable, do not renumber.
    and wrong for a blast, so a grenade has to sit outside that curve.
    Blocked only on the collision 16 wording, since the Placed rows go into
    `rules_ref_004:1053` which says "Tactical" where the book says "Telluric".
+
+## Shipped since the 1-8 list was written
+
+- **Scrip and the Assayer**, `rules_ref_004:685`. Scrip carries Rank and part.
+  Fires on cultural origin, not Rank. Tradeable, sellable to an Assayer,
+  giftable as a Contribution for Standing, Bound once redeemed.
+- **Set Bonus rebuilt in five parts**, `rules_ref_004:1041`. Armor Core
+  (pauldrons, cuirass, greaves, never separated), Helmet, Gloves/Bracers,
+  Boots, Accessories. Core carries the base bonus, each part adds its own.
+- **Bracers allow Parry, Gloves do not.** Stated at `rules_ref_005:681`,
+  `rules_ref_002:776`, `rules_ref_appendix:390`, `rules_ref_004:1048`.
+- **Culture holes 1 to 5 closed.** Four Higher Power cultures at
+  `rules_ref_002:270`; race card label is now Race Culture on all 46;
+  Variant added as a fourth thing a Culture governs; hole 3 was never a hole,
+  pg. 3 carries 48 Forbidden lists.
+- **Background is the one term.** Five "backstory" uses converted. Anchored at
+  `rules_ref_002:293`.
+- **Four new drafts**, Armaments, Armor, Weapons, Equipment, all cross-linked
+  and listed at `library.html#drafts`.
+
+## Still open, added since
+
+- **Scrip is an advantage, not a restriction.** An Ossein cannot get a bad
+  drop. Filed under Innate Inaptitude. Price it, or lock Hand and Distance
+  back on.
+- **Named artifacts.** Does an Asmodeus Crown Scrip come back as itself, or as
+  any helmet?
+- **`rules_ref_appendix:989`** still carries the old set penalty, 25% per
+  replacement and 50% if both, which contradicts the new five-part set.
+- **Favored Higher Power on race cards.** 42 of 46 have Tree, Path and Branch.
+  Missing on dwarf-snow, skrath, caelen, ossein. No card names a Higher Power.
+- **Class Variant lock table.** Cleric Telluric only, Monk Telluric only,
+  Priest Telluric or Chthonic. Needs the other 13 classes.
 
 ## Rules collisions, deep scan
 
