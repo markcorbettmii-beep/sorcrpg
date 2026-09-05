@@ -12,6 +12,7 @@ on:
     paths:
       - 'sorc-app/**'
       - '*.html'
+      - '_redirects'
 
 jobs:
   deploy:
@@ -28,6 +29,11 @@ jobs:
           for f in *.html; do
             [[ "$f" != "brunn_build.html" && "$f" != "build-brunn-flip.html" ]] && cp "$f" sorc-app/public/
           done 2>/dev/null || true
+      # _redirects lives at the repo root but is only honoured from inside the
+      # asset directory, so it has to be copied in like the HTML above. Without
+      # this the /lobbies/beg, /int and /adv rewrites never ship.
+      - name: Copy _redirects to public
+        run: cp _redirects sorc-app/public/_redirects
       - run: npx wrangler deploy
         working-directory: sorc-app
         env:
