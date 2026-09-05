@@ -2,77 +2,205 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SORC Avenger (Draft)</title>
+  <title>SORC Warlock (Draft)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css?v=9">
-  <style>
+<style>
     main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
     .rules-section { margin-bottom: 2.5rem; }
     .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
     .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
     .rules-section h4 { color: #e53935; }
-    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
-    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
-    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
-    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .beyond-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #2196f3; }
+    .slot-c { color: #e53935; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
     .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
     .rules-table tr:last-child td { border-bottom: none; }
-    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
-    .table-scroll { overflow-x: auto; }
-    .new-row td { background: rgba(197,160,66,0.14); }
-    .new-row td:first-child, .new-row td { font-weight: 500; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #b9aa00 !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.beyond-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
     body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
     body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
     body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
     body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
-    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
-    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
-       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
-       Modular may keep or drop any of them. */
-    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
-    .style-casual td { background: rgba(0,88,170,0.13); }
-    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
-    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
-    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
-       which carries !important and specificity (0,2,3). These must outrank it or only the
-       odd rows take their play-style color. */
-    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
-    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
-    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
-                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
-    .style-key.casual { background: rgba(0,88,170,0.13); }
-    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
-    .style-key.improvised { background: transparent; }
-
-    /* Telluric Ranged table: hold real column widths and scroll sideways rather
-       than wrapping every cell to three lines on a portrait phone. Everything but
-       the weapon column is centred. */
-    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
-       the Bare Bones blue rather than inheriting its lead row's colour. */
-    #telluric-table td[rowspan],
-    #telluric-table tbody tr:first-child td:first-child {
-      background: rgba(0,110,215,0.20) !important; }
-    body.lawful-mode #telluric-table td[rowspan],
-    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
-      background: rgba(0,88,170,0.13) !important; }
-    #telluric-table { min-width: 760px; }
-    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
-    #telluric-table th:first-child { text-align: left; }
-    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
-       Continuation rows have no weapon cell, so :first-child there is Dist. */
-    #telluric-table td[rowspan],
-    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Avenger class-card, standing alone as the
+       reference template every other class's icon-Slot conversion is
+       measured against. Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
   </style>
 </head>
 <body class="lawful-mode">
-<div class="page-wrapper">
-<main>
-  <div class="rules-section">
-
-    <div class="callout"><strong>Draft.</strong> The Avenger tree, Cleric, Monk and Priest, pulled out of the live page so it can be worked on in one place. Nothing here goes back into the live tree until it is settled.</div>
-
-<main>
+  <main>
     <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Warlock - Class Tree</h2>
       <div class="class-grid" style="grid-template-columns: 1fr;">
 <div class="class-card">
             <h4 id="warlock">Warlock <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Not Playable in Starter Set)</span></h4>
@@ -811,4 +939,10 @@
 </main>
 </div>
 </body>
+</html>
+
+  </main>
+</main>
+</body>
+</html>
 </html>
