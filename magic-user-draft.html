@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Magic User (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* Telluric Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode #telluric-table td[rowspan],
+    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,88,170,0.13) !important; }
+    #telluric-table { min-width: 760px; }
+    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
+    #telluric-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+<main>
+  <div class="rules-section">
+
+    <div class="callout"><strong>Draft.</strong> The Magic User class tree, pulled out of Playable Classes (Basic Rules pg. 3) so it can be worked on in one place. Nothing here goes back into the chapter until it is settled.</div>
+    <div class="callout"><strong>Related.</strong><br/>
+      Class drafts: <a href="avenger-draft.html">Avenger</a> &middot;
+      <a href="barbarian-draft.html">Barbarian</a> &middot;
+      <a href="bard-draft.html">Bard</a> &middot;
+      <a href="doom-knight-draft.html">Doom Knight</a> &middot;
+      <a href="druid-draft.html">Druid</a> &middot;
+      <a href="fighter-draft.html">Fighter</a> &middot;
+      <strong>Magic User</strong> &middot;
+      <a href="marksman-draft.html">Marksman</a> &middot;
+      <a href="overseer-draft.html">Overseer</a> &middot;
+      <a href="shaman-draft.html">Shaman</a> &middot;
+      <a href="sorcerer-draft.html">Sorcerer</a> &middot;
+      <a href="strategist-draft.html">Strategist</a> &middot;
+      <a href="tyrant-draft.html">Tyrant</a> &middot;
+      <a href="warlock-draft.html">Warlock</a> &middot;
+      <a href="warrior-draft.html">Warrior</a> &middot;
+      <a href="witch-draft.html">Witch</a><br/>
+      Other drafts: <a href="armaments-draft.html">Armaments</a> &middot; <a href="armor-draft.html">Armor</a> &middot; <a href="weapons-draft.html">Weapons</a> &middot; <a href="equipment-draft.html">Equipment</a> &middot; <a href="enhancements-draft.html">Enhancements</a> &middot; <a href="ranged-mechanics-draft.html">Ranged</a> &middot; <a href="melee-mechanics-draft.html">Melee</a> &middot; <a href="unarmed-mechanics-draft.html">Unarmed</a><br/>
+      Live: <a href="content/essentia_core/rules_ref_003.html">Playable Classes, pg. 3</a> &middot; <a href="content/essentia_core/rules_ref_004.html">Armaments, pg. 4</a> &middot; <a href="content/essentia_core/rules_ref_005.html">Combat, pg. 5</a><br/>
+      Culture: <a href="content/essentia_core/rules_ref_002.html#culture">Culture</a> &middot; <a href="content/essentia_core/rules_ref_002.html#background">Background (BG)</a> &middot; <a href="content/essentia_core/rules_ref_002.html#higher-power">Higher Power</a> &middot; <a href="content/essentia_core/rules_ref_004.html#cultural-armament">Cultural Armaments</a></div>
+
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Magic User - Class Tree Template</h2>
+      <div class="template-note"><strong>Template, not a live rules page.</strong> This is the Magic User class-card exactly as it stands in Basic Rules pg. 3 (<a href="content/essentia_core/rules_ref_003.html#magicuser">view it there</a>), pulled out on its own so the tree can be worked on in one place. It follows the Avenger template: one Ability column matching the class's actual Nature/Spell split, Slots marked by role icon rather than by letter, and Tier Armaments specific to the Main Class rather than copied from one of its own Paths. Edit the source page, not this file, this is a reference snapshot regenerated from it.</div>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="magicuser">Magic User <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Not Playable in Starter Set)</span></h4>            <p>Arcane scholars and innate tricksters who bend reality through illusion, transformation, and raw magical force, Magic Users sacrifice all physical durability for nearly limitless manipulation of both the material and immaterial world, equally comfortable turning an enemy into a toad, stepping sideways through time, or opening a rift to somewhere else entirely.</p>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Path and Branch Dependent<br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Magic User's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              <strong>Favored Races:</strong><br>Imperials +5, Gnome +5, Miceling +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5<br><br>
+              &dagger;Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> Ogre -5, Dwarf, Common -5, <span class="beyond-starter">Neanderthal (Glaciera) -5</span><br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Spellweaver's Trance, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Reality Fracture, Once Per Day the Magic User tears a seam in reality, dealing arcane damage equal to twice their Knowledge SCR to one target.<br><br>
+              Extra 1d6 + LVL arcane damage on Critical Hits.<br>
+              Once per encounter, Magic Users can Flourish their arcane focus that lowers their target's Defense at a number equal to their Wit SCR.<br><br>
+              Magic Users get +5 feet their base movement speed, once per encounter.<br><br>
+              Magic Users get +4 plus their KNOWLEDGE SCR on Knowledge checks involving arcane lore.<br><br>
+                            <hr class="thin-hr">
+              <strong>Magic User Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Illusionist</em> - A Magic User who reshapes reality and self alike, mastering illusion and transformation.<br>
+              &nbsp;&nbsp;a. <em>Astral Weaver</em> - An Illusionist who weaves astral threads into illusions few can see through.<br>
+              &nbsp;&nbsp;b. <em>Metamorphiser</em> - An Illusionist who reshapes their own form to fit any need.<br>
+              &nbsp;&nbsp;c. <em>Shapeshifter</em> - An Illusionist who takes on another's shape entirely, not just its likeness.<br>
+              ii. <em>Mage</em> - A destructive Magic User who channels raw arcane power into devastating, direct spellcraft.<br>
+              &nbsp;&nbsp;a. <em>Blood Mage</em> - A Mage who fuels devastating spells with their own vitality.<br>
+              &nbsp;&nbsp;b. <em>Chronomancer</em> - A Mage who bends time itself, slowing enemies or hastening allies.<br>
+              &nbsp;&nbsp;c. <em>RuinMaster</em> - A Mage who specializes in outright destruction, LVLing anything in their path.<br>
+              iii. <em>Trickster</em> - A cunning Magic User who bends reality with misdirection and illusion as much as raw spellcraft. Favors the Guile School, spells that seduce, charm, or coerce, altering another's mind to establish dominance over it.<br>
+              &nbsp;&nbsp;a. <em>Arcana</em> - A Trickster devoted to raw sleight-of-hand magic, bending small truths into big illusions.<br>
+              &nbsp;&nbsp;b. <em>Jester</em> - A Trickster who fights through misdirection, turning laughter into a weapon.<br>
+              &nbsp;&nbsp;c. <em>Shadow Dancer</em> - A Trickster who slips between light and shadow, never quite where they seem.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Hacker<br>
+              Professions: Enchanter, Artificer, Gem Crafter<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Magic User Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Weapon Proficiency</strong><br><em>Abilities from this Tier require one of the weapons below to be readied (see Required Weapons, Appendix). Basic ATTKs are never restricted this way, any weapon performs one. A Main Class Tier carries no Culture of its own, since its three Paths share none; Culture arrives at LVL 4 with the Path and carries through that Path's Branches, each of which may state its own exceptions (see Culture, Basic Rules pg. 2).</em><br><br>
+              <strong>Weapon Styles and Hand:</strong><br>
+              &#9670;1h Arcane Focus (wand, orb, or tome).<br><br>
+              <strong>Weapon Types:</strong><br>
+              &#9670;Magic (Spell).<br>
+              &#9670;<strong>Weapon/Hand Proficiency Bonus:</strong> +8 to Hit when the weapon above is wielded (Main Hand).<br><br>
+              <strong>Whenever Spellweaver's Trance (see Main Class Abilities above) is Active:</strong><br><br>
+              &#9670;Weapon Bonus&dagger;: +1 to spell Hit while drawn.<br>
+              &#9670;<strong>1H Melee:</strong> 0.<br>
+              &#9670;<strong>2H Melee:</strong> 0.<br>
+              &#9670;<strong>Spell:</strong> +2 arcane; +1 illusion and transformation.<br>
+              &#9670;+2 and +2 to spell potency and Hacker Talents if the Runebound Tome is channeled.<br>
+              &#9670;Spellbook (Off) +1 spell potency, or a free hand (Off) +1 Hit to spell attacks instead (somatic gesture).<br><br>
+              &dagger;Reminder: Abilities from a Tier, Path, or Branch require one of that tree's listed weapons to be readied. A weapon the tree does not list, one it names Forbidden, or no weapon at all, performs no Ability from it. Basic ATTKs are never restricted this way, any weapon a Character can carry performs one. Wielding the weapon above additionally grants the stated Weapon/Hand Proficiency bonus (see Required Weapons, Appendix).<br><br>
+              </span><strong>Armor Thresholds</strong><br>
+              Grade: Delicate (Silk Robe).<br><br>
+              Paths and Branches unlock various Armaments not available for Class Tier Abilities.<br><br>
+              A Path or Branch's Weapon/Hand Proficiency profile includes every weapon already available to the Main Class, plus any new weapons that Path or Branch unlocks. A Path or Branch's Armor Threshold also rises without an Armament Penalty, typically half a Grade step above the Tier before it.<br><br>
+              Armament Thresholds allow the given Grade and anything lighter. If Armor that is heavier than the Magic User's Threshold is worn, Characters suffer the ensuing Penalties to the Armor's SCR (see Armament Penalty, Basic Rules pg. 6).<br><br>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #c93f35; line-height:1.25;">Magic User Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). See Spell Abilities individually for details, see card examples on this page.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #c93f35;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Magic User)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Magic User Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Arcane Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A focus-strike charged with raw force, a Magic User's earliest proof that the arcane isn't only cast at range... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Focus Jab</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A quick jab charged with raw arcane force... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Warded Focus</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with the same raw force as a focus-strike... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Arcane Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Raw force drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Force Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt of raw arcane force loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Focus Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from raw arcane force, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Magic User Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Fraying Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A strike that unravels the guard along with the flesh, a Magic User's earliest lesson in what raw force alone can unravel... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unraveling Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut that unravels the guard alone, leaving the flesh for later... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Frayed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held against a strike that unravels whatever it touches... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Frayed Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A shield woven from what unravels a lesser guard, over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fraying Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that unravels the guard along with the flesh, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Frayed Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from what raw force alone can unravel, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Magic User Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Fracturing Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A strike that fractures light itself around the target, a Magic User's earliest reach beyond brute force... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fractured Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown as light itself fractures around the target... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Fractured Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Flux<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held as light itself fractures around it... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Fractured Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Fractured light drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fracture Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that fractures light itself around a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Fractured Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn beyond brute force, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Magic User Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Illusionist</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A Magic User who reshapes reality and self alike, mastering illusion and transformation. (LVL 4-20)</em><br>
+              <em>(see Illusionist Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Illusionist Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Illusionist)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none (Arcane Focus). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Illusionist):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate (Mirrorweave Silk).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Illusionist Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Astral Weaver (LVL 21-30)<br>
+                <em>An Illusionist who weaves astral threads into illusions few can see through.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Astral Weaver Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Astral Weaver Branch chosen at LVL 21 - see Astral Weaver above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Astral Weaver Branch chosen at LVL 21 - see Astral Weaver above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Metamorphiser (LVL 21-30)<br>
+                <em>An Illusionist who reshapes their own form to fit any need.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Metamorphiser Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Metamorphiser Branch chosen at LVL 21 - see Metamorphiser above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Metamorphiser Branch chosen at LVL 21 - see Metamorphiser above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Shapeshifter (LVL 21-30)<br>
+                <em>An Illusionist who takes on another's shape entirely, not just its likeness.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Shapeshifter Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Shapeshifter Branch chosen at LVL 21 - see Shapeshifter above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Shapeshifter Branch chosen at LVL 21 - see Shapeshifter above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Illusionist Abilities (Magic User Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Magic User - Illusionist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Claim the Fracture's Edge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Mirage<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The fractured light splintering wider still, an Illusionist's earliest proof that a mark never really heals clean... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Splintered Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Mirage<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown as fractured light splinters wider still... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Splintered Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Mirage<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held behind fractured light splintering wider still... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Splintered Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Illusion<br>Cost: 2 Mana<br>Uses: Unlimited</span>Fractured light drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fracture Splinter</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Illusion<br>Cost: 2 Mana<br>Uses: Unlimited</span>Fractured light loosed at a foe, splintering wider still... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Splintered Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Illusion<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from a mark that never really heals clean, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Magic User - Illusionist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Warping Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Mirage<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike that bends the world's edges along with the target's, an Illusionist's earliest taste of bending more than light... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Warped Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Mirage<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut thrown as the world's edges bend along with the target's... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Warped Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Mirage<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held while bending more than light... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Warped Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Illusion<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bent edge of the world drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Warping Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Illusion<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt that bends the world's edges along with a foe's, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Warped Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Illusion<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from bending more than light, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Magic User - Illusionist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bent Light</strong><br>A bend in the light around the Illusionist before a blow ever gets the chance to land clean... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bent Light Cut</strong><br>A cut thrown from a bend in the light before a blow can land clean... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bent Light Guard</strong><br>A guard held in a bend of light before a blow can land clean... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bent Light Aegis</strong><br>A shield sung from a bend in the light, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bent Light Bolt</strong><br>A bend in the light loosed at a foe before a blow can land clean... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bent Light Renewal</strong><br>A renewal drawn from a bend in the light, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Magic User - Illusionist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Split Image</strong><br>The Illusionist's own image split mid-fight, letting a double take a hit meant for the real Illusionist... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Split Image Cut</strong><br>A cut thrown from a split image meant to take a hit instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Split Image Guard</strong><br>A guard held by a double meant to take the hit instead... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Split Image Aegis</strong><br>A shield sung by a double meant to take the hit instead, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Split Image Bolt</strong><br>An image split mid-fight, loosed at range as a foe strikes the wrong target... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Split Image Renewal</strong><br>A renewal drawn by a double meant to take the hit instead, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Magic User - Illusionist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Mirrored Double</strong><br>Illusionists split themselves into mirrored doubles, misdirecting every blow meant to land true... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Mirrored Cut</strong><br>Illusionists strike from mirrored doubles, misdirecting every blow meant to land true... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mirrored Guard</strong><br>Illusionists guard behind mirrored doubles, misdirecting every blow meant to land true... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Mirrored Aegis</strong><br>Illusionists shield behind mirrored doubles, misdirecting every blow meant to land true, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Mirrored Bolt</strong><br>Illusionists split into mirrored doubles at range, misdirecting every blow meant to land true... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mirrored Renewal</strong><br>Illusionists mend behind mirrored doubles, misdirecting every blow meant to land true, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Magic User - Illusionist Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Astral Weaver (LVL 21-30)<br>
+                <em>An Illusionist who weaves astral threads into illusions few can see through.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Astral Weaver Abilities (Illusionist Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Astral Weaver Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Metamorphiser (LVL 21-30)<br>
+                <em>An Illusionist who reshapes their own form to fit any need.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Metamorphiser Abilities (Illusionist Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Metamorphiser Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Shapeshifter (LVL 21-30)<br>
+                <em>An Illusionist who takes on another's shape entirely, not just its likeness.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Shapeshifter Abilities (Illusionist Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Shapeshifter Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Mage</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A destructive Magic User who channels raw arcane power into devastating, direct spellcraft. (LVL 4-20)</em><br>
+              <em>(see Mage Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Mage Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Mage)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none (Arcane Focus). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Mage):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate (Runewoven Cloth).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Mage Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Blood Mage (LVL 21-30)<br>
+                <em>A Mage who fuels devastating spells with their own vitality.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Blood Mage Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Blood Mage Branch chosen at LVL 21 - see Blood Mage above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Blood Mage Branch chosen at LVL 21 - see Blood Mage above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Chronomancer (LVL 21-30)<br>
+                <em>A Mage who bends time itself, slowing enemies or hastening allies.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Chronomancer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Chronomancer Branch chosen at LVL 21 - see Chronomancer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Chronomancer Branch chosen at LVL 21 - see Chronomancer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; RuinMaster (LVL 21-30)<br>
+                <em>A Mage who specializes in outright destruction, LVLing anything in their path.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>RuinMaster Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the RuinMaster Branch chosen at LVL 21 - see RuinMaster above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the RuinMaster Branch chosen at LVL 21 - see RuinMaster above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Mage Abilities (Magic User Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Magic User - Mage Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Searing Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Force<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A focus-strike wreathed in arcane fire, a Mage's earliest lesson in force that keeps burning after contact... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Searing Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Force<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut wreathed in the same arcane fire... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wreathed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Force<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard wreathed in arcane fire that keeps burning after contact... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Searing Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Fire<br>Cost: 2 Mana<br>Uses: Unlimited</span>Arcane fire drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Searing Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Fire<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt of arcane fire that keeps burning after contact... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Searing Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Fire<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from force that keeps burning after contact, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Magic User - Mage Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overcharged Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Force<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike pushed past what's safe, a Mage's earliest taste of power bought at its own cost... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Overcharged Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Force<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut pushed past what's safe, power bought at its own cost... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Overcharged Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Force<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with power bought at its own cost... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overcharged Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Fire<br>Cost: 3 Mana<br>Uses: 3/Round</span>Power bought at its own cost, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Overcharged Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Fire<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt pushed past what's safe, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Overcharged Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Fire<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from power bought at its own cost, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Magic User - Mage Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overreach Cast</strong><br>A cast pushed a little further than what's safe, courting a burn the Mage hasn't quite earned yet... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Overreach Cut</strong><br>A cut thrown a little further than what's safe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Overreach Guard</strong><br>A guard held a little further than what's safe... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overreach Aegis</strong><br>A shield sung a little further than what's safe, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Overreach Bolt</strong><br>A cast pushed further than what's safe, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Overreach Renewal</strong><br>A renewal courting a burn the Mage hasn't quite earned yet, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Magic User - Mage Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overcharged Rune</strong><br>A rune overcharged mid-spell, runed force building toward more than it was meant to hold... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Runed Cut</strong><br>A cut thrown while a rune builds toward more than it was meant to hold... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Runed Guard</strong><br>A guard held while a rune builds toward more than it was meant to hold... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Runed Aegis</strong><br>A shield sung from a rune building toward more than it was meant to hold, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Runed Bolt</strong><br>A rune overcharged mid-spell, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Runed Renewal</strong><br>A renewal drawn from a rune building toward more than it was meant to hold, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Magic User - Mage Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overcharged Force</strong><br>Mages burn through their own reserves for raw, escalating arcane force, runed and overcharged past what any focus should hold... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Overcharged Cut Force</strong><br>Mages strike with raw, escalating arcane force, past what any focus should hold... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Overcharged Guard Force</strong><br>Mages guard by burning through their own reserves, past what any focus should hold... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Overcharged Force Aegis</strong><br>Mages shield by burning through their own reserves, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Overcharged Force Bolt</strong><br>Mages loose raw, escalating arcane force at range, past what any focus should hold... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Overcharged Force Renewal</strong><br>Mages mend by burning through their own reserves, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Magic User - Mage Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Blood Mage (LVL 21-30)<br>
+                <em>A Mage who fuels devastating spells with their own vitality.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Blood Mage Abilities (Mage Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Blood Mage Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Chronomancer (LVL 21-30)<br>
+                <em>A Mage who bends time itself, slowing enemies or hastening allies.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Chronomancer Abilities (Mage Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Chronomancer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; RuinMaster (LVL 21-30)<br>
+                <em>A Mage who specializes in outright destruction, LVLing anything in their path.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: RuinMaster Abilities (Mage Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The RuinMaster Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Trickster</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A cunning Magic User who bends reality with misdirection and illusion as much as raw spellcraft. Favors the Guile School, spells that seduce, charm, or coerce, altering another's mind to establish dominance over it. (LVL 4-20)</em><br>
+              <em>(see Trickster Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Trickster Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Trickster)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none (Arcane Focus). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Trickster):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate (Shifting Silk).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Trickster Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Arcana (LVL 21-30)<br>
+                <em>A Trickster devoted to raw sleight-of-hand magic, bending small truths into big illusions.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Arcana Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Arcana Branch chosen at LVL 21 - see Arcana above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Arcana Branch chosen at LVL 21 - see Arcana above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Jester (LVL 21-30)<br>
+                <em>A Trickster who fights through misdirection, turning laughter into a weapon.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Jester Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Jester Branch chosen at LVL 21 - see Jester above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Jester Branch chosen at LVL 21 - see Jester above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Shadow Dancer (LVL 21-30)<br>
+                <em>A Trickster who slips between light and shadow, never quite where they seem.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Shadow Dancer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Shadow Dancer Branch chosen at LVL 21 - see Shadow Dancer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Shadow Dancer Branch chosen at LVL 21 - see Shadow Dancer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Trickster Abilities (Magic User Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Magic User - Trickster Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Baffling Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Sleight<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A focus-strike that baffles the mind on contact, a Trickster's earliest proof that a fight can be won without a single real blow... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Baffled Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Sleight<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown while the mind's still baffled from contact... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Baffling Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Sleight<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held behind a baffling focus-strike... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Baffling Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Guile<br>Cost: 2 Mana<br>Uses: Unlimited</span>A baffling ward drawn over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Baffling Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Guile<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that baffles the mind on contact, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Baffling Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Guile<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn while a fight is won without a single real blow, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Magic User - Trickster Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hexing Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Sleight<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike laced with a minor hex, a Trickster's earliest taste of luck itself turned into a weapon... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Hexed Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Sleight<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut laced with the same minor hex... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hexed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h Arcane Focus | Discipline: Sleight<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with luck itself turned into a ward... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hexed Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Guile<br>Cost: 3 Mana<br>Uses: 3/Round</span>Luck itself turned into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Hex Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Guile<br>Cost: 3 Mana<br>Uses: 3/Round</span>A minor hex loosed at a foe, luck turned into a weapon... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hexed Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Guile<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from luck itself, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Magic User - Trickster Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Planted Lie</strong><br>A lie planted mid-cast that a target won't notice until it's already too late... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Lie's Edge</strong><br>A cut thrown while a planted lie still hasn't been noticed... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Planted Guard</strong><br>A guard held behind a lie a target won't notice until it's too late... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Planted Aegis</strong><br>A shield sung behind a lie a target won't notice until it's too late, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Lie Bolt</strong><br>A lie planted mid-cast, loosed at a foe before it's ever noticed... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Planted Renewal</strong><br>A renewal drawn from a lie planted mid-cast, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Magic User - Trickster Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Baffled Mind</strong><br>Confusion turned into a weapon of its own, baffling a mind before it can even react... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Confused Cut</strong><br>A cut thrown while a mind is still too baffled to react... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Confused Guard</strong><br>A guard held while confusion does the first work... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Confused Aegis</strong><br>A shield sung from confusion turned into a weapon of its own, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Confusion Bolt</strong><br>Confusion turned into a bolt, loosed before a mind can even react... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Confused Renewal</strong><br>A renewal drawn from confusion turned into a weapon of its own, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Magic User - Trickster Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Turned Strength</strong><br>Tricksters unravel a fight from the inside, hexing, baffling, and turning a target's own strength against them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Turned Strike</strong><br>Tricksters strike with a target's own strength turned against them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Turned Guard</strong><br>Tricksters guard by unraveling a fight from the inside... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Turned Aegis</strong><br>Tricksters shield by unraveling a fight from the inside, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Turned Bolt</strong><br>Tricksters hex and baffle at range, turning a target's own strength against them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Turned Renewal</strong><br>Tricksters mend by unraveling a fight from the inside, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Magic User - Trickster Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Arcana (LVL 21-30)<br>
+                <em>A Trickster devoted to raw sleight-of-hand magic, bending small truths into big illusions.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Arcana Abilities (Trickster Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Arcana Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Jester (LVL 21-30)<br>
+                <em>A Trickster who fights through misdirection, turning laughter into a weapon.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Jester Abilities (Trickster Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Jester Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Shadow Dancer (LVL 21-30)<br>
+                <em>A Trickster who slips between light and shadow, never quite where they seem.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Shadow Dancer Abilities (Trickster Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Shadow Dancer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+  </div>
+</main>
+</div>
+</body>
+</html>

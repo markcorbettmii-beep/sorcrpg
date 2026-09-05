@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Warrior (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* Telluric Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode #telluric-table td[rowspan],
+    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,88,170,0.13) !important; }
+    #telluric-table { min-width: 760px; }
+    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
+    #telluric-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+<main>
+  <div class="rules-section">
+
+    <div class="callout"><strong>Draft.</strong> The Warrior class tree, pulled out of Playable Classes (Basic Rules pg. 3) so it can be worked on in one place. Nothing here goes back into the chapter until it is settled.</div>
+    <div class="callout"><strong>Related.</strong><br/>
+      Class drafts: <a href="avenger-draft.html">Avenger</a> &middot;
+      <a href="barbarian-draft.html">Barbarian</a> &middot;
+      <a href="bard-draft.html">Bard</a> &middot;
+      <a href="doom-knight-draft.html">Doom Knight</a> &middot;
+      <a href="druid-draft.html">Druid</a> &middot;
+      <a href="fighter-draft.html">Fighter</a> &middot;
+      <a href="magic-user-draft.html">Magic User</a> &middot;
+      <a href="marksman-draft.html">Marksman</a> &middot;
+      <a href="overseer-draft.html">Overseer</a> &middot;
+      <a href="shaman-draft.html">Shaman</a> &middot;
+      <a href="sorcerer-draft.html">Sorcerer</a> &middot;
+      <a href="strategist-draft.html">Strategist</a> &middot;
+      <a href="tyrant-draft.html">Tyrant</a> &middot;
+      <a href="warlock-draft.html">Warlock</a> &middot;
+      <strong>Warrior</strong> &middot;
+      <a href="witch-draft.html">Witch</a><br/>
+      Other drafts: <a href="armaments-draft.html">Armaments</a> &middot; <a href="armor-draft.html">Armor</a> &middot; <a href="weapons-draft.html">Weapons</a> &middot; <a href="equipment-draft.html">Equipment</a> &middot; <a href="enhancements-draft.html">Enhancements</a> &middot; <a href="ranged-mechanics-draft.html">Ranged</a> &middot; <a href="melee-mechanics-draft.html">Melee</a> &middot; <a href="unarmed-mechanics-draft.html">Unarmed</a><br/>
+      Live: <a href="content/essentia_core/rules_ref_003.html">Playable Classes, pg. 3</a> &middot; <a href="content/essentia_core/rules_ref_004.html">Armaments, pg. 4</a> &middot; <a href="content/essentia_core/rules_ref_005.html">Combat, pg. 5</a><br/>
+      Culture: <a href="content/essentia_core/rules_ref_002.html#culture">Culture</a> &middot; <a href="content/essentia_core/rules_ref_002.html#background">Background (BG)</a> &middot; <a href="content/essentia_core/rules_ref_002.html#higher-power">Higher Power</a> &middot; <a href="content/essentia_core/rules_ref_004.html#cultural-armament">Cultural Armaments</a></div>
+
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Warrior - Class Tree Template</h2>
+      <div class="template-note"><strong>Template, not a live rules page.</strong> This is the Warrior class-card exactly as it stands in Basic Rules pg. 3 (<a href="content/essentia_core/rules_ref_003.html#warrior">view it there</a>), pulled out on its own so the tree can be worked on in one place. It follows the Avenger template: one Ability column matching the class's actual Nature/Spell split, Slots marked by role icon rather than by letter, and Tier Armaments specific to the Main Class rather than copied from one of its own Paths. Edit the source page, not this file, this is a reference snapshot regenerated from it.</div>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="warrior">Warrior <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Not Playable in Starter Set)</span></h4>            <p>Comprehensive martial masters who have developed mastery across every armament type, from heavy armor and shield work through every blade discipline, spear, lance, and even command-LVL battlefield magic, Warriors are the most armor-flexible and weapon-diverse class in Essentia, capable of filling any martial role while outperforming dedicated specialists in their chosen lane at high LVLs.</p>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Path and Branch Dependent<br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Warrior's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              <strong>Favored Races:</strong><br>Dwarf (Arctic) +5, Dwarf (Ash) +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5, Neanderthal (Glaciera) +5, Omn&egrave; +5<br><br>
+              &dagger;Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> None recorded.<br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Battle Stance, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Tactical Mastery, Once Per Day the Warrior adapts mid-combat, gaining a bonus to Hit and Damage equal to their Grit SCR until the end of the encounter.<br><br>
+              Extra 1d6 + LVL physical damage on Critical Hits.<br>
+              Once per encounter, Warriors can Flourish their weapon that lowers their target's Defense at a number equal to their Strength SCR.<br><br>
+              Warriors get +5 feet their base movement speed, once per encounter.<br><br>
+              Warriors get +4 plus their VIGOR SCR on Endurance checks.<br><br>
+                            <hr class="thin-hr">
+              <strong>Warrior Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Armorer</em> - A defense-focused Warrior who turns armor and shield into an unbreakable wall.<br>
+              &nbsp;&nbsp;a. <em>Bulwark</em> - An Armorer devoted entirely to holding a line no enemy can push through.<br>
+              &nbsp;&nbsp;b. <em>Champion</em> - An Armorer who leads by example, standing firm at the front of every fight.<br>
+              &nbsp;&nbsp;c. <em>Ironclad</em> - An Armorer who trusts nothing but the heaviest armor available.<br>
+              ii. <em>Blade Master</em> - A precision-focused Warrior devoted to mastering the blade above all else.<br>
+              &nbsp;&nbsp;a. <em>Duelist</em> - A Blade Master who favors precision and timing over raw power.<br>
+              &nbsp;&nbsp;b. <em>Gladiator</em> - A Blade Master trained for single combat, thriving in one-on-one duels.<br>
+              &nbsp;&nbsp;c. <em>Slayer</em> - A Blade Master whose every strike is aimed to end the fight quickly.<br>
+              iii. <em>Warlord</em> - A commanding Warrior who channels rune-etched weapons and raw battlefield authority into overwhelming force.<br>
+              &nbsp;&nbsp;a. <em>Runeblades</em> - A Warlord who fights with a pair of rune-etched weapons, each empowering the other.<br>
+              &nbsp;&nbsp;b. <em>Stormbringer</em> - A Warlord who channels raw storm-force directly into their weapon.<br>
+              &nbsp;&nbsp;c. <em>Sun Thrower</em> - A Warlord who hurls sun-charged weapons, striking from range as readily as up close.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Olympiad<br>
+              Professions: Blacksmith, Stonesmith, Tinker<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Warrior Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Weapon Proficiency</strong><br><em>Abilities from this Tier require one of the weapons below to be readied (see Required Weapons, Appendix). Basic ATTKs are never restricted this way, any weapon performs one. A Main Class Tier carries no Culture of its own, since its three Paths share none; Culture arrives at LVL 4 with the Path and carries through that Path's Branches, each of which may state its own exceptions (see Culture, Basic Rules pg. 2).</em><br><br>
+              <strong>Weapon Styles and Hand:</strong><br>
+              &#9670;Any (Slashing, Blunt, Piercing, or Chop), 1h or 2h, Melee, Throw, or Range.<br><br>
+              <strong>Weapon Types:</strong><br>
+              &#9670;Tactical (Martial).<br>
+              &#9670;TAW and Chthonic both permitted.<br>
+              &#9670;<strong>Weapon/Hand Proficiency Bonus:</strong> +8 to Hit when the weapon above is wielded (Main Hand).<br><br>
+              <strong>Whenever Battle Stance (see Main Class Abilities above) is Active:</strong><br><br>
+              &#9670;Weapon Bonus&dagger;: Crit add 1d6 + STR (Melee) or AGI (Range).<br>
+              &#9670;<strong>1H Melee:</strong> +1 Hit.<br>
+              &#9670;+2 and +2 to Hit and Olympiad Talents if the Battleworn Longsword is wielded.<br>
+              &#9670;Shield (Off) +1 Armor Scr., or a second 1h Weapon (Off) for a full Off Hand attack instead (dual-wield, requires a Nature Ability, see Hit and Weapon, pg. 5).<br>
+              &#9670;<strong>2H Melee:</strong> +1 Hit.<br>
+              &#9670;+2 and +2 to Hit and Olympiad Talents if the Titan's Greatblade is wielded.<br>
+              &#9670;<strong>Throw (e.g. spear or javelin):</strong> +1 Hit (Armorer), 0 otherwise.<br>
+              &#9670;+2 and +2 to Hit and Olympiad Talents if the Stormtip Javelin is thrown (Armorer).<br>
+              &#9670;<strong>Range (e.g. longbow):</strong> 0.<br>
+              &#9670;<strong>Spell:</strong> +1 rune and storm (Warlord).<br><br>
+              &dagger;Reminder: Abilities from a Tier, Path, or Branch require one of that tree's listed weapons to be readied. A weapon the tree does not list, one it names Forbidden, or no weapon at all, performs no Ability from it. Basic ATTKs are never restricted this way, any weapon a Character can carry performs one. Wielding the weapon above additionally grants the stated Weapon/Hand Proficiency bonus (see Required Weapons, Appendix).<br><br>
+              </span><strong>Armor Thresholds</strong><br>
+              Grade: Versatile (Heavy through Light).<br><br>
+              Paths and Branches unlock various Armaments not available for Class Tier Abilities.<br><br>
+              A Path or Branch's Weapon/Hand Proficiency profile includes every weapon already available to the Main Class, plus any new weapons that Path or Branch unlocks. A Path or Branch's Armor Threshold also rises without an Armament Penalty, typically half a Grade step above the Tier before it.<br><br>
+              Armament Thresholds allow the given Grade and anything lighter. If Armor that is heavier than the Warrior's Threshold is worn, Characters suffer the ensuing Penalties to the Armor's SCR (see Armament Penalty, Basic Rules pg. 6).<br><br>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #c93f35; line-height:1.25;">Warrior Main Class Abilities</span><br>
+              <em>Armaments reminder: Heavy Grade armor or lighter; Weapon Type: Tactical, TAW, or Chthonic for Martial, Magic for Spell; Weapon Style (Martial only): Slashing, Blunt, or Piercing; 1h or 2h, Melee, Throw, or Range (e.g., sword, axe, mace, spear, lance, bow, TAW blade/rifle, or an elemental Chthonic blade). Wearing a heavier Grade brings a -5 Armament Penalty per Grade of difference.<br><span style="color: #c93f35;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). See Martial Abilities individually for details, see card examples on this page.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Warrior)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Warrior Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Battle-Honed Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A well-drilled strike, a Warrior's earliest proof that discipline alone can carry a fight... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Honed Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown with the same well-drilled discipline... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Honed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with discipline alone carrying a fight... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Honed Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Well-drilled discipline drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Honed Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A well-drilled bolt loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Honed Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from discipline alone carrying a fight, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Warrior Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Weapon Mastery Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A strike that builds on the one before it, a Warrior's earliest taste of momentum turned into a weapon of its own... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Mastery Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut that builds on the one before it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mastery Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with momentum turned into a weapon of its own... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Mastery Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Momentum turned into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Mastery Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A strike that builds on the one before it, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mastery Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from momentum turned into a weapon of its own, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Warrior Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Marked for the Blade</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A precise strike that marks the target, a Warrior's earliest reach toward mastering every weapon in reach... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Marked Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown at a target already marked... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Marked Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Adaptation<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held while mastering every weapon in reach... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Marked Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A shield drawn while mastering every weapon in reach, over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Marked Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A precise bolt that marks the target, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Marked Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn while mastering every weapon in reach, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Warrior Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Armorer</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Lawful<br>
+              <strong>Higher Power:</strong> TBA (Lawful)<br>
+              <em>A defense-focused Warrior who turns armor and shield into an unbreakable wall. (LVL 4-20)</em><br>
+              <em>(see Armorer Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Armorer Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Armorer)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Slashing or Blunt, 2h, Melee, or 1h (Main) with a shield. Weapon Type: Martial, TAW, or Chthonic for Nature, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Armorer):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Heavy (Tower Plate).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Armorer Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Bulwark (LVL 21-30)<br>
+                <em>An Armorer devoted entirely to holding a line no enemy can push through.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Bulwark Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Bulwark Branch chosen at LVL 21 - see Bulwark above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Bulwark Branch chosen at LVL 21 - see Bulwark above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Champion (LVL 21-30)<br>
+                <em>An Armorer who leads by example, standing firm at the front of every fight.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Champion Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Champion Branch chosen at LVL 21 - see Champion above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Champion Branch chosen at LVL 21 - see Champion above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Ironclad (LVL 21-30)<br>
+                <em>An Armorer who trusts nothing but the heaviest armor available.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Ironclad Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Ironclad Branch chosen at LVL 21 - see Ironclad above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Ironclad Branch chosen at LVL 21 - see Ironclad above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Armorer Abilities (Warrior Tier)<br><em>(Heavy Grade armor or lighter; Weapon Style: Slashing or Blunt, 2h, Melee, or 1h (Main) with a shield, Tank style, e.g., greatsword, maul, or sword and shield)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Warrior - Armorer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Shield Slam</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h or 1h with Shield | Discipline: Wallguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blow that puts the Armorer squarely in the way, an Armorer's earliest proof that a wall can hit back... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Shield Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h or 1h with Shield | Discipline: Wallguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown from squarely in the way... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Shield Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h or 1h with Shield | Discipline: Wallguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held knowing a wall can hit back... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Shield Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A wall that hits back, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Shield Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A blow that puts the Armorer squarely in the way, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Shield Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn knowing a wall can hit back, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Warrior - Armorer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Revenge Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h or 1h with Shield | Discipline: Wallguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike that answers whoever struck first, an Armorer's earliest taste of a line that answers every hit twice... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Revenge Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h or 1h with Shield | Discipline: Wallguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut that answers whoever struck first... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Revenge Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h or 1h with Shield | Discipline: Wallguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with a line that answers every hit twice... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Revenge Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A line that answers every hit twice, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Revenge Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A strike that answers whoever struck first, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Revenge Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from a line that answers every hit twice, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Warrior - Armorer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Early Plant</strong><br>A stance planted behind shield and plate before the fight even asks the Armorer to move... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Early Cut</strong><br>A cut thrown before the fight even asks the Armorer to move... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Early Guard</strong><br>A guard planted behind shield and plate before the fight even asks... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Early Aegis</strong><br>A stance planted behind shield and plate, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Early Bolt</strong><br>A stance planted early, loosed at range before the fight even asks... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Early Renewal</strong><br>A renewal planted before the fight even asks the Armorer to move, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Warrior - Armorer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Taunted Swing</strong><br>A line taunted into swinging where the Armorer wants it to, absorbing a blow that was never meant for them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Taunted Cut</strong><br>A cut thrown where the Armorer wants the line to swing... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Taunted Guard</strong><br>A guard held that absorbs a blow that was never meant for them... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Taunted Aegis</strong><br>A shield sung that absorbs a blow that was never meant for them, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Taunted Bolt</strong><br>A line taunted into swinging where the Armorer wants it, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Taunted Renewal</strong><br>A renewal drawn while absorbing a blow that was never meant for them, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Warrior - Armorer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Taunted Line</strong><br>Armorers plant behind shield and plate, taunting and absorbing until nothing else can reach the line behind them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Taunted Line Cut</strong><br>Armorers strike while taunting and absorbing until nothing else can reach the line behind them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Taunted Line Guard</strong><br>Armorers guard the line, absorbing until nothing else can reach it... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Taunted Line Aegis</strong><br>Armorers shield the line, absorbing until nothing else can reach it, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Taunted Line Bolt</strong><br>Armorers taunt at range, absorbing until nothing else can reach the line behind them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Taunted Line Renewal</strong><br>Armorers mend the line, absorbing until nothing else can reach it, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Warrior - Armorer Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Bulwark (LVL 21-30)<br>
+                <em>An Armorer devoted entirely to holding a line no enemy can push through.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Bulwark Abilities (Armorer Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Bulwark Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Champion (LVL 21-30)<br>
+                <em>An Armorer who leads by example, standing firm at the front of every fight.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Champion Abilities (Armorer Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Champion Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Ironclad (LVL 21-30)<br>
+                <em>An Armorer who trusts nothing but the heaviest armor available.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Ironclad Abilities (Armorer Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Ironclad Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Blade Master</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A precision-focused Warrior devoted to mastering the blade above all else. (LVL 4-20)</em><br>
+              <em>(see Blade Master Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Blade Master Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Blade Master)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Slashing, 1h (Main) and 1h (Off), Melee, dual-wielded. Weapon Type: Martial, TAW, or Chthonic for Nature, Magic for Spell. +8 to Hit (Main Hand), +2 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Blade Master):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium (Duelist's Mail).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Blade Master Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Duelist (LVL 21-30)<br>
+                <em>A Blade Master who favors precision and timing over raw power.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Duelist Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Duelist Branch chosen at LVL 21 - see Duelist above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Duelist Branch chosen at LVL 21 - see Duelist above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Gladiator (LVL 21-30)<br>
+                <em>A Blade Master trained for single combat, thriving in one-on-one duels.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Gladiator Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Gladiator Branch chosen at LVL 21 - see Gladiator above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Gladiator Branch chosen at LVL 21 - see Gladiator above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Slayer (LVL 21-30)<br>
+                <em>A Blade Master whose every strike is aimed to end the fight quickly.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Slayer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Slayer Branch chosen at LVL 21 - see Slayer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Slayer Branch chosen at LVL 21 - see Slayer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Blade Master Abilities (Warrior Tier)<br><em>(Medium Grade armor or lighter; Weapon Style: Slashing, 1h (Main) and 1h (Off), Melee, dual-wielded, Fury style, e.g., twin swords, twin axes, or sword and axe)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Warrior - Blade Master Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Claim the Blade</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing | Hand: 1h dual-wielded | Discipline: Swordcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The precise mark cut deeper still, a Blade Master's earliest proof that mastery is more than one blade deep... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Deeper Blade Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing | Hand: 1h dual-wielded | Discipline: Swordcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut carved deeper than the precise mark that came before it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Blade Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing | Hand: 1h dual-wielded | Discipline: Swordcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with mastery more than one blade deep... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Blade Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Mastery more than one blade deep, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Blade Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>The precise mark cut deeper still, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Blade Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from mastery more than one blade deep, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Warrior - Blade Master Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rending Blades</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing | Hand: 1h dual-wielded | Discipline: Swordcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>Twin edges that leave more than one kind of wound, a Blade Master's earliest taste of the damage twin edges leave behind... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rending Blade Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing | Hand: 1h dual-wielded | Discipline: Swordcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut thrown from twin edges that leave more than one kind of wound... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rending Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing | Hand: 1h dual-wielded | Discipline: Swordcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with the damage twin edges leave behind... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rending Blade Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>Twin edges' own damage drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rending Blade Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>Twin edges' own wound loosed at a foe from range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rending Blade Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from the damage twin edges leave behind, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Warrior - Blade Master Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Opening Flurry</strong><br>A flurry opened with more cuts than a single blade could keep up with... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Opening Cut</strong><br>A cut thrown with more force than a single blade could keep up with... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Opening Guard</strong><br>A guard held through a flurry more than a single blade could keep up with... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Opening Aegis</strong><br>A flurry drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Opening Bolt</strong><br>A flurry opened at range, more than a single blade could keep up with... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Opening Renewal</strong><br>A renewal drawn through a flurry more than a single blade could keep up with, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Warrior - Blade Master Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Storm's Mark</strong><br>A target marked mid-storm of cuts, finishing whoever's already caught in it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Storm's Cut</strong><br>A cut thrown at whoever's already caught in a storm of cuts... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Storm's Guard</strong><br>A guard held mid-storm of cuts... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Storm's Aegis</strong><br>A storm of cuts drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Storm's Bolt</strong><br>A target marked mid-storm, finished at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Storm's Renewal</strong><br>A renewal drawn mid-storm of cuts, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Warrior - Blade Master Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Storm of Cuts</strong><br>Blade Masters dual-wield a storm of cuts, marking and finishing a target in the same relentless motion... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Storm of Cuts Finisher</strong><br>Blade Masters strike a target already marked in the same relentless motion... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Storm of Cuts Guard</strong><br>Blade Masters guard through a relentless storm of cuts... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Storm of Cuts Aegis</strong><br>Blade Masters shield through a relentless storm of cuts, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Storm of Cuts Bolt</strong><br>Blade Masters dual-wield a storm of cuts at range, marking and finishing in the same motion... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Storm of Cuts Renewal</strong><br>Blade Masters mend through a relentless storm of cuts, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Warrior - Blade Master Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Duelist (LVL 21-30)<br>
+                <em>A Blade Master who favors precision and timing over raw power.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Duelist Abilities (Blade Master Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Duelist Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Gladiator (LVL 21-30)<br>
+                <em>A Blade Master trained for single combat, thriving in one-on-one duels.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Gladiator Abilities (Blade Master Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Gladiator Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Slayer (LVL 21-30)<br>
+                <em>A Blade Master whose every strike is aimed to end the fight quickly.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Slayer Abilities (Blade Master Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Slayer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Warlord</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A commanding Warrior who channels rune-etched weapons and raw battlefield authority into overwhelming force. (LVL 4-20)</em><br>
+              <em>(see Warlord Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Warlord Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Warlord)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Blunt or Slashing, 2h, Melee. Weapon Type: Martial, TAW, or Chthonic for Nature, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Warlord):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Heavy (Warforge Plate).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Warlord Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Runeblades (LVL 21-30)<br>
+                <em>A Warlord who fights with a pair of rune-etched weapons, each empowering the other.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Runeblades Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Runeblades Branch chosen at LVL 21 - see Runeblades above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Runeblades Branch chosen at LVL 21 - see Runeblades above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Stormbringer (LVL 21-30)<br>
+                <em>A Warlord who channels raw storm-force directly into their weapon.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Stormbringer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Stormbringer Branch chosen at LVL 21 - see Stormbringer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Stormbringer Branch chosen at LVL 21 - see Stormbringer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Sun Thrower (LVL 21-30)<br>
+                <em>A Warlord who hurls sun-charged weapons, striking from range as readily as up close.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Sun Thrower Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Sun Thrower Branch chosen at LVL 21 - see Sun Thrower above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Sun Thrower Branch chosen at LVL 21 - see Sun Thrower above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Warlord Abilities (Warrior Tier)<br><em>(Heavy Grade armor or lighter; Weapon Style: Blunt or Slashing, 2h, Melee, Clobber style, e.g., greathammer, greatsword, or warblade)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Warrior - Warlord Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rune-Etched Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Slashing | Hand: 2h | Discipline: Runeforce<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blow that leaves a rune behind as much as a bruise, a Warlord's earliest proof that command cuts as deep as steel... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rune-Etched Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Slashing | Hand: 2h | Discipline: Runeforce<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut that leaves a rune behind as much as a bruise... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rune-Etched Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Slashing | Hand: 2h | Discipline: Runeforce<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held knowing command cuts as deep as steel... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rune-Etched Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Command cut into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rune-Etched Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A blow that leaves a rune behind, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rune-Etched Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn knowing command cuts as deep as steel, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Warrior - Warlord Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Colossal Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Slashing | Hand: 2h | Discipline: Runeforce<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike that finds the seam beneath the plate, a Warlord's earliest taste of the storm they command... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Colossal Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Slashing | Hand: 2h | Discipline: Runeforce<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut that finds the seam beneath the plate... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Colossal Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Slashing | Hand: 2h | Discipline: Runeforce<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with the storm they command... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Colossal Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>The storm they command, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Colossal Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A strike that finds the seam beneath the plate, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Colossal Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from the storm they command, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Warrior - Warlord Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">First Rune</strong><br>The first rune etched into a blade before the line's even finished forming... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">First Rune Cut</strong><br>A cut thrown before the line's even finished forming... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">First Rune Guard</strong><br>A guard etched with the first rune, before the line's even finished forming... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">First Rune Aegis</strong><br>The first rune drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">First Rune Bolt</strong><br>The first rune etched into a bolt, loosed before the line's even finished forming... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">First Rune Renewal</strong><br>A renewal etched before the line's even finished forming, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Warrior - Warlord Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commanding Strike</strong><br>A line commanded mid-strike, rune and storm etched into every blow struck... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commanding Cut</strong><br>A cut thrown with rune and storm etched into it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Commanding Guard</strong><br>A guard held while a line is commanded mid-strike... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commanding Aegis</strong><br>A line commanded mid-cast, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commanding Bolt</strong><br>Rune and storm etched into a bolt, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Commanding Renewal</strong><br>A renewal drawn while a line is commanded mid-strike, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Warrior - Warlord Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commanding Rune</strong><br>Warlords etch their strikes with rune and storm, commanding the whole line while they fight... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commanding Rune Cut</strong><br>Warlords strike with rune and storm etched in, commanding the whole line while they fight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Commanding Rune Guard</strong><br>Warlords guard the whole line while they fight, rune and storm etched in... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commanding Rune Aegis</strong><br>Warlords shield the whole line while they fight, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commanding Rune Bolt</strong><br>Warlords etch their strikes with rune and storm at range, commanding the whole line... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Commanding Rune Renewal</strong><br>Warlords mend the whole line while they fight, rune and storm etched in, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Warrior - Warlord Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Runeblades (LVL 21-30)<br>
+                <em>A Warlord who fights with a pair of rune-etched weapons, each empowering the other.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Runeblades Abilities (Warlord Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Runeblades Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Stormbringer (LVL 21-30)<br>
+                <em>A Warlord who channels raw storm-force directly into their weapon.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Stormbringer Abilities (Warlord Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Stormbringer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Sun Thrower (LVL 21-30)<br>
+                <em>A Warlord who hurls sun-charged weapons, striking from range as readily as up close.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Sun Thrower Abilities (Warlord Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Sun Thrower Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+  </div>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Marksman (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* Telluric Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode #telluric-table td[rowspan],
+    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,88,170,0.13) !important; }
+    #telluric-table { min-width: 760px; }
+    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
+    #telluric-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+<main>
+  <div class="rules-section">
+
+    <div class="callout"><strong>Draft.</strong> The Marksman class tree, pulled out of Playable Classes (Basic Rules pg. 3) so it can be worked on in one place. Nothing here goes back into the chapter until it is settled.</div>
+    <div class="callout"><strong>Related.</strong><br/>
+      Class drafts: <a href="avenger-draft.html">Avenger</a> &middot;
+      <a href="barbarian-draft.html">Barbarian</a> &middot;
+      <a href="bard-draft.html">Bard</a> &middot;
+      <a href="doom-knight-draft.html">Doom Knight</a> &middot;
+      <a href="druid-draft.html">Druid</a> &middot;
+      <a href="fighter-draft.html">Fighter</a> &middot;
+      <a href="magic-user-draft.html">Magic User</a> &middot;
+      <strong>Marksman</strong> &middot;
+      <a href="overseer-draft.html">Overseer</a> &middot;
+      <a href="shaman-draft.html">Shaman</a> &middot;
+      <a href="sorcerer-draft.html">Sorcerer</a> &middot;
+      <a href="strategist-draft.html">Strategist</a> &middot;
+      <a href="tyrant-draft.html">Tyrant</a> &middot;
+      <a href="warlock-draft.html">Warlock</a> &middot;
+      <a href="warrior-draft.html">Warrior</a> &middot;
+      <a href="witch-draft.html">Witch</a><br/>
+      Other drafts: <a href="armaments-draft.html">Armaments</a> &middot; <a href="armor-draft.html">Armor</a> &middot; <a href="weapons-draft.html">Weapons</a> &middot; <a href="equipment-draft.html">Equipment</a> &middot; <a href="enhancements-draft.html">Enhancements</a> &middot; <a href="ranged-mechanics-draft.html">Ranged</a> &middot; <a href="melee-mechanics-draft.html">Melee</a> &middot; <a href="unarmed-mechanics-draft.html">Unarmed</a><br/>
+      Live: <a href="content/essentia_core/rules_ref_003.html">Playable Classes, pg. 3</a> &middot; <a href="content/essentia_core/rules_ref_004.html">Armaments, pg. 4</a> &middot; <a href="content/essentia_core/rules_ref_005.html">Combat, pg. 5</a><br/>
+      Culture: <a href="content/essentia_core/rules_ref_002.html#culture">Culture</a> &middot; <a href="content/essentia_core/rules_ref_002.html#background">Background (BG)</a> &middot; <a href="content/essentia_core/rules_ref_002.html#higher-power">Higher Power</a> &middot; <a href="content/essentia_core/rules_ref_004.html#cultural-armament">Cultural Armaments</a></div>
+
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Marksman - Class Tree Template</h2>
+      <div class="template-note"><strong>Template, not a live rules page.</strong> This is the Marksman class-card exactly as it stands in Basic Rules pg. 3 (<a href="content/essentia_core/rules_ref_003.html#marksman">view it there</a>), pulled out on its own so the tree can be worked on in one place. It follows the Avenger template: one Ability column matching the class's actual Nature/Spell split, Slots marked by role icon rather than by letter, and Tier Armaments specific to the Main Class rather than copied from one of its own Paths. Edit the source page, not this file, this is a reference snapshot regenerated from it.</div>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="marksman">Marksman <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>            <p>Precision-focused ranged combatants who dominate at distance through superior positioning, weapon mastery, and tactical patience, striking long before enemies can close the gap through either heavy bow work, black powder weaponry, or the swift shortbow mobility of a Ranger who turns natural terrain into cover, an edge on the hunt, and a marked shot the moment prey steps into the open.</p>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Path and Branch Dependent<br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Marksman's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              <strong>Favored Races:</strong><br>Elf (Common)&dagger; +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5, Wood Elf +5, Brownling +5, Ratkin +5, Yawnie +5, Omn&egrave; +5<br><br>
+              &dagger;Elf (Common), Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> None recorded.<br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Steady Hand, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Deadeye, Once Per Day the Marksman lines up the perfect shot, dealing damage equal to twice their Dexterity SCR to one target, ignoring half their Defense.<br><br>
+              Extra 1d6 + LVL piercing damage on Critical Hits.<br>
+              Once per encounter, Marksmen can Flourish their ranged weapon that lowers their target's Defense at a number equal to their Dexterity SCR.<br><br>
+              Marksmen get +5 feet their base movement speed, once per encounter.<br><br>
+              Marksmen get +4 plus their DEXTERITY SCR on Perception checks.<br><br>
+                            <hr class="thin-hr">
+              <strong>Marksman Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Bowman</em> - A bow-focused Marksman who favors precision and range over raw firepower.<br>
+              &nbsp;&nbsp;a. <em>Archer</em> - A Bowman devoted to the bow above all, mastering range and power with practiced patience.<br>
+              &nbsp;&nbsp;b. <em>Bandit</em> - A Bowman who strikes fast from ambush before melting back into cover.<br>
+              &nbsp;&nbsp;c. <em>Outrider</em> - A Bowman who fights from horseback, striking and repositioning in the same motion.<br>
+              ii. <em>Gunner</em> - A black-powder Marksman who trades a bow's patience for a gun's immediate stopping power.<br>
+              &nbsp;&nbsp;a. <em>Duelist</em> - A Gunner who favors precise, close-range engagements over a firefight.<br>
+              &nbsp;&nbsp;b. <em>Gun Slinger</em> - A Gunner who trades a rifle's power for a pair of pistols' speed.<br>
+              &nbsp;&nbsp;c. <em>Wrangler</em> - A Gunner who pairs a gun with a lasso or whip to control the fight itself.<br>
+              iii. <em>Ranger</em> - A frontier Marksman who holds ground and defends territory as readily as they strike from range.<br>
+              &nbsp;&nbsp;a. <em>Forest Guardian</em> - A Ranger who takes the fight head-on, armored heavily enough to hold the frontline.<br>
+              &nbsp;&nbsp;b. <em>Keeper</em> - A Ranger who holds their ground, defending territory rather than chasing it.<br>
+              &nbsp;&nbsp;c. <em>Wood Warden</em> - A Ranger built for patrol and pursuit, striking and drawing weapons in one motion.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Scout<br>
+              Professions: Hunter, Tinker<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Marksman Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Weapon Proficiency</strong><br><em>Abilities from this Tier require one of the weapons below to be readied (see Required Weapons, Appendix). Basic ATTKs are never restricted this way, any weapon performs one. A Main Class Tier carries no Culture of its own, since its three Paths share none; Culture arrives at LVL 4 with the Path and carries through that Path's Branches, each of which may state its own exceptions (see Culture, Basic Rules pg. 2).</em><br><br>
+              <strong>Range and Hand:</strong> <em>(Range weapons carry no Style)</em><br>
+              &#9670;Range, path dependent (Longbow, Black Powder Weapon, or Shortbow).<br><br>
+              <strong>Weapon Types:</strong><br>
+              &#9670;Tactical Ranged (Martial).<br>
+              &#9670;TAW and Chthonic both permitted.<br>
+              &#9670;Restricted to Martial for Melee; wherever a Path or Branch may allow it.<br>
+              &#9670;<strong>Weapon/Hand Proficiency Bonus:</strong> +8 to Hit when the weapon above is wielded (Main Hand).<br><br>
+              <strong>Whenever Steady Hand (see Main Class Abilities above) is Active:</strong><br><br>
+              &#9670;Weapon Bonus&dagger;: Crit add 1d6 + AGI.<br>
+              &#9670;<strong>1H Melee:</strong> 0.<br>
+              &#9670;<strong>2H Melee:</strong> 0.<br>
+              &#9670;<strong>1H Range:</strong> +1 Hit (Gunner path).<br>
+              &#9670;+2 and +2 to Hit and Scout Talents if the Duskfire Pistol is wielded.<br>
+              &#9670;a second Pistol (Off) for a full Off Hand attack instead (Gun Slinger dual-wield, requires a Nature Ability, see Hit and Weapon, pg. 5), or a Light Blade (Off) +1 Defense instead (Duelist).<br>
+              &#9670;<strong>2H Range:</strong> +2 Hit.<br>
+              &#9670;+2 and +2 to Hit and Scout Talents if the Stormcaller Longbow is wielded.<br>
+              &#9670;<strong>Throw:</strong> 0 Hit (Ranger, Main Hand only).<br>
+              &#9670;<strong>Spell:</strong> 0 (Ranger, nature magic).<br><br>
+              &dagger;Reminder: Abilities from a Tier, Path, or Branch require one of that tree's listed weapons to be readied. A weapon the tree does not list, one it names Forbidden, or no weapon at all, performs no Ability from it. Basic ATTKs are never restricted this way, any weapon a Character can carry performs one. Wielding the weapon above additionally grants the stated Weapon/Hand Proficiency bonus (see Required Weapons, Appendix).<br><br>
+              </span><strong>Armor Thresholds</strong><br>
+              Grade: Medium or Light (Chain, Leather).<br><br>
+              Paths and Branches unlock various Armaments not available for Class Tier Abilities.<br><br>
+              A Path or Branch's Weapon/Hand Proficiency profile includes every weapon already available to the Main Class, plus any new weapons that Path or Branch unlocks. A Path or Branch's Armor Threshold also rises without an Armament Penalty, typically half a Grade step above the Tier before it.<br><br>
+              Armament Thresholds allow the given Grade and anything lighter. If Armor that is heavier than the Marksman's Threshold is worn, Characters suffer the ensuing Penalties to the Armor's SCR (see Armament Penalty, Basic Rules pg. 6).<br><br>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #c93f35; line-height:1.25;">Marksman Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). Each LVL offers 3 choices, learn only ONE. See Martial Abilities individually for details, see card examples on this page. See Slots and Prerequisites, above.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. Weapon Type: Tactical for Martial, Magic for Spell (Spell is warded shots and hunter's charms channeled through the same bow or gun, not incantations). <br><span style="color: #c93f35;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Marksman)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Marksman Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Steady Aim</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A draw built from horn, wood, and sinew layered for power beyond what the arm alone could give, +1 Hit when not moving that turn... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Braced Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A charge kept ready the way a guild hunter never lets the match go cold, +1 Defense (Brace behind cover) when braced against cover before firing... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Still Hunter's Mark</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A patient prince's wait for the shot the target never sees coming, advantage on the next Stealth check when the target hasn't noticed the shooter yet... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Focused Mark</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A hunter's mark placed on the target before the draw, the Marksman's own next attack against it gains +1 Hit... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bramble Trap</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>Lays a hidden bramble snare, the next enemy to trigger it takes a brief Slow effect... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Aspect of the Owl</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A keen, quiet stance held before the shot, advantage on the Marksman's next Stealth check while it holds... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Marksman Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Quick Nock</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Drawn and loosed in one motion, faster than a flinch, draw and fire without using an action... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fast Match</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A charge kept lit and ready as a guild hunter's trade demands, drawn and fired on reflex without using an action, also granting +1 Defense (quick Brace) for the turn... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Snap Loose</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A shot fired mid-stride through the brush like a prince who hunted long before he ever went to war, draw and fire without using an action, granting advantage on the next Stealth check... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Snap Trigger</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A hair-trigger snare that, once sprung, lets the Marksman fire a free shot at whatever triggered it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Flash Trap</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A trap that bursts with light on trigger, briefly blinding the first enemy caught in it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Aspect of the Fox</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A stance of hushed movement, the Marksman may draw and fire once without using an action while it holds, and gains advantage on their next Stealth check... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Marksman Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-a" id="gate-marksman-tac-a">(Slot A) <strong class="ability-name">Called Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A single shot placed exactly where legend remembers it landing, target a specific body location for bonus Damage... refer to Ability Card.<br><span class="prereq-note">↳ Unlocks <a href="#unlock-marksman-bowman-tac-a">Piercing Arrow (LVL 4)</a></span></span></li><li>(Slot B) <strong class="ability-name">Powder Burst</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A shot that punches the target off its feet, target a specific body location, knocking the target back and granting +1 Defense (create distance) until the Marksman's next turn... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sinew Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Deadeye<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A draw-weight built the way horn and sinew are layered for range no simple stave could match, opens a vein instead of ending it outright, target a specific body location, adding a brief bleed effect that makes the target easier to track... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li><span class="slot-c" id="gate-marksman-spe-a">(Slot A) <strong class="ability-name">Called Mark</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A ward-mark placed exactly where legend remembers it landing, marking a specific body location and granting the Marksman and allies +1 Hit against it until it's struck... refer to Ability Card.<br><span class="prereq-note">↳ Unlocks <a href="#unlock-marksman-bowman-spe-a">Wardpiercer Shaft (LVL 4)</a></span></span></li><li>(Slot B) <strong class="ability-name">Root Trap</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A trap of conjured roots; the next enemy to trigger it is rooted in place for one turn... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bloodroot Mark</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A ward-mark of bloodroot laid on the target, granting allies advantage on their next ATTK roll against that marked target... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Marksman Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Bowman</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A bow-focused Marksman who favors precision and range over raw firepower. (LVL 4-20)</em><br>
+              <em>(see Bowman Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Bowman Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Bowman)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none. Range: Range, 2h (e.g., longbow, recurve bow, or composite bow). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Bowman):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium or Light (Bowyer's Leather).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Bowman Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Archer (unlocks heavier bows for greater range and power) (LVL 21-30)<br>
+                <em>A Bowman devoted to the bow above all, mastering range and power with practiced patience.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Archer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Archer Branch chosen at LVL 21 - see Archer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Archer Branch chosen at LVL 21 - see Archer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Bandit (Light Grade (Quickdraw Leather) armor for quick draws; favors the longbow) (LVL 21-30)<br>
+                <em>A Bowman who strikes fast from ambush before melting back into cover.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Bandit Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Bandit Branch chosen at LVL 21 - see Bandit above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Bandit Branch chosen at LVL 21 - see Bandit above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Outrider (spear or longbow, Light Grade (Huntress Leather) armor) (LVL 21-30)<br>
+                <em>A Bowman who fights from horseback, striking and repositioning in the same motion.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Outrider Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Outrider Branch chosen at LVL 21 - see Outrider above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Outrider Branch chosen at LVL 21 - see Outrider above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Bowman Abilities (Marksman Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Marksman - Bowman Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-a" id="unlock-marksman-bowman-tac-a">(Slot A) <strong class="ability-name">Piercing Arrow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Following through Called Shot, it adds a round of duration to the called location, then strikes it for even greater bonus Damage than Called Shot alone, and ignores a portion of the target's PROTS as it passes through... refer to Ability Card.<br><span class="prereq-note">↰ Requires <a href="#gate-marksman-tac-a">Called Shot (LVL 3)</a></span></span></li><li>(Slot B) <strong class="ability-name">Hired Bow's Mark</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guild-trained watchfulness that never leaves a partner exposed, +1 Defense (mutual guard) while an ally stands adjacent... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Winter's Silence</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The same patience a hunting prince learned long before any war, the Marksman is harder to detect until they act again... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li><span class="slot-c" id="unlock-marksman-bowman-spe-a">(Slot A) <strong class="ability-name">Wardpiercer Shaft</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>Following through Called Mark, it adds a round of duration, then deepens Called Mark's ward to +2 Hit for the Marksman, or +1 Hit for allies, against it, and the exposed guard also lowers the target's PROTS by 1 until it's struck... refer to Ability Card.<br><span class="prereq-note">↰ Requires <a href="#gate-marksman-spe-a">Called Mark (LVL 3)</a></span></span></li><li>(Slot B) <strong class="ability-name">Snare Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A warded arrow that blooms into binding vines on impact, roots the target in place for one turn... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Aspect of the Hush</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A stance of quiet focus, advantage on the Marksman's next Stealth check while it holds... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Marksman - Bowman Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A spread of arrows loosed in the same breath with power to spare for two, fire at two targets in the same turn... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Mercenary's Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guild-bond that covers a partner as readily as it covers a kill, +1 Defense (mutual guard) for the turn, shared with an adjacent ally... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Iron Sight Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stillness held the way legend remembers a single decisive shot being held, advantage on the next Perception check, so long as the Marksman hasn't moved this encounter... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Splitting Ward-Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A single warded arrow that splits mid-flight, marking two targets at once and granting allies +1 Hit against either until one is struck... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Binding Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A warded arrow-burst that snares up to two targets in place for one turn... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Aspect of the Eagle</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A keen-eyed stance, advantage on the Marksman's next Perception check while it holds... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Marksman - Bowman Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Warning Nock</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A warning shot the whole guild would recognize, marking a target before the volley starts... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Nocked Loose</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A shot loosed the instant a warning nock lands, bonus Damage on a marked target... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Nocked Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held while marking a target before the volley starts... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Warning Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A warning shot the whole guild would recognize, marked at range before the volley starts... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Nocked Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A warded bolt loosed the instant a mark lands, bonus Damage... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Nocked Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn while marking a target before the volley starts, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Marksman - Bowman Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Called Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A shot called ahead of the draw, marking whoever's about to feel the whole guild answer for it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Called Loose</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A shot loosed at whoever's already marked, the whole guild answering for it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Called Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while calling a shot ahead of the draw... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Called Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A shot called ahead of the draw, marked at range for the whole guild to answer... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Called Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A warded bolt loosed at whoever's already marked... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Called Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn while calling a shot ahead of the draw, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Marksman - Bowman Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Guild's Reckoning</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Bowmen call a shot before it's loosed, marking a target for a reckoning the whole guild answers together... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Guild's Loose</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Bowmen strike a target the whole guild has already answered together... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Guild's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Longshot<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Bowmen guard while marking a target for a reckoning the whole guild answers together... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Guild's Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Bowmen mark a target at range for a reckoning the whole guild answers together... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Guild's Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Bowmen loose a warded bolt at a target the whole guild has already answered for... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Guild's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Bowmen mend while marking a target for a reckoning the whole guild answers together, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Marksman - Bowman Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Archer (unlocks heavier bows for greater range and power) (LVL 21-30)<br>
+                <em>A Bowman devoted to the bow above all, mastering range and power with practiced patience.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Archer Abilities (Bowman Path)<br><em>(unlocks heavier bows for greater range and power)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Archer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Bandit (Light Grade (Quickdraw Leather) armor for quick draws; favors the longbow) (LVL 21-30)<br>
+                <em>A Bowman who strikes fast from ambush before melting back into cover.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Bandit Abilities (Bowman Path)<br><em>(Light Grade (Quickdraw Leather) armor for quick draws; favors the longbow)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Bandit Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Outrider (spear or longbow, Light Grade (Huntress Leather) armor) (LVL 21-30)<br>
+                <em>A Bowman who fights from horseback, striking and repositioning in the same motion.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Outrider Abilities (Bowman Path)<br><em>(spear or longbow, Light Grade (Huntress Leather) armor)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Outrider Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Gunner</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A black-powder Marksman who trades a bow's patience for a gun's immediate stopping power. (LVL 4-20)</em><br>
+              <em>(see Gunner Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Gunner Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Gunner)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none. Range: Range, 1h or 2h, black powder mechanism (e.g., pistol, blunderbuss, or musket). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Gunner):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium or Light (Powderhide).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Gunner Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Duelist (single pistol and light blade for close engagements) (LVL 21-30)<br>
+                <em>A Gunner who favors precise, close-range engagements over a firefight.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Duelist Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Duelist Branch chosen at LVL 21 - see Duelist above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Duelist Branch chosen at LVL 21 - see Duelist above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Gun Slinger (unlocks dual-wielded pistols) (LVL 21-30)<br>
+                <em>A Gunner who trades a rifle's power for a pair of pistols' speed.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Gun Slinger Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Gun Slinger Branch chosen at LVL 21 - see Gun Slinger above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Gun Slinger Branch chosen at LVL 21 - see Gun Slinger above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Wrangler (black powder weapon plus a Flexible-Style lasso or whip) (LVL 21-30)<br>
+                <em>A Gunner who pairs a gun with a lasso or whip to control the fight itself.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Wrangler Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Wrangler)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Black powder weapon (see Gunner Path above) plus a 1h Flexible (Off) lasso or whip. Weapon Type: Tactical for Martial, Magic for Spell.<br><br>
+                <strong>Weapons Forbidden (Culture, Wrangler):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Wrangler Branch chosen at LVL 21 - see Wrangler above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Gunner Abilities (Marksman Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Marksman - Gunner Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Guard Corps Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A scattering volley fired with a hunting guild's trained coordination that tears through a cluster and rattles what's left standing, bonus Damage against adjacent targets, plus briefly frightens nearby enemies... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">PTS-Blank Blast</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Firing at point-blank range with a draw-weight's worth of force behind it briefly grants +1 Defense (recoil Brace)... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Siege Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A heavy powder charge worthy of breaking a ten-year wall, that also reveals one hidden enemy or trap in the blast radius... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hexpowder Volley</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Verbal or Ritual | Mechanic: Instant | Style: Burst/Radius or Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A scattering volley of hex-charged shot that marks every target it tears through, granting allies +1 Hit against any of them until their next turn... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Flashbang Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Verbal or Ritual | Mechanic: Instant | Style: Burst/Radius or Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A hex-charged blast that bursts light at point-blank range, briefly blinding the first enemy to close on the Marksman... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Revealing Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Verbal or Ritual | Mechanic: Instant | Style: Burst/Radius or Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A charge laced with a seeking charm that reveals one hidden enemy or trap in the blast radius, granting allies advantage on their next Perception check regarding it... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Marksman - Gunner Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Powder Master's Hand</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guild-trained hand that never wastes a motion, reduces the reload penalty by half, plus the next shot ignores a small portion of PROTS... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Drilled Ranks</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A discipline built the way empires drill their finest corps, reduces the reload penalty by half, grants +1 Defense (reload Brace) while reloading, and reloads instantly the first time each encounter... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Reload Discipline</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 3 Stamina<br>Uses: 3/Round</span>The patience of one who learned to wait before ever learning to fight, reduces the reload penalty by half... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Alchemist's Hand</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>An alchemical charm shared onto an ally's weapon, halves that ally's reload penalty and marks their next target, granting them +1 Hit... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Trapper's Cache</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A shared alchemical cache that lets an ally halve their reload penalty and lay a quick snare-shot, briefly rooting their next target... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Aspect of Patience</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target or Self | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A steadying stance, halves the Marksman's own reload penalty on their next reload... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Marksman - Gunner Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Primed Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A charge primed before the trigger's even been thought about, marking a target for whatever's already loaded... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Primed Blast</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blast fired at whatever's already loaded and marked... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Primed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with a charge primed before the trigger's even been thought about... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Primed Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A charge primed before the trigger's even thought about, marked at range for whatever's already loaded... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Primed Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt loosed at whatever's already loaded and marked... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Primed Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn while a charge is primed before the trigger's even thought about, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Marksman - Gunner Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Timed Detonation</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A detonation timed to the beat of a held breath, marking whoever's about to feel it land... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Timed Blast</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A blast fired at whoever's already marked to feel it land... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Timed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held to the beat of a held breath, before a detonation lands... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Timed Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A detonation timed to the beat of a held breath, marked at range before it lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Timed Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A bolt loosed at whoever's already marked to feel it land... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Timed Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn to the beat of a held breath, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Marksman - Gunner Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Cued Blast</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Gunners pack their charges to detonate on cue, marking a target for a blast only they can trigger... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Cued Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Gunners strike whoever's already marked for a blast only they can trigger... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Cued Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 1h or 2h | Discipline: Powderburn<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Gunners guard while packing their charges to detonate on cue... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Cued Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Gunners mark a target at range for a blast only they can trigger... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Cued Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Gunners loose a bolt at a target marked for a blast only they can trigger... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Cued Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Gunners mend while packing their charges to detonate on cue, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Marksman - Gunner Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Duelist (single pistol and light blade for close engagements) (LVL 21-30)<br>
+                <em>A Gunner who favors precise, close-range engagements over a firefight.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Duelist Abilities (Gunner Path)<br><em>(single pistol and light blade for close engagements)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Duelist Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Gun Slinger (unlocks dual-wielded pistols) (LVL 21-30)<br>
+                <em>A Gunner who trades a rifle's power for a pair of pistols' speed.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Gun Slinger Abilities (Gunner Path)<br><em>(unlocks dual-wielded pistols)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Gun Slinger Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Wrangler (black powder weapon plus a Flexible-Style lasso or whip) (LVL 21-30)<br>
+                <em>A Gunner who pairs a gun with a lasso or whip to control the fight itself.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Wrangler Abilities (Gunner Path)<br><em>(black powder weapon plus a Flexible-Style lasso or whip)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Wrangler Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Ranger</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A frontier Marksman who holds ground and defends territory as readily as they strike from range. (LVL 4-20)</em><br>
+              <em>(see Ranger Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Ranger Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Ranger)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: 2h Ranged Pierce, 2h Ranged Throw, 1h Ranged Pierce (Main), 1h Ranged Pierce (Off), 1h Ranged Throw (Main), or 1h Ranged Throw (Off), with or without specialty Armaments (e.g., shortbow, hand-crossbow, sling, handaxe, or javelin). Weapon Type: Tactical for Martial, Magic for Spell, both cast through the same readied Ranged Pierce or Throw weapon in hand, no separate focus needed. +8 to Hit (Main Hand), +2 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Ranger):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                Note: Omn&egrave; Rangers gain a bonus with TAW ranged weapons, notwithstanding the class's usual TAW restriction.<br><br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium or Light (Rangehide).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Ranger Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Forest Guardian (unlocks Half Heavy Grade (Guardian Plate) armor for frontline forest defense) (LVL 21-30)<br>
+                <em>A Ranger who takes the fight head-on, armored heavily enough to hold the frontline.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Forest Guardian Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Forest Guardian Branch chosen at LVL 21 - see Forest Guardian above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Forest Guardian Branch chosen at LVL 21 - see Forest Guardian above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Keeper (shortbow and Medium Grade (Keeper's Chain) armor, suited to holding ground) (LVL 21-30)<br>
+                <em>A Ranger who holds their ground, defending territory rather than chasing it.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Keeper Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Keeper Branch chosen at LVL 21 - see Keeper above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Keeper Branch chosen at LVL 21 - see Keeper above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Wood Warden (1h Slashing melee, dual-wielded, can also be thrown, +4 to Hit (Main Hand) and +1 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency, smaller than the Path's own ranged bonus above), Medium Grade (Warden's Chain) armor, free weapon-draw once per round; built for patrol and pursuit) (LVL 21-30)<br>
+                <em>A Ranger built for patrol and pursuit, striking and drawing weapons in one motion.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Wood Warden Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Wood Warden Branch chosen at LVL 21 - see Wood Warden above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Wood Warden Branch chosen at LVL 21 - see Wood Warden above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Ranger Abilities (Marksman Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Marksman - Ranger Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Warden's Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A draw-weight's worth of extra force against beasts of the wild, minor Damage bonus against MAC in natural terrain... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wildwood Sense</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guild hunter's inherited reading of the land, advantage on checks to track a specific target, plus resist being ambushed while tracking... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Tracker's Eye</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The same patient eye a hunting prince turned on prey long before he turned it on men, advantage on the Ranger's next Perception check involving natural terrain or wildlife... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bramble Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A thorn conjured to a barbed point and loosed without any physical arrow, minor nature damage at Range range... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Marked Quarry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A woodland ward laid upon the target, granting the Ranger and allies advantage on their next attack against it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wild Whisper</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal or Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A murmured word in the old tongue of beasts, calms a hostile or startled animal, or asks a friendly one for simple aid... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Marksman - Ranger Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Beast Spirit Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A draw-weight's worth of extra force against beasts of the wild, doubled against beast-type MAC... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Grove Warden's Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guild hunter's cover discipline, firing from cover (Brace) grants a brief Defense and Perception bonus in natural terrain... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Spirit-Sight</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A hunting prince's inherited eye for tracks and terrain, advantage on checks to track a specific target, plus advantage on Knowledge checks about local wildlife... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Mender's Touch</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A touch-range rite drawn from root and sap, small Life heal to self or an adjacent ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wildkeeper's Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>Cures poison, disease, or a curse afflicting an animal, Companion, or patch of natural terrain, or shields it with a brief Defense bonus... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Gentle Hand</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>Stills a frightened or feral beast completely, preventing it from attacking or fleeing for a short time... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Marksman - Ranger Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Pack Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A closing step that moves with the pack even when hunting alone, closing on marked prey before it knows it's been found... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Pack Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A shot loosed at prey already found by the pack... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Pack Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held while closing on marked prey before it knows it's been found... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Pack Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>The pack's own instinct drawn into a ward, closing on marked prey before it knows it's been found... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Pack Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt loosed at prey already found by the pack... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Pack Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn while closing on marked prey before it knows it's been found, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Marksman - Ranger Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Pack's Finish</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A target run down the way a pack finishes what it started, closing the gap before it can escape... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Pack's Closing Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A shot loosed the way a pack finishes what it started... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Pack's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while closing the gap before prey can escape... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Pack's Finish Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A target run down the way a pack finishes what it started, warded at range before it can escape... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Pack's Closing Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A bolt loosed the way a pack finishes what it started... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Pack's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn while closing the gap before prey can escape, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Marksman - Ranger Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Pack's Claim</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Rangers claim their marked prey the way a pack finishes a hunt, closing in for the kill together... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Pack's Claim Shot</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Rangers strike prey the pack has already claimed together... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Pack's Claim Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range | Style: none | Hand: 2h | Discipline: Frontierguard<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Rangers guard while claiming their marked prey the way a pack finishes a hunt... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Pack's Claim Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Rangers claim their marked prey at range, closing in for the kill together... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Pack's Claim Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Rangers loose a bolt at prey the pack has already claimed together... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Pack's Claim Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 4 Mana<br>Uses: 3/Round</span>Rangers mend while claiming their marked prey the way a pack finishes a hunt, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Marksman - Ranger Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Forest Guardian (unlocks Half Heavy Grade (Guardian Plate) armor for frontline forest defense) (LVL 21-30)<br>
+                <em>A Ranger who takes the fight head-on, armored heavily enough to hold the frontline.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Forest Guardian Abilities (Ranger Path)<br><em>(unlocks Half Heavy Grade (Guardian Plate) armor for frontline forest defense)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Forest Guardian Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Keeper (shortbow and Medium Grade (Keeper's Chain) armor, suited to holding ground) (LVL 21-30)<br>
+                <em>A Ranger who holds their ground, defending territory rather than chasing it.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Keeper Abilities (Ranger Path)<br><em>(shortbow and Medium Grade (Keeper's Chain) armor, suited to holding ground)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Keeper Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Wood Warden (1h Slashing melee, dual-wielded, can also be thrown, +4 to Hit (Main Hand) and +1 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency, smaller than the Path's own ranged bonus above), Medium Grade (Warden's Chain) armor, free weapon-draw once per round; built for patrol and pursuit) (LVL 21-30)<br>
+                <em>A Ranger built for patrol and pursuit, striking and drawing weapons in one motion.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Wood Warden Abilities (Ranger Path)<br><em>(1h Slashing melee, dual-wielded, can also be thrown, +4 to Hit (Main Hand) and +1 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency, smaller than the Path's own ranged bonus above), Medium Grade (Warden's Chain) armor, free weapon-draw once per round; built for patrol and pursuit)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table path-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Wood Warden Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+
+          <p class="skip-link">Skip to next playable starter set Class, <a href="#sorcerer">Sorcerer</a>.</p>
+      </div>
+  </div>
+</main>
+</div>
+</body>
+</html>

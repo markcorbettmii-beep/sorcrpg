@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Overseer (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* Telluric Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode #telluric-table td[rowspan],
+    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,88,170,0.13) !important; }
+    #telluric-table { min-width: 760px; }
+    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
+    #telluric-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+<main>
+  <div class="rules-section">
+
+    <div class="callout"><strong>Draft.</strong> The Overseer class tree, pulled out of Playable Classes (Basic Rules pg. 3) so it can be worked on in one place. Nothing here goes back into the chapter until it is settled.</div>
+    <div class="callout"><strong>Related.</strong><br/>
+      Class drafts: <a href="avenger-draft.html">Avenger</a> &middot;
+      <a href="barbarian-draft.html">Barbarian</a> &middot;
+      <a href="bard-draft.html">Bard</a> &middot;
+      <a href="doom-knight-draft.html">Doom Knight</a> &middot;
+      <a href="druid-draft.html">Druid</a> &middot;
+      <a href="fighter-draft.html">Fighter</a> &middot;
+      <a href="magic-user-draft.html">Magic User</a> &middot;
+      <a href="marksman-draft.html">Marksman</a> &middot;
+      <strong>Overseer</strong> &middot;
+      <a href="shaman-draft.html">Shaman</a> &middot;
+      <a href="sorcerer-draft.html">Sorcerer</a> &middot;
+      <a href="strategist-draft.html">Strategist</a> &middot;
+      <a href="tyrant-draft.html">Tyrant</a> &middot;
+      <a href="warlock-draft.html">Warlock</a> &middot;
+      <a href="warrior-draft.html">Warrior</a> &middot;
+      <a href="witch-draft.html">Witch</a><br/>
+      Other drafts: <a href="armaments-draft.html">Armaments</a> &middot; <a href="armor-draft.html">Armor</a> &middot; <a href="weapons-draft.html">Weapons</a> &middot; <a href="equipment-draft.html">Equipment</a> &middot; <a href="enhancements-draft.html">Enhancements</a> &middot; <a href="ranged-mechanics-draft.html">Ranged</a> &middot; <a href="melee-mechanics-draft.html">Melee</a> &middot; <a href="unarmed-mechanics-draft.html">Unarmed</a><br/>
+      Live: <a href="content/essentia_core/rules_ref_003.html">Playable Classes, pg. 3</a> &middot; <a href="content/essentia_core/rules_ref_004.html">Armaments, pg. 4</a> &middot; <a href="content/essentia_core/rules_ref_005.html">Combat, pg. 5</a><br/>
+      Culture: <a href="content/essentia_core/rules_ref_002.html#culture">Culture</a> &middot; <a href="content/essentia_core/rules_ref_002.html#background">Background (BG)</a> &middot; <a href="content/essentia_core/rules_ref_002.html#higher-power">Higher Power</a> &middot; <a href="content/essentia_core/rules_ref_004.html#cultural-armament">Cultural Armaments</a></div>
+
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Overseer - Class Tree Template</h2>
+      <div class="template-note"><strong>Template, not a live rules page.</strong> This is the Overseer class-card exactly as it stands in Basic Rules pg. 3 (<a href="content/essentia_core/rules_ref_003.html#overseer">view it there</a>), pulled out on its own so the tree can be worked on in one place. It follows the Avenger template: one Ability column matching the class's actual Nature/Spell split, Slots marked by role icon rather than by letter, and Tier Armaments specific to the Main Class rather than copied from one of its own Paths. Edit the source page, not this file, this is a reference snapshot regenerated from it.</div>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="overseer">Overseer <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Not Playable in Starter Set)</span></h4>            <p>Devoted martial commanders who lead from the front in blessed or discipline-forged plate, Overseers combine exceptional armor mastery with auras, command abilities, and unshakable authority, inspiring allies who stand near them, breaking the will of evil through proximity alone, and serving as the unmovable standard around which armies and adventuring parties alike can rally and hold.</p>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Path and Branch Dependent<br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Overseer's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              <strong>Favored Races:</strong><br>Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5<br><br>
+              &dagger;Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> <span class="beyond-starter">Bast -5, </span>Ogre -5, <span class="beyond-starter">Troll (Bridge) -5, Troll (Sand) -5, Dr&#257;co Blood -5, Drow -5, Dwarf (Glimmerstone) -5, Gnoll -5, Orcus -5, Goblorc -5, Pinkling -5, Ratkin -5, Drevane -5, Emberscale -5, Imperials -5, Leshy -5, Primal -5, Skrath -5</span><br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Overseer's Oath, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Unbroken Vanguard, Once Per Day the Overseer plants their banner, granting every ally within earshot a shield equal to their Piety SCR that absorbs damage before Life.<br><br>
+              Extra 1d6 + LVL holy damage on Critical Hits.<br>
+              Once per encounter, Overseers can Flourish their weapon to grant an ally a free Defense roll.<br><br>
+              Overseers get +5 feet their base movement speed, once per encounter.<br><br>
+              Overseers get +4 plus their PIETY SCR on Knowledge checks involving religious lore.<br><br>
+                            <hr class="thin-hr">
+              <strong>Overseer Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Archon</em> - A disciplined Overseer who commands the battlefield like a seasoned legion officer.<br>
+              &nbsp;&nbsp;a. <em>Battleguard</em> - An Archon who commands the frontline like a seasoned field officer.<br>
+              &nbsp;&nbsp;b. <em>Defender</em> - An Archon devoted to holding ground and protecting allies over dealing damage.<br>
+              &nbsp;&nbsp;c. <em>Legionnaire</em> - An Archon trained in disciplined formation-fighting, stronger the more allies stand beside them.<br>
+              ii. <em>Crusader</em> - A zealous Overseer who leads the charge, carrying faith into battle like a weapon.<br>
+              &nbsp;&nbsp;a. <em>Blessed Knight</em> - A Crusader anointed for battle, carrying a blessing into every fight.<br>
+              &nbsp;&nbsp;b. <em>Devout</em> - A Crusader whose unwavering faith fuels every strike.<br>
+              &nbsp;&nbsp;c. <em>Trojan</em> - A Crusader who breaks through enemy lines by sheer, disciplined force.<br>
+              iii. <em>Paladin</em> - A protective Overseer who shields allies with radiant conviction and steadfast defense.<br>
+              &nbsp;&nbsp;a. <em>Guardian</em> - A Paladin devoted entirely to shielding allies from harm.<br>
+              &nbsp;&nbsp;b. <em>Radiant</em> - A Paladin who channels holy light directly into devastating, purifying strikes.<br>
+              &nbsp;&nbsp;c. <em>Templar</em> - A Paladin sworn to disciplined defense, holding the line above all else.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Theologist<br>
+              Professions: Blacksmith, Stonesmith, Enchanter, Shieldwright<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Overseer Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Weapon Proficiency</strong><br><em>Abilities from this Tier require one of the weapons below to be readied (see Required Weapons, Appendix). Basic ATTKs are never restricted this way, any weapon performs one. A Main Class Tier carries no Culture of its own, since its three Paths share none; Culture arrives at LVL 4 with the Path and carries through that Path's Branches, each of which may state its own exceptions (see Culture, Basic Rules pg. 2).</em><br><br>
+              <strong>Weapon Styles and Hand:</strong><br>
+              &#9670;1h or 2h, any Style (Holy-blessed weapon).<br><br>
+              <strong>Weapon Types:</strong><br>
+              &#9670;Tactical (Martial).<br>
+              &#9670;<strong>Weapon/Hand Proficiency Bonus:</strong> +8 to Hit when the weapon above is wielded (Main Hand).<br><br>
+              <strong>Whenever Overseer's Oath (see Main Class Abilities above) is Active:</strong><br><br>
+              &#9670;Weapon Bonus&dagger;: Crit add 1d6 + PIETY.<br>
+              &#9670;<strong>1H Melee:</strong> +1 Hit (shield combo).<br>
+              &#9670;+2 and +2 to Hit and Theologist Talents if the Sanctified Blade is wielded.<br>
+              &#9670;Shield (Off) +1 Armor Scr., or Holy Symbol (Off) +1 to all Heals or Smites instead.<br>
+              &#9670;<strong>2H Melee:</strong> +1 Hit.<br>
+              &#9670;+2 and +2 to Hit and Theologist Talents if the Radiant Greatsword is wielded.<br>
+              &#9670;<strong>Spell:</strong> +1 divine healing and smite.<br><br>
+              &dagger;Reminder: Abilities from a Tier, Path, or Branch require one of that tree's listed weapons to be readied. A weapon the tree does not list, one it names Forbidden, or no weapon at all, performs no Ability from it. Basic ATTKs are never restricted this way, any weapon a Character can carry performs one. Wielding the weapon above additionally grants the stated Weapon/Hand Proficiency bonus (see Required Weapons, Appendix).<br><br>
+              </span><strong>Armor Thresholds</strong><br>
+              Grade: Heavy or Medium (Plate, Full Chain).<br><br>
+              Paths and Branches unlock various Armaments not available for Class Tier Abilities.<br><br>
+              A Path or Branch's Weapon/Hand Proficiency profile includes every weapon already available to the Main Class, plus any new weapons that Path or Branch unlocks. A Path or Branch's Armor Threshold also rises without an Armament Penalty, typically half a Grade step above the Tier before it.<br><br>
+              Armament Thresholds allow the given Grade and anything lighter. If Armor that is heavier than the Overseer's Threshold is worn, Characters suffer the ensuing Penalties to the Armor's SCR (see Armament Penalty, Basic Rules pg. 6).<br><br>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #c93f35; line-height:1.25;">Overseer Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). See Ability Cards individually for details, see card examples on this page.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #c93f35;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Overseer)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Overseer Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sanctified Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blessed strike that judges evil on contact, the first flicker of an Overseer's own divine authority made manifest... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Blessed Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut blessed with the same divine authority... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sanctified Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with divine authority made manifest... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sanctified Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>Divine authority drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Judging Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that judges evil on contact, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sanctified Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from divine authority made manifest, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Overseer Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Smiting Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blow that blinds the wicked on impact, steel already learning to judge as well as strike... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Smiting Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut that blinds the wicked on impact... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Judgment Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held by steel already learning to judge as well as strike... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Smiting Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A blinding light drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Smiting Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that blinds the wicked on impact, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Judgment Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from steel already learning to judge as well as strike, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Overseer Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commander's Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A strike thrown to rally the line, marking a target for a reckoning the whole legion will answer... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commander's Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown to mark a target the whole legion will answer... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Legion's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Crusade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held to rally the line before a reckoning comes due... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commander's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A shield sung to rally the line, over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Legion's Call</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A call marking a target for a reckoning the whole legion will answer, at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Legion's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn to rally the line, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Overseer Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Archon</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A disciplined Overseer who commands the battlefield like a seasoned legion officer. (LVL 4-20)</em><br>
+              <em>(see Archon Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Archon Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Archon)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: any (Holy-blessed weapon). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Archon):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Heavy or Medium (Archon Chain).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Archon Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Battleguard (LVL 21-30)<br>
+                <em>An Archon who commands the frontline like a seasoned field officer.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Battleguard Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Battleguard Branch chosen at LVL 21 - see Battleguard above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Battleguard Branch chosen at LVL 21 - see Battleguard above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Defender (LVL 21-30)<br>
+                <em>An Archon devoted to holding ground and protecting allies over dealing damage.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Defender Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Defender Branch chosen at LVL 21 - see Defender above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Defender Branch chosen at LVL 21 - see Defender above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Legionnaire (LVL 21-30)<br>
+                <em>An Archon trained in disciplined formation-fighting, stronger the more allies stand beside them.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Legionnaire Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Legionnaire Branch chosen at LVL 21 - see Legionnaire above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Legionnaire Branch chosen at LVL 21 - see Legionnaire above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Archon Abilities (Overseer Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Overseer - Archon Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Commander's Reckoning</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Command<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The mark called out louder to the whole line, an Archon's gift for turning one soldier's focus into the whole line's... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commander's Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Command<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown as the mark is called out louder to the whole line... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Line's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Command<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held while turning one soldier's focus into the whole line's... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Line's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>One soldier's focus drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Commander's Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A mark called out louder to the whole line, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Line's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from one soldier's focus turned into the whole line's, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Overseer - Archon Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Unbroken Line Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Command<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blow that answers whoever broke formation to strike an ally, the line closing back around whoever broke it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unbroken Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Command<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut thrown as the line closes back around whoever broke it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Unbroken Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Command<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard that closes back around whoever broke it... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Unbroken Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>An unbroken line drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unbroken Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt that answers whoever broke formation, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Unbroken Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn as the line closes back around whoever broke it, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Overseer - Archon Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Formation's Eye</strong><br>A glance that holds the whole formation together, calling the line where it needs to be... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Formation's Cut</strong><br>A cut thrown wherever the line needs to be... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Formation's Guard</strong><br>A guard held wherever the line needs to be... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Formation's Aegis</strong><br>A shield sung wherever the line needs to be, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Formation's Bolt</strong><br>A glance that holds the whole formation together, called in at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Formation's Renewal</strong><br>A renewal drawn wherever the line needs to be, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Overseer - Archon Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Formation's Mark</strong><br>A target marked for the whole formation at once, converging a line before it even moves... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Formation's Mark Cut</strong><br>A cut thrown at a target marked for the whole formation at once... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Formation's Mark Guard</strong><br>A guard held over a target marked for the whole formation... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Formation's Mark Aegis</strong><br>A shield sung over a target marked for the whole formation, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Formation's Mark Bolt</strong><br>A target marked for the whole formation, converged on at range before it even moves... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Formation's Mark Renewal</strong><br>A renewal drawn over a target marked for the whole formation, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Overseer - Archon Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Line's Convergence</strong><br>Archons command the whole formation, marking targets for the entire line to converge on at once... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Convergence Cut</strong><br>Archons strike whoever's marked for the entire line to converge on at once... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Convergence Guard</strong><br>Archons guard the entire line as it converges on a marked target... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Convergence Aegis</strong><br>Archons shield the entire line as it converges on a marked target, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Convergence Bolt</strong><br>Archons command the whole formation at range, marking targets to converge on at once... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Convergence Renewal</strong><br>Archons mend the entire line as it converges on a marked target, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Overseer - Archon Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Battleguard (LVL 21-30)<br>
+                <em>An Archon who commands the frontline like a seasoned field officer.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Battleguard Abilities (Archon Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Battleguard Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Defender (LVL 21-30)<br>
+                <em>An Archon devoted to holding ground and protecting allies over dealing damage.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Defender Abilities (Archon Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Defender Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Legionnaire (LVL 21-30)<br>
+                <em>An Archon trained in disciplined formation-fighting, stronger the more allies stand beside them.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Legionnaire Abilities (Archon Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Legionnaire Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Crusader</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Lawful<br>
+              <strong>Higher Power:</strong> TBA (Lawful)<br>
+              <em>A zealous Overseer who leads the charge, carrying faith into battle like a weapon. (LVL 4-20)</em><br>
+              <em>(see Crusader Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Crusader Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Crusader)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: any (Holy-blessed weapon). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Crusader):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Heavy or Medium (Crusader Plate).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Crusader Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Blessed Knight (LVL 21-30)<br>
+                <em>A Crusader anointed for battle, carrying a blessing into every fight.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Blessed Knight Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Blessed Knight Branch chosen at LVL 21 - see Blessed Knight above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Blessed Knight Branch chosen at LVL 21 - see Blessed Knight above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Devout (LVL 21-30)<br>
+                <em>A Crusader whose unwavering faith fuels every strike.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Devout Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Devout Branch chosen at LVL 21 - see Devout above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Devout Branch chosen at LVL 21 - see Devout above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Trojan (LVL 21-30)<br>
+                <em>A Crusader who breaks through enemy lines by sheer, disciplined force.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Trojan Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Trojan Branch chosen at LVL 21 - see Trojan above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Trojan Branch chosen at LVL 21 - see Trojan above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Crusader Abilities (Overseer Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Overseer - Crusader Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Zealous Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Charge<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A strike that burns brighter against evil and undead alike, the first mark of a Crusader's own burning conviction... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Zealous Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Charge<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut that burns brighter against evil and undead alike... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Zealous Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Charge<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with the same burning conviction... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Zealous Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>Burning conviction drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Zealous Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that burns brighter against evil and undead alike, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Zealous Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from a Crusader's own burning conviction, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Overseer - Crusader Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Wrathful Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Charge<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blow that lands hardest on a foe already brought low, wrath given a Crusader's own edge... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wrathful Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Charge<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut that lands hardest on a foe already brought low... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wrathful Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Charge<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with wrath given a Crusader's own edge... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Wrathful Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>Wrath given a Crusader's own edge, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wrathful Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt that lands hardest on a foe already brought low, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wrathful Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from wrath given a Crusader's own edge, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Overseer - Crusader Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Wicked Ground</strong><br>A strike that burns hottest where the wicked gather, cutting down evil before it can take root... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wicked Cut</strong><br>A cut thrown where the wicked gather, cutting down evil before it can take root... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wicked Guard</strong><br>A guard held where the wicked gather, before evil can take root... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Wicked Aegis</strong><br>A shield sung where the wicked gather, before evil can take root, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wicked Bolt</strong><br>A strike that burns hottest where the wicked gather, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wicked Renewal</strong><br>A renewal drawn where the wicked gather, before evil can take root, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Overseer - Crusader Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Consecrated Line</strong><br>A stretch of ground consecrated mid-fight, daring evil to cross a line it won't cross twice... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Consecrated Cut</strong><br>A cut thrown along a line evil won't cross twice... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Consecrated Guard</strong><br>A guard held along a line consecrated mid-fight... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Consecrated Aegis</strong><br>A shield sung along a line consecrated mid-fight, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Consecrated Bolt</strong><br>A stretch of ground consecrated mid-fight, loosed at a foe daring to cross it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Consecrated Renewal</strong><br>A renewal drawn along a line consecrated mid-fight, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Overseer - Crusader Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Consecrated Ground</strong><br>Crusaders burn with zeal against the wicked, consecrating ground and cutting down evil where it stands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Consecrated Ground Cut</strong><br>Crusaders strike the wicked where they stand, cutting down evil on consecrated ground... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Consecrated Ground Guard</strong><br>Crusaders guard ground already consecrated against the wicked... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Consecrated Ground Aegis</strong><br>Crusaders shield ground already consecrated against the wicked, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Consecrated Ground Bolt</strong><br>Crusaders burn with zeal at range, cutting down evil where it stands... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Consecrated Ground Renewal</strong><br>Crusaders mend ground already consecrated against the wicked, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Overseer - Crusader Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Blessed Knight (LVL 21-30)<br>
+                <em>A Crusader anointed for battle, carrying a blessing into every fight.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Blessed Knight Abilities (Crusader Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Blessed Knight Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Devout (LVL 21-30)<br>
+                <em>A Crusader whose unwavering faith fuels every strike.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Devout Abilities (Crusader Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Devout Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Trojan (LVL 21-30)<br>
+                <em>A Crusader who breaks through enemy lines by sheer, disciplined force.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Trojan Abilities (Crusader Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Trojan Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Paladin</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Lawful<br>
+              <strong>Higher Power:</strong> TBA (Lawful)<br>
+              <em>A protective Overseer who shields allies with radiant conviction and steadfast defense. (LVL 4-20)</em><br>
+              <em>(see Paladin Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Paladin Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Paladin)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: any (Holy-blessed weapon). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Paladin):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Heavy or Medium (Radiant Mail).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Paladin Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Guardian (LVL 21-30)<br>
+                <em>A Paladin devoted entirely to shielding allies from harm.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Guardian Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Guardian Branch chosen at LVL 21 - see Guardian above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Guardian Branch chosen at LVL 21 - see Guardian above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Radiant (LVL 21-30)<br>
+                <em>A Paladin who channels holy light directly into devastating, purifying strikes.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Radiant Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Radiant Branch chosen at LVL 21 - see Radiant above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Radiant Branch chosen at LVL 21 - see Radiant above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Templar (LVL 21-30)<br>
+                <em>A Paladin sworn to disciplined defense, holding the line above all else.</em><br>
+                <details class="tree-details beyond-starter">
+                <summary>Templar Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Templar Branch chosen at LVL 21 - see Templar above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Templar Branch chosen at LVL 21 - see Templar above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Paladin Abilities (Overseer Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Overseer - Paladin Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Guardian's Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Shieldheart<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A strike that answers whoever dared harm an ally first, a Paladin's earliest vow made steel... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Guardian's Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Shieldheart<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut that answers whoever dared harm an ally first... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Vowbound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Shieldheart<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held on a vow made steel... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Guardian's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A vow made steel drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Guardian's Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that answers whoever dared harm an ally first, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Vowbound Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn on a vow made steel, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Overseer - Paladin Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Steadfast Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Shieldheart<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blow that lands hardest against the undead and the fiendish alike, an oath kept in the sharpest possible terms... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Steadfast Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Shieldheart<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut that lands hardest against the undead and the fiendish alike... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Steadfast Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Shieldheart<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with an oath kept in the sharpest possible terms... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Steadfast Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>An oath drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Steadfast Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt that lands hardest against the undead and the fiendish alike, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Steadfast Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from an oath kept in the sharpest possible terms, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Overseer - Paladin Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Anointing Hand</strong><br>A healing hand pressed to a wound in the same motion as the blade that opened it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Anointed Cut</strong><br>A cut opened in the same motion as a healing hand pressed to it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Anointing Guard</strong><br>A guard held with a healing hand ready in the same motion... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Anointing Aegis</strong><br>A healing hand drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Anointing Bolt</strong><br>A healing hand turned into a bolt, loosed in the same motion that opens the wound... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Anointing Renewal</strong><br>A healing hand pressed to a wound, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Overseer - Paladin Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Woven Blessing</strong><br>A blessing woven into every strike, anointing a wound before it's even fully opened... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Woven Cut</strong><br>A cut woven with a blessing before the wound is even fully opened... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Woven Guard</strong><br>A guard held with a blessing woven into every motion... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Woven Aegis</strong><br>A blessing woven into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Woven Bolt</strong><br>A blessing woven into a bolt, loosed before a wound is even fully opened... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Woven Renewal</strong><br>A blessing woven into a renewal, anointing a wound before it's fully opened, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Overseer - Paladin Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Anointed Edge</strong><br>Paladins anoint every wound they open, weaving healing directly into the edge of their own blade... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Anointed Cut Edge</strong><br>Paladins strike and anoint in the same motion, weaving healing into the edge of their own blade... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Anointed Edge Guard</strong><br>Paladins guard with healing woven directly into the edge of their own blade... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Anointed Edge Aegis</strong><br>Paladins shield with healing woven directly into the edge of their own blade, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Anointed Edge Bolt</strong><br>Paladins loose a blessing at range, weaving healing directly into the bolt... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Anointed Edge Renewal</strong><br>Paladins anoint every wound they open, weaving healing into a renewal, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details beyond-starter">
+                  <summary>LVL 9-20 Overseer - Paladin Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="beyond-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Guardian (LVL 21-30)<br>
+                <em>A Paladin devoted entirely to shielding allies from harm.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Guardian Abilities (Paladin Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Guardian Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Radiant (LVL 21-30)<br>
+                <em>A Paladin who channels holy light directly into devastating, purifying strikes.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Radiant Abilities (Paladin Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Radiant Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Templar (LVL 21-30)<br>
+                <em>A Paladin sworn to disciplined defense, holding the line above all else.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Templar Abilities (Paladin Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="beyond-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Templar Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+  </div>
+</main>
+</div>
+</body>
+</html>
