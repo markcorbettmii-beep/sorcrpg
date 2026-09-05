@@ -2,6 +2,46 @@
 
 Working list. Nothing here is live unless it says so.
 
+## World building, the working 1-8
+
+This is the list we are resolving now. Numbering is stable, do not renumber.
+
+1. **The Hexagonum curse Variant has no name.** Described in full: their own
+   Telluric Armaments Enhanced with curses, iron that is red, purple, black or
+   green, dark even when shiny. The Grafted Variant text points at it by name,
+   so nothing ships until it is named. BLOCKED on Mark.
+
+2. **The Hexagonum undead playable race has no name and no card.** Skin tight
+   to the bone but not corroded, narcissistic, intelligent, not wraiths. Dark
+   magic and necromancy. Wasteful with material, greedy with it, collect only
+   to build. One variant of this undead type only. BLOCKED on Mark.
+
+3. **The Angeligla alchemy race has no name, no card, and no planet.**
+   Apothecary, alchemy, corrosion. Human-passing, diverse, versatile. Magic
+   dull, only Sorcery, Witchcraft and Shamanism. Weapons from corrosives,
+   chemicals, explosives and gases. Atmospheric mining, gas scooping. Angeligla
+   went to the Aberrations, so this race currently has nowhere to stand.
+   BLOCKED on Mark, name and planet.
+
+4. **CLOSED.** Grafted Variant written. Variant row, Gear & Item row, both DMG
+   Mod charts in `rules_ref_004`, the combined chart in `rules_ref_appendix`,
+   and the Enhancements callout. "three variants" reads four everywhere.
+
+5. **CLOSED** by 4. Grafted is defined, the Caelen card no longer dangles.
+
+6. **CLOSED.** Both lines now read "Home to the Caelen, the Cyborg race".
+
+7. **MAC leather and cloth for Hexagonum and Angeligla.** Creature-sourced
+   materials found only on each planet. Hook exists at `rules_ref_004:1743`,
+   the MAC Waste row. BLOCKED on Mark, needs the material names.
+
+8. **Telluric grenade, Chthonic Geode, Placed delivery row.** Agreed in
+   principle, none written. Geode name approved. Behind it: the Thrown Chart at
+   `rules_ref_appendix:608` zeroes damage past 26 ft., which is right for an axe
+   and wrong for a blast, so a grenade has to sit outside that curve.
+   Blocked only on the collision 16 wording, since the Placed rows go into
+   `rules_ref_004:1053` which says "Tactical" where the book says "Telluric".
+
 ## Rules collisions, deep scan
 
 1. **CLOSED.** Charge speed 3x vs 2x. Charge deleted, RAOO built, RAOO cut,
