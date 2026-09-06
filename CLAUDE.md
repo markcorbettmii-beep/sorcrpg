@@ -55,3 +55,18 @@ design. There is no Improvised Weapon and no Improvised Projectile.
    113 pre-existing broken links; that number must not grow.
 3. Screenshot anything visual, in **both** modes. Evil is dark ground with
    light text, Lawful is light ground with dark text.
+
+## Go live first
+
+Ship the resolved work before answering anything else. Commit and push, then
+report, and never say a thing is live without checking `git status` clean and
+`HEAD` matching `origin`. Reporting a gap is not a substitute for fixing what
+was already decided.
+
+Gaps that are genuinely open, or that need Mark's call, go in `GAPS.md` and stay
+there until they are resolved.
+
+## Sweeps cover every file type
+
+A rename or terminology sweep is not done at `.html`. Check `.ts`, `.js`, `.json`,
+`.md` and `.css` too, and exclude only `node_modules`, `.git` and build output.

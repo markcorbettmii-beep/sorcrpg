@@ -1,0 +1,49 @@
+# Open gaps
+
+Running note. Anything found and not yet resolved goes here so it is not lost
+between sessions. Resolved items come off the list.
+
+## Waiting on Mark's call
+
+- **Glaciera has three spellings.** `Glaciera` x11, `Glacieria` x6, `Glaceria` x2,
+  across the Basic Rules, three Class Trees, The Book of Zailister and both race
+  pickers. No Tome names it, so nothing settles it.
+- **The Imperials card contradicts the Culture section.** The card says "Humans
+  carrying the lineage of one of six ancient bloodlines". Culture says "Humans
+  carry no bloodlines and no subraces". Both live.
+- **The Futurum carry no physical traits.** Tawdry Dwarf & Beyond says they "do
+  not bear any unique physical traits", which sits against being a race of their
+  own. Nothing to change until Mark says what they look like.
+- **Wood Elf and Elf share identical stats.** Nothing differentiates them.
+- **`zail.html` lists peoples with no roster entry.** Vanwa, Forsworn, Nefertari,
+  Darklings, Legendary Scions, Necrotic Wraiths. Not everything listed has to be
+  playable, so these may be fine as they stand.
+
+## Known and deliberate
+
+- **The Tredeki and the Futurum are lore, not cards.** Mark's call. The pg. 4
+  excerpt describes the Tredeki as a people; there is no race card and that is
+  intended for now.
+- **Bare Bones gates the tech armaments on "a race or Background from Omne,
+  Tredeki or Futurum".** No Futurum race exists, so only the Background half
+  applies to them. The "or" carries it.
+
+## Repo hygiene
+
+- **Four app mirrors are stale**, from earlier work, not from this pass:
+  `sorc-app/public/lobbies.html` 727 lines out, `assess.html` 568, `library.html`
+  90, `public-profile.html` 56. Syncing them is its own job.
+- **`heroes-hermits.html` reads "a order bound by oath".** Mark's words, left as
+  written.
+- **Screenshots in both modes have not been run** this pass. Evil dark ground,
+  Lawful light ground.
+
+## Queued, in the stated order (rules, then Appendix, then GM Codex)
+
+- Appendix DMG Mod Chart chop row disagrees with pg. 4; Dense column and
+  Flexible/Grab rows missing from the merged table.
+- Appendix TABA table carries 6 of 11 grades, missing 5 Half grades.
+- Appendix Spirit & Apex table says 28 playable races; the roster holds more.
+- GM Codex has 11 forward references from pg. 4 with no content behind them yet.
+- Dual wield is on hold at Mark's word. The old plan file is stale, do not reuse.
+- Whether the Fae get their own Armament Variant is still open.
