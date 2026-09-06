@@ -5,15 +5,13 @@ between sessions. Resolved items come off the list.
 
 ## Waiting on Mark's call
 
-- **Glaciera has three spellings.** `Glaciera` x11, `Glacieria` x6, `Glaceria` x2,
-  across the Basic Rules, three Class Trees, The Book of Zailister and both race
-  pickers. No Tome names it, so nothing settles it.
 - **The Imperials card contradicts the Culture section.** The card says "Humans
   carrying the lineage of one of six ancient bloodlines". Culture says "Humans
   carry no bloodlines and no subraces". Both live.
-- **The Futurum carry no physical traits.** Tawdry Dwarf & Beyond says they "do
+- **The Futurem carry no physical traits.** Tawdry Dwarf & Beyond says they "do
   not bear any unique physical traits", which sits against being a race of their
-  own. Nothing to change until Mark says what they look like.
+  own that shares human blood. Nothing to change until Mark says what they look
+  like.
 - **Wood Elf and Elf share identical stats.** Nothing differentiates them.
 - **`zail.html` lists peoples with no roster entry.** Vanwa, Forsworn, Nefertari,
   Darklings, Legendary Scions, Necrotic Wraiths. Not everything listed has to be
@@ -21,11 +19,11 @@ between sessions. Resolved items come off the list.
 
 ## Known and deliberate
 
-- **The Tredeki and the Futurum are lore, not cards.** Mark's call. The pg. 4
+- **The Tredeki and the Futurem are lore, not cards.** Mark's call. The pg. 4
   excerpt describes the Tredeki as a people; there is no race card and that is
   intended for now.
 - **Bare Bones gates the tech armaments on "a race or Background from Omne,
-  Tredeki or Futurum".** No Futurum race exists, so only the Background half
+  Tredeki or Futurem".** No Futurem race exists, so only the Background half
   applies to them. The "or" carries it.
 
 ## Repo hygiene
@@ -47,3 +45,11 @@ between sessions. Resolved items come off the list.
 - GM Codex has 11 forward references from pg. 4 with no content behind them yet.
 - Dual wield is on hold at Mark's word. The old plan file is stale, do not reuse.
 - Whether the Fae get their own Armament Variant is still open.
+
+## Settled by the Zailister map
+
+The map is the authority on anything named on Zailister. Check new place names
+against it before writing them.
+
+- **Glaciera**, one spelling. Glacieria and Glaceria are gone.
+- **Futurem**, not Futurum.

@@ -1760,7 +1760,7 @@ const ASSESSMENT_QUESTIONS = [
   { q: "How many Copper coins equal one Silver coin in SORC?", options: ["5", "10", "25", "100"], answer: 1, page: 4 },
   { q: "What are the three standard currency denominations in Essentia?", options: ["Platinum, Gold, Silver", "Gold, Silver, Copper", "Gold, Silver, Bronze", "Credits, Gold, Silver"], answer: 1, page: 4 },
   { q: "Which world serves as the universe's primary reserve currency issuer?", options: ["Omne", "Ignis", "Zailister", "Tredeki"], answer: 2, page: 4 },
-  { q: "Which worlds refuse coins and trade only in Credits?", options: ["Ignis and Zailister", "Futurum, Omne, and Tredeki", "Zailister and Tredeki", "Only Omne"], answer: 1, page: 4 },
+  { q: "Which worlds refuse coins and trade only in Credits?", options: ["Ignis and Zailister", "Futurem, Omne, and Tredeki", "Zailister and Tredeki", "Only Omne"], answer: 1, page: 4 },
   { q: "What Card rank is included in a module of LVLs 1-5?", options: ["Rare", "Uncommon", "Common", "Heroic"], answer: 2, page: 4 },
   { q: "What Card rank is included in a module of LVLs 5-8?", options: ["Common", "Uncommon", "Rare", "Unique"], answer: 1, page: 4 },
   { q: "What is the highest item Rank in SORC?", options: ["Legendary", "Elite", "Divine", "Unique"], answer: 2, page: 4 },
