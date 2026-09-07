@@ -7,7 +7,7 @@ between sessions. Resolved items come off the list.
 
 - **The Imperials card contradicts the Culture section.** The card says "Humans
   carrying the lineage of one of six ancient bloodlines". Culture says "Humans
-  carry no bloodlines and no subraces". Both live.
+  carry no bloodlines and no kinborns". Both live.
 - **The Futurem carry no physical traits.** Tawdry Dwarf & Beyond says they "do
   not bear any unique physical traits", which sits against being a race of their
   own that shares human blood. Nothing to change until Mark says what they look
