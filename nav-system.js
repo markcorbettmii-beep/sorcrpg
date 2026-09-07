@@ -72,26 +72,27 @@ class SORCNavigation {
       <div id="sorc-nav-wrapper" class="sorc-nav-wrapper">
         <!-- Hamburger Menu -->
         <nav class="sorc-nav">
-          <div class="sorc-nav-left">
-            <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
-              <span class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-              </span>
-            </button>
-            <a href="${pathToRoot}index.html" class="sorc-nav-home-icon" aria-label="Home">
-              &#8962;
-            </a>
-          </div>
+          <!-- Home Icon (Far Left) -->
+          <a href="${pathToRoot}index.html" class="sorc-nav-home-icon" aria-label="Home">
+            &#8962;
+          </a>
 
-          <!-- Theme Toggle (Lawful/Evil Mode) -->
+          <!-- Theme Toggle (Lawful/Evil Mode) - Center -->
           <div class="sorc-theme-toggle-wrapper">
             <button class="sorc-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
-              <span class="sorc-theme-label lawful">☀️ Lawful</span>
-              <span class="sorc-theme-label evil">🌙 Evil</span>
+              <span class="sorc-theme-label lawful">LAWFUL</span>
+              <span class="sorc-theme-label evil">EVIL</span>
             </button>
           </div>
+
+          <!-- Hamburger Menu (Far Right) -->
+          <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span class="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </button>
 
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
