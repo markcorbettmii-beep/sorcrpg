@@ -45,6 +45,11 @@ between sessions. Resolved items come off the list.
 - GM Codex has 11 forward references from pg. 4 with no content behind them yet.
 - Dual wield is on hold at Mark's word. The old plan file is stale, do not reuse.
 - Whether the Fae get their own Armament Variant is still open.
+- Small-size Elf naming. `Elf (Sylvan)` is a Small Size Firstborn, not a Kinborn
+  of the Standard Size Elf, so the parenthetical form misnames it. Wood Elf, the
+  other Small Firstborn, is named plainly. If a Kinborn ever did need naming the
+  form is `Sylvan (Elf Kinborn)`, not `Elf (Sylvan)`. `Dwarf (Glimmerstone)` and
+  `Dwarf (Snow)` carry the same problem. Mark is fixing this.
 
 ## Settled by the Zailister map
 
