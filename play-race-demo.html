@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Slayers of Rings &amp; Crowns (SORC) - Basic Rules pg. 2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .race-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+    .race-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.15); padding: 0.75rem 1rem; border-radius: 4px; }
+    .race-card h4 { font-size: 0.92rem; letter-spacing: 1px; margin: 0 0 0.3rem; }
+    .race-card p { font-size: 0.82rem; opacity: 0.8; margin: 0 0 0.3rem; line-height: 1.5; }
+    .trait-tag { font-size: 0.78rem; opacity: 0.7; font-style: italic; }
+    .race-card.faded { opacity: 0.35; pointer-events: none; }
+    .race-card.faded a { pointer-events: auto; }
+    .race-section-label { font-size: 0.72rem; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; margin: 0.55rem 0 0.1rem; opacity: 1; }
+    .race-favored { color: rgba(130,210,130,0.95); }
+    .race-averse { color: rgba(210,100,100,0.95); }
+    .race-divider { border-top: 1px solid rgba(160,140,200,0.15); margin: 0.55rem 0 0; }
+    .lifespan-tag { font-size: 0.75rem; font-style: italic; color: rgba(180,160,220,0.9); margin: 0.25rem 0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+
+    /* Rule Set. Bare Bones is the default view; the switch opens every Complex
+       section at once. data-style is the source of truth for the PDF build.
+       Evil is the dark ground, Lawful the light one, so each carries its own
+       tint strength and its own text colour off the same three rank hues. */
+
+    /* --- Evil, dark ground (#0a0a0a): lightened hues, stronger tint --- */
+    .casual-lead { background: rgba(0,110,215,0.20); border: 2px solid rgba(186,85,211,0.55);
+                   border-radius: 3px; padding: 0.7rem 1rem 0.3rem; margin: 0.5rem 0; }
+    .casual-lead, .casual-lead p { color: #e8e8e8; }
+    details.play-toggle { margin: 0.3rem 0 1.2rem; }
+    details.play-toggle[open] { background: rgba(197,160,66,0.16); border: 2px solid rgba(186,85,211,0.55);
+                                border-radius: 3px; padding: 0.7rem 1rem; }
+    details.play-toggle[open], details.play-toggle[open] p, details.play-toggle[open] li { color: #e8e8e8; }
+    p.style-note { font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase;
+                   font-weight: bold; color: #c5a042; margin: 0.6rem 0 0.2rem; opacity: 1; }
+    details.play-toggle > summary {
+      cursor: pointer; list-style: none; display: inline-block;
+      font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; font-weight: bold;
+      padding: 0.3rem 0.75rem; border-radius: 3px;
+      border: 2px solid rgba(186,85,211,0.55);
+      background: rgba(0,110,215,0.24); color: #6ab4ff;
+    }
+    details.play-toggle > summary::-webkit-details-marker { display: none; }
+    details.play-toggle > summary::marker { content: ""; }
+    details.play-toggle > summary::after { content: "Expand for Complex"; }
+    details.play-toggle[open] > summary::after { content: "Collapse for Bare Bones"; }
+    details.play-toggle[open] > summary { background: rgba(197,160,66,0.24); color: #c5a042; }
+    .play-style-bar { text-align: center; margin: 0.5rem 0 1.5rem; }
+    .play-style-switch {
+      cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: bold;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 0.4rem 1rem; border-radius: 3px;
+      border: 2px solid rgba(186,85,211,0.6);
+      background: rgba(0,110,215,0.24); color: #6ab4ff;
+    }
+    body.enthusiastic-mode .play-style-switch { background: rgba(197,160,66,0.24); color: #c5a042; }
+    .play-style-hint { display: block; font-size: 0.72rem; letter-spacing: 1px;
+                       opacity: 0.6; margin-top: 0.35rem; }
+
+    /* --- Lawful, light ground (#f5f5f0): the rank hues as printed, lighter tint --- */
+    body.lawful-mode .casual-lead { background: rgba(0,88,170,0.10); border-color: rgba(140,6,163,0.32); }
+    body.lawful-mode .casual-lead, body.lawful-mode .casual-lead p { color: #2c2c2c; }
+    body.lawful-mode details.play-toggle[open] { background: rgba(146,121,58,0.15); border-color: rgba(140,6,163,0.32); }
+    body.lawful-mode details.play-toggle[open],
+    body.lawful-mode details.play-toggle[open] p,
+    body.lawful-mode details.play-toggle[open] li { color: #2c2c2c; }
+    body.lawful-mode p.style-note { color: #92793a; }
+    body.lawful-mode details.play-toggle > summary { background: rgba(0,88,170,0.13); color: #0058aa;
+                                                     border-color: rgba(140,6,163,0.32); }
+    body.lawful-mode details.play-toggle[open] > summary { background: rgba(146,121,58,0.20); color: #92793a; }
+    body.lawful-mode .play-style-switch { background: rgba(0,88,170,0.13); color: #0058aa;
+                                          border-color: rgba(140,6,163,0.45); }
+    body.lawful-mode.enthusiastic-mode .play-style-switch { background: rgba(146,121,58,0.22); color: #92793a; }
+
+    /* Portrait phones: the Complex label is long, so shrink it enough to
+       hold one line. Landscape and desktop keep the full size. */
+    @media (max-width: 600px) {
+      .play-style-switch { font-size: 0.58rem; letter-spacing: 0.3px;
+                           padding: 0.35rem 0.5rem; white-space: nowrap; }
+      .play-style-hint { font-size: 0.62rem; letter-spacing: 0.3px; }
+    }
+
+    @media print {
+      details.play-toggle > summary { border-color: #666; background: none; color: #000; }
+      .play-style-bar { display: none; }
+    }
+    /* --- Rule Set grounds. Only the Rule Set blocks carry a ground: Bare Bones
+       is rank blue, Complex is rank gold, both inside a rank purple border,
+       at low opacity so the names keep their rank colour on top. Everything else
+       keeps the mode's own ground, dark in Evil and light in Lawful. The badges,
+       the switch, the ENTHUSIASTIC labels and the headings are untouched. --- */
+    .casual-lead {
+      background: rgba(0,88,170,0.45) !important; border: 2px solid #8c06a3 !important;
+      border-radius: 3px; padding: 0.7rem 1rem 0.3rem; margin: 0.5rem 0; }
+    details.play-toggle[open] {
+      background: rgba(146,121,58,0.45) !important; border: 2px solid #8c06a3 !important;
+      border-radius: 3px; padding: 0.7rem 1rem; }
+    .casual-lead, .casual-lead p, .casual-lead li, .casual-lead td,
+    details.play-toggle[open], details.play-toggle[open] p,
+    details.play-toggle[open] li, details.play-toggle[open] td {
+      color: #e8e8e8 !important; }
+    .casual-lead a, details.play-toggle[open] a {
+      color: #e8e8e8 !important; font-weight: normal !important; }
+
+    body.lawful-mode .casual-lead { background: rgba(0,88,170,0.90) !important; }
+    body.lawful-mode details.play-toggle[open] { background: #92793a !important; }
+    /* The open badge carries its own gold text, so on the gold ground it needs its
+       dark backing back. Nothing else about the badge changes. */
+    body.lawful-mode details.play-toggle[open] > summary {
+      background: rgba(0,0,0,0.45) !important; }
+    body.lawful-mode .casual-lead, body.lawful-mode .casual-lead p,
+    body.lawful-mode .casual-lead li, body.lawful-mode .casual-lead td,
+    body.lawful-mode details.play-toggle[open],
+    body.lawful-mode details.play-toggle[open] p,
+    body.lawful-mode details.play-toggle[open] li,
+    body.lawful-mode details.play-toggle[open] td {
+      color: #ffffff !important; }
+    body.lawful-mode .casual-lead a, body.lawful-mode details.play-toggle[open] a {
+      color: #ffffff !important; font-weight: normal !important; }
+
+    /* A table inside a Rule Set block carries its own white ground and a light
+       zebra stripe from styles.css, both of which hide the ground. Let it show.
+       Rows with their own Rule Set colour are excluded. */
+    .casual-lead table.rules-table, details.play-toggle[open] table.rules-table,
+    body.lawful-mode .casual-lead table.rules-table,
+    body.lawful-mode details.play-toggle[open] table.rules-table {
+      background: transparent !important; }
+    body.lawful-mode .casual-lead table.rules-table tr:not([class*="style-"]) td,
+    body.lawful-mode details.play-toggle[open] table.rules-table tr:not([class*="style-"]) td {
+      background: transparent !important; }
+    body.lawful-mode .casual-lead table.rules-table tr:not([class*="style-"]):nth-child(even) td,
+    body.lawful-mode details.play-toggle[open] table.rules-table tr:not([class*="style-"]):nth-child(even) td {
+      background: rgba(0,0,0,0.16) !important; }
+
+    /* The three Rule Set names keep their rank colour, and no rules link is bold. */
+    span[style*="0058aa"] { color: #0058aa !important; }
+    span[style*="8c06a3"] { color: #8c06a3 !important; }
+    span[style*="92793a"] { color: #92793a !important; }
+    .rules-section a { font-weight: normal !important; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <div class="header-container">
+    <img src="images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-letters-img evil-only" />
+    <img src="images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-letters-img lawful-only" />
+  </div>
+    <nav>
+        <div id="navRoleBadge"></div>
+    </nav>
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a href="content/essentia_core/rules_ref_001.html">pg. 1</a></li>
+      <li><a href="content/essentia_core/rules_ref_002.html">pg. 2</a></li>
+      <li><a href="content/essentia_core/rules_ref_003.html">pg. 3</a></li>
+      <li><a href="content/essentia_core/rules_ref_004.html">pg. 4</a></li>
+      <li><a href="content/essentia_core/rules_ref_005.html">pg. 5</a></li>
+      <li><a href="content/essentia_core/rules_ref_appendix.html">pg. 6</a></li>
+      <li><a href="content/essentia_core/rules_ref_006.html">pg. 7</a></li>
+    </ul>
+    <main>
+      <div class="rules-section">
+        <h2 class="subtopic" id="race-section-goliath">Goliath Size Races</h2>
+        <p>Goliaths are towering beings, typically standing between 7 to 9 feet tall, known for their impressive strength, endurance, and commanding presence.</p>
+        <p><strong>Base Life:</strong> 60 &nbsp;|&nbsp; <strong>Base Mana:</strong> 24 &nbsp;|&nbsp; <strong>Base Stamina:</strong> 40 &nbsp;|&nbsp; <strong>Base Endurance:</strong> 35 &nbsp;|&nbsp; <strong>Base Speed:</strong> 40 ft. &nbsp;|&nbsp; <strong>Base Carry:</strong> 200 lbs &nbsp;|&nbsp; <strong>Size Bonus:</strong> +1 Strength, +1 Toughness &nbsp;|&nbsp; <strong>Size Penalty:</strong> -1 Agility, -1 Defense</p>
+        <p>Goliaths have the highest Stamina, Strength and Speed of any size tier, built for sustained physical dominance. Their Mana pool is lower than Standard and Small, while their mass favors physical strength and vigor over magical capacity.</p>
+        <div class="race-grid">
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-bast">Bast</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Bast treat most encounters like a game they've already decided to win. Quick tongues and a knack for always landing on top, figuratively and otherwise, have earned them a reputation as charming liars and worse cardsharps. They're easy to underestimate and that's exactly how they prefer it; a Bast caught in a straight fight has usually already lost, but a Bast given an opening rarely needs a second one.</p>
+            <p><a href="all-races.html#race-bast">Continue to full Bast Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-bugbear">Bugbear</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Bugbears are tall, broad-shouldered predators covered in coarse, bristled fur, built for both raw strength and the patience of a hunter. Despite their size, they move with surprising quiet through dense brush and rocky terrain, relying on ambush as often as brute force to bring down prey twice their size.</p>
+            <p><a href="all-races.html#race-bugbear">Continue to full Bugbear Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-centyr">Centyr</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Centyr, derived from the word "Center," a mythical race combining human-like features with various types of horns and matching animal lower bodies. Centyr beings possess a striking and unique appearance.</p>
+            <p><a href="all-races.html#race-centyr">Continue to full Centyr Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-firbolg">Firbolg</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Firbolgs are gentle giants who carry themselves with a quiet, deliberate calm, more inclined to step around a conflict than start one. Their lives are spent deeply entwined with the natural world, tending to forests and wildlife with the same care others might reserve for family.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Of Fae lineage, however distant, descended from Tenue, through the Veilwood, into Zailister, same as Elves (see Fae, above).</p>
+            <p>Stories travelers tell of Firbolgs speaking with deer and trees aren't far off, a Firbolg can share simple thoughts with any animal or plant they can see, a quiet conversation that needs no words and no effort.</p>
+            <p>That same gentleness makes Firbolg slow to anger and slower still to act first, in a fight that demands a hard, fast decision, a Firbolg's instinct to step back can cost them the opening.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Firbolgs armor to end fights rather than start them. Broad, heavy and deliberately unthreatening in line, the work of a people who would rather absorb a blow and give the other side time to reconsider. Little ornament, and none of it martial. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 6 (+2 growth) | Apex Start 8 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+3 Intuition, +1 Piety | -2 Deceit, -2 Charisma, -1 Agility</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">VIG 2, WIS 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Speak with Flora and Fauna | shares simple thoughts with any animal or plant within sight; passive, no roll required for basic exchanges.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls requiring a fast, aggressive first move; a Firbolg's instinct to step back costs them the opening in any sudden confrontation.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~500 years (Mortal)</p>
+            <p>Starting Age: 125 | Retirement Age: 165 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Druid (Nature) +4 / Path: Hyborian +4 / Branch: Metamorpher +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Small forest creature drawn to a Firbolg's quiet, gentle company. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Goliath-sized companion that watches over the woods a Firbolg tends. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-hawkbear">Hawkbear</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Hawkbears are imposing hybrids, a bear's dense frame and head, with a hawk's hooked beak and piercing, predatory eyes. They also feature loose folds of skin stretching from wrist to ankle that when stretched out allow them to glide, whether it's from a jumping start or off of a mountain's edge, far distances in the air.</p>
+            <p><a href="all-races.html#race-hawkbear">Continue to full Hawkbear Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-leshy">Leshy <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Tredeki, Goliath Size)</span></h4>
+            <p>Massive, emerald-eyed beings from the frontiers of Tredeki, with bark-textured hide and vine-entwined hair-crests. They govern themselves under a strict tribal code of wilderness supremacy, the land is sacred, and those who cannot survive it have no authority over it.</p>
+            <p>Leshy measure status by survival, not lineage or wealth, a Leshy who has weathered the harshest seasons of Tredeki commands more respect in their tribe than one born into any title.</p>
+            <p>A Leshy steps off Tredeki without a currency anyone else recognizes, and the same directness that commands respect in the wild reads as outright hostility in a city, no Leshy holds rank or title once they've left their tribe's land behind.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>A Leshy is already armored, bark hide granting protection before anything is strapped over it, so Leshy work is cut away rather than built up, leaving hide and vine-crests exposed and working. They wear Imperial Techmat when they wear anything manufactured at all, and they cut it down to suit, which Imperials consider vandalism. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Toughness, +2 Intuition, +1 Constitution, +1 Piety | -2 Charisma, -2 Deceit, -2 Knowledge</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">VIG 2, PHY 2, Wisdom (WIS) 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Bark hide grants +3 natural Armor Scr. before armor is applied.</p>
+            <p>+2 to all wilderness survival, tracking, and foraging rolls.</p>
+            <p>Immune to natural poisons and toxins native to Tredeki.</p>
+            <p>Vine-crests allow passive communication with plant life, detect growth patterns, recent disturbance, or hidden paths.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Laser-credit systems only, Leshy do not recognize or use universal coin currency. Transactions off Tredeki require an intermediary.</p>
+            <p>-3 to all social rolls in urban or heavily structured environments, their tribal directness reads as aggression.</p>
+            <p>Cannot hold civic, political, or legal titles outside of Tredeki.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~800 years (Mortal)</p>
+            <p>Starting Age: 200 | Retirement Age: 240 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Druid (Nature) +4 / Path: Hyborian +4 / Branch: Metamorpher +6</p>
+            <p>Shaman +5</p>
+            <p>Barbarian +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Standard-sized companion drawn from Tredeki's wilderness alongside a Leshy. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Goliath-sized companion that helps a Leshy hold their tribe's land. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card">
+            <h4 id="race-ogre">Ogre <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Towering and muscular, ogres are known for their immense strength and ferocity in battle.</p>
+            <p><a href="all-races.html#race-ogre">Continue to full Ogre Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn: Troll</div>
+          <div class="race-lineage-label" style="margin:0.8rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.45; padding-left:1rem;">Kinborn</div>
+<div class="race-card faded">
+            <h4 id="race-troll">Troll (Common)</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>The Common Troll is a highly adaptable and versatile race, known for their exceptional resilience and resourcefulness. They possess a sturdy build with thick, leathery skin that provides natural protection, making them resilient in a variety of environments, from lush forests and swamps to mountainous regions.</p>
+            <p>Unlike more specialized trolls, the Common Troll excels in many roles, whether as skilled hunters, cunning foragers, or resourceful craftsmen. Their intelligence and Adaptability allow them to learn new skills quickly, making them flexible allies and formidable opponents. With a strong sense of community and an unyielding spirit, the Common Troll thrives in diverse settings, turning their natural toughness and versatility into powerful assets.</p>
+            <p>Jack of all trades cuts both ways, a Common Troll rarely masters any one skill the way a specialist would, and it shows whenever true expertise is what the moment calls for.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Common Troll work is the most adaptable armament of any Goliath people, made to be repaired from whatever the ground offers. Nothing matched, nothing precious, and nothing that cannot be replaced by evening. Trolls regenerate; their armor is expected to be the part that does not. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 10 (+5 growth) | Apex Start 1 (+3 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Toughness, +1 Constitution | -2 Wit, -2 Charisma, -1 Deceit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Jack of All Trades | learns new skills quickly across varied terrain; +2 to rolls made when adapting to an unfamiliar task or environment for the first time.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls requiring true mastery or specialization; a Common Troll rarely outperforms a dedicated specialist at their own craft.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~200 years (Mortal)</p>
+            <p>Starting Age: 50 | Retirement Age: 90 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Fighter (Warrior) +4 / Path: Juggernaut +4 / Branch: Rumbler +6</p>
+            <p>Tyrant +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Guardian, a Goliath-sized companion that fights alongside a Common Troll in any terrain. Bond in half the time, -25% upkeep.</p>
+            <p>2. Draft, a Standard-sized working animal suited to a Common Troll's adaptable lifestyle. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-troll-bridge">Troll (Bridge)</h4>
+            <p>Bridge Trolls, often referred to as Town Trolls, dwell near cities and towns, making their homes beneath the bridges they use as both shelter and choke point, with the water below serving as a steady source of food and resources. The Spire Crumbling Bridge on Nivis is the most fought over of these holds. They're as well known for cornering unwary travelers with riddles and tolls as they are for the threats they pose outright.</p>
+            <p>Years spent in the cramped dark beneath bridges and culverts have left Bridge Trolls perfectly at home where most people can't even stand up straight, and there isn't a riddle, puzzle, or word-trap they haven't already heard some version of.</p>
+            <p>Years spent in the dark under a bridge leave a Bridge Troll badly suited to open sunlight and wide horizons, too much open space leaves them edgy and exposed in a way no riddle can talk them out of.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Bridge Trolls armor for the choke point, not the field. Heavy on the front and shoulders and almost nothing behind, built by people who fight where the width of a bridge means nothing can flank them. Salvaged town steel, taken in tolls and in fights. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 10 (+5 growth) | Apex Start 1 (+3 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Wit, +1 Deceit | -2 Strength, -2 Agility</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 1, Intellect (INT) 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Riddlewise | perfectly at home in cramped, low-ceilinged spaces; +2 to Wit rolls made to solve riddles, puzzles, or word-traps.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made in open sunlight or wide, unobstructed terrain; a Bridge Troll grows edgy and exposed without a tight space nearby.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~180 years (Mortal)</p>
+            <p>Starting Age: 45 | Retirement Age: 85 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Barbarian (Warrior) +4 / Path: Destroyer +4 / Branch: Bloodrager +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Small companion at home in the cramped dark beneath a bridge. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Standard humanoid companion who shares a Bridge Troll's toll and territory. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-troll-mountain">Troll (Mountain)</h4>
+            <p>Mountain Trolls are cold-hardened climbers who make their homes at elevations where little else survives, their thick hides shrugging off frost and falling rock alike. Cascade Heights, the Heavenly Peaks, and Serpent's Ridge are theirs. They guard their peaks fiercely, treating any intrusion as a threat to be driven off or buried in snow.</p>
+            <p>Climbers swap stories about Mountain Trolls scaling sheer cliffs and crossing ice and scree without ever slowing down or losing their footing, terrain that would stop most climbers cold.</p>
+            <p>All that time spent alone on exposed peaks left Mountain Trolls poor company and worse diplomats, they don't see much point in talking a problem out when it could just be thrown off a cliff.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Mountain Troll work is cold-country first and martial second, thick hide layered over an already thick hide, weighted for footing on ice rather than for a duel. What metal there is sits low, where a fall does the damage. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 10 (+5 growth) | Apex Start 1 (+3 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Toughness, +1 Warded | -2 Wit, -2 Deceit, -1 Piety</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2, RES 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Sure Foot | scales sheer cliffs and crosses ice and scree without losing footing; +2 to climbing and balance rolls in mountainous terrain.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all social and negotiation rolls; a Mountain Troll sees little point in talking out what could simply be thrown off a cliff.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~250 years (Mortal)</p>
+            <p>Starting Age: 62 | Retirement Age: 102 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Barbarian (Warrior) +4 / Path: Mountaineer +4 / Branch: Beast Master +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Guardian, a Goliath-sized companion that helps a Mountain Troll defend their peak. Bond in half the time, -25% upkeep.</p>
+            <p>2. Draft, a Standard-sized working animal bred for sure footing on sheer cliffs and ice. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-troll-sand">Troll (Sand)</h4>
+            <p>Sand Trolls have adapted to the harshest deserts, their leathery hides shedding heat that would scorch other races, their senses tuned to the smallest shift in dune or wind. The Wandering Wastelands are the widest ground they hold. They move through open desert with unsettling ease, vanishing from sight long before anyone realizes they were being watched.</p>
+            <p>Caravans crossing the dunes swear a Sand Troll can walk for days on a single waterskin and disappear into open ground with nothing to hide behind.</p>
+            <p>A Sand Troll's body is built to shed heat, not hold it, cold climates sap their stamina fast, and a hard freeze can leave one sluggish and slow to react.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Sand Trolls wear as little as survival allows, loose and light-coloured, cut to shed heat that would kill other races. Coverage is a liability in the deep desert, and a Sand Troll in heavy plate is a Sand Troll a long way from home. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 10 (+5 growth) | Apex Start 1 (+3 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Constitution, +1 Deceit | -2 Wit, -2 Charisma, -1 Willpower</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Dune Walker | moves through open desert with unsettling ease, vanishing from sight long before being noticed; +2 to Stealth and survival rolls in arid terrain.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made in cold climates; a hard freeze leaves a Sand Troll sluggish and slow to react.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~180 years (Mortal)</p>
+            <p>Starting Age: 45 | Retirement Age: 85 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Shaman (Mystic) +4 / Path: Ritualist +4 / Branch: Runecrafter +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Small desert creature that shadows a Sand Troll across the dunes. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Goliath-sized companion that helps a Sand Troll watch the open desert. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-troll-village">Troll (Village)</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Village Trolls have set aside the solitary, territorial instincts common to their kind in favor of guarding a single community, often one that has come to depend on them as much as fear them. They take their role seriously, treating every villager as something worth protecting.</p>
+            <p><a href="all-races.html#race-troll-village">Continue to full Troll (Village) Race Card</a></p>
+          </div>
+</div>
+      </div>
+
+      <div class="rules-section">
+        <h2 class="subtopic" id="race-section-standard">Standard Sized Races</h2>
+        <p>Standard-sized races stand between 5 to 7 feet tall, offering a versatile and balanced physique suitable for a wide range of roles and Abilities.</p>
+        <p><strong>Base Life:</strong> 50 &nbsp;|&nbsp; <strong>Base Mana:</strong> 32 &nbsp;|&nbsp; <strong>Base Stamina:</strong> 32 &nbsp;|&nbsp; <strong>Base Endurance:</strong> 35 &nbsp;|&nbsp; <strong>Base Speed:</strong> 30 ft. &nbsp;|&nbsp; <strong>Base Carry:</strong> 100 lbs &nbsp;|&nbsp; <strong>Size Bonus:</strong> None &nbsp;|&nbsp; <strong>Size Penalty:</strong> None</p>
+        <p>Standard races are the most balanced of the three size tiers, equal Mana and Stamina pools with no size-LVL strengths or weaknesses. What they lack in extremes they make up for in flexibility. Endurance is shared across all sizes at 30 and resets daily. Each race within this tier has its own innate trait bonuses and penalties, Innate Aptitude and Inaptitude, Favored Class Trees, companion affinities, Profession bonuses, Talent Tree preferences, and lifespan. These stack on top of the size base above.</p>
+        <div class="callout"><strong>Immortal Races:</strong> Elves and other Immortal races do not die of old age. However, because an immortal character played indefinitely would grow beyond a reasonable power ceiling, Players must retire their immortal character at a GM-chosen age milestone. Upon retirement, the Character continues to exist in the world as an NPC and may still be involved in roleplay, story events, and lore, they simply pass the active Player role to a new character. The retired character's legacy, relationships, and accumulated history remain part of the world.</div>
+        <div class="race-grid">
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-caelen">Caelen <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Corpus Caeleste, Standard Size)</span></h4>
+            <p>The Omn&egrave; Astral Cabal Empire invaded Corpus Caeleste. The Caelen fought hard, but their technology was not as advanced as the Cabal's, and they had no magic. They were taken by the millions and experimented on. The experimented Caelen became too strong for the Cabal to control, fought back, sought revenge and got a great deal of it, and took Cabal vessels home to reunite with their families, who are just normal Caelen. This card is the experimented line. The Caelen who were never taken remain as they always were.</p>
+            <p>The Caelen were remade piece by piece, until almost nothing of the original remained. It was never one decision. A hand, then a lung, then an eye, and somewhere along that line the person stopped being the thing they started as. They do not consider this a loss and have little patience for anyone who does. Corpus Caeleste sits past Tawdry Dwarf where the old star gives too little to live on unaided, and the Caelen answer to that was to stop needing what it could no longer give. See <em>Tawdry Dwarf &amp; Beyond</em> for more.</p>
+            <p>What is left of them runs precisely. A Caelen does not tire the way flesh tires, does not misjudge a distance, and does not forget a figure they have been given.</p>
+            <p>What went out with the flesh went out for good. Adoria's light finds nothing in a Caelen to work on, and a mending spell laid on one closes half of what it would close on anyone else.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Caelen work is installed, not issued. A limb is machined to its owner and to nobody else, which makes a Caelen kit worthless secondhand and priceless to the one wearing it. They carry TAW alongside it for anything a body should not hold. Attachments were first crafted by the Astral Cabal, for the grafts it had made. The Cabal stopped producing them once the Caelen took their revenge and sailed home, and the Caelen have crafted their own ever since. They are enhanced the way TAW is enhanced, by Modification. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Dexterity, +2 Knowledge, +1 Toughness, +1 Focus | -3 Piety, -2 Charisma, -2 Willpower</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 2, PHY 2, VIG 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Installed | one Oxidize Attachment is fitted at creation. It cannot be disarmed, stolen, or dropped, and it is neither Sundered nor Salvaged. Repair follows the Armament's own Condition rules.</p>
+            <p>+2 to Dexterity rolls made for precision work, ranging a distance, or recalling an exact figure.</p>
+            <p>+2 to Knowledge rolls made on machinery, whether their own or another's.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Healing magic restores half its rolled value on a Caelen, rounded down. Miracles do nothing at all.</p>
+            <p>-2 to Charisma rolls made with anyone who has not met a Caelen before.</p>
+            <p>-3 to all nature, wilderness, and foraging rolls.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~200 years (Mortal, parts replaced)</p>
+            <p>Starting Age: 30 | Retirement Age: 70 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Marksman +5</p>
+            <p>Strategist +5</p>
+            <p>Overseer +5</p>
+            <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Mechanical, a Standard-sized constructed companion maintained rather than fed. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn: Dracö Blood</div>
+<div class="race-card faded">
+            <h4 id="race-draco-blood">Dr&#257;co Blood</h4>
+            <p>Dragon-blooded humans carrying the lineage between one of six ancient dragon bloodlines, chosen at character creation. Draco Blood characters bear innate charisma and draconic resilience, capable of wielding powerful draconic magic. Their bloodline determines their Elemental Aptitude, granting a bonus to rolls, damage, and resistance involving their aligned element, and a penalty against its opposite where applicable.</p>
+            <div class="race-lineage-label" style="margin:0.8rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.45; padding-left:1rem;">Bloodlines</div>
+            <p>Red (Fire | penalty: Ice), Blue (Ice | penalty: Fire), Black (Shadow | penalty: Lightning), White (Arcane | penalty: Shadow), Green (Poison | penalty: Nature), Gold (Nature | penalty: Poison).</p>
+            <p>That draconic blood runs hot in more than just magic, Draco Blood are prone to pride and short tempers, and an insult to their bloodline rarely goes unanswered, sense be damned.</p>
+
+            <table style="width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.9rem;">
+              <thead>
+                <tr style="background-color:#2a2a2a; border-bottom:2px solid #666;">
+                  <th style="text-align:left; padding:0.5rem; border-right:1px solid #555;">Bloodline</th>
+                  <th style="text-align:center; padding:0.5rem; border-right:1px solid #555; min-width:100px;">Element</th>
+                  <th style="text-align:center; padding:0.5rem; border-right:1px solid #555; min-width:100px;">Weakness</th>
+                  <th style="text-align:left; padding:0.5rem; border-right:1px solid #555;">Favored Class (Tier) +3 / Path +5 / Branch +7</th>
+                  <th style="text-align:left; padding:0.5rem;">Averse Class -3</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #444;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Red</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Fire</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Ice</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Sorcerer (Tier) +3 / Path: Wizard +5 / Branch: Fire Breather +7</td>
+                  <td style="padding:0.5rem;">Witch (Norwitch, frost-touched)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444; background-color:#1a1a1a;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Blue</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Ice</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Fire</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Witch (Tier) +3 / Path: Norwitch +5 / Branch: (Frost Branch TBA) +7</td>
+                  <td style="padding:0.5rem;">Sorcerer (Wizard, fire elementalist)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Black</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Shadow</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Lightning</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Strategist (Tier) +3 / Path: Shadow Stalker +5 / Branch: (Shadow Branch TBA) +7</td>
+                  <td style="padding:0.5rem;">Shaman (Primordial, storm elementalist)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444; background-color:#1a1a1a;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>White</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Arcane</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Shadow</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Magic User (Tier) +3 / Path: Mage +5 / Branch: (Arcane Branch TBA) +7</td>
+                  <td style="padding:0.5rem;">Warlock (Grimlock/Necromancer, dark power)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Green</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Poison</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Nature</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Witch (Tier) +3 / Path: BrewMaster +5 / Branch: Green +7</td>
+                  <td style="padding:0.5rem;">Druid (Hyborian, nature-aligned)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444; background-color:#1a1a1a;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Gold</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Nature</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Poison</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Druid (Tier) +3 / Path: Hyborian +5 / Branch: (Nature Branch TBA) +7</td>
+                  <td style="padding:0.5rem;">Witch (BrewMaster, poison brews)</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="race-section-label">Race Culture</p>
+            <p>Scale is Draco Blood work, the overlapping pattern taken directly from their own lineage's hide, and the six bloodlines each finish it differently. It is the one Mould that spread everywhere without its makers ever losing the claim to it. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 8 (+5 growth) | Apex Start 2 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Charisma, +1 Intuition, +1 Defense | -2 Piety, -1 Agility</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Artistry (ART) 2, Vigilance (VIG) 1, Physique (PHY) 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Elemental Aptitude | +2 to rolls, damage, and resistance involving their bloodline's aligned element.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to rolls, damage resistance, and checks against their bloodline's opposing element.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~200 years (Mortal)</p>
+            <p>Starting Age: 50 | Retirement Age: 90 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes (by Bloodline)</p>
+            <p>See Drâco Blood Bloodlines table above. Each bloodline favors a specific Class Tree aligned with its elemental nature, with bonuses scaling from Tier (+3) to Path (+5) to Branch (+7).</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Small companion that shares a Draco Blood's draconic temperament. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Standard-sized companion that fights alongside its Draco Blood owner. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-drow">Drow</h4>
+            <p>Solitary and feared, Drow wield black magic drawn from the earth itself, associated with death, darkness, and hidden power, known to bring disease and nightmares upon those who cross their path. The Underhold runs beneath Nivis and answers to them. Rarely seen by surface-dwellers without intent, an encounter with a Drow is seldom a fortunate one. Descendants of the formidable, spider-blood infused Ancient Drow, a pact broke away thousands of years ago, shedding that lineage over the millennia and becoming what is known today simply as Drow.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Distantly of Fae lineage, the Ancient Drow they descend from broke from that origin generations ago through the pact that reshaped their bloodline, leaving little of it recognizable today.</p>
+            <p>Drow are said to see perfectly in total darkness, treating the deepest cave or moonless night as no obstacle at all, light, when it comes, is the only thing that ever truly inconveniences them.</p>
+            <p>Centuries spent avoiding the surface and its light have left Drow with a reputation that precedes them everywhere they go, most surface-dwellers respond to a Drow with suspicion or open hostility long before they've done anything to earn it.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Drow armament is built to defeat sight and sound before it defeats a blade, matte, jointed, and silent underground. The black magic they work is bound into the material itself as often as cast from it, which is why Drow sets are rarely worn comfortably by anyone else. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 3 (+1 growth) | Apex Start 8 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +1 Wit | -2 Strength, -2 Piety, -1 Charisma</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Intellect (INT) 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Dark Vision | sees perfectly in total darkness, treating the deepest cave or moonless night as no obstacle at all.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made in direct sunlight; light is the only thing that ever truly inconveniences a Drow.</p>
+            <p>-2 to social rolls with surface-dwellers who respond to a Drow with suspicion or open hostility on sight.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Immortal, begins adventuring later and retires later than most races (see Starting Age and Retirement Age below, and Time, pg. 4)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Warlock (Magic) +4 / Path: Bloodlock +4 / Branch: Vampire +6</p>
+            <p>Strategist +5</p>
+            <p>Witch +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Guardian | Mount: Theowarg, a Standard-sized wolf-boar hybrid bred for war, fighting fiercely at a Drow's side and carrying them swiftly through total darkness. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet | Nightcrawler, a Small spider-kin companion descended from the Ancient Drow's bloodline, moving silently through the dark alongside its Drow. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn: Dwarf</div>
+          <div class="race-lineage-label" style="margin:0.8rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.45; padding-left:1rem;">Kinborn</div>
+<div class="race-card">
+            <h4 id="race-dwarf">Dwarf, Common <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Sturdy and resilient, Common Dwarves are known for their craftsmanship, endurance, and hearty nature. They thrive in mountain halls and underground cities, with a mastery of forging, stonework, and deep-earth navigation. Their tough physiques and unwavering determination make them formidable allies and resilient foes.</p>
+            <p>Take a Dwarf out of stone and underground and put them in open water or featureless plains, and that same sharp instinct that reads a cave wall like a book goes quiet, they sink fast and read the wide world poorly, and magic study never quite clicks for them either.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Common Dwarf craft is the baseline the rest of Essentia measures plate and mail against. Solid, matched, made to outlast the wearer and usually to outlast their heir. Where another culture innovates, a Dwarf refines the same pattern for another century. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+2 growth) | Apex Start 3 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+1 Toughness, +1 Dexterity, +1 Constitution, +1 Strength | -1 Charisma, -2 Agility, -1 Wit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 1, PHY 1</p>
+            <hr class="race-divider">
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>+2 to crafting rolls.</p>
+            <p>Stone Sense: detects structural weaknesses, hidden passages, and stone composition at close range. Complex structures may require a Perception check.</p>
+            <p>Dark Vision: sees clearly up to 60 feet in low light. Detects shapes up to 30 feet in near-total darkness. No color in total darkness.</p>
+            <p>+1 Perception (sound or scent).</p>
+            <p>Treasure Sense: passively detects metals, gems, and valuables nearby. General direction only, not precise. Suppressible by magic.</p>
+            <p>Innate Profession: Blacksmith. Begins with Apprentice-LVL expertise.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-3 to swimming rolls. Sinks in deep water without aid.</p>
+            <p>-1 Perception and Intuition in wide, flat, or featureless terrain.</p>
+            <p>-1 to all Ability Rolls when using Spells in arcane Class Trees.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~350 years (Mortal)</p>
+            <p>Starting Age: 88 | Retirement Age: 128 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Avenger (Divine) +4 / Path: Cleric +4 / Branch: Holy +6</p>
+            <p>Overseer +5</p>
+            <p>Barbarian +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Mechanical, a Standard-sized constructed companion built in a Common Dwarf's own forge. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Standard-sized companion that fights alongside its Dwarf owner. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-dwarf-arctic">Dwarf (Arctic)</h4>
+            <p>Arctic Dwarves carved out lives in some of the coldest, least forgiving terrain on the continent, building their halls into glaciers and frozen cliffs where the cold itself becomes a defense against invaders. Generations of exposure have left them nearly impervious to frostbite and biting wind that would cripple softer races.</p>
+            <p>Outsiders who visit Arctic Dwarf holds come away surprised that the cold never seems to slow them down or wear them out, even in storms that would leave anyone else frostbitten within the hour.</p>
+            <p>All that cold resistance comes at the other end of the thermometer, Arctic Dwarves wilt fast in heat and humidity, tiring far quicker than other races the moment the temperature climbs.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Arctic Dwarf work is the only tradition built for weather before war, fur and layered hide over glacier-hall steel. Cold kills faster than an enemy at those elevations, and their armament is honest about the order of those threats. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+2 growth) | Apex Start 3 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Constitution, +1 Warded | -2 Charisma, -2 Agility, -1 Wit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2, RES 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Frost-Hardened | immune to frostbite and biting wind; cold and storms never slow an Arctic Dwarf down or wear them out.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made in heat or humidity; an Arctic Dwarf tires far quicker than other races as the temperature climbs.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~400 years (Mortal)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Warrior (Warrior) +4 / Path: Armorer +4 / Branch: Ironclad +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Draft, a Standard-sized working animal bred to haul loads through ice and frozen cliffs. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Standard-sized companion that helps an Arctic Dwarf hold their frozen hall. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-dwarf-ash">Dwarf (Ash)</h4>
+            <p>Ash Dwarves originate from volcanic regions, most notably from the fiery volcanic pits to the ice-capped peaks of Mt. Grayface, and are uniquely adapted to extreme heat, with bodies resistant to scorching temperatures that allow them to navigate harsh environments with ease. Their ashy-colored skin, a result of their working conditions, gives them their name. Ash Dwarves focus on studying stone and harnessing volcanic properties for smelting steel used in martial combat.</p>
+            <p>Built for fire and forge, Ash Dwarves fare poorly anywhere cold or damp, chill weather stiffens their joints and slows them in a way no amount of stubbornness can shake.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Ash Dwarf armament comes out of volcanic forges and shows it, heat-worked, dark-finished, and heavier than it looks. Their sets are the physical counterpart to Red Dwarf alchemy, the same fire put to labour rather than to study. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+2 growth) | Apex Start 3 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Warded, +1 Strength | -2 Agility, -1 Charisma</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 1, RES 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Forge-Born | bodies resistant to scorching temperatures; immune to heat-based environmental hazards and +2 to rolls involving smelting or forge work.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made in cold or damp conditions; chill weather stiffens an Ash Dwarf's joints and slows their reactions.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~300 years (Mortal)</p>
+            <p>Starting Age: 75 | Retirement Age: 115 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Warrior (Warrior) +4 / Path: Armorer +4 / Branch: Ironclad +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Draft, a Standard-sized working animal that hauls ore and stone through the forge halls. Bond in half the time, -25% upkeep.</p>
+            <p>2. Mechanical, a Standard-sized constructed companion built to withstand an Ash Dwarf's volcanic forges. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-dwarf-red">Dwarf (Red)</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Red Dwarves emphasize fire magic, alchemy, and jewel crafting, relying less on physical labor compared to their Ash Dwarf cousins. While Ash Dwarves master stone and volcanic forging, Red Dwarves are skilled in manipulating fire and its elements, making them natural Sorcerers and alchemists.</p>
+            <p><a href="all-races.html#race-dwarf-red">Continue to full Dwarf (Red) Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn: Elf</div>
+          <div class="race-lineage-label" style="margin:0.8rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.45; padding-left:1rem;">Kinborn</div>
+<div class="race-card">
+            <h4 id="race-elf">Elf (Common) <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Graceful forest dwellers skilled in archery and nature magic, living in harmony with their woodland environment.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Of Fae lineage, the root Elf bloodline, descended from Tenue, through the Veilwood, into Zailister (see Fae, above).</p>
+            <p>An Elf's body simply isn't built for sustained physical strain, and their easy charm falters fast around Ogres, Trolls, and Gnolls, underground, in the dark and confined, that same grace deserts them entirely.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Common Elf armament is built around the bow, cut to leave the draw clean and the step quiet, with nature magic worked into the material rather than layered on afterward. Nothing about it is designed to hold a line. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+1 growth) | Apex Start 8 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +1 Wit | -2 Strength, -2 Toughness, -1 Constitution</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 1, PHY 2</p>
+            <hr class="race-divider">
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>+2 Intuition (sight or sound, outdoors).</p>
+            <p>Nature Sense: passively detects health and mood of nearby flora and fauna. Disturbed nature registers immediately, no roll required.</p>
+            <p>Forest Navigation: cannot become lost in natural environments. Navigation in forests, plains, jungles auto-succeeds.</p>
+            <p>+2 Knowledge (lore, history, ancient events).</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-1 Endurance rolls in physically demanding situations.</p>
+            <p>-1 Charisma when interacting with Ogres, Trolls, Gnolls.</p>
+            <p>-1 to all rolls in caves, mines, or underground environments.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Immortal, begins adventuring later and retires later than most races (see Starting Age and Retirement Age below, and Time, pg. 4)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Marksman (Ranger) +4 / Path: Ranger +4 / Branch: Forest Guardian +6</p>
+            <p>Druid +5</p>
+            <p>Magic User +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Fellowship, a Standard humanoid companion who travels the woodland paths alongside an Elf. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Small songbird suited to an Elf's forest life. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div><div class="race-card faded">
+            <h4 id="race-elf-high">Elf (High)</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Descendants of the Arch Elves, High Elves are versatile spellcasters and ranged combatants with a deep appreciation for knowledge and tradition.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Like all Elves, of Fae lineage, descended from Tenue, through the Veilwood, into Zailister (see Fae, above).</p>
+            <p>High Elves carry themselves with the unhurried confidence of a people who measure time in centuries rather than years. They are said to never forget a face, a name, or a slight, recalling decades-old detail comes to them as easily as recalling yesterday.</p>
+            <p>Centuries of memory cut both ways, a High Elf rarely lets go of an old slight, and grudges that should've faded generations ago still color how they treat certain names and bloodlines.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Mithril is High Elf work, and for it Mould, Grade and Type collapse into a single thing that appears at no other Grade. Their other sets, robes and light ceremonial plate, are made to carry knowledge and rank as much as protection. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+1 growth) | Apex Start 8 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +1 Wit | -2 Strength, -2 Constitution, -1 Deceit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Unfading Memory | never forgets a face, name, or slight; +2 to Knowledge rolls made to recall decades-old detail.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to social rolls with names or bloodlines tied to an old grudge; a High Elf rarely lets go of a slight, however ancient.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Immortal, begins adventuring later and retires later than most races (see Starting Age and Retirement Age below, and Time, pg. 4)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Sorcerer (Magic) +4 / Path: Seer +4 / Branch: Mystic +6</p>
+            <p>Bard +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Fellowship, a Standard humanoid companion who shares a High Elf's long memory and tradition. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Small companion kept for centuries of quiet company. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-emberscale">Emberscale <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Ignis, Standard Size)</span></h4>
+            <p>Cold-blooded reptilian humanoids native to Ignis's ash fields and lava-carved caverns, their scaled hide drinking in heat rather than suffering it. Lean and broad-shouldered, standing a head taller than a Human on average, an Emberscale's scales run in deep ember-red or ash-black, veined with thin seams that glow dull orange when they've basked recently. Their eyes burn a solid, pupil-less amber, and a low ridge of hardened scale runs from brow to the base of a short, blunt tail. They live scattered between the world's wandering fire elementals and golems, and many Emberscale tribes venerate them as kin rather than fear them.</p>
+            <p>An Emberscale resting near an open flame or lava flow doesn't just tolerate the heat, they draw strength from it, recovering faster than they would anywhere cooler.</p>
+            <p>That same body turns sluggish fast the moment the temperature drops, an Emberscale caught in snow or deep cold moves and thinks like someone twice their age.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Emberscale hide drinks heat rather than suffering it, so their tradition is the thinnest on Ignis, worked to shed weight and let the scales do the work. What they do build is heat-forged where Primal work is hand-bound, the two traditions have shared the same ash fields for as long as either remembers, and each has taken from the other. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 8 (+5 growth) | Apex Start 2 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Toughness, +2 Resistance, +1 Constitution | -2 Agility, -1 Wit, -1 Charisma</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2, RES 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Sunbasked | resting within 10 ft. of open flame, lava, or intense heat restores Vitality at double the normal Spirit rate.</p>
+            <p>+2 to Resistance rolls against fire and heat-based hazards; immune to non-magical fire damage from natural heat sources such as lava or open flame.</p>
+            <p>Natural claws deal +1 unarmed damage.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-3 to all rolls in cold or freezing environments; movement speed halved below freezing temperatures unless magically warmed.</p>
+            <p>-2 to social rolls with races unaccustomed to reptilian features.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~120 years (Mortal)</p>
+            <p>Starting Age: 30 | Retirement Age: 70 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Barbarian (Warrior) +4 / Path: Cimmerian +4 / Branch: Bloodrager +6</p>
+            <p>Shaman +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Guardian, a Standard-sized companion that helps an Emberscale hold their ground near the flows. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Small companion drawn from Ignis's ash fields alongside an Emberscale. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-gnoll">Gnoll</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Gnolls live and fight as a pack first, individual second, a lone Gnoll is rare, and rarer still is a happy one. Tribal hierarchy is settled through strength and is rarely questioned once decided.</p>
+            <p><a href="all-races.html#race-gnoll">Continue to full Gnoll Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-helf">Helf (Half-Elf)</h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>Adaptable hybrids inheriting Traits from both humans and elves, excelling in magic, diplomacy, and versatile pursuits.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Half-Elves carry Fae lineage through their Elf parentage, descended from Tenue, through the Veilwood, into Zailister (see Fae, above).</p>
+            <p>Growing up reading two cultures at once has left Helf with a sharp read on people generally, they tend to pick up on a stranger's mood and intent within moments of meeting them, faster than most races raised within a single, familiar culture ever learn to.</p>
+            <p>Belonging fully to neither culture leaves a Helf without a true home in either, they're skilled at reading a room of strangers, but struggle to find one where they're not, on some LVL, still the outsider.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Hybrid gear is Helf work, and the name is not incidental. Two traditions spliced into one kit, elven cut over human hardware or the reverse, made by a people who inherit from both and are fully claimed by neither. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 6 (+1 growth) | Apex Start 2 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +1 Wit | -2 Strength, -2 Toughness, -1 Courage</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Dual Reading | reads a stranger's mood and intent within moments of meeting them; +2 to Insight rolls made on first impressions.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to social rolls seeking full acceptance into either human or elf society; a Helf is skilled at reading a room but always remains, on some LVL, an outsider.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~300 years (Mortal)</p>
+            <p>Starting Age: 75 | Retirement Age: 115 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Strategist (Rogue) +4 / Path: Spellblade +4 / Branch: Shadowblade +6</p>
+            <p>Sorcerer +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Fellowship, a Standard humanoid companion who shares a Helf's footing between two cultures. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Small companion that adapts as easily as its Helf owner. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card">
+            <h4 id="race-human">Human <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>
+            <p>The most versatile of all races, humans are natural communicators, traders, and survivors. Their adaptability has allowed them to establish cultures across every corner of Essentia. Humans carry no separate sub-race, every human shares the same Traits and Stats regardless of upbringing, see Culture, above, for how Omn&egrave;, Nordian, and every other human culture differ in practice rather than in body.</p>
+            <p>No two human settlements look quite alike, and that's the point, whatever the terrain, climate, or culture demands, humans bend to fit it faster than almost any other race, picking up new trades, gods, and customs within a generation or two.</p>
+            <p>Humans carry no innate edge in any one craft or fighting style, leaning instead on raw adaptability, and a human who goes too long without picking up something new starts to lose standing fast, restlessness being as core to them as versatility.</p>
+            <p>That versatility is why Humans are the one race Favored across every single Main Class in the book, no other race carries a bonus this wide, reflecting a Human's ability to pick up any calling and hold their own in it.</p>
+            <p><strong>Human Cultures.</strong> The named Human cultures are the <strong>Nordian</strong>, the <strong>Tanu'la</strong>, the <strong>Xo'kajal</strong>, and the <strong>Eldrim</strong>, alongside the Humans raised among the Omn&egrave;. More are on the way. A culture is not a subrace, every Human holds the same base Traits and Stats whichever one raised them. A Human may also be raised into any culture in Essentia, Human or otherwise, through their Background, and any race may be raised into a Human culture the same way (see <a href="content/essentia_core/rules_ref_002.html#culture">Culture</a>, above).</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Tactical Armor and Tactical Gear are Human work, invented on Zailister and traded everywhere. Modular panels and mounts reconfigured for the job rather than committed at the forge. Humans invented little of it outright, it is dwarven plate cut into panels and Omn&egrave; hardware copied badly and then copied well. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 5 (+2 growth) | Apex Start 5 (+2 growth) <em>(Only race with equal values - baseline for balance)</em></p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+1 Courage, +1 Charisma, +1 Deceit | -1 Toughness, -1 Intuition, -1 Piety</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 1, FRT 1</p>
+            <hr class="race-divider">
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Begin with 2 additional spoken languages. +2 to all language rolls except Demonic, Draconic, and Ancient Primordial (requires a talent or cultural background to learn).</p>
+            <p>+2 to social rolls (negotiation, persuasion, de-escalation).</p>
+            <p>Can learn the first ability in any new Class Tree without seeking a trainer.</p>
+            <p>Once per session, after a failed non-combat roll, may immediately attempt it again with +2 added to the result.</p>
+            <p>Innate Profession: Body Artist. Begins with Apprentice-LVL expertise.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>No race-based bonus to any single Profession, Talent Tree, or armament type.</p>
+            <p>3+ sessions without progressing a Class Tree or Profession: -1 to Prestige rolls until they do.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~80 years (Mortal)</p>
+            <p>Starting Age: 20 | Retirement Age: 60 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Fighter (Warrior) +4 / Path: Hero +4 / Branch: Combatant +6</p>
+            <p>Overseer +5</p>
+            <p>Marksman +5</p>
+            <p>Doom Knight +5</p>
+            <p>Warlock +5</p>
+            <p>Shaman +5</p>
+            <p>Tyrant +5</p>
+            <p>Warrior +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Fellowship, a Standard humanoid companion who travels and trades alongside a Human. Bond in half the time, -25% upkeep.</p>
+            <p>2. Draft, a Standard-sized working animal suited to a Human's adaptable lifestyle. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn: Imperials</div>
+<div class="race-card faded">
+            <h4 id="race-imperials">Imperials <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Tredeki, Standard Size)</span></h4>
+            <p>Humans carrying the lineage of one of five ancient bloodlines, chosen at character creation. Imperials bear innate charisma and a body that shifts its own coloring at will, capable of wielding powerful mind-magic. Imperials favor spells over martial combat, their frail build turning them toward the mind rather than the blade, and every bloodline carries this the same way, only the School it's spent on differs. Their bloodline determines their Favored School, granting a bonus to rolls, damage, and resistance involving their aligned School, and a penalty against its opposite where applicable. The main Imperial bloodline favors Psychic, the future-telling School; every other bloodline favors one face of Psionic instead, Telekinesis, Clairvoyance, Metacreativity, and Psychometabolism each a named discipline within it, alongside Psionic itself, unfocused and general.</p>
+            <div class="race-lineage-label" style="margin:0.8rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.45; padding-left:1rem;">Bloodlines</div>
+            <p>Every Imperial Bloodline is penalised in the Psychic School, the one none of them answers to.</p>
+            <p>Crimson (Telekinesis | penalty: Psychic), Onyx (Clairvoyance | penalty: Psychic), Violet (Metacreativity | penalty: Psychic), Azure (Psionic | penalty: Psychic), Verdant (Psychometabolism | penalty: Psychic).</p>
+            <p>All five share the same random gene pool for hair and eye color, ranging across the full spectrum. During the day, lighter bloodlines blend into their surroundings, and during the night, Onyx does the same. Their native planet is Tredeki, where they are the dominant race. Imperials are chaotic neutral by default, though their alignment is shaped by their culture and where on Tredeki they're from.</p>
+            <p>Imperials can shift the intensity of their natural coloring at will, fading into shadow or blending into a crowd until someone's looking right at them, most outsiders write it off as a trick of the light.</p>
+            <p>That same shifting unpredictability that lets Imperials blend in works against them just as often, few outsiders fully trust someone whose loyalties and appearance are both known to change at will.</p>
+
+            <table style="width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.9rem;">
+              <thead>
+                <tr style="background-color:#2a2a2a; border-bottom:2px solid #666;">
+                  <th style="text-align:left; padding:0.5rem; border-right:1px solid #555;">Bloodline</th>
+                  <th style="text-align:center; padding:0.5rem; border-right:1px solid #555; min-width:100px;">Favored School</th>
+                  <th style="text-align:center; padding:0.5rem; border-right:1px solid #555; min-width:100px;">Weakness</th>
+                  <th style="text-align:left; padding:0.5rem; border-right:1px solid #555;">Favored Class (Tier) / Path / Branch</th>
+                  <th style="text-align:left; padding:0.5rem;">Averse Class</th>
+                </tr>
+              </thead>
+              <tbody>
+
+
+<tr style="border-bottom:1px solid #444; background-color:#1a1a1a;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Crimson</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Telekinesis</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psychic</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Warlock (Tier) +3 / Path: (TBA) +5 / Branch: (TBA) +7</td>
+                  <td style="padding:0.5rem;">(Averse Class TBA)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Onyx</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Clairvoyance</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psychic</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Witch (Tier) +3 / Path: (TBA) +5 / Branch: (TBA) +7</td>
+                  <td style="padding:0.5rem;">(Averse Class TBA)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444; background-color:#1a1a1a;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Violet</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Metacreativity</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psychic</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Bard (Tier) +3 / Path: (TBA) +5 / Branch: (TBA) +7</td>
+                  <td style="padding:0.5rem;">(Averse Class TBA)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Azure</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psionic</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psychic</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Sorcerer (Tier) +3 / Path: (TBA) +5 / Branch: (TBA) +7</td>
+                  <td style="padding:0.5rem;">(Averse Class TBA)</td>
+                </tr>
+                <tr style="border-bottom:1px solid #444; background-color:#1a1a1a;">
+                  <td style="padding:0.5rem; border-right:1px solid #555;"><strong>Verdant</strong></td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psychometabolism</td>
+                  <td style="text-align:center; padding:0.5rem; border-right:1px solid #555;">Psychic</td>
+                  <td style="padding:0.5rem; border-right:1px solid #555;">Druid (Tier) +3 / Path: (TBA) +5 / Branch: (TBA) +7</td>
+                  <td style="padding:0.5rem;">(Averse Class TBA)</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="race-section-label">Race Culture</p>
+            <p>Techmat is Imperial work. Frail by build, with no natural protection and an eye for making, the Imperials answered Omn&egrave;'s manufactured armor with a laminated psi-conductive mat pressed in plies, tuned to carry psionics the way no other TABA does. It is the dominant armament of Tredeki and it stops at Heavy Grade by nature. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 3 (+2 growth) | Apex Start 9 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Charisma, +1 Wit | -2 Constitution, -2 Toughness, -1 Courage</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Artistry (ART) 2, Intellect (INT) 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Chromatic Shift | shifts the intensity of natural coloring at will, fading into shadow or blending into a crowd; +2 to Stealth and Deceit rolls made to avoid notice.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to social rolls building lasting trust; the same shifting unpredictability that lets an Imperial blend in leaves outsiders unsure their loyalties and appearance won't change too.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Immortal, begins adventuring later and retires later than most races (see Starting Age and Retirement Age below, and Time, pg. 4)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes (by Bloodline)</p>
+            <p>See Imperials Bloodlines table above. Each bloodline favors a specific Class Tree aligned with its Favored School.</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Fellowship, a Standard humanoid companion who blends into a crowd alongside an Imperial. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Standard-sized companion that shifts its coloring to match an Imperial's surroundings. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-orcus">Orcus</h4>
+            <p>The Orcus dwell deep beneath the heights of the Tantalizing Mountains in the Grimhold region of Nivis, Zailister's largest continent. Subterranean dwellers who long ago retreated from the sun into deep cavern kingdoms, the Orcus trace their name and lineage to old funerary rites and broken oaths, said to be the cursed inheritors of those who swore false vows over the dead. Generations underground have left their skin pale and sunken, and they carry an old, instinctive hatred of bards and everything they stand for. Humans, Elves, and Dwarves call them "Orcus" | a slanderous outsider's term with no root in Orcus history, used to lump them in with savage stock; no Orcus answers to it without taking offense.</p>
+            <p>Humans, both settlers and of Noble forces, have claimed and fortified the land east of the range and work the mountains as miners, making expeditions there extremely dangerous | miners are frequent targets of Orcus ambushes and raids. Because the humans and nobility in the area are heavily fortified, the Orcus spend most of their time deep under the range, surfacing mainly at the northernmost and highest peaks, where the cliffs are battered by the waves of the Umbra Ocean. Deadtooth Pass is the road both sides need and neither holds for long. War has broken out between the Orcus and the human settlers before, and it will again, once both sides have licked their wounds and resupplied.</p>
+            <p>An Orcus moving through pitch-black tunnels reads the stone the way a sighted creature reads a room, and that same old curse leaves them with an unsettling knack for knowing the moment someone's spoken word becomes a lie | a broken oath rings as loud to an Orcus as a shout in an empty cave.</p>
+            <p>Drag an Orcus out under open sky for too long and that pale, sunken skin starts working against them fast, while the mere sound of a lute or a bard's voice raised in song is enough to set their temper instantly and dangerously short.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Orcus armament is grave-iron and salvaged human steel, hooded against a sun their skin cannot take and deliberately open at the ear so Stonesense is never sealed away. That opening is the culture's trade-off, and against a bard it costs them dearly. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+3 growth) | Apex Start 3 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Strength, +2 Constitution | -2 Charisma, -2 Piety</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Stonesense | navigate and sense movement through solid rock and tunnels without light; immune to underground darkness penalties.</p>
+            <p>Oathsense | instinctively senses when a sworn vow or promise has just been broken nearby; +2 to Insight rolls involving lies tied to oaths or promises.</p>
+            <p>+2 to all rolls made in enclosed, underground, or mining environments.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Sunlight sensitivity | -2 to all rolls during extended exposure to direct sunlight; Stonesense bonuses do not function outdoors.</p>
+            <p>Cannot resist provoked aggression toward Bards | must pass a Composure check to avoid attacking a Bard on sight.</p>
+            <p>-2 to all social rolls with parties aware of the Orcus's cursed lineage.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~180 years (Mortal)</p>
+            <p>Starting Age: 45 | Retirement Age: 85 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Tyrant (Warrior) +4 / Path: Berserker +4 / Branch: Fury +6</p>
+            <p>Doom Knight +5</p>
+            <p>Shaman +5</p>
+            <p>Warlock +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Theowarg, a Standard-sized wolf-boar hybrid draft/mount bred for war. Bond in half the time, -25% upkeep.</p>
+            <p>2. Tunnelmole, a Small burrowing pet that sniffs out ore veins and tunnel collapses before they happen. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-ossein">Ossein <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Hexagonum, Standard Size, Undead)</span></h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>The Ossein died and kept going, and they will tell you the second part is the only part that matters. Skin still covers them, drawn so tight to the frame that every joint reads through it, but it never rotted and it never sloughed, which is the line they draw between themselves and everything else walking Hexagonum. They are not wraiths. They will correct you on that.</p>
+            <p><a href="all-races.html#race-ossein">Continue to full Ossein (Hexagonum, Standard Size, Undead) Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-primal">Primal <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Ignis, Standard Size)</span></h4>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>A prehistoric, tribal people who never adopted metal tools or written language, relying instead on stone, bone, and instinct passed down hunter to hunter across generations on Ignis's ash fields. Tall and lean, built with wiry, corded muscle rather than bulk, with nutmeg-toned skin and coarse, ash-grayed hair worn in tight braids or shaved close to keep it out of a fight, a Primal is easy to pick out of a crowd by their tattoos alone, ash-ink worked into deep charcoal-black lines across the arms, chest, and scalp. They live in scattered bands between the wandering fire elementals and golems that call the world home, reading omens in their movements rather than fearing them. Every scar and kill earns a tattoo, worked into the skin with ash-ink and a bone needle, the most sacred marks are placed where the wearer will never see them, on the back of the skull, meant only for whoever stands behind them.</p>
+            <p><a href="all-races.html#race-primal">Continue to full Primal (Ignis, Standard Size) Race Card</a></p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-skrath">Skrath <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Tredeki, Standard Size)</span></h4>
+            <p>Wiry, fast-moving reptilian humanoids native to the frontiers of Tredeki, sharing the planet with the Leshy but operating nothing like them. Where the Leshy govern through structure and reverence for the land, the Skrath run in loose packs with no formal hierarchy, leadership is earned in the moment and changes fast. Their defining trait is rapid cellular regeneration, wounds that would sideline most races close on a Skrath within minutes. They live short, violent lives and seem fine with it. The Leshy consider them reckless. The Skrath consider the Leshy insufferably slow.</p>
+            <p>A Skrath's wounds rarely slow them down for more than a few minutes, and the pack rarely waits around for the slow ones to catch up.</p>
+            <p>Outside Tredeki, a Skrath's lack of formal rank or title leaves most strangers unsure how to treat them, and a Skrath who tries to claim authority somewhere structured rarely finds anyone willing to recognize it.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Skrath armament is almost nothing, and deliberately. Wounds close on a Skrath within minutes, so weight and coverage cost more than they return, and a pack that does not wait for the slow does not wait for the armored either. Claws serve where a weapon would, and what little they wear is scavenged, rarely matched, and never mended. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +2 Constitution, +1 Toughness | -2 Knowledge, -2 Charisma, -2 Piety</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Rapid regeneration, recover 2 Vitality per round in and out of combat.</p>
+            <p>Natural weapons (claws, bite) deal +2 unarmed damage.</p>
+            <p>+2 to all tracking, ambush, and close-quarters combat rolls.</p>
+            <p>Pack instinct, +1 to all rolls when at least two allies are within melee range.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Cannot hold titles, ranks, or civic roles, no structured authority is recognized.</p>
+            <p>-3 to all social rolls outside of Tredeki.</p>
+            <p>Cannot use heavy armor, too restrictive for their movement style.</p>
+            <p>No affinity for magic study or formal learning.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~40 years (Mortal)</p>
+            <p>Starting Age: 10 | Retirement Age: 50 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Barbarian +5 | Cimmerian +7 | Berserker +9</p>
+            <p>Shaman +5</p>
+            <p>Marksman +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Stormstrider, a Goliath-sized giant feathered plains runner, storm-sensing and built for Tredeki's frontiers. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Standard-sized companion that runs with a Skrath's pack. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+</div>
+      </div>
+
+      <div class="rules-section">
+        <h2 class="subtopic" id="race-section-small">Small Size Races</h2>
+        <p>Small races are typically between 3 to 5 feet tall, characterized by their agility, stealth, and dexterity, making them excellent at sneaking and navigating tight spaces.</p>
+        <p><strong>Base Life:</strong> 40 &nbsp;|&nbsp; <strong>Base Mana:</strong> 40 &nbsp;|&nbsp; <strong>Base Stamina:</strong> 24 &nbsp;|&nbsp; <strong>Base Endurance:</strong> 35 &nbsp;|&nbsp; <strong>Base Speed:</strong> 25 ft. &nbsp;|&nbsp; <strong>Base Carry:</strong> 50 lbs &nbsp;|&nbsp; <strong>Size Bonus:</strong> +1 Agility, +1 Defense &nbsp;|&nbsp; <strong>Size Penalty:</strong> -1 Strength, -1 Toughness</p>
+        <p><strong>Quicker Feet:</strong> Small races move at 25 ft. base speed and can change direction at every 5 ft. square without penalty, cutting corners, reversing course mid-stride, and slipping through gaps in ways larger bodies simply can't follow. When a Small race is on the move, predicting where they're going is half the problem.</p>
+        <p>Small races have the highest Mana pool of any size tier and are the quickest on their feet thanks to Quicker Feet. Their Stamina is lower than Goliath and Standard, and their Life is the lowest, they are not built for prolonged physical punishment. Each race within this tier has its own innate trait bonuses and penalties, Innate Aptitude and Inaptitude, Favored Class Trees, companion affinities, Profession bonuses, Talent Tree preferences, and lifespan. These stack on top of the size base above.</p>
+
+        <div class="race-grid">
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-brownling">Brownling</h4>
+            <p>Charming smallfolk born of Halfling blood and the Brownie Fae race of the wilderness, Brownlings carry slightly pointed ears and an earthy, luminescent complexion that bestows their dual heritage. With deep cultural roots and a gift for artistic expression, they excel in Fae and nature magic, weaving gentle enchantments with ease. Brownlings are also elusive and keen characters making for good rogue and thief roles.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Of Fae lineage through their Brownie Fae parentage, tracing back to Tenue, through the Veilwood, into Zailister, same as Elves (see Fae, above).</p>
+            <p>Although adventurous, Brownlings are naturally reclusive and like being home, and with a touch of magic, tending a woodland or upkeeping a household comes naturally to them. Masters of craftsmanship, upkeep and stealth, little escapes their notice or their hands.</p>
+            <p>That homebound streak runs deep, a Brownling pulled too far or too long from their household or woodland grows visibly anxious, and their craftsmanship suffers the longer they're away from a proper hearth.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Brownling work is Fae-touched smallfolk craft, earthy, light and quietly enchanted more often than not. Little of it is made for war, and what is tends to have been a gift rather than a purchase. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 3 (+1 growth) | Apex Start 7 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Charisma, +1 Knowledge | -2 Strength, -2 Toughness, -1 Intuition</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Artistry (ART) 2, Wisdom (WIS) 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Hearthcraft | gentle Fae-touched skill with craftsmanship, upkeep, and stealth; +2 to rolls made tending a woodland or household.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made far or long from home; a Brownling pulled away from their household or woodland grows visibly anxious.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~150 years (Mortal)</p>
+            <p>Starting Age: 38 | Retirement Age: 78 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Bard (Performer) +4 / Path: Strumalong +4 / Branch: Stroller +6</p>
+            <p>Marksman +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny woodland companion that keeps close to a Brownling's hearth. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Small humanoid companion who shares a Brownling's household and craft. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-drevane">Drevane <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Omn&egrave;, Small Size)</span></h4>
+            <p>The original inhabitants of planet Omne Malum, older than any recorded history on the planet and deeply tied to its ecosystem. When Tawdry Dwarf began its long death and the atmosphere of Omn&egrave; shifted into something hostile, the Drevane did not build around it. They adapted to it. Over generations their bodies absorbed the pressure, hardened against the toxins, and evolved to thrive in conditions that drove the Omn&egrave; settlers into suits. They are watchers and keepers, they remember what Omn&egrave; was before Tawdry started dying and they do not share that knowledge freely. They do not oppose the Omn&egrave;'s construction projects, but they do not help either.</p>
+            <p>A Drevane doesn't need to roll to catch a shift in pressure or a whiff of corrupted air, they simply notice, no test required, where anyone else might roll and miss it entirely.</p>
+            <p>A Drevane's hands were never made for circuitry or machinery, and what they know of Omn&egrave;'s past, they keep close, walk one into a city of steel and glass and watch them grow visibly uneasy, trusting the feel of open ground over anything built.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Drevane armament predates every factory on their own world. As Omn&egrave;'s original inhabitants they built from the ecosystem they are tied to, fibre, resin and shell, and they were wearing it long before TABA existed. Most Drevane now wear Omn&egrave; tech like everyone else, and a Drevane who still works the old organic patterns is making a point about who was there first. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 1 (+0 growth) | Apex Start 4 (+0 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Constitution, +2 Toughness, +1 Intuition | -2 Charisma, -1 Agility, -1 Knowledge</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Vigilance (VIG) 1, Physique (PHY) 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Immune to gas, toxin, and atmospheric hazards native to Omn&egrave;.</p>
+            <p>Thick, hardened skin grants +2 natural Armor Scr. before armor is applied.</p>
+            <p>+2 to all survival and endurance rolls.</p>
+            <p>Passive environmental awareness, can detect atmospheric changes, pressure shifts, and incoming hazards before others register them.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>No affinity for technology or engineered solutions. -2 to all technology and crafting rolls.</p>
+            <p>Do not share knowledge freely, -2 to social rolls involving information exchange with outsiders.</p>
+            <p>Deeply distrustful of artificial structures, -2 in heavily urban or industrial environments.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~900 years (Mortal)</p>
+            <p>Starting Age: 225 | Retirement Age: 265 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Shaman (Mystic) +4 / Path: Primordial +4 / Branch: Whisperer +6</p>
+            <p>Barbarian +5</p>
+            <p>Druid +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Draft, a Standard-sized working animal hardened against Omnè's hostile atmosphere alongside a Drevane. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Standard-sized companion that helps a Drevane keep watch over Omnè's old ecosystem. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-dwarf-glimmerstone">Dwarf (Glimmerstone)</h4>
+            <p>Glimmerstone Dwarves are renowned as Master miners and treasure hunters, with an exceptional talent for uncovering hidden gems and enchanted materials deep within the earth. Their keen senses and innate connection to the mineral veins allow them to detect valuable deposits that others might overlook. They possess an Aptitude called "Mineral Instincts," which enables them to sense the origins and true potential of the materials around them.</p>
+            <p>Glimmerstone blood runs part dwarf, part Fae, a lineage struck generations back somewhere in the deepest veins they still mine today. That Fae inheritance shows in short, uncanny bursts of speed, a Glimmerstone Dwarf vanishing from one spot for a heartbeat before reappearing already standing in another.</p>
+            <p>Additionally, they have a skill called "Greed," which involves marking a target so that as it is defeated, it yields increased chances of Rare treasures and enchanted loot. While they excel at hunting for materials, these Dwarves prefer the thrill of discovery over crafting, focusing their skills on unearthing the most valuable resources. This combination of instincts and the active "Greed" effect gives them a significant edge in exploration and resource gathering, helping them uncover the game's most coveted treasures with ease.</p>
+            <p>That instinct for treasure cuts both ways, a Glimmerstone Dwarf finds it almost physically difficult to walk past unclaimed valuables, even when doing so is clearly the smarter call. Their greed is not subtle, and it does not stop at outsiders, Glimmerstone Dwarves haggle, needle, and undercut one another over a single gem with the same unattractive hunger they'd show a stranger, kinship counts for little once coin or treasure is on the table. What keeps that hunger from costing them everything is the charm to back it up, Glimmerstone Dwarves are natural schmoozers and superb barterers, talking a fair price down to a steal with a smile the other party doesn't realize they should distrust. It helps that they're cute, round faces and bright eyes that put strangers at ease, and that cuteness is deceptive, underneath it Glimmerstone Dwarves are mean, calculating people who've learned to perform charm rather than feel it, all the better to close a deal.</p>
+            <p>Glimmerstone Dwarves favor light or delicate armor over their kin's heavier plates, trading protection for the speed and reach their treasure-hunting demands. On their feet they wear only cobblers of their own making, wooden shoes carved rather than stitched, shaped with the same sculpting tools they turn to art and ornament. A well-made pair never wears out, and a Glimmerstone Dwarf takes more pride in their cobblers than in almost anything else they own, save perhaps whatever treasure they haven't found yet.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Glimmerstone Dwarves draw ring and wire finer than any other people, and chain in all its forms is their work. Master miners fund master metallurgy, and what they do not wear they trade, which is why mail is everywhere and plate is not. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+2 growth) | Apex Start 3 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Intuition, +3 Deceit, +2 Charisma | -2 Piety, -1 Agility, -1 Defense</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 3, VIG 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Mineral Instincts | senses the origins and true potential of nearby materials; +2 to rolls made to locate hidden gems or enchanted materials underground.</p>
+            <p>Greed | marks a defeated target, yielding increased chances of Rare treasure and enchanted loot.</p>
+            <p>Glimmer Step | Fae-blooded burst of speed, vanishing for a moment before reappearing several feet away at any spot within sight, once per encounter.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Cannot pass unclaimed valuables without attempting to investigate or claim them, even against better judgment.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~400 years (Mortal)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p>Starting Gold: 150 (see Starting Equipment, pg. 2)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Strategist (Rogue) +4 / Path: Rogue +4 / Branch: Recon +6</p>
+            <p>Magic User +5 | Trickster +7</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Small companion with a knack for sniffing out hidden gems alongside its Glimmerstone Dwarf owner. Bond in half the time, -25% upkeep.</p>
+            <p>2. Draft, a Standard-sized working animal that hauls a Glimmerstone Dwarf's mining hauls. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-dwarf-snow">Dwarf (Snow)</h4>
+            <p>Snow Dwarves carved their halls into the same icy peaks as their Arctic cousins, but lean harder into raw endurance than magic or craft, content to outlast a storm rather than out-think it.</p>
+            <p>A Snow Dwarf can march or labor through blizzard conditions that would exhaust or injure other races, shrugging off cold and fatigue that should slow them down.</p>
+            <p>Snow Dwarves lean so hard on raw endurance that magic and fine craft never really took root for them, spellwork and delicate trades come slower and harder to a Snow Dwarf than to nearly any other race.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Snow Dwarves lean on endurance where their Arctic cousins lean on craft, so their armament is plainer, heavier and worn longer between repairs. Function to the point of severity. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+2 growth) | Apex Start 3 (+2 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+1 Constitution, +1 Resistance (cold), +1 Toughness | -2 Charisma, -2 Agility, -1 Intuition</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Physique (PHY) 1, RES 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Endure the Storm | marches or labors through blizzard conditions without exhaustion or injury; +2 to Endurance rolls in extreme cold.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls involving spellwork or delicate trades; magic and fine craft come slower and harder to a Snow Dwarf than to nearly any other race.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~400 years (Mortal)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Barbarian +5 | Mountaineer +7 | Amazon +9</p>
+            <p>Witch +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Draft, a Small working animal that hauls supplies through blizzard conditions. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Small companion that helps a Snow Dwarf outlast a storm. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-elf-sylvan">Elf (Sylvan)</h4>
+            <p>Sylvan Elves live deeper in the wild than their Common Elf kin, rarely settling anywhere long enough to be called a town, their dwellings are little more than the trees and hollows they pass through on a given season.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Like all Elves, of Fae lineage, descended from Tenue, through the Veilwood, into Zailister (see Fae, above).</p>
+            <p>A Sylvan Elf can hold a quiet conversation with the forest itself, sensing the mood of nearby plants and animals and reading subtle warnings, a storm coming, a predator near, long before anyone else notices.</p>
+            <p>A Sylvan Elf's whole life is tuned to the wild, open forest, long stretches indoors or in built-up cities leave them restless and noticeably duller in their senses than they are under open sky.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Sylvan Elves live too far out to resupply, so their armament is cured hide worked quiet and repaired from the forest itself. Leather and studded work is theirs, and it travels better than anything a settled people makes. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+1 growth) | Apex Start 8 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+3 Agility | -3 Strength, -1 Toughness, -1 Deceit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 3</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Wildtouch | senses the mood of nearby plants and animals, reading subtle warnings of storms or predators before anyone else notices.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made indoors or in built-up cities; a Sylvan Elf grows restless and noticeably duller in their senses away from open sky.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Immortal, begins adventuring later and retires later than most races (see Starting Age and Retirement Age below, and Time, pg. 4)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Druid (Nature) +4 / Path: Hyborian +4 / Branch: Rager +6</p>
+            <p>Barbarian +5</p>
+            <p>Witch +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Small songbird at home under the open sky a Sylvan Elf needs. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Standard-sized companion that watches over a Sylvan Elf's open forest. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-gnome">Gnome</h4>
+            <p>Gnomes treat every locked door, broken machine, or half-finished contraption as a personal challenge, rarely able to walk past one without stopping to tinker. Their burrows honeycomb the Rooted Hollows. Their small, wrinkled faces carry an almost mole-like look, a soft, blunted snout and squinted, light-sensitive eyes suited to long hours spent tinkering underground.</p>
+            <p>A Gnome can take apart and reassemble most mechanical devices on sight, often improving on the original design without meaning to, though just as often leaving it rigged with an unplanned side effect.</p>
+            <p>A Gnome can't walk past a broken lock or stalled contraption without stopping to fix it, no matter the timing, and their hands were never built to swing anything heavier than a wrench, subtlety in conversation fares about as well, since they tend to interrupt to explain how something works.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Gnomish armament is a contraption before it is a defence, hinged, catch-fitted and full of ideas that mostly work. No two sets are alike because no Gnome has ever finished improving one. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+2 growth) | Apex Start 9 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+3 Wit, +1 Deceit | -5 Strength</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 1, Intellect (INT) 3</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Speak with burrowing Flora (such as fungi) and Fauna (such as small burrowing animals). Passive, no roll required for basic communication; complex exchanges may require a Wit check at GM discretion.</p>
+            <p>Flora and Fauna Handling: naturally adept at caring for, calming, and handling plants and animals. No roll required for non-hostile creatures in calm conditions; reduces handling difficulty for agitated or exotic creatures.</p>
+            <p>Artist: gifted in all articulate arts, intricate craftsmanship, music, and illusionary expression. +2 to rolls involving fine art, performance, and illusion-based magic or trickery.</p>
+            <p>Engineering Prowess: +1 to all mechanical interactions, devices, traps, constructs, locks, and engineered systems.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Compulsive tinkering, cannot leave a broken device, lock, or mechanism alone without attempting to fix it, even mid-mission.</p>
+            <p>-2 to all Strength-based rolls; cannot wield Standard or larger 2h weapons.</p>
+            <p>-2 to social rolls requiring patience or subtlety, Gnomes tend to interrupt to explain how something works.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~400 years (Mortal)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Bard (Performer) +4 / Path: Strumalong +4 / Branch: Plucker +6</p>
+            <p>Magic User +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Mechanical, a Small constructed companion a Gnome tinkers with constantly. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Tiny burrowing companion drawn to a Gnome's mole-like senses. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-goblorc">Goblorc</h4>
+            <p>Goblorcs combine a goblin's quick mind with an orc's brute frame, building war camps that run on cleverness as much as muscle, the smartest goblorc in a camp usually outranks the strongest.</p>
+            <p>A Goblorc can read a battlefield or a building's layout in moments, instinctively spotting where a trap, ambush, or shortcut would work best, often before they've even finished walking it.</p>
+            <p>A Goblorc's cleverness rarely earns trust from either side of their bloodline, orcs see them as too small and sly to lead from the front, while goblins see them as too brutish to out-think a real plan, leaving most Goblorcs without a clear place in either society's hierarchy.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Goblorc war camps run on cleverness as much as muscle, and their armament shows both, orcish bulk assembled to a goblin's plan. Scavenged, cleverly re-fitted, and better than it has any right to be. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 3 (+1 growth) | Apex Start 7 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Deceit, +1 Knowledge | -2 Courage, -2 Charisma</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 2, WIS 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Tactical Eye | reads a battlefield or building's layout in moments, spotting where a trap, ambush, or shortcut would work best; +2 to Tactician-style planning rolls.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to social rolls with both Goblins and Orcus; a Goblorc's cleverness rarely earns trust from either side of their bloodline.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~80 years (Mortal)</p>
+            <p>Starting Age: 20 | Retirement Age: 60 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Strategist (Rogue) +4 / Path: Rogue +4 / Branch: Assassin +6</p>
+            <p>Witch +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Guardian, a Small companion that fights alongside a Goblorc in the war camp. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Tiny companion that helps a Goblorc scout a layout before a raid. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+                    <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card">
+            <h4 id="race-halfling">Halfling <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>
+            <p>Halflings build their lives around comfort, community, and staying just out of the way of bigger trouble, their hidden burrows and villages are easy to walk past without ever noticing they're there.</p>
+            <p>Halflings seem to have an uncanny knack for things simply working out in their favor, a missed step, a lucky find, a fight avoided by seconds, more often than chance alone would explain.</p>
+            <p>A Halfling's small frame keeps anything built for bigger hands out of reach, and the same size means they carry less before it starts to weigh them down, trying to command respect from someone twice their height rarely lands the way they'd hoped.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Halflings build for comfort and for staying out of the way, so their armament is light, quiet and easy to live in for a long day. What protection there is has been argued into the design rather than the other way around. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+1 growth) | Apex Start 2 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+1 Agility | -2 Strength, -2 Toughness, -1 Intuition</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">Vigilance (VIG) 2, PHY 1</p>
+            <hr class="race-divider">
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Reroll one failed non-combat roll per session. Result stands. Additional rerolls available through the Luck talent in the Leprechaun Talent Tree.</p>
+            <p>+2 Stealth (outdoors, rural). Leaves minimal tracks passively.</p>
+            <p>Locate food and water in the wild. No roll in abundant areas; reduced Perception check in harsh terrain.</p>
+            <p>+2 Courage (fear, intimidation, panic).</p>
+            <p>Innate Profession: Tinker. Begins with Apprentice-LVL expertise.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Cannot use 2h weapons designed for Standard or larger races without specific class abilities.</p>
+            <p>Carry limit at half standard weight before encumbrance.</p>
+            <p>-1 Intuition when projecting authority to Standard or larger races who don't know them.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~130 years (Mortal)</p>
+            <p>Starting Age: 32 | Retirement Age: 72 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Strategist (Rogue) +4 / Path: Rogue +4 / Branch: Shroud +6</p>
+            <p>Bard +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny companion that finds food and shelter alongside a Halfling. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Small humanoid companion who shares a Halfling's burrow and community. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-hobbling">Hobbling</h4>
+            <p>Hobblings carry a hobgoblin's discipline and a halfling's nerve, training from a young age to fight in tight coordination rather than relying on size or strength alone.</p>
+            <p>A Hobbling moves and strikes with an economy other races spend years drilling for, slipping past a guard's reach and landing a hit in the same motion, then vanishing back out of range before retaliation comes.</p>
+            <p>Hobblings train constantly for coordinated combat and little else, left without allies to fight alongside, or facing a problem that isn't solved by a fight, a Hobbling is often at a genuine loss.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Hobbling gear is issued rather than chosen, matched across a unit and made to be fought in shoulder to shoulder. Hobgoblin discipline in a halfling frame, and the only smallfolk tradition that looks like an army's. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +1 Dexterity | -2 Strength, -2 Charisma, -1 Intuition</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Drilled Coordination | strikes and withdraws in a single fluid motion alongside allies; +2 to combat rolls made while fighting in coordination with at least one ally.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made when fighting alone or facing a problem that isn't solved by combat.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~80 years (Mortal)</p>
+            <p>Starting Age: 20 | Retirement Age: 60 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Fighter (Warrior) +4 / Path: Brawler +4 / Branch: Unarmed +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Fellowship, a Small humanoid companion who fights in coordination alongside a Hobbling. Bond in half the time, -25% upkeep.</p>
+            <p>2. Pet, a Tiny companion that keeps a Hobbling steady between fights. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-miceling">Miceling</h4>
+            <p>Micelings are natural contortionists, twisting and folding themselves through gaps and crawlspaces no bigger than a fist, spaces built to keep every other race out.</p>
+            <p>Micelings have sharp senses both above and below ground, rarely losing their way, they have an uncanny knack for finding the way out of a maze, ruin, or collapsed tunnel, and even seem to puzzle out riddles and traps faster than expected (ask the GM for a hint). They have Dark Vision and speak both Common and Burrowing Animal, their native tongue.</p>
+            <p>Built to fold through gaps no bigger than a fist, Micelings are fragile in the open, a solid hit lands harder on them than it would most other races, and there's nowhere to wedge themselves out of the way in a straight fight.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Micelings need to fold through gaps no bigger than a fist, which rules out almost everything. Their armament is soft-jointed and shed-able, built to be abandoned in a crawlspace and recovered later rather than to be fought in. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+0 growth) | Apex Start 3 (+0 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+3 Willpower, +2 Dexterity, +1 Wit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 2, INT 3</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Fistgap Squeeze | folds and twists through gaps and crawlspaces no bigger than a fist; +2 to escape and infiltration rolls in tight spaces.</p>
+            <p>Tunnelwise | rarely loses their way below or above ground; +2 to rolls made finding a path out of a maze, ruin, or collapsed tunnel, and to solving riddles and traps.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to Toughness-based rolls absorbing a solid hit; a Miceling's small frame takes harder damage than most other races from the same blow.</p>
+            <p>-2 to all rolls made in a straight, open fight with nowhere to wedge out of the way.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~60 years (Mortal)</p>
+            <p>Starting Age: 15 | Retirement Age: 55 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Strategist (Rogue) +4 / Path: Rogue +4 / Branch: Shroud +6</p>
+            <p>Magic User +5</p>
+            <p>Marksman +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny burrowing companion that fits the same fist-sized gaps a Miceling does. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Small humanoid companion who navigates tunnels and ruins alongside a Miceling. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-neanderthal">Neanderthal <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Glaciera)</span></h4>
+            <p>Neanderthals are built for endurance over speed, heavy-boned, broad-shouldered, and built to take a hit rather than dodge one. Generations surviving Glaciera's brutal mountain cold left them practical and plainspoken, more interested in what works than what's clever.</p>
+            <p>Cold that would drop another race in their tracks barely slows a Neanderthal down, and that same hardiness holds against nearly anything else thrown at them, fire, frost, acid, lightning barely faze a Neanderthal where they'd stagger someone else outright.</p>
+            <p>All that raw endurance comes at the cost of finesse, Neanderthals are slow to pick up anything that calls for precision or subtlety, and a delicate task takes them noticeably longer than it would almost any other race.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Neanderthal work is heavy-boned like its wearers, built to take a hit rather than avoid one, hide and bone over a frame that hardly needs the help. Close cousin to Primal work, and old enough that the resemblance may not be coincidence. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 8 (+2 growth) | Apex Start 3 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Strength, +2 Toughness, +1 Constitution | -2 Agility, -1 Charisma, -1 Wit</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Cold-Forged | cold that would drop another race in their tracks barely slows a Neanderthal down; +2 to resist fire, frost, acid, and lightning hazards that would stagger most other races outright.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls requiring precision or subtlety; a delicate task takes a Neanderthal noticeably longer than it would almost any other race.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~60 years (Mortal)</p>
+            <p>Starting Age: 15 | Retirement Age: 55 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Barbarian (Warrior) +4 / Path: Mountaineer +4 / Branch: Predator +6</p>
+            <p>Warrior +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Guardian, a Small companion that fights alongside a Neanderthal in Glaciera's cold. Bond in half the time, -25% upkeep.</p>
+            <p>2. Draft, a Small working animal bred to endure the same mountain cold. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-omne">Omn&egrave; <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Omne Malum, Small Size)</span></h4>
+            <p>The oldest known human development in Essentia, an ancient sub-human civilization that settled on planet Omne Malum, Omn&egrave; in short, long before recorded history. Although part Human, the Omn&egrave; are a race on their own, they share human blood. So far from Adoria that magic never took root, they built their survival entirely through technology. As the dying star Tawdry Dwarf deteriorates, the conditions it once sustained across planets 8 through 13 have collapsed into hostile atmospheres and environmental decay. On Omn&egrave;, this forced the population into sealed pressure suits outside pressurized habitats, and accelerated a desperate technological arms race, including the construction of a synthetic planet and surrounding protection barrier designed to shield Omn&egrave; from Tawdry's fall and filter the encroaching gases. It is this slow extinction that drove the Omn&egrave; into the invasion of Zailister. See <em>Tawdry Dwarf &amp; Beyond</em> for more.</p>
+            <p>Omn&egrave; troubleshooting starts and ends with hard data, faced with a sealed door or a failing system, they'll run a diagnostic before they'd ever think to pray.</p>
+            <p>Magic simply never took root in an Omn&egrave;, not a spark of it, suit or no suit, and step outside a pressurized habitat without that suit sealed and their body starts failing fast; put them anywhere wild and unbuilt and they're badly out of their depth.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>The TAA family, TABA, TAW and TAG, is Omn&egrave; work and the oldest continuous manufacturing tradition in Essentia. A world that developed without magic had to build every advantage it has, and every other culture has since tried to copy the result. It carries a cost premium wherever it is sold. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Knowledge, +1 Wit | -2 Piety, -1 Strength, -2 Intuition</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 1, WIS 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>+3 to all technology, engineering, and crafting rolls.</p>
+            <p>Pressure suit grants passive resistance to environmental hazards (gas, toxin, extreme temperature).</p>
+            <p>+2 to Knowledge-based skill checks.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Cannot cast magic, no affinity whatsoever. Magic items can still be used.</p>
+            <p>Pressure suit must be equipped in all non-pressurized environments or Constitution drops by 2 per turn.</p>
+            <p>-3 to all nature, wilderness, and foraging rolls.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Varies (Mortal or Immortal depending on subtype)</p>
+            <p>Starting Age and Retirement Age vary by subtype (see Time, pg. 4).</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Tyrant (Warrior) +4 / Path: Demolisher +4 / Branch: Rampager +6</p>
+            <p>Marksman +5</p>
+            <p>Magic User +5</p>
+            <p>Warrior +5</p>
+            <p>Witch +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Mechanical, a Standard-sized constructed companion built by Omnè engineering. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Standard humanoid companion who shares a sealed habitat alongside an Omnè. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-pinkling">Pinkling</h4>
+            <p>Pinklings are unmistakable for their pink-hued skin and an even harder to mistake reputation, wherever something has gone missing or someone's been fooled, a Pinkling is usually involved, and rarely caught.</p>
+            <p>A Pinkling can talk their way past nearly anyone once, spinning a lie convincing enough that even a suspicious mark tends to believe it the first time around.</p>
+            <p>A Pinkling's reputation eventually catches up with them, word travels, and once a town's heard enough stories, even their best lie struggles to land with anyone who's heard the name before.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Pinkling armament is whatever was not being watched closely enough. Rarely matched, frequently someone else's, and worn with a confidence that discourages questions about the provenance. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 7 (+1 growth) | Apex Start 3 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Deceit, +1 Agility | -1 Strength, -4 Toughness, -3 Piety</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 2, PHY 1</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>First Mark | talks their way past nearly anyone the first time; +2 to Deceit rolls made spinning a lie on a mark with no prior reputation against them.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to social rolls in any town or with any mark who has already heard a Pinkling's name; their reputation for trickery follows and undercuts even their best lie.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~120 years (Mortal)</p>
+            <p>Starting Age: 30 | Retirement Age: 70 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Warlock (Magic) +4 / Path: Grimlock +4 / Branch: Changeling +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny companion that slips through town unnoticed alongside a Pinkling. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Small humanoid companion who helps a Pinkling work a con. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-ratkin">Ratkin</h4>
+            <p>Ratkin are good back-stabbers, both literally and figuratively, sneaking past a guard or sneaking into someone's confidence come just as naturally to them, and either one usually ends the same way for whoever let them get close. Dead Man's Wharf and Pirate's Bay run on their trade.</p>
+            <p>Ratkin see clearly in total darkness and move with practiced ease through sewers, tunnels, and crypts, their senses sharpening underground, making them some of the best dungeon crawlers around. They have Dark Vision and speak both Common and Rodent, their native tongue.</p>
+            <p>Ratkin earn deep distrust everywhere they go before they've said a word, their reputation for treachery follows them into every new town, and it takes real effort to convince anyone otherwise.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Ratkin gear is built for the approach and the exit, not the middle, soft-soled, low-profile, and shed fast if the exit needs to be faster. A Ratkin in heavy plate has misjudged the job. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+1 growth) | Apex Start 7 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +2 Dexterity, +1 Wit | -3 Willpower, -3 Charisma</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">ART 2, INT 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Dark Vision | sees clearly in total darkness; moves with practiced ease through sewers, tunnels, and crypts. +2 to Stealth rolls made underground.</p>
+            <p>+2 to Deceit rolls made sneaking into someone's confidence.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all social rolls on first meeting; a Ratkin's reputation for treachery follows them into every new town before they've said a word.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: ~50 years (Mortal)</p>
+            <p>Starting Age: 12 | Retirement Age: 52 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Witch (Mystic) +4 / Path: BrewMaster +4 / Branch: Shrew +6</p>
+            <p>Marksman +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny rodent companion at home in sewers and tunnels alongside Ratkin. Bond in half the time, -25% upkeep.</p>
+            <p>2. Guardian, a Small companion that watches a Ratkin's back in the dungeon dark. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-wood-elf">Wood Elf</h4>
+            <p>Wood Elves keep to the deep canopy and undergrowth, smaller and quieter than their Common Elf kin, content to let a forest hide them rather than relying on open confrontation.</p>
+            <div class="race-lineage-label" style="margin:0.4rem 0 0.3rem; font-size:0.72rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.5;">Fae Descent</div>
+            <p>Like all Elves, of Fae lineage, descended from Tenue, through the Veilwood, into Zailister (see Fae, above).</p>
+            <p>A Wood Elf moves through dense brush and forest canopy without snagging a branch or breaking a twig, vanishing into foliage that would slow or expose anyone else.</p>
+            <p>A Wood Elf's whole skillset assumes cover and canopy, caught in open ground or built-up city streets with nowhere to disappear into, they're noticeably less sure-footed and far easier to spot than they're used to.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Wood Elves let the forest do the hiding, so their armament is lighter and quieter even than Sylvan work, mottled to the canopy and made from it. The smallest and least martial of the elven traditions. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 6 (+1 growth) | Apex Start 3 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Agility, +1 Wit | -2 Strength, -2 Toughness, -1 Constitution</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 1, PHY 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Canopy Step | moves through dense brush and forest canopy without snagging a branch or breaking a twig; +2 to Stealth rolls made in foliage and undergrowth.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>-2 to all rolls made in open ground or built-up city streets; a Wood Elf's whole skillset assumes cover and canopy that isn't there.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: Immortal, begins adventuring later and retires later than most races (see Starting Age and Retirement Age below, and Time, pg. 4)</p>
+            <p>Starting Age: 100 | Retirement Age: 140 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Marksman (Ranger) +4 / Path: Ranger +4 / Branch: Wood Warden +6</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny songbird that nests in the deep canopy alongside a Wood Elf. Bond in half the time, -25% upkeep.</p>
+            <p>2. Fellowship, a Small humanoid companion who moves through the undergrowth alongside a Wood Elf. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+          <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:0.55;">Firstborn</div>
+<div class="race-card faded">
+            <h4 id="race-yawnie">Yawnie</h4>
+            <p>Yawnies move and speak slowly by nature, but mistaking that for weakness comes at a cost, their patience runs deep, and little seems to rattle or hurry them once they've settled into stillness.</p>
+            <p>A Yawnie can hold absolute stillness for hours at a stretch, becoming nearly impossible to spot by sight or motion alike as long as they don't choose to move.</p>
+            <p>A Yawnie simply doesn't have another gear to shift into, no spell, talent, or emergency ever makes them move faster than a walk, and anything that demands a snap decision under pressure tends to catch them flat-footed.</p>
+            <p class="race-section-label">Race Culture</p>
+            <p>Yawnie work is slow-made and made once, heavy, patient and unhurried in every line, by a people who see no reason to rush a thing that has to last. Little rattles a Yawnie, and their armament is built on the same assumption. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
+            <p class="race-section-label">Spirit &amp; Apex</p>
+            <p class="trait-tag">Spirit Start 2 (+1 growth) | Apex Start 8 (+1 growth)</p>
+            <p class="race-section-label">Innate Trait Adjustments</p>
+            <p class="trait-tag">+2 Focus | -2 Agility, -2 Strength, -1 Knowledge</p>
+            <p class="race-section-label">Starting ATTR Floor</p>
+            <p class="trait-tag">INT 2</p>
+            <p class="race-section-label">Innate Aptitude</p>
+            <p>Crawl speed: 5 ft. (flat, ignores standard 1/4x penalty).</p>
+            <p>Climb speed: 5 ft. (flat, ignores standard 1/2x penalty).</p>
+            <p>Swing: +10 ft. bonus on top of standard swing speed.</p>
+            <p class="race-section-label">Innate Inaptitude</p>
+            <p>Cannot Sprint, Run/Dash, or otherwise exceed normal Walk speed under any circumstance, no ability, talent, or magic overrides this cap.</p>
+            <p>-2 to all rolls requiring urgency or quick reaction under time pressure.</p>
+            <hr class="race-divider">
+            <p class="lifespan-tag">Lifespan: 300+ years (Mortal, slow metabolism)</p>
+            <p>Starting Age: 75 | Retirement Age: 115 (see Time, pg. 4)</p>
+            <p class="race-section-label race-favored">Favored Classes</p>
+            <p>Druid (Nature) +4 / Path: Dreamcryer +4 / Branch: Lorekeeper +6</p>
+            <p>Marksman +5</p>
+                        <p class="race-section-label race-favored">Favored Companions</p>
+            <p>1. Pet, a Tiny companion as unhurried and patient as a Yawnie. Bond in half the time, -25% upkeep.</p>
+            <p>2. Draft, a Small working animal that matches a Yawnie's slow, steady pace. Bond in half the time, -25% upkeep.</p>
+            <p>Refer to Specific Companion Cards for default Races they dislike.</p>
+          </div>
+</div>
+      </div>
+
+      
+
+      <div class="rules-section">
+        <h2 id="forbidden-races" class="chapter">Forbidden Races</h2>
+        <p>Essentia is walked by a great deal more than the playable roster. A Forbidden Race is a people, a war body, or a power that holds ground somewhere in the thirteen planets and is closed to Players. A Character is never built from one. They are written here so a GM knows what is out there, and so a Player recognises what has just come over the ridge.</p>
+        <p>This is a growing list. GMs and future Modules are expected to add to it.</p>
+
+        <h3 id="legion-forms">Legion Forms</h3>
+        <p>A people that marshals for war fields a <strong>Legion form</strong>, named by placing its Legion title in front of the race. The titles in use are <strong>Hell</strong>, <strong>Uber</strong>, <strong>Mighty</strong>, <strong>Elite</strong>, <strong>Burrowing</strong>, and <strong>Fiendish</strong>, as in Hell Orcus, Elite Ogres, and Burrowing Gnomes.</p>
+        <p>A Legion title names the war body a people puts in the field, not a separate people. The race underneath it is unchanged, and no Legion form is playable.</p>
+
+        <h3 id="the-wars">The Wars</h3>
+        <p><strong>The Ends War.</strong> Dozens of races met on Zailister, technology against magic, across every continent it could reach.</p>
+        <p><strong>The Purge.</strong> Invaders out of El&egrave; Quint and Omn&egrave; came for Zailister's four sovereign territories and were driven back. The Purge Forces still hold their alliances, and the prophecy of the crowns runs the age that followed.</p>
+
+        <h3 id="powers-and-hosts">Powers and Hosts</h3>
+        <p><strong>The Omn&egrave; Astral Cabal Empire.</strong> The arm of Omn&egrave; that invaded Corpus Caeleste and took the Caelen by the millions. The Caelen fought back, took Cabal vessels off them, and the Cabal has not forgotten it.</p>
+        <p><strong>The Omn&egrave; war ranks.</strong> The Overlord commands, the Dark Warlords carry the legions, the Shadow Knights do the quiet work. None is a race. Each is a station an Omn&egrave; is raised to.</p>
+        <p><strong>The Futurem of Undeximus.</strong> A technocratic people of the eleventh planet, allied with the Tredeki and at war with the Omn&egrave;. Although part Human, the Futurem are a race on their own, they share human blood.</p>
+        <p><strong>The Tredeki of Tredeki.</strong> The people of the thirteenth planet, masters of the mind and the coldest world's technology. Although part Human, the Tredeki are a race on their own, they share human blood.</p>
+
+        <h3 id="notable-non-playable">Notable Peoples and Things</h3>
+        <p>Drawn from the Tomes, and closed to Players.</p>
+        <ul>
+          <li><strong>Forsworn, Nefertari, Legendary Scions.</strong> Mythical and neutral powers of Zailister, standing outside the crowns.</li>
+          <li><strong>Dragons.</strong> Their blood runs in the Dr&#257;co Blood. They themselves are not played.</li>
+          <li><strong>Necrotic Wraiths.</strong> Undead of Zailister, counted among the mythical rather than the risen.</li>
+          <li><strong>Vanwa, Darklings.</strong> Neutral peoples of Zailister with no roster entry.</li>
+          <li><strong>Golems and fire elementals.</strong> Native to Glacies et Ignis, wandering its ash fields alongside the Emberscale and the Primal.</li>
+          <li><strong>Ghosts, aberrations, and spiritual entities.</strong> The population of Corpus Caeleste that the Caelen share their world with.</li>
+          <li><strong>The natives of Varanis and Krakus.</strong> The moons of Omn&egrave; Malum, holding what ground the Omn&egrave; have not built over yet.</li>
+        </ul>
+      </div>
+    </main>
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><a href="content/essentia_core/rules_ref_001.html">pg. 1</a></li>
+      <li><a href="content/essentia_core/rules_ref_002.html">pg. 2</a></li>
+      <li><a href="content/essentia_core/rules_ref_003.html">pg. 3</a></li>
+      <li><a href="content/essentia_core/rules_ref_004.html">pg. 4</a></li>
+      <li><a href="content/essentia_core/rules_ref_005.html">pg. 5</a></li>
+      <li><a href="content/essentia_core/rules_ref_appendix.html">pg. 6</a></li>
+      <li><a href="content/essentia_core/rules_ref_006.html">pg. 7</a></li>
+    </ul>
+    <div id="footer"></div>
+  </div>
+  <script src="nav.js?v=2"></script>
+  <script src="main.js?v=26"></script>
+  <script src="play-style.js?v=5"></script>
+</body>
+</html>
