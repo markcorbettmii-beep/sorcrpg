@@ -1714,7 +1714,7 @@ const ASSESSMENT_QUESTIONS = [
   { q: "Which color chips represent Life in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 0, page: 2 },
   { q: "What color chips represent Mana in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 1, page: 2 },
   { q: "What color chips represent Stamina in SORC?", options: ["Red", "Blue", "Yellow", "Green"], answer: 2, page: 2 },
-  { q: "How many playable races and subraces are available in SORC?", options: ["20", "30", "40", "50"], answer: 2, page: 2 },
+  { q: "How many playable races and kinborns are available in SORC?", options: ["20", "30", "40", "50"], answer: 2, page: 2 },
   { q: "How many size categories do SORC races fall into?", options: ["2", "3", "4", "5"], answer: 1, page: 2 },
   { q: "What are the three size categories for SORC races?", options: ["Large, Medium, Small", "Goliath, Standard, Small", "Titan, Normal, Tiny", "Heavy, Average, Light"], answer: 1, page: 2 },
   { q: "What is the height range for Goliath size races?", options: ["5-7 ft", "7-9 ft", "9-11 ft", "3-5 ft"], answer: 1, page: 2 },
