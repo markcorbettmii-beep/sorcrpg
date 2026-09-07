@@ -51,8 +51,8 @@ between sessions. Resolved items come off the list.
   a Small Size Firstborn. Still open:
   1. The Size rule is not written. A Kinborn shares its Firstborn's Size; a
      different Size makes it a Firstborn in its own right. Nothing on pg. 2 says so.
-  2. `Dwarf (Glimmerstone)` and `Dwarf (Snow)` are labelled Firstborn but wear the
-     `Race (Variant)` naming that Kinborn use, so the name hides the tier.
+  2. `Dwarf (Glimmerstone)` is labelled Firstborn but wears the `Race (Variant)`
+     naming that Kinborn use, so the name hides the tier. Snow Dwarf is resolved.
   3. The written Bloodlines rule says only that what they favor differs. It does not
      mention hue or culture, and the Imperials example says they answer to a
      different School instead.
