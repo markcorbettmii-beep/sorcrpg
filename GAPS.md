@@ -45,11 +45,19 @@ between sessions. Resolved items come off the list.
 - GM Codex has 11 forward references from pg. 4 with no content behind them yet.
 - Dual wield is on hold at Mark's word. The old plan file is stale, do not reuse.
 - Whether the Fae get their own Armament Variant is still open.
-- Small-size Elf naming. `Elf (Sylvan)` is a Small Size Firstborn, not a Kinborn
-  of the Standard Size Elf, so the parenthetical form misnames it. Wood Elf, the
-  other Small Firstborn, is named plainly. If a Kinborn ever did need naming the
-  form is `Sylvan (Elf Kinborn)`, not `Elf (Sylvan)`. `Dwarf (Glimmerstone)` and
-  `Dwarf (Snow)` carry the same problem. Mark is fixing this.
+- Race hierarchy, four open points. The system is Firstborn (the race itself),
+  Kinborn (sub races, different base stats), Bloodlines (same base stats, differing
+  by hue and culture, which set the favored classes). Sylvan is resolved and is now
+  a Small Size Firstborn. Still open:
+  1. The Size rule is not written. A Kinborn shares its Firstborn's Size; a
+     different Size makes it a Firstborn in its own right. Nothing on pg. 2 says so.
+  2. `Dwarf (Glimmerstone)` and `Dwarf (Snow)` are labelled Firstborn but wear the
+     `Race (Variant)` naming that Kinborn use, so the name hides the tier.
+  3. The written Bloodlines rule says only that what they favor differs. It does not
+     mention hue or culture, and the Imperials example says they answer to a
+     different School instead.
+  4. `Elf (Common)` sits under a Kinborn label, which leaves no Elf Firstborn on
+     the roster.
 
 ## Settled by the Zailister map
 
