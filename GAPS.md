@@ -45,6 +45,13 @@ between sessions. Resolved items come off the list.
 - GM Codex has 11 forward references from pg. 4 with no content behind them yet.
 - Dual wield is on hold at Mark's word. The old plan file is stale, do not reuse.
 - Whether the Fae get their own Armament Variant is still open.
+- **Paused, waiting on Mark.** Lineage colour themes: Firstborn rank-code gold
+  `#92793a`, Kinborn rank purple `#8c06a3`, and each Bloodline a row in its own
+  hue. The order must leave room for Bloodlines under a Kinborn later, none exist
+  yet. Mark asked to be reminded.
+- **Paused, waiting on Mark.** Notable factions, 1 to 3 per race, filed under
+  Origin (Planet) and Culture. The Nobles already carry 2. Zailian races carry
+  Noble, Purge and the Ferals, and Mark wants 2 more added there.
 - Race hierarchy, four open points. The system is Firstborn (the race itself),
   Kinborn (sub races, different base stats), Bloodlines (same base stats, differing
   by hue and culture, which set the favored classes). Sylvan is resolved and is now
