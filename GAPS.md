@@ -45,11 +45,6 @@ between sessions. Resolved items come off the list.
 - GM Codex has 11 forward references from pg. 4 with no content behind them yet.
 - Dual wield is on hold at Mark's word. The old plan file is stale, do not reuse.
 - Whether the Fae get their own Armament Variant is still open.
-- **Three classes break the three-alignment Spectrum cap.** Their Path bases span
-  four points of the line, so no base can reach all of them. Mark said he would
-  rather change the class Alignments than the rule.
-  Shaman: Moral, Ambivalent, Evil. Warrior: Lawful, Ambivalent, Amoral.
-  Witch: Moral (Norwitch) and Evil (BrewMaster, Lunar).
 - **Paused, waiting on Mark.** Lineage colour themes: Firstborn rank-code gold
   `#92793a`, Kinborn rank purple `#8c06a3`, and each Bloodline a row in its own
   hue. The order must leave room for Bloodlines under a Kinborn later, none exist
