@@ -81,8 +81,8 @@
     { name:'Tredeki',           hx:0.972, hy:0.725, r:15, col:'#90c0e0', dark:'#5090b8',
       wR:5,  wS:0.020, φ:0.5 },
 
-    /* Undeximus - mid right */
-    { name:'Undeximus',         hx:0.700, hy:0.500, r:9,  col:'#78a868', dark:'#486040',
+    /* Undeki - mid right */
+    { name:'Undeki',         hx:0.700, hy:0.500, r:9,  col:'#78a868', dark:'#486040',
       wR:8,  wS:0.045, φ:3.7 },
   ];
 
