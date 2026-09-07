@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Sorcerer (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../styles.css?v=9">
+<style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
+    .rules-section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #be0500; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .web-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #0058aa; }
+    .slot-c { color: #be0500; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #92793a !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.web-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Sorcerer class-card, standing alone.
+       Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
+  </style>
+</head>
+<body class="lawful-mode">
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><span class="page-nav-current" aria-current="page">pg. 1</span></li>
+    </ul>
+  <main>
+    <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Sorcerer - Class Tree</h2>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="sorcerer">Sorcerer <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>            <p>Born rather than trained, Sorcerers carry raw arcane power in their blood and channel it through stave and cloth into spells of extraordinary breadth, their magic growing more unstable and powerful the deeper they push their natural gift, making them capable of the most dramatic single effects in Essentia at the price of anything resembling physical resilience.</p>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Alignments range from Lawful, Moral, Ambivalent and Amoral, and are Path and Branch Dependent.<br><br>
+              <em>To use the Abilities of this Path or Branch, you must fall within the Alignment's Spectrum. To devote to the Path's Higher Power you must fall exactly at that Alignment (see <a href="../content/essentia_core/rules_ref_002.html#alignment-spectrum">Alignment, Basic Rules pg. 2</a>).</em><br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Sorcerer's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              To learn a Path's Abilities, or any of its three Branches', your own alignment need only sit inside this Class's Spectrum.<br><br>
+              To draw a Path's Higher Power bonus you must hold that Path's exact base Alignment, and that same base is what its three Branches require (see <a href="../content/essentia_core/rules_ref_002.html#alignment-spectrum">Alignment</a>, pg. 2).<br><br>
+              <strong>Favored Races:</strong><br>Dr&#257;co Blood +5, Dwarf (Red) +5, Elf (High) +5, Helf +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5<br><br>
+              &dagger;Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> None recorded.<br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Arcane Ascendance, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Bloodborn Surge, Once Per Day the Sorcerer unleashes raw innate magic, dealing arcane damage equal to twice their Focus SCR to one target, with the Sorcerer taking damage equal to half that amount.<br><br>
+              Extra 1d6 + LVL arcane damage on Critical Hits.<br>
+              Once per encounter, Sorcerers can Flourish their stave that lowers their target's Defense at a number equal to their Focus SCR.<br><br>
+              Sorcerers get +5 feet their base movement speed, once per encounter.<br><br>
+              Sorcerers get +4 plus their FOCUS SCR on Knowledge checks involving arcane lore.<br><br>
+                            <hr class="thin-hr">
+              <strong>Sorcerer Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Conjurer</em> - A summoning-focused Sorcerer who calls forth allies and constructs from beyond to fight at their side.<br>
+              &nbsp;&nbsp;<em>Alignment: Ambivalent</em><br>
+              &nbsp;&nbsp;<em>Observance: None. Ambivalent Paths answer to no god and no patron at all.</em><br>
+              &nbsp;&nbsp;<em>No Higher Power, so no exact alignment is required at this Path or at any of its three Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Magus</em> - A Conjurer who fuses stave and blade into a single hybrid weapon.<br>
+              &nbsp;&nbsp;b. <em>Planes Walker</em> - A Conjurer who tears momentary rifts to nearby planes, stepping through and back at will.<br>
+              &nbsp;&nbsp;c. <em>Psionic</em> - A Conjurer who channels raw mind-power instead of any physical focus.<br>
+              ii. <em>Seer</em> - A far-seeing Sorcerer who reads fate itself, striking with knowledge as much as raw power.<br>
+              &nbsp;&nbsp;<em>Alignment: Moral</em><br>
+              &nbsp;&nbsp;<em>Observance: Service and care. Devotion is spent on other people rather than performed.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Evil and Amoral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Moral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Clairvoyant</em> - A Seer who reads the immediate future, striking where the enemy hasn't moved yet.<br>
+              &nbsp;&nbsp;b. <em>Mystic</em> - A Seer who channels raw, intuitive insight into their spellcasting.<br>
+              &nbsp;&nbsp;c. <em>Prophet</em> - A Seer whose visions reach far beyond the battlefield, foretelling what's still to come.<br>
+              iii. <em>Wizard</em> - An elemental Sorcerer who wields fire and force with the discipline of formal study.<br>
+              &nbsp;&nbsp;<em>Alignment: Moral</em><br>
+              &nbsp;&nbsp;<em>Observance: Service and care. Devotion is spent on other people rather than performed.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Evil and Amoral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Moral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Battlecryer</em> - A Wizard who channels magic through voice and command as much as spellcraft.<br>
+              &nbsp;&nbsp;b. <em>Fire Breather</em> - A Wizard devoted to raw, elemental fire above all other schools.<br>
+              &nbsp;&nbsp;c. <em>Transmuter</em> - A Wizard who reshapes matter itself, turning the battlefield's own materials into a weapon.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Traveler<br>
+              Professions: Enchanter, Gem Crafter, Body Artist<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Sorcerer Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Armor Threshold (Tier):</strong> Delicate Grade. Armor heavier than Delicate will incur an Armament Penalty (-5 per Grade of difference) when performing Tier Abilities, though heavier armor can still be worn (see Armament Penalties, pg. 4).<br><br><strong>Weapon Proficiency (Tier):</strong> Variant: Telluric. Type: Magic. Hand: 2h, 1h (Main), or 1h (Off) with Arcane Orb or a free hand. Distance: Melee. Style: Blunt (Stave or Wand). Forbidden: All Variants outside Telluric. Tactical Type. Each Path refines these specifications further; see each Path below for its baseline, and each Branch for any exceptions it states.</span>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #be0500; line-height:1.25;">Sorcerer Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). Each LVL offers 3 choices, learn only ONE. See Spell Abilities individually for details, see card examples on this page. See Slots and Prerequisites, above.</em><br>
+              <em>Armaments reminder: Delicate Grade armor, or no armor at all for best potency; Weapon Type: Tactical for Martial, Magic for Spell, 1h or 2h (e.g., orb, crystal ball, stave, stave, or magic blade), see each Path below for its favored focus. Nature are stave-strikes and parries charged with residual arcane force, a spellblade's fighting style rather than plain weapon technique. Wearing a heavier Grade brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #be0500;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Sorcerer)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Sorcerer Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Arcane Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-strike charged with raw force, struck like a star-spirit's blow made physical, basic melee arcane damage Nature... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Warding Parry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-parry woven with balanced breath, blocks one Spell... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Focus Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-strike that draws hidden knowledge from the world on contact, temporary Mana regeneration boost... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Arcane Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A raw lance of force called down like sunfire hurled by a star-spirit, punched clean through, basic ranged arcane damage Spell... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Minor Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Conjures a shimmering barrier woven from balanced breath around an ally, blocks the next Spell aimed at them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mana Surge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>An insight drawn the way a wanderer's stave pulls hidden knowledge from the world, temporary Mana regeneration boost... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Sorcerer Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Oracle's Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-thrust guided by a wanderer's far-seeing eye, finds the seam in a foe's defenses, basic melee arcane damage Nature that also briefly reveals the target's weakness... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sunstone Parry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-parry drawn from a star-spirit's light that blocks one Spell, plus resists one fear effect... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sanctum Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-strike circulated the way old alchemists taught, temporary Mana regeneration boost, plus advantage on the next Knowledge check... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Oracle's Dart</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A needle of force guided by a wanderer's far-seeing eye, finds the seam in a foe's defenses, basic ranged arcane damage Spell that also briefly reveals the target's weakness... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sunstone Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Conjures a shimmering barrier drawn from a star-spirit's light around an ally, blocks the next Spell aimed at them, plus resists their next fear effect... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sanctum Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A breath drawn and shared with an ally, grants that ally a temporary Mana regeneration boost, plus advantage on their next Knowledge check... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Sorcerer Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-a" id="gate-sorcerer-tac-a">(Slot A) <strong class="ability-name">Flame Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-blow wreathed in controlled alchemical fire that catches flesh and cloth alike, basic melee arcane damage Nature dealing fire damage... refer to Ability Card.<br><span class="prereq-note">↳ Unlocks <a href="#unlock-sorcerer-conjurer-tac-a">Herald's Strike (LVL 4)</a></span></span></li><li>(Slot B) <strong class="ability-name">Fire Veil Parry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-parry wreathed in sun-bright ward that blocks one Spell, reflecting minor fire damage back at the attacker... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sacred Flame Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h Stave | Discipline: Bloodspark<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-strike drawn like warmth gathered at a wanderer's hearth-fire, temporary Mana regeneration boost that grows if standing near an open flame... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li><span class="slot-c" id="gate-sorcerer-spe-a">(Slot A) <strong class="ability-name">Flame Word</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A word of controlled alchemical fire that catches flesh and cloth alike, basic ranged arcane damage Spell dealing fire damage... refer to Ability Card.<br><span class="prereq-note">↳ Unlocks <a href="#unlock-sorcerer-conjurer-spe-a">Herald's Ward (LVL 4)</a></span></span></li><li>(Slot B) <strong class="ability-name">Fire Veil Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Conjures a sun-bright barrier around an ally that blocks the next Spell aimed at them, reflecting minor fire damage back at the attacker... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sacred Flame Draw</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>An insight shared with an ally, drawn like warmth gathered at a wanderer's hearth-fire, grants that ally a temporary Mana regeneration boost that grows if they stand near an open flame... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Sorcerer Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Conjurer</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A summoning-focused Sorcerer who calls forth allies and constructs from beyond to fight at their side. (LVL 4-20)</em><br>
+              <em>(see Conjurer Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Conjurer Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Conjurer)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none (Stave). Weapon Type: Tactical for Martial, Magic for Spell. May bear a Stave Crown (Crystal, Gemstone, Dragon Heartstring, Phoenix Feather, or Unicorn Hair core, see Stave Crowns, Basic Rules pg. 4). +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Conjurer):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate (Riftweave Silk).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Conjurer Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Magus (unlocks light armor and a 1h stave-blade hybrid) (LVL 21-30)<br>
+                <em>A Conjurer who fuses stave and blade into a single hybrid weapon.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Magus Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Magus Branch chosen at LVL 21 - see Magus above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Magus Branch chosen at LVL 21 - see Magus above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Planes Walker (stave; unlocks planar teleportation focus) (LVL 21-30)<br>
+                <em>A Conjurer who tears momentary rifts to nearby planes, stepping through and back at will.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Planes Walker Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Planes Walker Branch chosen at LVL 21 - see Planes Walker above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Planes Walker Branch chosen at LVL 21 - see Planes Walker above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Psionic (no weapon needed; channels through raw mind power) (LVL 21-30)<br>
+                <em>A Conjurer who channels raw mind-power instead of any physical focus.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Psionic Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Psionic Branch chosen at LVL 21 - see Psionic above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Psionic Branch chosen at LVL 21 - see Psionic above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Conjurer Abilities (Sorcerer Tier)<br><em>(Weapon Type: Tactical for Martial, Magic for Spell, 1h or 2h, summoning-focused - e.g., orb, crystal ball, or magic blade)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Sorcerer - Conjurer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-a" id="unlock-sorcerer-conjurer-tac-a">(Slot A) <strong class="ability-name">Herald's Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Following through Flame Strike, it adds a round of duration, then burns hotter, dealing greater fire damage, and now conjures a small bound star-spirit to strike alongside it for additional minor arcane Damage (advantage - see Card if the caster's Companion is already a spirit or elemental).<br><span class="prereq-note">↰ Requires <a href="#gate-sorcerer-tac-a">Flame Strike (LVL 3)</a></span></span></li><li>(Slot B) <strong class="ability-name">Spark Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-parry that conjures a small elemental barrier, +1 Defense for one turn (advantage - see Card if the caster's Companion is already a spirit or elemental).</li><li>(Slot C) <strong class="ability-name">Rift Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-blow that opens a brief tear to close distance instantly, short teleport taken mid-swing, within line of sight... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li><span class="slot-c" id="unlock-sorcerer-conjurer-spe-a">(Slot A) <strong class="ability-name">Herald's Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Following through Flame Word, it adds a round of duration, then burns hotter, dealing greater fire damage at range, and now conjures a small bound star-spirit that strikes the target for additional minor arcane damage (advantage - see Card if the caster's Companion is already a spirit or elemental).<br><span class="prereq-note">↰ Requires <a href="#gate-sorcerer-spe-a">Flame Word (LVL 3)</a></span></span></li><li>(Slot B) <strong class="ability-name">Summon Spark</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Conjures a small elemental balanced from the five forces, whose barrier shields an ally instead, granting them +1 Defense for one turn (advantage - see Card if the caster's Companion is already a spirit or elemental).</li><li>(Slot C) <strong class="ability-name">Rift Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target or Self | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A brief tear opened at an ally's feet, letting that ally teleport to the caster's side, within line of sight... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Sorcerer - Conjurer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Phantom Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow that conjures a small ancestor-echo to lash out alongside it, minor arcane Damage and briefly confuses the target's next action (advantage - see Card if the caster's Companion is already a spirit or elemental).</li><li>(Slot B) <strong class="ability-name">Wingbeat Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow that carries the wielder on a raven's wingbeat, short teleport granting a brief Resistance bonus afterward, within line of sight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Starbound Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow charted the way old star-readers mapped the sky, short teleport following a memorized path with no chance of error, within line of sight... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Phantom Echo</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Burst/Radius or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>Conjures a small ancestor-echo that lashes out at up to two adjacent targets for minor arcane damage, briefly confusing each one's next action (advantage - see Card if the caster's Companion is already a spirit or elemental).</li><li>(Slot B) <strong class="ability-name">Wingbeat Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Burst/Radius or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A raven's wingbeat lent to an ally, carrying that ally a short teleport with a brief Resistance bonus afterward, within line of sight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Starbound Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Burst/Radius or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A path charted the way old star-readers mapped the sky, lent to an ally for a short teleport with no chance of error, within line of sight... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Sorcerer - Conjurer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Seam Crack</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>The first seam cracked into a rift before the spell is even fully formed... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Seam Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow struck through a seam already cracked into a rift... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Seam Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with a seam cracked into a rift before the spell is even fully formed... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Seam Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A seam cracked into a rift, drawn into a ward over self or an ally before the spell is even fully formed... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Seam Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt loosed through a seam already cracked into a rift... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Seam Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from a seam cracked into a rift, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Sorcerer - Conjurer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bound Wrath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A star-spirit's wrath bound to a mark, calling it down the moment a target least expects it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bound Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A stave-blow struck the moment a target least expects it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held with a star-spirit's wrath bound to a mark... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bound Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A star-spirit's wrath bound to a ward over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bound Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A star-spirit's wrath loosed the moment a target least expects it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bound Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn from a star-spirit's wrath bound to a mark, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Sorcerer - Conjurer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Star-Spirit's Wrath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Conjurers tear rifts into a marked target, calling a bound star-spirit's wrath down on whoever earned it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Star-Spirit's Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Conjurers strike whoever's already earned a bound star-spirit's wrath... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Star-Spirit's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Summoncraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Conjurers guard while tearing rifts into a marked target... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Star-Spirit's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Conjurers shield with a bound star-spirit while tearing rifts into a marked target, self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Star-Spirit's Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Conjurers call a bound star-spirit's wrath down at range on whoever earned it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Star-Spirit's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Conjurers mend with a bound star-spirit while tearing rifts into a marked target, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Sorcerer - Conjurer Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Magus (unlocks light armor and a 1h stave-blade hybrid) (LVL 21-30)<br>
+                <em>A Conjurer who fuses stave and blade into a single hybrid weapon.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Magus Abilities (Conjurer Path)<br><em>(unlocks light armor and a 1h stave-blade hybrid)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Magus Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Planes Walker (stave; unlocks planar teleportation focus) (LVL 21-30)<br>
+                <em>A Conjurer who tears momentary rifts to nearby planes, stepping through and back at will.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Planes Walker Abilities (Conjurer Path)<br><em>(stave; unlocks planar teleportation focus)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Planes Walker Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Psionic (no weapon needed; channels through raw mind power) (LVL 21-30)<br>
+                <em>A Conjurer who channels raw mind-power instead of any physical focus.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Psionic Abilities (Conjurer Path)<br><em>(no weapon needed; channels through raw mind power)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Psionic Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Seer</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A far-seeing Sorcerer who reads fate itself, striking with knowledge as much as raw power. (LVL 4-20)</em><br>
+              <em>(see Seer Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Seer Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Seer)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none (Stave). Weapon Type: Tactical for Martial, Magic for Spell. May bear a Stave Crown (Crystal, Gemstone, Dragon Heartstring, Phoenix Feather, or Unicorn Hair core, see Stave Crowns, Basic Rules pg. 4). +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Seer):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate (Farsight Veil).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Seer Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Clairvoyant (stave; favors detection and ranged spellcasting) (LVL 21-30)<br>
+                <em>A Seer who reads the immediate future, striking where the enemy hasn't moved yet.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Clairvoyant Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Clairvoyant Branch chosen at LVL 21 - see Clairvoyant above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Clairvoyant Branch chosen at LVL 21 - see Clairvoyant above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Mystic (stave; favors defensive and support magic) (LVL 21-30)<br>
+                <em>A Seer who channels raw, intuitive insight into their spellcasting.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Mystic Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Mystic Branch chosen at LVL 21 - see Mystic above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Mystic Branch chosen at LVL 21 - see Mystic above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Prophet (stave; favors ally-support foresight) (LVL 21-30)<br>
+                <em>A Seer whose visions reach far beyond the battlefield, foretelling what's still to come.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Prophet Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Prophet Branch chosen at LVL 21 - see Prophet above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Prophet Branch chosen at LVL 21 - see Prophet above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Seer Abilities (Sorcerer Tier)<br><em>(Weapon Type: Tactical for Martial, Magic for Spell, 1h or 2h, favors perception and defense - e.g., crystal ball, orb, or stave)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Sorcerer - Seer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Zodiac Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-blow timed to a favorable hour chosen the way old star-readers charted, advantage on the first ATTK roll this encounter, chosen at the start instead of in the moment... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Foresight Parry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-parry guided by a precognitive flicker, grants advantage on one Defense roll this encounter... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mind's Eye Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-blow that opens an inner eye through balanced stillness, reveals one hidden enemy or trap... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Zodiac Sight</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A day and hour chosen the way old star-readers charted which were favorable, grants an ally advantage on their first ATTK roll this encounter, chosen at the start instead of in the moment... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Foresight</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A precognitive flicker shared with an ally the same way a wanderer once traded an eye for it, grants that ally advantage on one Defense roll this encounter... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mind's Eye</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>An inner eye opened through balanced stillness, reveals one hidden enemy or trap... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Sorcerer - Seer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Celestial Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow timed to a star-chart read the way old astronomers mapped the heavens, reveals one hidden enemy or trap, granting advantage on the first ATTK roll against them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Prophet's Parry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-parry carried like a raven's news across distance, grants advantage on one Defense roll this encounter, plus warns one ally of the same danger... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Watchman's Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow struck in stillness the way a mountain hermit keeps watch, reveals one hidden enemy or trap, plus alerts all allies to its location... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Celestial Chart Sight</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A star-chart read the way old astronomers mapped the heavens, reveals one hidden enemy or trap, granting an ally advantage on their first ATTK roll against it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Prophet's Warning</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A precognitive flicker carried like a raven's news across distance, grants an ally advantage on their next Defense roll this encounter instead of the caster... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Watchman's Warning</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A stillness kept the way a mountain hermit keeps watch, reveals one hidden enemy or trap, plus grants all allies +1 Defense against it until it acts... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Sorcerer - Seer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Corner Sight</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A wound caught in the corner of sight long before the blow that causes it... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Corner Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow struck at a wound already caught in the corner of sight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Corner Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with a wound caught in the corner of sight long before it lands... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Corner Sight Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A wound caught in the corner of sight, warded away over self or an ally before it lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Corner Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt loosed at a wound already caught in the corner of sight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Corner Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from a wound caught in the corner of sight long before it lands, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Sorcerer - Seer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Marked Fate</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A fate marked mid-vision, priming a target for the blow already coming... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Marked Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A blow already coming, struck at a target primed by a marked fate... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Marked Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while priming a target for the blow already coming... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Marked Fate Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A fate marked mid-vision, warded away from self or an ally before the blow already coming lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Marked Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A blow already coming, loosed at a target primed by a marked fate... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Marked Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn while priming a target for the blow already coming, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Sorcerer - Seer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Foreseen Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Seers foresee a wound before it's struck, marking a target's fate for the blow that already landed in their sight... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Foreseen Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Seers strike a target whose fate already landed in their sight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Foreseen Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Fateweave<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Seers guard while foreseeing a wound before it's struck... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Foreseen Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Seers shield a wound foreseen before it's struck, self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Foreseen Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Seers loose a bolt at a target whose fate already landed in their sight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Foreseen Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Seers mend a wound foreseen before it's struck, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Sorcerer - Seer Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Clairvoyant (stave; favors detection and ranged spellcasting) (LVL 21-30)<br>
+                <em>A Seer who reads the immediate future, striking where the enemy hasn't moved yet.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Clairvoyant Abilities (Seer Path)<br><em>(stave; favors detection and ranged spellcasting)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Clairvoyant Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Mystic (stave; favors defensive and support magic) (LVL 21-30)<br>
+                <em>A Seer who channels raw, intuitive insight into their spellcasting.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Mystic Abilities (Seer Path)<br><em>(stave; favors defensive and support magic)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Mystic Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Prophet (stave; favors ally-support foresight) (LVL 21-30)<br>
+                <em>A Seer whose visions reach far beyond the battlefield, foretelling what's still to come.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Prophet Abilities (Seer Path)<br><em>(stave; favors ally-support foresight)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Prophet Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Wizard</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>An elemental Sorcerer who wields fire and force with the discipline of formal study. (LVL 4-20)</em><br>
+              <em>(see Wizard Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Wizard Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Wizard)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: none (Stave). Weapon Type: Tactical for Martial, Magic for Spell. May bear a Stave Crown (Crystal, Gemstone, Dragon Heartstring, Phoenix Feather, or Unicorn Hair core, see Stave Crowns, Basic Rules pg. 4). +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Wizard):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate (Cinderweave Cloth).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Wizard Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Battlecryer (2h (Main) stave or stave, 1h (Off) Slashing or Blunt weapon; favors ally-empowering war magic) (LVL 21-30)<br>
+                <em>A Wizard who channels magic through voice and command as much as spellcraft.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Battlecryer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Battlecryer Branch chosen at LVL 21 - see Battlecryer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Battlecryer Branch chosen at LVL 21 - see Battlecryer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Fire Breather (stave; unlocks bonus fire damage) (LVL 21-30)<br>
+                <em>A Wizard devoted to raw, elemental fire above all other schools.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Fire Breather Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Fire Breather Branch chosen at LVL 21 - see Fire Breather above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Fire Breather Branch chosen at LVL 21 - see Fire Breather above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Transmuter (stave; unlocks chemical-type spells) (LVL 21-30)<br>
+                <em>A Wizard who reshapes matter itself, turning the battlefield's own materials into a weapon.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Transmuter Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Transmuter Branch chosen at LVL 21 - see Transmuter above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Transmuter Branch chosen at LVL 21 - see Transmuter above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Wizard Abilities (Sorcerer Tier)<br><em>(Weapon Type: Tactical for Martial, Magic for Spell, 1h or 2h, favors elemental damage - e.g., stave, stave, or magic blade)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Sorcerer - Wizard Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Firebrand Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-blow wreathed in flame that clings and keeps burning long after it lands, fire Damage Nature with a burn-over-time effect... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sunfire Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-parry that channels sunlight the way old sun-priests once bent it into a woven ward, granting a brief Defense bonus during daylight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Alchemical Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stave-blow tended the way old grove-keepers tended sacred flame, grants a brief Focus bonus and advantage on the next Knowledge check involving fire or alchemy... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Firebrand</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: DoT or Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A flame carried the way a wanderer's torch never truly gutters, clings and keeps burning long after it lands, fire damage Spell with a burn-over-time effect... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sunfire Rite</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: DoT or Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Channels sunlight the way old sun-priests once bent it into a woven ward around an ally, granting that ally a brief Defense bonus during daylight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Alchemical Flame</strong><br><strong>ATTK</strong><span class="stat-line">Range: Range or Touch | Cast: Verbal | Mechanic: DoT or Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A fire tended the way old grove-keepers tended sacred flame, kept and taught, never written down, grants an ally a brief Focus bonus and advantage on their next Knowledge check involving fire or alchemy... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Sorcerer - Wizard Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Arcane Overstrike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A surge drawn with a wanderer's reckless hunger for more, next Nature deals bonus Damage, costs extra Mana... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Elixir Overguard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A draught brewed the way old sun-priests prepared their sacred rites, the next incoming Spell against the caster is weakened, refunding Mana if it's fully resisted... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Transmuter's Overstrike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch or Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A shape-changing working passed hand to hand the way old grove-keepers passed their lore, transmutes excess Mana into a small Life heal for the caster... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Arcane Overcharge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A surge drawn with a wanderer's reckless hunger for more, next Spell deals bonus Damage, costs extra Mana... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Elixir Overcharge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A draught shared with an ally, the next incoming Spell against that ally is weakened, refunding the caster Mana if it's fully resisted... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Transmuter's Overcharge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A shape-changing working passed hand to hand the way old grove-keepers passed their lore, transmutes excess Mana into a small Life heal shared with an ally instead of the caster... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Sorcerer - Wizard Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Catching Ember</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>An ember let catch on a target's own coat before the real spell ever lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Catching Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stave-blow struck at an ember already catching on a target's coat... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Catching Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with an ember catching before the real spell ever lands... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Catching Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>An ember drawn into a ward over self or an ally before the real spell ever lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Catching Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt loosed at an ember already catching on a target's coat... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Catching Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn with an ember catching before the real spell ever lands, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Sorcerer - Wizard Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Slow Fuse</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A target branded with a slow-burning fuse, priming a detonation that only the Wizard can trigger... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fuse Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A stave-blow struck at a target already branded with a slow-burning fuse... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Fuse Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while priming a detonation that only the Wizard can trigger... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Slow Fuse Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A slow-burning fuse drawn into a ward over self or an ally, priming a detonation only the Wizard can trigger... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Fuse Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A bolt loosed at a target already branded with a slow-burning fuse... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Fuse Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>A renewal drawn while priming a detonation that only the Wizard can trigger, self or an ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Sorcerer - Wizard Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Primed Detonation</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Wizards brand a target with smoldering embers, priming a detonation only they can trigger... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Primed Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Wizards strike a target already branded with smoldering embers... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Primed Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h | Discipline: Scholarcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Wizards guard while branding a target with smoldering embers... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Primed Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Wizards ward self or an ally while branding a target with smoldering embers... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Primed Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Wizards loose a bolt at a target already branded with smoldering embers... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Primed Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Self or Single Target | School: Arcane<br>Cost: 4 Mana<br>Uses: 3/Round</span>Wizards mend self or an ally while branding a target with smoldering embers... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Sorcerer - Wizard Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Battlecryer (2h (Main) stave or stave, 1h (Off) Slashing or Blunt weapon; favors ally-empowering war magic) (LVL 21-30)<br>
+                <em>A Wizard who channels magic through voice and command as much as spellcraft.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Battlecryer Abilities (Wizard Path)<br><em>(2h (Main) stave or stave, 1h (Off) Slashing or Blunt weapon; favors ally-empowering war magic)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Battlecryer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Fire Breather (stave; unlocks bonus fire damage) (LVL 21-30)<br>
+                <em>A Wizard devoted to raw, elemental fire above all other schools.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Fire Breather Abilities (Wizard Path)<br><em>(stave; unlocks bonus fire damage)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Fire Breather Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Transmuter (stave; unlocks chemical-type spells) (LVL 21-30)<br>
+                <em>A Wizard who reshapes matter itself, turning the battlefield's own materials into a weapon.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Transmuter Abilities (Wizard Path)<br><em>(stave; unlocks chemical-type spells)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Transmuter Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+      <p style="margin-top: 3rem; text-align: center; font-size: 0.9rem; opacity: 0.7;">
+        <a href="class-tree-nav.html">View all class trees</a>
+      </p>
+    </div>
+  </main>
+  </div>
+</main>
+</div>
+</body>
+</html>
+
+  </main>
+</main>
+</body>
+</html>
+</html>

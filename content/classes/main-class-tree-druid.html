@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Druid (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../styles.css?v=9">
+<style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
+    .rules-section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #be0500; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .web-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #0058aa; }
+    .slot-c { color: #be0500; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #92793a !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.web-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Druid class-card, standing alone.
+       Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
+  </style>
+</head>
+<body class="lawful-mode">
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><span class="page-nav-current" aria-current="page">pg. 1</span></li>
+    </ul>
+  <main>
+    <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Druid - Class Tree</h2>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="druid">Druid <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Not Playable in Starter Set)</span></h4>            <p>Ancient nature-bound spellcasters who draw power from the living world itself, Druids channel celestial forces, primal animal transformation, and dream-state consciousness to protect and reshape the natural order, equally capable of becoming the predator they summon, calling down starlight as a weapon, or walking through enemy minds while their body sits motionless in the wild.</p>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Alignments range from Lawful, Moral, Ambivalent, Amoral and Evil, and are Path and Branch Dependent.<br><br>
+              <em>To use the Abilities of this Path or Branch, you must fall within the Alignment's Spectrum. To devote to the Path's Higher Power you must fall exactly at that Alignment (see <a href="../content/essentia_core/rules_ref_002.html#alignment-spectrum">Alignment, Basic Rules pg. 2</a>).</em><br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Druid's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              To learn a Path's Abilities, or any of its three Branches', your own alignment need only sit inside this Class's Spectrum.<br><br>
+              To draw a Path's Higher Power bonus you must hold that Path's exact base Alignment, and that same base is what its three Branches require (see <a href="../content/essentia_core/rules_ref_002.html#alignment-spectrum">Alignment</a>, pg. 2).<br><br>
+              <strong>Favored Races:</strong><br>Firbolg +5, Elf (Common)&dagger; +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5, Sylvan +5, Yawnie +5, Drevane +5, Leshy +5<br><br>
+              &dagger;Elf (Common), Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> <span class="web-starter">Omn&egrave; -5</span><br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Verdant Attunement, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Wild Shape Ascendant, Once Per Day the Druid fully transforms into a beast form matching their terrain, gaining a Life pool equal to their Constitution SCR and the beast's natural attacks for the rest of the encounter.<br><br>
+              Extra 1d6 + LVL nature damage on Critical Hits.<br>
+              Once per encounter, Druids can Flourish their stave to entangle a target, reducing their movement speed by half.<br><br>
+              Druids get +5 feet their base movement speed, once per encounter, while in natural terrain.<br><br>
+              Druids get +4 plus their KNOWLEDGE SCR on nature-related Knowledge checks.<br><br>
+                            <hr class="thin-hr">
+              <strong>Druid Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Celestial</em> - A sky-focused Druid who channels the sun, moon, and stars into their magic.<br>
+              &nbsp;&nbsp;<em>Alignment: Moral</em><br>
+              &nbsp;&nbsp;<em>Observance: Service and care. Devotion is spent on other people rather than performed.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Evil and Amoral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Moral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Lunar</em> - A Celestial Druid whose power swells and fades with the moon's own phases.<br>
+              &nbsp;&nbsp;b. <em>Solar</em> - A Celestial Druid who channels the sun's raw, burning light directly into battle.<br>
+              &nbsp;&nbsp;c. <em>Starduster</em> - A Celestial Druid who scatters starlight to blind, guide, or heal as needed.<br>
+              ii. <em>Dreamcryer</em> - A Druid who walks the dream-realm, drawing power and secrets from sleep and nightmare alike.<br>
+              &nbsp;&nbsp;<em>Alignment: Amoral</em><br>
+              &nbsp;&nbsp;<em>Observance: Bargain and price. Devotion is a contract kept, whatever it was for.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Moral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Amoral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Dreamcaster</em> - A Dreamcryer who reaches into allies' sleeping minds to mend and steady them.<br>
+              &nbsp;&nbsp;b. <em>Lorekeeper</em> - A Dreamcryer who gathers secrets from the dream-realm most will never wake to remember.<br>
+              &nbsp;&nbsp;c. <em>Nightmare</em> - A Dreamcryer who drags enemies into waking nightmares of their own fear.<br>
+              iii. <em>Hyborian</em> - A primal Druid who draws on beast-spirits and shapeshifting to fight alongside nature's fiercest forms.<br>
+              &nbsp;&nbsp;<em>Alignment: Ambivalent</em><br>
+              &nbsp;&nbsp;<em>Observance: None. Ambivalent Paths answer to no god and no patron at all.</em><br>
+              &nbsp;&nbsp;<em>No Higher Power, so no exact alignment is required at this Path or at any of its three Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Ravager</em> - A Hyborian Druid who abandons restraint entirely for a beast's full, savage fury.<br>
+              &nbsp;&nbsp;b. <em>Shifter</em> - A Hyborian Druid who freely reshapes their own body to match the fight at hand.<br>
+              &nbsp;&nbsp;c. <em>Ursidae</em> - A Hyborian Druid who transforms into a bear at will, tanking with raw strength and endurance instead of armor.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Scout<br>
+              Professions: Apothecary, Bioengineer, Carpenter<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Druid Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Armor Threshold (Tier):</strong> Light Grade. Armor heavier than Light will incur an Armament Penalty (-5 per Grade of difference) when performing Tier Abilities, though heavier armor can still be worn (see Armament Penalties, pg. 4).<br><br><strong>Weapon Proficiency (Tier):</strong> Variant: Telluric. Type: Magic. Hand: 2h, 1h (Main), or 1h (Off) with Focus Pouch or Buckler. Distance: Melee. Style: Blunt or Chop. Forbidden: All Variants outside Telluric. Tactical Type. Each Path refines these specifications further; see each Path below for its baseline, and each Branch for any exceptions it states.</span>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #be0500; line-height:1.25;">Druid Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). See Ability Cards individually for details, see card examples on this page.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #be0500;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Druid)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Druid Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bramblewood Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A warding stance drawn from tangled root and bark, a Druid's earliest lesson in letting the wild answer for them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Root Snare</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Roots surge up beneath a foe's feet on command, catching them before they can react... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bark Skin</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Skin toughened like young bark, hardening against the next blow... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Verdant Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>Living green wraps around self or an ally, turning aside harm before it lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Thorned Lash</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A whip-crack of thorned vine lashed out at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sapling's Mend</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>New growth knits quietly over a wound, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Druid Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Stonebark Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The bark thickens the longer a Druid holds still, patience itself becoming a shield... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Stone Fist</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blow struck with the weight of standing stone behind it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Deep Roots</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Footing anchored like an old-growth root, refusing to be moved... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Stone Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A skin of living stone settles over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Quake Snap</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A sharp tremor snapped up through the ground toward a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Mending Bloom</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A flower blooms early over a wound, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Druid Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Starlit Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The first ward drawn down from starlight overhead, a Druid's earliest reach beyond the earth itself... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Falling Star</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blow brought down like a star falling to earth... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Starlight Calm</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Wildcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Cold starlight settles a racing heart before it can spiral... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Celestial Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>Starlight gathers into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Star-Fire Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A mote of star-fire struck home from range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Starlit Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>Starlight poured into a wound like water, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Druid Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Celestial</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A sky-focused Druid who channels the sun, moon, and stars into their magic. (LVL 4-20)</em><br>
+              <em>(see Celestial Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Celestial Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Celestial)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Blunt or Chop (stave, club, or sickle). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Celestial):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Light or Delicate (Starlight Weave).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Celestial Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Lunar (LVL 21-30)<br>
+                <em>A Celestial Druid whose power swells and fades with the moon's own phases.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Lunar Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Lunar Branch chosen at LVL 21 - see Lunar above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Lunar Branch chosen at LVL 21 - see Lunar above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Solar (LVL 21-30)<br>
+                <em>A Celestial Druid who channels the sun's raw, burning light directly into battle.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Solar Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Solar Branch chosen at LVL 21 - see Solar above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Solar Branch chosen at LVL 21 - see Solar above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Starduster (LVL 21-30)<br>
+                <em>A Celestial Druid who scatters starlight to blind, guide, or heal as needed.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Starduster Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Starduster Branch chosen at LVL 21 - see Starduster above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Starduster Branch chosen at LVL 21 - see Starduster above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Celestial Abilities (Druid Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Druid - Celestial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Starbound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Starcall<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The starlight ward reaching full brightness, a Celestial's earliest claim on the sky itself... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Star Streak</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Starcall<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A streak of falling light struck home... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Skybound Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Starcall<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A step taken half a beat ahead of where the body was... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Halo Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A ring of starlight settles over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Comet Call</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>A splinter of falling star called down on a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Starlit Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 2 Mana<br>Uses: Unlimited</span>Starlight drawn into a slow, mending breath, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Druid - Celestial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Eclipse Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Starcall<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A ward struck the instant sun and moon align, a Celestial's earliest lesson in timing a ward to the heavens... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Eclipse Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Starcall<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blow timed to the instant sun and moon align... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Waning Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Starcall<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A step taken as the light itself thins away... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Eclipse Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A shield drawn from the alignment of sun and moon, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Umbral Ray</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>A ray of eclipsed light loosed on a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Lunar Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Holy<br>Cost: 3 Mana<br>Uses: 3/Round</span>Moonlight drawn into a slow, mending breath, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Druid - Celestial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Skyfall Strike</strong><br>A strike drawn from whatever light hangs overhead, drawing on a sky that never stops watching... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Meteor Graze</strong><br>A glancing blow struck like a meteor skimming the horizon... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Skyward Guard</strong><br>A ward raised with an eye still turned to the sky... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Starfall Ray</strong><br>A ray called down from whatever light hangs overhead... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Skyward Aegis</strong><br>A shield drawn from the same sky that never stops watching, self or ally... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Comet's Breath</strong><br>A breath drawn slow beneath a falling star, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Druid - Celestial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Turning Stars</strong><br>The turning stars read mid-cast, warding an ally the instant the moon turns... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Star's Reach</strong><br>A blow that reaches as far as starlight itself carries... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Waxing Step</strong><br>A step taken as the light itself grows again... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Turning Aegis</strong><br>A shield read mid-cast the instant the moon turns, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Star's Reach Bolt</strong><br>A bolt that reaches as far as starlight itself carries... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Waxing Breath</strong><br>A breath drawn as the light itself grows again, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Druid - Celestial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Moonfall Strike</strong><br>Celestials read the turning sky itself, striking and warding by the phase of the moon and the fall of a star... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Starfall Strike</strong><br>Celestials strike by the fall of a star read just before it lands... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Skybound Guard</strong><br>Celestials ward by the phase of the moon overhead... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Moonfall Aegis</strong><br>Celestials shield by the phase of the moon itself, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Starfall Ray</strong><br>Celestials call down light by the fall of a star read just before it lands... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Skybound Breath</strong><br>Celestials mend by the phase of the moon overhead, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Druid - Celestial Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Lunar (LVL 21-30)<br>
+                <em>A Celestial Druid whose power swells and fades with the moon's own phases.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Lunar Abilities (Celestial Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Lunar Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Solar (LVL 21-30)<br>
+                <em>A Celestial Druid who channels the sun's raw, burning light directly into battle.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Solar Abilities (Celestial Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Solar Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Starduster (LVL 21-30)<br>
+                <em>A Celestial Druid who scatters starlight to blind, guide, or heal as needed.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Starduster Abilities (Celestial Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Starduster Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Dreamcryer</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A Druid who walks the dream-realm, drawing power and secrets from sleep and nightmare alike. (LVL 4-20)</em><br>
+              <em>(see Dreamcryer Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Dreamcryer Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Dreamcryer)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Blunt or Chop (stave, club, or sickle). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Dreamcryer):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Light or Delicate (Dreamsilk).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Dreamcryer Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Dreamcaster (LVL 21-30)<br>
+                <em>A Dreamcryer who reaches into allies' sleeping minds to mend and steady them.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Dreamcaster Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Dreamcaster Branch chosen at LVL 21 - see Dreamcaster above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Dreamcaster Branch chosen at LVL 21 - see Dreamcaster above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Lorekeeper (LVL 21-30)<br>
+                <em>A Dreamcryer who gathers secrets from the dream-realm most will never wake to remember.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Lorekeeper Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Lorekeeper Branch chosen at LVL 21 - see Lorekeeper above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Lorekeeper Branch chosen at LVL 21 - see Lorekeeper above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Nightmare (LVL 21-30)<br>
+                <em>A Dreamcryer who drags enemies into waking nightmares of their own fear.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Nightmare Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Nightmare Branch chosen at LVL 21 - see Nightmare above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Nightmare Branch chosen at LVL 21 - see Nightmare above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Dreamcryer Abilities (Druid Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Druid - Dreamcryer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Waking Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Dreamwalk<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A ward drawn from rousing half out of a dream, a Dreamcryer's earliest instinct to react just before the threat lands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Half-Waking Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Dreamwalk<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A blow struck half-roused, before the mind fully catches up... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Drowsy Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Dreamwalk<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A step taken between one blink and the next... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Waking Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Psychic<br>Cost: 2 Mana<br>Uses: Unlimited</span>A ward drawn from rousing half out of a dream, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Dream Splinter</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Psychic<br>Cost: 2 Mana<br>Uses: Unlimited</span>A splinter of half-formed dream loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Restful Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Psychic<br>Cost: 2 Mana<br>Uses: Unlimited</span>A slow, mending breath drawn from restful sleep, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Druid - Dreamcryer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Nightmare Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Dreamwalk<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A ward that turns a missed strike back into fear itself, a Dreamcryer's earliest grasp on the fear a missed strike leaves behind... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Nightmare Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Dreamwalk<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blow struck with the same fear a missed strike leaves behind... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Dreadwake Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Dreamwalk<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A step taken on the edge between dream and dread... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Nightmare Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Psychic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A ward that turns a missed strike back into fear itself, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Dread Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Psychic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt carrying the fear a missed strike leaves behind, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Dreadwake Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Psychic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A slow, mending breath drawn on the edge between dream and dread, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Druid - Dreamcryer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sleep's Edge</strong><br>A ward held at the edge of sleep, guarding allies from whatever stirs before it's fully awake... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Waking Blow</strong><br>A blow struck the instant something stirs before it's fully awake... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Edge of Sleep</strong><br>A guard held right at the edge of sleep itself... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sleep's Aegis</strong><br>A shield held at the edge of sleep, guarding self or an ally from whatever stirs... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Waking Call</strong><br>A call loosed the instant something stirs before it's fully awake... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sleep's Breath</strong><br>A slow, mending breath drawn right at the edge of sleep, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Druid - Dreamcryer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Forming Nightmare</strong><br>A nightmare read before it fully forms, warding a target from a threat that isn't fully real yet... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unformed Strike</strong><br>A strike thrown at a threat that isn't fully real yet... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Half-Formed Guard</strong><br>A guard raised against a threat that isn't fully real yet... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Unformed Aegis</strong><br>A shield raised against a threat that isn't fully real yet, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Nightmare's Reach</strong><br>A reaching bolt read before the nightmare fully forms, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Half-Formed Breath</strong><br>A slow, mending breath drawn before the threat fully forms, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Druid - Dreamcryer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Unfinished Threat</strong><br>Dreamcryers walk the thin edge between waking and dream, warding their allies from threats that aren't fully formed yet... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unfinished Strike</strong><br>Dreamcryers strike from the thin edge between waking and dream... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Unfinished Guard</strong><br>Dreamcryers ward from the thin edge between waking and dream... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Unfinished Aegis</strong><br>Dreamcryers shield from the thin edge between waking and dream, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unfinished Call</strong><br>Dreamcryers call from the thin edge between waking and dream, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Unfinished Renewal</strong><br>Dreamcryers mend from the thin edge between waking and dream, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Druid - Dreamcryer Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Dreamcaster (LVL 21-30)<br>
+                <em>A Dreamcryer who reaches into allies' sleeping minds to mend and steady them.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Dreamcaster Abilities (Dreamcryer Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Dreamcaster Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Lorekeeper (LVL 21-30)<br>
+                <em>A Dreamcryer who gathers secrets from the dream-realm most will never wake to remember.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Lorekeeper Abilities (Dreamcryer Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Lorekeeper Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Nightmare (LVL 21-30)<br>
+                <em>A Dreamcryer who drags enemies into waking nightmares of their own fear.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Nightmare Abilities (Dreamcryer Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Nightmare Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Hyborian</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A primal Druid who draws on beast-spirits and shapeshifting to fight alongside nature's fiercest forms. (LVL 4-20)</em><br>
+              <em>(see Hyborian Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Hyborian Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Hyborian)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Blunt or Chop (stave, club, or sickle). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Hyborian):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Light or Delicate (Bearskin Hide).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Hyborian Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Ravager (LVL 21-30)<br>
+                <em>A Hyborian Druid who abandons restraint entirely for a beast's full, savage fury.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Ravager Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Ravager Branch chosen at LVL 21 - see Ravager above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Ravager Branch chosen at LVL 21 - see Ravager above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Shifter (LVL 21-30)<br>
+                <em>A Hyborian Druid who freely reshapes their own body to match the fight at hand.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Shifter Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Shifter Branch chosen at LVL 21 - see Shifter above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Shifter Branch chosen at LVL 21 - see Shifter above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Ursidae (unlocks Bear Form, a sustained tank transformation the Druid can enter and exit at will, independent of worn armor) (LVL 21-30)<br>
+                <em>A Hyborian Druid who transforms into a bear at will, tanking with raw strength and endurance instead of armor.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Ursidae Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Ursidae Branch chosen at LVL 21 - see Ursidae above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Ursidae Branch chosen at LVL 21 - see Ursidae above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Hyborian Abilities (Druid Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Druid - Hyborian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Claw Rake</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Beastform<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The first shapeshifted rake of claw through hide, a Hyborian's earliest taste of the hunt within... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Snapping Jaw</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Beastform<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A jaw snapped shut on a fleeing foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hide Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Beastform<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Hide thickened half a beat before the blow lands... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Feral Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A hide-toughening ward drawn from the hunt within, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rending Howl</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A howl carrying claw and bite loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Den Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A slow, mending breath drawn from the den, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Druid - Hyborian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rending Bite</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Beastform<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A bite that finds the deepest wound already opened, a Hyborian's earliest instinct for the kill... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Deepest Wound</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Beastform<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike aimed at a wound already opened... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Predator's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Blunt or Chop | Hand: 1h or 2h | Discipline: Beastform<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guarded stance held with a predator's own patience... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Predator's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A shield drawn from a predator's own patience, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wound Caller</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A call that finds the deepest wound already opened, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Kindred Breath</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A slow, mending breath drawn from a kindred instinct, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Druid - Hyborian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Claw Answer</strong><br>A strike where claw and hide answer before words ever could, closing a fight like a predator closes a hunt... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Hunt's Answer</strong><br>A strike thrown the instant the hunt calls for it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Kindred Guard</strong><br>A guard raised on kindred instinct alone... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hunt's Aegis</strong><br>A shield raised the instant the hunt calls for it, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Claw Call</strong><br>A call carrying claw and hide loosed at a foe before words ever could... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Instinct's Breath</strong><br>A slow, mending breath drawn on kindred instinct alone, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Druid - Hyborian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">First Mover</strong><br>A hunt run on instinct alone, marking whoever moves first as prey that won't get a second chance... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Second Strike</strong><br>A blow thrown the instant a first strike lands... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Prey's Guard</strong><br>A guard held with the same instinct that marks prey... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Prey's Aegis</strong><br>A shield raised with the same instinct that marks prey, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">First Mover's Call</strong><br>A call thrown at whoever moves first, marking them as prey that won't get a second chance... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Instinct's Renewal</strong><br>A slow, mending breath drawn on instinct alone, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Druid - Hyborian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bound Predator</strong><br>Hyborians shed their own shape for claw and hide, hunting as the predator they've bound themselves to... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bound Fang</strong><br>Hyborians strike with the fang of the predator they've bound themselves to... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bound Hide</strong><br>Hyborians ward with the hide of the predator they've bound themselves to... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bound Aegis</strong><br>Hyborians shield with the hide of the predator they've bound themselves to, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bound Howl</strong><br>Hyborians call with the voice of the predator they've bound themselves to, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bound Renewal</strong><br>Hyborians mend with the instinct of the predator they've bound themselves to, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Druid - Hyborian Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Ravager (LVL 21-30)<br>
+                <em>A Hyborian Druid who abandons restraint entirely for a beast's full, savage fury.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Ravager Abilities (Hyborian Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Ravager Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Shifter (LVL 21-30)<br>
+                <em>A Hyborian Druid who freely reshapes their own body to match the fight at hand.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Shifter Abilities (Hyborian Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Shifter Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Ursidae (unlocks Bear Form, a sustained tank transformation the Druid can enter and exit at will, independent of worn armor) (LVL 21-30)<br>
+                <em>A Hyborian Druid who transforms into a bear at will, tanking with raw strength and endurance instead of armor.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Ursidae Abilities (Hyborian Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA past LVL 21. The Ursidae Branch continues this Path's progression exclusively through LVL 30, built around Bear Form - see the GM's full class reference for LVL 21's real content.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+      <p style="margin-top: 3rem; text-align: center; font-size: 0.9rem; opacity: 0.7;">
+        <a href="class-tree-nav.html">View all class trees</a>
+      </p>
+    </div>
+  </main>
+  </div>
+</main>
+</div>
+</body>
+</html>
+
+  </main>
+</main>
+</body>
+</html>
+</html>
