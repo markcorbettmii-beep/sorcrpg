@@ -317,9 +317,15 @@ class SORCNavigation {
       }
     });
 
-    // Close menu on link click
+    // Close menu on link click (submenu links)
     const navLinks = document.querySelectorAll('.sorc-nav-section-menu a');
     navLinks.forEach(link => {
+      link.addEventListener('click', () => this.closeMenu());
+    });
+
+    // Close menu on direct link click
+    const directLinks = document.querySelectorAll('.sorc-nav-direct-link');
+    directLinks.forEach(link => {
       link.addEventListener('click', () => this.closeMenu());
     });
   }
