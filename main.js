@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
     profileBtn.textContent = 'S';
     profileBtn.onclick = function(e) {
       e.stopPropagation();
-      window.location.href = '/signin.html';
+      window.location.href = '/content/auth/signin.html';
     };
   };
 
@@ -117,7 +117,8 @@ document.addEventListener('DOMContentLoaded', function() {
     e.stopPropagation();
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
-    window.location.href = (saved && saved.authKey) ? '/content/features/space.html' : '/signin.html';
+<<<<<<< HEAD
+    window.location.href = (saved && saved.authKey) ? '/content/features/space.html' : '/content/auth/signin.html';
   });
 
   headerControls.appendChild(profileBtn);
@@ -147,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '<a href="/terms.html">Terms of Service</a>' +
         '<a href="/privacy.html">Privacy Policy</a>' +
         '<a href="/conduct.html">Code of Conduct</a>' +
-        '<a href="/forum.html">Forums</a>' +
+        '<a href="/content/features/forum.html">Forums</a>' +
         '<a href="/sorc-web.html">SORC Web</a>' +
         '<a href="mailto:corbett@sorcrpg.com">Contact</a>' +
       '</nav>' +
@@ -259,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ========== EXPIRED SESSION HANDLER ==========
 window.sorcHandleExpiredSession = function() {
   localStorage.removeItem('sorc_user');
-  window.location.href = '/signin.html?expired=true';
+  window.location.href = '/content/auth/signin.html?expired=true';
 };
 
 // ========== ONLINE PRESENCE HEARTBEAT ==========
@@ -572,7 +573,7 @@ function showLoggedOutBadge() {
   var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
   var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;"></span>';
   existing.style.cssText = 'display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;margin:0!important;width:100%!important;box-sizing:border-box!important;';
-  existing.innerHTML = defaultAvatar + 'User · Lobbies · Inbox · <a href="/signin.html" style="color:' + linkColor + ' !important;text-decoration:underline;">Login</a> · Fellowships · Forums · Content · Downloads';
+  existing.innerHTML = defaultAvatar + 'User · Lobbies · Inbox · <a href="/content/auth/signin.html" style="color:' + linkColor + ' !important;text-decoration:underline;">Login</a> · Fellowships · Forums · Content · Downloads';
 }
 
 // ========== AUTH STATE ==========
