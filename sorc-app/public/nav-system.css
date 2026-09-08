@@ -1,0 +1,969 @@
+/**
+ * SORC Navigation System Styling
+ * D&D Beyond-style navigation with lawful mode (light) as default
+ * Supports both lawful mode (light) and dark mode with SORC branding
+ */
+
+:root {
+  /* Lawful Mode (Light Theme) - DEFAULT */
+  --sorc-nav-bg: #ffffff;
+  --sorc-nav-text: #2c2c2c;
+  --sorc-nav-text-secondary: #666666;
+  --sorc-nav-border: #e0e0e0;
+  --sorc-nav-hover-bg: #f5f5f0;
+  --sorc-nav-accent: #c5a042;
+  --sorc-nav-overlay: rgba(0, 0, 0, 0.5);
+  --sorc-nav-shadow: rgba(0, 0, 0, 0.1);
+
+  /* Badge and Avatar */
+  --sorc-badge-bg: #f5f5f0;
+  --sorc-badge-text: #2c2c2c;
+  --sorc-badge-border: #c5a042;
+  --sorc-avatar-bg: #e8e8e8;
+  --sorc-avatar-text: #2c2c2c;
+}
+
+/* Dark Mode (Chaotic/Evil) */
+body:not(.lawful-mode) {
+  --sorc-nav-bg: #1a1a1a;
+  --sorc-nav-text: #e8e8e8;
+  --sorc-nav-text-secondary: #b0b0b0;
+  --sorc-nav-border: #333333;
+  --sorc-nav-hover-bg: rgba(197, 160, 66, 0.1);
+  --sorc-nav-accent: #c5a042;
+  --sorc-nav-overlay: rgba(0, 0, 0, 0.8);
+  --sorc-nav-shadow: rgba(0, 0, 0, 0.5);
+
+  --sorc-badge-bg: #2a2a2a;
+  --sorc-badge-text: #e8e8e8;
+  --sorc-badge-border: #8c06a3;
+  --sorc-avatar-bg: #333333;
+  --sorc-avatar-text: #e8e8e8;
+}
+
+/* ============================================
+   NAVIGATION WRAPPER & LAYOUT
+   ============================================ */
+
+.sorc-nav-wrapper {
+  position: relative;
+  z-index: 1000;
+}
+
+.sorc-nav {
+  position: relative;
+  height: 60px;
+  background: var(--sorc-nav-bg) !important;
+  border-bottom: 1px solid var(--sorc-nav-border) !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding: 0 1rem !important;
+  box-shadow: 0 2px 8px var(--sorc-nav-shadow) !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+  gap: 0.5rem !important;
+}
+
+/* ============================================
+   HAMBURGER MENU BUTTON
+   ============================================ */
+
+.sorc-nav-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  order: 2 !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+
+
+.sorc-nav-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sorc-nav-text);
+  transition: transform 0.3s ease;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.sorc-nav-toggle:hover {
+  background: var(--sorc-nav-hover-bg);
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 24px;
+  height: 20px;
+}
+
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--sorc-nav-text);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.sorc-nav-toggle[aria-expanded="true"] .hamburger span:nth-child(1) {
+  transform: rotate(45deg) translateY(11px);
+}
+
+.sorc-nav-toggle[aria-expanded="true"] .hamburger span:nth-child(2) {
+  opacity: 0;
+}
+
+.sorc-nav-toggle[aria-expanded="true"] .hamburger span:nth-child(3) {
+  transform: rotate(-45deg) translateY(-11px);
+}
+
+/* ============================================
+   NAVIGATION SIDEBAR
+   ============================================ */
+
+.sorc-nav-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--sorc-nav-bg);
+  border-right: 1px solid var(--sorc-nav-border);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  box-shadow: 2px 0 8px var(--sorc-nav-shadow);
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.sorc-nav-sidebar.open {
+  transform: translateX(0);
+}
+
+.sorc-nav-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--sorc-nav-overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 998;
+}
+
+.sorc-nav-sidebar.open ~ .sorc-nav-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sorc-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--sorc-nav-border);
+}
+
+.sorc-nav-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--sorc-nav-accent);
+  text-decoration: none;
+  letter-spacing: 2px;
+  transition: color 0.3s ease;
+}
+
+.sorc-nav-logo:hover {
+  color: #8c06a3;
+}
+
+.sorc-nav-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--sorc-nav-text);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.sorc-nav-close:hover {
+  background: var(--sorc-nav-hover-bg);
+}
+
+/* ============================================
+   HOME ICON
+   ============================================ */
+
+.sorc-nav-home-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 1.5rem !important;
+  color: var(--sorc-nav-accent) !important;
+  text-decoration: none !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid transparent !important;
+  order: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.sorc-nav-home-icon:hover {
+  background: var(--sorc-nav-hover-bg);
+  border-color: var(--sorc-nav-accent);
+  transform: scale(1.1);
+}
+
+/* ============================================
+   SEARCH BAR
+   ============================================ */
+
+.sorc-nav-search-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  background: transparent !important;
+  border: 1px solid var(--sorc-nav-border) !important;
+  border-radius: 20px !important;
+  padding: 0.35rem 0.75rem !important;
+  width: 160px !important;
+  flex-shrink: 0 !important;
+  order: 1 !important;
+  transition: all 0.2s ease !important;
+}
+
+.sorc-nav-search-container:focus-within {
+  border-color: var(--sorc-nav-accent);
+  box-shadow: 0 0 4px rgba(197, 160, 66, 0.3);
+}
+
+.sorc-nav-search-icon {
+  color: var(--sorc-nav-text-secondary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sorc-nav-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--sorc-nav-text);
+  font-size: 0.9rem;
+  outline: none;
+  padding: 0;
+  font-family: inherit;
+}
+
+.sorc-nav-search-input::placeholder {
+  color: var(--sorc-nav-text-secondary);
+  opacity: 0.6;
+}
+
+/* ============================================
+   THEME TOGGLE (LAWFUL/EVIL MODE)
+   ============================================ */
+
+.sorc-theme-toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  order: 0;
+}
+
+.sorc-theme-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(90deg, #92793a 0%, #8c06a3 50%, #be0500 100%);
+  border: 2px solid #8c06a3;
+  border-radius: 20px;
+  padding: 0;
+  width: 140px;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+  font-weight: 700;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sorc-theme-toggle:hover {
+  box-shadow: 0 2px 12px rgba(140, 6, 163, 0.5);
+}
+
+.sorc-theme-label {
+  position: absolute;
+  width: 70px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+/* Lawful side: Gold, Blue, Purple colors */
+.sorc-theme-label.lawful {
+  left: 0;
+  color: #f5f5f0;
+  opacity: 1;
+  transform: translateX(0);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+/* Evil side: Black, Red, Purple colors */
+.sorc-theme-label.evil {
+  right: 0;
+  color: #f5f5f0;
+  opacity: 1;
+  transform: translateX(0);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+/* Slider background with rank colors */
+.sorc-theme-toggle::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  width: 64px;
+  height: 36px;
+  background: linear-gradient(90deg, #0058aa 0%, #8c06a3 50%, #000000 100%);
+  border-radius: 18px;
+  transition: left 0.3s ease;
+  z-index: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+body:not(.lawful-mode) .sorc-theme-toggle::before {
+  left: 74px;
+}
+
+/* ============================================
+   NAVIGATION SECTIONS
+   ============================================ */
+
+.sorc-nav-content {
+  padding: 1rem 0;
+}
+
+.sorc-nav-section {
+  border-bottom: 1px solid var(--sorc-nav-border);
+}
+
+.sorc-nav-section-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: var(--sorc-nav-text);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: background 0.2s ease;
+}
+
+.sorc-nav-section-toggle:hover {
+  background: var(--sorc-nav-hover-bg);
+}
+
+/* Direct Links (No Toggle) */
+.sorc-nav-direct-link {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: var(--sorc-nav-text) !important;
+  text-decoration: none !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid var(--sorc-nav-border);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.sorc-nav-direct-link:hover {
+  background: var(--sorc-nav-hover-bg);
+  color: var(--sorc-nav-accent) !important;
+}
+
+.sorc-nav-direct-link:visited {
+  color: var(--sorc-nav-text) !important;
+}
+
+.sorc-nav-section-icon {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.sorc-nav-section-toggle.expanded .sorc-nav-section-icon {
+  transform: rotate(90deg);
+}
+
+.sorc-nav-section-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.sorc-nav-section-menu.expanded {
+  max-height: 2000px;
+}
+
+.sorc-nav-section-menu li {
+  border-top: 1px solid var(--sorc-nav-border);
+}
+
+.sorc-nav-section-menu a {
+  display: block;
+  padding: 0.6rem 1rem 0.6rem 2rem;
+  color: var(--sorc-nav-text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sorc-nav-section-menu a:hover {
+  background: var(--sorc-nav-hover-bg);
+  color: var(--sorc-nav-accent);
+  border-left-color: var(--sorc-nav-accent);
+}
+
+/* ============================================
+   CHAPTER SUBSECTIONS (RULES)
+   ============================================ */
+
+.sorc-nav-chapter {
+  border-top: 1px solid var(--sorc-nav-border);
+}
+
+.sorc-nav-details {
+  margin: 0;
+  padding: 0;
+}
+
+.sorc-nav-chapter-title {
+  display: block;
+  padding: 0.6rem 1rem 0.6rem 2rem;
+  cursor: pointer;
+  color: var(--sorc-nav-text-secondary);
+  font-size: 0.9rem;
+  user-select: none;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sorc-nav-chapter-title:hover {
+  background: var(--sorc-nav-hover-bg);
+  color: var(--sorc-nav-accent);
+}
+
+.sorc-nav-chapter-title::marker {
+  color: var(--sorc-nav-accent);
+}
+
+.sorc-nav-subsections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--sorc-nav-hover-bg);
+}
+
+.sorc-nav-subsections li {
+  border-top: 1px solid var(--sorc-nav-border);
+}
+
+.sorc-nav-subsections a {
+  display: block;
+  padding: 0.5rem 1rem 0.5rem 3rem;
+  color: var(--sorc-nav-text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sorc-nav-subsections a:hover {
+  color: var(--sorc-nav-accent);
+  border-left-color: var(--sorc-nav-accent);
+}
+
+/* ============================================
+   BADGE COMPONENT (MEMBERSHIP)
+   ============================================ */
+
+.sorc-badge {
+  position: sticky;
+  top: 60px;
+  right: 220px;
+  background: var(--sorc-badge-bg);
+  border: 2px solid var(--sorc-badge-border);
+  border-radius: 20px;
+  padding: 0.4rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--sorc-badge-text);
+  z-index: 1002;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px var(--sorc-nav-shadow);
+  transition: all 0.3s ease;
+}
+
+.sorc-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--sorc-nav-shadow);
+}
+
+.sorc-badge-tier {
+  color: var(--sorc-nav-accent);
+  font-weight: 700;
+}
+
+.sorc-badge-icon {
+  font-size: 1rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================
+   FLOATING AVATAR COMPONENT
+   ============================================ */
+
+.sorc-avatar-floating {
+  position: sticky;
+  top: 60px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+.sorc-avatar-button {
+  background: var(--sorc-badge-bg);
+  border: 2px solid var(--sorc-badge-border);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 8px var(--sorc-nav-shadow);
+}
+
+.sorc-avatar-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--sorc-nav-shadow);
+  border-color: #8c06a3;
+}
+
+.sorc-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sorc-nav-accent), #8c06a3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--sorc-badge-bg);
+  font-size: 1rem;
+}
+
+.sorc-avatar-placeholder {
+  display: block;
+}
+
+.sorc-avatar-dropdown {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 0.6rem;
+  color: var(--sorc-nav-accent);
+}
+
+/* Avatar Menu */
+.sorc-avatar-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 280px;
+  background: var(--sorc-nav-bg);
+  border: 1px solid var(--sorc-nav-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--sorc-nav-shadow);
+  margin-top: 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 10001;
+  overflow: hidden;
+}
+
+.sorc-avatar-menu.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.sorc-avatar-header {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--sorc-nav-border);
+}
+
+.sorc-avatar-circle-large {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--sorc-nav-accent), #8c06a3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--sorc-badge-bg);
+  font-size: 1.2rem;
+}
+
+.sorc-avatar-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sorc-avatar-username {
+  font-weight: 600;
+  color: var(--sorc-nav-text);
+  font-size: 0.95rem;
+}
+
+.sorc-avatar-tier {
+  font-size: 0.8rem;
+  color: var(--sorc-nav-text-secondary);
+  margin-top: 0.2rem;
+}
+
+.sorc-avatar-menu-divider {
+  height: 1px;
+  background: var(--sorc-nav-border);
+  margin: 0.5rem 0;
+  list-style: none;
+  padding: 0;
+  border: none;
+}
+
+.sorc-avatar-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.sorc-avatar-menu-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.sorc-avatar-menu-list a {
+  display: block;
+  padding: 0.7rem 1rem;
+  color: var(--sorc-nav-text);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.sorc-avatar-menu-list a:hover {
+  background: var(--sorc-nav-hover-bg);
+  color: var(--sorc-nav-accent);
+  border-left-color: var(--sorc-nav-accent);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 900px) {
+  .sorc-theme-toggle {
+    width: 120px;
+  }
+
+  .sorc-theme-label {
+    width: 60px;
+    font-size: 0.65rem;
+  }
+
+  .sorc-theme-toggle::before {
+    width: 56px;
+  }
+
+  body:not(.lawful-mode) .sorc-theme-toggle::before {
+    left: 62px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sorc-nav-sidebar {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .sorc-badge,
+  .sorc-avatar-floating {
+    display: none;
+  }
+
+  .sorc-avatar-menu {
+    width: calc(100vw - 2rem);
+    max-width: 280px;
+  }
+
+  .sorc-theme-toggle {
+    width: 100px;
+    height: 36px;
+  }
+
+  .sorc-theme-label {
+    width: 50px;
+    height: 36px;
+    font-size: 0.6rem;
+  }
+
+  .sorc-theme-toggle::before {
+    height: 32px;
+    width: 48px;
+  }
+
+  body:not(.lawful-mode) .sorc-theme-toggle::before {
+    left: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sorc-nav {
+    padding: 0 0.75rem;
+  }
+
+  .sorc-nav-sidebar {
+    width: 100%;
+  }
+
+  .sorc-nav-section-menu a,
+  .sorc-nav-subsections a {
+    padding-right: 0.75rem;
+  }
+}
+
+/* ============================================
+   AVATAR MENU THEME TOGGLE
+   ============================================ */
+
+.sorc-avatar-theme-toggle-wrapper {
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.sorc-avatar-theme-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(90deg, #92793a 0%, #8c06a3 50%, #be0500 100%);
+  border: 2px solid #8c06a3;
+  border-radius: 20px;
+  padding: 0;
+  width: 140px;
+  height: 40px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+  font-weight: 700;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sorc-avatar-theme-toggle:hover {
+  box-shadow: 0 2px 12px rgba(140, 6, 163, 0.5);
+}
+
+.sorc-avatar-theme-toggle .sorc-theme-label {
+  position: absolute;
+  width: 70px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  color: #f5f5f0;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.sorc-avatar-theme-toggle .sorc-theme-label.lawful {
+  left: 0;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sorc-avatar-theme-toggle .sorc-theme-label.evil {
+  right: 0;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+body:not(.lawful-mode) .sorc-avatar-theme-toggle .sorc-theme-label.lawful {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+body:not(.lawful-mode) .sorc-avatar-theme-toggle .sorc-theme-label.evil {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sorc-avatar-theme-toggle::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  width: 64px;
+  height: 36px;
+  background: linear-gradient(90deg, #0058aa 0%, #8c06a3 50%, #000000 100%);
+  border-radius: 18px;
+  transition: left 0.3s ease;
+  z-index: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+body:not(.lawful-mode) .sorc-avatar-theme-toggle::before {
+  left: 74px;
+}
+
+/* ============================================
+   HIDE OLD HEADER & LOGO
+   ============================================ */
+
+#site-header {
+  display: none !important;
+}
+
+.header-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background: transparent !important;
+  padding: 1.5rem 0 !important;
+  border: none !important;
+  min-height: 140px !important;
+}
+
+.sorc-letters-img {
+  max-height: 140px !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  display: none !important;
+}
+
+.sorc-letters-img.lawful-only {
+  display: none !important;
+}
+
+.sorc-letters-img.evil-only {
+  display: none !important;
+}
+
+body.lawful-mode .sorc-letters-img.lawful-only {
+  display: block !important;
+}
+
+body:not(.lawful-mode) .sorc-letters-img.evil-only {
+  display: block !important;
+}
+
+
+/* ============================================
+   HIDE OLD PAGE NAV (REPLACED BY NEW NAVBAR)
+   ============================================ */
+
+.page-nav {
+  display: none !important;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .sorc-nav-wrapper {
+    display: none !important;
+  }
+
+  body {
+    padding-top: 0;
+  }
+
+  .page-nav {
+    display: flex !important;
+  }
+}
