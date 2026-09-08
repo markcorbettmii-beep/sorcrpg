@@ -77,14 +77,22 @@ class SORCNavigation {
             &#8962;
           </a>
 
-          <!-- Hamburger Menu (Far Right) -->
-          <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
-            <span class="hamburger">
-              <span></span>
-              <span></span>
-              <span></span>
-            </span>
-          </button>
+          <!-- Right Side Controls (Search, Avatar, Hamburger) -->
+          <div class="sorc-nav-right">
+            <!-- Search Icon -->
+            <button class="sorc-nav-search" aria-label="Search">
+              🔍
+            </button>
+
+            <!-- Hamburger Menu (Far Right) -->
+            <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+              <span class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </button>
+          </div>
 
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
