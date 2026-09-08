@@ -242,6 +242,7 @@ class SORCNavigation {
 
             <div class="sorc-avatar-menu-divider"></div>
             <ul class="sorc-avatar-menu-list">
+              <li><a href="${pathToRoot}content/features/space.html">Your Space</a></li>
               <li><a href="${pathToRoot}content/features/characters-home.html">My Characters</a></li>
               <li><a href="${pathToRoot}content/features/achievements.html">Achievements</a></li>
               <li><a href="${pathToRoot}content/features/vault.html">Vault</a></li>
