@@ -98,6 +98,14 @@ class SORCNavigation {
             </button>
           </div>
 
+          <!-- Navigation Logo (centered, not on index.html) -->
+          ${window.location.pathname.endsWith('index.html') || window.location.pathname === '/' ? '' : `
+            <div class="sorc-nav-logo-center">
+              <img src="${pathToRoot}images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-nav-logo-img lawful-only" />
+              <img src="${pathToRoot}images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-nav-logo-img evil-only" />
+            </div>
+          `}
+
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
             <div class="sorc-nav-header">
