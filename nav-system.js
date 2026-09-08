@@ -108,7 +108,7 @@ class SORCNavigation {
             </div>
 
             <div class="sorc-nav-content">
-              <!-- YOUR SPACE - First Section -->
+              <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play">
                   <span class="sorc-nav-section-label">YOUR SPACE</span>
@@ -122,16 +122,10 @@ class SORCNavigation {
                 </ul>
               </div>
 
-              <!-- Alphabetical Sections Below -->
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="announcements">
-                  <span class="sorc-nav-section-label">ANNOUNCEMENTS</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="announcements-menu">
-                  <li><a href="${pathToRoot}content/announcements-index.html">Announcements</a></li>
-                </ul>
-              </div>
+              <!-- Direct Links (No Arrows) -->
+              <a href="${pathToRoot}content/announcements-index.html" class="sorc-nav-direct-link">
+                <span class="sorc-nav-section-label">ANNOUNCEMENTS</span>
+              </a>
 
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="community">
@@ -158,16 +152,9 @@ class SORCNavigation {
                 </ul>
               </div>
 
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="gamemodes">
-                  <span class="sorc-nav-section-label">GAME MODES</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="gamemodes-menu">
-                  <li><a href="${pathToRoot}content/game-modes-index.html">Game Modes</a></li>
-                  <li><a href="${pathToRoot}content/trials-of-combat-index.html">Trials of Combat</a></li>
-                </ul>
-              </div>
+              <a href="${pathToRoot}content/game-modes-index.html" class="sorc-nav-direct-link">
+                <span class="sorc-nav-section-label">GAME MODES</span>
+              </a>
 
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="library">
@@ -183,15 +170,9 @@ class SORCNavigation {
                 </ul>
               </div>
 
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="news">
-                  <span class="sorc-nav-section-label">NEWS</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="news-menu">
-                  <li><a href="${pathToRoot}content/news-index.html">News</a></li>
-                </ul>
-              </div>
+              <a href="${pathToRoot}content/news-index.html" class="sorc-nav-direct-link">
+                <span class="sorc-nav-section-label">NEWS</span>
+              </a>
 
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="rules">
@@ -214,6 +195,10 @@ class SORCNavigation {
                   `).join('')}
                 </ul>
               </div>
+
+              <a href="${pathToRoot}content/trials-of-combat-index.html" class="sorc-nav-direct-link">
+                <span class="sorc-nav-section-label">TRIALS OF COMBAT</span>
+              </a>
             </div>
           </div>
 
