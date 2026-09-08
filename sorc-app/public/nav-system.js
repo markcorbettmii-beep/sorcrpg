@@ -59,15 +59,10 @@ class SORCNavigation {
   }
 
   init() {
-    console.log('SORCNavigation.init() called');
     this.injectNavigationHTML();
-    console.log('Navigation HTML injected');
     this.attachEventListeners();
-    console.log('Event listeners attached');
     this.loadUserProfile();
-    console.log('User profile loaded');
     this.initThemeToggle();
-    console.log('Theme toggle initialized');
   }
 
   injectNavigationHTML() {
@@ -272,36 +267,27 @@ class SORCNavigation {
     const path = window.location.pathname;
     const depth = (path.match(/\//g) || []).length - 1; // -1 for leading slash
 
-    let result;
     // Calculate relative path based on page depth:
     // depth 0: root level (/index.html) -> no path needed
     // depth 1: content level (/content/file.html) -> go up one level
     // depth 2: subdirectory level (/content/subdir/file.html) -> go up two levels
     // depth 3+: deeper levels -> go up accordingly
     if (depth >= 3) {
-      result = '../../../';
+      return '../../../';
     } else if (depth === 2) {
-      result = '../../';
+      return '../../';
     } else if (depth === 1) {
-      result = '../';
-    } else {
-      result = ''; // depth 0: already at root, no path needed
+      return '../';
     }
-
-    console.log('getPathToRoot:', { path, depth, result });
-    return result;
+    return ''; // depth 0: already at root, no path needed
   }
 
   attachEventListeners() {
-    console.log('attachEventListeners called');
-
     // Hamburger menu toggle
     const menuToggle = document.querySelector('.sorc-nav-toggle');
     const sidebar = document.querySelector('.sorc-nav-sidebar');
     const overlay = document.querySelector('.sorc-nav-overlay');
     const closeBtn = document.querySelector('.sorc-nav-close');
-
-    console.log('Elements found:', { menuToggle, sidebar, overlay, closeBtn });
 
     if (menuToggle) {
       menuToggle.addEventListener('click', () => this.toggleMenu());
@@ -317,12 +303,9 @@ class SORCNavigation {
 
     // Section toggles
     const sectionToggles = document.querySelectorAll('.sorc-nav-section-toggle');
-    console.log('Section toggles found:', sectionToggles.length);
-    sectionToggles.forEach((toggle, idx) => {
-      console.log(`Attaching listener to toggle ${idx}:`, toggle.dataset.section);
+    sectionToggles.forEach(toggle => {
       toggle.addEventListener('click', (e) => {
         const section = toggle.dataset.section;
-        console.log(`Toggle ${idx} clicked: section=${section}`);
         this.toggleSection(section, e.currentTarget);
       });
     });
@@ -343,28 +326,14 @@ class SORCNavigation {
 
     // Close menu on link click (submenu links)
     const navLinks = document.querySelectorAll('.sorc-nav-section-menu a');
-    console.log('Nav links found:', navLinks.length);
-    navLinks.forEach((link, idx) => {
-      const href = link.getAttribute('href');
-      console.log(`Nav link ${idx}:`, href);
-      link.addEventListener('click', (e) => {
-        console.log(`Nav link ${idx} clicked:`, href);
-        alert(`LINK CLICKED: ${href}`);
-        this.closeMenu();
-      });
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => this.closeMenu());
     });
 
     // Close menu on direct link click
     const directLinks = document.querySelectorAll('.sorc-nav-direct-link');
-    console.log('Direct links found:', directLinks.length);
-    directLinks.forEach((link, idx) => {
-      const href = link.getAttribute('href');
-      console.log(`Direct link ${idx}:`, href);
-      link.addEventListener('click', (e) => {
-        console.log(`Direct link ${idx} clicked:`, href);
-        alert(`DIRECT LINK CLICKED: ${href}`);
-        this.closeMenu();
-      });
+    directLinks.forEach(link => {
+      link.addEventListener('click', () => this.closeMenu());
     });
   }
 
@@ -395,11 +364,7 @@ class SORCNavigation {
   }
 
   toggleSection(section, button) {
-    console.log('toggleSection called:', section);
-
     const menu = document.getElementById(`${section}-menu`);
-    console.log(`Menu element (${section}-menu):`, menu);
-
     if (menu) {
       menu.classList.toggle('expanded');
       button.classList.toggle('expanded');
@@ -407,23 +372,7 @@ class SORCNavigation {
 
     // Navigate to section index if data-href is present
     const href = button.getAttribute('data-href');
-    const pathname = window.location.pathname;
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-
-    console.log('toggleSection details:', { section, href, pathname, hostname, protocol });
-
-    alert(`TOGGLE SECTION DEBUG
-Section: ${section}
-Href: ${href}
-Path: ${pathname}
-Host: ${hostname}
-Protocol: ${protocol}
-
-Will navigate: ${!!href}`);
-
     if (href) {
-      console.log('Navigating to:', href);
       window.location.href = href;
     }
   }
