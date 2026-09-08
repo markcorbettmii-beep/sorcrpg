@@ -372,17 +372,6 @@ class SORCNavigation {
 
     // Navigate to section index if data-href is present
     const href = button.getAttribute('data-href');
-    if (section === 'play') {
-      const pathname = window.location.pathname;
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
-      alert(`YOUR SPACE DEBUG
-Href: ${href}
-Path: ${pathname}
-Host: ${hostname}
-Protocol: ${protocol}
-Will navigate: ${!!href}`);
-    }
     if (href) {
       window.location.href = href;
     }
