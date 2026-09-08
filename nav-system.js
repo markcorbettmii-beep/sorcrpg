@@ -110,7 +110,7 @@ class SORCNavigation {
             <div class="sorc-nav-content">
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="play">
+                <button class="sorc-nav-section-toggle" data-section="play" data-href="${pathToRoot}content/lobbies-index.html">
                   <span class="sorc-nav-section-label">YOUR SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
@@ -128,7 +128,7 @@ class SORCNavigation {
               </a>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="community">
+                <button class="sorc-nav-section-toggle" data-section="community" data-href="${pathToRoot}content/community-index.html">
                   <span class="sorc-nav-section-label">COMMUNITY</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
@@ -141,7 +141,7 @@ class SORCNavigation {
               </div>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="content">
+                <button class="sorc-nav-section-toggle" data-section="content" data-href="${pathToRoot}content/content-index.html">
                   <span class="sorc-nav-section-label">CONTENT</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
@@ -157,7 +157,7 @@ class SORCNavigation {
               </a>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="library">
+                <button class="sorc-nav-section-toggle" data-section="library" data-href="${pathToRoot}content/library-index.html">
                   <span class="sorc-nav-section-label">LIBRARY</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
@@ -175,7 +175,7 @@ class SORCNavigation {
               </a>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="rules">
+                <button class="sorc-nav-section-toggle" data-section="rules" data-href="${pathToRoot}content/essentia_core/rules-index.html">
                   <span class="sorc-nav-section-label">RULES</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
@@ -368,6 +368,12 @@ class SORCNavigation {
     if (menu) {
       menu.classList.toggle('expanded');
       button.classList.toggle('expanded');
+    }
+
+    // Navigate to section index if data-href is present
+    const href = button.getAttribute('data-href');
+    if (href) {
+      window.location.href = href;
     }
   }
 
