@@ -109,15 +109,82 @@ class SORCNavigation {
 
             <div class="sorc-nav-content">
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="play">
-                  <span class="sorc-nav-section-label">YOUR SPACE</span>
+                <button class="sorc-nav-section-toggle" data-section="announcements">
+                  <span class="sorc-nav-section-label">ANNOUNCEMENTS</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
-                <ul class="sorc-nav-section-menu" id="play-menu">
-                  <li><a href="${pathToRoot}content/features/lobbies.html">Lobbies</a></li>
-                  <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
-                  <li><a href="${pathToRoot}content/features/trading-post.html">Trading Post</a></li>
-                  <li><a href="${pathToRoot}content/features/trials-of-combat.html">Trials of Combat</a></li>
+                <ul class="sorc-nav-section-menu" id="announcements-menu">
+                  <li><a href="${pathToRoot}content/announcements-index.html">Announcements</a></li>
+                </ul>
+              </div>
+
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="character">
+                  <span class="sorc-nav-section-label">CHARACTER</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="character-menu">
+                  <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
+                </ul>
+              </div>
+
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="community">
+                  <span class="sorc-nav-section-label">COMMUNITY</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="community-menu">
+                  <li><a href="${pathToRoot}content/features/leaderboard.html">Leaderboard</a></li>
+                  <li><a href="${pathToRoot}content/features/fellowships.html">Fellowships</a></li>
+                  <li><a href="${pathToRoot}content/features/forum.html">Forums</a></li>
+                  <li><a href="${pathToRoot}content/features/threads.html">Threads</a></li>
+                </ul>
+              </div>
+
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="content">
+                  <span class="sorc-nav-section-label">CONTENT</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="content-menu">
+                  <li><a href="${pathToRoot}content/features/sorc-store.html">SORC Store</a></li>
+                  <li><a href="${pathToRoot}content/features/exchange.html">Essentia Exchange</a></li>
+                  <li><a href="${pathToRoot}content/features/collection.html">Collection</a></li>
+                </ul>
+              </div>
+
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="gamemodes">
+                  <span class="sorc-nav-section-label">GAME MODES</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="gamemodes-menu">
+                  <li><a href="${pathToRoot}content/game-modes-index.html">Game Modes</a></li>
+                  <li><a href="${pathToRoot}content/trials-of-combat-index.html">Trials of Combat</a></li>
+                </ul>
+              </div>
+
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="library">
+                  <span class="sorc-nav-section-label">LIBRARY</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="library-menu">
+                  <li><a href="${pathToRoot}content/library-index.html">Library</a></li>
+                  <li><a href="${pathToRoot}library.html">Legacy Library</a></li>
+                  <li><a href="${pathToRoot}content/tomes/heroes-hermits.html">Tomes</a></li>
+                  <li><a href="${pathToRoot}content/reference/talents.html">Talents</a></li>
+                  <li><a href="${pathToRoot}content/classes/main-class-tree-avenger.html">Classes</a></li>
+                </ul>
+              </div>
+
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="news">
+                  <span class="sorc-nav-section-label">NEWS</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="news-menu">
+                  <li><a href="${pathToRoot}content/news-index.html">News</a></li>
                 </ul>
               </div>
 
@@ -144,40 +211,14 @@ class SORCNavigation {
               </div>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="library">
-                  <span class="sorc-nav-section-label">LIBRARY</span>
+                <button class="sorc-nav-section-toggle" data-section="play">
+                  <span class="sorc-nav-section-label">YOUR SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
-                <ul class="sorc-nav-section-menu" id="library-menu">
-                  <li><a href="${pathToRoot}library.html">Library</a></li>
-                  <li><a href="${pathToRoot}content/tomes/heroes-hermits.html">Tomes</a></li>
-                  <li><a href="${pathToRoot}content/reference/talents.html">Talents</a></li>
-                  <li><a href="${pathToRoot}content/classes/main-class-tree-avenger.html">Classes</a></li>
-                </ul>
-              </div>
-
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="community">
-                  <span class="sorc-nav-section-label">COMMUNITY</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="community-menu">
-                  <li><a href="${pathToRoot}content/features/leaderboard.html">Leaderboard</a></li>
-                  <li><a href="${pathToRoot}content/features/fellowships.html">Fellowships</a></li>
-                  <li><a href="${pathToRoot}content/features/forum.html">Forums</a></li>
-                  <li><a href="${pathToRoot}content/features/threads.html">Threads</a></li>
-                </ul>
-              </div>
-
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="marketplace">
-                  <span class="sorc-nav-section-label">CONTENT</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="marketplace-menu">
-                  <li><a href="${pathToRoot}content/features/sorc-store.html">SORC Store</a></li>
-                  <li><a href="${pathToRoot}content/features/exchange.html">Essentia Exchange</a></li>
-                  <li><a href="${pathToRoot}content/features/collection.html">Collection</a></li>
+                <ul class="sorc-nav-section-menu" id="play-menu">
+                  <li><a href="${pathToRoot}content/lobbies-index.html">Lobbies</a></li>
+                  <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
+                  <li><a href="${pathToRoot}content/features/trading-post.html">Trading Post</a></li>
                 </ul>
               </div>
             </div>
