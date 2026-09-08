@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Ranged Mechanics (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../styles.css?v=9">
+  <style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section h3 { color: #9c27b0; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #e53935; }
+    .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
+    .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.8rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .table-scroll { overflow-x: auto; }
+    .new-row td { background: rgba(197,160,66,0.14); }
+    .new-row td:first-child, .new-row td { font-weight: 500; }
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .new-row td { background: rgba(185,170,0,0.18); }
+    /* Rule Set color coding. Blue (Rare) is in play at every Rule Set, Bare Bones included.
+       Gold (Divine) is Complex only. Purple (Legendary) borders every row, because
+       Modular may keep or drop any of them. */
+    .style-improvised td { border: 2px solid rgba(140,6,163,0.32) !important; }
+    .style-casual td { background: rgba(0,88,170,0.13); }
+    .style-enthusiastic td { background: rgba(146,121,58,0.15); }
+    body.lawful-mode .style-improvised td { border-color: rgba(140,6,163,0.30) !important; }
+    /* styles.css zebra-stripes even rows with `body.lawful-mode tr:nth-child(even) td`,
+       which carries !important and specificity (0,2,3). These must outrank it or only the
+       odd rows take their play-style color. */
+    body.lawful-mode .rules-table tr.style-casual td { background: rgba(0,88,170,0.13) !important; }
+    body.lawful-mode .rules-table tr.style-enthusiastic td { background: rgba(146,121,58,0.20) !important; }
+    .style-key { display: inline-block; width: 0.85rem; height: 0.85rem; vertical-align: -1px;
+                 margin-right: 0.35rem; border: 1px solid rgba(140,6,163,0.45); }
+    .style-key.casual { background: rgba(0,88,170,0.13); }
+    .style-key.enthusiastic { background: rgba(146,121,58,0.15); }
+    .style-key.improvised { background: transparent; }
+
+    /* Telluric Ranged table: hold real column widths and scroll sideways rather
+       than wrapping every cell to three lines on a portrait phone. Everything but
+       the weapon column is centred. */
+    /* The weapon column is Core: every weapon exists under Bare Bones, so it takes
+       the Bare Bones blue rather than inheriting its lead row's colour. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,110,215,0.20) !important; }
+    body.lawful-mode #telluric-table td[rowspan],
+    body.lawful-mode #telluric-table tbody tr:first-child td:first-child {
+      background: rgba(0,88,170,0.13) !important; }
+    #telluric-table { min-width: 760px; }
+    #telluric-table th, #telluric-table td { text-align: center; white-space: nowrap; }
+    #telluric-table th:first-child { text-align: left; }
+    /* The weapon column only: the rowspan cells, plus CLOSE QTR. which has none.
+       Continuation rows have no weapon cell, so :first-child there is Dist. */
+    #telluric-table td[rowspan],
+    #telluric-table tbody tr:first-child td:first-child { text-align: left; white-space: normal; }
+  </style>
+</head>
+<body class="lawful-mode">
+<div class="page-wrapper">
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><span class="page-nav-current" aria-current="page">pg. 1</span></li>
+    </ul>
+<main>
+  <div class="rules-section">
+
+    
+
+
+    <div class="callout" id="how-to-read">
+      <strong>How to read this page.</strong>
+      <br/><br/>
+      <strong>The table.</strong> Find your weapon, then your distance. The <em>Velocity Curve</em> column
+      names the state your shot is in. The three columns after it are the consequences:
+      <em>Hit MOD.</em> is added to your d100 roll, <em>Base DMG.</em> is how many of the weapon's dice survive the flight,
+      and <em>DMG. MOD.</em> is the Trait Score added after.
+      <br/><br/>
+      <strong>Dice fractions.</strong> Base DMG. is written as a share of the weapon's listed dice.
+      On a Rare 4d6 weapon: Max DMG. (+&frac14; dice) is 5d6, Base DMG. (full dice) is 4d6,
+      Decay (&frac34; dice) is 3d6 and Decay (&frac12; dice) is 2d6. Agility is added after the dice are
+      set, in full, at every band.
+      <br/><br/>
+      <strong>Notes.</strong> &#10035;, &#10020;, &#10022; and &#10023; mark the four footnotes directly under the table,
+      in that order. &#10035; is Oscillation, the one band a <a href="bare-bones.html"><span style="color:#0058aa">Bare Bones</span></a> table still uses,
+      so it leads. &#10020; is Thrown, which every Rule Set uses, so it follows. &#10022; is Point Blank,
+      &#10023; is Velocity Drop.
+      <br/><br/>
+      <strong>Charts.</strong> Every combat chart this page draws on is reproduced at the bottom,
+      under <em>Charts</em>. Each carries its own anchor so it can be linked to by name.
+      <br/><br/>
+      <strong>Anchors.</strong> Every heading, footnote and chart on this page has an id. Link to one by
+      adding <code>#id</code> to the page address, for example <code>#telluric-ranged</code> or
+      <code>#crit-chart</code>.
+    </div>
+
+    <div class="callout" id="style-legend">
+      <strong>Reading the row colors.</strong> Every table and chart on this page is coded to the three
+      Rule Sets. The Rule Set is chosen before the campaign begins and locked in.
+      <br/><br/>
+      <span class="style-key casual"></span><span class="rank-rare" style="color:#0058aa"><span style="color:#0058aa">Bare Bones</span></span> &nbsp;Blue rows are in
+      play at every Rule Set, <span style="color:#0058aa">Bare Bones</span> included. This is the bare bones version of the table.
+      <br/>
+      <span class="style-key enthusiastic"></span><span class="rank-divine" style="color:#92793a"><span style="color:#92793a">Complex</span></span> &nbsp;Gold
+      rows are the added layers. They are in play under <span style="color:#92793a">Complex</span> and dropped under <span style="color:#0058aa">Bare Bones</span>.
+      <br/>
+      <span class="style-key improvised"></span><span class="rank-legendary" style="color:#8c06a3"><span style="color:#8c06a3">Modular</span></span> &nbsp;The
+      purple border runs around every row, because a <span style="color:#8c06a3">Modular</span> table may keep or drop any of them.
+    </div>
+
+    <h2 id="ranged-mechanics">SORC Ranged Mechanics</h2>
+
+    <h3 id="ranged-attacks">Ranged Attacks</h3>
+    <p>Ranged combat covers any attack delivered from a distance using projectiles or spells. All ranged attacks use the d100 roll-over system where your relevant Trait SCR (Agility for ranged weapons, Acuity for spells, Strength for Melee, etc) is added directly to your hit roll against a target's Protection Score (PROTS).</p>
+    <p>Ranged attacks fall into four primary categories based on their origin: <strong>Telluric</strong> (bows, crossbows, thrown weapons, and black powder firearms), <strong>Technologically Advanced Weapons (TAW)</strong> (manufactured technology, splitting into TAW Ballistic and TAW Charged), <strong>Chthonic</strong> (elemental substance carried around a real primal weapon, neither cast nor built), and <strong>Spell</strong> (magical effects cast, in this case from a distance). Each type uses different range bands, damage calculations, and armor interactions.</p>
+
+    <h3 id="telluric-ranged">Telluric - Ranged</h3>
+    <p>Telluric projectiles operate under physics-based range mechanics where distance, projectile velocity drops, and stability directly affect accuracy and damage. Distance is measured in feet. <em>(Given: 1 sq. = 5 ft).</em> Every ranged shot, whether arrow, bolt, hand thrown or slung, falls into one of four velocity states based on how far it travels: <strong>Point Blank</strong>, <strong>Oscillation</strong>, <strong>Stabilized</strong>, and <strong>Velocity Drop</strong> (gravity and air resistance, out to the weapon's maximum range). Band distances past Point Blank vary by weapon class and are read off the table below.</p>
+
+    <p>At Point Blank range (0&#8211;10 ft., 0&#8211;5 ft. for a thrown weapon), if the attacker's d100 roll is a <strong>Critical Hit</strong> (96-100), it lands automatically and the target's <strong>Botch</strong> is waived off. The Crit deals 2x damage dice + Agility Score of the attacker (see Critical Hit Formula, Combat, Hit Results, pg. 5). If the attacker's hit roll is a non-critical hit that meets or exceeds the defender's Protection Score (PROTS), the target may attempt a Botch to interrupt it. The target rolls d100 and adds the higher of their Strength Score or Agility Score, plus their Defense Trait Score, against the attacker's total roll, including modifiers. PROTS is not added. On a meet or exceed the attack is Botched and deals half its damage dice, rounded up, with the attacker's Trait Score still added in full. A thrown weapon cannot be Botched at any distance.</p>
+
+    <p><em>Note: Innate Aptitude and Inaptitude apply to this roll; for example, a Gnome with an innate -5 Strength (STR) Inaptitude would add their Agility Score instead of Strength when calculating their defense roll.</em> If the defender's roll fails to meet the attacker's roll, the shot lands uncontested and deals full damage.</p>
+
+    <p>Compact Telluric weapons (shortbows, light crossbows, slings, hand cannons, shotguns, blunderbusses, dart guns) reach a maximum of 200 ft. Extended weapons (longbows, heavy crossbows, war cannons, siege mortars, ballistae, harpoon guns) reach a maximum of 300 ft. Individual weapon cards may override these defaults. Rifles and longer ranged Telluric weapons distances are pending.</p>
+
+    <p><strong>Black Powder:</strong> Telluric covers black powder firearms as well as drawn and thrown weapons. Hand cannons, blunderbusses, muskets and pistols burn black powder to drive a lead ball, slug or shot, and that charge is what separates them from Technologically Advanced Weapons, which never use black powder. A black powder firearm reads off the same table as every other Telluric projectile, taking the same velocity states, band distances, and hit and damage columns as a bow or crossbow of its reach.</p>
+
+    <p><strong>Reminder: Everything except blue is ignored for <span class="rank-rare" style="color:#0058aa"><span style="color:#0058aa">Bare Bones</span></span> play.</strong></p>
+
+    <div class="table-scroll">
+    <table class="rules-table" id="telluric-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Weapon<br/>(Telluric)</th><th style="background:#b9aa00;color:#2c2c2c">Dist. (ft.)</th><th style="background:#b9aa00;color:#2c2c2c">Velocity Curve</th><th style="background:#b9aa00;color:#2c2c2c">Hit MOD.</th><th style="background:#b9aa00;color:#2c2c2c">Base DMG.</th><th style="background:#b9aa00;color:#2c2c2c">DMG. MOD.</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><strong>CLOSE QTR.</strong></td><td style="background:#d5e1e7;border:2px solid #d6add9">0&#8211;5 ft.</td><td style="background:#d5e1e7;border:2px solid #d6add9">Melee</td><td style="background:#d5e1e7;border:2px solid #d6add9">&#8212;</td><td style="background:#d5e1e7;border:2px solid #d6add9">&#8212;</td><td style="background:#d5e1e7;border:2px solid #d6add9">STR</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#d5e1e7;border:2px solid #d6add9" rowspan="2"><strong>THROW&#10020;</strong><br/>(axe - knife)</td><td style="background:#e1dccc;border:2px solid #d6add9">0&#8211;5 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Pt. Blank&#10022;</td><td style="background:#e1dccc;border:2px solid #d6add9">+0 (+10&#10022;)</td><td style="background:#e1dccc;border:2px solid #d6add9">Base DMG. (full dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">6&#8211;25 ft.</td><td style="background:#d5e1e7;border:2px solid #d6add9">Oscillation</td><td style="background:#d5e1e7;border:2px solid #d6add9">&plusmn;10 1st/last 10ft.&#10035;</td><td style="background:#d5e1e7;border:2px solid #d6add9">Base DMG. (full dice)</td><td style="background:#d5e1e7;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#d5e1e7;border:2px solid #d6add9" rowspan="4"><strong>MID RANGE</strong><br/>(Shortbow)</td><td style="background:#e1dccc;border:2px solid #d6add9">0&#8211;10 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Pt. Blank&#10022;</td><td style="background:#e1dccc;border:2px solid #d6add9">+0 (+10&#10022;)</td><td style="background:#e1dccc;border:2px solid #d6add9">Max DMG. (+&frac14; dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">11&#8211;85 ft.</td><td style="background:#d5e1e7;border:2px solid #d6add9">Oscillation</td><td style="background:#d5e1e7;border:2px solid #d6add9">+10 1st 10ft.&#10035;</td><td style="background:#d5e1e7;border:2px solid #d6add9">Base DMG. (full dice)</td><td style="background:#d5e1e7;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">86&#8211;150 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Stabilized</td><td style="background:#e1dccc;border:2px solid #d6add9">&ndash;10</td><td style="background:#e1dccc;border:2px solid #d6add9">Max DMG. (+&frac14; dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">151&#8211;200 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Velocity Drop&#10023;</td><td style="background:#e1dccc;border:2px solid #d6add9">&ndash;15</td><td style="background:#e1dccc;border:2px solid #d6add9">Decay (&frac34; dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#d5e1e7;border:2px solid #d6add9" rowspan="4"><strong>LONG RANGE</strong><br/>(Longbow)</td><td style="background:#e1dccc;border:2px solid #d6add9">0&#8211;10 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Pt. Blank&#10022;</td><td style="background:#e1dccc;border:2px solid #d6add9">+0 (+10&#10022;)</td><td style="background:#e1dccc;border:2px solid #d6add9">Max DMG. (+&frac14; dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">11&#8211;150 ft.</td><td style="background:#d5e1e7;border:2px solid #d6add9">Oscillation</td><td style="background:#d5e1e7;border:2px solid #d6add9">+10 1st 20 ft.&#10035;</td><td style="background:#d5e1e7;border:2px solid #d6add9">Base DMG. (full dice)</td><td style="background:#d5e1e7;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">151&#8211;200 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Stabilized</td><td style="background:#e1dccc;border:2px solid #d6add9">&ndash;15</td><td style="background:#e1dccc;border:2px solid #d6add9">Max DMG. (+&frac14; dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">201&#8211;300 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Velocity Drop&#10023;</td><td style="background:#e1dccc;border:2px solid #d6add9">&ndash;25</td><td style="background:#e1dccc;border:2px solid #d6add9">Decay (&frac12; dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">AGI</td></tr>
+          </tbody>
+        </table>
+    </div>
+
+    <div class="callout"><strong>Note:</strong> Fired black powder weapons and compound bows will be on a separate chart. The table above covers drawn and thrown Telluric weapons.</div>
+
+    <p id="pt-blank-bonus">&#10035;<strong>Oscillation.</strong> Short Bow: +10 to hit in the first 10 ft. of the band. Long Bow: +10 to hit in the first 20 ft. of the band. Throw: +10 to hit in the first 10 ft. of the band, &ndash;10 in the last 10 ft.</p>
+    <p id="thrown-note">&#10020;<strong>Thrown.</strong> The Throw band's numbers are for weapons made to be thrown, a throwing axe, a throwing knife, a sudikon and the like. Any other weapon may still be thrown, as an <a href="unarmed-mechanics-draft.html#improvised-tools">Improvised Tool</a>: it deals its Improvised Class damage in place of its Rank dice. Point Blank for a throw ends at 5 ft. A thrown weapon cannot be Botched.</p>
+
+    <p id="point-blank">&#10022;<strong>Point Blank.</strong> From distance 0 ft. through 10 ft. the shot is Point Blank, 0 ft. through 5 ft. for a thrown weapon. A d100 roll of 96-100 is a Critical Hit and lands automatically; the defender gets no Botch attempt. Any other roll result that meets or exceeds the defender's PROTS is a normal hit; where a Botch may then be attempted by the target. At this range the Hit MOD. is +0, and +10 only if the target cannot move; otherwise, refer to the Botch chance for target rule. A thrown weapon cannot be Botched.</p>
+
+    <p id="velocity-drop">✧<strong>Velocity Drop.</strong> The band runs to the weapon's maximum range, 200 ft. for Compact weapons and 300 ft. for Extended weapons. Damage decays across the band at the rate shown in the DMG. MOD. column, and nothing may be fired past the maximum.</p>
+
+    <p id="darkness"><strong>Darkness.</strong> No light, can't attack. Dim light penalty if no darkvision, &ndash;10 on top of the band's own Hit MOD. Darkvision, no penalty as long as the target is in the archer's darkvision range. Darkvision distance is read off the character (see <a href="../content/essentia_core/rules_ref_005.html#visibility-and-light">Visibility and Light</a>, Combat, pg. 5).</p>
+
+    <p>The <strong>Velocity Curve</strong> column tracks projectile physics and identifies the physical sweet spot where ammunition reaches peak velocity and damage potential.</p>
+
+    <p><strong>Abbreviations:</strong> "Melee" is a Close Quarters strike, not a shot, and uses Strength. "Pt. Blank" is the shaft at full launch energy but still unsettled, devastating at contact. A drawn bow is a Committed Action, see Botch, Unarmed Combat, pg. 5. "Oscillation" is the shaft still flexing out of the archer's paradox, flying at Base DMG. rather than a peak. "Stabilized" is the second peak, where the shaft has finished settling and flies true. "Velocity Drop" shows the projectile losing energy and accuracy as gravity and air resistance accumulate, reading "Less DMG." on a shortbow and "Decay" on a longbow. This column directly informs tactical positioning: the Stabilized band, 86–150 ft. with a shortbow and 151–200 ft. with a longbow, is the highest damage output at range, and it is bought with &ndash;10 to hit on a shortbow and &ndash;15 on a longbow. Standing inside the first 10 ft. of Oscillation on a shortbow, or the first 20 ft. on a longbow, is the most accurate shot in the table at +10.</p>
+
+    <p>Thrown weapons use the Throw band, a 0–25 ft. range, and Agility alone applies to hit and defense. A throw flies at Base DMG. across its whole range, Point Blank included; it has no damage peak, reaches no Stabilized band and takes no Velocity Drop within 25 ft. These numbers are for weapons made to be thrown, a throwing axe, a throwing knife, a sudikon and the like. Any other weapon may still be thrown, as an Improvised Tool: it deals its Improvised Class damage in place of its Rank dice, see Improvised Tools, Combat, pg. 5. Point Blank for a throw ends at 5 ft. A thrown weapon cannot be Botched.</p>
+
+    <p><strong>Projectiles driven by hand</strong> rather than launched are Improvised Tools, not a rule of their own.</p>
+    <p><strong>Learned or not is the test.</strong> A Character striking with a technique they have learned from a Main Class Tier, Path or Branch is fighting <a href="unarmed-mechanics-draft.html#unarmed-combat">Unarmed</a>. A Character striking with one they have not is using an Improvised Tool, whether their hands are empty or not.</p>
+    <p><strong>Brawlers</strong> - a <a href="main-class-tree-fighter.html#brawler">Path of the Fighter Main Class</a> - get bonuses to Improvised Tools and to hand to hand combat, as long as no weapon is drawn.</p>
+
+    <p id="projectile-recovery"><strong>Projectile Recovery:</strong> Telluric projectiles may be recovered after combat. Typically, 50% of arrows or bolts fired land recoverable. Recovered projectiles can be salvaged for crafting materials or sold. Ballistic projectiles (slugs, pellets, stones) may also be recovered and used for materials. Technologically Advanced Weapons (TAW) and Chthonic projectiles cannot be recovered; they are expended on use.</p>
+
+    <p id="weapon-families"><strong>Weapon Families.</strong> Telluric, Technologically Advanced Weapons (TAW) and Chthonic are the three power sources a ranged weapon can draw on, and the distinction governs range bands, armor interaction and planetary penalties alike. Telluric is forged or knapped and driven by muscle or mechanism. TAW is technologically manufactured and tuned to the sun of its native planet, losing range off-world. Chthonic is ore and gem out of Ignis, carrying Adoria's own magic, so it is strongest where her light is strongest and takes the same planetary Bonus and Penalty as Magic. All three are defined under Tech and Magic Across Essentia (Planetary Markets, Basic Rules pg. 4).</p>
+
+    <p>Reach weapons do not use range bands; they simply extend melee reach to 10 ft. and follow standard melee rules.</p>
+
+    <h3 id="telluric-projectiles">Telluric Projectiles</h3>
+    <p>Telluric is by far the most diverse projectile family, spanning four material tiers. A projectile's Grade is the material of the part that strikes, the head, tip or point, not the shaft, so an ordinary wooden shaft under an Adamantium head is an Adamantium projectile.</p>
+    <ul>
+      <li><strong>Knapped and carved:</strong> Wooden, Bone, Stone, Obsidian, the oldest projectiles on any world and the only ones every people can make.</li>
+      <li><strong>The forged standard:</strong> Steel/Iron, Bronze, Hardened Steel, Chromium, what most bundles are built from.</li>
+      <li><strong>Light metals:</strong> Silver, Mithril, Refined Steel, worked for the cut rather than the weight.</li>
+      <li><strong>Dense and legendary:</strong> Tungsten, Osmium, Iridium, Platinum, Ruthenium, Titanium, Vibranium, Adamantium, Dragon Scale, heads that punish the drawing arm as much as the target.</li>
+    </ul>
+    <p>Slope Mod belongs to whatever launches the projectile, the arm or the bow, and is read off the launcher's own rules (see Slope Conditions below). Full Grades, damage, bundle sizes and costs are on each Projectile's Card (see Projectile Grade, pg. 4).</p>
+
+    <h3 id="slope-conditions">Slope Conditions</h3>
+    <p><strong>High Ground.</strong></p>
+    <p><strong>Low Ground.</strong></p>
+    <p>Rules for Slope Conditions are still being adjusted.</p>
+
+    <h3 id="taw-ranged">TAW Ranged</h3>
+    <p>Technologically Advanced Weapons (TAW) are rail guns, mini guns, high velocity sniper rifles, laser pistols, plasma pistols and rifles, plasma grenades that stick, and other technologically advanced weaponry originally manufactured on the planets further out from Adoria. TAW splits into two: <strong>TAW Ballistic</strong>, which fires a physical round, and <strong>TAW Charged</strong>, which fires light or plasma. A laser pistol or a plasma cannon is TAW Charged, not Chthonic, because it was built (see Chthonic Weapons, pg. 4).</p>
+    <p>TAW also fields shotguns, and they fire more than plasma. A TAW shotgun will throw minerals much the way lead is thrown from an Telluric gun, but it never burns black powder to do it. The propellant for any TAW round that is not light or plasma is one of two systems: <strong>nuclear pulse propulsion</strong> or an <strong>electrothermal-chemical (ETC)</strong> charge. That distinction, powder against
+      <span style="opacity:0.6">[your text ends here]</span></p>
+
+
+    <h2 id="charts">Charts</h2>
+    <p>Every combat chart this page draws on, reproduced for reference. These are the same charts held in
+    the Appendix; the rules that use them are explained above.</p>
+
+        <h4 id="hit-chart">Hit Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Armor Type</th><th style="background:#b9aa00;color:#2c2c2c">Base Armor Score (Armor Scr.)</th><th style="background:#b9aa00;color:#2c2c2c">Base Hit Chance</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Delicate (e.g. Cloth)</td><td style="background:#d5e1e7;border:2px solid #d6add9">10</td><td style="background:#d5e1e7;border:2px solid #d6add9">80%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Light (e.g. Leather)</td><td style="background:#d5e1e7;border:2px solid #d6add9">25</td><td style="background:#d5e1e7;border:2px solid #d6add9">65%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Medium (e.g. Chain)</td><td style="background:#d5e1e7;border:2px solid #d6add9">35</td><td style="background:#d5e1e7;border:2px solid #d6add9">55%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Heavy (e.g. Plate)</td><td style="background:#d5e1e7;border:2px solid #d6add9">45</td><td style="background:#d5e1e7;border:2px solid #d6add9">50%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Dense (e.g. Osmium Plate)</td><td style="background:#d5e1e7;border:2px solid #d6add9">60</td><td style="background:#d5e1e7;border:2px solid #d6add9">35%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Composite (e.g. Dragon Scale)</td><td style="background:#d5e1e7;border:2px solid #d6add9">55</td><td style="background:#d5e1e7;border:2px solid #d6add9">40%</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">TABA (any Grade, Melee and TAW Range only)</td><td style="background:#e1dccc;border:2px solid #d6add9">Varies by grade</td><td style="background:#e1dccc;border:2px solid #d6add9">+5% above base grade</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="hit-results-chart">Hit Results Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Result</th><th style="background:#b9aa00;color:#2c2c2c">Condition</th><th style="background:#b9aa00;color:#2c2c2c">Damage</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Miss</td><td style="background:#d5e1e7;border:2px solid #d6add9">Roll below graze threshold</td><td style="background:#d5e1e7;border:2px solid #d6add9">No damage; the target may Counter</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Graze</td><td style="background:#d5e1e7;border:2px solid #d6add9">Within ~5 points below PROTS</td><td style="background:#d5e1e7;border:2px solid #d6add9">Half damage (rounded down). May impose minor effects.</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Direct Hit</td><td style="background:#d5e1e7;border:2px solid #d6add9">Roll &ge; PROTS</td><td style="background:#d5e1e7;border:2px solid #d6add9">Full damage (xd6 +/- all modifiers)</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Critical Hit</td><td style="background:#d5e1e7;border:2px solid #d6add9">Within the Critical Window for the weapon's Rank (see <a href="#crit-chart">Crit Chart</a>)</td><td style="background:#d5e1e7;border:2px solid #d6add9">2x damage dice. Add Strength score to Melee crits, Agility score to Martial Range crits, Acuity score to spell crits. May trigger extra effects, limb severance, or severe injuries.</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Fumble / Fizzle</td><td style="background:#e1dccc;border:2px solid #d6add9">Roll result 1-5</td><td style="background:#e1dccc;border:2px solid #d6add9">The character stumbles: 1d10 ft., direction GM-determined. Open to counter attack and AoO on every square entered.</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="hit-bonus-chart">Hit Bonus Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Rank</th><th style="background:#b9aa00;color:#2c2c2c">Hit Main Hand</th><th style="background:#b9aa00;color:#2c2c2c">Hit Off Hand</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-common">Common</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+8 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+4 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-uncommon">Uncommon</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+14 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+7 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-rare">Rare</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+20 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+10 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-unique">Unique</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+23 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+12 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-heroic">Heroic</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+26 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+13 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-elite">Elite</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+32 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+16 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-legendary">Legendary</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+38 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+19 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-divine">Divine</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+50 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+25 &plusmn; x</td></tr>
+          </tbody>
+        </table>
+        </div>
+    <p><strong>x</strong> = Strength Trait &#177; any other modifiers (melee), Agility Trait &#177; any other modifiers (ranged), Acuity Trait &#177; any other modifiers (spells).</p>
+        <h4 id="dmg-chart">DMG. Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Rank</th><th style="background:#b9aa00;color:#2c2c2c">1H Weapon</th><th style="background:#b9aa00;color:#2c2c2c">2H Weapon</th><th style="background:#b9aa00;color:#2c2c2c">Off Hand (1H)</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-common">Common</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+2d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+4d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+1d4 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-uncommon">Uncommon</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+3d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+6d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+1d6 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-rare">Rare</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+4d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+8d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+2d6 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-unique">Unique</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+5d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+10d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+3d6 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-heroic">Heroic</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+6d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+12d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+3d6 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-elite">Elite</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+8d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+16d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+4d6 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-legendary">Legendary</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+10d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+20d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+5d6 &plusmn; x</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9"><span class="rank-divine">Divine</span></td><td style="background:#d5e1e7;border:2px solid #d6add9">+12d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+24d6 &plusmn; x</td><td style="background:#d5e1e7;border:2px solid #d6add9">+6d6 &plusmn; x</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="crit-chart">Crit Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Weapon Rank</th><th style="background:#b9aa00;color:#2c2c2c">Critical Window</th><th style="background:#b9aa00;color:#2c2c2c">Chance</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Common, Uncommon</td><td style="background:#d5e1e7;border:2px solid #d6add9">96-100</td><td style="background:#d5e1e7;border:2px solid #d6add9">5%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Rare, Unique</td><td style="background:#d5e1e7;border:2px solid #d6add9">95-100</td><td style="background:#d5e1e7;border:2px solid #d6add9">6%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Heroic, Elite</td><td style="background:#d5e1e7;border:2px solid #d6add9">94-100</td><td style="background:#d5e1e7;border:2px solid #d6add9">7%</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Legendary, Divine</td><td style="background:#d5e1e7;border:2px solid #d6add9">92-100</td><td style="background:#d5e1e7;border:2px solid #d6add9">9%</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="dmg-mod-chart">DMG. Mod Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Weapon Type/Style</th><th style="background:#b9aa00;color:#2c2c2c">Cloth</th><th style="background:#b9aa00;color:#2c2c2c">Leather</th><th style="background:#b9aa00;color:#2c2c2c">Chain</th><th style="background:#b9aa00;color:#2c2c2c">Plate</th><th style="background:#b9aa00;color:#2c2c2c">Composite</th><th style="background:#b9aa00;color:#2c2c2c">Beast</th><th style="background:#b9aa00;color:#2c2c2c">Undead</th><th style="background:#b9aa00;color:#2c2c2c">Construct</th><th style="background:#b9aa00;color:#2c2c2c">Spirit</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Slashing</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">-3</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Chop</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Blunt</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+5</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Piercing</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">-3</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Range</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td><td style="background:#e1dccc;border:2px solid #d6add9">-5</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">-4</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Magic</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+5</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">0</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+6</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">TAW</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">-3</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+6</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Chthonic</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+2</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td><td style="background:#e1dccc;border:2px solid #d6add9">-2</td><td style="background:#e1dccc;border:2px solid #d6add9">+1</td><td style="background:#e1dccc;border:2px solid #d6add9">+4</td><td style="background:#e1dccc;border:2px solid #d6add9">+3</td><td style="background:#e1dccc;border:2px solid #d6add9">+5</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="thrown-chart">Thrown Chart, Damage Falloff</h4>
+        <p class="style-note">Complex</p>
+        <p><span style="color:#0058aa">Bare Bones</span> throws at Base DMG. across the whole 0&#8211;25 ft., see the Telluric Ranged table. The curve below is the <span style="color:#92793a">Complex</span> detail: a throw needs room to travel, so it is weakest in hand-reach, hardest at 11-15 ft., and falls away past that. Thrown attacks use Agility alone to hit, trading a melee weapon's Strength for it. Slope Mod&dagger; (see Slope Conditions, above) is what the ground itself is worth to the throw, High Ground where the thrower stands above their target, Low Ground where they stand below it. High Ground is the one exception to the last row, a thrower above their target still deals damage at 26 ft. and past, where level ground deals none; Low Ground carries a penalty in its place.</p>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Dist.</th><th style="background:#b9aa00;color:#2c2c2c">Damage</th><th style="background:#b9aa00;color:#2c2c2c">Notes</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">0-10 ft. (1-2 squares)</td><td style="background:#e1dccc;border:2px solid #d6add9">Melee damage</td><td style="background:#e1dccc;border:2px solid #d6add9">The throw has not set, it lands as the weapon does in hand</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">11-15 ft. (3 squares)</td><td style="background:#e1dccc;border:2px solid #d6add9">Peak damage</td><td style="background:#e1dccc;border:2px solid #d6add9">The throw at its hardest, full listed damage</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">16-20 ft. (4 squares)</td><td style="background:#e1dccc;border:2px solid #d6add9">Melee damage</td><td style="background:#e1dccc;border:2px solid #d6add9">Back to what the same weapon deals in hand</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">21-25 ft. (5 squares)</td><td style="background:#e1dccc;border:2px solid #d6add9">1/3 melee damage</td><td style="background:#e1dccc;border:2px solid #d6add9">Still lands, barely</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">26 ft. and past</td><td style="background:#e1dccc;border:2px solid #d6add9">&dagger;0 damage</td><td style="background:#e1dccc;border:2px solid #d6add9">Out of a throw's reach on level ground</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="melee-range-chart">Melee Range Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Band</th><th style="background:#b9aa00;color:#2c2c2c">Penalty</th><th style="background:#b9aa00;color:#2c2c2c">Damage</th><th style="background:#b9aa00;color:#2c2c2c">Dist.</th><th style="background:#b9aa00;color:#2c2c2c">Notes</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Touch</td><td style="background:#d5e1e7;border:2px solid #d6add9">None</td><td style="background:#d5e1e7;border:2px solid #d6add9">Full</td><td style="background:#d5e1e7;border:2px solid #d6add9">5 ft. (1 square)</td><td style="background:#d5e1e7;border:2px solid #d6add9">Standard melee range; the same "Touch" band used by touch-cast Spells, see Range Bands, Spells below</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Reach</td><td style="background:#d5e1e7;border:2px solid #d6add9">None</td><td style="background:#d5e1e7;border:2px solid #d6add9">Full</td><td style="background:#d5e1e7;border:2px solid #d6add9">10 ft. (2 squares)</td><td style="background:#d5e1e7;border:2px solid #d6add9">Reach weapons only (e.g., spears, polearms), no range bands</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Throw&#10020; &#8211; Pt. Blank&#10022;</td><td style="background:#e1dccc;border:2px solid #d6add9">+0 (+10&#10022;)</td><td style="background:#e1dccc;border:2px solid #d6add9">Base DMG. (full dice)</td><td style="background:#e1dccc;border:2px solid #d6add9">0&#8211;5 ft.</td><td style="background:#e1dccc;border:2px solid #d6add9">Thrown weapons, AGI only, a throw trades STR for AGI to hit.</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Throw&#10020; &#8211; Oscillation</td><td style="background:#d5e1e7;border:2px solid #d6add9">&plusmn;10 1st/last 10ft.&#10035;</td><td style="background:#d5e1e7;border:2px solid #d6add9">Base DMG. (full dice)</td><td style="background:#d5e1e7;border:2px solid #d6add9">6&#8211;25 ft.</td><td style="background:#d5e1e7;border:2px solid #d6add9">&#8212;</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="spell-range-chart">Spell Range Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead><tr><th style="background:#b9aa00;color:#2c2c2c">Band</th><th style="background:#b9aa00;color:#2c2c2c">Penalty</th><th style="background:#b9aa00;color:#2c2c2c">Notes</th></tr></thead>
+          <tbody>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Touch</td><td style="background:#d5e1e7;border:2px solid #d6add9">None</td><td style="background:#d5e1e7;border:2px solid #d6add9">Melee range only</td></tr>
+            <tr class="style-improvised style-casual"><td style="background:#d5e1e7;border:2px solid #d6add9">Close</td><td style="background:#d5e1e7;border:2px solid #d6add9">None</td><td style="background:#d5e1e7;border:2px solid #d6add9">No penalty</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Mid</td><td style="background:#e1dccc;border:2px solid #d6add9">-10 to hit</td><td style="background:#e1dccc;border:2px solid #d6add9">WIL SCR absorbs</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Long</td><td style="background:#e1dccc;border:2px solid #d6add9">-20 to hit</td><td style="background:#e1dccc;border:2px solid #d6add9">WIL SCR absorbs</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Velocity Drop</td><td style="background:#e1dccc;border:2px solid #d6add9">-30 to hit</td><td style="background:#e1dccc;border:2px solid #d6add9">WIL SCR absorbs, the cast is failing</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9">Dead Zone</td><td style="background:#e1dccc;border:2px solid #d6add9">Auto miss</td><td style="background:#e1dccc;border:2px solid #d6add9">No roll permitted</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="lst-chart">LST Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+          <thead>
+            <tr><th style="background:#b9aa00;color:#2c2c2c">Weapon Rank</th><th style="background:#b9aa00;color:#2c2c2c">Head</th><th style="background:#b9aa00;color:#2c2c2c">Groin</th><th style="background:#b9aa00;color:#2c2c2c">Limb</th><th style="background:#b9aa00;color:#2c2c2c">Torso</th></tr>
+          </thead>
+          <tbody>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-common">Common</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-3 / +6</td><td style="background:#e1dccc;border:2px solid #d6add9">-2 / +4</td><td style="background:#e1dccc;border:2px solid #d6add9">-2 / +4</td><td style="background:#e1dccc;border:2px solid #d6add9">-1 / +2</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-uncommon">Uncommon</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-6 / +12</td><td style="background:#e1dccc;border:2px solid #d6add9">-4 / +8</td><td style="background:#e1dccc;border:2px solid #d6add9">-4 / +8</td><td style="background:#e1dccc;border:2px solid #d6add9">-2 / +4</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-rare">Rare</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-9 / +18</td><td style="background:#e1dccc;border:2px solid #d6add9">-7 / +14</td><td style="background:#e1dccc;border:2px solid #d6add9">-6 / +12</td><td style="background:#e1dccc;border:2px solid #d6add9">-4 / +8</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-unique">Unique</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-13 / +26</td><td style="background:#e1dccc;border:2px solid #d6add9">-10 / +20</td><td style="background:#e1dccc;border:2px solid #d6add9">-8 / +16</td><td style="background:#e1dccc;border:2px solid #d6add9">-6 / +12</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-heroic">Heroic</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-17 / +34</td><td style="background:#e1dccc;border:2px solid #d6add9">-13 / +26</td><td style="background:#e1dccc;border:2px solid #d6add9">-11 / +22</td><td style="background:#e1dccc;border:2px solid #d6add9">-8 / +16</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-elite">Elite</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-21 / +42</td><td style="background:#e1dccc;border:2px solid #d6add9">-17 / +34</td><td style="background:#e1dccc;border:2px solid #d6add9">-14 / +28</td><td style="background:#e1dccc;border:2px solid #d6add9">-11 / +22</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-legendary">Legendary</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-25 / +50</td><td style="background:#e1dccc;border:2px solid #d6add9">-21 / +42</td><td style="background:#e1dccc;border:2px solid #d6add9">-18 / +36</td><td style="background:#e1dccc;border:2px solid #d6add9">-14 / +28</td></tr>
+            <tr class="style-improvised style-enthusiastic"><td style="background:#e1dccc;border:2px solid #d6add9"><span class="rank-divine">Divine</span></td><td style="background:#e1dccc;border:2px solid #d6add9">-30 / +60</td><td style="background:#e1dccc;border:2px solid #d6add9">-24 / +48</td><td style="background:#e1dccc;border:2px solid #d6add9">-21 / +42</td><td style="background:#e1dccc;border:2px solid #d6add9">-17 / +34</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <h4 id="mod-scaling-chart">Mod Scaling Chart</h4>
+        <div class="table-scroll">
+        <table class="rules-table">
+  <thead>
+    <tr>
+      <th style="background:#b9aa00;color:#2c2c2c">Weapon Rank</th>
+      <th style="background:#b9aa00;color:#2c2c2c">x Value<br>(per round &amp; for scaling)</th>
+      <th style="background:#b9aa00;color:#2c2c2c">Example Damage<br>(+x d6, +x d4, etc.)</th>
+      <th style="background:#b9aa00;color:#2c2c2c">Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="style-improvised style-enthusiastic">
+      <td style="background:#e1dccc;border:2px solid #d6add9"><strong>Rare</strong></td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">1</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">+1d6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">
+        Mod may trigger 1×/round;<br>
+        use 1 for scaling in effect.
+      </td>
+    </tr>
+    <tr class="style-improvised style-enthusiastic">
+      <td style="background:#e1dccc;border:2px solid #d6add9"><strong>Unique</strong></td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">2</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">+2d6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">
+        Mod may trigger 2×/round;<br>
+        use 2 for scaling.
+      </td>
+    </tr>
+    <tr class="style-improvised style-enthusiastic">
+      <td style="background:#e1dccc;border:2px solid #d6add9"><strong>Heroic</strong></td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">3</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">+3d6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">
+        Mod may trigger 3×/round;<br>
+        use 3 for scaling.
+      </td>
+    </tr>
+    <tr class="style-improvised style-enthusiastic">
+      <td style="background:#e1dccc;border:2px solid #d6add9"><strong>Elite</strong></td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">4</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">+4d6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">
+        Mod may trigger 4×/round;<br>
+        use 4 for scaling.
+      </td>
+    </tr>
+    <tr class="style-improvised style-enthusiastic">
+      <td style="background:#e1dccc;border:2px solid #d6add9"><strong>Legendary</strong></td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">5</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">+5d6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">
+        Mod may trigger 5×/round;<br>
+        use 5 for scaling.
+      </td>
+    </tr>
+    <tr class="style-improvised style-enthusiastic">
+      <td style="background:#e1dccc;border:2px solid #d6add9"><strong>Divine</strong></td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">+6d6</td>
+      <td style="background:#e1dccc;border:2px solid #d6add9">
+        Mod may trigger 6×/round;<br>
+        use 6 for scaling.
+      </td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+  </div>
+</main>
+</div>
+</body>
+</html>

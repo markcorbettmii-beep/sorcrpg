@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Shaman (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../styles.css?v=9">
+<style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
+    .rules-section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #be0500; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .web-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #0058aa; }
+    .slot-c { color: #be0500; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #92793a !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.web-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Shaman class-card, standing alone.
+       Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
+  </style>
+</head>
+<body class="lawful-mode">
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><span class="page-nav-current" aria-current="page">pg. 1</span></li>
+    </ul>
+  <main>
+    <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Shaman - Class Tree</h2>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="shaman">Shaman <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Not Playable in Starter Set)</span></h4>            <p>Spirit-world intermediaries who bridge the gap between the living and the ancient, Shamans channel elemental forces, ancestor spirits, and deep earth magic through rituals, mantras, and voodoo-adjacent mysticism, as comfortable calling lightning through a tribal drum as they are raising the bones of the fallen to serve their cause or whispering fire through their own breath.</p>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Alignments range from Lawful, Moral, Ambivalent, Amoral and Evil, and are Path and Branch Dependent.<br><br>
+              <em>To use the Abilities of this Path or Branch, you must fall within the Alignment's Spectrum. To devote to the Path's Higher Power you must fall exactly at that Alignment (see Alignment, Basic Rules pg. 2).</em><br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Shaman's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              To learn a Path's Abilities, or any of its three Branches', your own alignment need only sit inside this Class's Spectrum.<br><br>
+              To draw a Path's Higher Power bonus you must hold that Path's exact base Alignment, and that same base is what its three Branches require.<br><br>
+              <strong>Favored Races:</strong><br>Troll (Sand) +5, Drevane +5, Leshy +5, Skrath +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5<br><br>
+              &dagger;Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> <span class="web-starter">Omn&egrave; -5</span><br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Totem Rite, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Ancestor's Call, Once Per Day the Shaman summons the spirits of their lineage, healing all allies within earshot for an amount equal to their Willpower SCR.<br><br>
+              Extra 1d6 + LVL spirit damage on Critical Hits.<br>
+              Once per encounter, Shamans can Flourish their totem that lowers their target's Resistance at a number equal to their Intuition SCR.<br><br>
+              Shamans get +5 feet their base movement speed, once per encounter.<br><br>
+              Shamans get +4 plus their KNOWLEDGE SCR on Knowledge checks involving spirit lore.<br><br>
+                            <hr class="thin-hr">
+              <strong>Shaman Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Medicine Man</em> - A Shaman who draws on ancestral spirits and the bones of the fallen to heal and empower their tribe.<br>
+              &nbsp;&nbsp;<em>Alignment: Moral</em><br>
+              &nbsp;&nbsp;<em>Observance: Service and care. Devotion is spent on other people rather than performed.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Evil and Amoral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Moral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Ancestral</em> - A Medicine Man who calls on ancestor spirits for guidance and protection.<br>
+              &nbsp;&nbsp;b. <em>Bone Collector</em> - A Medicine Man who draws power from the bones and remains of the fallen.<br>
+              &nbsp;&nbsp;c. <em>Earthbound</em> - A Medicine Man rooted deeply in the land itself, drawing strength from the earth underfoot.<br>
+              ii. <em>Primordial</em> - A Shaman who channels the raw forces of sky and storm into devastating elemental power.<br>
+              &nbsp;&nbsp;<em>Alignment: Ambivalent</em><br>
+              &nbsp;&nbsp;<em>Observance: None. Ambivalent Paths answer to no god and no patron at all.</em><br>
+              &nbsp;&nbsp;<em>No Higher Power, so no exact alignment is required at this Path or at any of its three Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Astromancer</em> - A Primordial Shaman who reads and channels power from the stars themselves.<br>
+              &nbsp;&nbsp;b. <em>Stormbringer</em> - A Primordial Shaman who calls down storms to scour the battlefield.<br>
+              &nbsp;&nbsp;c. <em>Whisperer</em> - A Primordial Shaman who hears the land's own voice, translating it into guidance and warning.<br>
+              iii. <em>Ritualist</em> - A ritual-focused Shaman who binds curses and blessings alike through careful ceremony.<br>
+              &nbsp;&nbsp;<em>Alignment: Evil</em><br>
+              &nbsp;&nbsp;<em>Observance: Offering and dominion. Devotion is paid in what it costs someone.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Lawful and Moral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Evil exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Ceremonial</em> - A Ritualist who channels power through careful, formal rite rather than raw instinct.<br>
+              &nbsp;&nbsp;b. <em>Hexbinder</em> - A Ritualist who specializes in binding lasting curses onto their enemies.<br>
+              &nbsp;&nbsp;c. <em>Runecrafter</em> - A Ritualist who binds power into runes, empowering allies or cursing foes at a distance.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Theologist<br>
+              Professions: Alchemist, Apothecary, Witchcrafter<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Shaman Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Armor Threshold (Tier):</strong> Light Grade. Armor heavier than Light will incur an Armament Penalty (-5 per Grade of difference) when performing Tier Abilities, though heavier armor can still be worn (see Armament Penalties, pg. 4).<br><br><strong>Weapon Proficiency (Tier):</strong> Variant: Telluric. Type: Magic. Hand: 2h, 1h (Main), or 1h (Off) with Bone Rattle or Buckler. Distance: Melee. Style: Blunt (Totem or Stave). Forbidden: All Variants outside Telluric. Tactical Type. Each Path refines these specifications further; see each Path below for its baseline, and each Branch for any exceptions it states.</span>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #be0500; line-height:1.25;">Shaman Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). See Spell Abilities individually for details, see card examples on this page.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. Weapon Type: Tactical for Martial, Magic for Spell (Martial is totem-blows and spirit-guided strikes, not weapon technique alone). <br><span style="color: #be0500;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Shaman)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Shaman Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ash-Bound Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A quick shuffle through kicked-up ash timed to the totem's swing, a Shaman's earliest lesson in reading a spirit mid-fight... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ash-Kicked Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown through kicked-up ash, timed to the totem's swing... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ash-Bound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held while reading a spirit mid-fight... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Spirit Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A spirit read mid-fight, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ash Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A burst of kicked-up ash loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Spirit Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from a spirit read mid-fight, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Shaman Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Drum-Call Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A totem-beat timed to throw an enemy off their own rhythm, a Shaman's earliest taste of the spirit-world's own rhythm... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Drum-Call Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut timed to throw an enemy off their own rhythm... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Drum-Call Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held to the spirit-world's own rhythm... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rhythm Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>The spirit-world's own rhythm drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Drum-Call Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A totem-beat loosed to throw an enemy off their own rhythm... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rhythm Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from the spirit-world's own rhythm, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Shaman Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ember-Bound Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A burst of ember-ash kicked up mid-step, a Shaman's earliest reach into the flash between one world and the next... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ember Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut struck in the flash between one world and the next... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ember-Bound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritbond<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held in the flash between one world and the next... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ember Ward</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>The flash between one world and the next drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ember Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A burst of ember-ash loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ember Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from the flash between one world and the next, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Shaman Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Medicine Man</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A Shaman who draws on ancestral spirits and the bones of the fallen to heal and empower their tribe. (LVL 4-20)</em><br>
+              <em>(see Medicine Man Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Medicine Man Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Medicine Man)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: 1h or 2h Totem or Stave. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Medicine Man):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Light or Delicate (Ancestral Hide).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Medicine Man Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Ancestral (LVL 21-30)<br>
+                <em>A Medicine Man who calls on ancestor spirits for guidance and protection.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Ancestral Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Ancestral Branch chosen at LVL 21 - see Ancestral above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Ancestral Branch chosen at LVL 21 - see Ancestral above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Bone Collector (LVL 21-30)<br>
+                <em>A Medicine Man who draws power from the bones and remains of the fallen.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Bone Collector Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Bone Collector Branch chosen at LVL 21 - see Bone Collector above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Bone Collector Branch chosen at LVL 21 - see Bone Collector above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Earthbound (LVL 21-30)<br>
+                <em>A Medicine Man rooted deeply in the land itself, drawing strength from the earth underfoot.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Earthbound Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Earthbound Branch chosen at LVL 21 - see Earthbound above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Earthbound Branch chosen at LVL 21 - see Earthbound above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Medicine Man Abilities (Shaman Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Shaman - Medicine Man Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ancestor's Touch</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The ember-ash burst kicked up further still, a Medicine Man's earliest proof that the ancestors carry more than memory... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ancestor's Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut kicked up from ember-ash, the ancestors carrying more than memory... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ancestor's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with the ancestors carrying more than memory... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ancestor's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>The ancestors' own memory drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ancestor's Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>An ember-ash burst loosed at a foe, the ancestors carrying more than memory... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ancestor's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from the ancestors' own memory, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Shaman - Medicine Man Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Elder's Touch</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blessing drawn from elders who never moved from where they fell, a Medicine Man's earliest lesson in what a blessing can undo... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Elder's Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut drawn from elders who never moved from where they fell... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Elder's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Spiritcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with what a blessing can undo... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Elder's Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A blessing from elders who never moved, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Elder's Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A blessing drawn from elders, loosed at a foe as what it can undo... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Elder's Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Nature<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from what a blessing can undo, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Shaman - Medicine Man Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Judging Breath</strong><br>A cleansing rite carried on the same breath as its judgment, deciding what a curse deserves before it's lifted... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Judging Cut</strong><br>A cut thrown on the same breath as a cleansing rite's judgment... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Judging Guard</strong><br>A guard held while deciding what a curse deserves before it's lifted... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Judging Aegis</strong><br>A cleansing rite drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Judging Bolt</strong><br>A cleansing rite loosed at a foe, deciding what a curse deserves before it's lifted... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Judging Renewal</strong><br>A renewal carried on the same breath as a cleansing rite's judgment, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Shaman - Medicine Man Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ancestors' Call</strong><br>The ancestors called mid-rite, marking a target for whatever comes next... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ancestors' Cut</strong><br>A cut thrown at a target marked for whatever comes next... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ancestors' Guard</strong><br>A guard held while the ancestors are called mid-rite... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ancestors' Aegis</strong><br>The ancestors called mid-rite, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ancestors' Bolt</strong><br>The ancestors called mid-rite, loosed at a target marked for whatever comes next... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ancestors' Renewal</strong><br>A renewal drawn while the ancestors are called mid-rite, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Shaman - Medicine Man Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ancestors' Judgment</strong><br>Medicine Men judge and cleanse in the same breath, marking a target for the ancestors' final word... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ancestors' Judgment Cut</strong><br>Medicine Men strike whoever's marked for the ancestors' final word... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ancestors' Judgment Guard</strong><br>Medicine Men guard while judging and cleansing in the same breath... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ancestors' Judgment Aegis</strong><br>Medicine Men shield while judging and cleansing in the same breath, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ancestors' Judgment Bolt</strong><br>Medicine Men judge and cleanse at range, marking a target for the ancestors' final word... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ancestors' Judgment Renewal</strong><br>Medicine Men mend while judging and cleansing in the same breath, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Shaman - Medicine Man Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Ancestral (LVL 21-30)<br>
+                <em>A Medicine Man who calls on ancestor spirits for guidance and protection.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Ancestral Abilities (Medicine Man Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Ancestral Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Bone Collector (LVL 21-30)<br>
+                <em>A Medicine Man who draws power from the bones and remains of the fallen.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Bone Collector Abilities (Medicine Man Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Bone Collector Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Earthbound (LVL 21-30)<br>
+                <em>A Medicine Man rooted deeply in the land itself, drawing strength from the earth underfoot.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Earthbound Abilities (Medicine Man Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Earthbound Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Primordial</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A Shaman who channels the raw forces of sky and storm into devastating elemental power. (LVL 4-20)</em><br>
+              <em>(see Primordial Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Primordial Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Primordial)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: 1h or 2h Totem or Stave. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Primordial):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Light or Delicate (Stormhide).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Primordial Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Astromancer (LVL 21-30)<br>
+                <em>A Primordial Shaman who reads and channels power from the stars themselves.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Astromancer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Astromancer Branch chosen at LVL 21 - see Astromancer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Astromancer Branch chosen at LVL 21 - see Astromancer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Stormbringer (LVL 21-30)<br>
+                <em>A Primordial Shaman who calls down storms to scour the battlefield.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Stormbringer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Stormbringer Branch chosen at LVL 21 - see Stormbringer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Stormbringer Branch chosen at LVL 21 - see Stormbringer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Whisperer (LVL 21-30)<br>
+                <em>A Primordial Shaman who hears the land's own voice, translating it into guidance and warning.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Whisperer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Whisperer Branch chosen at LVL 21 - see Whisperer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Whisperer Branch chosen at LVL 21 - see Whisperer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Primordial Abilities (Shaman Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Shaman - Primordial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Storm-Drum Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Stormcall<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A crack of thunder called down through the totem itself, a Primordial's earliest proof that the sky answers when called... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Storm-Drum Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Stormcall<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut called down through the totem itself... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Storm-Drum Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Stormcall<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held while the sky answers when called... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Storm Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Lightning<br>Cost: 2 Mana<br>Uses: Unlimited</span>A crack of thunder drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Storm-Drum Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Lightning<br>Cost: 2 Mana<br>Uses: Unlimited</span>A crack of thunder called down through the totem, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Storm Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Lightning<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from the sky answering when called, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Shaman - Primordial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Thunderclap Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Stormcall<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A crack of thunder channeled through totem and bone alike, a Primordial's earliest taste of a storm not yet fully theirs... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Thunderclap Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Stormcall<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut channeled through totem and bone alike... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Thunderclap Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Stormcall<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with a storm not yet fully theirs... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Thunderclap Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Lightning<br>Cost: 3 Mana<br>Uses: 3/Round</span>A storm not yet fully theirs, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Thunderclap Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Lightning<br>Cost: 3 Mana<br>Uses: 3/Round</span>A crack of thunder channeled through totem and bone alike, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Thunderclap Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Lightning<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from a storm not yet fully theirs, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Shaman - Primordial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">First Crack</strong><br>The first crack of a coming storm called down, letting the sky answer before the storm even breaks... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">First Crack Cut</strong><br>A cut thrown at the first crack of a coming storm... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">First Crack Guard</strong><br>A guard held before the storm even breaks... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">First Crack Aegis</strong><br>The first crack of a coming storm drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">First Crack Bolt</strong><br>The first crack of a coming storm loosed at a foe before it even breaks... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">First Crack Renewal</strong><br>A renewal drawn before the storm even breaks, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Shaman - Primordial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Gathering Storm</strong><br>A target marked beneath a gathering storm, letting the sky itself decide when to strike... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Gathering Cut</strong><br>A cut thrown at a target marked beneath a gathering storm... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Gathering Guard</strong><br>A guard held while the sky itself decides when to strike... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Gathering Aegis</strong><br>A gathering storm drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Gathering Bolt</strong><br>A gathering storm loosed at a target, letting the sky itself decide when to strike... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Gathering Renewal</strong><br>A renewal drawn while the sky itself decides when to strike, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Shaman - Primordial Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sky's Mark</strong><br>Primordials call down storm and static, marking a target for the sky itself to answer... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sky's Mark Cut</strong><br>Primordials strike whoever's marked for the sky itself to answer... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sky's Mark Guard</strong><br>Primordials guard while calling down storm and static... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sky's Mark Aegis</strong><br>Primordials shield while calling down storm and static, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sky's Mark Bolt</strong><br>Primordials call down storm and static at range, marking a target for the sky to answer... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sky's Mark Renewal</strong><br>Primordials mend while calling down storm and static, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Shaman - Primordial Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Astromancer (LVL 21-30)<br>
+                <em>A Primordial Shaman who reads and channels power from the stars themselves.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Astromancer Abilities (Primordial Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Astromancer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Stormbringer (LVL 21-30)<br>
+                <em>A Primordial Shaman who calls down storms to scour the battlefield.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Stormbringer Abilities (Primordial Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Stormbringer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Whisperer (LVL 21-30)<br>
+                <em>A Primordial Shaman who hears the land's own voice, translating it into guidance and warning.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Whisperer Abilities (Primordial Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Whisperer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Ritualist</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Evil<br>
+              <strong>Higher Power:</strong> TBA (Evil)<br>
+              <em>A ritual-focused Shaman who binds curses and blessings alike through careful ceremony. (LVL 4-20)</em><br>
+              <em>(see Ritualist Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Ritualist Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Ritualist)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: 1h or 2h Totem or Stave. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Ritualist):</strong><br>
+                &#9670;TAW<br>
+                &#9670;Chthonic<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Light or Delicate (Ritual Bindings).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Ritualist Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Ceremonial (LVL 21-30)<br>
+                <em>A Ritualist who channels power through careful, formal rite rather than raw instinct.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Ceremonial Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Ceremonial Branch chosen at LVL 21 - see Ceremonial above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Ceremonial Branch chosen at LVL 21 - see Ceremonial above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Hexbinder (LVL 21-30)<br>
+                <em>A Ritualist who specializes in binding lasting curses onto their enemies.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Hexbinder Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Hexbinder Branch chosen at LVL 21 - see Hexbinder above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Hexbinder Branch chosen at LVL 21 - see Hexbinder above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Runecrafter (LVL 21-30)<br>
+                <em>A Ritualist who binds power into runes, empowering allies or cursing foes at a distance.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Runecrafter Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Runecrafter Branch chosen at LVL 21 - see Runecrafter above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Runecrafter Branch chosen at LVL 21 - see Runecrafter above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Ritualist Abilities (Shaman Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Shaman - Ritualist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rune-Bound Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Ritecraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A totem-blow marked with a carved rune before the flare ever settles, a Ritualist's earliest proof that a rune outlasts a blow... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rune-Bound Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Ritecraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut marked with a carved rune before the flare ever settles... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rune-Bound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Ritecraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with a rune that outlasts a blow... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rune-Bound Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 2 Mana<br>Uses: Unlimited</span>A carved rune drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rune-Bound Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 2 Mana<br>Uses: Unlimited</span>A carved rune loosed at a foe before the flare ever settles... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rune-Bound Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn from a rune that outlasts a blow, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Shaman - Ritualist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Runescored Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Ritecraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A rune carved straight into the totem itself, a Ritualist's earliest taste of a rite that outlives the totem itself... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Runescored Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Ritecraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut carved straight into the totem itself... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Runescored Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: none | Hand: 1h or 2h Totem or Stave | Discipline: Ritecraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with a rite that outlives the totem itself... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Runescored Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A rite that outlives the totem itself, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Runescored Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A rune carved straight into the totem, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Runescored Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Necrotic<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn from a rite that outlives the totem itself, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Shaman - Ritualist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Whispering Head</strong><br>A hovering head that whispers a name long before the rite begins, marking who the Ritualist has already judged... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Whispering Cut</strong><br>A cut thrown at whoever the Ritualist has already judged... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Whispering Guard</strong><br>A guard held while a hovering head whispers a name long before the rite begins... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Whispering Aegis</strong><br>A hovering head's whisper drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Whispering Bolt</strong><br>A hovering head whispers a name, loosed at whoever's already judged... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Whispering Renewal</strong><br>A renewal drawn while a hovering head whispers a name long before the rite begins, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Shaman - Ritualist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Tightening Circle</strong><br>Shrunken heads circling tighter the longer a rite is held, binding a target's fate to a hex not yet spoken aloud... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Tightening Cut</strong><br>A cut thrown as shrunken heads circle tighter, binding a target's fate... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Tightening Guard</strong><br>A guard held while a rite is held, binding a fate not yet spoken aloud... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Tightening Aegis</strong><br>Shrunken heads circling tighter, drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Tightening Bolt</strong><br>Shrunken heads circling tighter, loosed at a foe, binding their fate to a hex not yet spoken... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Tightening Renewal</strong><br>A renewal drawn while a rite is held, binding a fate not yet spoken aloud, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Shaman - Ritualist Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hexbound Curse</strong><br>Shrunken heads that hover around the Shaman bind doom into rune and hex, marking a target for a curse only they can lift... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Hexbound Cut</strong><br>Ritualists strike whoever's marked for a curse only they can lift... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hexbound Guard</strong><br>Ritualists guard while binding doom into rune and hex... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hexbound Aegis</strong><br>Ritualists shield while binding doom into rune and hex, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Hexbound Bolt</strong><br>Ritualists bind doom into rune and hex at range, marking a target for a curse only they can lift... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hexbound Renewal</strong><br>Ritualists mend while binding doom into rune and hex, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Shaman - Ritualist Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Ceremonial (LVL 21-30)<br>
+                <em>A Ritualist who channels power through careful, formal rite rather than raw instinct.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Ceremonial Abilities (Ritualist Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Ceremonial Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Hexbinder (LVL 21-30)<br>
+                <em>A Ritualist who specializes in binding lasting curses onto their enemies.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Hexbinder Abilities (Ritualist Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Hexbinder Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Runecrafter (LVL 21-30)<br>
+                <em>A Ritualist who binds power into runes, empowering allies or cursing foes at a distance.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Runecrafter Abilities (Ritualist Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">Same 3-choice pattern as the Path Levels above, content TBA. The Runecrafter Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+      <p style="margin-top: 3rem; text-align: center; font-size: 0.9rem; opacity: 0.7;">
+        <a href="class-tree-nav.html">View all class trees</a>
+      </p>
+    </div>
+  </main>
+  </div>
+</main>
+</div>
+</body>
+</html>
+
+  </main>
+</main>
+</body>
+</html>
+</html>

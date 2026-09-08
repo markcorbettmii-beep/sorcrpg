@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Role Assessment | Slayers of Rings § Crowns</title>
+  <link rel="stylesheet" href="../../styles.css?v=9" />
+  <style>
+    .assess-wrap { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .assess-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
+    .assess-sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .result-card { background: #1a1a1a; border: 2px solid #b9aa00; border-radius: 14px; padding: 2rem; text-align: center; }
+    .result-card h2 { color: #b9aa00; margin-bottom: 0.5rem; }
+    .result-role { font-size: 2rem; font-weight: bold; margin: 0.5rem 0; }
+    .result-score { color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+    .lobby-info { margin-top: 1rem; padding: 1rem; background: #222; color: #ccc; font-size: 0.9rem; border-radius: 8px; }
+    .error-message { color: #c93f35; font-size: 1rem; margin-top: 1.5rem; }
+    .reload-btn { margin-top: 1rem; background: #c93f35; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+    .reload-btn:hover { background: #a11d1b; }
+    .q-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+    .q-num { color: #555; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .q-text { color: #e0cfc0; font-size: 0.97rem; margin-bottom: 1rem; line-height: 1.5; }
+    .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    @media (max-width: 480px) { .q-options { grid-template-columns: 1fr; } }
+    .opt-btn { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
+      color: #aaa; font-size: 0.88rem; cursor: pointer; text-align: left; transition: all 0.15s; }
+    .opt-btn:hover { border-color: #555; color: #e0cfc0; }
+    .opt-btn.selected { border-color: #c93f35; color: #e0cfc0; background: #1a0505; }
+    .rules-link { display: block; margin-top: 0.5rem; font-size: 0.9rem; color: #b9aa00; text-decoration: underline; cursor: pointer; }
+    .rules-link:hover { color: #d8c85a; }
+    .submit-btn { margin: 2rem 0; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: bold; background: #c93f35; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .submit-btn:disabled { background: #555; color: #aaa; cursor: not-allowed; }
+
+    /* Wrong-answer review. Options here are static - the quiz is over, so they
+       are divs rather than buttons and carry no click target. */
+    .review-head { color: #b9aa00; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em;
+      margin: 2rem 0 0.75rem; text-align: left; }
+    .review-wrap { text-align: left; }
+    .rev-opt { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
+      color: #777; font-size: 0.88rem; text-align: left; }
+    .rev-opt.correct { border-color: #4a9d5f; background: #0d1f13; color: #cfe8d6; }
+    .rev-opt.chosen-wrong { border-color: #c93f35; background: #1f0b0a; color: #f0cfcc; }
+    .rev-tag { float: right; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: bold; }
+    .rev-opt.correct .rev-tag { color: #6fc98a; }
+    .rev-opt.chosen-wrong .rev-tag { color: #e07a72; }
+    .rev-note { color: #7a7a7a; font-size: 0.8rem; margin-top: 0.7rem; font-style: italic; }
+    .q-card.was-wrong { border-color: #4a1f1c; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+    </header>
+    <div class="assess-wrap">
+      <h1>Role Assessment</h1>
+      <p class="assess-sub">Answer 10 questions to find out your rank!</p>
+      <div id="assessApp"><p style="color:#555;">Loading...</p></div>
+    </div>
+  </div>
+
+  <script>
+    var API_URL = 'https://api.sorcrpg.com';
+    var questions = [];
+    var selectedAnswers = {};
+
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    // Fetch and load the beta quiz
+    async function loadBetaQuiz() {
+      const app = document.getElementById("assessApp");
+      app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
+
+      try {
+        const res = await fetch(`${API_URL}/api/assess/beta-questions?t=${Date.now()}`, { cache: 'no-store' });
+
+        if (!res.ok) {
+          throw new Error(`Error fetching questions. Status: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (!data.questions || data.questions.length === 0) {
+          throw new Error('No questions available.');
+        }
+
+        questions = data.questions;
+        selectedAnswers = {};
+        renderQuiz();
+      } catch (error) {
+        console.error(error);
+        app.innerHTML = `
+          <p class="error-message">Failed to load quiz: ${error.message}</p>
+          <button class="reload-btn" onclick="location.reload()">Retry</button>
+        `;
+      }
+    }
+
+    // Render the quiz
+    function renderQuiz() {
+      const app = document.getElementById("assessApp");
+      if (!questions.length) {
+        app.innerHTML = `<p class="error-message">No questions found. Please try again later.</p>`;
+        return;
+      }
+
+      const quizHtml = questions.map((question, index) => `
+        <div class="q-card">
+          <div class="q-num">Question ${index + 1} of ${questions.length}</div>
+          <div class="q-text">${esc(question.q)}</div>
+          <div class="q-options">
+            ${question.options.map((opt, i) => `
+              <button class="opt-btn" onclick="selectAnswer(${question.id}, ${i}, this)">
+                ${String.fromCharCode(65 + i)}. ${esc(opt)}
+              </button>
+            `).join('')}
+          </div>
+          <a href="https://sorcrpg.com/content/essentia_core/rules_ref_00${question.page}" target="_blank" class="rules-link">
+            See rules pg. ${question.page}
+          </a>
+        </div>
+      `).join("");
+
+      app.innerHTML = quizHtml;
+
+      // Add a submit button at the end of the quiz
+      app.innerHTML += `
+        <button class="submit-btn" onclick="submitQuiz()" id="submitQuizButton" disabled>
+          Submit
+        </button>
+      `;
+    }
+
+    // Handle answer selection
+    function selectAnswer(questionId, optionIndex, buttonElement) {
+      selectedAnswers[questionId] = optionIndex;
+
+      // Highlight the selected button and unselect others in the same question group
+      const buttons = buttonElement.parentNode.querySelectorAll('.opt-btn');
+      buttons.forEach((btn) => btn.classList.remove('selected'));
+      buttonElement.classList.add('selected');
+
+      // Enable the submit button if all questions are answered
+      const allAnswered = Object.keys(selectedAnswers).length === questions.length;
+      const submitButton = document.getElementById("submitQuizButton");
+      submitButton.disabled = !allAnswered;
+    }
+
+    // Submit the quiz
+    async function submitQuiz() {
+      const submitButton = document.getElementById("submitQuizButton");
+      submitButton.disabled = true;
+
+      try {
+        const res = await fetch(`${API_URL}/api/assess/beta-submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers: Object.entries(selectedAnswers).map(([id, answer]) => ({ id: parseInt(id), answer })) })
+        });
+
+        if (!res.ok) {
+          throw new Error(`Error submitting quiz. Status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        showResult(data);
+      } catch (error) {
+        console.error(error);
+        const app = document.getElementById("assessApp");
+        app.innerHTML = `
+          <p class="error-message">Failed to submit quiz: ${error.message}</p>
+          <button class="reload-btn" onclick="location.reload()">Retry</button>
+        `;
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    // Show result
+    function showResult(assessment) {
+      const app = document.getElementById('assessApp');
+      /* Both /api/assess/submit and the beta endpoint name this field `role`.
+         `role_granted` is the assessments table column, not a response field,
+         so reading it always fell through to the fallback and every result
+         announced '[PC] Novice' no matter what was scored. */
+      const role = assessment.role || assessment.role_granted || 'PC-BEG';
+      const roleText = roleLabel(role);
+      const color = roleColor(role);
+
+      /* Under 6 of 10 the server grants no role and returns FAIL. That earns
+         no lobby, so it gets its own card rather than being run through
+         determineLobbyType, which would invite the reader into 'the Unknown
+         lobby'. Reachable only now that the real role is being read. */
+      if (role === 'FAIL') {
+        app.innerHTML = `
+          <div class="result-card">
+            <h2>Assessment Complete</h2>
+            <div class="result-role" style="color: ${color};">Not yet</div>
+            <div class="result-score">${assessment.score}/10 correct</div>
+            <div class="lobby-info">
+              A score of 6 or better earns a lobby role.
+              Study the Basic Rules and assess again.
+            </div>
+          </div>
+        ` + renderWrongReview(assessment);
+        return;
+      }
+
+      const lobbyType = determineLobbyType(role); // Determine lobby type
+      const lobbyLink = `<a href="https://sorcrpg.com/lobbies" target="_blank" style="color: #b9aa00; text-decoration: underline;">Sign in as Guest</a>`;
+
+      app.innerHTML = `
+        <div class="result-card">
+          <h2>Assessment Complete</h2>
+          <div class="result-role" style="color: ${color};">${roleText}</div>
+          <div class="result-score">${assessment.score}/10 correct</div>
+          <div class="lobby-info">
+            You assessed into the ${lobbyType} lobby. ${lobbyLink}
+            <br><br>
+            Note: Only a GM can launch a room.
+          </div>
+        </div>
+      ` + renderWrongReview(assessment);
+    }
+
+    /* Per-question breakdown under the result card: what you picked, what was
+       right. The server decides how much to reveal - a miss comes back as
+       { id, answer } when the correct option can be shown, or as { id } alone
+       for the GM Codex, whose pool is the same ten questions every attempt and
+       would be burned by publishing its answer key. A Codex miss therefore
+       marks your pick red and stops there. An older API that sends no `wrong`
+       array at all drops the review rather than guessing at it. */
+    function renderWrongReview(assessment) {
+      const wrong = assessment && assessment.wrong;
+      if (!Array.isArray(wrong) || !questions.length) return '';
+
+      const missById = {};
+      wrong.forEach((w) => { if (w && w.id !== undefined) missById[w.id] = w; });
+
+      const cards = questions.map((question, index) => {
+        const chosen = selectedAnswers[question.id];
+        const miss = missById[question.id];
+        const wasWrong = !!miss;
+        // A question answered correctly has no entry, so the pick is the answer.
+        // A miss names the answer only when the server chose to reveal it.
+        const correctIdx = wasWrong
+          ? (miss.answer === undefined ? null : miss.answer)
+          : chosen;
+
+        const opts = question.options.map((opt, i) => {
+          const letter = String.fromCharCode(65 + i) + '. ' + esc(opt);
+          if (correctIdx !== null && i === correctIdx) {
+            const mine = (i === chosen) ? ' &middot; your answer' : '';
+            return `<div class="rev-opt correct"><span class="rev-tag">Correct${mine}</span>${letter}</div>`;
+          }
+          if (wasWrong && i === chosen) {
+            return `<div class="rev-opt chosen-wrong"><span class="rev-tag">Your answer</span>${letter}</div>`;
+          }
+          return `<div class="rev-opt">${letter}</div>`;
+        }).join('');
+
+        const note = (wasWrong && correctIdx === null)
+          ? '<div class="rev-note">The correct answer for this one is not shown - GM Codex questions keep their answer key.</div>'
+          : '';
+
+        return `
+          <div class="q-card${wasWrong ? ' was-wrong' : ''}">
+            <div class="q-num">Question ${index + 1} of ${questions.length}</div>
+            <div class="q-text">${esc(question.q)}</div>
+            <div class="q-options">${opts}</div>
+            ${note}
+            <a href="https://sorcrpg.com/content/essentia_core/rules_ref_00${question.page}" target="_blank" class="rules-link">
+              See rules pg. ${question.page}
+            </a>
+          </div>
+        `;
+      }).join('');
+
+      const missed = wrong.length;
+      const heading = missed === 0
+        ? 'Review, every answer correct'
+        : `Review, ${missed} missed`;
+
+      return `<div class="review-wrap"><div class="review-head">${heading}</div>${cards}</div>`;
+    }
+
+    // Generate lobby type based on role
+    function determineLobbyType(role) {
+      switch (role) {
+        case 'PC-BEG':
+          return 'Beginner';
+        case 'PC-INT':
+          return 'Intermediate';
+        case 'PC-ADV':
+          return 'Advanced';
+        default:
+          return 'Unknown';
+      }
+    }
+
+    // Role labels
+    function roleLabel(r) {
+      switch (r) {
+        case 'PC-BEG': return '[PC] Novice';
+        case 'PC-INT': return '[PC] Journeyman';
+        case 'PC-ADV': return '[PC] Master';
+        case 'GM-BEG': return '[GM] Novice';
+        case 'GM-INT': return '[GM] Journeyman';
+        case 'GM-ADV': return '[GM] Master';
+        default: return r;
+      }
+    }
+
+    // Role colors
+    function roleColor(r) {
+      if (!r) return '#e0cfc0'; // Default color if role is undefined
+      if (r === 'FAIL') return '#c93f35';
+      /* Raw role codes arrive here - PC-BEG, GM-ADV - not the bracketed text
+         roleLabel produces, so testing for '[PC]' never matched and every rank
+         rendered in the default cream. Hex rather than the named 'blue' and
+         'purple', which are close to unreadable on the card's dark ground. */
+      if (r.indexOf('PC-') === 0) return '#6fa8dc'; // PC roles in blue
+      if (r.indexOf('GM-') === 0) return '#b085e0'; // GM roles in purple
+      return '#e0cfc0'; // Default color
+    }
+
+    // Initialize the page
+    loadBetaQuiz();
+  </script>
+</body>
+</html>

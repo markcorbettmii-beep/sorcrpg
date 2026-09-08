@@ -1,0 +1,1057 @@
+/**
+ * Character Customizer Customization
+ * Copyright © 2024 [Corbett, editor in chief of Ogre Adventurer, a publishing company of Slayers of Rings § (n, and &) Crowns. Time stamped via GitHub repository push]
+ * Created: December 26, 2024
+ * All rights reserved.
+ */
+
+const BASE = "../../../assets/";
+const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
+
+// Image paths for special layers
+const IMG_BG = `${BASE}highres-canvas-bg.png`;
+const IMG_ARMOR = `${BASE}set-epic-fur-mantle.png`;
+const IMG_HELMET = `${BASE}bear-skn-helmet.png`;
+const IMG_WEAPON_BACK = `${BASE}kaida-great-bow-bck.png`;
+const IMG_WEAPON_FRONT = `${BASE}kaida-btlax-frnt.png`;
+
+// ONLY MUSCULAR BODY TYPES
+const bodyOptions = [
+  { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BASE}fbody-musc-med.png`, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
+];
+
+const faceOptions = [
+  // Pale skin faces - all available once Pale body is selected
+  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}fface-pale-green_20260618_175154_0000.png`, skin: "pale", eyes: "grn", enabled: true, closeupExtraYShift: 6 },
+  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}fface-pale-brown_20260618_175523_0000.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: 6 },
+  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}fface-pale-violet_20260618_175420_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 16 }
+];
+
+const facePaintOptions = [
+  { src: "", thumb: "", clup: "", label: "None", enabled: true },
+  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, clup: `${BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
+  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, clup: `${BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, clup: `${BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
+  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, clup: `${BASE}facepnt5-red-clup.png`, color: "red", enabled: true }
+];
+
+const hairOptions = [
+  { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png`, clup: `${BASE}femhair1-clup.png`, enabled: true },
+  { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png`, clup: `${BASE}femhair2-clup.png`, enabled: true },
+  { src: `${BASE}femhair3.png`, thumb: `${BASE}femhair3-tmb.png`, clup: `${BASE}femhair3-clup.png`, enabled: true },
+  { src: `${BASE}femhair4.png`, thumb: `${BASE}femhair4-tmb.png`, clup: `${BASE}femhair4-clup.png`, enabled: true },
+  { src: `${BASE}femhair5.png?v=2`, thumb: `${BASE}femhair5-tmb.png`, clup: `${BASE}femhair5-clup.png`, enabled: true },
+  { src: `${BASE}femhair6.png`, thumb: `${BASE}femhair6-tmb.png`, clup: `${BASE}femhair6-clup.png`, enabled: true },
+  { src: `${BASE}femhair7.png`, thumb: `${BASE}femhair7-tmb.png`, clup: `${BASE}femhair7-clup.png`, enabled: true, closeupExtraXShift: 4 },
+  { src: `${BASE}femhair8.png`, thumb: `${BASE}femhair8-tmb.png`, clup: `${BASE}femhair8-clup.png`, enabled: true },
+  { src: `${BASE}femhair9.png`, thumb: `${BASE}femhair9-tmb.png`, clup: `${BASE}femhair9-clup.png`, enabled: true },
+  { src: `${BASE}femhair10.png`, thumb: `${BASE}femhair10-tmb.png`, clup: `${BASE}femhair10-clup.png`, enabled: true },
+  { src: `${BASE}femhair11.png`, thumb: `${BASE}femhair11-tmb.png`, clup: `${BASE}femhair11-clup.png`, enabled: true },
+  { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, clup: `${BASE}femhair12-clup.png?v=7`, enabled: true, closeupExtraXShift: -4 }
+];
+
+let selected = {
+  body: 2,
+  face: 0,
+  facePaint: 0,
+  hair: 0,
+  armor: false,
+  helmet: false,
+  weapon: false
+};
+
+let isPortraitView = false;
+let charRenderGen = 0;
+let finalRenderGen = 0;
+
+function pickFirstEnabledFace(skin) {
+  const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
+  return index !== -1 ? index : 0;
+}
+
+const holdPreviewOverlay = document.getElementById("holdPreviewOverlay");
+const HOLD_PREVIEW_DELAY = 450;
+
+function showHoldPreview(src) {
+  if (!holdPreviewOverlay || !src) return;
+  holdPreviewOverlay.innerHTML = "";
+  const previewImg = document.createElement("img");
+  previewImg.src = src;
+  holdPreviewOverlay.appendChild(previewImg);
+  holdPreviewOverlay.classList.add("visible");
+}
+
+function hideHoldPreview() {
+  if (holdPreviewOverlay) holdPreviewOverlay.classList.remove("visible");
+}
+
+let disabledNoteTimer = null;
+function showDisabledNote(message) {
+  if (!holdPreviewOverlay) return;
+  clearTimeout(disabledNoteTimer);
+  holdPreviewOverlay.innerHTML = "";
+  const note = document.createElement("div");
+  note.className = "disabled-note-text";
+  note.textContent = message;
+  holdPreviewOverlay.appendChild(note);
+  holdPreviewOverlay.classList.add("visible");
+  disabledNoteTimer = setTimeout(hideHoldPreview, 1600);
+}
+
+function attachHoldPreview(img, previewSrc) {
+  if (!previewSrc) return;
+  img.draggable = false;
+  let timer = null;
+  let moved = false;
+  let shown = false;
+  let startX = 0;
+  let startY = 0;
+  const MOVE_THRESHOLD = 12;
+
+  function clearTimer() {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+
+  function checkMoved(x, y) {
+    if (Math.hypot(x - startX, y - startY) > MOVE_THRESHOLD) {
+      moved = true;
+      clearTimer();
+      if (shown) {
+        shown = false;
+        hideHoldPreview();
+      }
+    }
+  }
+
+  function endHold() {
+    clearTimer();
+    if (shown) {
+      shown = false;
+      hideHoldPreview();
+    }
+  }
+
+  img.addEventListener("contextmenu", function(e) {
+    e.preventDefault();
+  });
+
+  img.addEventListener("mousedown", function(e) {
+    moved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    clearTimer();
+    timer = setTimeout(function() {
+      if (!moved) {
+        shown = true;
+        showHoldPreview(previewSrc);
+      }
+    }, HOLD_PREVIEW_DELAY);
+  });
+  img.addEventListener("mousemove", function(e) {
+    checkMoved(e.clientX, e.clientY);
+  });
+  img.addEventListener("mouseup", endHold);
+  img.addEventListener("mouseleave", endHold);
+
+  img.addEventListener("touchstart", function(e) {
+    if (e.touches.length > 1) {
+      clearTimer();
+      return;
+    }
+    moved = false;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    clearTimer();
+    timer = setTimeout(function() {
+      if (!moved) {
+        shown = true;
+        showHoldPreview(previewSrc);
+      }
+    }, HOLD_PREVIEW_DELAY);
+  }, { passive: true });
+  img.addEventListener("touchmove", function(e) {
+    if (e.touches.length > 0) {
+      checkMoved(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+  img.addEventListener("touchend", endHold);
+  img.addEventListener("touchcancel", endHold);
+}
+
+function createPlaceholder(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 100;
+  canvas.height = 100;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#333';
+  ctx.fillRect(0, 0, 100, 100);
+
+  ctx.fillStyle = '#888';
+  ctx.font = 'bold 12px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const words = text.split(' ');
+  const lineHeight = 14;
+  const startY = 50 - ((words.length - 1) * lineHeight / 2);
+
+  words.forEach((word, i) => {
+    ctx.fillText(word, 50, startY + (i * lineHeight));
+  });
+
+  return canvas.toDataURL();
+}
+
+function renderBodyPickers() {
+  const container = document.getElementById("body-pickers");
+  container.innerHTML = "";
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
+
+  bodyOptions.forEach((body, idx) => {
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = "center";
+
+    const img = document.createElement("img");
+
+    if (body.thumb) {
+      img.src = body.thumb;
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+    }
+
+    let className = "thumb";
+    if (!body.thumb) className += " placeholder";
+    if (!body.enabled) className += " disabled";
+    if (selected.body === idx) className += " selected";
+
+    img.className = className;
+
+    if (!body.enabled && body.disabledNote) {
+      img.alt = body.disabledNote;
+      img.title = body.disabledNote;
+    }
+
+    img.onclick = function() {
+      if (body.enabled) {
+        selected.body = idx;
+        selected.face = pickFirstEnabledFace(body.skin);
+        renderAllPickers();
+        renderCharacter();
+        renderFacePreview();
+      } else if (body.disabledNote) {
+        showDisabledNote(body.disabledNote);
+      }
+    };
+
+    if (body.enabled) {
+      attachHoldPreview(img, body.src);
+    }
+
+    wrap.appendChild(img);
+    rowDiv.appendChild(wrap);
+  });
+
+  container.appendChild(rowDiv);
+}
+
+function renderFacePickers() {
+  const container = document.getElementById("face-pickers");
+  container.innerHTML = "";
+  let body = bodyOptions[selected.body];
+  let skin = (body && body.skin) ? body.skin : "med";
+  let filtered = faceOptions.filter(f => f.skin === skin);
+
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
+
+  filtered.forEach((face) => {
+    const globalIdx = faceOptions.indexOf(face);
+    const img = document.createElement("img");
+
+    if (face.thumb) {
+      img.src = face.thumb;
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+    }
+
+    let className = "thumb";
+    if (!face.thumb) className += " placeholder";
+    if (!face.enabled) className += " disabled";
+    if (selected.face === globalIdx) className += " selected";
+
+    img.className = className;
+
+    if (!face.enabled && face.disabledNote) {
+      img.alt = face.disabledNote;
+      img.title = face.disabledNote;
+    }
+
+    img.onclick = function() {
+      if (face.enabled) {
+        selected.face = globalIdx;
+        renderFacePickers();
+        renderCharacter();
+        renderFacePreview();
+        renderFinalCharacter();
+      } else if (face.disabledNote) {
+        showDisabledNote(face.disabledNote);
+      }
+    };
+
+    if (face.enabled) {
+      attachHoldPreview(img, face.clup && face.clup.length > 0 ? face.clup : face.src);
+    }
+
+    rowDiv.appendChild(img);
+  });
+
+  container.appendChild(rowDiv);
+}
+
+function renderFacePaintPickers() {
+  const container = document.getElementById("facepaint-pickers");
+  container.innerHTML = "";
+
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
+
+  facePaintOptions.forEach((paint, idx) => {
+    const img = document.createElement("img");
+
+    if (idx === 0) {
+      img.src = createPlaceholder('None');
+    } else if (paint.thumb) {
+      img.src = paint.thumb;
+      img.onerror = function() {
+        img.onerror = null;
+        img.src = paint.clup || paint.src || createPlaceholder('Coming Soon');
+      };
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+    }
+
+    let className = "thumb";
+    if (idx === 0) className += " placeholder";
+    if (!paint.enabled) className += " disabled";
+    if (selected.facePaint === idx) className += " selected";
+
+    img.className = className;
+
+    if (!paint.enabled && paint.disabledNote) {
+      img.alt = paint.disabledNote;
+      img.title = paint.disabledNote;
+    }
+
+    img.onclick = function() {
+      if (paint.enabled) {
+        selected.facePaint = idx;
+        renderFacePaintPickers();
+        renderCharacter();
+        renderFacePreview();
+        renderFinalCharacter();
+      } else if (paint.disabledNote) {
+        showDisabledNote(paint.disabledNote);
+      }
+    };
+
+    if (idx !== 0 && paint.enabled) {
+      attachHoldPreview(img, paint.clup && paint.clup.length > 0 ? paint.clup : paint.src);
+    }
+
+    rowDiv.appendChild(img);
+  });
+
+  container.appendChild(rowDiv);
+}
+
+function renderHairPickers() {
+  const container = document.getElementById("hair-pickers");
+  container.innerHTML = "";
+  const rowDiv = document.createElement("div");
+  rowDiv.className = "thumb-list";
+
+  hairOptions.forEach((hair, idx) => {
+    const img = document.createElement("img");
+
+    if (hair.thumb) {
+      img.src = hair.thumb;
+    } else {
+      img.src = createPlaceholder('Coming Soon');
+    }
+
+    let className = "thumb";
+    if (!hair.thumb) className += " placeholder";
+    if (!hair.enabled) className += " disabled";
+    if (selected.hair === idx) className += " selected";
+
+    img.className = className;
+    if (idx === 9) img.style.transform = "translateY(-6px)";
+
+    img.onclick = function() {
+      if (hair.enabled) {
+        selected.hair = idx;
+        renderHairPickers();
+        renderCharacter();
+        renderFacePreview();
+        renderFinalCharacter();
+      }
+    };
+
+    attachHoldPreview(img, hair.clup && hair.clup.length > 0 ? hair.clup : hair.src);
+
+    rowDiv.appendChild(img);
+  });
+
+  container.appendChild(rowDiv);
+}
+
+function renderAllPickers() {
+  renderBodyPickers();
+  renderFacePickers();
+  renderFacePaintPickers();
+  renderHairPickers();
+}
+
+function getCanvasSize() {
+  const maxWidth = 640, maxHeight = 1280;
+  let vw = window.innerWidth;
+  let vh = window.innerHeight;
+  let width = Math.min(vw * 0.96, maxWidth);
+  let height = Math.min(width * 2, vh * 0.92, maxHeight);
+  if (height / 2 < width) width = height / 2;
+  return { width: Math.round(width), height: Math.round(height) };
+}
+
+function resizeCanvasAndRender() {
+  const canvas = document.getElementById("charCanvas");
+  if (canvas) {
+    const { width, height } = getCanvasSize();
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    renderCharacter();
+  }
+}
+
+function renderCharacter(callback) {
+  const canvas = document.getElementById("charCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const gen = ++charRenderGen;
+
+  if (isPortraitView) {
+    const img = new window.Image();
+    img.src = PORTRAIT_EXAMPLE;
+    img.onload = function() {
+      if (gen !== charRenderGen) return;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (callback) callback(canvas);
+    };
+    img.onerror = function() {
+      if (callback) callback(canvas);
+    };
+    return;
+  }
+
+  let layers = [];
+  
+  layers.push({ src: IMG_BG, layer: "bg" });
+  
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
+  }
+  
+  let body = bodyOptions[selected.body];
+  if (body && body.src) {
+    layers.push({ src: body.src, layer: "body" });
+  }
+  
+  if (selected.armor) {
+    layers.push({ src: IMG_ARMOR, layer: "armor" });
+  }
+  
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
+    }
+  }
+  
+  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
+    let paint = facePaintOptions[selected.facePaint];
+    if (paint && paint.src && paint.enabled !== false) {
+      layers.push({ src: paint.src, layer: "facepaint" });
+    }
+  }
+  
+  if (selected.hair !== -1 && hairOptions[selected.hair]) {
+    let hair = hairOptions[selected.hair];
+    if (hair && hair.src && hair.enabled !== false) {
+      layers.push({ src: hair.src, layer: "hair" });
+    }
+  }
+  
+  if (selected.helmet) {
+    layers.push({ src: IMG_HELMET, layer: "helmet" });
+  }
+  
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
+  }
+
+  Promise.all(
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve(im);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
+  ).then(imgs => {
+    if (gen !== charRenderGen) return;
+    imgs.forEach(im => {
+      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+    });
+    drawCompanionSizeLabels(ctx, canvas);
+    if (callback) callback(canvas);
+  });
+}
+
+function drawCompanionSizeLabels(ctx, canvas) {
+  ctx.save();
+  ctx.textAlign = "center";
+  const headerFont = `bold ${Math.round(canvas.width * 0.02)}px sans-serif`;
+  const labelFont = `bold ${Math.round(canvas.width * 0.024)}px sans-serif`;
+  const headerGap = canvas.height * 0.03;
+
+  const labelColor = "#FFEE00";
+  const outlineColor = "rgba(0,0,0,0.85)";
+  const outlineWidth = Math.max(2, canvas.width * 0.003);
+
+  function drawSlot(label, x, y, header) {
+    ctx.globalAlpha = 1;
+    ctx.font = headerFont;
+    ctx.lineWidth = outlineWidth;
+    ctx.strokeStyle = outlineColor;
+    ctx.strokeText(header || "Companion Slot", x, y - headerGap);
+    ctx.fillStyle = labelColor;
+    ctx.fillText(header || "Companion Slot", x, y - headerGap);
+
+    ctx.font = labelFont;
+    ctx.strokeText(label, x, y);
+    ctx.fillText(label, x, y);
+  }
+
+  drawSlot("Angelic (small/tiny)", canvas.width * 0.78, canvas.height * 0.18);
+  drawSlot("Large/Goliath/Behemoth (empty)", canvas.width * 0.30, canvas.height * 0.18);
+  drawSlot("Pet (small/tiny)", canvas.width * 0.72, canvas.height * 0.49);
+  drawSlot("Standard (empty)", canvas.width * 0.22, canvas.height * 0.47);
+  drawSlot("Camp/Light Source", canvas.width * 0.22, canvas.height * 0.60, "Wayfarer Location");
+
+  const bootLines = [
+    "Character default in street clothes and TABA Boots.",
+    "Selections; Armaments, Companions and Physique must be earned",
+    "and approved by GM before submitting custom portraits (see rules)."
+  ];
+  const bootFontSize = Math.round(canvas.width * 0.02);
+  const bootFont = `bold ${bootFontSize}px sans-serif`;
+  const bootLineHeight = bootFontSize * 1.5;
+  const bootX = canvas.width * 0.5;
+  const bootStartY = canvas.height * 0.94;
+  ctx.font = bootFont;
+  ctx.lineWidth = outlineWidth;
+  ctx.strokeStyle = outlineColor;
+  ctx.fillStyle = labelColor;
+  bootLines.forEach((line, i) => {
+    const y = bootStartY + i * bootLineHeight;
+    ctx.strokeText(line, bootX, y);
+    ctx.fillText(line, bootX, y);
+  });
+
+  ctx.restore();
+}
+
+function renderFacePreview() {
+  const canvas = document.getElementById("faceCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Dark background
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  let layers = [];
+
+  // Use face CLUP for closeup window
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.enabled !== false) {
+      let faceImg = face.clup && face.clup.length > 0 ? face.clup : face.src;
+      if (faceImg) {
+        layers.push({ src: faceImg, layer: "face", useCloseupFit: face.clup && face.clup.length > 0, extraYShift: face.closeupExtraYShift || 0 });
+      }
+    }
+  }
+
+  // Use facepaint CLUP for closeup window
+  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
+    let paint = facePaintOptions[selected.facePaint];
+    if (paint && paint.enabled !== false) {
+      let paintImg = paint.clup && paint.clup.length > 0 ? paint.clup : paint.src;
+      if (paintImg) {
+        layers.push({ src: paintImg, layer: "facepaint", useCloseupFit: paint.clup && paint.clup.length > 0 });
+      }
+    }
+  }
+  
+  // Use hair CLUP for closeup window
+  if (selected.hair !== -1 && hairOptions[selected.hair]) {
+    let hair = hairOptions[selected.hair];
+    if (hair && hair.enabled !== false) {
+      let hairImg = hair.clup && hair.clup.length > 0 ? hair.clup : hair.src;
+      if (hairImg) {
+        layers.push({ src: hairImg, layer: "hair", useCloseupFit: hair.clup && hair.clup.length > 0, extraXShift: hair.closeupExtraXShift || 0, extraYShift: hair.closeupExtraYShift || 0 });
+      }
+    }
+  }
+
+  Promise.all(
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve({ img: im, useCloseupFit: opt.useCloseupFit, layer: opt.layer, extraYShift: opt.extraYShift || 0, extraXShift: opt.extraXShift || 0 });
+        im.onerror = () => {
+          console.warn(`Failed to load preview image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
+  ).then(results => {
+    results.forEach(result => {
+      if (result && result.img) {
+        const im = result.img;
+        
+        if (result.useCloseupFit) {
+          // CLUP images: fit without stretching (contain behavior)
+          const imgAspect = im.width / im.height;
+          const canvasAspect = canvas.width / canvas.height;
+          
+          let drawWidth, drawHeight, drawX, drawY;
+          
+          if (imgAspect > canvasAspect) {
+            // Image is wider than canvas - fit to width
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / imgAspect;
+            drawX = 0;
+            drawY = (canvas.height - drawHeight) / 2;
+          } else {
+            // Image is taller than canvas - fit to height
+            drawHeight = canvas.height;
+            drawWidth = canvas.height * imgAspect;
+            drawX = (canvas.width - drawWidth) / 2;
+            drawY = 0;
+          }
+
+          if (result.layer === "face") {
+            // Face art sits small/low within its clup frame, so scale it
+            // up and shift it upward to better fill the hair's face window.
+            // Individual face images differ slightly in content placement,
+            // so extraYShift lets specific faces get an additional nudge.
+            const FACE_SCALE_BOOST = 1.8;
+            const FACE_Y_SHIFT = canvas.height * -0.01;
+            const FACE_X_SHIFT = canvas.width * 0.005;
+            const boostedWidth = drawWidth * FACE_SCALE_BOOST;
+            const boostedHeight = drawHeight * FACE_SCALE_BOOST;
+            drawX -= (boostedWidth - drawWidth) / 2;
+            drawY -= (boostedHeight - drawHeight) / 2;
+            drawY -= FACE_Y_SHIFT;
+            drawY -= result.extraYShift || 0;
+            drawX += FACE_X_SHIFT;
+            drawWidth = boostedWidth;
+            drawHeight = boostedHeight;
+          }
+
+          drawX += result.extraXShift || 0;
+          if (result.layer === "facepaint") {
+            const FACEPAINT_Y_SHIFT = canvas.height * -0.02;
+            const FACEPAINT_X_SHIFT = canvas.width * -0.01;
+            const FACEPAINT_EXTRA_Y_SHIFT = canvas.height * 0.02;
+            drawX += FACEPAINT_X_SHIFT;
+            drawY += FACEPAINT_Y_SHIFT;
+            drawY += FACEPAINT_EXTRA_Y_SHIFT;
+            drawY += result.extraYShift || 0;
+          } else if (result.layer !== "face") {
+            const HAIR_Y_SHIFT = canvas.height * -0.015;
+            drawY += HAIR_Y_SHIFT;
+            drawY += result.extraYShift || 0;
+          }
+
+          ctx.drawImage(im, drawX, drawY, drawWidth, drawHeight);
+        } else {
+          // Fallback if no clup available: stretch to fill
+          ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+        }
+      }
+    });
+  });
+}
+
+function renderFinalCharacter() {
+  const canvas = document.getElementById("finalCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const gen = ++finalRenderGen;
+
+  let layers = [];
+  
+  layers.push({ src: IMG_BG, layer: "bg" });
+  
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
+  }
+  
+  let body = bodyOptions[selected.body];
+  if (body && body.src) {
+    layers.push({ src: body.src, layer: "body" });
+  }
+  
+  if (selected.armor) {
+    layers.push({ src: IMG_ARMOR, layer: "armor" });
+  }
+  
+  if (selected.face !== -1 && faceOptions[selected.face]) {
+    let face = faceOptions[selected.face];
+    if (face && face.src && face.enabled !== false) {
+      layers.push({ src: face.src, layer: "face" });
+    }
+  }
+  
+  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
+    let paint = facePaintOptions[selected.facePaint];
+    if (paint && paint.src && paint.enabled !== false) {
+      layers.push({ src: paint.src, layer: "facepaint" });
+    }
+  }
+  
+  if (selected.hair !== -1 && hairOptions[selected.hair]) {
+    let hair = hairOptions[selected.hair];
+    if (hair && hair.src && hair.enabled !== false) {
+      layers.push({ src: hair.src, layer: "hair" });
+    }
+  }
+  
+  if (selected.helmet) {
+    layers.push({ src: IMG_HELMET, layer: "helmet" });
+  }
+  
+  if (selected.weapon) {
+    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
+  }
+
+  Promise.all(
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve(im);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
+  ).then(imgs => {
+    if (gen !== finalRenderGen) return;
+    imgs.forEach(im => {
+      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+    });
+  });
+}
+
+const physiqueForm = document.getElementById("physiqueForm");
+const physiqueInput = document.getElementById("physiqueInput");
+const physiqueError = document.getElementById("physiqueError");
+const physiqueApprovedMsg = document.getElementById("physiqueApprovedMsg");
+
+physiqueForm.addEventListener("submit", function(e) {
+  e.preventDefault();
+  const val = parseInt(physiqueInput.value);
+  if (isNaN(val) || val < 1) {
+    physiqueError.style.display = "inline";
+    physiqueApprovedMsg.style.display = "none";
+    return;
+  }
+  
+  physiqueError.style.display = "none";
+  physiqueApprovedMsg.style.display = "block";
+  
+  let bodyType = "";
+  if (val <= 1) {
+    bodyType = "thin";
+  } else if (val >= 2 && val <= 4) {
+    bodyType = "lean";
+  } else if (val >= 5 && val <= 20) {
+    bodyType = "muscular";
+  } else {
+    bodyType = "massive";
+  }
+  
+  physiqueApprovedMsg.textContent = `Physique accepted! Body type: ${bodyType} (Physique: ${val}). Note: Physique mechanics are not functional while in beta.`;
+  
+  renderAllPickers();
+  resizeCanvasAndRender();
+});
+
+document.getElementById("equipArmorChk").addEventListener("change", function(e) {
+  selected.armor = e.target.checked;
+  document.getElementById("equipArmorChkFinal").checked = e.target.checked;
+  renderCharacter();
+  renderFinalCharacter();
+});
+document.getElementById("equipHelmetChk").addEventListener("change", function(e) {
+  selected.helmet = e.target.checked;
+  document.getElementById("equipHelmetChkFinal").checked = e.target.checked;
+  renderCharacter();
+  renderFinalCharacter();
+});
+document.getElementById("equipWeaponsChk").addEventListener("change", function(e) {
+  selected.weapon = e.target.checked;
+  document.getElementById("equipWeaponsChkFinal").checked = e.target.checked;
+  renderCharacter();
+  renderFinalCharacter();
+});
+
+document.getElementById("equipArmorChkFinal").addEventListener("change", function(e) {
+  selected.armor = e.target.checked;
+  document.getElementById("equipArmorChk").checked = e.target.checked;
+  renderFinalCharacter();
+});
+document.getElementById("equipHelmetChkFinal").addEventListener("change", function(e) {
+  selected.helmet = e.target.checked;
+  document.getElementById("equipHelmetChk").checked = e.target.checked;
+  renderFinalCharacter();
+});
+document.getElementById("equipWeaponsChkFinal").addEventListener("change", function(e) {
+  selected.weapon = e.target.checked;
+  document.getElementById("equipWeaponsChk").checked = e.target.checked;
+  renderFinalCharacter();
+});
+
+document.getElementById("randomBtn").addEventListener("click", function() {
+  let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledBodiesIdx.length === 0) return;
+  
+  selected.body = enabledBodiesIdx[Math.floor(Math.random() * enabledBodiesIdx.length)];
+
+  let body = bodyOptions[selected.body];
+  let skin = (body && body.skin) ? body.skin : "med";
+  
+  let filteredFaces = faceOptions.filter(f => f.skin === skin && f.enabled);
+  if (filteredFaces.length > 0) {
+    let randomFaceLocalIdx = Math.floor(Math.random() * filteredFaces.length);
+    selected.face = faceOptions.indexOf(filteredFaces[randomFaceLocalIdx]);
+  } else {
+    selected.face = pickFirstEnabledFace(skin);
+  }
+  
+  let enabledHairIdx = hairOptions.map((h, idx) => h.enabled ? idx : -1).filter(idx => idx !== -1);
+  if (enabledHairIdx.length > 0) {
+    selected.hair = enabledHairIdx[Math.floor(Math.random() * enabledHairIdx.length)];
+  }
+
+  renderAllPickers();
+  resizeCanvasAndRender();
+  renderFacePreview();
+  renderFinalCharacter();
+});
+
+const showJpegBtn = document.getElementById("showJpegBtn");
+showJpegBtn.addEventListener("click", function() {
+  const charCanvas = document.getElementById("finalCanvas");
+  const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
+  localStorage.setItem("sorc_portrait", portraitDataUrl);
+  window.open("../../../../char-sheet-flip.html", "_blank");
+});
+
+const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
+showBlankJpegBtn.addEventListener("click", function() {
+  localStorage.removeItem("sorc_portrait");
+  window.open("../../../../char-sheet-flip.html", "_blank");
+});
+
+function showPage(n) {
+  document.getElementById("page1").classList.toggle("active", n === 1);
+  document.getElementById("page2").classList.toggle("active", n === 2);
+  document.getElementById("page3").classList.toggle("active", n === 3);
+  window.scrollTo(0, 0);
+
+  if (n === 2) {
+    renderFacePreview();
+  }
+
+  if (n === 3) {
+    document.getElementById("equipWeaponsChkFinal").checked = selected.weapon;
+    document.getElementById("equipArmorChkFinal").checked = selected.armor;
+    document.getElementById("equipHelmetChkFinal").checked = selected.helmet;
+
+    setTimeout(function() {
+      const finalCanvas = document.getElementById("finalCanvas");
+      if (finalCanvas) {
+        const { width, height } = getCanvasSize();
+        finalCanvas.width = width;
+        finalCanvas.height = height;
+        finalCanvas.style.width = width + "px";
+        finalCanvas.style.height = height + "px";
+        renderFinalCharacter();
+      }
+    }, 50);
+  }
+}
+
+// Give each customizer step its own history entry so the browser's back
+// button steps back through the customizer pages instead of leaving it.
+history.replaceState({ page: 1 }, "");
+
+document.getElementById("toPage2Btn").addEventListener("click", function() {
+  document.getElementById("gmCodeOverlay").classList.add("visible");
+});
+
+document.getElementById("gmCodeSubmitBtn").addEventListener("click", function() {
+  document.getElementById("gmCodeOverlay").classList.remove("visible");
+  showPage(2);
+  history.pushState({ page: 2 }, "");
+});
+
+document.getElementById("toPage3Btn").addEventListener("click", function() {
+  showPage(3);
+  history.pushState({ page: 3 }, "");
+});
+
+window.addEventListener("popstate", function(e) {
+  showPage((e.state && e.state.page) || 1);
+});
+
+window.addEventListener("resize", resizeCanvasAndRender);
+window.addEventListener("orientationchange", resizeCanvasAndRender);
+
+const canvasEl = document.getElementById("charCanvas");
+let holdTimer = null;
+let touchMoved = false;
+
+if (canvasEl) {
+  canvasEl.addEventListener("mousedown", function(e) {
+    touchMoved = false;
+    holdTimer = setTimeout(function() {
+      if (!touchMoved) {
+        isPortraitView = !isPortraitView;
+        renderCharacter();
+      }
+    }, 1200);
+  });
+  
+  canvasEl.addEventListener("mousemove", function() {
+    touchMoved = true;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("mouseup", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("mouseleave", function() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("touchstart", function(e) {
+    if (e.touches.length > 1) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      return;
+    }
+    
+    touchMoved = false;
+    holdTimer = setTimeout(function() {
+      if (!touchMoved) {
+        isPortraitView = !isPortraitView;
+        renderCharacter();
+      }
+    }, 1200);
+  });
+  
+  canvasEl.addEventListener("touchmove", function(e) {
+    if (e.touches.length > 1) {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      return;
+    }
+    
+    touchMoved = true;
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+  
+  canvasEl.addEventListener("touchend", function(e) {
+    if (e.touches.length > 0) {
+      return;
+    }
+    
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+
+  canvasEl.addEventListener("touchcancel", function(e) {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+  });
+}
+
+selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
+renderAllPickers();
+resizeCanvasAndRender();
+
+// Ensure character renders properly on initial load with retry for slow image loading
+setTimeout(() => {
+  renderCharacter();
+}, 100);

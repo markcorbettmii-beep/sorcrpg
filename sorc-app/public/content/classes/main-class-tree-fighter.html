@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Fighter (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../styles.css?v=9">
+<style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
+    .rules-section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #be0500; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .web-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #0058aa; }
+    .slot-c { color: #be0500; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #92793a !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.web-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Fighter class-card, standing alone.
+       Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
+  </style>
+</head>
+<body class="lawful-mode">
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><span class="page-nav-current" aria-current="page">pg. 1</span></li>
+    </ul>
+  <main>
+    <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Fighter - Class Tree</h2>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="fighter">Fighter <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>            <p>The most adaptable martial class in Essentia, Fighters are defined by mastery of raw combat fundamentals, developing unmatched weapon mastery through sheer repetition and battlefield Experience (XP) that no trained academic can replicate, making them the most reliable class in sustained combat regardless of the situation they find themselves in.</p>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Alignments range from Lawful, Moral, Ambivalent, Amoral and Evil, and are Path and Branch Dependent.<br><br>
+              <em>To use the Abilities of this Path or Branch, you must fall within the Alignment's Spectrum. To devote to the Path's Higher Power you must fall exactly at that Alignment (see Alignment, Basic Rules pg. 2).</em><br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Fighter's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              To learn a Path's Abilities, or any of its three Branches', your own alignment need only sit inside this Class's Spectrum.<br><br>
+              To draw a Path's Higher Power bonus you must hold that Path's exact base Alignment, and that same base is what its three Branches require.<br><br>
+              <strong>Favored Races:</strong><br>Troll (Village) +5, Troll (Common) +5, Human&dagger; +5, Dwarf (Common)&dagger; +5, Halfling&dagger; +5, Hobbling +5<br><br>
+              &dagger;Human, Dwarf, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> Elf (Common) -5, Halfling -5<br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Combat Focus, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Battle-Forged, Once Per Day the Fighter draws on raw battle instinct, gaining a bonus to Hit and Damage equal to their Grit SCR for the rest of the encounter.<br><br>
+              Extra 1d6 + LVL physical damage on Critical Hits.<br>
+              Once per encounter, Fighters can Flourish their weapon that lowers their target's Defense at a number equal to their Strength SCR.<br><br>
+              Fighters get +5 feet their base movement speed, once per encounter.<br><br>
+              Fighters get +4 plus their STR SCR on Athletics checks.<br><br>
+                            <hr class="thin-hr">
+              <strong>Fighter Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Brawler</em> - An unarmed Fighter who relies on fists and raw grit over steel.<br>
+              &nbsp;&nbsp;<em>Alignment: Ambivalent</em><br>
+              &nbsp;&nbsp;<em>Observance: None. Ambivalent Paths answer to no god and no patron at all.</em><br>
+              &nbsp;&nbsp;<em>No Higher Power, so no exact alignment is required at this Path or at any of its three Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Bruiser</em> - A Brawler who wears down enemies through sheer, relentless punishment.<br>
+              &nbsp;&nbsp;b. <em>Enforcer</em> - A Brawler who intimidates as much as strikes, breaking enemy resolve with brute presence.<br>
+              &nbsp;&nbsp;c. <em>Rager</em> - A Brawler who fights harder the more damage they take.<br>
+              ii. <em>Hero</em> - A versatile Fighter who takes up any cause, adapting their fighting style to whatever the moment demands.<br>
+              &nbsp;&nbsp;<em>Alignment: Moral</em><br>
+              &nbsp;&nbsp;<em>Observance: Service and care. Devotion is spent on other people rather than performed.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Evil and Amoral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Moral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Combatant</em> - A Hero who masters the fundamentals of every fighting style equally well.<br>
+              &nbsp;&nbsp;b. <em>Merc</em> - A Hero who fights for coin and contract, adapting to whatever the job demands.<br>
+              &nbsp;&nbsp;c. <em>Vigilante</em> - A Hero who takes justice into their own hands, striking wherever it's needed most.<br>
+              iii. <em>Juggernaut</em> - A heavy-hitting Fighter who wades into the thick of battle, built to take and deal punishment in equal measure.<br>
+              &nbsp;&nbsp;<em>Alignment: Amoral</em><br>
+              &nbsp;&nbsp;<em>Observance: Bargain and price. Devotion is a contract kept, whatever it was for.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Moral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Amoral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Reaver</em> - A Juggernaut who tears through enemy lines with unstoppable forward momentum.<br>
+              &nbsp;&nbsp;b. <em>Rumbler</em> - A Juggernaut whose ground-shaking strikes stagger everything nearby.<br>
+              &nbsp;&nbsp;c. <em>Vanguard</em> - A Juggernaut who leads the charge, absorbing the first and heaviest blows.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Tactician<br>
+              Professions: Blacksmith, Body Artist, Hunter<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Fighter Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Armor Threshold (Tier):</strong> Medium Grade. Armor heavier than Medium will incur an Armament Penalty (-5 per Grade of difference) when performing Tier Abilities, though heavier armor can still be worn (see Armament Penalties, pg. 4).<br><br><strong>Weapon Proficiency (Tier):</strong> Variant: Telluric, TAW, or Chthonic. Type: Tactical. Hand: 2h, 1h (Main), 1h (Off), or bare hands. Distance: Melee. Style: Slashing, Blunt, Piercing, or Chop. Forbidden: Magic Type. Each Path refines these specifications further; see each Path below for its baseline, and each Branch for any exceptions it states.</span>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #be0500; line-height:1.25;">Fighter Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). See Martial Abilities individually for details, see card examples on this page.</em><br>
+              <em>Wearing a heavier Grade than the current tier allows brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #be0500;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Fighter)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Fighter Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Measured Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A disciplined strike honed through repetition, a Fighter's earliest lesson in what pure repetition can do... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Practiced Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown from the same well of repetition... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Disciplined Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with the same discipline as a measured strike... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Disciplined Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Discipline itself drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Practiced Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt honed through the same repetition, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Measured Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn with the same measured discipline, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Fighter Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Weapon Flow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Momentum carried from one strike into the next, a Fighter's earliest taste of a fight that never really stops... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Flowing Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut carried on momentum from the last strike... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Flowing Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard that never really stops moving... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Flowing Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Momentum itself drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Flowing Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt carried on momentum, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Flowing Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal carried on the same unbroken momentum, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Fighter Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table tier-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Adaptive Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A stance that reads the fight and bends with it, a Fighter's earliest step toward becoming whatever the fight needs... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Adaptive Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown from a stance still reading the fight... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Bending Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Mastery<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard that bends with whatever the fight needs... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Adaptive Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A shield that reads the fight and bends with it, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Adaptive Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A bolt that reads the fight, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Adaptive Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal that bends with whatever the fight needs, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Fighter Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry" id="brawler"><span class="path-header">i. <em>Brawler</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>An unarmed Fighter who relies on fists and raw grit over steel. (LVL 4-20)</em><br>
+              <em>(see Brawler Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Brawler Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Brawler)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Any (Slashing, Blunt, Piercing, or Chop), 1h (Main), 1h (Off), or 2h; unarmed strikes also usable and gain a bonus. Brawlers get bonuses to everyday items used as weapons, and to grappling, gouging and so forth, as long as no weapon is drawn (see <a href="../essentia_core/archived-rules/rules_ref_005.html#improvised-tools">Improvised Tools</a>, Combat, pg. 5). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit (Main Hand), +2 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Brawler):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate, Light, or Medium (Knuckle Wraps).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Brawler Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Bruiser (LVL 21-30)<br>
+                <em>A Brawler who wears down enemies through sheer, relentless punishment.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Bruiser Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Bruiser Branch chosen at LVL 21 - see Bruiser above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Bruiser Branch chosen at LVL 21 - see Bruiser above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Enforcer (LVL 21-30)<br>
+                <em>A Brawler who intimidates as much as strikes, breaking enemy resolve with brute presence.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Enforcer Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Enforcer Branch chosen at LVL 21 - see Enforcer above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Enforcer Branch chosen at LVL 21 - see Enforcer above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Rager (LVL 21-30)<br>
+                <em>A Brawler who fights harder the more damage they take.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Rager Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Rager Branch chosen at LVL 21 - see Rager above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Rager Branch chosen at LVL 21 - see Rager above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Brawler Abilities (Fighter Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Fighter - Brawler Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Flurry of Fists</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Grit<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The first rapid combo thrown bare-knuckle, a Brawler's earliest proof that hands alone can be enough... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Bare Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Grit<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown bare-knuckle before a real weapon is drawn... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Fists Up Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Grit<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with nothing but fists raised... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Bare-Knuckle Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Bare-knuckle proof drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Flurry Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A rapid combo loosed at range instead of bare-knuckle... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Fists Up Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn with nothing but fists raised, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Fighter - Brawler Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Body Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Grit<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A blow aimed at the wind rather than the flesh, a Brawler's earliest lesson in where a fight really ends... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wind Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Grit<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut aimed at the wind rather than the flesh... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Winded Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Grit<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held where a fight really ends... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Winded Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A shield drawn where a fight really ends, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Body Blow Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A blow aimed at the wind, loosed at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Winded Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn where a fight really ends, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Fighter - Brawler Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Knuckle Rush</strong><br>A rush closed with knuckle and elbow before a real weapon is ever drawn... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Elbow Cut</strong><br>A cut thrown with knuckle and elbow, closing distance fast... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rushing Guard</strong><br>A guard held while closing distance before a real weapon is drawn... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Rushing Aegis</strong><br>A shield sung while closing distance, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Knuckle Bolt</strong><br>A rush closed with knuckle and elbow, loosed at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Rushing Renewal</strong><br>A renewal drawn while closing distance, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Fighter - Brawler Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Read Opening</strong><br>An opening read mid-swing, grinding a fight down to whoever hits last... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Opening Cut</strong><br>A cut thrown the instant an opening is read... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Closing Guard</strong><br>A guard held while grinding a fight down to whoever hits last... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Closing Aegis</strong><br>A shield sung while grinding a fight down to whoever hits last, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Opening Bolt</strong><br>An opening read mid-swing, loosed at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Closing Renewal</strong><br>A renewal drawn while grinding a fight down to whoever hits last, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Fighter - Brawler Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ground Grind</strong><br>Brawlers trade steel for knuckle and wrap, closing distance and grinding a fight down to fists and will... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ground Cut</strong><br>Brawlers strike whoever's caught in a fight ground down to fists and will... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ground Guard</strong><br>Brawlers guard whoever's caught in a fight ground down to fists and will... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Ground Aegis</strong><br>Brawlers shield whoever's caught in a fight ground down to fists and will, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Ground Bolt</strong><br>Brawlers trade steel for range, grinding a fight down to fists and will... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Ground Renewal</strong><br>Brawlers mend whoever's caught in a fight ground down to fists and will, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Fighter - Brawler Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Bruiser (LVL 21-30)<br>
+                <em>A Brawler who wears down enemies through sheer, relentless punishment.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Bruiser Abilities (Brawler Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Bruiser Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Enforcer (LVL 21-30)<br>
+                <em>A Brawler who intimidates as much as strikes, breaking enemy resolve with brute presence.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Enforcer Abilities (Brawler Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Enforcer Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Rager (LVL 21-30)<br>
+                <em>A Brawler who fights harder the more damage they take.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Rager Abilities (Brawler Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Rager Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Hero</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A versatile Fighter who takes up any cause, adapting their fighting style to whatever the moment demands. (LVL 4-20)</em><br>
+              <em>(see Hero Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Hero Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Hero)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Any (Slashing, Blunt, Piercing, or Chop), 1h (Main), 1h (Off), or 2h; unarmed strikes also usable. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit (Main Hand), +2 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Hero):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate, Light, or Medium (Battleworn Leather).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Hero Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Combatant (LVL 21-30)<br>
+                <em>A Hero who masters the fundamentals of every fighting style equally well.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Combatant Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Combatant Branch chosen at LVL 21 - see Combatant above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Combatant Branch chosen at LVL 21 - see Combatant above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Merc (LVL 21-30)<br>
+                <em>A Hero who fights for coin and contract, adapting to whatever the job demands.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Merc Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Merc Branch chosen at LVL 21 - see Merc above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Merc Branch chosen at LVL 21 - see Merc above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Vigilante (LVL 21-30)<br>
+                <em>A Hero who takes justice into their own hands, striking wherever it's needed most.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Vigilante Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Vigilante Branch chosen at LVL 21 - see Vigilante above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Vigilante Branch chosen at LVL 21 - see Vigilante above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Hero Abilities (Fighter Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Fighter - Hero Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Adaptive Reckoning</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Allguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The reading stance sharpened into instinct, a Hero's earliest proof that adapting isn't just surviving... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Instinct Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Allguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown on instinct sharpened past mere reading... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Instinctive Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Allguard<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held on the same sharpened instinct... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Instinctive Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>Sharpened instinct drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Reckoning Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A reckoning sharpened into instinct, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Instinctive Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn on the same sharpened instinct, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Fighter - Hero Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Weapon Swap Flow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Allguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A seamless switch between one weapon and the next, a Hero's earliest lesson in fighting for whatever the moment demands... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Swap Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Allguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut thrown mid-switch between one weapon and the next... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Seamless Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Allguard<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held through a seamless switch of weapons... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Seamless Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A seamless switch drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Swap Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A seamless switch loosed at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Seamless Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn through a seamless switch, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Fighter - Hero Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Shifting Guard</strong><br>A stance that shifts mid-fight to whatever an ally needs most, standing wherever the line is about to break... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Shifting Cut</strong><br>A cut thrown wherever the line is about to break... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Breaking Line Guard</strong><br>A guard standing wherever the line is about to break... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Shifting Aegis</strong><br>A shield standing wherever the line is about to break, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Shifting Bolt</strong><br>A stance shifted into a bolt, loosed wherever the line is about to break... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Breaking Line Renewal</strong><br>A renewal drawn wherever the line is about to break, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Fighter - Hero Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Shifting Tide</strong><br>A battlefield read like a shifting tide, the guard adapting before it even needs to... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Tide Cut</strong><br>A cut thrown as the battlefield shifts like a tide... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Tidal Guard</strong><br>A guard adapting before the shifting tide even needs it to... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Tidal Aegis</strong><br>A shield adapting before the shifting tide even needs it to, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Tide Bolt</strong><br>A battlefield read like a shifting tide, loosed at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Tidal Renewal</strong><br>A renewal adapting before the shifting tide even needs it to, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Fighter - Hero Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Whatever the Line</strong><br>Heroes fight for whoever's beside them, adapting their guard and their blade to whatever the line needs... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Whatever It Takes</strong><br>Heroes strike for whoever's beside them, adapting their blade to whatever the line needs... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Whatever Guards</strong><br>Heroes guard for whoever's beside them, adapting to whatever the line needs... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Whatever Aegis</strong><br>Heroes shield whoever's beside them, adapting to whatever the line needs, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Whatever Bolt</strong><br>Heroes fight for whoever's beside them at range, adapting to whatever the line needs... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Whatever Renewal</strong><br>Heroes mend whoever's beside them, adapting to whatever the line needs, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Fighter - Hero Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Combatant (LVL 21-30)<br>
+                <em>A Hero who masters the fundamentals of every fighting style equally well.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Combatant Abilities (Hero Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Combatant Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Merc (LVL 21-30)<br>
+                <em>A Hero who fights for coin and contract, adapting to whatever the job demands.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Merc Abilities (Hero Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Merc Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Vigilante (LVL 21-30)<br>
+                <em>A Hero who takes justice into their own hands, striking wherever it's needed most.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Vigilante Abilities (Hero Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Vigilante Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Juggernaut</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A heavy-hitting Fighter who wades into the thick of battle, built to take and deal punishment in equal measure. (LVL 4-20)</em><br>
+              <em>(see Juggernaut Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Juggernaut Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Juggernaut)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Any (Slashing, Blunt, Piercing, or Chop), 1h (Main), 1h (Off), or 2h; unarmed strikes also usable. Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit (Main Hand), +2 to Hit (Off Hand) when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Juggernaut):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Delicate, Light, or Medium (Ironhide Padding).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Juggernaut Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Reaver (LVL 21-30)<br>
+                <em>A Juggernaut who tears through enemy lines with unstoppable forward momentum.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Reaver Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Reaver Branch chosen at LVL 21 - see Reaver above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Reaver Branch chosen at LVL 21 - see Reaver above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Rumbler (LVL 21-30)<br>
+                <em>A Juggernaut whose ground-shaking strikes stagger everything nearby.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Rumbler Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Rumbler Branch chosen at LVL 21 - see Rumbler above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Rumbler Branch chosen at LVL 21 - see Rumbler above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Vanguard (LVL 21-30)<br>
+                <em>A Juggernaut who leads the charge, absorbing the first and heaviest blows.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Vanguard Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Vanguard Branch chosen at LVL 21 - see Vanguard above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Vanguard Branch chosen at LVL 21 - see Vanguard above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Juggernaut Abilities (Fighter Tier)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Fighter - Juggernaut Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Crushing Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Ironhide<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A heavy blow that leaves more than a bruise behind, a Juggernaut's earliest lesson in the weight behind a blow... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Heavy Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Ironhide<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cut thrown with the full weight behind it... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Weighted Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Ironhide<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A guard held with the same weight behind a crushing blow... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Weighted Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>The full weight of a crushing blow drawn into a shield over self or an ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Crushing Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A heavy bolt that leaves more than a bruise behind, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Weighted Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 2 Mana<br>Uses: Unlimited</span>A renewal drawn with the same weight behind a crushing blow, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Fighter - Juggernaut Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sundering Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Ironhide<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike that finds the seam beneath the plate, a Juggernaut's earliest reach past mere armor... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Seam Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Ironhide<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut aimed at the seam beneath the plate... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Plated Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Any | Hand: 1h or 2h | Discipline: Ironhide<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held over the same seam a Juggernaut learns to find... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Sundering Aegis</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Ritual | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A shield drawn over the seam beneath the plate, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sundering Bolt</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Verbal | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A bolt that finds the seam beneath the plate, loosed at a foe... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Plated Renewal</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Cast: Touch | Mechanic: Instant | Style: Single Target | School: Arcane<br>Cost: 3 Mana<br>Uses: 3/Round</span>A renewal drawn over the same seam a Juggernaut learns to find, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Fighter - Juggernaut Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Iron Root Stance</strong><br>A stance that plants the Juggernaut's feet, daring the fight to move them, soaking up whatever comes next... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rooted Cut</strong><br>A cut thrown from feet already planted, daring the fight to move them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Iron Root Guard</strong><br>A guard planted like iron roots, soaking up whatever comes next... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Iron Root Aegis</strong><br>A shield planted like iron roots, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Rooted Bolt</strong><br>A stance planted like iron roots, loosed at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Iron Root Renewal</strong><br>A renewal drawn from feet already planted, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Fighter - Juggernaut Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Held Line</strong><br>A held line turned into a weapon of its own, absorbing a blow only to send it back harder... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Returned Cut</strong><br>A cut sent back harder than the blow that was absorbed... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Line Holding Guard</strong><br>A guard held like a line turned into a weapon of its own... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Held Line Aegis</strong><br>A shield sung from a held line turned into a weapon of its own, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Returned Bolt</strong><br>A held line turned into a bolt, sent back harder at range... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Held Line Renewal</strong><br>A renewal drawn from a held line turned into a weapon of its own, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Fighter - Juggernaut Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table path-table">
+                    <thead><tr><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Iron Wall</strong><br>Juggernauts plant like a wall of iron, absorbing and returning every blow that dares to reach them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Iron Wall Cut</strong><br>Juggernauts strike back at every blow that dares to reach their wall of iron... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Iron Wall Stance</strong><br>Juggernauts plant like a wall of iron, absorbing every blow that dares to reach them... refer to Ability Card.</li></ul></td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Iron Wall Aegis</strong><br>Juggernauts shield like a wall of iron, absorbing every blow that dares to reach them, self or ally... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Iron Wall Bolt</strong><br>Juggernauts return every blow that reaches their wall of iron, at range instead... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Iron Wall Renewal</strong><br>Juggernauts mend behind their wall of iron, self or ally... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Fighter - Juggernaut Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Reaver (LVL 21-30)<br>
+                <em>A Juggernaut who tears through enemy lines with unstoppable forward momentum.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Reaver Abilities (Juggernaut Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Reaver Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Rumbler (LVL 21-30)<br>
+                <em>A Juggernaut whose ground-shaking strikes stagger everything nearby.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Rumbler Abilities (Juggernaut Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Rumbler Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Vanguard (LVL 21-30)<br>
+                <em>A Juggernaut who leads the charge, absorbing the first and heaviest blows.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Vanguard Abilities (Juggernaut Path)<br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th><th>Spell Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td colspan="2">TBA. The Vanguard Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+      <p style="margin-top: 3rem; text-align: center; font-size: 0.9rem; opacity: 0.7;">
+        <a href="class-tree-nav.html">View all class trees</a>
+      </p>
+    </div>
+  </main>
+  </div>
+</main>
+</div>
+</body>
+</html>
+
+  </main>
+</main>
+</body>
+</html>
+</html>

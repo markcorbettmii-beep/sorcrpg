@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<!--
+  Female Human Character Customizer
+  Copyright © 2024 Corbett, editor in chief of Ogre Adventurer, a publishing company of Slayers of Rings § (and, and &) Crowns. Time stamped via GitHub repository push
+  Created: December 26, 2024
+  All rights reserved.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Female Human Character Customizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3">
+  <link rel="stylesheet" href="../../../../styles.css?v=9">
+  <link rel="stylesheet" href="../../../ccstyle.css">
+ 
+ <style>
+    /* Character Customizer Specific Styles */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+    
+    header,
+nav {
+  width: 100%;
+  align-self: stretch;
+}
+
+header .container {
+  justify-content: center;
+}
+
+nav {
+  justify-content: flex-end;
+}
+
+h1 {
+      text-align: center;
+      color: #c93f35;
+      margin-bottom: 0.5rem;
+    }
+    
+    .coming-soon {
+      text-align: center;
+      color: #DED463;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+    
+    .main-layout {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .center-panel {
+      background: #121212;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      border: 1px solid #c93f35;
+    }
+    
+    /* Page Sections */
+    .page-section {
+      display: none;
+    }
+    
+    .page-section.active {
+      display: block;
+    }
+    
+    /* Form Styles */
+    #physiqueForm {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #c93f35;
+    }
+    
+    #physiqueForm label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #e0cfc0;
+    }
+    
+    #physiqueInput {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: #0a0a0a;
+      border: 1px solid #c93f35;
+      color: #e0cfc0;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    button {
+      background: #c93f35;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 1rem;
+    }
+    
+    button:hover {
+      background: #c93f35;
+    }
+    
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    
+    .nav-button {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      font-size: 1.1rem;
+    }
+    
+    /* Canvas Container - CENTERED */
+    #characterCanvasContainer, #characterCanvasContainer2 {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1.5rem auto;
+      max-width: 640px;
+    }
+    
+    #faceCanvasContainer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1.5rem auto;
+      max-width: 400px;
+    }
+    
+    #canvasInstruction {
+      font-size: 1em;
+      color: #DED463;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    #charCanvas, #faceCanvas, #finalCanvas {
+      display: block;
+      margin: 0 auto;
+      border: 2px solid #c93f35;
+      border-radius: 8px;
+      background: #0a0a0a;
+      cursor: pointer;
+    }
+    
+    /* Character Actions */
+    #character-actions {
+      margin: 2rem 0 1rem 0;
+      text-align: center;
+    }
+    
+    #randomBtn {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    /* Equipment Controls */
+    #equipment-controls, #companion-controls {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #c93f35;
+    }
+    
+    #equipment-controls label,
+    #companion-controls label {
+      display: block;
+      margin: 0.5rem 0;
+      color: #e0cfc0;
+      cursor: pointer;
+    }
+    
+    #equipment-controls input[type="checkbox"],
+    #companion-controls input[type="checkbox"] {
+      margin-right: 0.5rem;
+      cursor: pointer;
+    }
+
+    .armaments-note {
+      text-align: center;
+      color: #DED463;
+      font-weight: bold;
+      margin: 0.75rem 0;
+      opacity: 0.45;
+    }
+
+    .armaments-note.full {
+      opacity: 1;
+    }
+    
+    /* Feature Rows */
+    .feature-rows {
+      margin: 1.5rem 0;
+    }
+    
+    .feature-row {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #c93f35;
+    }
+    
+    .feature-row h2 {
+      color: #c93f35;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+    
+    /* Thumbnail Styles */
+    .thumb-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .thumb {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border: 3px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #0a0a0a;
+      -webkit-touch-callout: none;
+      -webkit-user-drag: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    /* Hold-for-preview overlay */
+    #holdPreviewOverlay {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      background: #0a0a0a;
+      border: 3px solid #c93f35;
+      border-radius: 10px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.85);
+      padding: 8px;
+      pointer-events: none;
+    }
+
+    #holdPreviewOverlay.visible {
+      display: block;
+    }
+
+    #holdPreviewOverlay img {
+      display: block;
+      max-width: min(80vw, 320px);
+      max-height: min(80vh, 320px);
+      object-fit: contain;
+    }
+
+    #holdPreviewOverlay .disabled-note-text {
+      color: #DED463;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      max-width: 60vw;
+      text-align: center;
+    }
+    
+    .thumb:hover {
+      border-color: #c93f35;
+      transform: scale(1.05);
+    }
+
+    /* GM Code modal */
+    #gmCodeOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.75);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #gmCodeOverlay.visible {
+      display: flex;
+    }
+
+    #gmCodeModal {
+      background: #0a0a0a;
+      border: 3px solid #c93f35;
+      border-radius: 10px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.85);
+      padding: 1.5rem;
+      max-width: 90vw;
+      width: 380px;
+      text-align: center;
+    }
+
+    #gmCodeModal h3 {
+      color: #c93f35;
+      margin-top: 0;
+      font-size: 1.2rem;
+    }
+
+    #gmCodeInput {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.6rem;
+      margin: 1rem 0;
+      border-radius: 6px;
+      border: 1px solid #c93f35;
+      background: #1a060c;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    #gmCodeInput::placeholder {
+      color: #e0cfc0;
+      opacity: 0.5;
+    }
+    
+    .thumb.selected {
+      border-color: #DED463;
+      box-shadow: 0 0 10px #DED463;
+    }
+    
+    .thumb.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      filter: grayscale(100%);
+    }
+    
+    .thumb.disabled:hover {
+      transform: none;
+      border-color: transparent;
+    }
+    
+    .thumb.placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #333;
+      color: #888;
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 4px;
+      line-height: 1.2;
+    }
+    
+    /* Body Type Explanation */
+    .body-type-explanation {
+      margin: 2rem 0;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #c93f35;
+    }
+    
+    .body-type-explanation h2 {
+      color: #c93f35;
+      margin-top: 0;
+    }
+    
+    .body-type-explanation ul {
+      color: #e0cfc0;
+      line-height: 1.8;
+    }
+    
+    /* Info Section */
+    .info-section {
+      margin: 2rem 0;
+      padding: 1rem;
+      background: #1a060c;
+      border-radius: 8px;
+      border-left: 4px solid #c93f35;
+    }
+    
+    .info-section div {
+      margin-bottom: 0.8em;
+      color: #fff;
+      font-size: 0.98em;
+      line-height: 1.6;
+    }
+    
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 2rem;
+      color: #c93f35;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .back-link:hover {
+      color: #fff;
+    }
+    
+    /* Back button styling */
+    .back-button {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 20px 0;
+      background-color: #c93f35;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .back-button:hover {
+      background-color: #a00116;
+    }
+    
+    /* Responsive */
+    @media (max-width: 600px) {
+      .center-panel {
+        padding: 1rem;
+      }
+      
+      .thumb {
+        width: 90px;
+        height: 90px;
+      }
+      
+      button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+      }
+    }
+  
+
+    /* ─── Lawful Mode (Light Theme) ─── */
+    body.lawful-mode {
+      background: #f5f5f0;
+      color: #2c2c2c;
+    }
+    body.lawful-mode header { background: #ffffff; }
+    body.lawful-mode nav { background: #ffffff; }
+    body.lawful-mode main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode .content-main { background: #f5f5f0; color: #2c2c2c; }
+    body.lawful-mode h1, body.lawful-mode h2, body.lawful-mode h3, body.lawful-mode h4, body.lawful-mode h5 { color: #2c2c2c; }
+    body.lawful-mode p { color: #2c2c2c; }
+    body.lawful-mode .Profession-entry, body.lawful-mode .talent-entry, body.lawful-mode .skill-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+      color: #2c2c2c;
+    }
+    body.lawful-mode .talent-card { 
+      background: rgba(185,170,0,0.06); 
+      border-color: rgba(0,0,0,0.12); 
+    }
+    body.lawful-mode .note { 
+      background: rgba(185,170,0,0.1); 
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+    body.lawful-mode .callout {
+      background: rgba(185,170,0,0.1);
+      border-color: rgba(180,140,20,0.5);
+      color: #2c2c2c;
+    }
+</style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="header-container">
+      <span class="sorc-letters">S O R C</span>
+    </header>
+
+  <header>
+    <div class="container">
+      <div class="header-image-wrapper">
+        <a href="../../../../index.html">
+          <img src="../../../../slayers-letters_20260510_111419_0000.jpg" alt="Slayers of Rings § Crowns" class="header-logo">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <nav>
+        <div id="navRoleBadge"></div>
+  </nav>
+
+  <h1>SORC Female Human Character Customizer</h1>
+  
+  <div id="holdPreviewOverlay"></div>
+
+  <div class="main-layout">
+    <div class="center-panel">
+      
+      <!-- PAGE 1: BODY & EQUIPMENT -->
+      <div id="page1" class="page-section active">
+        <a href="../choose-femrace.html" class="back-button">← Back to Race Selection</a>
+        <h2 style="text-align:center; color:#c93f35;">Step 1: Body & Equipment</h2>
+
+        <p class="armaments-note" title="Select Armaments and Companions on last page of customizer.">Select Armaments and Companions on last page of customizer.</p>
+
+        <form id="physiqueForm">
+          <label for="physiqueInput"><strong>Enter Physique for Body Type</strong></label>
+          <input type="number" id="physiqueInput" min="1" max="99" required>
+          <button type="submit">Submit Physique</button>
+          <span id="physiqueError" style="color:red;display:none;">Please enter a valid score (1 or higher).</span>
+        </form>
+        
+        <div id="physiqueApprovedMsg" style="display:none;margin-bottom:1em;color:#DED463;font-weight:bold;">
+          Physique accepted! You can now create your Character.
+        </div>
+        
+        <div id="characterCanvasContainer">
+          <div id="canvasInstruction">
+            Press n hold image to flip to portrait example
+          </div>
+          <canvas id="charCanvas" width="640" height="1280"></canvas>
+        </div>
+
+        <div class="feature-row" id="body-row">
+          <h2>Body Type <span style="font-size:0.9em;color:#888;">(muscular available)</span></h2>
+          <div id="body-pickers"></div>
+        </div>
+
+        <div id="equipment-controls">
+          <label>
+            <input type="checkbox" id="equipWeaponsChk"> Show Weapons
+          </label>
+          <button id="cardWeaponsBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
+          <br>
+          <label>
+            <input type="checkbox" id="equipArmorChk"> Show Armor
+          </label>
+          <button id="cardArmorBtn" type="button" style="margin-left:8px;">View Linked Card (coming soon)</button>
+          <br>
+          <label>
+            <input type="checkbox" id="equipHelmetChk"> Show Helmet
+          </label>
+          <br>
+          <div style="margin:10px 0; font-weight:bold; color:#DED463; font-size:1.1em;">
+            Companion displays coming soon
+          </div>
+        </div>
+        
+        <div id="companion-controls">
+          <div style="display: flex; align-items: center; gap: 1.5em;">
+            <label style="margin-bottom:0;">
+              <input type="checkbox" id="equipCompanionChk" disabled> Companions
+              <span style="margin-left:6px;">(toggle mount on/off <input type="checkbox" id="toggleMountChk" disabled style="vertical-align:middle;">)</span>
+            </label>
+          </div>
+          <br>
+          <label>
+            <input type="checkbox" id="equipHearthChk" disabled> Selected Hearth
+          </label>
+        </div>
+        
+        <button class="nav-button" id="toPage2Btn">Confirm and Continue</button>
+      </div>
+
+      <!-- GM Code Modal -->
+      <div id="gmCodeOverlay">
+        <div id="gmCodeModal">
+          <h3>GM Code required to confirm earned assets</h3>
+          <input type="text" id="gmCodeInput" placeholder="GM Code bypassed for beta, submit.">
+          <button id="gmCodeSubmitBtn">Submit</button>
+        </div>
+      </div>
+
+      <!-- PAGE 2: FACE CUSTOMIZATION -->
+      <div id="page2" class="page-section">
+        <a href="../choose-femrace.html" class="back-button">← Back to Race Selection</a>
+        <h2 style="text-align:center; color:#c93f35;">Step 2: Face Customization</h2>
+
+        <p class="armaments-note" title="Select Armaments and Companions on last page of customizer.">Select Armaments and Companions on last page of customizer.</p>
+
+        <div id="faceCanvasContainer">
+          <div style="font-size: 1em; color: #DED463; margin-bottom: 8px; text-align: center; font-weight: bold;">
+            Face Close-Up Preview
+          </div>
+          <canvas id="faceCanvas" width="400" height="500"></canvas>
+        </div>
+
+        <div class="feature-row" id="face-row">
+          <h2>Face <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
+          <div id="face-pickers"></div>
+        </div>
+        
+        <div class="feature-row" id="hair-row">
+          <h2>Hair <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
+          <div id="hair-pickers"></div>
+        </div>
+        
+        <div class="feature-row" id="facepaint-row">
+          <h2>Face Paint <span style="font-size:0.9em;color:#888;">(hold for preview)</span></h2>
+          <div id="facepaint-pickers"></div>
+        </div>
+        
+        <button class="nav-button" id="toPage3Btn">Submit & View Final Profile</button>
+      </div>
+      
+      <!-- PAGE 3: FINAL PROFILE -->
+      <div id="page3" class="page-section">
+        <h2 style="text-align:center; color:#c93f35;">Your Complete Character</h2>
+
+        <p class="armaments-note full" title="Select Armaments and Companions on last page of customizer.">Select Armaments and Companions on last page of customizer.</p>
+
+        <div id="characterCanvasContainer2">
+          <div style="font-size: 1em; color: #DED463; margin-bottom: 8px; text-align: center; font-weight: bold;">
+            Final Character
+          </div>
+          <canvas id="finalCanvas" width="640" height="1280"></canvas>
+        </div>
+
+        <div id="character-actions">
+          <button id="randomBtn">Randomize Character</button>
+          <div style="margin-bottom: 0.5em; font-weight: bold; color: #e0cfc0;">(random character elements)</div>
+
+          <div id="equipment-controls-final" style="margin: 1rem auto; padding: 1rem; background: #1a060c; border-radius: 8px; border-left: 4px solid #c93f35; display:inline-block; text-align:left;">
+            <label style="display:block;margin:0.5rem 0;color:#e0cfc0;cursor:pointer;">
+              <input type="checkbox" id="equipWeaponsChkFinal"> Show Weapons
+            </label>
+            <label style="display:block;margin:0.5rem 0;color:#e0cfc0;cursor:pointer;">
+              <input type="checkbox" id="equipArmorChkFinal"> Show Armor
+            </label>
+            <label style="display:block;margin:0.5rem 0;color:#e0cfc0;cursor:pointer;">
+              <input type="checkbox" id="equipHelmetChkFinal"> Show Helmet
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; justify-content: center; flex-wrap: wrap;">
+            <a href="../../../../empty.html" style="text-decoration: none;">
+              <button style="background: #c93f35; color: #fff; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem;">Finalize</button>
+            </a>
+            <span style="font-size: 0.98em; color: #e0cfc0;">to create character sheet</span>
+          </div>
+        </div>
+        
+        <section class="body-type-explanation">
+          <h2>Body Type Selection (Female Human - Beta)</h2>
+          <ul>
+            <li><strong>Currently available:</strong> Muscular body types (all skin tones)</li>
+            <li><strong>Physique system:</strong> Not functional during beta - you can select any body type for testing</li>
+            <li><strong>Coming soon:</strong> Thin, lean, and massive body types</li>
+          </ul>
+        </section>
+        
+        <div class="coming-soon">
+          Armaments and Gear coming soon...
+        </div>
+        
+        <section class="info-section">
+          <div>
+            <strong>Companions</strong> come in the form of; Agothian, Pets, Ruminants, Mounts, Guardian, Companions, Draft Animals, Temps (summons, hirelings etc) and more. See page of basic rules for more on "Companion Cards".
+          </div>
+          <div>
+            <strong>Hearth</strong> is any fire source you've found and chosen as your Wayfarer's resting place.
+          </div>
+          <div>
+            Characters are displayed at ease and only the Armor and Weapons on your person are displayed, but in sheath.
+          </div>
+          <div>
+            Default elements are currently shown in Black and White until you own these elements (they're in color here for beta purposes).
+          </div>
+        </section>
+        
+        <a href="../../../creation-overview.html" class="back-link">← Back To Creation Overview</a>
+      </div>
+      
+    </div>
+  </div>
+
+  <div id="footer"></div>
+  
+  <script src="cc-fem-hum.js?v=20260619p"></script>
+  <script src="../../../../main.js?v=26"></script>
+</body>
+</html>
+

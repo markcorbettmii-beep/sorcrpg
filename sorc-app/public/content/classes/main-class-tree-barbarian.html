@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SORC Barbarian (Draft)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../styles.css?v=9">
+<style>
+    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
+    .rules-section { margin-bottom: 2.5rem; }
+    .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
+    .rules-section > h2:first-child { margin-top: 0; }
+    .rules-section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: #be0500; }
+    .def-block h4 { color: #ffffff; }
+    .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
+    .rules-section ul { padding-left: 1.4rem; }
+    .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
+    .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
+    .class-card.faded { opacity: 0.35; pointer-events: none; }
+    .class-card.faded details { pointer-events: auto; }
+    .class-card h4 { font-size: 1rem; letter-spacing: 1px; margin: 0 0 0.4rem; text-transform: uppercase; }
+    .class-card p { font-size: 0.85rem; opacity: 0.8; margin: 0 0 0.5rem; line-height: 1.55; }
+    .class-paths { font-size: 0.8rem; opacity: 0.7; }
+    .class-paths strong { opacity: 0.85; }
+    .class-stat-bar { font-size: 0.77rem; opacity: 0.82; margin-top: 0.55rem; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.35rem 0.6rem; line-height: 1.65; }
+    .class-stat-bar strong { color: rgba(190,165,255,0.95); opacity: 1; }
+    .align-tag { color: rgba(190,165,255,0.95); font-size: 0.77rem; }
+    .path-entry { margin: 0.35rem 0 0; }
+    .path-entry > em { font-style: normal; font-weight: bold; opacity: 0.95; }
+    .path-header { color: rgba(190,165,255,0.95); }
+    .tier-armaments-plain { color: rgba(255,255,255,0.72); }
+    .tier-armaments-plain strong { color: #ffffff; }
+    body.lawful-mode .tier-armaments-plain { color: rgba(0,0,0,0.72); }
+    body.lawful-mode .tier-armaments-plain strong { color: #000000; }
+    .branch-list { margin: 0.1rem 0 0 0.8rem; line-height: 1.55; }
+    .web-starter { opacity: 0.4; }
+    .thin-hr { border: none; border-top: 1px solid rgba(160,140,200,0.4); margin: 0.5rem 0; }
+    .slot-a { color: #c5a042; }
+    .slot-b { color: #0058aa; }
+    .slot-c { color: #be0500; }
+    .prereq-note { display: block; font-size: 0.78em; opacity: 0.82; margin-top: 0.2rem; font-style: italic; }
+    .future-gate { font-style: italic; }
+    .prereq-note a { color: inherit; text-decoration: underline dotted; }
+    .prereq-note a:hover { opacity: 1; color: inherit; }
+    .rules-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .rules-table th { background: rgba(120,80,200,0.18); padding: 0.5rem 0.75rem; text-align: left; letter-spacing: 1px; font-size: 0.82rem; text-transform: uppercase; }
+    .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
+    .rules-table tr:last-child td { border-bottom: none; }
+    .class-stat-bar table.rules-table { font-size: 0.74rem; margin: 0.4rem 0 0.7rem; }
+    .class-stat-bar table.rules-table th { padding: 0.3rem 0.45rem; font-size: 0.68rem; }
+    .class-stat-bar table.rules-table td { padding: 0.3rem 0.45rem; line-height: 1.5; }
+    .class-stat-bar table.rules-table:not(.split-table) td:first-child { white-space: nowrap; font-weight: bold; color: rgba(190,165,255,0.95); }
+    table.split-table td:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(3) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table td:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    table.split-table th:nth-child(2):not(:last-child) { border-left: 1px solid rgba(160,140,200,0.15); }
+    details.tree-details { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* One shared width for every tree table, whatever its stage or nesting
+       depth, so a table that drops below another lines up with it. */
+    details.tree-details table.split-table,
+    details.tree-details table.tier-table,
+    details.tree-details table.path-table,
+    details.tree-details table.branch-table {
+      table-layout: fixed; width: 720px;
+      /* styles.css caps .single-col at max-width:70%, which on a phone left the
+         Ability column near 170px and wrapped descriptions to ~10 lines. */
+      max-width: none;
+    }
+    details.tree-details table.split-table th,
+    details.tree-details table.split-table td { overflow-wrap: break-word; width: 50%; }
+    /* Single-column trees take the full width rather than half of it, which
+       otherwise left the Ability column at 50% and the rest of the table blank. */
+    details.tree-details table.split-table.single-col th,
+    details.tree-details table.split-table.single-col td { width: 100%; }
+    /* On a phone a fixed 720px would just force sideways scrolling, so the tree
+       tables fill the pane instead. Nesting runs several details deep and each
+       level's padding was eating the Ability column, so the inner levels give
+       their horizontal padding back - that also makes every table the same
+       width no matter how deep it sits. */
+    @media (max-width: 700px) {
+      main { padding-left: 0.6rem; padding-right: 0.6rem; }
+      details.tree-details details.tree-details { padding-left: 0; padding-right: 0; }
+      .class-card { padding-left: 0.5rem; padding-right: 0.5rem; }
+      .class-stat-bar { padding-left: 0.35rem; padding-right: 0.35rem; }
+      details.tree-details table.split-table,
+      details.tree-details table.tier-table,
+      details.tree-details table.path-table,
+      details.tree-details table.branch-table { width: 100%; }
+      details.tree-details table.lvl-col th:first-child,
+      details.tree-details table.lvl-col td:first-child { width: 64px; }
+    }
+    /* A leading Lvl column stays narrow so the Ability columns keep their room. */
+    details.tree-details table.lvl-col th:first-child,
+    details.tree-details table.lvl-col td:first-child { width: 96px; }
+    /* Stage tints: green Tier, red Path, gold Branch. */
+    details.tree-details table.tier-table { background: rgba(76,175,80,0.07); }
+    details.tree-details table.path-table { background: rgba(229,57,53,0.07); }
+    details.tree-details table.branch-table { background: rgba(197,160,66,0.08); }
+    details.tree-details table.tier-table th { background: rgba(76,175,80,0.20); }
+    details.tree-details table.path-table th { background: rgba(229,57,53,0.20); }
+    details.tree-details table.branch-table th { background: rgba(197,160,66,0.22); }
+    /* The light theme paints every table white and every header gold with
+       !important, so the stage tints have to out-shout it there. */
+    body.lawful-mode details.tree-details table.tier-table { background: #eef6ee !important; }
+    body.lawful-mode details.tree-details table.path-table { background: #fbeeed !important; }
+    body.lawful-mode details.tree-details table.branch-table { background: #f9f3e3 !important; }
+    body.lawful-mode details.tree-details table.tier-table th { background: #4f7d4f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.path-table th { background: #a8443f !important; color: #ffffff !important; }
+    body.lawful-mode details.tree-details table.branch-table th { background: #92793a !important; color: #2c2c2c !important; }
+    .class-stat-bar table.rules-table tr.web-starter { opacity: 0.4; }
+    .rules-table td ul.choice-list { list-style: none; margin: 0.1rem 0 0; padding: 0; }
+    .rules-table td ul.choice-list li { padding-left: 0; margin: 0 0 0.6rem; }
+    .rules-table td ul.choice-list li:last-child { margin-bottom: 0; }
+    .rules-table td ul.choice-list li .ability-name { color: rgba(190,165,255,0.98); font-weight: 700; }
+    .rules-table td ul.choice-list li em { display: block; font-size: 0.72rem; line-height: 1.4; opacity: 0.85; font-style: italic; font-weight: normal; margin: 0.15rem 0 0.25rem; }
+    .rules-table td ul.choice-list li strong:not(.ability-name) { display: block; font-size: 0.72rem; font-weight: 600; opacity: 0.85; letter-spacing: 0.3px; margin-bottom: 0.1rem; }
+    body.lawful-mode .rules-table td ul.choice-list li .ability-name { color: #6a4fa0; }
+    details.tree-details { margin: 0.6rem 0; background: rgba(0,0,0,0.18); border-radius: 3px; padding: 0.4rem 0.65rem; }
+    details.tree-details.plain-tier-details { background: none; padding: 0; margin: 0.3rem 0; border-radius: 0; }
+    details.tree-details > summary { cursor: pointer; font-size: 0.85rem; font-weight: bold; color: rgba(190,165,255,0.95); padding: 0.25rem 0; list-style: none; }
+    details.tree-details > summary::-webkit-details-marker { display: none; }
+    details.tree-details > summary em { font-style: normal; font-weight: normal; opacity: 0.75; font-size: 0.76rem; }
+    details.tree-details[open] > summary { margin-bottom: 0.2rem; }
+    details.tree-details .rules-table { margin: 0.5rem 0 0.2rem; }
+    details.tree-details.branch-details { margin: 0.5rem 0 0.15rem; background: rgba(0,0,0,0.14); }
+    details.tree-details.branch-details > summary { font-size: 0.78rem; }
+    .tree-hint { font-size: 1em; font-weight: normal; font-style: normal; opacity: 1; margin-left: 0.5em; text-transform: none; color: #ffffff; }
+    .tree-hint-arrow { display: inline-block; color: #ffffff; transition: transform 0.15s ease; }
+    details.tree-details[open] > summary .tree-hint-arrow { transform: rotate(90deg); }
+    .card-reminder { font-size: 0.68rem; font-weight: normal; font-style: italic; color: #ffffff; opacity: 0.85; }
+    .skip-link { font-size: 0.85rem; font-style: italic; opacity: 0.85; margin: 0.6rem 0; }
+    .skip-link a { color: #c5a042; }
+    .stat-line { display: block; font-size: 0.78rem; opacity: 0.85; margin: 0.15rem 0 0.25rem; }
+    .prereq-tag { display: inline; font-size: 0.68rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(190,165,255,0.95); }
+    body.lawful-mode details.tree-details { background: rgba(0,0,0,0.05); }
+    body.lawful-mode details.tree-details > summary { color: #6a4fa0; }
+    body.lawful-mode .prereq-tag { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .class-stat-bar strong { color: #6a4fa0; }
+    body.lawful-mode .path-header { color: #6a4fa0; }
+    body.lawful-mode .class-stat-bar table.rules-table:not(.split-table) td:first-child { color: #6a4fa0; }
+    body.lawful-mode .sample-card { background: rgba(0,0,0,0.05); }
+    body.lawful-mode .sample-card .sc-name { color: #6a4fa0; }
+    body.lawful-mode .tree-hint,
+    body.lawful-mode .tree-hint-arrow,
+    body.lawful-mode .card-reminder { color: #555; }
+    .rules-section p.sample-card-caption { font-size: 0.7rem; font-style: italic; opacity: 0.65; margin: 0.6rem 0 0.2rem; text-align: left; max-width: none; }
+    .sample-card-badge { width: 350px; margin: 0.4rem auto 0; text-align: center; font-size: 0.68rem; opacity: 0.85; }
+    .sample-card { width: 350px; height: 490px; box-sizing: border-box; margin: 1rem auto; position: relative; border-radius: 10px; background: rgba(0,0,0,0.18); padding: 0.55rem 0.6rem 0.5rem; font-size: 0.6rem; line-height: 1.28; display: flex; flex-direction: column; }
+    .sample-card .sc-name { flex-shrink: 0; font-weight: bold; color: rgba(190,165,255,0.95); font-size: 0.74rem; display: block; margin-bottom: 0.3rem; text-align: center; }
+    .sample-card .sc-art-window { flex-shrink: 0; width: 100%; height: 34%; border: 3px double rgba(255,255,255,0.4); border-radius: 4px; background: rgba(255,255,255,0.03); margin-bottom: 0.75rem; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.4rem; }
+    .sample-card .sc-art-window-text { font-size: 0.52rem; font-style: italic; opacity: 0.2; line-height: 1.3; }
+    .sample-card .sc-body { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .sample-card .sc-body .sc-line { display: block; }
+    .sample-card .sc-body .sc-ref { display: block; opacity: 0.6; font-size: 0.52rem; }
+    .sample-card .sc-body .sc-ref-note { display: block; margin-top: auto; padding-top: 0.3rem; opacity: 0.5; font-size: 0.48rem; font-style: italic; }
+    .sample-card .sc-body .sc-desc { display: block; margin-top: 0.4rem; font-style: italic; opacity: 0.85; }
+    .sample-card::before {
+      content: "\2726";
+      position: absolute;
+      top: -0.6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #121212;
+      padding: 0 0.4rem;
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+    .sample-card.tier-card { max-width: none; min-width: 0; border: 3px double rgba(158,158,158,0.85); box-shadow: 0 0 8px rgba(158,158,158,0.3), inset 0 0 12px rgba(158,158,158,0.08); }
+    .sample-card.tier-card::before { color: rgba(158,158,158,0.9); }
+    .sample-card.tier-card .sc-art-window { border-color: rgba(158,158,158,0.55); }
+    .sample-card.path-card { border: 3px double rgba(33,150,243,0.85); box-shadow: 0 0 10px rgba(33,150,243,0.35), inset 0 0 12px rgba(33,150,243,0.08); }
+    .sample-card.path-card::before { color: rgba(33,150,243,0.9); }
+    .sample-card.path-card .sc-art-window { border-color: rgba(33,150,243,0.55); }
+    .sample-card.branch-card { border: 3px double rgba(197,160,66,0.85); box-shadow: 0 0 14px rgba(197,160,66,0.45), inset 0 0 12px rgba(197,160,66,0.1); }
+    .sample-card.branch-card::before { color: rgba(197,160,66,0.9); }
+    .sample-card.branch-card .sc-art-window { border-color: rgba(197,160,66,0.55); }
+    body.lawful-mode .sample-card::before { background: #f5f5f0; }
+
+    body.lawful-mode .rules-section h2 { border-color: rgba(100,60,0,0.2); }
+    body.lawful-mode .rules-table th { background: rgba(185,170,0,0.15); color: #2c2c2c; }
+    body.lawful-mode .rules-table td { border-color: rgba(0,0,0,0.08); }
+    body.lawful-mode .callout { background: rgba(185,170,0,0.1); border-color: rgba(180,140,20,0.5); }
+    body.lawful-mode .race-card, body.lawful-mode .class-card, body.lawful-mode .def-block { background: rgba(200,180,120,0.08); border-color: rgba(0,0,0,0.12); }
+  </style>
+  <style>
+    /* This page is the single Barbarian class-card, standing alone.
+       Nothing here should diverge from what ships on
+       content/essentia_core/rules_ref_003.html - if the two drift, this
+       file is wrong, not the source of truth. */
+    body { background: #14101c; color: #eee; }
+    main { max-width: 900px; }
+    .template-note { max-width: 900px; margin: 2rem auto 0; padding: 0.9rem 1.1rem; background: rgba(120,80,200,0.1); border-left: 3px solid rgba(160,100,220,0.6); font-size: 0.85rem; line-height: 1.6; opacity: 0.85; }
+  </style>
+</head>
+<body class="lawful-mode">
+    <ul class="page-nav">
+      <li><a href="index.html">&#8962;</a></li>
+      <li><span class="page-nav-current" aria-current="page">pg. 1</span></li>
+    </ul>
+  <main>
+    <div class="rules-section">
+      <h2 style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Barbarian - Class Tree</h2>
+      <div class="class-grid" style="grid-template-columns: 1fr;">
+<div class="class-card">
+            <h4 id="barbarian">Barbarian <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Playable in Starter Set)</span></h4>            <p>Fierce and relentless hunters who draw power from primal instinct and raw physical dominance, Barbarians trade refinement for devastation, excelling in brutal melee combat across every environment from frozen mountain peaks to untamed wild plains, where rage is a resource and restraint is a weakness.</p>
+            <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
+            </div>
+            <p>&Dagger; Abilities from their respective trees are summarized below. Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</p>
+            <div class="class-stat-bar">
+              <em>Note: Main Class baseline stats, Armament requirements and thresholds, and other Class features change depending on the Classes Tier, Path or Branch as noted in each respective Sub-Class.</em><br><br>
+              <hr class="thin-hr">
+              <strong class="align-tag">Alignment:</strong> Alignments range from Lawful, Moral, Ambivalent, Amoral and Evil, and are Path and Branch Dependent.<br><br>
+              <em>To use the Abilities of this Path or Branch, you must fall within the Alignment's Spectrum. To devote to the Path's Higher Power you must fall exactly at that Alignment (see Alignment, Basic Rules pg. 2).</em><br><br>
+              <strong>Higher Power:</strong> Path Dependent (see Path below)<br><br>
+              Barbarian's Paths individually restrict by alignment from LVL 4 on, see each Path above for its specific Alignment.<br><br>
+              To learn a Path's Abilities, or any of its three Branches', your own alignment need only sit inside this Class's Spectrum.<br><br>
+              To draw a Path's Higher Power bonus you must hold that Path's exact base Alignment, and that same base is what its three Branches require.<br><br>
+              <strong>Favored Races:</strong><br>Bugbear +5, Hawkbear +5, Ogre&dagger; +5, Dwarf (Common)&dagger; +5, Human&dagger; +5, Halfling&dagger; +5, Troll (Bridge) +5, Troll (Mountain) +5, Snow Dwarf +5, Neanderthal (Glaciera) +5, Skrath +5, Dwarf (Ash) +5, Sylvan +5, Drevane +5, Leshy +5<br><br>
+              &dagger;Ogre, Dwarf, Human, and Halfling Playable with Starter Set.<br><br>
+              <strong>Averse Races:</strong> Elf (Common) -5, Halfling -5<br><br>
+              Refer to Races for details on favored and averse paths and branches.<br><br><hr class="thin-hr">
+              <strong>Passive Abilities:</strong><br>
+              <em>These passive Abilities belong to the Main Class alone, granted once and active regardless of Tier, Path, or Branch; they are not re-granted, replaced, or duplicated at any Path or Branch.</em><br><br>
+              Blood Frenzy, lasts 6 hours (must be recast every 6 hours to stay active). No mana cost for Main Class Abilities.<br><br>
+              Barbzerker, Once Per Day the Barbarian roars when reaches half of their Life they get an extra attack per turn.<br><br>
+              When a barbarian reaches 0 Life, they instantly get life equal to their Constitution Trait SCR, and get 3 attacks at that turn.<br><br>
+              Extra 1d6 + LVL damage on Critical Hits.<br>
+              Once per encounter, Barbarians can<br><br>
+              Flourish a 2h Melee weapon that lowers their target's PROTS at a number equal to their Athletics SCR.<br><br>
+              Barbarians get +5 feet their base movement speed, once per encounter.<br><br>
+              Barbarians get +4 plus their STR SCR on Intimidation checks.<br><br>
+                            <hr class="thin-hr">
+              <strong>Barbarian Paths and Branches</strong><br>
+              <span style="font-size:0.85em;"><em>Each Path and Branch has full descriptions in their Ability section.</em></span><br>
+              i. <em>Cimmerian</em> - A versatile Barbarian who adapts weapon and stance to the fight at hand, as comfortable dual-wielding as bearing a single blade.<br>
+              &nbsp;&nbsp;<em>Alignment: Ambivalent</em><br>
+              &nbsp;&nbsp;<em>Observance: None. Ambivalent Paths answer to no god and no patron at all.</em><br>
+              &nbsp;&nbsp;<em>No Higher Power, so no exact alignment is required at this Path or at any of its three Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Ghost</em> - A stealth-focused Cimmerian who strikes from hiding and vanishes before the counter.<br>
+              &nbsp;&nbsp;b. <em>Nomad</em> - A mounted raider who strikes fast and rides on.<br>
+              &nbsp;&nbsp;c. <em>Woodwose</em> - A wild-born survivalist who needs neither shelter nor armor to endure.<br>
+              ii. <em>Destroyer</em> - A brute-force Barbarian who commits fully to a single devastating two-handed weapon, trading defense for maximum damage.<br>
+              &nbsp;&nbsp;<em>Alignment: Amoral</em><br>
+              &nbsp;&nbsp;<em>Observance: Bargain and price. Devotion is a contract kept, whatever it was for.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Moral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Amoral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Bloodrager</em> - A dual-wielding berserker who trades caution for reckless momentum.<br>
+              &nbsp;&nbsp;b. <em>Frenzied</em> - An armor-shedding berserker who trades protection entirely for speed and fury.<br>
+              &nbsp;&nbsp;c. <em>Mauler</em> - A heavy-weapon specialist who crushes armor and bone alike.<br>
+              iii. <em>Mountaineer</em> - A ranged-focused Barbarian who fights from a distance with spear or bow, mastering trap-craft and rugged terrain.<br>
+              &nbsp;&nbsp;<em>Alignment: Moral</em><br>
+              &nbsp;&nbsp;<em>Observance: Service and care. Devotion is spent on other people rather than performed.</em><br>
+              &nbsp;&nbsp;<em>Will not share a Character with: Evil and Amoral.</em><br>
+              &nbsp;&nbsp;<em>The Higher Power bonus requires holding Moral exactly, and that same base carries through all three of its Branches below.</em><br>
+              &nbsp;&nbsp;a. <em>Amazon</em> - A spear-and-bow specialist skilled in trap-craft and wilderness survival.<br>
+              &nbsp;&nbsp;b. <em>Beast Master</em> - A Barbarian bonded to a Companion, fighting as one with a beast ally.<br>
+              &nbsp;&nbsp;c. <em>Predator</em> - A pursuit specialist who runs prey to ground before it knows it's being hunted.<br>
+<hr class="thin-hr">
+              <strong>Favorite Talent and Profession Trees</strong><br>
+              Talent Trees: Olympiad<br>
+              Professions: Field Medic, Hunter, Bounty Hunter, Scout<br><br>
+              No Cost to open Talent Tree. 5% rate increase on Profession tiers. See Talent and Profession Bonuses: Races vs. Classes for how these bonuses work.<br><br>
+              Features such as; Companion Pairing, buffs, and various Armaments and Accessories and their Modifiers and Enhancements modify base stats, refer to Basic Rules for more.
+            </div>
+            
+              <details class="tree-details">
+                <summary>Barbarian Tier Armaments<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+              <span class="tier-armaments-plain"><strong>Armor Threshold (Tier):</strong> Medium Grade. Armor heavier than Medium will incur an Armament Penalty (-5 per Grade of difference) when performing Tier Abilities, though heavier armor can still be worn (see Armament Penalties, pg. 4).<br><br><strong>Weapon Proficiency (Tier):</strong> Variant: Telluric, TAW, or Chthonic. Type: Tactical. Hand: 2h. Distance: Melee. Style: Chop or Blunt. Forbidden: Magic Type. Each Path refines these specifications further; see each Path below for its baseline, and each Branch for any exceptions it states.</span>
+              <p style="margin:0.4rem 0;"><a href="javascript:void(0)" onclick="this.closest('details').open=false;" style="font-size:0.78rem;">&#9662; Collapse Armament</a></p>
+                            </details>
+            <div class="class-stat-bar">
+              <hr class="thin-hr">
+              <span style="font-size:1.05rem; font-weight:normal; color: #be0500; line-height:1.25;">Barbarian Main Class Abilities</span><br>
+              <em>Each tree below runs LVL 1 through 30, Tier (1-3), Path (4-20), Branch (21-30). Each LVL offers 3 choices, learn only ONE. See Ability Cards individually for details, see card examples on this page. See Slots and Prerequisites, above, for how a later choice can require an earlier one.</em><br>
+              <em>Armaments reminder: Medium Grade armor or lighter; Weapon Style: Slashing or Blunt, 2h, Melee, base loadout (e.g., greataxe, greatsword, warhammer, or maul), see each Path below for how this widens past LVL 5. Weapon Type: Tactical for Martial, Magic for Spell (Spell is chants, war cries, and spirit-rites, not incantations). Wearing a heavier Grade brings a -5 Armament Penalty per Grade of difference. <br><span style="color: #be0500;">Note:</span> See each Classes respective Ability Card for full details; Ability Cards are released with Module and their expansions, supporting various Character Levels, and list the DIFS for any check an Ability requires. Refer pg. 6 for more on Ability Cards.</em><br>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Tier Abilities (Barbarian)<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 1 Barbarian Tier Ability &dagger;<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span><br>&dagger; For Paths see LVL 3 Tier Abilities Below</summary>
+                  <table class="rules-table split-table single-col tier-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(🗡️ DPS) <strong class="ability-name">Reckless Swing</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A wild swing thrown with a frenzy that cares nothing for its own guard, extra Damage for reduced Defense this turn... refer to Ability Card.</li><li>(🛡️ Tank) <strong class="ability-name">Iron Skin</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A hide toughened by sun and open ground, temporary Toughness bonus when Life drops low... refer to Ability Card.</li><li>(🌗 Hybrid) <strong class="ability-name">War Cry</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A cry carried on open wind meant to be heard for miles, fear on nearby enemies once per encounter... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 1.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 2 Barbarian Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col tier-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Horselord's Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A mounted-style closing charge, extra Damage the farther the ground covered... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Sun-Hardened Hide</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A temporary Toughness bonus while unarmored or lightly armored... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Warcarved Roar</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch&dagger;| Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A raised war cry carved from old defiance, granting nearby allies a brief Hit bonus too... refer to Ability Card.<br>&dagger; Hybrids, in this case Buffs, require a reagent as stated on the Ability Card, and/or contact via the caster's hand or a totem with the target.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 2.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 3 Barbarian Tier Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col tier-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-a" id="gate-barbarian-tac-a">(Slot A) <strong class="ability-name">Spear Rush</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A mounted-style closing charge (no spear required) that adds bonus Damage equal to distance covered... refer to Ability Card.<br><span class="prereq-note">↳ Unlocks <a href="#unlock-barbarian-destroyer-tac-a">Encircling Cleave (LVL 4)</a></span></span></li><li>(Slot B) <strong class="ability-name">Shield Wall Stance</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A temporary PROTS bonus while standing beside an ally... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Drumbeat Advance</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch&dagger;| Style: Slashing or Blunt | Hand: 2h | Discipline: Ferocity<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A rhythmic war-drum cadence that boosts nearby allies' movement speed briefly... refer to Ability Card.<br>&dagger; Hybrids, in this case Buffs, require a reagent as stated on the Ability Card, and/or contact via the caster's hand or a totem with the target.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                </details>
+              <strong>Barbarian Paths &dagger;</strong><br>
+              &dagger; For Branches, refer to LVL 20 of each Path<br>
+                            <div class="path-entry"><span class="path-header">i. <em>Cimmerian</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Ambivalent<br>
+              <strong>Higher Power:</strong> TBA (Ambivalent)<br>
+              <em>A versatile Barbarian who adapts weapon and stance to the fight at hand, as comfortable dual-wielding as bearing a single blade. (LVL 4-20)</em><br>
+              <em>(see Cimmerian Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Cimmerian Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Cimmerian)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Slashing or Blunt, 1h or 2h, Melee at Levels 4-5; starting LVL 6, each choice may require a different Weapon Style or Hand (see Ability Cards). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Cimmerian):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium (Rawhide).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Cimmerian Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Ghost (Light Grade (Shadowhide) armor for stealth; favors 1h weapons) (LVL 21-30)<br>
+                <em>A stealth-focused Cimmerian who strikes from hiding and vanishes before the counter.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Ghost Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Ghost Branch chosen at LVL 21 - see Ghost above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Ghost Branch chosen at LVL 21 - see Ghost above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Nomad (Light Grade (Saddle Leather) armor and mobile weapons suited to mounted combat) (LVL 21-30)<br>
+                <em>A mounted raider who strikes fast and rides on.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Nomad Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Nomad Branch chosen at LVL 21 - see Nomad above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Nomad Branch chosen at LVL 21 - see Nomad above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Woodwose (lives wild with no fixed shelter, surviving on instinct, defensive awareness, and trapping; unarmed or natural weapons, no armor) (LVL 21-30)<br>
+                <em>A wild-born survivalist who needs neither shelter nor armor to endure.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Woodwose Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Woodwose Branch chosen at LVL 21 - see Woodwose above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Woodwose Branch chosen at LVL 21 - see Woodwose above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Cimmerian Abilities (Barbarian Tier)<br><em>(Weapon Style: Slashing or Blunt, 1h or 2h, Melee, agile 1h option viable at Levels 4-5, e.g., hand-axe, short-sword, or war-club; starting LVL 6, each choice may require a different Weapon Style or Hand, noted individually below)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Barbarian - Cimmerian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Primal Leap</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A pouncing charge covered like ground closed at a gallop, bonus Damage on the landing strike... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Beast Instinct</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A wild-country awareness honed on harsher ground than most ever cross, +1 Defense and Perception in natural terrain... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Warband Fury</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 2 Stamina<br>Uses: Unlimited</span>+1 Strength and Agility while fighting in open ground, the old warband's fury still answering the call... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Barbarian - Cimmerian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Warband Vault</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A short forced-movement charge that ends in a bonus-Damage strike... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Horse Sense</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 3 Stamina<br>Uses: 3/Round</span>+1 Defense (mounted awareness) while mounted or within a turn of dismounting... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sand-Runner's Leap</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A short forced-movement charge with no Fatigue cost, endurance that crosses open desert on foot... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Barbarian - Cimmerian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Forest's Silence</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A closing step that moves like the wood itself forgot to name it, closing distance before the target reacts... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Silent Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A cut thrown before the target even reacts... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Forest's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held with the wood itself forgetting to name it... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Barbarian - Cimmerian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Wound's Map</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A wound read like a map, following the first cut to wherever it leads next... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Wound's Edge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A cut thrown following the map a wound already reads... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Wound's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while a wound is read like a map... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Barbarian - Cimmerian Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Blood Trail</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Cimmerians follow a blood-trail to its end, marking prey that has no hope of losing them... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Blood Trail Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Cimmerians strike prey with no hope of losing them... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Blood Trail Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Shiftblade<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Cimmerians guard while following a blood-trail to its end... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Barbarian - Cimmerian Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Ghost (Light Grade (Shadowhide) armor for stealth; favors 1h weapons) (LVL 21-30)<br>
+                <em>A stealth-focused Cimmerian who strikes from hiding and vanishes before the counter.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Ghost Abilities (Cimmerian Path)<br><em>(Light Grade (Shadowhide) armor for stealth; favors 1h weapons)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Ghost Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Nomad (Light Grade (Saddle Leather) armor and mobile weapons suited to mounted combat) (LVL 21-30)<br>
+                <em>A mounted raider who strikes fast and rides on.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Nomad Abilities (Cimmerian Path)<br><em>(Light Grade (Saddle Leather) armor and mobile weapons suited to mounted combat)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Nomad Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Woodwose (lives wild with no fixed shelter, surviving on instinct, defensive awareness, and trapping; unarmed or natural weapons, no armor) (LVL 21-30)<br>
+                <em>A wild-born survivalist who needs neither shelter nor armor to endure.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Woodwose Abilities (Cimmerian Path)<br><em>(lives wild with no fixed shelter, surviving on instinct, defensive awareness, and trapping; unarmed or natural weapons, no armor)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Woodwose Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">ii. <em>Destroyer</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Amoral<br>
+              <strong>Higher Power:</strong> TBA (Amoral)<br>
+              <em>A brute-force Barbarian who commits fully to a single devastating two-handed weapon, trading defense for maximum damage. (LVL 4-20)</em><br>
+              <em>(see Destroyer Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Destroyer Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Destroyer)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Slashing or Blunt, 2h, Melee at Levels 4-5; starting LVL 6, each choice may require a different Weapon Style or Hand (see Ability Cards). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Destroyer):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium (Boiled Leather).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Destroyer Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Bloodrager (unlocks dual-wielded 1h weapons for reckless offense) (LVL 21-30)<br>
+                <em>A dual-wielding berserker who trades caution for reckless momentum.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Bloodrager Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Bloodrager Branch chosen at LVL 21 - see Bloodrager above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Bloodrager Branch chosen at LVL 21 - see Bloodrager above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Frenzied (no armor for maximum frenzy speed; 2h weapon only) (LVL 21-30)<br>
+                <em>An armor-shedding berserker who trades protection entirely for speed and fury.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Frenzied Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Frenzied Branch chosen at LVL 21 - see Frenzied above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Frenzied Branch chosen at LVL 21 - see Frenzied above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Mauler (unlocks heavier 2h weapons like mauls and greatclubs) (LVL 21-30)<br>
+                <em>A heavy-weapon specialist who crushes armor and bone alike.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Mauler Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Mauler Branch chosen at LVL 21 - see Mauler above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Mauler Branch chosen at LVL 21 - see Mauler above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Destroyer Abilities (Barbarian Tier)<br><em>(Weapon Style: Slashing or Blunt, 2h, Melee at Levels 4-5, e.g., greataxe, greatsword, or maul; starting LVL 6, each choice may require a different Weapon Style or Hand, noted individually below)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Barbarian - Destroyer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li><span class="slot-a" id="unlock-barbarian-destroyer-tac-a">(Slot A) <strong class="ability-name">Encircling Cleave</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The closing charge swings wider and harder, catching two adjacent targets in a single berserk arc... refer to Ability Card.<br><span class="prereq-note">↰ Requires <a href="#gate-barbarian-tac-a">Spear Rush (LVL 3)</a></span></span></li><li>(Slot B) <strong class="ability-name">Sandstorm Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Kicks up a cloud of sand for one turn, +1 Defense (Evade) and brief concealment from ranged attacks... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hardened Raider</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A will forged raiding the open ground, resists one Fear or Panic Engine effect and grants a brief Hit bonus after... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Barbarian - Destroyer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Onset Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A 2h weapon attack thrown like a mounted raider closing at full gallop, also lowers the target's movement speed... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Unbroken Ranks</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 3 Stamina<br>Uses: 3/Round</span>Disciplined formation, +1 PROTS while adjacent to an ally... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Desert-Worn</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 3 Stamina<br>Uses: 3/Round</span>Resists one Fatigue-based penalty for the rest of the encounter... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Barbarian - Destroyer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Avalanche Blow</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A single blow struck with an avalanche's weight, letting the first hit decide how the fight goes... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Avalanche Follow-Through</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A second blow struck on the same avalanche weight, bonus Damage if the first already landed... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Avalanche Stance</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A stance braced with an avalanche's own weight, +1 Defense while it holds... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Barbarian - Destroyer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Chosen Kill</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A kill picked out of a crowd, marking whoever the Destroyer has decided won't be walking away... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Chosen Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A strike thrown at whoever's already marked, bonus Damage... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Chosen Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while marking whoever won't be walking away... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Barbarian - Destroyer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Marked Kill</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Destroyers run down whoever they've marked for the kill, closing a fight with pure, relentless force... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Marked Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Destroyers strike whoever's already marked with pure, relentless force... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Marked Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 2h | Discipline: Onslaught<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Destroyers guard while running down whoever they've marked for the kill... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Barbarian - Destroyer Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Bloodrager (unlocks dual-wielded 1h weapons for reckless offense) (LVL 21-30)<br>
+                <em>A dual-wielding berserker who trades caution for reckless momentum.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Bloodrager Abilities (Destroyer Path)<br><em>(unlocks dual-wielded 1h weapons for reckless offense)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Bloodrager Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Frenzied (no armor for maximum frenzy speed; 2h weapon only) (LVL 21-30)<br>
+                <em>An armor-shedding berserker who trades protection entirely for speed and fury.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Frenzied Abilities (Destroyer Path)<br><em>(no armor for maximum frenzy speed; 2h weapon only)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Frenzied Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Mauler (unlocks heavier 2h weapons like mauls and greatclubs) (LVL 21-30)<br>
+                <em>A heavy-weapon specialist who crushes armor and bone alike.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Mauler Abilities (Destroyer Path)<br><em>(unlocks heavier 2h weapons like mauls and greatclubs)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Mauler Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>              <div class="path-entry"><span class="path-header">iii. <em>Mountaineer</em> (Penalties and Bonuses TBA)</span><br>
+              <strong>Alignment:</strong> Moral<br>
+              <strong>Higher Power:</strong> TBA (Moral)<br>
+              <em>A ranged-focused Barbarian who fights from a distance with spear or bow, mastering trap-craft and rugged terrain. (LVL 4-20)</em><br>
+              <em>(see Mountaineer Path and Branch Abilities Below)</em><br>
+              <details class="tree-details">
+                <summary>Mountaineer Path<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency (Culture, Mountaineer)</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Weapon Style: Slashing or Blunt, 1h or 2h, Melee at Levels 4-5; starting LVL 6, widens to Throw and Range, each choice may require a different Weapon Style, Hand, or Range (see Ability Cards). Weapon Type: Tactical for Martial, Magic for Spell. +8 to Hit when wielded (Weapon/Hand Proficiency).<br><br>
+                <strong>Weapons Forbidden (Culture, Mountaineer):</strong><br>
+                &#9670;None; this Culture bars no Weapon Type outright, though the profile above still governs what performs its Abilities.<br>
+                <strong>Armor Thresholds</strong><br>
+                Armor Grade: caps at Medium (Furhide Mantle).<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              <strong>Mountaineer Branches</strong><br>
+              <div class="branch-list">
+                &#9670; Amazon (unlocks spears or bows alongside the Barbarian default; masters of trap-craft and biome survival) (LVL 21-30)<br>
+                <em>A spear-and-bow specialist skilled in trap-craft and wilderness survival.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Amazon Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Amazon Branch chosen at LVL 21 - see Amazon above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Amazon Branch chosen at LVL 21 - see Amazon above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Beast Master (any Barbarian default weapon; built around Companion synergy) (LVL 21-30)<br>
+                <em>A Barbarian bonded to a Companion, fighting as one with a beast ally.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Beast Master Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Beast Master Branch chosen at LVL 21 - see Beast Master above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Beast Master Branch chosen at LVL 21 - see Beast Master above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              &#9670; Predator (Light Grade (Stalker's Hide) armor for pursuit; favors 1h weapons) (LVL 21-30)<br>
+                <em>A pursuit specialist who runs prey to ground before it knows it's being hunted.</em><br>
+                <details class="tree-details web-starter">
+                <summary>Predator Branch<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Armaments</span></summary>
+                <strong>Weapon Proficiency</strong> <em>(Abilities require one of the weapons below to be readied; Basic ATTKs do not)</em><br>
+                Set by the Predator Branch chosen at LVL 21 - see Predator above for its specific Weapon Style and Type.<br><br>
+                <em>This Path's Culture carries through to whichever Branch is chosen at LVL 21; see that Branch for any exceptions it states to the armaments below.</em><br>
+                <strong>Armor Thresholds</strong><br>
+                Set by the Predator Branch chosen at LVL 21 - see Predator above for its specific Armor Grade.<br>
+                See Weapon/Hand Proficiency, Armor Thresholds, and Special Armaments above.<br>
+                </details>
+              </div></div>
+              <details class="tree-details">
+                <summary><span class="card-reminder">For full versions see each Ability's Card, per module.</span><br>Path: Mountaineer Abilities (Barbarian Tier)<br><em>(Weapon Style: Slashing or Blunt, 1h or 2h, Melee, suited to rugged terrain at Levels 4-5, e.g., hatchet, war-club, or short-sword; starting LVL 6, Mountaineer widens to Throw (e.g., spear, javelin, sling) and Range (e.g., short recurve bow), each choice noted individually below)</em><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Paths</span></summary>
+                <details class="tree-details">
+                  <summary>LVL 4 Barbarian - Mountaineer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Companion Bond</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>A bond built the way herders raise a beast to trust them before all others, bonus Damage alongside a Companion... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Tundra Step</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>Immune to difficult-terrain penalties in snow or ice, resists cold damage... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Sure Footing</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 2 Stamina<br>Uses: Unlimited</span>The patient, silent footing of something that has stalked worse ground than this, immune to difficult-terrain movement penalties... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 4.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 5 Barbarian - Mountaineer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Highland Cairn</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>The high ground taken and held like stones stacked by hands long gone, bonus Damage on elevated or rocky terrain... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Terrace Stride</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>Footing kept sure on ground carved into steps by generations before, immune to difficult terrain, +1 Defense on elevated ground... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Reindeer Kinship</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strengthened combat bonus alongside a Companion in cold terrain, doubled if that Companion is cold-adapted... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 5.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 6 Barbarian - Mountaineer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Peakhound Charge</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A charge that hunts like the mountain itself is hunting alongside, closing in from ground no one else could cross... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Peakhound Strike</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A strike thrown from ground no one else could cross... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Peakhound Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 3 Stamina<br>Uses: 3/Round</span>A guard held on ground no one else could cross... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 6.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 7 Barbarian - Mountaineer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Chase Brand</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A brand seared mid-chase, marking a trail that only ends when the Mountaineer has run it down... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Chase Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A cut thrown along a trail that only ends when run down... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Chase Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>A guard held while a brand is seared mid-chase... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 7.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details">
+                  <summary>LVL 8 Barbarian - Mountaineer Path Ability<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table split-table single-col path-table">
+                    <thead><tr><th>Martial Abilities</th></tr></thead>
+                    <tbody>
+                      <tr><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Hunter's Brand</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Mountaineers brand their prey mid-hunt, tracking a mark that only ends when the quarry falls... refer to Ability Card.</li><li>(Slot B) <strong class="ability-name">Hunter's Cut</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Mountaineers strike whoever's already branded mid-hunt... refer to Ability Card.</li><li>(Slot C) <strong class="ability-name">Hunter's Guard</strong><br><strong>ATTK</strong><span class="stat-line">Range: Touch | Style: Slashing or Blunt | Hand: 1h or 2h | Discipline: Trapcraft<br>Cost: 4 Stamina<br>Uses: 3/Round</span>Mountaineers guard while branding their prey mid-hunt... refer to Ability Card.</li></ul></td></tr>
+                    </tbody>
+                  </table>
+                  <p style="margin:0.3rem 0; font-size:0.78rem; opacity:0.7;">&dagger;See Ability Cards for LVL 8.5 midpoint Abilities.</p>
+                </details>
+                <details class="tree-details web-starter">
+                  <summary>LVL 9-20 Barbarian - Mountaineer Path Abilities<br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Select to Expand Abilities</span></summary>
+                  <table class="rules-table path-table">
+                    <tbody>
+                      <tr class="web-starter"><td>LVL 9-20 (Path)</td><td>Content TBA. The same 3-Slot choice pattern as the Path Levels above continues this Path's progression through LVL 20, before its three Branches open at LVL 21.</td></tr>
+                    </tbody>
+                  </table>
+                </details>
+                                
+                              &#9670; Amazon (unlocks spears or bows alongside the Barbarian default; masters of trap-craft and biome survival) (LVL 21-30)<br>
+                <em>A spear-and-bow specialist skilled in trap-craft and wilderness survival.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Amazon Abilities (Mountaineer Path)<br><em>(unlocks spears or bows alongside the Barbarian default; masters of trap-craft and biome survival)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td><ul class="choice-list"><li>(Slot A) <strong class="ability-name">Snare Craft</strong><br>Rigs whatever the terrain offers into a trap on the spot, a swing-log, spike pit, or snake den sprung the instant an enemy...</li><li>(Slot B) <strong class="ability-name">Wilds-Born</strong><br>Shrugs off any biome's worst, mountain, desert, jungle, swamp, or forest, and its weather alike, even turning a quake, avalanche, or storm to their...</li><li>(Slot C) Snare Orb (Orbital) - a hovering construct woven from raw magic that primes a different trap each turn it holds, springing fire, poison, or crushing force on whatever draws too...</li></ul> Same 3-choice pattern as the Path Levels above, content continues through LVL 30 in the GM's full class reference.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Beast Master (any Barbarian default weapon; built around Companion synergy) (LVL 21-30)<br>
+                <em>A Barbarian bonded to a Companion, fighting as one with a beast ally.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Beast Master Abilities (Mountaineer Path)<br><em>(any Barbarian default weapon; built around Companion synergy)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Beast Master Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>              &#9670; Predator (Light Grade (Stalker's Hide) armor for pursuit; favors 1h weapons) (LVL 21-30)<br>
+                <em>A pursuit specialist who runs prey to ground before it knows it's being hunted.</em><br>
+              <details class="tree-details branch-details">
+    <summary>Branch: Predator Abilities (Mountaineer Path)<br><em>(Light Grade (Stalker's Hide) armor for pursuit; favors 1h weapons)</em><br><br><span class="tree-hint"><span class="tree-hint-arrow">&#9656;</span> Expand Ability Tree Branches</span></summary>
+                <table class="rules-table split-table single-col branch-table lvl-col">
+                  <thead><tr><th>LVL</th><th>Martial Abilities</th></tr></thead>
+                  <tbody>
+                    <tr class="web-starter"><td>LVL 21-30 (Branch)</td><td>Same 3-choice pattern as the Path Levels above, content TBA. The Predator Branch continues this Path's progression exclusively through LVL 30.</td></tr>
+                  </tbody>
+                </table>
+  </details>
+</details>
+            </details></div>
+          </div>
+      </div>
+      <p style="margin-top: 3rem; text-align: center; font-size: 0.9rem; opacity: 0.7;">
+        <a href="class-tree-nav.html">View all class trees</a>
+      </p>
+    </div>
+  </main>
+  </div>
+</main>
+</div>
+</body>
+</html>
+
+  </main>
+</main>
+</body>
+</html>
+</html>
