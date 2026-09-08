@@ -372,6 +372,8 @@ class SORCNavigation {
 
     // Navigate to section index if data-href is present
     const href = button.getAttribute('data-href');
+    console.log('toggleSection called:', { section, href, pathname: window.location.pathname });
+    alert(`Section: ${section}\nHref: ${href}\nPath: ${window.location.pathname}`);
     if (href) {
       window.location.href = href;
     }
