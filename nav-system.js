@@ -81,7 +81,10 @@ class SORCNavigation {
           <div class="sorc-nav-right">
             <!-- Search Bar -->
             <div class="sorc-nav-search-container">
-              <span class="sorc-nav-search-icon">🔍</span>
+              <svg class="sorc-nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
               <input type="text" class="sorc-nav-search-input" placeholder="Delve" aria-label="Search">
             </div>
 
