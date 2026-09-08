@@ -77,8 +77,14 @@ class SORCNavigation {
             &#8962;
           </a>
 
-          <!-- Right Side Controls (Hamburger) -->
+          <!-- Right Side Controls (Search, Hamburger) -->
           <div class="sorc-nav-right">
+            <!-- Search Bar -->
+            <div class="sorc-nav-search-container">
+              <span class="sorc-nav-search-icon">🔍</span>
+              <input type="text" class="sorc-nav-search-input" placeholder="Delve" aria-label="Search">
+            </div>
+
             <!-- Hamburger Menu (Far Right) -->
             <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
               <span class="hamburger">
