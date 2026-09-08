@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     profileBtn.onclick = function(e) {
       e.stopPropagation();
-      window.location.href = '/space.html';
+      window.location.href = '/content/features/space.html';
     };
   };
 
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
     e.stopPropagation();
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
-    window.location.href = (saved && saved.authKey) ? '/space.html' : '/signin.html';
+    window.location.href = (saved && saved.authKey) ? '/content/features/space.html' : '/signin.html';
   });
 
   headerControls.appendChild(profileBtn);
@@ -360,16 +360,16 @@ function showRoleBadge(user) {
     : '';
 
   var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
-  var lobbiesHref = hasAssessed ? '/lobbies.html' : '/assess.html';
+  var lobbiesHref = hasAssessed ? '/content/features/lobbies.html' : '/content/reference/assess.html';
 
   existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;color:' + linkColor + ' !important;background:transparent !important;">' + abbr + '</span>' +
-    ' · <a href="/space.html" style="color:' + linkColor + ';text-decoration:underline;">Space</a>' +
+    ' · <a href="/content/features/space.html" style="color:' + linkColor + ';text-decoration:underline;">Space</a>' +
     ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
-    ' · <a id="badgeInboxLink" href="/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
-    ' · <a id="badgeFellowshipsLink" href="/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
-    ' · <a href="/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
-    ' · <a href="/content.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
+    ' · <a id="badgeInboxLink" href="/content/features/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
+    ' · <a id="badgeFellowshipsLink" href="/content/features/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
+    ' · <a href="/content/features/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
+    ' · <a href="/content/content-index.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
     ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Logout</strong></button>';
 
