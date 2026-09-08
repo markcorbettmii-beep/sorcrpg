@@ -1,7 +1,8 @@
 /**
- * SORC Navigation System
+ * SORC Navigation System v2
  * D&D Beyond-style hamburger menu, badge, and floating avatar
  * Works on all pages with proper theme support (lawful/dark)
+ * Theme sync: lawful (light) default
  */
 
 // Chapter hierarchy for the rules navigation
@@ -77,17 +78,25 @@ class SORCNavigation {
             &#8962;
           </a>
 
-          <!-- Right Side Controls (Search, Hamburger) -->
-          <div class="sorc-nav-right">
-            <!-- Search Bar -->
-            <div class="sorc-nav-search-container">
-              <svg class="sorc-nav-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-              <input type="text" class="sorc-nav-search-input" placeholder="Delve" aria-label="Search">
-            </div>
+          <!-- Search Bar -->
+          <div class="sorc-nav-search-container">
+            <svg class="sorc-nav-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input type="text" class="sorc-nav-search-input" placeholder="Delve" aria-label="Search">
+          </div>
 
+          <!-- Centered Logo -->
+          ${window.location.pathname.endsWith('index.html') || window.location.pathname === '/' ? '' : `
+            <div class="sorc-nav-logo-center">
+              <img src="${pathToRoot}images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-nav-logo-img lawful-only" />
+              <img src="${pathToRoot}images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-nav-logo-img evil-only" />
+            </div>
+          `}
+
+          <!-- Right Side Controls (Hamburger) -->
+          <div class="sorc-nav-right">
             <!-- Hamburger Menu (Far Right) -->
             <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
               <span class="hamburger">
@@ -97,14 +106,6 @@ class SORCNavigation {
               </span>
             </button>
           </div>
-
-          <!-- Navigation Logo (centered, not on index.html) -->
-          ${window.location.pathname.endsWith('index.html') || window.location.pathname === '/' ? '' : `
-            <div class="sorc-nav-logo-center">
-              <img src="${pathToRoot}images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-nav-logo-img lawful-only" />
-              <img src="${pathToRoot}images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-nav-logo-img evil-only" />
-            </div>
-          `}
 
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
@@ -116,7 +117,7 @@ class SORCNavigation {
             <div class="sorc-nav-content">
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play">
-                  <span class="sorc-nav-section-label">PLAY</span>
+                  <span class="sorc-nav-section-label">YOUR SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
                 <ul class="sorc-nav-section-menu" id="play-menu">
@@ -177,7 +178,7 @@ class SORCNavigation {
 
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="marketplace">
-                  <span class="sorc-nav-section-label">MARKETPLACE</span>
+                  <span class="sorc-nav-section-label">CONTENT</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
                 <ul class="sorc-nav-section-menu" id="marketplace-menu">
@@ -381,7 +382,7 @@ class SORCNavigation {
     if (!themeToggle) return;
 
     // Load saved theme preference (default: lawful mode)
-    const savedTheme = localStorage.getItem('sorc_theme') || 'lawful';
+    const savedTheme = localStorage.getItem('themeSelected') || 'lawful';
     const isLawful = savedTheme === 'lawful';
 
     // Set initial state
@@ -399,10 +400,10 @@ class SORCNavigation {
   applyTheme(isLawful) {
     if (isLawful) {
       document.body.classList.add('lawful-mode');
-      localStorage.setItem('sorc_theme', 'lawful');
+      localStorage.setItem('themeSelected', 'lawful');
     } else {
       document.body.classList.remove('lawful-mode');
-      localStorage.setItem('sorc_theme', 'evil');
+      localStorage.setItem('themeSelected', 'evil');
     }
   }
 }
