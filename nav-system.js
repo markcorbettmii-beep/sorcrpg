@@ -116,7 +116,7 @@ class SORCNavigation {
                 </button>
                 <ul class="sorc-nav-section-menu" id="play-menu">
                   <li><a href="${pathToRoot}content/features/space.html">Your Space Profile</a></li>
-                  <li><a href="${pathToRoot}content/lobbies-index.html">Lobbies</a></li>
+                  <li><a href="${pathToRoot}content/features/lobbies.html">My Lobbies</a></li>
                   <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
                   <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
                   <li><a href="${pathToRoot}content/features/trading-post.html">Trading Post</a></li>
@@ -137,7 +137,6 @@ class SORCNavigation {
                   <li><a href="${pathToRoot}content/features/leaderboard.html">Leaderboard</a></li>
                   <li><a href="${pathToRoot}content/features/fellowships.html">Fellowships</a></li>
                   <li><a href="${pathToRoot}content/features/forum.html">Forums</a></li>
-                  <li><a href="${pathToRoot}content/features/threads.html">Threads</a></li>
                 </ul>
               </div>
 
