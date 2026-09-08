@@ -266,13 +266,19 @@ class SORCNavigation {
     const path = window.location.pathname;
     const depth = (path.match(/\//g) || []).length - 1; // -1 for leading slash
 
-    // Most pages are 2 levels deep (content/subdir/page.html)
+    // Calculate relative path based on page depth:
+    // depth 0: root level (/index.html) -> no path needed
+    // depth 1: content level (/content/file.html) -> go up one level
+    // depth 2: subdirectory level (/content/subdir/file.html) -> go up two levels
+    // depth 3+: deeper levels -> go up accordingly
     if (depth >= 3) {
       return '../../../';
-    } else if (depth >= 2) {
+    } else if (depth === 2) {
       return '../../';
+    } else if (depth === 1) {
+      return '../';
     }
-    return '../';
+    return ''; // depth 0: already at root, no path needed
   }
 
   attachEventListeners() {
