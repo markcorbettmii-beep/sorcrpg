@@ -110,11 +110,12 @@ class SORCNavigation {
             <div class="sorc-nav-content">
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="play" data-href="${pathToRoot}content/lobbies-index.html">
+                <button class="sorc-nav-section-toggle" data-section="play" data-href="${pathToRoot}content/features/space.html">
                   <span class="sorc-nav-section-label">YOUR SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
                 <ul class="sorc-nav-section-menu" id="play-menu">
+                  <li><a href="${pathToRoot}content/features/space.html">Your Space Profile</a></li>
                   <li><a href="${pathToRoot}content/lobbies-index.html">Lobbies</a></li>
                   <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
                   <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
