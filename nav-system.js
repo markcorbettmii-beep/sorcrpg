@@ -87,13 +87,6 @@ class SORCNavigation {
             <input type="text" class="sorc-nav-search-input" placeholder="Delve" aria-label="Search">
           </div>
 
-          <!-- Centered Logo -->
-          ${window.location.pathname.endsWith('index.html') || window.location.pathname === '/' ? '' : `
-            <div class="sorc-nav-logo-center">
-              <img src="${pathToRoot}images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-nav-logo-img lawful-only" />
-              <img src="${pathToRoot}images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-nav-logo-img evil-only" />
-            </div>
-          `}
 
           <!-- Right Side Controls (Hamburger) -->
           <div class="sorc-nav-right">
