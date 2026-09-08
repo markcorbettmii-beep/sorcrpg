@@ -108,6 +108,21 @@ class SORCNavigation {
             </div>
 
             <div class="sorc-nav-content">
+              <!-- YOUR SPACE - First Section -->
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="play">
+                  <span class="sorc-nav-section-label">YOUR SPACE</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <ul class="sorc-nav-section-menu" id="play-menu">
+                  <li><a href="${pathToRoot}content/lobbies-index.html">Lobbies</a></li>
+                  <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
+                  <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
+                  <li><a href="${pathToRoot}content/features/trading-post.html">Trading Post</a></li>
+                </ul>
+              </div>
+
+              <!-- Alphabetical Sections Below -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="announcements">
                   <span class="sorc-nav-section-label">ANNOUNCEMENTS</span>
@@ -115,16 +130,6 @@ class SORCNavigation {
                 </button>
                 <ul class="sorc-nav-section-menu" id="announcements-menu">
                   <li><a href="${pathToRoot}content/announcements-index.html">Announcements</a></li>
-                </ul>
-              </div>
-
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="character">
-                  <span class="sorc-nav-section-label">CHARACTER</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="character-menu">
-                  <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
                 </ul>
               </div>
 
@@ -207,18 +212,6 @@ class SORCNavigation {
                       </details>
                     </li>
                   `).join('')}
-                </ul>
-              </div>
-
-              <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="play">
-                  <span class="sorc-nav-section-label">YOUR SPACE</span>
-                  <span class="sorc-nav-section-icon">›</span>
-                </button>
-                <ul class="sorc-nav-section-menu" id="play-menu">
-                  <li><a href="${pathToRoot}content/lobbies-index.html">Lobbies</a></li>
-                  <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
-                  <li><a href="${pathToRoot}content/features/trading-post.html">Trading Post</a></li>
                 </ul>
               </div>
             </div>
