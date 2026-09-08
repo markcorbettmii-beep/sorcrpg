@@ -92,7 +92,7 @@ class SORCNavigation {
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
             <div class="sorc-nav-header">
-              <a href="${pathToRoot}index.html" class="sorc-nav-logo">SORC</a>
+              <a href="${pathToRoot}index.html" class="sorc-nav-logo">SORC Web</a>
               <button class="sorc-nav-close" aria-label="Close menu">✕</button>
             </div>
 
