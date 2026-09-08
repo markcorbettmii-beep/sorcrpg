@@ -77,14 +77,6 @@ class SORCNavigation {
             &#8962;
           </a>
 
-          <!-- Theme Toggle (Lawful/Evil Mode) - Center -->
-          <div class="sorc-theme-toggle-wrapper">
-            <button class="sorc-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
-              <span class="sorc-theme-label lawful">LAWFUL</span>
-              <span class="sorc-theme-label evil">EVIL</span>
-            </button>
-          </div>
-
           <!-- Hamburger Menu (Far Right) -->
           <button class="sorc-nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
             <span class="hamburger">
@@ -205,6 +197,16 @@ class SORCNavigation {
                 <div class="sorc-avatar-tier">Basic Member</div>
               </div>
             </div>
+            <div class="sorc-avatar-menu-divider"></div>
+
+            <!-- Theme Toggle Inside Avatar Menu -->
+            <div class="sorc-avatar-theme-toggle-wrapper">
+              <button class="sorc-avatar-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
+                <span class="sorc-theme-label lawful">LAWFUL</span>
+                <span class="sorc-theme-label evil">EVIL</span>
+              </button>
+            </div>
+
             <div class="sorc-avatar-menu-divider"></div>
             <ul class="sorc-avatar-menu-list">
               <li><a href="${pathToRoot}content/features/characters-home.html">My Characters</a></li>
@@ -355,7 +357,7 @@ class SORCNavigation {
   }
 
   initThemeToggle() {
-    const themeToggle = document.querySelector('.sorc-theme-toggle');
+    const themeToggle = document.querySelector('.sorc-avatar-theme-toggle');
     if (!themeToggle) return;
 
     // Load saved theme preference (default: lawful mode)
