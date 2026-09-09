@@ -263,10 +263,8 @@ class SORCNavigation {
                 <p class="sorc-nav-section-description">Tomes of Essentia, Character Sheets, Journal and other downloadable books and tools.</p>
                 <ul class="sorc-nav-section-menu" id="library-menu">
                   <li><a href="${pathToRoot}content/library-index.html">Library</a></li>
-                  <li><a href="${pathToRoot}library.html">Legacy Library</a></li>
+                  <li><a href="${pathToRoot}library.html">Legacy Library</a><span class="sorc-nav-item-description">Retire your PC as an NPC, Legend, or Hermit.</span></li>
                   <li><a href="${pathToRoot}content/tomes/heroes-hermits.html">Tomes</a></li>
-                  <li><a href="${pathToRoot}content/reference/talents.html">Talents</a></li>
-                  <li><a href="${pathToRoot}content/classes/main-class-tree-avenger.html">Classes</a></li>
                 </ul>
               </div>
 
