@@ -139,7 +139,7 @@ class SORCNavigation {
             </div>
 
             <a class="sorc-sidebar-profile-card" href="${pathToRoot}content/auth/signin.html">
-              <span class="sorc-sidebar-profile-avatar">S</span>
+              <span class="sorc-sidebar-profile-avatar sorc-visitor-avatar">Wanderer</span>
               <span class="sorc-sidebar-profile-copy">
                 <strong class="sorc-sidebar-profile-name">Sign in</strong>
                 <small class="sorc-sidebar-profile-role">Guest</small>
@@ -296,7 +296,7 @@ class SORCNavigation {
         </div>
 
         <a class="sorc-floating-profile-link" href="${pathToRoot}content/auth/signin.html" aria-label="Sign in">
-          <span class="sorc-floating-profile-avatar">S</span>
+          <span class="sorc-floating-profile-avatar sorc-visitor-avatar">Wanderer</span>
         </a>
 
       </div>
@@ -350,11 +350,12 @@ class SORCNavigation {
       const tier = isSignedIn ? this.getMembershipLabel(user) : 'Guest';
       membershipTier.textContent = tier.replace(/\s+Member$/i, '');
       membershipBadge.classList.toggle('guest', !isSignedIn);
+      membershipBadge.hidden = !isSignedIn;
       if (membershipIcon) membershipIcon.hidden = !isSignedIn;
     }
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
-      : 'S';
+      : 'Wanderer';
     avatar.textContent = initial;
     if (floatingAvatar) floatingAvatar.textContent = initial;
     if (isSignedIn && user.avatar) {
