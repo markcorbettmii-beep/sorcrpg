@@ -336,12 +336,12 @@ class SORCNavigation {
 
     card.href = isSignedIn
       ? '/content/features/space.html'
-      : '/content/auth/signin.html';
+      : '/content/auth/wanderer.html';
     if (floatingLink) {
       floatingLink.href = card.href;
       floatingLink.setAttribute(
         'aria-label',
-        isSignedIn ? `Open ${displayName}'s Space` : 'Sign in'
+        isSignedIn ? `Open ${displayName}'s Space` : 'Wanderer welcome page'
       );
     }
     name.textContent = displayName;
