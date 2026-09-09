@@ -126,6 +126,13 @@ class SORCNavigation {
               <button class="sorc-nav-close" aria-label="Close menu">✕</button>
             </div>
 
+            <div class="sorc-avatar-theme-toggle-wrapper sorc-sidebar-theme-toggle">
+              <button class="sorc-avatar-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
+                <span class="sorc-theme-label lawful">LAWFUL</span>
+                <span class="sorc-theme-label evil">EVIL</span>
+              </button>
+            </div>
+
             <div class="sorc-nav-content">
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
@@ -252,15 +259,6 @@ class SORCNavigation {
             </div>
             <div class="sorc-avatar-menu-divider"></div>
 
-            <!-- Theme Toggle Inside Avatar Menu -->
-            <div class="sorc-avatar-theme-toggle-wrapper">
-              <button class="sorc-avatar-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
-                <span class="sorc-theme-label lawful">LAWFUL</span>
-                <span class="sorc-theme-label evil">EVIL</span>
-              </button>
-            </div>
-
-            <div class="sorc-avatar-menu-divider"></div>
             <ul class="sorc-avatar-menu-list">
               <li><a href="${pathToRoot}content/features/space.html">Your Space</a></li>
               <li><a href="${pathToRoot}content/features/characters-home.html">My Characters</a></li>
