@@ -289,6 +289,8 @@ class SORCNavigation {
                 <p class="sorc-nav-section-description">Learn the rules that guide characters, items, and play.</p>
                 <ul class="sorc-nav-section-menu" id="rules-menu">
                   <li><a href="${pathToRoot}content/essentia_core/rules-index.html">Rules Index</a></li>
+                  <li><a href="${pathToRoot}content/essentia_core/rules_in-the-box.html#in-the-box">In the Box · Sheets &amp; Booklets</a></li>
+                  <li><a href="${pathToRoot}content/essentia_core/rules_sorc-cards.html#sorc-cards">SORC Cards · Tracking &amp; Recharge</a></li>
                   ${RULES_CHAPTERS.map((ch, idx) => `
                     <li class="sorc-nav-chapter">
                       <details class="sorc-nav-details">
@@ -312,6 +314,7 @@ class SORCNavigation {
                 <p class="sorc-nav-section-description">Enter tactical challenges and prove yourself in combat.</p>
                 <ul class="sorc-nav-section-menu" id="trials-of-combat-menu">
                   <li><a href="${pathToRoot}content/trials-of-combat-index.html">Trials of Combat Index</a></li>
+                  <li><a href="${pathToRoot}content/trials-of-combat.html#war">War · Myriad Scale</a></li>
                 </ul>
               </div>
 
