@@ -511,10 +511,24 @@ class SORCNavigation {
 
   toggleSection(section, button) {
     const menu = document.getElementById(`${section}-menu`);
-    if (menu) {
-      const isExpanded = menu.classList.toggle('expanded');
-      button.classList.toggle('expanded', isExpanded);
-      button.setAttribute('aria-expanded', String(isExpanded));
+    if (!menu) return;
+
+    const isExpanded = menu.classList.contains('expanded');
+    document.querySelectorAll('.sorc-nav-section-menu.expanded').forEach((openMenu) => {
+      openMenu.classList.remove('expanded');
+      const openButton = document.querySelector(
+        `.sorc-nav-section-toggle[aria-controls="${openMenu.id}"]`
+      );
+      if (openButton) {
+        openButton.classList.remove('expanded');
+        openButton.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    if (!isExpanded) {
+      menu.classList.add('expanded');
+      button.classList.add('expanded');
+      button.setAttribute('aria-expanded', 'true');
     }
   }
 
