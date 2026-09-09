@@ -1,4 +1,37 @@
 // ========== THEME SYSTEM ==========
+(function() {
+  var protectedPaths = {
+    '/lobbies.html': true,
+    '/library.html': true,
+    '/content/features/achievements.html': true,
+    '/content/features/ai-chat.html': true,
+    '/content/features/armor-system.html': true,
+    '/content/features/call-to-arms.html': true,
+    '/content/features/characters-home.html': true,
+    '/content/features/collection.html': true,
+    '/content/features/exchange.html': true,
+    '/content/features/fellowships.html': true,
+    '/content/features/forum.html': true,
+    '/content/features/inbox.html': true,
+    '/content/features/leaderboard.html': true,
+    '/content/features/lobbies.html': true,
+    '/content/features/room.html': true,
+    '/content/features/sorc-store.html': true,
+    '/content/features/space.html': true,
+    '/content/features/threads.html': true,
+    '/content/features/trading-post.html': true,
+    '/content/features/trials-of-combat.html': true,
+    '/content/features/vault.html': true
+  };
+  var currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (!protectedPaths[currentPath]) return;
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem('sorc_user') || 'null'); } catch (e) {}
+  if (!saved || !saved.authKey) {
+    window.location.replace('/content/auth/wanderer.html');
+  }
+})();
+
 if (typeof sorcSyncHtmlBg !== 'function') {
   var sorcSyncHtmlBg = function(isLawful) {
     document.documentElement.style.background = isLawful ? '#f5f5f0' : '#0a0a0a';

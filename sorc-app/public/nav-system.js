@@ -52,6 +52,30 @@ const RULES_CHAPTERS = [
   }
 ];
 
+const SORC_AUTH_REQUIRED_PATHS = new Set([
+  '/lobbies.html',
+  '/library.html',
+  '/content/features/achievements.html',
+  '/content/features/ai-chat.html',
+  '/content/features/armor-system.html',
+  '/content/features/call-to-arms.html',
+  '/content/features/characters-home.html',
+  '/content/features/collection.html',
+  '/content/features/exchange.html',
+  '/content/features/fellowships.html',
+  '/content/features/forum.html',
+  '/content/features/inbox.html',
+  '/content/features/leaderboard.html',
+  '/content/features/lobbies.html',
+  '/content/features/room.html',
+  '/content/features/sorc-store.html',
+  '/content/features/space.html',
+  '/content/features/threads.html',
+  '/content/features/trading-post.html',
+  '/content/features/trials-of-combat.html',
+  '/content/features/vault.html'
+]);
+
 class SORCNavigation {
   constructor() {
     this.isMenuOpen = false;
@@ -60,6 +84,7 @@ class SORCNavigation {
 
   init() {
     if (document.getElementById('sorc-nav-wrapper')) return;
+    if (this.redirectUnauthenticatedVisitor()) return;
 
     const savedTheme = localStorage.getItem('themeSelected') || 'lawful';
     document.body.classList.toggle('lawful-mode', savedTheme === 'lawful');
@@ -71,6 +96,22 @@ class SORCNavigation {
     this.loadUserProfile();
     this.refreshAuthenticatedUser();
     this.initThemeToggle();
+  }
+
+  redirectUnauthenticatedVisitor() {
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    if (!SORC_AUTH_REQUIRED_PATHS.has(currentPath)) return false;
+
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('sorc_user') || 'null');
+    } catch (error) {
+      user = null;
+    }
+    if (user && user.authKey) return false;
+
+    window.location.replace('/content/auth/wanderer.html');
+    return true;
   }
 
   injectNavigationHTML() {
