@@ -701,7 +701,7 @@
             if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
             else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
 
-            var isPro = user.pro_member === true || user.pro_member === 1;
+            var isPro = user.is_pro === true || user.is_pro === 1 || user.membership === 'pro';
 
             // Fetch fresh data
             try {
@@ -712,7 +712,7 @@
                     var freshData = await freshRes.json();
                     if (freshData.user) {
                         user = Object.assign(user, freshData.user);
-                        isPro = user.pro_member === true || user.pro_member === 1;
+                        isPro = user.is_pro === true || user.is_pro === 1 || user.membership === 'pro';
                         localStorage.setItem('sorc_user', JSON.stringify(user));
                     }
                 }

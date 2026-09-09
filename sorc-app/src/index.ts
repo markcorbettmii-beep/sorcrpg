@@ -163,12 +163,17 @@ const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Missing auth key' }, 401);
   const user = await c.env.sorc_db.prepare(
-    `SELECT * FROM users WHERE auth_key = ?
-     AND (banned IS NULL OR banned = 0)
-     AND (suspended_until IS NULL OR suspended_until < datetime('now'))
-     AND (auth_key_expires_at IS NULL OR auth_key_expires_at > datetime('now'))`
+    `SELECT * FROM users WHERE auth_key = ?`
   ).bind(authKey).first() as any;
-  if (!user) return c.json({ error: 'Invalid auth key' }, 401);
+  if (!user || user.banned === 1 || user.banned === true) {
+    return c.json({ error: 'Invalid auth key' }, 401);
+  }
+  if (user.suspended_until && new Date(user.suspended_until).getTime() > Date.now()) {
+    return c.json({ error: 'Account suspended' }, 403);
+  }
+  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at).getTime() <= Date.now()) {
+    return c.json({ error: 'Session expired', expired: true }, 401);
+  }
   c.set('user', user);
   await next();
 };
@@ -360,6 +365,7 @@ app.post('/api/auth/signin', async (c) => {
   const authKey = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
   await c.env.sorc_db.prepare('UPDATE users SET auth_key = ?, auth_key_expires_at = ? WHERE id = ?').bind(authKey, expiresAt, user.id).run();
+  const isPro = await isProMember(c.env.sorc_db, user);
   return c.json({
     success: true,
     user: {
@@ -368,6 +374,9 @@ app.post('/api/auth/signin', async (c) => {
       username: user.username,
       display_name: user.display_name,
       role: user.role,
+      sorc_role: user.sorc_role || null,
+      membership: isPro ? 'pro' : 'basic',
+      is_pro: isPro,
       community_points: user.community_points,
       created_at: user.created_at,
       avatar: user.avatar,
@@ -474,11 +483,29 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
 app.get('/api/me', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   try {
-    const fullUser = await c.env.sorc_db.prepare(`SELECT * FROM users WHERE id = ?`).bind(user.id).first() as any;
+    const fullUser = await c.env.sorc_db.prepare('SELECT * FROM users WHERE id = ?').bind(user.id).first() as any;
     if (!fullUser) return c.json({ error: 'User not found' }, 404);
-    delete fullUser.password_hash;
-    delete fullUser.auth_key;
-    return c.json({ user: fullUser });
+    const safeFields = [
+      'id', 'email', 'username', 'display_name', 'first_name', 'surname', 'prefix', 'suffix',
+      'bio', 'avatar', 'website', 'social_twitter', 'social_instagram', 'social_twitch', 'signature',
+      'birthday', 'role', 'sorc_role', 'community_points', 'post_count', 'titles', 'join_date',
+      'last_seen', 'user_id', 'unlocked_fellowships', 'unlocked_basic', 'unlocked_surname',
+      'unlocked_prefix_suffix', 'unlocked_pro', 'privacy_email', 'privacy_birthday',
+      'privacy_bio', 'privacy_social', 'email_verified', 'unlocked_features', 'admin_invited',
+      'gm_invited', 'needs_reassess', 'assessment_rewarded', 'created_at', 'updated_at'
+    ];
+    const safeUser: Record<string, any> = {};
+    for (const field of safeFields) {
+      if (field in fullUser) safeUser[field] = fullUser[field];
+    }
+    const isPro = await isProMember(c.env.sorc_db, user);
+    return c.json({
+      user: {
+        ...safeUser,
+        membership: isPro ? 'pro' : 'basic',
+        is_pro: isPro
+      }
+    });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
   }
@@ -493,6 +520,9 @@ app.get('/api/profile/:userId', async (c) => {
     if (user.privacy_email !== 0 && user.privacy_email !== false) {
       delete user.email;
     }
+    const isPro = await isProMember(c.env.sorc_db, user);
+    user.membership = isPro ? 'pro' : 'basic';
+    user.is_pro = isPro;
     return c.json({ user });
   } catch (error: any) {
     return c.json({ error: 'Failed to load profile', details: error.message }, 500);
@@ -942,11 +972,13 @@ const adminMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');
   if (!authKey) return c.json({ error: 'Unauthorized' }, 401);
   const user = await c.env.sorc_db.prepare(
-    `SELECT * FROM users WHERE auth_key = ? AND (banned IS NULL OR banned = 0)
-     AND (suspended_until IS NULL OR suspended_until < datetime('now'))`
+    `SELECT * FROM users WHERE auth_key = ?`
   ).bind(authKey).first() as any;
-  if (!user) return c.json({ error: 'Unauthorized' }, 401);
-  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at) < new Date()) {
+  if (!user || user.banned === 1 || user.banned === true) return c.json({ error: 'Unauthorized' }, 401);
+  if (user.suspended_until && new Date(user.suspended_until).getTime() > Date.now()) {
+    return c.json({ error: 'Account suspended' }, 403);
+  }
+  if (user.auth_key_expires_at && new Date(user.auth_key_expires_at).getTime() <= Date.now()) {
     return c.json({ error: 'Session expired', expired: true }, 401);
   }
   if (user.role !== 'ADMIN' && user.role !== 'OWNER') return c.json({ error: 'Not authorized' }, 403);

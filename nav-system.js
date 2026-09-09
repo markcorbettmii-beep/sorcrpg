@@ -69,6 +69,7 @@ class SORCNavigation {
     this.mountProfileBadge();
     setTimeout(() => this.mountProfileBadge(), 0);
     this.loadUserProfile();
+    this.refreshAuthenticatedUser();
     this.initThemeToggle();
   }
 
@@ -388,13 +389,45 @@ class SORCNavigation {
 
   getMembershipLabel(user) {
     const membership = String(user.membership || user.membership_status || '').toLowerCase();
-    const storedTier = String(localStorage.getItem('sorc_tier') || '').toLowerCase();
-    const isPro = membership === 'pro'
+    const isPro = user.is_pro === true
+      || user.is_pro === 1
+      || membership === 'pro'
       || user.pro_member === true
       || user.box_set_redeemed === true
-      || user.isPro === true
-      || storedTier.includes('pro');
+      || user.isPro === true;
     return isPro ? 'Pro' : 'Basic';
+  }
+
+  refreshAuthenticatedUser() {
+    let saved = null;
+    try {
+      saved = JSON.parse(localStorage.getItem('sorc_user') || 'null');
+    } catch (error) {
+      saved = null;
+    }
+    if (!saved || !saved.authKey) return;
+
+    fetch('https://api.sorcrpg.com/api/me', {
+      headers: { 'X-Auth-Key': saved.authKey }
+    }).then((response) => {
+      if (response.status === 401) {
+        localStorage.removeItem('sorc_user');
+        this.mountProfileBadge();
+        this.loadUserProfile();
+        return null;
+      }
+      if (!response.ok) return null;
+      return response.json();
+    }).then((data) => {
+      if (!data || !data.user) return;
+      localStorage.setItem('sorc_user', JSON.stringify({
+        ...saved,
+        ...data.user,
+        authKey: saved.authKey
+      }));
+      this.mountProfileBadge();
+      this.loadUserProfile();
+    }).catch(() => {});
   }
 
   getPathToRoot() {
