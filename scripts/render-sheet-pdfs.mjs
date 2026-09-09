@@ -13,11 +13,12 @@
 // Run: node scripts/render-sheet-pdfs.mjs [sheet.html ...]
 
 import { chromium } from 'playwright';
-import { PDFDocument, rgb } from 'pdf-lib';
+import pdfLib from 'pdf-lib';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 
+const { PDFDocument, rgb } = pdfLib;
 const CSS_W = 768;   // .page width  in css px
 const CSS_H = 1104;  // .page height in css px
 const PT = 72 / 96;  // css px -> pdf points
