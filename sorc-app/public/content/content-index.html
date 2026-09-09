@@ -6,18 +6,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="../styles.css?v=9">
   <style>
-    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
-    .section { margin-bottom: 2.5rem; }
-    .section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
-    .section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
-    .index-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-    .index-card { background: rgba(120,80,200,0.08); border: 1px solid rgba(160,140,200,0.3); border-radius: 4px; padding: 1.25rem; }
-    .index-card h3 { margin-top: 0; }
-    .index-card a { color: #0058aa; text-decoration: none; font-weight: bold; }
+    :root { --index-gold: #b9aa00; --index-blue: #1769aa; --index-ink: #24252a; --index-muted: #69717a; --index-panel: #ffffff; --index-line: rgba(30, 66, 92, 0.16); }
+    body.evil-mode { --index-gold: #d0a7ff; --index-blue: #e2c7ff; --index-ink: #f4eff8; --index-muted: #b9afc2; --index-panel: #19151e; --index-line: rgba(208, 167, 255, 0.22); }
+    main { padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 5vw, 4rem) 4rem; margin: 0 auto; max-width: 1180px; color: var(--index-ink); }
+    .index-hero { max-width: 760px; margin: 0 auto 2.5rem; text-align: center; }
+    .index-eyebrow { margin: 0 0 0.65rem; color: var(--index-gold); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; }
+    .index-hero h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.8rem); line-height: 0.98; letter-spacing: 0.04em; text-transform: uppercase; }
+    .index-hero p { max-width: 620px; margin: 1rem auto 0; color: var(--index-muted); font-size: 1rem; line-height: 1.6; }
+    .index-rule { display: flex; align-items: center; gap: 0.8rem; margin: 1.4rem auto 0; max-width: 300px; color: var(--index-gold); }
+    .index-rule::before, .index-rule::after { content: ""; height: 1px; flex: 1; background: currentColor; opacity: 0.65; }
+    .index-rule span { width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+    .index-section { margin: 0 auto; padding: clamp(1rem, 3vw, 1.5rem); background: var(--index-panel); border: 1px solid var(--index-line); border-top: 3px solid var(--index-gold); box-shadow: 0 12px 32px rgba(20, 31, 43, 0.07); }
+    .index-section-header { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .index-section-header h2 { margin: 0; color: var(--index-ink); font-size: 1.1rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .index-section-header p { margin: 0; color: var(--index-muted); font-size: 0.85rem; }
+    .index-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.7rem; }
+    .index-card { position: relative; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem; background: color-mix(in srgb, var(--index-panel) 88%, var(--index-gold)); border: 1px solid var(--index-line); border-left: 3px solid transparent; transition: transform 0.18s ease, border-color 0.18s ease; }
+    .index-card:hover { transform: translateY(-2px); border-left-color: var(--index-gold); }
+    .index-card h3 { margin: 0; color: var(--index-ink); font-size: 1rem; line-height: 1.2; }
+    .index-card p { margin: 0.7rem 0 0; color: var(--index-muted); font-size: 0.82rem; line-height: 1.4; }
+    .index-card a { color: var(--index-blue); text-decoration: none; font-weight: 800; }
     .index-card a:hover { text-decoration: underline; }
-
-    body.lawful-mode .index-card { background: rgba(0,88,170,0.08); border-color: rgba(0,88,170,0.2); }
-    body.lawful-mode .index-card h3 { color: #0058aa; }
+    .index-card .index-action { display: inline-block; margin-top: 1rem; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .index-card:not(:has(.status-note))::after { content: "OPEN"; position: absolute; top: 0.7rem; right: 0.7rem; padding: 0.2rem 0.38rem; color: var(--index-blue); border: 1px solid var(--index-line); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; }
+    @media (max-width: 620px) { .index-section-header { display: block; } .index-section-header p { margin-top: 0.4rem; } .index-card { min-height: 112px; } }
   </style>
   <link rel="stylesheet" href="../nav-system.css">
 </head>
@@ -29,25 +41,29 @@
   </div>
 
     <main>
-      <div class="section">
-        <h2 id="content-index" class="chapter">Content</h2>
-        <p>Explore the marketplace and trading systems. Buy, sell, and trade with other players in the heart of Essentia's economy.</p>
-
-        <div class="index-grid">
-        <div class="index-card">
-          <h3><a href="#">SORC Store</a></h3>
-          <p><a href="#">View Full Section →</a></p>
-        </div>
-        <div class="index-card">
-          <h3><a href="#">Essentia Exchange</a></h3>
-          <p><a href="#">View Full Section →</a></p>
-        </div>
-        <div class="index-card">
-          <h3><a href="#">Collection</a></h3>
-          <p><a href="#">View Full Section →</a></p>
-        </div>
-        </div>
+      <div class="index-hero">
+        <p class="index-eyebrow">Essentia / SORC Web</p>
+        <h1 id="content-index">Content</h1>
+        <p>Explore the systems, spaces, and experiences that make up the SORC Web.</p>
+        <div class="index-rule" aria-hidden="true"><span></span></div>
       </div>
+
+      <section class="index-section" aria-labelledby="content-sections">
+        <div class="index-section-header">
+          <h2 id="content-sections">Explore SORC Web</h2>
+          <p>Choose a destination to continue.</p>
+        </div>
+        <div class="index-grid">
+          <article class="index-card"><h3><a href="sorc-web-index.html">SORC Web</a></h3><p>Personal space, gameplay, marketplace, community, and membership.</p><a class="index-action" href="sorc-web-index.html">Open index →</a></article>
+          <article class="index-card"><h3><a href="features/sorc-store.html">SORC Store</a></h3><p>Find starter items and supplies for your adventures.</p><a class="index-action" href="features/sorc-store.html">View section →</a></article>
+          <article class="index-card"><h3><a href="features/exchange.html">Essentia Exchange</a></h3><p>Manage your in-world economic resources.</p><a class="index-action" href="features/exchange.html">View section →</a></article>
+          <article class="index-card"><h3><a href="features/collection.html">Collection</a></h3><p>Keep track of SORC Cards and special items.</p><a class="index-action" href="features/collection.html">View section →</a></article>
+          <article class="index-card"><h3><a href="library-index.html">Library</a></h3><p>Tomes, character sheets, the Journal, rules, and downloadable tools.</p><a class="index-action" href="library-index.html">Open library →</a></article>
+          <article class="index-card"><h3><a href="game-modes-index.html">Game Modes</a></h3><p>Choose how you want to play across Essentia.</p><a class="index-action" href="game-modes-index.html">View modes →</a></article>
+          <article class="index-card"><h3><a href="community-index.html">Community</a></h3><p>Connect through fellowships, forums, and rankings.</p><a class="index-action" href="community-index.html">Join community →</a></article>
+          <article class="index-card"><h3><a href="news-index.html">News &amp; Announcements</a></h3><p>Read the latest SORC updates and developments.</p><a class="index-action" href="news-index.html">Read updates →</a></article>
+        </div>
+      </section>
     </main>
 
     <ul class="page-nav">

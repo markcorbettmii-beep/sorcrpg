@@ -6,20 +6,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="../styles.css?v=9">
   <style>
-    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
-    .section { margin-bottom: 2.5rem; }
-    .section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
-    .section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
-    .index-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-    .index-card { background: rgba(120,80,200,0.08); border: 1px solid rgba(160,140,200,0.3); border-radius: 4px; padding: 1.25rem; }
-    .index-card h3 { margin-top: 0; }
-    .index-card a { color: #0058aa; text-decoration: none; font-weight: bold; }
+    :root { --library-gold: #b9aa00; --library-blue: #1769aa; --library-ink: #24252a; --library-muted: #69717a; --library-panel: #ffffff; --library-line: rgba(30, 66, 92, 0.16); }
+    body.evil-mode { --library-gold: #d0a7ff; --library-blue: #e2c7ff; --library-ink: #f4eff8; --library-muted: #b9afc2; --library-panel: #19151e; --library-line: rgba(208, 167, 255, 0.22); }
+    main { padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 5vw, 4rem) 4rem; margin: 0 auto; max-width: 1180px; color: var(--library-ink); }
+    .index-hero { max-width: 760px; margin: 0 auto 2.3rem; text-align: center; }
+    .index-eyebrow { margin: 0 0 0.65rem; color: var(--library-gold); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; }
+    .index-hero h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.8rem); line-height: 0.98; letter-spacing: 0.04em; text-transform: uppercase; }
+    .index-hero p { max-width: 650px; margin: 1rem auto 0; color: var(--library-muted); font-size: 1rem; line-height: 1.6; }
+    .index-rule { display: flex; align-items: center; gap: 0.8rem; margin: 1.4rem auto 0; max-width: 300px; color: var(--library-gold); }
+    .index-rule::before, .index-rule::after { content: ""; height: 1px; flex: 1; background: currentColor; opacity: 0.65; }
+    .index-rule span { width: 7px; height: 7px; border: 1px solid currentColor; transform: rotate(45deg); }
+    .index-jump { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 0 auto 2.4rem; }
+    .index-jump a { padding: 0.45rem 0.7rem; color: var(--library-blue); border: 1px solid var(--library-line); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-decoration: none; text-transform: uppercase; }
+    .index-jump a:hover { border-color: var(--library-gold); }
+    .section { margin-bottom: 2.5rem; padding: clamp(1rem, 3vw, 1.5rem); background: var(--library-panel); border: 1px solid var(--library-line); border-top: 3px solid var(--library-gold); box-shadow: 0 12px 32px rgba(20, 31, 43, 0.07); }
+    .section > h2 { display: none; }
+    .section > p { color: var(--library-muted); line-height: 1.6; }
+    .section > h3 { display: flex; align-items: center; gap: 0.7rem; margin: 2rem 0 0.7rem; color: var(--library-ink); font-size: 1rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .section > h3::before { content: ""; width: 18px; height: 2px; background: var(--library-gold); }
+    .index-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.7rem; margin: 0 0 1.4rem; }
+    .index-card { position: relative; min-height: 92px; display: flex; flex-direction: column; justify-content: space-between; padding: 0.9rem 1rem; background: color-mix(in srgb, var(--library-panel) 88%, var(--library-gold)); border: 1px solid var(--library-line); border-left: 3px solid transparent; transition: transform 0.18s ease, border-color 0.18s ease; }
+    .index-card:hover { transform: translateY(-2px); border-left-color: var(--library-gold); }
+    .index-card h3 { margin: 0; color: var(--library-ink); font-size: 0.94rem; line-height: 1.25; }
+    .index-card p { margin: 0.55rem 0 0; color: var(--library-muted); font-size: 0.8rem; line-height: 1.35; }
+    .index-card a { color: var(--library-blue); text-decoration: none; font-weight: 800; }
     .index-card a:hover { text-decoration: underline; }
-    .status-note { opacity: 0.7; font-size: 0.9rem; }
-    .sheet-reference { font-size: 0.9rem; opacity: 0.85; }
-
-    body.lawful-mode .index-card { background: rgba(0,88,170,0.08); border-color: rgba(0,88,170,0.2); }
-    body.lawful-mode .index-card h3 { color: #0058aa; }
+    .index-card:not(:has(.status-note))::after { content: "OPEN"; position: absolute; top: 0.65rem; right: 0.65rem; padding: 0.18rem 0.34rem; color: var(--library-blue); border: 1px solid var(--library-line); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em; }
+    .status-note { display: inline-flex; width: fit-content; margin-top: 0.55rem !important; padding: 0.18rem 0.34rem; opacity: 1; color: var(--library-muted); border: 1px solid var(--library-line); font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .sheet-reference { font-size: 0.82rem; opacity: 0.85; }
+    @media (max-width: 620px) { .index-card { min-height: 78px; } }
   </style>
   <link rel="stylesheet" href="../nav-system.css">
 </head>
@@ -30,7 +45,21 @@
     <img src="../images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-letters-img lawful-only" />
   </div>
 
-    <main>
+    <main class="library-page">
+      <div class="index-hero">
+        <p class="index-eyebrow">Essentia / Reference</p>
+        <h1>Library</h1>
+        <p>Tomes of Essentia, Character Sheets, Journal and other downloadable books and tools.</p>
+        <div class="index-rule" aria-hidden="true"><span></span></div>
+      </div>
+      <nav class="index-jump" aria-label="Library sections">
+        <a href="#resources">Resources</a>
+        <a href="#character-sheets">Character Sheets</a>
+        <a href="#rules">Rules</a>
+        <a href="#tomes">Tomes</a>
+        <a href="#manuals">Guides</a>
+        <a href="#modules">Modules</a>
+      </nav>
       <div class="section">
         <h2 id="library-index" class="chapter">Library</h2>
         <p>Essential tools, rules, books, and references for building, playing, and exploring SORC.</p>
@@ -44,21 +73,51 @@
 
         <h3 id="character-sheets">Character Sheets</h3>
         <div class="index-grid">
-          <div class="index-card"><h3>Female Muscular</h3><p><a href="../character/character-sheet-fem-musc.html">Editable Sheet</a> · <a href="../character-sheet-fem-musc.pdf">PDF</a></p></div>
-          <div class="index-card"><h3>Male Muscular</h3><p><a href="../character/character-sheet-male-musc.html">Editable Sheet</a> · <a href="../character-sheet-male-musc.pdf">PDF</a></p></div>
-          <div class="index-card"><h3>Female Thin</h3><p class="status-note">Under development</p></div>
-          <div class="index-card"><h3>Male Thin</h3><p class="status-note">Under development</p></div>
-          <div class="index-card"><h3>Female Massive</h3><p class="status-note">Under development</p></div>
-          <div class="index-card"><h3>Male Massive</h3><p class="status-note">Under development</p></div>
+          <div class="index-card">
+            <h3>Female Muscular</h3>
+            <p><a href="character/character-sheet-fem-musc.html">Editable Sheet</a> · <a href="../character-sheet-fem-musc.pdf">PDF</a></p>
+          </div>
+          <div class="index-card">
+            <h3>Male Muscular</h3>
+            <p><a href="character/character-sheet-male-musc.html">Editable Sheet</a> · <a href="../character-sheet-male-musc.pdf">PDF</a></p>
+          </div>
+          <div class="index-card">
+            <h3>Female Thin</h3>
+            <p class="status-note">Under development</p>
+          </div>
+          <div class="index-card">
+            <h3>Male Thin</h3>
+            <p class="status-note">Under development</p>
+          </div>
+          <div class="index-card">
+            <h3>Female Massive</h3>
+            <p class="status-note">Under development</p>
+          </div>
+          <div class="index-card">
+            <h3>Male Massive</h3>
+            <p class="status-note">Under development</p>
+          </div>
         </div>
-        <p class="sheet-reference">Physique reference: <a href="../character/character-customizer/creation-overview.html">Character Customizer</a>. This reference page is not the new sheet artwork.</p>
+        <p class="sheet-reference">Physique reference: <a href="character/character-customizer/creation-overview.html">Character Customizer</a>. This reference page is not the new sheet artwork.</p>
 
         <h3 id="rules">Rules &amp; Downloads</h3>
         <div class="index-grid">
-          <div class="index-card"><h3>Basic Rules</h3><p><a href="essentia_core/rules-index.html">Read online</a> · <a href="essentia_core/SORC-Basic-Rules.pdf">PDF</a></p></div>
-          <div class="index-card"><h3>Prologue</h3><p><a href="pages/prologue.html">Read the prologue</a></p></div>
-          <div class="index-card"><h3>SORC Cards</h3><p><a href="sorc-cards/sorc-cards-overview.html">Card overview</a></p></div>
-          <div class="index-card"><h3>Journal</h3><p><a href="pages/journal-tearaway.html">Journal pages</a></p></div>
+          <div class="index-card">
+            <h3>Basic Rules</h3>
+            <p><a href="essentia_core/rules-index.html">Read online</a> · <a href="essentia_core/SORC-Basic-Rules.pdf">PDF</a></p>
+          </div>
+          <div class="index-card">
+            <h3>Prologue</h3>
+            <p><a href="pages/prologue.html">Read the prologue</a></p>
+          </div>
+          <div class="index-card">
+            <h3>SORC Cards</h3>
+            <p><a href="sorc-cards/sorc-cards-overview.html">Card overview</a></p>
+          </div>
+          <div class="index-card">
+            <h3>Journal</h3>
+            <p><a href="pages/journal-tearaway.html">Journal pages</a></p>
+          </div>
         </div>
 
         <h3 id="tomes">Tomes of Essentia</h3>
