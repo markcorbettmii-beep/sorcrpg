@@ -66,6 +66,8 @@ class SORCNavigation {
     document.body.classList.toggle('evil-mode', savedTheme === 'evil');
     this.injectNavigationHTML();
     this.attachEventListeners();
+    this.mountProfileBadge();
+    setTimeout(() => this.mountProfileBadge(), 0);
     this.loadUserProfile();
     this.initThemeToggle();
   }
@@ -79,10 +81,12 @@ class SORCNavigation {
       '.header-container .sorc-letters-img, .header-container .sorc-letters, .header-container img[src*="sorc" i], [data-sorc-page-banner]'
     );
     const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
-      <a href="${pathToRoot}index.html" class="sorc-global-brand-banner" data-sorc-page-banner aria-label="SORC home">
-        <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
-        <img src="/images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
-      </a>
+      <div class="sorc-global-brand-banner" data-sorc-page-banner>
+        <a href="${pathToRoot}index.html" class="sorc-global-brand-link" aria-label="SORC home">
+          <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
+          <img src="/images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
+        </a>
+      </div>
     ` : '';
 
     const navHTML = `
@@ -239,45 +243,69 @@ class SORCNavigation {
           <span class="sorc-badge-icon">⭐</span>
         </div>
 
-        <!-- Floating Avatar Component -->
-        <div class="sorc-avatar-floating">
-          <button class="sorc-avatar-button" aria-label="Open user profile menu" aria-expanded="false">
-            <div class="sorc-avatar-circle">
-              <span class="sorc-avatar-placeholder">U</span>
-            </div>
-            <span class="sorc-avatar-dropdown">▼</span>
-          </button>
-          <div class="sorc-avatar-menu">
-            <div class="sorc-avatar-header">
-              <div class="sorc-avatar-circle-large">
-                <span class="sorc-avatar-placeholder">U</span>
-              </div>
-              <div class="sorc-avatar-info">
-                <div class="sorc-avatar-username">User</div>
-                <div class="sorc-avatar-tier">Basic Member</div>
-              </div>
-            </div>
-            <div class="sorc-avatar-menu-divider"></div>
-
-            <ul class="sorc-avatar-menu-list">
-              <li><a href="${pathToRoot}content/features/space.html">Your Space</a></li>
-              <li><a href="${pathToRoot}content/features/characters-home.html">My Characters</a></li>
-              <li><a href="${pathToRoot}content/features/achievements.html">Achievements</a></li>
-              <li><a href="${pathToRoot}content/features/vault.html">Vault</a></li>
-              <li><a href="${pathToRoot}content/auth/public-profile.html">Profile</a></li>
-              <li class="sorc-avatar-menu-divider"></li>
-              <li><a href="${pathToRoot}content/pages/new-pro.html">Upgrade to Pro</a></li>
-              <li><a href="${pathToRoot}content/pages/subscriptions.html">Subscriptions</a></li>
-              <li class="sorc-avatar-menu-divider"></li>
-              <li><a href="${pathToRoot}content/auth/signin.html">Sign Out</a></li>
-            </ul>
-          </div>
-        </div>
       </div>
     `;
 
     // Inject into body
     document.body.insertAdjacentHTML('afterbegin', navHTML);
+  }
+
+  mountProfileBadge() {
+    const host = document.querySelector(
+      '[data-sorc-page-banner], .header-container, .header-image-wrapper'
+    );
+    if (!host) return;
+    host.classList.add('sorc-profile-badge-host');
+
+    const legacyControls = document.getElementById('headerControls');
+    const fallbackControls = document.getElementById('sorc-shell-profile-controls');
+    if (legacyControls) {
+      if (fallbackControls) fallbackControls.remove();
+      legacyControls.classList.add('sorc-banner-profile-controls');
+      host.appendChild(legacyControls);
+      return;
+    }
+    if (fallbackControls) return;
+
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('sorc_user') || 'null');
+    } catch (error) {
+      user = null;
+    }
+    const isSignedIn = !!(user && user.authKey);
+    const displayName = isSignedIn
+      ? (user.username || user.display_name || user.email || 'Adventurer')
+      : 'Sign in';
+    const controls = document.createElement('div');
+    controls.id = 'sorc-shell-profile-controls';
+    controls.className = 'sorc-banner-profile-controls';
+    const button = document.createElement('button');
+    button.className = 'sorc-banner-profile-button';
+    button.type = 'button';
+    button.title = isSignedIn ? `Open ${displayName}'s Space` : 'Sign in';
+    button.setAttribute('aria-label', button.title);
+    if (isSignedIn && user.avatar) {
+      const image = document.createElement('img');
+      image.src = `/images/avatars/${user.avatar}`;
+      image.alt = '';
+      image.addEventListener('error', () => {
+        image.remove();
+        button.textContent = displayName.trim().charAt(0).toUpperCase() || 'S';
+      });
+      button.appendChild(image);
+    } else {
+      button.textContent = isSignedIn
+        ? (displayName.trim().charAt(0).toUpperCase() || 'S')
+        : 'S';
+    }
+    button.addEventListener('click', () => {
+      window.location.href = isSignedIn
+        ? '/content/features/space.html'
+        : '/content/auth/signin.html';
+    });
+    controls.appendChild(button);
+    host.appendChild(controls);
   }
 
   getPathToRoot() {

@@ -117,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function() {
     e.stopPropagation();
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
-<<<<<<< HEAD
     window.location.href = (saved && saved.authKey) ? '/content/features/space.html' : '/content/auth/signin.html';
   });
 
