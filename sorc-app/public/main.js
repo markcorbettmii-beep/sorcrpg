@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
   profileBtn.id = 'profileBtn';
   profileBtn.title = 'Space';
   profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
-  profileBtn.textContent = 'S';
+  profileBtn.textContent = 'W';
 
   window._updateProfileBtnColors = function() {
     var isLawful = document.body.classList.contains('lawful-mode');
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window._profileBtn_loggedOut = function() {
-    profileBtn.textContent = 'S';
+    profileBtn.textContent = 'W';
     profileBtn.onclick = function(e) {
       e.stopPropagation();
       window.location.href = '/content/auth/signin.html';
