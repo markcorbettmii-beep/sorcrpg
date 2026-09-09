@@ -292,7 +292,7 @@ class SORCNavigation {
                   ${RULES_CHAPTERS.map((ch, idx) => `
                     <li class="sorc-nav-chapter">
                       <details class="sorc-nav-details">
-                        <summary class="sorc-nav-chapter-title">Ch. ${idx + 1}: ${ch.name}</summary>
+                        <summary class="sorc-nav-chapter-title"><a href="${pathToRoot}content/essentia_core/${ch.file}#${ch.subsections[0]?.id || ''}">Ch. ${idx + 1}: ${ch.name}</a></summary>
                         <ul class="sorc-nav-subsections">
                           ${ch.subsections.map(sub => `
                             <li><a href="${pathToRoot}content/essentia_core/${ch.file}#${sub.id}">${sub.name}</a></li>
