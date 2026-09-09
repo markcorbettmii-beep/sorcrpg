@@ -59,6 +59,11 @@ class SORCNavigation {
   }
 
   init() {
+    if (document.getElementById('sorc-nav-wrapper')) return;
+
+    const savedTheme = localStorage.getItem('themeSelected') || 'lawful';
+    document.body.classList.toggle('lawful-mode', savedTheme === 'lawful');
+    document.body.classList.toggle('evil-mode', savedTheme === 'evil');
     this.injectNavigationHTML();
     this.attachEventListeners();
     this.loadUserProfile();
@@ -68,6 +73,17 @@ class SORCNavigation {
   injectNavigationHTML() {
     // Get the correct path to root based on current page depth
     const pathToRoot = this.getPathToRoot();
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const isHomePage = currentPath === '/' || currentPath === '/index.html';
+    const hasPageBanner = !!document.querySelector(
+      '.header-container .sorc-letters-img, .header-container .sorc-letters, .header-container img[src*="sorc" i], [data-sorc-page-banner]'
+    );
+    const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
+      <a href="${pathToRoot}index.html" class="sorc-global-brand-banner" data-sorc-page-banner aria-label="SORC home">
+        <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
+        <img src="/images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
+      </a>
+    ` : '';
 
     const navHTML = `
       <div id="sorc-nav-wrapper" class="sorc-nav-wrapper">
@@ -75,7 +91,10 @@ class SORCNavigation {
         <nav class="sorc-nav">
           <!-- Home Icon (Far Left) -->
           <a href="${pathToRoot}index.html" class="sorc-nav-home-icon" aria-label="Home">
-            &#8962;
+            <svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 10.8 12 3l9 7.8"></path>
+              <path d="M5.5 9.5V21h13V9.5"></path>
+            </svg>
           </a>
 
           <!-- Search Bar -->
@@ -205,6 +224,7 @@ class SORCNavigation {
           <!-- Navigation Overlay -->
           <div class="sorc-nav-overlay"></div>
         </nav>
+        ${brandBannerHTML}
 
         <!-- Badge Component (Membership Status) -->
         <div class="sorc-badge">
@@ -299,6 +319,38 @@ class SORCNavigation {
 
     if (overlay) {
       overlay.addEventListener('click', () => this.closeMenu());
+    }
+
+    // "Delve" searches the destinations exposed by the global navigation.
+    // Enter opens the best matching destination without sending the query
+    // to an unrelated third-party search engine.
+    const searchInput = document.querySelector('.sorc-nav-search-input');
+    if (searchInput) {
+      const destinations = Array.from(
+        document.querySelectorAll('.sorc-nav-sidebar a[href]')
+      ).map((link) => ({
+        label: (link.textContent || '').trim().toLowerCase(),
+        href: link.href,
+      })).filter((item) => item.label);
+
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          searchInput.value = '';
+          searchInput.blur();
+          return;
+        }
+        if (event.key !== 'Enter') return;
+
+        const query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+          this.openMenu();
+          return;
+        }
+        const match = destinations.find((item) => item.label === query)
+          || destinations.find((item) => item.label.startsWith(query))
+          || destinations.find((item) => item.label.includes(query));
+        if (match) window.location.href = match.href;
+      });
     }
 
     // Section toggles
@@ -431,9 +483,11 @@ class SORCNavigation {
   applyTheme(isLawful) {
     if (isLawful) {
       document.body.classList.add('lawful-mode');
+      document.body.classList.remove('evil-mode');
       localStorage.setItem('themeSelected', 'lawful');
     } else {
       document.body.classList.remove('lawful-mode');
+      document.body.classList.add('evil-mode');
       localStorage.setItem('themeSelected', 'evil');
     }
   }
