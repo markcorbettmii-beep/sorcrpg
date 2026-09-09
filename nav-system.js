@@ -289,7 +289,7 @@ class SORCNavigation {
 
         <!-- Badge Component (Membership Status) -->
         <div class="sorc-badge">
-          <span class="sorc-badge-tier">Basic</span>
+          <span class="sorc-badge-tier">Guest</span>
           <span class="sorc-badge-icon">⭐</span>
         </div>
 
@@ -327,6 +327,9 @@ class SORCNavigation {
     const signout = document.querySelector('.sorc-sidebar-signout');
     const floatingLink = document.querySelector('.sorc-floating-profile-link');
     const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
+    const membershipBadge = document.querySelector('.sorc-badge');
+    const membershipTier = document.querySelector('.sorc-badge-tier');
+    const membershipIcon = document.querySelector('.sorc-badge-icon');
     if (!card || !avatar || !name || !roleLabel) return;
 
     card.href = isSignedIn
@@ -341,6 +344,14 @@ class SORCNavigation {
     }
     name.textContent = displayName;
     roleLabel.textContent = role;
+    if (membershipBadge && membershipTier) {
+      const tier = isSignedIn
+        ? (user.membershipTier || user.membership || user.tier || localStorage.getItem('sorc_tier') || 'Basic')
+        : 'Guest';
+      membershipTier.textContent = tier.replace(/\s+Member$/i, '');
+      membershipBadge.classList.toggle('guest', !isSignedIn);
+      if (membershipIcon) membershipIcon.hidden = !isSignedIn;
+    }
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
       : 'S';
@@ -556,8 +567,19 @@ class SORCNavigation {
     const usernamEl = document.querySelector('.sorc-avatar-username');
     const tierEl = document.querySelector('.sorc-avatar-tier');
 
-    const username = localStorage.getItem('sorc_username') || 'Adventurer';
-    const tier = localStorage.getItem('sorc_tier') || 'Basic Member';
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('sorc_user') || 'null');
+    } catch (error) {
+      user = null;
+    }
+    const isSignedIn = !!(user && user.authKey);
+    const username = isSignedIn
+      ? (user.username || user.display_name || user.email || 'Adventurer')
+      : 'Guest';
+    const tier = isSignedIn
+      ? (user.membershipTier || user.membership || user.tier || localStorage.getItem('sorc_tier') || 'Basic Member')
+      : 'Guest';
 
     if (usernamEl) usernamEl.textContent = username;
     if (tierEl) tierEl.textContent = tier;
