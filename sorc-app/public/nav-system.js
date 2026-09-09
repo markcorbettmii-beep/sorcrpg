@@ -137,6 +137,15 @@ class SORCNavigation {
               </button>
             </div>
 
+            <a class="sorc-sidebar-profile-card" href="${pathToRoot}content/auth/signin.html">
+              <span class="sorc-sidebar-profile-avatar">S</span>
+              <span class="sorc-sidebar-profile-copy">
+                <strong class="sorc-sidebar-profile-name">Sign in</strong>
+                <small class="sorc-sidebar-profile-role">Guest</small>
+              </span>
+              <span class="sorc-sidebar-profile-arrow" aria-hidden="true">›</span>
+            </a>
+
             <div class="sorc-nav-content">
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
@@ -229,6 +238,14 @@ class SORCNavigation {
               <a href="${pathToRoot}content/trials-of-combat-index.html" class="sorc-nav-direct-link">
                 <span class="sorc-nav-section-label">TRIALS OF COMBAT</span>
               </a>
+
+              <a href="${pathToRoot}admin.html" class="sorc-nav-direct-link sorc-sidebar-admin-link" hidden>
+                <span class="sorc-nav-section-label">ADMIN PANEL</span>
+              </a>
+
+              <button type="button" class="sorc-nav-direct-link sorc-sidebar-signout" hidden>
+                <span class="sorc-nav-section-label">SIGN OUT</span>
+              </button>
             </div>
           </div>
 
@@ -243,6 +260,10 @@ class SORCNavigation {
           <span class="sorc-badge-icon">⭐</span>
         </div>
 
+        <a class="sorc-floating-profile-link" href="${pathToRoot}content/auth/signin.html" aria-label="Sign in">
+          <span class="sorc-floating-profile-avatar">S</span>
+        </a>
+
       </div>
     `;
 
@@ -251,21 +272,8 @@ class SORCNavigation {
   }
 
   mountProfileBadge() {
-    const host = document.querySelector(
-      '[data-sorc-page-banner], .header-container, .header-image-wrapper'
-    );
-    if (!host) return;
-    host.classList.add('sorc-profile-badge-host');
-
     const legacyControls = document.getElementById('headerControls');
-    const fallbackControls = document.getElementById('sorc-shell-profile-controls');
-    if (legacyControls) {
-      if (fallbackControls) fallbackControls.remove();
-      legacyControls.classList.add('sorc-banner-profile-controls');
-      host.appendChild(legacyControls);
-      return;
-    }
-    if (fallbackControls) return;
+    if (legacyControls) legacyControls.remove();
 
     let user = null;
     try {
@@ -277,35 +285,62 @@ class SORCNavigation {
     const displayName = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Sign in';
-    const controls = document.createElement('div');
-    controls.id = 'sorc-shell-profile-controls';
-    controls.className = 'sorc-banner-profile-controls';
-    const button = document.createElement('button');
-    button.className = 'sorc-banner-profile-button';
-    button.type = 'button';
-    button.title = isSignedIn ? `Open ${displayName}'s Space` : 'Sign in';
-    button.setAttribute('aria-label', button.title);
-    if (isSignedIn && user.avatar) {
-      const image = document.createElement('img');
-      image.src = `/images/avatars/${user.avatar}`;
-      image.alt = '';
-      image.addEventListener('error', () => {
-        image.remove();
-        button.textContent = displayName.trim().charAt(0).toUpperCase() || 'S';
-      });
-      button.appendChild(image);
-    } else {
-      button.textContent = isSignedIn
-        ? (displayName.trim().charAt(0).toUpperCase() || 'S')
-        : 'S';
+    const role = isSignedIn ? (user.role || 'CIVILIAN') : 'Guest';
+    const card = document.querySelector('.sorc-sidebar-profile-card');
+    const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
+    const name = document.querySelector('.sorc-sidebar-profile-name');
+    const roleLabel = document.querySelector('.sorc-sidebar-profile-role');
+    const adminLink = document.querySelector('.sorc-sidebar-admin-link');
+    const signout = document.querySelector('.sorc-sidebar-signout');
+    const floatingLink = document.querySelector('.sorc-floating-profile-link');
+    const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
+    if (!card || !avatar || !name || !roleLabel) return;
+
+    card.href = isSignedIn
+      ? '/content/features/space.html'
+      : '/content/auth/signin.html';
+    if (floatingLink) {
+      floatingLink.href = card.href;
+      floatingLink.setAttribute(
+        'aria-label',
+        isSignedIn ? `Open ${displayName}'s Space` : 'Sign in'
+      );
     }
-    button.addEventListener('click', () => {
-      window.location.href = isSignedIn
-        ? '/content/features/space.html'
-        : '/content/auth/signin.html';
-    });
-    controls.appendChild(button);
-    host.appendChild(controls);
+    name.textContent = displayName;
+    roleLabel.textContent = role;
+    const initial = isSignedIn
+      ? (displayName.trim().charAt(0).toUpperCase() || 'S')
+      : 'S';
+    avatar.textContent = initial;
+    if (floatingAvatar) floatingAvatar.textContent = initial;
+    if (isSignedIn && user.avatar) {
+      const makeImage = (target) => {
+        const image = document.createElement('img');
+        image.src = `/images/avatars/${user.avatar}`;
+        image.alt = '';
+        image.addEventListener('error', () => {
+          image.remove();
+          target.textContent = initial;
+        });
+        target.textContent = '';
+        target.appendChild(image);
+      };
+      makeImage(avatar);
+      if (floatingAvatar) makeImage(floatingAvatar);
+    }
+
+    const canAdmin = role === 'OWNER' || role === 'ADMIN';
+    if (adminLink) adminLink.hidden = !canAdmin;
+    if (signout) {
+      signout.hidden = !isSignedIn;
+      signout.onclick = () => {
+        if (typeof window.sorcSignOut === 'function') window.sorcSignOut();
+        else {
+          localStorage.removeItem('sorc_user');
+          window.location.reload();
+        }
+      };
+    }
   }
 
   getPathToRoot() {
