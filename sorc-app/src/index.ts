@@ -38,6 +38,7 @@ interface Env {
   sorc_db: D1Database;
   AVATARS: R2Bucket;
   FORUM_MEDIA: R2Bucket;
+  ASSETS: Fetcher;
   RESEND_API_KEY: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
@@ -64,7 +65,99 @@ app.onError((err: any, c: any) => {
   return c.json({ error: 'Server error.', details: err?.message || String(err) }, 500);
 });
 
-app.notFound((c: any) => c.json({ error: 'Not found.', path: c.req.path }, 404));
+const SHELL_EXCLUDED_PATHS = [
+  /^\/(?:content\/)?admin(?:\/|[-.])/i,
+  /^\/(?:content\/)?debug(?:\/|[-.])/i,
+  /^\/content\/archived-rules\//i,
+  /^\/content\/drafts\//i,
+  /^\/demos\//i,
+  /^\/images\/.*\.html$/i,
+];
+
+function shouldInjectVisitorShell(pathname: string): boolean {
+  return !SHELL_EXCLUDED_PATHS.some((pattern) => pattern.test(pathname));
+}
+
+function injectVisitorShell(html: string): string {
+  let output = html;
+  const shellStyles = '<link rel="stylesheet" href="/nav-system.css?v=3">';
+  const shellScript = '<script src="/nav-system.js?v=3" defer></script>';
+  const lawfulBootstrap = '<script data-sorc-theme-bootstrap>(function(){try{if((localStorage.getItem("themeSelected")||"lawful")==="lawful")document.body.classList.add("lawful-mode");}catch(e){document.body.classList.add("lawful-mode");}})();</script>';
+
+  if (/<link\b[^>]*nav-system\.css[^>]*>/i.test(output)) {
+    output = output.replace(/<link\b[^>]*nav-system\.css[^>]*>/gi, shellStyles);
+  } else if (/<\/head>/i.test(output)) {
+    output = output.replace(
+      /<\/head>/i,
+      `  ${shellStyles}\n</head>`
+    );
+  } else {
+    output = `${shellStyles}\n${output}`;
+  }
+
+  if (!/data-sorc-theme-bootstrap/i.test(output)) {
+    if (/<body\b[^>]*>/i.test(output)) {
+      output = output.replace(/<body\b[^>]*>/i, (bodyTag) => `${bodyTag}\n  ${lawfulBootstrap}`);
+    } else {
+      output = `${lawfulBootstrap}\n${output}`;
+    }
+  }
+
+  if (/<script\b[^>]*nav-system\.js[^>]*>\s*<\/script>/i.test(output)) {
+    output = output.replace(/<script\b[^>]*nav-system\.js[^>]*>\s*<\/script>/gi, shellScript);
+  } else if (/<\/body>/i.test(output)) {
+    output = output.replace(
+      /<\/body>/i,
+      `  ${shellScript}\n</body>`
+    );
+  } else {
+    output = `${output}\n${shellScript}`;
+  }
+  return output;
+}
+
+app.notFound(async (c: any) => {
+  if (c.req.path === '/api' || c.req.path.startsWith('/api/')) {
+    return c.json({ error: 'Not found.', path: c.req.path }, 404);
+  }
+
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
+    return c.json({ error: 'Not found.', path: c.req.path }, 404);
+  }
+
+  let assetResponse = await c.env.ASSETS.fetch(c.req.raw);
+  let contentType = assetResponse.headers.get('content-type') || '';
+  const acceptsHtml = (c.req.header('accept') || '').toLowerCase().includes('text/html');
+  const looksLikePage = !/\.[a-z0-9]+$/i.test(c.req.path) || /\.html?$/i.test(c.req.path);
+
+  if (assetResponse.status === 404 && (acceptsHtml || looksLikePage)) {
+    const notFoundUrl = new URL('/404.html', c.req.url);
+    const notFoundAsset = await c.env.ASSETS.fetch(new Request(notFoundUrl.toString()));
+    if (notFoundAsset.ok) {
+      assetResponse = new Response(notFoundAsset.body, {
+        status: 404,
+        headers: notFoundAsset.headers,
+      });
+      contentType = assetResponse.headers.get('content-type') || '';
+    }
+  }
+
+  if (
+    !contentType.toLowerCase().includes('text/html') ||
+    !shouldInjectVisitorShell(c.req.path)
+  ) {
+    return assetResponse;
+  }
+
+  const html = await assetResponse.text();
+  const headers = new Headers(assetResponse.headers);
+  headers.delete('content-length');
+  return new Response(injectVisitorShell(html), {
+    status: assetResponse.status,
+    statusText: assetResponse.statusText,
+    headers,
+  });
+});
 
 const authMiddleware = async (c: any, next: any) => {
   const authKey = c.req.header('X-Auth-Key');

@@ -59,8 +59,15 @@ class SORCNavigation {
   }
 
   init() {
+    if (document.getElementById('sorc-nav-wrapper')) return;
+
+    const savedTheme = localStorage.getItem('themeSelected') || 'lawful';
+    document.body.classList.toggle('lawful-mode', savedTheme === 'lawful');
+    document.body.classList.toggle('evil-mode', savedTheme === 'evil');
     this.injectNavigationHTML();
     this.attachEventListeners();
+    this.mountProfileBadge();
+    setTimeout(() => this.mountProfileBadge(), 0);
     this.loadUserProfile();
     this.initThemeToggle();
   }
@@ -68,6 +75,19 @@ class SORCNavigation {
   injectNavigationHTML() {
     // Get the correct path to root based on current page depth
     const pathToRoot = this.getPathToRoot();
+    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+    const isHomePage = currentPath === '/' || currentPath === '/index.html';
+    const hasPageBanner = !!document.querySelector(
+      '.header-container .sorc-letters-img, .header-container .sorc-letters, .header-container img[src*="sorc" i], [data-sorc-page-banner]'
+    );
+    const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
+      <div class="sorc-global-brand-banner" data-sorc-page-banner>
+        <a href="${pathToRoot}index.html" class="sorc-global-brand-link" aria-label="SORC home">
+          <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
+          <img src="/images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
+        </a>
+      </div>
+    ` : '';
 
     const navHTML = `
       <div id="sorc-nav-wrapper" class="sorc-nav-wrapper">
@@ -75,7 +95,10 @@ class SORCNavigation {
         <nav class="sorc-nav">
           <!-- Home Icon (Far Left) -->
           <a href="${pathToRoot}index.html" class="sorc-nav-home-icon" aria-label="Home">
-            &#8962;
+            <svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 10.8 12 3l9 7.8"></path>
+              <path d="M5.5 9.5V21h13V9.5"></path>
+            </svg>
           </a>
 
           <!-- Search Bar -->
@@ -103,17 +126,34 @@ class SORCNavigation {
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
             <div class="sorc-nav-header">
-              <a href="${pathToRoot}index.html" class="sorc-nav-logo">SORC Web</a>
+              <a href="${pathToRoot}index.html" class="sorc-nav-logo">Into Essentia</a>
               <button class="sorc-nav-close" aria-label="Close menu">✕</button>
             </div>
+
+            <div class="sorc-avatar-theme-toggle-wrapper sorc-sidebar-theme-toggle">
+              <button class="sorc-avatar-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
+                <span class="sorc-theme-label lawful">LAWFUL</span>
+                <span class="sorc-theme-label evil">EVIL</span>
+              </button>
+            </div>
+
+            <a class="sorc-sidebar-profile-card" href="${pathToRoot}content/auth/signin.html">
+              <span class="sorc-sidebar-profile-avatar">S</span>
+              <span class="sorc-sidebar-profile-copy">
+                <strong class="sorc-sidebar-profile-name">Sign in</strong>
+                <small class="sorc-sidebar-profile-role">Guest</small>
+              </span>
+              <span class="sorc-sidebar-profile-arrow" aria-hidden="true">›</span>
+            </a>
 
             <div class="sorc-nav-content">
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="play" data-href="${pathToRoot}content/features/space.html">
+                <button class="sorc-nav-section-toggle" data-section="play" aria-expanded="false" aria-controls="play-menu">
                   <span class="sorc-nav-section-label">YOUR SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
+                <p class="sorc-nav-section-description">Manage your character, lobbies, room, and personal progression.</p>
                 <ul class="sorc-nav-section-menu" id="play-menu">
                   <li><a href="${pathToRoot}content/features/space.html">Your Space Profile</a></li>
                   <li><a href="${pathToRoot}lobbies.html">My Lobbies</a></li>
@@ -123,16 +163,23 @@ class SORCNavigation {
                 </ul>
               </div>
 
-              <!-- Direct Links (No Arrows) -->
-              <a href="${pathToRoot}content/announcements-index.html" class="sorc-nav-direct-link">
-                <span class="sorc-nav-section-label">ANNOUNCEMENTS</span>
-              </a>
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="announcements" aria-expanded="false" aria-controls="announcements-menu">
+                  <span class="sorc-nav-section-label">ANNOUNCEMENTS</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <p class="sorc-nav-section-description">Catch up on official SORC updates and notices.</p>
+                <ul class="sorc-nav-section-menu" id="announcements-menu">
+                  <li><a href="${pathToRoot}content/announcements-index.html">Announcements Index</a></li>
+                </ul>
+              </div>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="community" data-href="${pathToRoot}content/community-index.html">
+                <button class="sorc-nav-section-toggle" data-section="community" aria-expanded="false" aria-controls="community-menu">
                   <span class="sorc-nav-section-label">COMMUNITY</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
+                <p class="sorc-nav-section-description">Connect with players through rankings, fellowships, and forums.</p>
                 <ul class="sorc-nav-section-menu" id="community-menu">
                   <li><a href="${pathToRoot}content/features/leaderboard.html">Leaderboard</a></li>
                   <li><a href="${pathToRoot}content/features/fellowships.html">Fellowships</a></li>
@@ -141,26 +188,36 @@ class SORCNavigation {
               </div>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="content" data-href="${pathToRoot}content/content-index.html">
+                <button class="sorc-nav-section-toggle" data-section="content" aria-expanded="false" aria-controls="content-menu">
                   <span class="sorc-nav-section-label">CONTENT</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
+                <p class="sorc-nav-section-description">Explore the SORC Web features, services, and experiences.</p>
                 <ul class="sorc-nav-section-menu" id="content-menu">
+                  <li><a href="${pathToRoot}content/sorc-web-index.html">SORC Web</a></li>
                   <li><a href="${pathToRoot}content/features/sorc-store.html">SORC Store</a></li>
                   <li><a href="${pathToRoot}content/features/exchange.html">Essentia Exchange</a></li>
                   <li><a href="${pathToRoot}content/features/collection.html">Collection</a></li>
                 </ul>
               </div>
 
-              <a href="${pathToRoot}content/game-modes-index.html" class="sorc-nav-direct-link">
-                <span class="sorc-nav-section-label">GAME MODES</span>
-              </a>
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="game-modes" aria-expanded="false" aria-controls="game-modes-menu">
+                  <span class="sorc-nav-section-label">GAME MODES</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <p class="sorc-nav-section-description">Choose how you want to play, from adventures to combat.</p>
+                <ul class="sorc-nav-section-menu" id="game-modes-menu">
+                  <li><a href="${pathToRoot}content/game-modes-index.html">Game Modes Index</a></li>
+                </ul>
+              </div>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="library" data-href="${pathToRoot}content/library-index.html">
+                <button class="sorc-nav-section-toggle" data-section="library" aria-expanded="false" aria-controls="library-menu">
                   <span class="sorc-nav-section-label">LIBRARY</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
+                <p class="sorc-nav-section-description">Tomes of Essentia, Character Sheets, Journal and other downloadable books and tools.</p>
                 <ul class="sorc-nav-section-menu" id="library-menu">
                   <li><a href="${pathToRoot}content/library-index.html">Library</a></li>
                   <li><a href="${pathToRoot}library.html">Legacy Library</a></li>
@@ -170,15 +227,23 @@ class SORCNavigation {
                 </ul>
               </div>
 
-              <a href="${pathToRoot}content/news-index.html" class="sorc-nav-direct-link">
-                <span class="sorc-nav-section-label">NEWS</span>
-              </a>
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="news" aria-expanded="false" aria-controls="news-menu">
+                  <span class="sorc-nav-section-label">NEWS</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <p class="sorc-nav-section-description">Read the latest stories, releases, and developments from Essentia.</p>
+                <ul class="sorc-nav-section-menu" id="news-menu">
+                  <li><a href="${pathToRoot}content/news-index.html">News Index</a></li>
+                </ul>
+              </div>
 
               <div class="sorc-nav-section">
-                <button class="sorc-nav-section-toggle" data-section="rules" data-href="${pathToRoot}content/essentia_core/rules-index.html">
+                <button class="sorc-nav-section-toggle" data-section="rules" aria-expanded="false" aria-controls="rules-menu">
                   <span class="sorc-nav-section-label">RULES</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
+                <p class="sorc-nav-section-description">Learn the rules that guide characters, items, and play.</p>
                 <ul class="sorc-nav-section-menu" id="rules-menu">
                   <li><a href="${pathToRoot}content/essentia_core/rules-index.html">Rules Index</a></li>
                   ${RULES_CHAPTERS.map((ch, idx) => `
@@ -196,15 +261,31 @@ class SORCNavigation {
                 </ul>
               </div>
 
-              <a href="${pathToRoot}content/trials-of-combat-index.html" class="sorc-nav-direct-link">
-                <span class="sorc-nav-section-label">TRIALS OF COMBAT</span>
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="trials-of-combat" aria-expanded="false" aria-controls="trials-of-combat-menu">
+                  <span class="sorc-nav-section-label">TRIALS OF COMBAT</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <p class="sorc-nav-section-description">Enter tactical challenges and prove yourself in combat.</p>
+                <ul class="sorc-nav-section-menu" id="trials-of-combat-menu">
+                  <li><a href="${pathToRoot}content/trials-of-combat-index.html">Trials of Combat Index</a></li>
+                </ul>
+              </div>
+
+              <a href="${pathToRoot}admin.html" class="sorc-nav-direct-link sorc-sidebar-admin-link" hidden>
+                <span class="sorc-nav-section-label">ADMIN PANEL</span>
               </a>
+
+              <button type="button" class="sorc-nav-direct-link sorc-sidebar-signout" hidden>
+                <span class="sorc-nav-section-label">SIGN OUT</span>
+              </button>
             </div>
           </div>
 
           <!-- Navigation Overlay -->
           <div class="sorc-nav-overlay"></div>
         </nav>
+        ${brandBannerHTML}
 
         <!-- Badge Component (Membership Status) -->
         <div class="sorc-badge">
@@ -212,54 +293,87 @@ class SORCNavigation {
           <span class="sorc-badge-icon">⭐</span>
         </div>
 
-        <!-- Floating Avatar Component -->
-        <div class="sorc-avatar-floating">
-          <button class="sorc-avatar-button" aria-label="Open user profile menu" aria-expanded="false">
-            <div class="sorc-avatar-circle">
-              <span class="sorc-avatar-placeholder">U</span>
-            </div>
-            <span class="sorc-avatar-dropdown">▼</span>
-          </button>
-          <div class="sorc-avatar-menu">
-            <div class="sorc-avatar-header">
-              <div class="sorc-avatar-circle-large">
-                <span class="sorc-avatar-placeholder">U</span>
-              </div>
-              <div class="sorc-avatar-info">
-                <div class="sorc-avatar-username">User</div>
-                <div class="sorc-avatar-tier">Basic Member</div>
-              </div>
-            </div>
-            <div class="sorc-avatar-menu-divider"></div>
+        <a class="sorc-floating-profile-link" href="${pathToRoot}content/auth/signin.html" aria-label="Sign in">
+          <span class="sorc-floating-profile-avatar">S</span>
+        </a>
 
-            <!-- Theme Toggle Inside Avatar Menu -->
-            <div class="sorc-avatar-theme-toggle-wrapper">
-              <button class="sorc-avatar-theme-toggle" aria-label="Toggle theme (Lawful/Evil mode)" aria-pressed="false">
-                <span class="sorc-theme-label lawful">LAWFUL</span>
-                <span class="sorc-theme-label evil">EVIL</span>
-              </button>
-            </div>
-
-            <div class="sorc-avatar-menu-divider"></div>
-            <ul class="sorc-avatar-menu-list">
-              <li><a href="${pathToRoot}content/features/space.html">Your Space</a></li>
-              <li><a href="${pathToRoot}content/features/characters-home.html">My Characters</a></li>
-              <li><a href="${pathToRoot}content/features/achievements.html">Achievements</a></li>
-              <li><a href="${pathToRoot}content/features/vault.html">Vault</a></li>
-              <li><a href="${pathToRoot}content/auth/public-profile.html">Profile</a></li>
-              <li class="sorc-avatar-menu-divider"></li>
-              <li><a href="${pathToRoot}content/pages/new-pro.html">Upgrade to Pro</a></li>
-              <li><a href="${pathToRoot}content/pages/subscriptions.html">Subscriptions</a></li>
-              <li class="sorc-avatar-menu-divider"></li>
-              <li><a href="${pathToRoot}content/auth/signin.html">Sign Out</a></li>
-            </ul>
-          </div>
-        </div>
       </div>
     `;
 
     // Inject into body
     document.body.insertAdjacentHTML('afterbegin', navHTML);
+  }
+
+  mountProfileBadge() {
+    const legacyControls = document.getElementById('headerControls');
+    if (legacyControls) legacyControls.remove();
+
+    let user = null;
+    try {
+      user = JSON.parse(localStorage.getItem('sorc_user') || 'null');
+    } catch (error) {
+      user = null;
+    }
+    const isSignedIn = !!(user && user.authKey);
+    const displayName = isSignedIn
+      ? (user.username || user.display_name || user.email || 'Adventurer')
+      : 'Sign in';
+    const role = isSignedIn ? (user.role || 'CIVILIAN') : 'Guest';
+    const card = document.querySelector('.sorc-sidebar-profile-card');
+    const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
+    const name = document.querySelector('.sorc-sidebar-profile-name');
+    const roleLabel = document.querySelector('.sorc-sidebar-profile-role');
+    const adminLink = document.querySelector('.sorc-sidebar-admin-link');
+    const signout = document.querySelector('.sorc-sidebar-signout');
+    const floatingLink = document.querySelector('.sorc-floating-profile-link');
+    const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
+    if (!card || !avatar || !name || !roleLabel) return;
+
+    card.href = isSignedIn
+      ? '/content/features/space.html'
+      : '/content/auth/signin.html';
+    if (floatingLink) {
+      floatingLink.href = card.href;
+      floatingLink.setAttribute(
+        'aria-label',
+        isSignedIn ? `Open ${displayName}'s Space` : 'Sign in'
+      );
+    }
+    name.textContent = displayName;
+    roleLabel.textContent = role;
+    const initial = isSignedIn
+      ? (displayName.trim().charAt(0).toUpperCase() || 'S')
+      : 'S';
+    avatar.textContent = initial;
+    if (floatingAvatar) floatingAvatar.textContent = initial;
+    if (isSignedIn && user.avatar) {
+      const makeImage = (target) => {
+        const image = document.createElement('img');
+        image.src = `/images/avatars/${user.avatar}`;
+        image.alt = '';
+        image.addEventListener('error', () => {
+          image.remove();
+          target.textContent = initial;
+        });
+        target.textContent = '';
+        target.appendChild(image);
+      };
+      makeImage(avatar);
+      if (floatingAvatar) makeImage(floatingAvatar);
+    }
+
+    const canAdmin = role === 'OWNER' || role === 'ADMIN';
+    if (adminLink) adminLink.hidden = !canAdmin;
+    if (signout) {
+      signout.hidden = !isSignedIn;
+      signout.onclick = () => {
+        if (typeof window.sorcSignOut === 'function') window.sorcSignOut();
+        else {
+          localStorage.removeItem('sorc_user');
+          window.location.reload();
+        }
+      };
+    }
   }
 
   getPathToRoot() {
@@ -299,6 +413,38 @@ class SORCNavigation {
 
     if (overlay) {
       overlay.addEventListener('click', () => this.closeMenu());
+    }
+
+    // "Delve" searches the destinations exposed by the global navigation.
+    // Enter opens the best matching destination without sending the query
+    // to an unrelated third-party search engine.
+    const searchInput = document.querySelector('.sorc-nav-search-input');
+    if (searchInput) {
+      const destinations = Array.from(
+        document.querySelectorAll('.sorc-nav-sidebar a[href]')
+      ).map((link) => ({
+        label: (link.textContent || '').trim().toLowerCase(),
+        href: link.href,
+      })).filter((item) => item.label);
+
+      searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          searchInput.value = '';
+          searchInput.blur();
+          return;
+        }
+        if (event.key !== 'Enter') return;
+
+        const query = searchInput.value.trim().toLowerCase();
+        if (!query) {
+          this.openMenu();
+          return;
+        }
+        const match = destinations.find((item) => item.label === query)
+          || destinations.find((item) => item.label.startsWith(query))
+          || destinations.find((item) => item.label.includes(query));
+        if (match) window.location.href = match.href;
+      });
     }
 
     // Section toggles
@@ -366,14 +512,9 @@ class SORCNavigation {
   toggleSection(section, button) {
     const menu = document.getElementById(`${section}-menu`);
     if (menu) {
-      menu.classList.toggle('expanded');
-      button.classList.toggle('expanded');
-    }
-
-    // Navigate to section index if data-href is present
-    const href = button.getAttribute('data-href');
-    if (href) {
-      window.location.href = href;
+      const isExpanded = menu.classList.toggle('expanded');
+      button.classList.toggle('expanded', isExpanded);
+      button.setAttribute('aria-expanded', String(isExpanded));
     }
   }
 
@@ -431,9 +572,11 @@ class SORCNavigation {
   applyTheme(isLawful) {
     if (isLawful) {
       document.body.classList.add('lawful-mode');
+      document.body.classList.remove('evil-mode');
       localStorage.setItem('themeSelected', 'lawful');
     } else {
       document.body.classList.remove('lawful-mode');
+      document.body.classList.add('evil-mode');
       localStorage.setItem('themeSelected', 'evil');
     }
   }
