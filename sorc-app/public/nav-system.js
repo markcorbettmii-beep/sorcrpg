@@ -194,6 +194,7 @@ class SORCNavigation {
                 </button>
                 <p class="sorc-nav-section-description">Explore the SORC Web features, services, and experiences.</p>
                 <ul class="sorc-nav-section-menu" id="content-menu">
+                  <li><a href="${pathToRoot}content/content-index.html">Content Index</a></li>
                   <li><a href="${pathToRoot}content/sorc-web-index.html">SORC Web</a></li>
                   <li><a href="${pathToRoot}content/features/sorc-store.html">SORC Store</a></li>
                   <li><a href="${pathToRoot}content/features/exchange.html">Essentia Exchange</a></li>
@@ -345,9 +346,7 @@ class SORCNavigation {
     name.textContent = displayName;
     roleLabel.textContent = role;
     if (membershipBadge && membershipTier) {
-      const tier = isSignedIn
-        ? (user.membershipTier || user.membership || user.tier || localStorage.getItem('sorc_tier') || 'Basic')
-        : 'Guest';
+      const tier = isSignedIn ? this.getMembershipLabel(user) : 'Guest';
       membershipTier.textContent = tier.replace(/\s+Member$/i, '');
       membershipBadge.classList.toggle('guest', !isSignedIn);
       if (membershipIcon) membershipIcon.hidden = !isSignedIn;
@@ -385,6 +384,17 @@ class SORCNavigation {
         }
       };
     }
+  }
+
+  getMembershipLabel(user) {
+    const membership = String(user.membership || user.membership_status || '').toLowerCase();
+    const storedTier = String(localStorage.getItem('sorc_tier') || '').toLowerCase();
+    const isPro = membership === 'pro'
+      || user.pro_member === true
+      || user.box_set_redeemed === true
+      || user.isPro === true
+      || storedTier.includes('pro');
+    return isPro ? 'Pro' : 'Basic';
   }
 
   getPathToRoot() {
@@ -577,9 +587,7 @@ class SORCNavigation {
     const username = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Guest';
-    const tier = isSignedIn
-      ? (user.membershipTier || user.membership || user.tier || localStorage.getItem('sorc_tier') || 'Basic Member')
-      : 'Guest';
+    const tier = isSignedIn ? this.getMembershipLabel(user) : 'Guest';
 
     if (usernamEl) usernamEl.textContent = username;
     if (tierEl) tierEl.textContent = tier;
@@ -599,7 +607,7 @@ class SORCNavigation {
 
     // Toggle handler
     themeToggle.addEventListener('click', () => {
-      const currentLawful = !document.body.classList.contains('lawful-mode');
+      const currentLawful = document.body.classList.contains('lawful-mode');
       this.applyTheme(!currentLawful);
       themeToggle.setAttribute('aria-pressed', !currentLawful ? 'false' : 'true');
     });
