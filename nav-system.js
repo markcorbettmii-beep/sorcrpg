@@ -182,8 +182,8 @@ class SORCNavigation {
             <a class="sorc-sidebar-profile-card" href="${pathToRoot}content/auth/signin.html">
               <span class="sorc-sidebar-profile-avatar sorc-visitor-avatar">W</span>
               <span class="sorc-sidebar-profile-copy">
-                <strong class="sorc-sidebar-profile-name">Sign in</strong>
-                <small class="sorc-sidebar-profile-role">Guest</small>
+                <strong class="sorc-sidebar-profile-name">Sign into Role</strong>
+                <small class="sorc-sidebar-profile-role"></small>
               </span>
               <span class="sorc-sidebar-profile-arrow" aria-hidden="true">›</span>
             </a>
