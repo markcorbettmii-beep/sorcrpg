@@ -21,6 +21,8 @@
     .race-template-section p { margin: 0.25rem 0; }
     .race-template-section strong { color: #c5a042; }
     .race-lineage-suffix { color: #92793a; font-weight: 700; }
+    .race-starter-status { color: #008601; font-weight: 700; }
+    .race-starter-status.unavailable { color: #be0500; }
     .kinborn-variant-card .variant-name, .kinborn-variant-card .variant-label { color: #8c06a3; }
     .aptitude-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; margin: 1rem 0; }
     .aptitude-grid > div { padding: 0.7rem; border: 1px solid rgba(160,140,200,0.2); }
@@ -1460,12 +1462,11 @@
             <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
               <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
             </div>
-            <p>Neandereti are cryptids of the Arctic, standard in size but usually tall for it, averaging between 6'5&quot; and 7' in height. They are broad, powerful, and built to endure the cold without sacrificing the reach and strength that their height gives them.</p>
-            <p>White fur covers their bodies and grows back rapidly wherever it is cut. It is thickest across the back and other rear-facing surfaces, while the fur on the front of the body is kept very short, giving a Neandereti a distinct contrast in texture and silhouette.</p>
-            <p>Neandereti have unusually large heads crowned with scurs, small horn growths that barely push through the skin. Their teeth are shaped like a man's, but the strength behind them is not: a Neandereti bite is powerful enough to crush bone.</p>
-            <p>Cold that would drop another race in their tracks barely slows a Neandereti down, and that same hardiness holds against nearly anything else thrown at them. Their size and strength come at the cost of finesse, making delicate tasks and tight spaces more difficult than they are for smaller or lighter races.</p>
+            <p>Neandereti are cryptids of the Arctic, standard in size but usually tall for it, averaging between 6'5&quot; and 7' in height. They are broad, powerful, and built to endure the cold without sacrificing the reach and strength that their height and particularly long arms gives them. White fur covers their bodies and grows back rapidly wherever it is cut. It is thickest across the back and other rear-facing surfaces, while the fur on the front of the body is kept very short, giving a Neandereti a distinct contrast in texture and silhouette. They hide well in the Arctic, night or day.</p>
+            <p>Neandereti have unusually large heads crowned with scurs - small horn growths that barely push through the skin. Their teeth are shaped like a man's, but the strength behind them is not: a Neandereti bite is powerful enough to crush bone.</p>
+            <p>A Neandereti thrives on freezing conditions that would drop another race in their tracks, and that same hardiness holds against nearly anything else thrown at them. Their size and strength come at the cost of finesse, making delicate tasks and tight spaces more difficult than they are for smaller or lighter races.</p>
             <p class="race-section-label">Native Planet</p>
-            <p class="trait-tag">Glaciera</p>
+            <p class="trait-tag">Zailister</p>
             <p class="race-section-label">Cultural Armaments</p>
             <p>Neandereti work is built for Arctic survival: thick hide, layered fur, and bone-reinforced frames that keep warmth in and impacts out. Their tools and armor favor weight, durability, and a clear line of force over delicacy. Telluric, cold-weather work shaped for the frozen reaches of Glaciera. See Cultural Armaments, and refer to the Tomes of Essentia for the full history.</p>
             <p class="race-section-label">Spirit &amp; Apex</p>
@@ -1476,13 +1477,14 @@
             <p class="trait-tag">PHY 2</p>
             <p class="race-section-label">Innate Aptitude</p>
             <p>Cold-Forged | cold that would drop another race in their tracks barely slows a Neandereti down; +2 to resist fire, frost, acid, and lightning hazards that would stagger most other races outright.</p>
-            <p>Bone-Crushing Bite | a Neandereti's bite is strong enough to crush bone.</p>
-            <p>Rapid Fur Growth | white fur grows back quickly wherever it is cut, thickest across the back and very short across the front.</p>
             <p class="race-section-label">Innate Inaptitude</p>
             <p>-2 to all rolls requiring precision or subtlety; a delicate task takes a Neandereti noticeably longer than it would almost any other race.</p>
+            <p class="race-section-label">Innate Abilities</p>
+            <p>Bone-Crushing Bite | a Neandereti's bite is strong enough to crush bone.</p>
+            <p>Rapid Fur Growth | white fur grows back quickly wherever it is cut, thickest across the back and very short across the front.</p>
             <hr class="race-divider">
             <p class="lifespan-tag">Lifespan: ~60 years (Mortal)</p>
-            <p>Starting Age: 15 | Retirement Age: 55 (see Time, pg. 4)</p>
+            <p>Starting Age: 23 | Retirement Age: 63 (see Time, pg. 4)</p>
             <p class="race-section-label race-favored">Favored Classes</p>
             <p><a href="../essentia_core/rules_playable-classes.html#barbarian">Barbarian</a> +4</p>
             <p><a href="../essentia_core/rules_playable-classes.html#warrior">Warrior</a> +5</p>
@@ -2175,15 +2177,38 @@
         node = node.nextElementSibling;
       }
     }
+    const mapRegions = ['Lakeland', 'Shadowfen', 'Mucklore', 'Duneland', 'Shimmering Grasslands', 'Grimhold', 'Pearl Coast', 'Deadtooth', 'Skierland', 'Hook', 'Dead Sea', 'Umbra Sea', 'Northern Arctic'];
+    const mapAreas = ['Cascade Heights', 'Mt. Deadtooth', "Hold's Keep Valley", 'Prismatic Lagoon', 'Putrid Sludge of Umbra', 'The Underhold', 'Deadtooth Pass', "Pirate's Bay", 'Dragon Lagoon', "Dead Man's Wharf", 'Mystic Marsh of Wraith Water', 'Bleeding Bayou', 'Nivis Islands', 'Strait of Nivis'];
+    function raceGeography(card, planet, raceName) {
+      if (card.dataset.race === 'race-neandereti') {
+        return { region: 'Northern Arctic', area: 'No specific area; they roam the Northern Arctic.' };
+      }
+      const text = card.textContent;
+      const region = planet === 'Zailister'
+        ? (mapRegions.find((name) => text.includes(name)) || 'Shimmering Grasslands')
+        : (planet + ' native region');
+      const mappedArea = planet === 'Zailister' && mapAreas.find((name) => text.includes(name));
+      const area = mappedArea || (raceName + ' Range');
+      return { region, area: mappedArea ? area + ' is an Area of ' + region + '.' : area + ' is an Area of ' + region + '.' };
+    }
     function addRaceTemplate(card) {
       const heading = card.querySelector(':scope > h4');
       if (!heading || heading.dataset.templateReady) return;
       heading.dataset.templateReady = 'true';
+      const originalTitle = heading.textContent.trim();
+      const raceName = (heading.childNodes[0] && heading.childNodes[0].nodeValue || originalTitle).trim();
       const lineage = raceCardLineage[card.dataset.race] || 'Firstborn';
+      const playable = /Playable in Starter Set/i.test(originalTitle);
+      heading.textContent = '';
+      heading.appendChild(document.createTextNode(raceName));
       const lineageSuffix = document.createElement('span');
       lineageSuffix.className = 'race-lineage-suffix';
       lineageSuffix.textContent = ' - ' + lineage;
-      heading.insertBefore(lineageSuffix, heading.querySelector(':scope > span'));
+      heading.appendChild(lineageSuffix);
+      const status = document.createElement('span');
+      status.className = 'race-starter-status' + (playable ? '' : ' unavailable');
+      status.textContent = ' (' + (playable ? 'Playable' : 'Not Playable') + ' in Starter Set)';
+      heading.appendChild(status);
       const image = heading.nextElementSibling;
       const descriptionHeading = document.createElement('p');
       descriptionHeading.className = 'race-template-heading';
@@ -2194,11 +2219,15 @@
       const armamentLabel = findRaceLabel(card, /^Cultural Armaments$/);
       const classLabel = findRaceLabel(card, /Favored Classes|Favorite Main Classes Tree Abilities/);
       const companionLabel = findRaceLabel(card, /Favored Companions/);
+      const planet = card.dataset.race === 'race-neandereti'
+        ? 'Zailister'
+        : (raceCardValue(planetLabel) || 'Not yet specified.');
+      const geography = raceGeography(card, planet, raceName);
       const culture = document.createElement('div');
       culture.className = 'race-template-section culture-template';
       culture.innerHTML =
         '<p class="race-template-heading">Culture</p>' +
-        '<p><strong>1. Planet</strong><br>' + (raceCardValue(planetLabel) || 'Not yet specified.') + '</p>' +
+        '<p><strong>1. Planet, Region, and Area</strong><br>Planet: ' + planet + '<br>Region: ' + geography.region + '<br>Area: ' + geography.area + '</p>' +
         '<p><strong>2. Background</strong><br>Determined by Background; any Culture may be taken by any race. Not yet specified for this race.</p>' +
         '<p><strong>3. Classes</strong><br>' + (raceCardSection(classLabel).join('<br>') || 'Not yet specified.') + '</p>' +
         '<p><strong>4. Languages</strong><br>Not yet specified.</p>' +
@@ -2235,6 +2264,11 @@
       }
       const aptitude = findRaceLabel(card, /^Aptitude$/);
       const inaptitude = findRaceLabel(card, /^Inaptitude$/);
+      const explicitAbilities = findRaceLabel(card, /^Innate Abilities$/);
+      const abilityValues = explicitAbilities
+        ? raceCardSection(explicitAbilities)
+        : (aptitude ? raceCardSection(aptitude).slice(1) : []);
+      hideRaceSection(explicitAbilities);
       if (aptitude && inaptitude) {
         const grid = document.createElement('div');
         grid.className = 'aptitude-grid';
@@ -2244,11 +2278,20 @@
           const value = label.nextElementSibling;
           cell.append(label);
           if (value) cell.append(value);
+          if (label === aptitude && !explicitAbilities) {
+            let extra = value && value.nextElementSibling;
+            while (extra && extra.tagName === 'P' && !extra.classList.contains('race-section-label')) {
+              extra.style.display = 'none';
+              extra = extra.nextElementSibling;
+            }
+          }
           grid.append(cell);
         });
         const ability = document.createElement('div');
         ability.className = 'race-template-section';
-        ability.innerHTML = '<p class="race-template-heading">Innate Abilities</p><p>Native Abilities are represented by this race&#39;s Innate Traits, Aptitude, and Inaptitude. Specific active abilities will be added to each card as they are finalized.</p>';
+        ability.innerHTML = '<p class="race-template-heading">Innate Abilities</p><p>' +
+          (abilityValues.join('<br>') || 'Native Abilities are represented by this race&#39;s Innate Traits, Aptitude, and Inaptitude. Specific active abilities will be added to each card as they are finalized.') +
+          '</p>';
         grid.insertAdjacentElement('afterend', ability);
       }
     }
