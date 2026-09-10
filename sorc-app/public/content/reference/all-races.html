@@ -20,6 +20,8 @@
     .race-template-heading { color: #c5a042 !important; font-size: 0.78rem !important; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin: 1rem 0 0.3rem !important; opacity: 1 !important; }
     .race-template-section p { margin: 0.25rem 0; }
     .race-template-section strong { color: #c5a042; }
+    .race-lineage-suffix { color: #92793a; font-weight: 700; }
+    .kinborn-variant-card .variant-name, .kinborn-variant-card .variant-label { color: #8c06a3; }
     .aptitude-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; margin: 1rem 0; }
     .aptitude-grid > div { padding: 0.7rem; border: 1px solid rgba(160,140,200,0.2); }
     @media (max-width: 700px) { .aptitude-grid { grid-template-columns: 1fr; } }
@@ -1454,7 +1456,7 @@
             <p>Refer to Specific Companion Cards for default Races they dislike.</p>
           </div>
           <div class="race-card" data-race="race-neandereti">
-            <h4 id="race-neandereti">Neandereti <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Glaciera, Standard Size)</span></h4>
+            <h4 id="race-neandereti">Neandereti <span style="font-size:0.68rem;opacity:0.6;font-weight:normal;">(Glaciera, Standard Size; Playable in Starter Set)</span></h4>
             <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
               <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
             </div>
@@ -2177,7 +2179,11 @@
       const heading = card.querySelector(':scope > h4');
       if (!heading || heading.dataset.templateReady) return;
       heading.dataset.templateReady = 'true';
-      heading.appendChild(document.createTextNode(' - ' + (raceCardLineage[card.dataset.race] || 'Firstborn')));
+      const lineage = raceCardLineage[card.dataset.race] || 'Firstborn';
+      const lineageSuffix = document.createElement('span');
+      lineageSuffix.className = 'race-lineage-suffix';
+      lineageSuffix.textContent = ' - ' + lineage;
+      heading.insertBefore(lineageSuffix, heading.querySelector(':scope > span'));
       const image = heading.nextElementSibling;
       const descriptionHeading = document.createElement('p');
       descriptionHeading.className = 'race-template-heading';

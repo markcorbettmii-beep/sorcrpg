@@ -20,6 +20,9 @@
     .rules-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid rgba(160,140,200,0.12); vertical-align: top; line-height: 1.6; }
     .rules-table tr:last-child td { border-bottom: none; }
     .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .race-lineage-label { color: #92793a !important; }
+    .race-lineage-label .lineage-kind { font-weight: 700; }
+    .kinborn-variant-card .variant-name, .kinborn-variant-card .variant-label { color: #8c06a3 !important; }
     #navRoleBadge { display: none !important; }
     .sorc-nav-home-icon svg { width: 25px !important; height: 25px !important; max-width: 25px !important; max-height: 25px !important; display: block !important; flex: 0 0 25px !important; }
 
@@ -336,7 +339,7 @@
               <p><a href="../reference/all-races.html#race-hawkbear">Full Race Card</a></p>
            </div>
           <div class="race-card">
-            <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:1;">Ogre - Firstborn <span style="color:#be0500;">(Not Playable in Starter Set)</span></div>
+            <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:1;">Ogre - Firstborn <span style="color:#008601;">(Playable in Starter Set)</span></div>
             <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
               <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
             </div>
@@ -544,7 +547,7 @@
             </table>
           </div>
           <div class="race-card faded">
-            <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:1;">Neandereti - Firstborn <span style="color:#be0500;">(Not Playable in Starter Set)</span></div>
+            <div class="race-lineage-label" style="margin:1.5rem 0 0.3rem; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; opacity:1;">Neandereti - Firstborn <span style="color:#008601;">(Playable in Starter Set)</span></div>
             <div style="width:100%;max-width:280px;height:320px;background:rgba(0,88,170,0.08);border:2px solid rgba(0,88,170,0.2);border-radius:4px;margin:1rem 0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
               <div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>
             </div>
@@ -896,5 +899,29 @@
   <script src="../../main.js?v=26"></script>
   <script src="../../play-style.js?v=5"></script>
   <script src="../../nav-system.js?v=2"></script>
+  <script>
+    (function () {
+      const lineageColors = { Firstborn: '#92793a', Kinborn: '#8c06a3', Bloodline: '#8c06a3' };
+      document.querySelectorAll('.race-lineage-label').forEach(function (label) {
+        const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+          const match = node.nodeValue.match(/\b(Firstborn|Kinborn|Bloodline)\b/);
+          if (!match) return;
+          const parts = node.nodeValue.split(match[0]);
+          const fragment = document.createDocumentFragment();
+          if (parts[0]) fragment.appendChild(document.createTextNode(parts[0]));
+          const span = document.createElement('span');
+          span.className = 'lineage-kind';
+          span.style.color = lineageColors[match[0]];
+          span.textContent = match[0];
+          fragment.appendChild(span);
+          if (parts[1]) fragment.appendChild(document.createTextNode(parts[1]));
+          node.parentNode.replaceChild(fragment, node);
+        });
+      });
+    }());
+  </script>
 </body>
 </html>
