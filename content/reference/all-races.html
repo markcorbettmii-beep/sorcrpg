@@ -2222,10 +2222,14 @@
       card.querySelectorAll(':scope > .race-section-label').forEach((label) => {
         const name = label.textContent.trim();
         if (name === 'Innate Trait Adjustments') label.textContent = 'Innate Traits';
-        if (name === 'Starting ATTR Floor') label.textContent = 'ATTR Floor';
+        if (name === 'Starting ATTR Floor') label.textContent = 'ATTR Floor (based on Trait Scores - see progression and development)';
         if (name === 'Innate Aptitude') label.textContent = 'Aptitude';
         if (name === 'Innate Inaptitude') label.textContent = 'Inaptitude';
       });
+      const spiritLabel = findRaceLabel(card, /^Spirit & Apex$/);
+      if (spiritLabel && spiritLabel.nextElementSibling) {
+        spiritLabel.nextElementSibling.innerHTML = spiritLabel.nextElementSibling.innerHTML.replace(/Spirit Start/g, 'Spirit Base').replace(/growth/g, 'Growth');
+      }
       const aptitude = findRaceLabel(card, /^Aptitude$/);
       const inaptitude = findRaceLabel(card, /^Inaptitude$/);
       if (aptitude && inaptitude) {
