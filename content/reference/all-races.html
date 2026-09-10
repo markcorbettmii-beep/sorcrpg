@@ -16,6 +16,13 @@
     .rules-section p, .rules-section li { font-size: 1.08rem; line-height: 1.8; opacity: 0.85; max-width: 68ch; }
     .rules-section ul { padding-left: 1.4rem; }
     .callout { background: rgba(120,80,200,0.08); border-left: 3px solid rgba(160,100,220,0.5); padding: 0.75rem 1rem; margin: 1rem 0; font-size: 0.93rem; line-height: 1.7; opacity: 0.85; }
+    .race-template-section { margin: 1rem 0; padding: 0.85rem 1rem; border: 1px solid rgba(160,140,200,0.2); border-left: 3px solid rgba(197,160,66,0.7); background: rgba(120,80,200,0.045); }
+    .race-template-heading { color: #c5a042 !important; font-size: 0.78rem !important; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin: 1rem 0 0.3rem !important; opacity: 1 !important; }
+    .race-template-section p { margin: 0.25rem 0; }
+    .race-template-section strong { color: #c5a042; }
+    .aptitude-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; margin: 1rem 0; }
+    .aptitude-grid > div { padding: 0.7rem; border: 1px solid rgba(160,140,200,0.2); }
+    @media (max-width: 700px) { .aptitude-grid { grid-template-columns: 1fr; } }
     .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(700px, 1fr)); gap: 1rem; margin: 1rem 0; }
     @media (max-width: 860px) { .class-grid { grid-template-columns: 1fr; } }
     .class-card { background: rgba(120,80,200,0.06); border: 1px solid rgba(160,140,200,0.18); padding: 1rem 1.1rem; border-radius: 4px; min-width: 0; }
@@ -2139,6 +2146,108 @@
     </div>
   </main>
   <script>
+    const raceCardLineage = {};
+    function raceCardValue(label, stopAtHr = true) {
+      if (!label) return '';
+      const value = label.nextElementSibling;
+      return value && value.tagName === 'P' ? value.innerHTML : '';
+    }
+    function raceCardSection(label, stopAtHr = true) {
+      const values = [];
+      let node = label ? label.nextElementSibling : null;
+      while (node && node.tagName === 'P' && !node.classList.contains('race-section-label')) {
+        if (!(stopAtHr && node.classList.contains('lifespan-tag'))) values.push(node.innerHTML);
+        node = node.nextElementSibling;
+      }
+      return values;
+    }
+    function findRaceLabel(card, matcher) {
+      return [...card.querySelectorAll(':scope > .race-section-label')].find((node) => matcher.test(node.textContent.trim()));
+    }
+    function hideRaceSection(label) {
+      if (!label) return;
+      label.style.display = 'none';
+      let node = label.nextElementSibling;
+      while (node && node.tagName === 'P' && !node.classList.contains('race-section-label')) {
+        node.style.display = 'none';
+        node = node.nextElementSibling;
+      }
+    }
+    function addRaceTemplate(card) {
+      const heading = card.querySelector(':scope > h4');
+      if (!heading || heading.dataset.templateReady) return;
+      heading.dataset.templateReady = 'true';
+      heading.appendChild(document.createTextNode(' - ' + (raceCardLineage[card.dataset.race] || 'Firstborn')));
+      const image = heading.nextElementSibling;
+      const descriptionHeading = document.createElement('p');
+      descriptionHeading.className = 'race-template-heading';
+      descriptionHeading.textContent = 'Description';
+      (image || heading).insertAdjacentElement('afterend', descriptionHeading);
+
+      const labels = [...card.querySelectorAll(':scope > .race-section-label')];
+      const planetLabel = findRaceLabel(card, /^Native Planet$/);
+      const armamentLabel = findRaceLabel(card, /^Cultural Armaments$/);
+      const classLabel = findRaceLabel(card, /Favored Classes|Favorite Main Classes Tree Abilities/);
+      const companionLabel = findRaceLabel(card, /Favored Companions/);
+      const culture = document.createElement('div');
+      culture.className = 'race-template-section culture-template';
+      culture.innerHTML =
+        '<p class="race-template-heading">Culture</p>' +
+        '<p><strong>1. Planet</strong><br>' + (raceCardValue(planetLabel) || 'Not yet specified.') + '</p>' +
+        '<p><strong>2. Background</strong><br>Determined by Background; any Culture may be taken by any race. Not yet specified for this race.</p>' +
+        '<p><strong>3. Classes</strong><br>' + (raceCardSection(classLabel).join('<br>') || 'Not yet specified.') + '</p>' +
+        '<p><strong>4. Languages</strong><br>Not yet specified.</p>' +
+        '<p><strong>5. Diet</strong><br>Not yet specified.</p>' +
+        '<p><strong>6. Companions</strong><br>' + (raceCardSection(companionLabel).filter((value) => !/^Refer to Specific Companion Cards/i.test(value.replace(/<[^>]+>/g, ''))).join('<br>') || 'Not yet specified.') + '</p>' +
+        '<p><strong>7. Skills</strong><br>Not yet specified.</p>' +
+        '<p><strong>8. Talents</strong><br>Not yet specified.</p>' +
+        (raceCardValue(armamentLabel) ? '<p><strong>Cultural Armaments</strong><br>' + raceCardValue(armamentLabel) + '</p>' : '');
+      const firstLabel = labels[0];
+      if (firstLabel) firstLabel.insertAdjacentElement('beforebegin', culture);
+      [planetLabel, armamentLabel, classLabel, companionLabel].forEach(hideRaceSection);
+
+      const oldAge = [...card.querySelectorAll(':scope > p')].find((node) => /^Starting Age:/i.test(node.textContent.trim()));
+      const lifespan = card.querySelector(':scope > .lifespan-tag');
+      const ageMatch = oldAge && oldAge.textContent.match(/Starting Age:\s*(\d+)/i);
+      const rawBase = ageMatch ? Number(ageMatch[1]) : 23;
+      const base = Math.max(23, rawBase);
+      const age = document.createElement('div');
+      age.className = 'race-template-section';
+      age.innerHTML = '<p><strong>Starting age:</strong> Race Base ' + base + ' years; the allowed starting age is ' + Math.max(23, base - 5) + '–' + (base + 5) + ' years. Retirement is 40 years after the chosen starting age.</p>' +
+        (lifespan ? '<p>' + lifespan.textContent + '</p>' : '');
+      culture.insertAdjacentElement('afterend', age);
+      if (oldAge) oldAge.remove();
+      if (lifespan) lifespan.remove();
+
+      card.querySelectorAll(':scope > .race-section-label').forEach((label) => {
+        const name = label.textContent.trim();
+        if (name === 'Innate Trait Adjustments') label.textContent = 'Innate Traits';
+        if (name === 'Starting ATTR Floor') label.textContent = 'ATTR Floor';
+        if (name === 'Innate Aptitude') label.textContent = 'Aptitude';
+        if (name === 'Innate Inaptitude') label.textContent = 'Inaptitude';
+      });
+      const aptitude = findRaceLabel(card, /^Aptitude$/);
+      const inaptitude = findRaceLabel(card, /^Inaptitude$/);
+      if (aptitude && inaptitude) {
+        const grid = document.createElement('div');
+        grid.className = 'aptitude-grid';
+        card.insertBefore(grid, aptitude);
+        const cells = [];
+        [aptitude, inaptitude].forEach((label) => {
+          const cell = document.createElement('div');
+          const value = label.nextElementSibling;
+          cell.append(label);
+          if (value) cell.append(value);
+          grid.append(cell);
+          cells.push(cell);
+        });
+        const ability = document.createElement('div');
+        ability.className = 'race-template-section';
+        ability.innerHTML = '<p class="race-template-heading">Innate Abilities</p><p>Native Abilities are represented by this race&#39;s Innate Traits, Aptitude, and Inaptitude. Specific active abilities will be added to each card as they are finalized.</p>';
+        grid.insertAdjacentElement('afterend', ability);
+      }
+    }
+    document.querySelectorAll('.race-card[data-race]').forEach(addRaceTemplate);
     const raceRiderSizes = {
       'race-bast':'Standard', 'race-brownling':'Small', 'race-bugbear':'Standard',
       'race-caelen':'Standard', 'race-centyr':'Goliath', 'race-draco-blood':'Standard',
