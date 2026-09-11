@@ -125,6 +125,25 @@ app.notFound(async (c: any) => {
     return c.json({ error: 'Not found.', path: c.req.path }, 404);
   }
 
+  const pdfMatch = c.req.path.match(/^\/(character-sheet-(?:fem|male)-musc\.pdf)$/i);
+  if (pdfMatch && !new URL(c.req.url).searchParams.has('v')) {
+    try {
+      const manifestUrl = new URL('/pdf-versions.json', c.req.url);
+      const manifestResponse = await c.env.ASSETS.fetch(manifestUrl);
+      if (manifestResponse.ok) {
+        const manifest = await manifestResponse.json() as Record<string, string>;
+        const version = manifest[pdfMatch[1]];
+        if (version) {
+          const versionedUrl = new URL(c.req.url);
+          versionedUrl.searchParams.set('v', version);
+          return c.redirect(versionedUrl.toString(), 302);
+        }
+      }
+    } catch {
+      // Fall through to the normal asset lookup if the manifest is unavailable.
+    }
+  }
+
   let assetResponse = await c.env.ASSETS.fetch(c.req.raw);
   let contentType = assetResponse.headers.get('content-type') || '';
   const acceptsHtml = (c.req.header('accept') || '').toLowerCase().includes('text/html');
