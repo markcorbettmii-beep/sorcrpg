@@ -24,9 +24,13 @@ const CSS_H = 1104;  // .page height in css px
 const PT = 72 / 96;  // css px -> pdf points
 
 const DEFAULT_SHEETS = [
-  'character-sheet-fem-musc.html',
-  'character-sheet-male-musc.html',
+  'content/character/character-sheet-fem-musc.html',
+  'content/character/character-sheet-male-musc.html',
 ];
+const OUTPUT_OVERRIDES = {
+  'content/character/character-sheet-fem-musc.html': 'character-sheet-fem-musc.pdf',
+  'content/character/character-sheet-male-musc.html': 'character-sheet-male-musc.pdf',
+};
 const args = process.argv.slice(2);
 // --check verifies the committed PDFs still match the current HTML instead of
 // rewriting them. Byte comparison is useless here: the output embeds timestamps
@@ -96,7 +100,7 @@ for (const sheet of sheets) {
       return out;
     });
 
-    const out = sheet.replace(/\.html$/, '.pdf');
+    const out = OUTPUT_OVERRIDES[sheet] || sheet.replace(/\.html$/, '.pdf');
     const flat = await page.pdf({
       printBackground: true,
       preferCSSPageSize: true,
