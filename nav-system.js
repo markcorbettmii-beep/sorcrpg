@@ -185,8 +185,8 @@ class SORCNavigation {
                 <span class="sorc-sidebar-profile-identity">
                   <strong class="sorc-sidebar-profile-name">Sign into Role</strong>
                   <small class="sorc-sidebar-profile-role"></small>
-                  <small class="sorc-sidebar-profile-membership" hidden></small>
                 </span>
+                <small class="sorc-sidebar-profile-membership" hidden></small>
               </span>
               <span class="sorc-sidebar-profile-arrow" aria-hidden="true">›</span>
             </a>
@@ -359,7 +359,8 @@ class SORCNavigation {
     const displayName = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Sign in';
-    const role = isSignedIn ? this.getRoleLabel(user) : 'Guest';
+    const effectiveRole = isSignedIn ? this.getEffectiveRole(user) : 'WANDERER';
+    const role = isSignedIn ? this.getRoleLabel(user) : 'Wanderer';
     const card = document.querySelector('.sorc-sidebar-profile-card');
     const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
     const name = document.querySelector('.sorc-sidebar-profile-name');
@@ -385,8 +386,10 @@ class SORCNavigation {
     roleLabel.textContent = role;
     if (membershipLabel) {
       const tier = isSignedIn ? this.getMembershipLabel(user) : '';
-      membershipLabel.textContent = tier ? `${tier.toUpperCase()} ⭐` : '';
+      membershipLabel.textContent = tier.toUpperCase();
       membershipLabel.hidden = !isSignedIn;
+      membershipLabel.classList.toggle('basic', tier === 'Basic');
+      membershipLabel.classList.toggle('pro', tier === 'Pro');
     }
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
@@ -409,7 +412,7 @@ class SORCNavigation {
       if (floatingAvatar) makeImage(floatingAvatar);
     }
 
-    const canAdmin = role === 'OWNER' || role === 'ADMIN';
+    const canAdmin = effectiveRole === 'OWNER' || effectiveRole === 'ADMIN';
     if (adminLink) adminLink.hidden = !canAdmin;
     if (signout) {
       signout.hidden = !isSignedIn;
@@ -459,6 +462,7 @@ class SORCNavigation {
       GAME_MASTER: 'Game Master',
       ADMIN: 'Admin',
       OWNER: 'Owner',
+      WANDERER: 'Wanderer',
     };
     return labels[this.getEffectiveRole(user)] || 'Civilian';
   }
