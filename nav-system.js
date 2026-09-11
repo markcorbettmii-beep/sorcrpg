@@ -120,7 +120,8 @@ class SORCNavigation {
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const isHomePage = currentPath === '/' || currentPath === '/index.html';
     const hasDedicatedPageBanner = !!document.querySelector('[data-sorc-page-banner]');
-    const showGlobalBrandBanner = !isHomePage && !hasDedicatedPageBanner;
+    const suppressGlobalBrandBanner = document.body.hasAttribute('data-sorc-no-global-banner');
+    const showGlobalBrandBanner = !isHomePage && !hasDedicatedPageBanner && !suppressGlobalBrandBanner;
     document.body.classList.toggle('sorc-global-banner-active', showGlobalBrandBanner);
     const brandBannerHTML = showGlobalBrandBanner ? `
       <div class="sorc-global-brand-banner" data-sorc-page-banner>
