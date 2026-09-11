@@ -155,7 +155,8 @@ app.notFound(async (c: any) => {
   const html = await assetResponse.text();
   const headers = new Headers(assetResponse.headers);
   headers.delete('content-length');
-  return new Response(injectVisitorShell(html), {
+  const isCharacterSheet = /^\/content\/character\/character-sheet-(?:fem|male)-musc(?:\.html)?$/i.test(c.req.path);
+  return new Response(isCharacterSheet ? html : injectVisitorShell(html), {
     status: assetResponse.status,
     statusText: assetResponse.statusText,
     headers,
