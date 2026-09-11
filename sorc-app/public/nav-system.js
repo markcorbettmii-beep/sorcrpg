@@ -334,12 +334,6 @@ class SORCNavigation {
         </nav>
         ${brandBannerHTML}
 
-        <!-- Badge Component (Membership Status) -->
-        <div class="sorc-badge">
-          <span class="sorc-badge-tier">Guest</span>
-          <span class="sorc-badge-icon">⭐</span>
-        </div>
-
         <a class="sorc-floating-profile-link" href="${pathToRoot}content/auth/signin.html" aria-label="Sign in">
           <span class="sorc-floating-profile-avatar sorc-visitor-avatar">W</span>
         </a>
@@ -365,7 +359,7 @@ class SORCNavigation {
     const displayName = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Sign in';
-    const role = isSignedIn ? this.getEffectiveRole(user) : 'Guest';
+    const role = isSignedIn ? this.getRoleLabel(user) : 'Guest';
     const card = document.querySelector('.sorc-sidebar-profile-card');
     const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
     const name = document.querySelector('.sorc-sidebar-profile-name');
@@ -375,9 +369,6 @@ class SORCNavigation {
     const signout = document.querySelector('.sorc-sidebar-signout');
     const floatingLink = document.querySelector('.sorc-floating-profile-link');
     const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
-    const membershipBadge = document.querySelector('.sorc-badge');
-    const membershipTier = document.querySelector('.sorc-badge-tier');
-    const membershipIcon = document.querySelector('.sorc-badge-icon');
     if (!card || !avatar || !name || !roleLabel) return;
 
     card.href = isSignedIn
@@ -394,15 +385,8 @@ class SORCNavigation {
     roleLabel.textContent = role;
     if (membershipLabel) {
       const tier = isSignedIn ? this.getMembershipLabel(user) : '';
-      membershipLabel.textContent = tier.toUpperCase();
+      membershipLabel.textContent = tier ? `${tier.toUpperCase()} ⭐` : '';
       membershipLabel.hidden = !isSignedIn;
-    }
-    if (membershipBadge && membershipTier) {
-      const tier = isSignedIn ? this.getMembershipLabel(user) : 'Guest';
-      membershipTier.textContent = tier.replace(/\s+Member$/i, '');
-      membershipBadge.classList.toggle('guest', !isSignedIn);
-      membershipBadge.hidden = !isSignedIn;
-      if (membershipIcon) membershipIcon.hidden = !isSignedIn;
     }
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
@@ -455,7 +439,28 @@ class SORCNavigation {
     const email = String(user.email || '').trim().toLowerCase();
     if (storedRole === 'OWNER' || email === 'corbett@sorcrpg.com') return 'OWNER';
     if (storedRole === 'ADMIN' || email === 'markcorbett.mii@gmail.com') return 'ADMIN';
-    return storedRole || 'CIVILIAN';
+    const roleAliases = {
+      CIVILIAN: 'CIVILIAN',
+      PLAYER: 'PLAYER',
+      MASTER: 'GAME_MASTER',
+      GM: 'GAME_MASTER',
+      'GAME MASTER': 'GAME_MASTER',
+      GAME_MASTER: 'GAME_MASTER',
+      ADMIN: 'ADMIN',
+      OWNER: 'OWNER',
+    };
+    return roleAliases[storedRole] || 'CIVILIAN';
+  }
+
+  getRoleLabel(user) {
+    const labels = {
+      CIVILIAN: 'Civilian',
+      PLAYER: 'Player',
+      GAME_MASTER: 'Game Master',
+      ADMIN: 'Admin',
+      OWNER: 'Owner',
+    };
+    return labels[this.getEffectiveRole(user)] || 'Civilian';
   }
 
   refreshAuthenticatedUser() {
