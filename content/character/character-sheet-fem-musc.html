@@ -150,6 +150,96 @@
       font-size: 0.9rem;
     }
 
+    .sheet-editor {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      color: #304019;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 12px;
+    }
+    .sheet-fields {
+      position: absolute;
+      top: 205px;
+      left: 72px;
+      right: 72px;
+      display: grid;
+      grid-template-columns: 1fr 1.05fr 1fr;
+      gap: 14px;
+    }
+    .field-column { display: grid; gap: 5px; align-content: start; }
+    .sheet-field {
+      min-height: 24px;
+      padding: 2px 4px;
+      border-bottom: 1px solid rgba(74, 90, 32, 0.5);
+      background: rgba(250, 248, 237, 0.52);
+    }
+    .sheet-field label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #53652b;
+    }
+    .sheet-field [contenteditable="true"] {
+      display: block;
+      min-height: 13px;
+      outline: none;
+      color: #222;
+    }
+    .portrait-overlay {
+      position: absolute;
+      top: 202px;
+      left: 251px;
+      width: 258px;
+      height: 382px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .portrait-overlay img {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+    }
+    .lower-fields {
+      position: absolute;
+      left: 155px;
+      right: 155px;
+      top: 615px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .lower-fields .sheet-field { min-height: 38px; }
+    .back-editor {
+      width: 100%;
+      height: 100%;
+      padding: 82px 70px;
+      color: #304019;
+      font-family: Georgia, "Times New Roman", serif;
+      background: rgba(250, 248, 237, 0.96);
+      border: 1px solid rgba(74, 90, 32, 0.45);
+    }
+    .back-editor h2 {
+      color: #304019;
+      text-align: left;
+      font-size: 18px;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+    .back-editor [contenteditable="true"] {
+      min-height: 115px;
+      margin-bottom: 16px;
+      padding: 8px;
+      border: 1px solid rgba(74, 90, 32, 0.45);
+      background: rgba(255, 255, 255, 0.5);
+      outline: none;
+    }
+
 
     .page-nav {
       list-style: none;
@@ -216,15 +306,50 @@
   <!-- FRONT PAGE - Clean Frame Canvas -->
   <div class="page">
     <div class="page-content">
-      <!-- Frame image handles everything - portrait placeholder is part of the image -->
+      <div class="sheet-editor">
+        <div class="sheet-fields" aria-label="Editable character profile fields">
+          <div class="field-column">
+            <div class="sheet-field"><label>Name / UID</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Nickname(s)</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Gender</label><span contenteditable="true">Female</span></div>
+            <div class="sheet-field"><label>Species / Race</label><span contenteditable="true">Human</span></div>
+            <div class="sheet-field"><label>Age</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Occupation / Role</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Height / Weight</label><span contenteditable="true"></span></div>
+          </div>
+          <div class="field-column"></div>
+          <div class="field-column">
+            <div class="sheet-field"><label>Alignment</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Standing / Reputation</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Titles and Relations</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Legacy</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Background</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Current Quests</label><span contenteditable="true"></span></div>
+            <div class="sheet-field"><label>Achievements</label><span contenteditable="true"></span></div>
+          </div>
+        </div>
+        <div class="portrait-overlay"><img id="portraitImage" alt="Female Human portrait from the Customizer" /></div>
+        <div class="lower-fields">
+          <div class="sheet-field"><label>Currency</label><span contenteditable="true"></span></div>
+          <div class="sheet-field"><label>Progression / Rank</label><span contenteditable="true"></span></div>
+          <div class="sheet-field"><label>Armor / Weapons / Companions</label><span contenteditable="true"></span></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- BACK PAGE -->
   <div class="page">
     <div class="page-content">
-      <h2>Back Page</h2>
-      <p>Additional content coming soon...</p>
+      <div class="back-editor">
+        <h2 contenteditable="true">Character Back Page</h2>
+        <label>Abilities, Traits, and Notes</label>
+        <div contenteditable="true"></div>
+        <label>Inventory, Equipment, and Companions</label>
+        <div contenteditable="true"></div>
+        <label>Conditions, Milestones, and Campaign Notes</label>
+        <div contenteditable="true"></div>
+      </div>
     </div>
   </div>
 
@@ -236,12 +361,18 @@
       <button class="ptab" data-side="both">Both</button>
     </div>
     <button id="printBtn">Print</button>
+    <button id="downloadPdfBtn">Download PDF</button>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script>
     // Page flipping
     const pages = document.querySelectorAll('.page');
     const ptabs = document.querySelectorAll('.ptab');
+    document.getElementById('portraitImage').src = localStorage.getItem('sorc_portrait') || '';
+    if (localStorage.getItem('sorc_portrait')) {
+      document.getElementById('portraitImage').style.display = 'block';
+    }
 
     // Reset to front/back's default state. Runs on first load AND whenever
     // the page is restored from the browser's back/forward cache (bfcache) -
@@ -288,6 +419,27 @@
       const lastPage = visiblePages[visiblePages.length - 1];
       if (lastPage) lastPage.classList.add('print-last');
       window.print();
+    });
+    document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+      const visiblePages = Array.from(pages).filter(page => !page.classList.contains('hidden'));
+      const root = document.createElement('div');
+      root.style.position = 'fixed';
+      root.style.left = '-100000px';
+      visiblePages.forEach(page => {
+        const copy = page.cloneNode(true);
+        copy.classList.remove('hidden');
+        copy.querySelectorAll('[contenteditable]').forEach(node => node.removeAttribute('contenteditable'));
+        root.appendChild(copy);
+      });
+      document.body.appendChild(root);
+      html2pdf().set({
+        margin: 0,
+        filename: 'character-sheet.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 1, useCORS: true },
+        jsPDF: { unit: 'px', format: [768, 1104], orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      }).from(root).save().finally(() => root.remove());
     });
     window.addEventListener('afterprint', function() {
       pages.forEach(page => page.classList.remove('print-last'));
