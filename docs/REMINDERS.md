@@ -166,8 +166,8 @@ This is the list we are resolving now. Numbering is stable, do not renumber.
     - `rules_ref_004:969` TAA
 
 19. **Eight stale copies under `sorc-app/public/`**
-    - index, into-essentia, library, prologue, zail, loot-table, forum,
-      empty-char-sheet. None carry any of tonight's edits
+    - index, into-essentia, library, prologue, zail, loot-table, forum.
+      None carry any of tonight's edits
 
 ## World building, open
 

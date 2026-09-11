@@ -345,30 +345,19 @@
         var ownerName = (sheets && sheets.owner && (sheets.owner.display_name || sheets.owner.username)) ||
             (owner && (owner.display_name || owner.username)) || username;
         var avatar = owner && owner.avatar
-            ? '<img src="../../images/avatars/" + esc2(owner.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
+            ? '<img src="../../images/avatars/' + esc2(owner.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
             : '<span style="font-size:1.5rem;">' + esc2(String(ownerName).charAt(0).toUpperCase()) + '</span>';
 
         var list = (sheets && sheets.characters) || [];
 
-        /* Same furniture the owner's own tab carries: the big frame and the
-           Basic and Pro slots under it. They stand whether or not a sheet has
-           been made - an empty tab is a tab with nothing in its slots, not a
-           tab with no slots. The owner-only links (Edit stats, Customize
-           Portrait, character creation) stay off a visitor's copy: they are
-           the reader's own tools, not this player's. */
+        /* Character records live in Heroes & Hermits. The retired sheet art is
+           intentionally not rendered here. */
         var frame =
             '<div style="margin:1.5rem auto;max-width:600px;text-align:center;">' +
-                '<div style="margin:1.5rem 0;">' +
-                    '<img id="bigSheet" src="' + SHEET_FRAME + '" alt="SORC Character Sheet" ' +
-                      'style="display:block;width:100%;height:auto;border-radius:8px;border:1px solid #333;background:#f5f5f5;" />' +
+                '<div class="card">' +
+                    '<h4>Character Records</h4>' +
+                    '<p>Named character records are maintained in <a href="../../content/tomes/heroes-hermits.html#brunn" style="color:#b9aa00;text-decoration:underline;">Heroes &amp; Hermits</a>.</p>' +
                 '</div>' +
-            '</div>' +
-            '<div style="margin:1.5rem auto 0;max-width:600px;">' +
-                '<h3>Other Characters</h3>' +
-                '<div class="sheet-tier">Basic</div>' +
-                '<div class="sheet-thumbs">' + sheetThumbs(0, 2) + '</div>' +
-                '<div class="sheet-tier">Pro</div>' +
-                '<div class="sheet-thumbs">' + sheetThumbs(2, 5) + '</div>' +
             '</div>';
 
         var body;
@@ -617,39 +606,6 @@
         '</div>';
     }
 
-    /* Sheet thumbnails under Other Characters. Basic holds two slots, Pro five.
-       Every slot is a static picture of a sheet - none of them is a sheet you can
-       type into, the same way an armory page shows what the game already decided.
-       Per-user sheet art does not exist yet, so each slot shows the default male
-       frame; once sheets are stored per player this reads their own art instead. */
-    var SHEET_FRAME = 'images/frame-male-musc_20260822_235531_0000.png';
-    var selectedSheet = 0;
-
-    function sheetThumbs(startIndex, count) {
-        var html = '';
-        for (var i = 0; i < count; i++) {
-            var idx = startIndex + i;
-            var isSel = (idx === selectedSheet) ? ' selected' : '';
-            html += '<button type="button" class="sheet-thumb' + isSel + '" data-sheet="' + idx + '"' +
-                ' title="Show this sheet" onclick="selectSheet(' + idx + ')"' +
-                ' style="background-image:url(\'' + SHEET_FRAME + '\');"></button>';
-        }
-        return html;
-    }
-
-    /* The one interaction a thumbnail has: choose which sheet fills the big frame.
-       The chosen slot keeps the highlight so it is clear which one is on show. */
-    function selectSheet(index) {
-        selectedSheet = index;
-        var big = document.getElementById('bigSheet');
-        if (big) big.src = SHEET_FRAME;
-        var thumbs = document.querySelectorAll('.sheet-thumb');
-        for (var i = 0; i < thumbs.length; i++) {
-            var owns = String(index) === thumbs[i].getAttribute('data-sheet');
-            thumbs[i].classList.toggle('selected', owns);
-        }
-    }
-
     function renderTabNav(user, role, isPro) {
         var html = '<div class="tab-nav">';
         PROFILE_TABS.forEach(function(tab) {
@@ -725,10 +681,8 @@
                                 '<div style="margin-bottom:1.5rem;">' +
                                     '<a href="https://sorcrpg.com/library" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Edit Character stats</a>' +
                                 '</div>' +
-                                /* Static sheet - stats are not editable in the field. Editing goes
-                                   through the Edit Character stats link above. Male is the default. */
                                 '<div style="margin:1.5rem 0;">' +
-                                    '<img id="bigSheet" src="../../images/frame-male-musc_20260822_235531_0000.png" alt="SORC Character Sheet" style="display:block;width:100%;height:auto;border-radius:8px;border:1px solid #333;background:#f5f5f5;" />' +
+                                    '<div class="card"><h4>Character Records</h4><p>Named character records are maintained in <a href="https://sorcrpg.com/content/tomes/heroes-hermits.html#brunn" style="color:#b9aa00;text-decoration:underline;">Heroes &amp; Hermits</a>.</p></div>' +
                                 '</div>' +
                                 '<div style="margin:1.5rem 0;">' +
                                     '<a href="https://sorcrpg.com/character-customizer/creation-overview" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Customize Portrait</a>' +
@@ -737,16 +691,7 @@
                                     '<a href="https://sorcrpg.com/content/essentia_core/rules_ref_002.html#character-creation" target="_blank" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Refer to character creation</a>' +
                                 '</div>' +
                             '</div>' +
-                            /* Other Characters. Character creation is linked once, above, where
-                               Refer to character creation sits - the old 'Create your first
-                               character' card pointed at the same rules page and is gone. */
-                            '<div style="margin:2.5rem auto 0;max-width:600px;">' +
-                                '<h3>Other Characters</h3>' +
-                                '<div class="sheet-tier">Basic</div>' +
-                                '<div class="sheet-thumbs">' + sheetThumbs(0, 2) + '</div>' +
-                                '<div class="sheet-tier">Pro</div>' +
-                                '<div class="sheet-thumbs">' + sheetThumbs(2, 5) + '</div>' +
-                            '</div>';
+                            '';
                         break;
 
                     case 'leaderboards':
