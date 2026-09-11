@@ -65,19 +65,6 @@ app.onError((err: any, c: any) => {
   return c.json({ error: 'Server error.', details: err?.message || String(err) }, 500);
 });
 
-const SHELL_EXCLUDED_PATHS = [
-  /^\/(?:content\/)?admin(?:\/|[-.])/i,
-  /^\/(?:content\/)?debug(?:\/|[-.])/i,
-  /^\/content\/archived-rules\//i,
-  /^\/content\/drafts\//i,
-  /^\/demos\//i,
-  /^\/images\/.*\.html$/i,
-];
-
-function shouldInjectVisitorShell(pathname: string): boolean {
-  return !SHELL_EXCLUDED_PATHS.some((pattern) => pattern.test(pathname));
-}
-
 function injectVisitorShell(html: string): string {
   let output = html;
   const shellStyles = '<link rel="stylesheet" href="/nav-system.css?v=3">';
@@ -161,10 +148,7 @@ app.notFound(async (c: any) => {
     }
   }
 
-  if (
-    !contentType.toLowerCase().includes('text/html') ||
-    !shouldInjectVisitorShell(c.req.path)
-  ) {
+  if (!contentType.toLowerCase().includes('text/html')) {
     return assetResponse;
   }
 
