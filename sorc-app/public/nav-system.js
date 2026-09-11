@@ -119,10 +119,10 @@ class SORCNavigation {
     const pathToRoot = this.getPathToRoot();
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const isHomePage = currentPath === '/' || currentPath === '/index.html';
-    const hasPageBanner = !!document.querySelector(
-      '.header-container .sorc-letters-img, .header-container .sorc-letters, .header-container img[src*="sorc" i], [data-sorc-page-banner]'
-    );
-    const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
+    const hasDedicatedPageBanner = !!document.querySelector('[data-sorc-page-banner]');
+    const showGlobalBrandBanner = !isHomePage && !hasDedicatedPageBanner;
+    document.body.classList.toggle('sorc-global-banner-active', showGlobalBrandBanner);
+    const brandBannerHTML = showGlobalBrandBanner ? `
       <div class="sorc-global-brand-banner" data-sorc-page-banner>
         <a href="${pathToRoot}index.html" class="sorc-global-brand-link" aria-label="SORC home">
           <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">

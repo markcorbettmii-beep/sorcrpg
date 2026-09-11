@@ -1789,19 +1789,45 @@ const ASSESSMENT_QUESTIONS = [
 
 // GM Codex: the GM-only counterpart to the Basic Rules pool above, drawn from
 // content/gm_essentials/gm_ref_001.html and gm_ref_002.html. IDs are offset by
-// 1000 so they never collide with ASSESSMENT_QUESTIONS' 0-based indices when
-// both pools are combined into one 20-question GM submission.
+// 1000 so they never collide with the other question ids when the three
+// sections are combined into one 30-question GM submission.
 const GM_CODEX_QUESTIONS = [
-  { q: "Per the GM Codex introduction, what actually gates a GM's access to Lobbies?", options: ["Reading the GM Codex itself", "Passing the SORC Assessment", "Owning a physical box set", "An admin invitation"], answer: 1, page: 1 },
-  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No - Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, page: 1 },
-  { q: "What happens to a Common or Uncommon rank Companion that dies?", options: ["It enters the boneyard for repair", "It can be resurrected once per campaign", "It is permanently lost and never enters the boneyard", "The GM automatically replaces it"], answer: 2, page: 1 },
-  { q: "At what item Rank does Attunement become required before an armament can be enhanced or Bound?", options: ["Rare and above", "Unique and above", "Heroic and above", "Legendary and above"], answer: 2, page: 1 },
-  { q: "Per the GM Codex Quick Reference table, what Card Rank is included in a module of Level 18-23?", options: ["Unique", "Heroic", "Elite", "Legendary"], answer: 1, page: 1 },
-  { q: "How many Drawn Ability picks does a character earn per year of age lived?", options: ["One every 2 years", "Exactly one, every year, flat", "One per Growth", "Two per year"], answer: 1, page: 2 },
-  { q: "A character who commits to a 20-ability capstone Drawn Ability tree and a 19-ability runner-up tree has spent how many of their 40 lifetime picks?", options: ["20", "30", "39", "40"], answer: 2, page: 2 },
-  { q: "How many total Class Ability picks does a character have across their entire career (Ch. Lvl 1 through 30)?", options: ["40", "50", "59", "60"], answer: 2, page: 2 },
-  { q: "Roughly how much cumulative XP does Ch. Lvl 30 require?", options: ["Roughly 1 million", "Roughly 1.5 million", "Roughly 2.58 million", "Roughly 3 million"], answer: 2, page: 2 },
-  { q: "In Attribute Development, how many d6 are rolled and how many of the lowest results are discarded?", options: ["Roll 1d6 six times, discard 1 lowest", "Roll 1d6 nine times, discard the two lowest", "Roll 1d6 seven times, discard none", "Roll 1d6 ten times, discard the three lowest"], answer: 1, page: 2 },
+  { q: "Per the GM Codex introduction, what actually gates a GM's access to Lobbies?", options: ["Reading the GM Codex itself", "Passing the SORC Assessment", "Owning a physical box set", "An admin invitation"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_001.html#introduction" },
+  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No - Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_001.html#simulated-characters" },
+  { q: "What happens to a Common or Uncommon rank Companion that dies?", options: ["It enters the boneyard for repair", "It can be resurrected once per campaign", "It is permanently lost and never enters the boneyard", "The GM automatically replaces it"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_001.html#companion-tracking" },
+  { q: "At what item Rank does Attunement become required before an armament can be enhanced or Bound?", options: ["Rare and above", "Unique and above", "Heroic and above", "Legendary and above"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_001.html#attunement" },
+  { q: "Per the GM Codex Quick Reference table, what Card Rank is included in a module of Level 18-23?", options: ["Unique", "Heroic", "Elite", "Legendary"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_001.html#quick-reference" },
+  { q: "How many Drawn Ability picks does a character earn per year of age lived?", options: ["One every 2 years", "Exactly one, every year, flat", "One per Growth", "Two per year"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_002.html#drawn-abilities" },
+  { q: "A character who commits to a 20-ability capstone Drawn Ability tree and a 19-ability runner-up tree has spent how many of their 40 lifetime picks?", options: ["20", "30", "39", "40"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_002.html#drawn-abilities" },
+  { q: "How many total Class Ability picks does a character have across their entire career (Ch. Lvl 1 through 30)?", options: ["40", "50", "59", "60"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_002.html#character-level" },
+  { q: "Roughly how much cumulative XP does Ch. Lvl 30 require?", options: ["Roughly 1 million", "Roughly 1.5 million", "Roughly 2.58 million", "Roughly 3 million"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_002.html#character-level" },
+  { q: "In Attribute Development, how many d6 are rolled and how many of the lowest results are discarded?", options: ["Roll 1d6 six times, discard 1 lowest", "Roll 1d6 nine times, discard the two lowest", "Roll 1d6 seven times, discard none", "Roll 1d6 ten times, discard the three lowest"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_002.html#attribute-development" },
+];
+
+const GM_PLAYER_HANDBOOK_QUESTIONS = [
+  { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
+  { q: "What does rolling two 0s on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
+  { q: "What does DIFS stand for in SORC?", options: ["Defense Index Factor Score", "Difficulty Score", "Damage Infliction Scale", "Dice Influence Factor"], answer: 1, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
+  { q: "In SORC, a D100 action roll must do what to the DIFS to succeed?", options: ["Fall below it", "Equal it exactly", "Meet or exceed it", "Exceed it by at least 5"], answer: 2, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
+  { q: "How many Attributes exist in SORC?", options: ["5", "6", "7", "8"], answer: 1, rulesHref: "/content/essentia_core/rules_character-creation.html#traits-tst" },
+  { q: "In SORC, does a Human's culture affect their base Traits and Stats?", options: ["Yes, significantly", "Yes, slightly", "No, every human begins with the same Traits and Stats", "Only in combat"], answer: 2, rulesHref: "/content/essentia_core/rules_playable-races.html#culture" },
+  { q: "How many size categories do SORC races fall into?", options: ["2", "3", "4", "5"], answer: 1, rulesHref: "/content/essentia_core/rules_playable-races.html#race-structure" },
+  { q: "How many Silver coins equal one Gold coin in SORC?", options: ["5", "10", "25", "100"], answer: 1, rulesHref: "/content/essentia_core/rules_currency.html#currency-system" },
+  { q: "How many Abilities are in a single Class Tree?", options: ["20", "25", "30", "40"], answer: 2, rulesHref: "/content/essentia_core/rules_playable-classes.html#playable-classes" },
+  { q: "What roll result counts as a Critical Hit in SORC?", options: ["Natural 1", "Natural 99 only", "96-100", "Any roll of 85+"], answer: 2, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
+];
+
+const GM_LOBBY_QUESTIONS = [
+  { q: "Which lobby tier can a Civilian join without an assessment?", options: ["Beginner", "Intermediate", "Advanced", "None"], answer: 0, rulesHref: "/content/features/lobbies.html#tierBar" },
+  { q: "What does an assessment allow a Player or GM to do in the lobby system?", options: ["Skip all lobby rules", "Reach higher lobby tiers according to their rank", "Create private Rooms without a lobby", "Change another user's role"], answer: 1, rulesHref: "/content/features/lobbies.html#tierBar" },
+  { q: "What is the primary purpose of a Lobby?", options: ["A private voice-only session", "Recruiting and party assembly through text chat", "A character-sheet editor", "A replacement for the GM Codex"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "What is launched from a Lobby when the party is ready to play?", options: ["A public forum thread", "A private Campaign Room", "A new assessment", "A store checkout"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "How many potential members can a Lobby support?", options: ["5", "10", "20", "50"], answer: 2, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "What does a private Lobby require from an invited Player?", options: ["A box set shipment", "The Lobby invite code", "An Admin promotion", "A second assessment"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "Who must be present before a private Campaign Room can launch?", options: ["Any Civilian", "A Player with Pro membership", "A Game Master", "An Owner"], answer: 2, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "Can a Civilian host a Lobby?", options: ["Yes, without restrictions", "Yes, but only an Advanced Lobby", "No, Civilians can join Beginner lobbies but cannot host", "Only with an Admin invitation"], answer: 2, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "How long does a role assessment remain valid for higher-tier lobby access?", options: ["7 days", "30 days", "90 days", "Forever"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
+  { q: "What happens when a Player or GM tries to enter a lobby above their assessed tier?", options: ["They are admitted automatically", "They are prompted to reassess to reach that tier", "The lobby tier changes to Beginner", "They become Admin"], answer: 1, rulesHref: "/content/features/lobbies.html#tierBar" },
 ];
 
 const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -1816,13 +1842,14 @@ function calcPcRole(basicRulesScore: number): string {
   return 'PC-BEG';
 }
 
-// GM track requires a perfect score across BOTH sections (10 Basic Rules +
-// 10 GM Codex, 20 total) to be granted GM-ADV. Anything less than a perfect
-// 20/20 falls back to grading just the Basic Rules portion as a normal PC
+// GM track requires a perfect score across all THREE sections (10 Player
+// Handbook + 10 GM Codex + 10 Lobby Features, 30 total) to be granted GM-ADV.
+// Anything less than a perfect 30/30 falls back to grading just the Player
+// Handbook portion as a normal PC
 // attempt, rather than a blanket fail.
-function calcSorcRole(basicRulesScore: number, gmTrack: boolean, gmCodexScore?: number): string {
+function calcSorcRole(basicRulesScore: number, gmTrack: boolean, gmCodexScore?: number, lobbyScore?: number): string {
   if (gmTrack) {
-    if (basicRulesScore === 10 && gmCodexScore === 10) return 'GM-ADV';
+    if (basicRulesScore === 10 && gmCodexScore === 10 && lobbyScore === 10) return 'GM-ADV';
     return calcPcRole(basicRulesScore);
   }
   return calcPcRole(basicRulesScore);
@@ -1852,6 +1879,18 @@ function shuffle<T>(arr: T[]): T[] {
   return out;
 }
 
+function rulesHrefForQuestion(q: any): string | null {
+  if (q.rulesHref) return q.rulesHref;
+  const pageHref: Record<number, string> = {
+    1: '/content/essentia_core/rules_statistics.html#formulas-reference',
+    2: '/content/essentia_core/rules_character-creation.html#character-creation',
+    3: '/content/essentia_core/rules_playable-classes.html#playable-classes',
+    4: '/content/essentia_core/rules_currency.html#currency-system',
+    5: '/content/essentia_core/rules_conditions.html#active-conditions'
+  };
+  return pageHref[q.page] || null;
+}
+
 app.get('/api/assess/questions', authMiddleware, async (c) => {
   const gmTrack = c.req.query('gm_track') === '1';
   const basicPool = shuffle(ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i, section: 'basic' })));
@@ -1859,10 +1898,10 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
 
   let questions = basicQuestions;
   if (gmTrack) {
-    // GM Codex ids are offset by 1000 so they never collide with the Basic
-    // Rules 0-based indices once both sections are combined for grading.
+    const playerHandbook = shuffle(GM_PLAYER_HANDBOOK_QUESTIONS.map((q, i) => ({ ...q, id: 2000 + i, section: 'player_handbook' })));
     const codexPool = shuffle(GM_CODEX_QUESTIONS.map((q, i) => ({ ...q, id: 1000 + i, section: 'gm_codex' })));
-    questions = basicQuestions.concat(codexPool.slice(0, 10));
+    const lobbyFeatures = shuffle(GM_LOBBY_QUESTIONS.map((q, i) => ({ ...q, id: 3000 + i, section: 'lobby_features' })));
+    questions = playerHandbook.concat(codexPool.slice(0, 10), lobbyFeatures);
   }
 
   const out = questions.map(q => ({
@@ -1870,7 +1909,8 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
     q: q.q,
     options: q.options,
     page: q.page,
-    section: q.section
+    section: q.section,
+    rulesHref: rulesHrefForQuestion(q)
   }));
   /* Never cache: every request must return a freshly shuffled set of questions */
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
@@ -1946,19 +1986,22 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
      rate limit above (5 an hour), not by a one-shot gate, and community points
      are unaffected either way - assessment_rewarded is claimed once, so a
      retake re-grades without paying out again. */
-  await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
-
   const { answers, gm_track } = await c.req.json() as any;
-  const expectedCount = gm_track ? 20 : 10;
+  const expectedCount = gm_track ? 30 : 10;
   if (!Array.isArray(answers) || answers.length !== expectedCount) {
     return c.json({ error: `Must answer all ${expectedCount} questions.` }, 400);
   }
+  // Replace the standing assessment only after the new submission has passed
+  // shape validation. Choosing reassessment alone does not erase the user's
+  // current role; the role changes only when this new result is saved below.
+  await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
 
-  // GM track answers span both pools: Basic Rules ids are 0-based (< 1000),
-  // GM Codex ids are offset by 1000 (see /api/assess/questions). Scored
+  // GM track answers span three pools: Player Handbook ids start at 2000,
+  // GM Codex ids at 1000, and Lobby Feature ids at 3000. They are scored
   // separately so a GM attempt is graded per-section, not just combined.
   let basicScore = 0;
   let codexScore = 0;
+  let lobbyScore = 0;
   // Review data for the result screen's wrong-answer breakdown (see
   // renderWrongReview in assess.html). Basic Rules is an 84-question pool
   // with only 10 drawn per attempt, so handing back the correct answer for
@@ -1972,7 +2015,19 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
     const qId = typeof entry === 'object' ? entry.id : null;
     const chosen = typeof entry === 'object' ? entry.answer : entry;
     if (qId === null) continue;
-    if (qId >= 1000) {
+    if (qId >= 3000) {
+      const lobbyId = qId - 3000;
+      if (lobbyId >= 0 && lobbyId < GM_LOBBY_QUESTIONS.length) {
+        if (chosen === GM_LOBBY_QUESTIONS[lobbyId].answer) lobbyScore++;
+        else wrong.push({ id: qId });
+      }
+    } else if (qId >= 2000) {
+      const handbookId = qId - 2000;
+      if (handbookId >= 0 && handbookId < GM_PLAYER_HANDBOOK_QUESTIONS.length) {
+        if (chosen === GM_PLAYER_HANDBOOK_QUESTIONS[handbookId].answer) basicScore++;
+        else wrong.push({ id: qId });
+      }
+    } else if (qId >= 1000) {
       const codexId = qId - 1000;
       if (codexId >= 0 && codexId < GM_CODEX_QUESTIONS.length) {
         if (chosen === GM_CODEX_QUESTIONS[codexId].answer) codexScore++;
@@ -1985,8 +2040,8 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
     }
   }
 
-  const role = calcSorcRole(basicScore, !!gm_track, gm_track ? codexScore : undefined);
-  const score = gm_track ? basicScore + codexScore : basicScore;
+  const role = calcSorcRole(basicScore, !!gm_track, gm_track ? codexScore : undefined, gm_track ? lobbyScore : undefined);
+  const score = gm_track ? basicScore + codexScore + lobbyScore : basicScore;
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
@@ -2003,7 +2058,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
         ).bind(now, user.id).run();
       }
     } catch(_) {}
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role: 'FAIL', passed: false, message: 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.', wrong });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, lobby_score: gm_track ? lobbyScore : undefined, role: 'FAIL', passed: false, message: 'Score too low - you have been downgraded to Civilian. Study the Player Handbook and reassess to regain lobby access.', wrong });
   }
 
   try {
@@ -2052,7 +2107,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
       ).bind(now, user.id).run();
     }
 
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: awarded, wrong });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, lobby_score: gm_track ? lobbyScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: awarded, wrong });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }

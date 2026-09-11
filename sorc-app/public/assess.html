@@ -9,6 +9,8 @@
     .assess-wrap { max-width: 680px; margin: 0 auto; padding: 2rem 1rem 4rem; }
     .assess-wrap h1 { color: #c93f35; margin-bottom: 0.25rem; font-size: 1.6rem; }
     .assess-sub { color: #666; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .q-section { margin: 2rem 0 0.75rem; color: #b9aa00; font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .q-section:first-of-type { margin-top: 1.25rem; }
     .role-track { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
     .track-btn { flex: 1; padding: 0.9rem; border-radius: 10px; border: 2px solid #2a2a2a; background: #1a1a1a;
       color: #888; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.2s; text-align: center; }
@@ -19,6 +21,9 @@
     .q-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
     .q-num { color: #555; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
     .q-text { color: #e0cfc0; font-size: 0.97rem; margin-bottom: 1rem; line-height: 1.5; }
+    .rules-link { display: inline-block; margin-top: 0.75rem; font-size: 0.78rem; color: #777; text-decoration: none; letter-spacing: 0.05em; }
+    .rules-link:hover { color: #b9aa00; text-decoration: underline; }
+    .return-note { margin: 0 0 1rem; color: #777; font-size: 0.82rem; }
     .q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     @media (max-width: 480px) { .q-options { grid-template-columns: 1fr; } }
     .opt-btn { padding: 0.65rem 0.9rem; background: #111; border: 1.5px solid #2a2a2a; border-radius: 8px;
@@ -83,7 +88,7 @@
 
     <div class="assess-wrap">
       <h1>Role Assessment</h1>
-      <p class="assess-sub">Answer 10 questions drawn from the SORC Basic Rules to unlock lobby access. Score 6–7 for PC Beginner, 8 for PC Intermediate, 9–10 for PC Advanced. GMs must score 9 or higher.</p>
+      <p class="assess-sub">Player assessment: 10 Player Handbook questions. GM assessment: 30 questions — 10 Player Handbook, 10 GM Codex, and 10 Lobby Features. Use each See Rules link for the exact rule section; your browser will return you to that same question.</p>
       <div id="assessApp"><p style="color:#555;">Loading...</p></div>
     </div>
 
@@ -105,6 +110,9 @@
     var gmTrack = false;
     var selectedAnswers = {};
     var questions = [];
+    var loadedTrack = null;
+
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
     function roleLabel(r) {
       switch(r) {
@@ -134,6 +142,7 @@
         var res = await fetch(API_URL + '/api/assess', { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
         if (data.assessment) {
+          gmTrack = !!data.assessment.gm_track;
           try {
             var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
             saved.sorc_role = data.assessment.role_granted;
@@ -152,13 +161,16 @@
       }
     }
 
-    async function loadQuiz() {
+    async function loadQuiz(forGM) {
+      forGM = !!forGM;
       var app = document.getElementById('assessApp');
       app.innerHTML = '<p style="color:#555;">Loading questions...</p>';
       try {
-        var res = await fetch(API_URL + '/api/assess/questions', { headers: { 'X-Auth-Key': currentUser.authKey } });
+        var res = await fetch(API_URL + '/api/assess/questions?gm_track=' + (forGM ? '1' : '0'), { headers: { 'X-Auth-Key': currentUser.authKey } });
         var data = await res.json();
         questions = data.questions || [];
+        loadedTrack = !!forGM;
+        selectedAnswers = {};
         renderQuiz();
       } catch(e) {
         app.innerHTML = '<p style="color:#c93f35;">Could not load questions.</p>';
@@ -167,8 +179,17 @@
 
     function renderQuiz() {
       var app = document.getElementById('assessApp');
+      var lastSection = '';
       var qHtml = questions.map(function(q, idx) {
-        return '<div class="q-card" id="qcard-' + q.id + '">' +
+        var sectionName = q.section === 'player_handbook' || q.section === 'basic'
+          ? 'Player Handbook'
+          : q.section === 'gm_codex' ? 'GM Codex' : 'Lobby Features';
+        var sectionHeader = sectionName !== lastSection
+          ? '<h2 class="q-section">' + sectionName + '</h2>'
+          : '';
+        lastSection = sectionName;
+        var rulesHref = q.rulesHref || '/content/essentia_core/rules-index.html';
+        return sectionHeader + '<div class="q-card" id="qcard-' + q.id + '">' +
           '<div class="q-num">Question ' + (idx + 1) + ' of ' + questions.length + '</div>' +
           '<div class="q-text">' + esc(q.q) + '</div>' +
           '<div class="q-options">' +
@@ -177,9 +198,7 @@
                 '<strong>' + ['A','B','C','D'][idx] + '.</strong> ' + esc(opt) + '</button>';
             }).join('') +
           '</div>' +
-          '<div style="margin-top:0.75rem;text-align:right;">' +
-            '<a href="/content/essentia_core/essentia_core_' + q.page + '.html" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">Read Rules Pg. ' + q.page + '</a>' +
-          '</div>' +
+          '<a class="rules-link" href="' + esc(rulesHref) + '" onclick="rememberQuestion(' + q.id + ')">See Rules for this question ↗</a>' +
         '</div>';
       }).join('');
 
@@ -188,22 +207,23 @@
           '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">Player Character (PC)</button>' +
           '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">Game Master (GM)</button>' +
         '</div>' +
-        '<p class="track-note" id="trackNote">Choose your track before answering - it locks in on your first answer and cannot be changed.</p>' +
+           '<p class="track-note" id="trackNote">Choose your track before answering - it locks in on your first answer and cannot be changed.</p>' +
+           '<p class="return-note">See Rules opens the exact answer section. Use your browser Back button to return to this question.</p>' +
         qHtml +
         '<div class="submit-row">' +
           '<button class="submit-btn" id="submitBtn" onclick="submitAssessment()" disabled>Submit Assessment</button>' +
           '<span class="assess-msg" id="assessMsg"></span>' +
         '</div>';
 
-      setTrack(false);
+      updateTrackUI();
+      restoreQuestionPosition();
     }
 
-    function setTrack(isGM) {
-      gmTrack = isGM;
-      document.getElementById('trackPC').classList.toggle('active', !isGM);
-      document.getElementById('trackGM').classList.toggle('active', isGM);
-      document.getElementById('trackNote').textContent = isGM
-        ? 'GM track selected. You must score 9 or higher to qualify as GM-ADV.'
+    function updateTrackUI() {
+      document.getElementById('trackPC').classList.toggle('active', !gmTrack);
+      document.getElementById('trackGM').classList.toggle('active', gmTrack);
+      document.getElementById('trackNote').textContent = gmTrack
+        ? 'GM track selected. Answer all 30 questions: 10 Player Handbook, 10 GM Codex, and 10 Lobby Features. A perfect 30/30 grants GM-ADV.'
         : 'PC track selected. Score 6+ to pass and receive a PC role.';
       questions.forEach(function(q) {
         var sel = selectedAnswers[q.id];
@@ -214,13 +234,41 @@
               btn.classList.remove('selected', 'gm-track');
               if (i === sel) {
                 btn.classList.add('selected');
-                if (isGM) btn.classList.add('gm-track');
+                if (gmTrack) btn.classList.add('gm-track');
               }
             }
           }
         }
       });
     }
+
+    function setTrack(isGM) {
+      if (Object.keys(selectedAnswers).length > 0) return;
+      gmTrack = isGM;
+      updateTrackUI();
+      if (loadedTrack !== isGM) loadQuiz(isGM);
+    }
+
+    function rememberQuestion(qId) {
+      sessionStorage.setItem('assessment-return-question', 'qcard-' + qId);
+      history.replaceState(null, '', '#qcard-' + qId);
+    }
+
+    function restoreQuestionPosition() {
+      var targetId = location.hash && location.hash.indexOf('#qcard-') === 0
+        ? location.hash.substring(1)
+        : sessionStorage.getItem('assessment-return-question');
+      if (!targetId) return;
+      setTimeout(function() {
+        var target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ block: 'center', behavior: 'auto' });
+          sessionStorage.removeItem('assessment-return-question');
+        }
+      }, 50);
+    }
+
+    window.addEventListener('pageshow', restoreQuestionPosition);
 
     function selectAnswer(qId, optIdx) {
       selectedAnswers[qId] = optIdx;
@@ -275,7 +323,14 @@
             saved.role = data.site_role || saved.role;
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
-          showResult({ score: data.score, role_granted: data.role, gm_track: gmTrack ? 1 : 0 }, false, false);
+          showResult({
+            score: data.score,
+            role_granted: data.role,
+            gm_track: gmTrack ? 1 : 0,
+            basic_score: data.basic_score,
+            codex_score: data.codex_score,
+            lobby_score: data.lobby_score
+          }, false, false);
         } else if (data.role === 'FAIL') {
           /* Downgraded to Civilian - update local cache and reload quiz for retry */
           try {
@@ -285,7 +340,7 @@
             localStorage.setItem('sorc_user', JSON.stringify(saved));
           } catch(e) {}
           msgEl.style.color = '#c0392b';
-          msgEl.textContent = data.message || 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess.';
+          msgEl.textContent = data.message || 'Score too low - you have been downgraded to Civilian. Study the Player Handbook and reassess.';
           submitBtn.disabled = false;
         } else {
           msgEl.textContent = data.error || 'Submission failed.';
@@ -302,17 +357,15 @@
       var role = assessment.role_granted;
       var score = assessment.score;
       var isGM = role && role.startsWith('GM');
+      var totalQuestions = assessment.gm_track ? 30 : 10;
 
       var qaHtml = '';
-      if (questions.length > 0) {
+      if (assessment.gm_track && assessment.basic_score !== undefined) {
         qaHtml = '<div class="scroll-qa" style="margin-bottom:1.5rem;">' +
-          '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Assessment Q&A</p>' +
-          questions.map(function(q, i) {
-            return '<div class="scroll-qa-item">' +
-              '<div class="scroll-qa-q">Q' + (i+1) + ': ' + esc(q.q) + '</div>' +
-              '<div class="scroll-qa-a">Answer: ' + esc(q.options[ANSWER_KEY[i]]) + '</div>' +
-            '</div>';
-          }).join('') +
+          '<p style="color:#555;font-size:0.78rem;margin:0 0 0.5rem;">Section scores</p>' +
+          '<div class="scroll-qa-item"><span class="scroll-qa-q">Player Handbook</span> <span class="scroll-qa-a">' + assessment.basic_score + '/10</span></div>' +
+          '<div class="scroll-qa-item"><span class="scroll-qa-q">GM Codex</span> <span class="scroll-qa-a">' + assessment.codex_score + '/10</span></div>' +
+          '<div class="scroll-qa-item"><span class="scroll-qa-q">Lobby Features</span> <span class="scroll-qa-a">' + assessment.lobby_score + '/10</span></div>' +
         '</div>';
       }
 
@@ -328,7 +381,7 @@
           expiryBanner +
           '<h2>' + (existing ? 'Your Current Role' : 'Assessment Complete') + '</h2>' +
           '<div class="result-role" style="color:' + roleColor(role) + ';">' + roleLabel(role) + '</div>' +
-          '<div class="result-score">' + score + '/10 correct</div>' +
+           '<div class="result-score">' + score + '/' + totalQuestions + ' correct</div>' +
           gmNote + pcNote +
           '<div class="result-links">' +
             (expired ? '' : '<a href="lobbies.html" class="btn-go">Enter Lobbies</a>') +
@@ -355,13 +408,9 @@
       }
       btn.dataset.confirm = '';
       try {
-        await fetch(API_URL + '/api/assess', {
-          method: 'DELETE',
-          headers: { 'X-Auth-Key': currentUser.authKey }
-        });
         selectedAnswers = {};
         questions = [];
-        loadQuiz();
+        loadQuiz(gmTrack);
       } catch(e) {
         btn.textContent = 'Reassess';
       }
