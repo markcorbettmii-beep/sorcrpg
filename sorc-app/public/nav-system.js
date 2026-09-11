@@ -182,8 +182,11 @@ class SORCNavigation {
             <a class="sorc-sidebar-profile-card" href="${pathToRoot}content/auth/signin.html">
               <span class="sorc-sidebar-profile-avatar sorc-visitor-avatar">W</span>
               <span class="sorc-sidebar-profile-copy">
-                <strong class="sorc-sidebar-profile-name">Sign in</strong>
-                <small class="sorc-sidebar-profile-role">Guest</small>
+                <span class="sorc-sidebar-profile-identity">
+                  <strong class="sorc-sidebar-profile-name">Sign in</strong>
+                  <small class="sorc-sidebar-profile-role">Guest</small>
+                  <small class="sorc-sidebar-profile-membership" hidden></small>
+                </span>
               </span>
               <span class="sorc-sidebar-profile-arrow" aria-hidden="true">›</span>
             </a>
@@ -362,11 +365,12 @@ class SORCNavigation {
     const displayName = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Sign in';
-    const role = isSignedIn ? (user.role || 'CIVILIAN') : 'Guest';
+    const role = isSignedIn ? this.getEffectiveRole(user) : 'Guest';
     const card = document.querySelector('.sorc-sidebar-profile-card');
     const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
     const name = document.querySelector('.sorc-sidebar-profile-name');
     const roleLabel = document.querySelector('.sorc-sidebar-profile-role');
+    const membershipLabel = document.querySelector('.sorc-sidebar-profile-membership');
     const adminLink = document.querySelector('.sorc-sidebar-admin-link');
     const signout = document.querySelector('.sorc-sidebar-signout');
     const floatingLink = document.querySelector('.sorc-floating-profile-link');
@@ -388,6 +392,11 @@ class SORCNavigation {
     }
     name.textContent = displayName;
     roleLabel.textContent = role;
+    if (membershipLabel) {
+      const tier = isSignedIn ? this.getMembershipLabel(user) : '';
+      membershipLabel.textContent = tier.toUpperCase();
+      membershipLabel.hidden = !isSignedIn;
+    }
     if (membershipBadge && membershipTier) {
       const tier = isSignedIn ? this.getMembershipLabel(user) : 'Guest';
       membershipTier.textContent = tier.replace(/\s+Member$/i, '');
@@ -439,6 +448,14 @@ class SORCNavigation {
       || user.box_set_redeemed === true
       || user.isPro === true;
     return isPro ? 'Pro' : 'Basic';
+  }
+
+  getEffectiveRole(user) {
+    const storedRole = String(user.role || '').toUpperCase();
+    const email = String(user.email || '').trim().toLowerCase();
+    if (storedRole === 'OWNER' || email === 'corbett@sorcrpg.com') return 'OWNER';
+    if (storedRole === 'ADMIN' || email === 'markcorbett.mii@gmail.com') return 'ADMIN';
+    return storedRole || 'CIVILIAN';
   }
 
   refreshAuthenticatedUser() {
