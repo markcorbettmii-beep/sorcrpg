@@ -54,7 +54,11 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 // storage, including the Lawful/Evil theme selection.
 app.use('*', async (c, next) => {
   const url = new URL(c.req.url);
-  if (url.hostname === 'www.sorcrpg.com') {
+  if (
+    url.hostname === 'www.sorcrpg.com' ||
+    url.hostname === 'slayersofringsncrowns.com' ||
+    url.hostname === 'www.slayersofringsncrowns.com'
+  ) {
     url.hostname = 'sorcrpg.com';
     return c.redirect(url.toString(), 301);
   }
