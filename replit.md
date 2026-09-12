@@ -17,3 +17,7 @@ Active rules must use this canonical list and wording:
 Maintenance is daily and player-controlled. Per long rest, the daily fee is `Item Value × 0.05 Gold` for each selected item. The Player chooses which items to include in daily maintenance or chooses to buy and replenish them manually; no item is charged automatically. Repair fixes the Condition and honestly worn Armaments; a Broken Armament must be Reforged. Reforging rebuilds a broken piece from its own materials and brings it back out of the boneyard. Salvaging destroys the Armament for a random part of its materials.
 
 Do not reintroduce alternate Enhancement names, the old one-line Resonating rule, the old Enhancing & Modification Armaments list, weekly `× 7 days` Armament Maintenance wording, or automatic maintenance charges into active rules. Archives remain reference-only.
+
+## URL host convention
+
+Use the `www.sorcrpg.com` hostname for Evil Mode links so the mode is visible in the URL. Use the apex `sorcrpg.com` hostname for the other canonical links.
