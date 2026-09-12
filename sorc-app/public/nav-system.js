@@ -291,20 +291,6 @@ class SORCNavigation {
                 <p class="sorc-nav-section-description">Learn the rules that guide characters, items, and play.</p>
                 <ul class="sorc-nav-section-menu" id="rules-menu">
                   <li><a href="${pathToRoot}content/essentia_core/rules-index.html">Rules Index</a></li>
-                  <li><a href="${pathToRoot}content/essentia_core/rules_in-the-box.html#in-the-box">In the Box · Sheets &amp; Booklets</a></li>
-                  <li><a href="${pathToRoot}content/essentia_core/rules_sorc-cards.html#sorc-cards">SORC Cards · Tracking &amp; Recharge</a></li>
-                  ${RULES_CHAPTERS.map((ch, idx) => `
-                    <li class="sorc-nav-chapter">
-                      <details class="sorc-nav-details">
-                        <summary class="sorc-nav-chapter-title"><a href="${pathToRoot}content/essentia_core/${ch.file}#${ch.subsections[0]?.id || ''}">Ch. ${idx + 1}: ${ch.name}</a></summary>
-                        <ul class="sorc-nav-subsections">
-                          ${ch.subsections.map(sub => `
-                            <li><a href="${pathToRoot}content/essentia_core/${ch.file}#${sub.id}">${sub.name}</a></li>
-                          `).join('')}
-                        </ul>
-                      </details>
-                    </li>
-                  `).join('')}
                 </ul>
               </div>
 
