@@ -50,6 +50,17 @@ interface Variables {
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// Keep one canonical public origin. This also unifies host-scoped browser
+// storage, including the Lawful/Evil theme selection.
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.hostname === 'www.sorcrpg.com') {
+    url.hostname = 'sorcrpg.com';
+    return c.redirect(url.toString(), 301);
+  }
+  await next();
+});
+
 app.use('*', cors({
   origin: ['https://sorcrpg.com', 'https://www.sorcrpg.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
