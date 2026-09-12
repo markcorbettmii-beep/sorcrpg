@@ -14,6 +14,14 @@ const IMG_ARMOR = `${BASE}set-epic-fur-mantle.png`;
 const IMG_HELMET = `${BASE}bear-skn-helmet.png`;
 const IMG_WEAPON_BACK = `${BASE}kaida-great-bow-bck.png`;
 const IMG_WEAPON_FRONT = `${BASE}kaida-btlax-frnt.png`;
+const IMG_SHEET_FRAME = "/images/frame-fem-musc_20260822_235512_0000.png";
+
+// The Editable Character Sheet is 768x1104. This portrait window matches
+// the placement of the existing character/background composition.
+const FINAL_SHEET_SIZE = { width: 768, height: 1104 };
+const SHEET_PORTRAIT = { x: 250, y: 214, width: 264, height: 400 };
+const SHEET_CHARACTER_OFFSET_Y = 72;
+const SHEET_HAIR_OPACITY = 1;
 
 // ONLY MUSCULAR BODY TYPES
 const bodyOptions = [
@@ -56,9 +64,9 @@ const hairOptions = [
 
 let selected = {
   body: 2,
-  face: 0,
+  face: pickFirstEnabledFace("pale"),
   facePaint: 0,
-  hair: 0,
+  hair: -1,
   armor: false,
   helmet: false,
   weapon: false
@@ -445,6 +453,24 @@ function resizeCanvasAndRender() {
   }
 }
 
+function resizeFinalCanvasForViewport() {
+  const canvas = document.getElementById("finalCanvas");
+  if (!canvas) return;
+
+  canvas.width = FINAL_SHEET_SIZE.width;
+  canvas.height = FINAL_SHEET_SIZE.height;
+
+  const displayWidth = Math.min(window.innerWidth * 0.96, FINAL_SHEET_SIZE.width);
+  const displayHeight = displayWidth * FINAL_SHEET_SIZE.height / FINAL_SHEET_SIZE.width;
+  canvas.style.width = Math.round(displayWidth) + "px";
+  canvas.style.height = Math.round(displayHeight) + "px";
+
+  const page3 = document.getElementById("page3");
+  if (page3 && page3.classList.contains("active")) {
+    renderFinalCharacter();
+  }
+}
+
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   if (!canvas) return;
@@ -770,8 +796,10 @@ function renderFinalCharacter() {
     layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
   }
 
+  const frameLayer = { src: IMG_SHEET_FRAME, layer: "sheet_frame" };
+
   Promise.all(
-    layers.map(opt =>
+    [...layers, frameLayer].map(opt =>
       new Promise(resolve => {
         if (!opt || !opt.src) return resolve(null);
         const im = new window.Image();
@@ -785,9 +813,55 @@ function renderFinalCharacter() {
     )
   ).then(imgs => {
     if (gen !== finalRenderGen) return;
-    imgs.forEach(im => {
-      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#f5f5f0";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const frame = imgs[imgs.length - 1];
+    const background = imgs[0];
+
+    if (background) {
+      ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+    }
+
+    if (frame) ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(
+      SHEET_PORTRAIT.x,
+      SHEET_PORTRAIT.y,
+      SHEET_PORTRAIT.width,
+      SHEET_PORTRAIT.height
+    );
+    ctx.clip();
+
+    // The frame contains a sample portrait. Paint the same full-canvas
+    // background back through the portrait window before adding selections.
+    if (background) {
+      ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+    }
+
+    layers.slice(1).forEach((layer, index) => {
+      const imageIndex = index + 1;
+      const im = imgs[imageIndex];
+      if (im) {
+        const y = SHEET_PORTRAIT.y + (
+          layer.layer !== "bg" ? SHEET_CHARACTER_OFFSET_Y : 0
+        );
+        ctx.globalAlpha = layer.layer === "hair" ? SHEET_HAIR_OPACITY : 1;
+        ctx.drawImage(
+          im,
+          SHEET_PORTRAIT.x,
+          y,
+          SHEET_PORTRAIT.width,
+          SHEET_PORTRAIT.height
+        );
+      }
     });
+
+    ctx.globalAlpha = 1;
+    ctx.restore();
   });
 }
 
@@ -920,11 +994,7 @@ function showPage(n) {
     setTimeout(function() {
       const finalCanvas = document.getElementById("finalCanvas");
       if (finalCanvas) {
-        const { width, height } = getCanvasSize();
-        finalCanvas.width = width;
-        finalCanvas.height = height;
-        finalCanvas.style.width = width + "px";
-        finalCanvas.style.height = height + "px";
+        resizeFinalCanvasForViewport();
         renderFinalCharacter();
       }
     }, 50);
@@ -955,7 +1025,9 @@ window.addEventListener("popstate", function(e) {
 });
 
 window.addEventListener("resize", resizeCanvasAndRender);
+window.addEventListener("resize", resizeFinalCanvasForViewport);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
+window.addEventListener("orientationchange", resizeFinalCanvasForViewport);
 
 const canvasEl = document.getElementById("charCanvas");
 let holdTimer = null;
