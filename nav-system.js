@@ -119,11 +119,10 @@ class SORCNavigation {
     const pathToRoot = this.getPathToRoot();
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const isHomePage = currentPath === '/' || currentPath === '/index.html';
-    const hasDedicatedPageBanner = !!document.querySelector('[data-sorc-page-banner]');
-    const suppressGlobalBrandBanner = document.body.hasAttribute('data-sorc-no-global-banner');
-    const showGlobalBrandBanner = !isHomePage && !hasDedicatedPageBanner && !suppressGlobalBrandBanner;
-    document.body.classList.toggle('sorc-global-banner-active', showGlobalBrandBanner);
-    const brandBannerHTML = showGlobalBrandBanner ? `
+    const hasPageBanner = !!document.querySelector(
+      '.header-container .sorc-letters-img, .header-container .sorc-letters, .header-container img[src*="sorc" i], [data-sorc-page-banner]'
+    );
+    const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
       <div class="sorc-global-brand-banner" data-sorc-page-banner>
         <a href="${pathToRoot}index.html" class="sorc-global-brand-link" aria-label="SORC home">
           <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
@@ -184,8 +183,8 @@ class SORCNavigation {
               <span class="sorc-sidebar-profile-avatar sorc-visitor-avatar">W</span>
               <span class="sorc-sidebar-profile-copy">
                 <span class="sorc-sidebar-profile-identity">
-                  <strong class="sorc-sidebar-profile-name">Sign into Role</strong>
-                  <small class="sorc-sidebar-profile-role"></small>
+                  <strong class="sorc-sidebar-profile-name">Sign in</strong>
+                  <small class="sorc-sidebar-profile-role">Guest</small>
                 </span>
                 <small class="sorc-sidebar-profile-membership" hidden></small>
               </span>
@@ -291,6 +290,20 @@ class SORCNavigation {
                 <p class="sorc-nav-section-description">Learn the rules that guide characters, items, and play.</p>
                 <ul class="sorc-nav-section-menu" id="rules-menu">
                   <li><a href="${pathToRoot}content/essentia_core/rules-index.html">Rules Index</a></li>
+                  <li><a href="${pathToRoot}content/essentia_core/rules_in-the-box.html#in-the-box">In the Box · Sheets &amp; Booklets</a></li>
+                  <li><a href="${pathToRoot}content/essentia_core/rules_sorc-cards.html#sorc-cards">SORC Cards · Tracking &amp; Recharge</a></li>
+                  ${RULES_CHAPTERS.map((ch, idx) => `
+                    <li class="sorc-nav-chapter">
+                      <details class="sorc-nav-details">
+                        <summary class="sorc-nav-chapter-title"><a href="${pathToRoot}content/essentia_core/${ch.file}#${ch.subsections[0]?.id || ''}">Ch. ${idx + 1}: ${ch.name}</a></summary>
+                        <ul class="sorc-nav-subsections">
+                          ${ch.subsections.map(sub => `
+                            <li><a href="${pathToRoot}content/essentia_core/${ch.file}#${sub.id}">${sub.name}</a></li>
+                          `).join('')}
+                        </ul>
+                      </details>
+                    </li>
+                  `).join('')}
                 </ul>
               </div>
 
@@ -346,8 +359,7 @@ class SORCNavigation {
     const displayName = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Sign in';
-    const effectiveRole = isSignedIn ? this.getEffectiveRole(user) : 'WANDERER';
-    const role = isSignedIn ? this.getRoleLabel(user) : 'Wanderer';
+    const role = isSignedIn ? this.getEffectiveRole(user) : 'Guest';
     const card = document.querySelector('.sorc-sidebar-profile-card');
     const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
     const name = document.querySelector('.sorc-sidebar-profile-name');
@@ -373,10 +385,8 @@ class SORCNavigation {
     roleLabel.textContent = role;
     if (membershipLabel) {
       const tier = isSignedIn ? this.getMembershipLabel(user) : '';
-      membershipLabel.textContent = tier.toUpperCase();
+      membershipLabel.textContent = tier ? `${tier.toUpperCase()} ⭐` : '';
       membershipLabel.hidden = !isSignedIn;
-      membershipLabel.classList.toggle('basic', tier === 'Basic');
-      membershipLabel.classList.toggle('pro', tier === 'Pro');
     }
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
@@ -399,7 +409,7 @@ class SORCNavigation {
       if (floatingAvatar) makeImage(floatingAvatar);
     }
 
-    const canAdmin = effectiveRole === 'OWNER' || effectiveRole === 'ADMIN';
+    const canAdmin = role === 'OWNER' || role === 'ADMIN';
     if (adminLink) adminLink.hidden = !canAdmin;
     if (signout) {
       signout.hidden = !isSignedIn;
@@ -429,29 +439,7 @@ class SORCNavigation {
     const email = String(user.email || '').trim().toLowerCase();
     if (storedRole === 'OWNER' || email === 'corbett@sorcrpg.com') return 'OWNER';
     if (storedRole === 'ADMIN' || email === 'markcorbett.mii@gmail.com') return 'ADMIN';
-    const roleAliases = {
-      CIVILIAN: 'CIVILIAN',
-      PLAYER: 'PLAYER',
-      MASTER: 'GAME_MASTER',
-      GM: 'GAME_MASTER',
-      'GAME MASTER': 'GAME_MASTER',
-      GAME_MASTER: 'GAME_MASTER',
-      ADMIN: 'ADMIN',
-      OWNER: 'OWNER',
-    };
-    return roleAliases[storedRole] || 'CIVILIAN';
-  }
-
-  getRoleLabel(user) {
-    const labels = {
-      CIVILIAN: 'Civilian',
-      PLAYER: 'Player',
-      GAME_MASTER: 'Game Master',
-      ADMIN: 'Admin',
-      OWNER: 'Owner',
-      WANDERER: 'Wanderer',
-    };
-    return labels[this.getEffectiveRole(user)] || 'Civilian';
+    return storedRole || 'CIVILIAN';
   }
 
   refreshAuthenticatedUser() {

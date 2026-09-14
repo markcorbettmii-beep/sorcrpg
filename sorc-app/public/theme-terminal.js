@@ -977,7 +977,7 @@
     }, 12, 35);
   }
 
-  /* ── TRANSPORTER: Star Trek shimmer ─────────────────── */
+  /* ── LIGHT-BAND SHIMMER ─────────────────────────────── */
   function scheduleTransporter() {
     sched(function () {
       if (!audioCtx || !masterGain) return;

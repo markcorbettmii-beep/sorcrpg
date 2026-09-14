@@ -3,7 +3,7 @@
    Four-movement soundscape cycling morning to night:
    1. Whimsy Woods    - warm, whimsical, morning
    2. Crystalline Woods - ethereal, crystalline, midday
-   3. Northern Vale   - Nordic, melancholic, dusk
+   3. Northern Vale   - melancholic, dusk
    4. Darkwood        - tense, sparse, night dread
    3 min each, 30s crossfade, loops forever.
    Exposes: window.veilwoodTheme = { start, stop }
@@ -580,7 +580,7 @@
 
   /* ════════════════════════════════════════════════════════════
      MOVEMENT 4 - NORTHERN VALE (DUSK)
-     D minor / Dorian. Low strings, lute plucks, Nordic drone.
+     D minor / Dorian. Low strings, plucked tones, open drone.
      Wind, ravens, rustling. Melancholic, brooding, earthy.
   ════════════════════════════════════════════════════════════ */
   var D2s=73, A2s=110, D3s=147, F3s=175, G3s=196, A3s=220,
@@ -591,7 +591,7 @@
     var idx = 3;
     movementActive[idx] = true;
 
-    /* Low Nordic drone - open fifth D-A */
+    /* Low open drone - open fifth D-A */
     [D2s, A2s, D3s, A3s].forEach(function (f) {
       [-3, 0, 3].forEach(function (c) {
         var osc = makeOsc('sawtooth', f * Math.pow(2, c / 1200));

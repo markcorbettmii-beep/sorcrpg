@@ -322,7 +322,7 @@ app.post('/api/auth/register', async (c) => {
 // ─────────────────────────────────────────────────────────────────────────────
 app.post('/api/auth/guest', async (c) => {
   if (!guestsEnabled(c.env)) {
-    return c.json({ error: 'Guest access is closed. Please create an account to join lobbies.' }, 403);
+    return c.json({ error: 'Wanderer access is closed. Please create an account to join lobbies.' }, 403);
   }
   try {
     // Ensure guest_counter table exists
@@ -343,7 +343,7 @@ app.post('/api/auth/guest', async (c) => {
     const result = await c.env.sorc_db.prepare('UPDATE guest_counter SET next_guest_number = next_guest_number + 1 WHERE id = 1 RETURNING next_guest_number').first() as any;
     const guestNumber = result.next_guest_number - 1; // Get the old value before increment
 
-    const username = `Guest ${guestNumber}`;
+    const username = `Wanderer ${guestNumber}`;
     const email = `guest-${guestNumber}-${Date.now()}@guest.sorcrpg.local`;
     const authKey = crypto.randomUUID();
     const uuid = crypto.randomUUID();
@@ -355,7 +355,7 @@ app.post('/api/auth/guest', async (c) => {
     const randomPassword = crypto.randomUUID().substring(0, 20);
     const passwordHash = await bcrypt.hash(randomPassword, 12);
 
-    // Guests land as a Beginner Player. The beta skips the assessment gate, so
+    // Wanderers land as a Beginner Player. The beta skips the assessment gate, so
     // both halves of that gate have to be satisfied: sorc_role is what the
     // Lobbies page checks client-side, the assessments row below is what
     // /api/lobbies/join checks server-side. Without both, a guest is bounced
@@ -377,10 +377,10 @@ app.post('/api/auth/guest', async (c) => {
     await recordLastIp(c.env.sorc_db, uuid, c.req.header('CF-Connecting-IP') || '');
 
     const newUser = await c.env.sorc_db.prepare('SELECT id, email, username, display_name, role, sorc_role, community_points, created_at FROM users WHERE id = ?').bind(uuid).first();
-    return c.json({ success: true, user: newUser, authKey, message: 'Guest account created' });
+    return c.json({ success: true, user: newUser, authKey, message: 'Wanderer account created' });
   } catch (error: any) {
-    console.error('Guest account creation failed:', error);
-    return c.json({ error: 'Guest account creation failed', details: error.message }, 500);
+    console.error('Wanderer account creation failed:', error);
+    return c.json({ error: 'Wanderer account creation failed', details: error.message }, 500);
   }
 });
 
@@ -1093,7 +1093,7 @@ app.post('/api/forum/post', authMiddleware, async (c) => {
   // fill one.
   if (isGuestUser(user)) {
     return c.json({
-      error: 'Posting requires a registered account. Guests can read the forums; create an account or sign in to reply.',
+       error: 'Posting requires a registered account. Wanderers can read the forums; create an account or sign in to reply.',
       requires_login: true
     }, 403);
   }
@@ -1171,7 +1171,7 @@ app.post('/api/fellowships/request', authMiddleware, async (c) => {
     const receiver = await c.env.sorc_db.prepare('SELECT id, email, display_name, username FROM users WHERE id = ?').bind(receiverUid).first() as any;
     if (!receiver) return c.json({ error: 'User not found' }, 404);
     if (isGuestUser(receiver)) {
-      return c.json({ error: 'Fellowship requires login. This player is a guest and has no account yet.', requires_login: true }, 403);
+      return c.json({ error: 'Fellowship requires login. This player is a Wanderer and has no account yet.', requires_login: true }, 403);
     }
     const existing = await c.env.sorc_db.prepare(
       `SELECT id FROM fellowships WHERE (sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?)`
@@ -1507,10 +1507,25 @@ function normalizeTier(tier: any): string | null {
   return LOBBY_TIERS.indexOf(t) === -1 ? null : t;
 }
 
+async function isLobbyGmOwner(db: D1Database, lobby: any, user: any): Promise<boolean> {
+  if (isPrivileged(user)) return true;
+  if (!lobby || lobby.creator_uid !== user?.id) return false;
+  const member = await db.prepare(
+    `SELECT lm.sorc_role, u.sorc_role AS live_sorc_role, u.role, u.email
+     FROM lobby_members lm LEFT JOIN users u ON u.id = lm.user_id
+     WHERE lm.lobby_id = ? AND lm.user_id = ?`
+  ).bind(lobby.id, user.id).first() as any;
+  const sorcRole = String(member?.live_sorc_role || member?.sorc_role || user?.sorc_role || '').toUpperCase();
+  return sorcRole.startsWith('GM-')
+    || member?.role === 'MASTER'
+    || isPrivileged({ ...user, role: member?.role || user?.role, email: member?.email || user?.email });
+}
+
 // Added lazily, like the other late columns here, so a live database picks it
 // up without a separate migration step. Existing lobbies read as Beginner.
 async function ensureLobbyTierColumn(db: D1Database) {
   await db.prepare(`ALTER TABLE lobbies ADD COLUMN tier TEXT DEFAULT '${DEFAULT_LOBBY_TIER}'`).run().catch(() => {});
+  await db.prepare(`ALTER TABLE lobbies ADD COLUMN membership_tier TEXT DEFAULT 'BASIC'`).run().catch(() => {});
 }
 
 /* The lead of one lobby at a time - the same rule creation already enforces
@@ -1789,48 +1804,51 @@ const ASSESSMENT_QUESTIONS = [
 
 // GM Codex: the GM-only counterpart to the Basic Rules pool above, drawn from
 // content/gm_essentials/gm_ref_001.html and gm_ref_002.html. IDs are offset by
-// 1000 so they never collide with the other question ids when the three
-// sections are combined into one 30-question GM submission.
+// 1000 so they never collide with ASSESSMENT_QUESTIONS' 0-based indices when
+// both pools are combined into one 20-question GM submission.
 const GM_CODEX_QUESTIONS = [
-  { q: "Per the GM Codex introduction, what actually gates a GM's access to Lobbies?", options: ["Reading the GM Codex itself", "Passing the SORC Assessment", "Owning a physical box set", "An admin invitation"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_001.html#introduction" },
-  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No - Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_001.html#simulated-characters" },
-  { q: "What happens to a Common or Uncommon rank Companion that dies?", options: ["It enters the boneyard for repair", "It can be resurrected once per campaign", "It is permanently lost and never enters the boneyard", "The GM automatically replaces it"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_001.html#companion-tracking" },
-  { q: "At what item Rank does Attunement become required before an armament can be enhanced or Bound?", options: ["Rare and above", "Unique and above", "Heroic and above", "Legendary and above"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_001.html#attunement" },
-  { q: "Per the GM Codex Quick Reference table, what Card Rank is included in a module of Level 18-23?", options: ["Unique", "Heroic", "Elite", "Legendary"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_001.html#quick-reference" },
-  { q: "How many Drawn Ability picks does a character earn per year of age lived?", options: ["One every 2 years", "Exactly one, every year, flat", "One per Growth", "Two per year"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_002.html#drawn-abilities" },
-  { q: "A character who commits to a 20-ability capstone Drawn Ability tree and a 19-ability runner-up tree has spent how many of their 40 lifetime picks?", options: ["20", "30", "39", "40"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_002.html#drawn-abilities" },
-  { q: "How many total Class Ability picks does a character have across their entire career (Ch. Lvl 1 through 30)?", options: ["40", "50", "59", "60"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_002.html#character-level" },
-  { q: "Roughly how much cumulative XP does Ch. Lvl 30 require?", options: ["Roughly 1 million", "Roughly 1.5 million", "Roughly 2.58 million", "Roughly 3 million"], answer: 2, rulesHref: "/content/gm_essentials/gm_ref_002.html#character-level" },
-  { q: "In Attribute Development, how many d6 are rolled and how many of the lowest results are discarded?", options: ["Roll 1d6 six times, discard 1 lowest", "Roll 1d6 nine times, discard the two lowest", "Roll 1d6 seven times, discard none", "Roll 1d6 ten times, discard the three lowest"], answer: 1, rulesHref: "/content/gm_essentials/gm_ref_002.html#attribute-development" },
+  { q: "Per the GM Codex introduction, what actually gates a GM's access to Lobbies?", options: ["Reading the GM Codex itself", "Passing the SORC Assessment", "Owning a physical box set", "An admin invitation"], answer: 1, page: 1 },
+  { q: "Can a GM ever simulate a character's Rank?", options: ["Yes, freely", "Yes, but only up to Uncommon", "No - Rank is only ever earned, no exceptions", "Only for NPCs"], answer: 2, page: 1 },
+  { q: "What happens to a Common or Uncommon rank Companion that dies?", options: ["It enters the boneyard for repair", "It can be resurrected once per campaign", "It is permanently lost and never enters the boneyard", "The GM automatically replaces it"], answer: 2, page: 1 },
+  { q: "At what item Rank does Attunement become required before an armament can be enhanced or Bound?", options: ["Rare and above", "Unique and above", "Heroic and above", "Legendary and above"], answer: 2, page: 1 },
+  { q: "Per the GM Codex Quick Reference table, what Card Rank is included in a module of Level 18-23?", options: ["Unique", "Heroic", "Elite", "Legendary"], answer: 1, page: 1 },
+  { q: "How many Drawn Ability picks does a character earn per year of age lived?", options: ["One every 2 years", "Exactly one, every year, flat", "One per Growth", "Two per year"], answer: 1, page: 2 },
+  { q: "A character who commits to a 20-ability capstone Drawn Ability tree and a 19-ability runner-up tree has spent how many of their 40 lifetime picks?", options: ["20", "30", "39", "40"], answer: 2, page: 2 },
+  { q: "How many total Class Ability picks does a character have across their entire career (Ch. Lvl 1 through 30)?", options: ["40", "50", "59", "60"], answer: 2, page: 2 },
+  { q: "Roughly how much cumulative XP does Ch. Lvl 30 require?", options: ["Roughly 1 million", "Roughly 1.5 million", "Roughly 2.58 million", "Roughly 3 million"], answer: 2, page: 2 },
+  { q: "In Attribute Development, how many d6 are rolled and how many of the lowest results are discarded?", options: ["Roll 1d6 six times, discard 1 lowest", "Roll 1d6 nine times, discard the two lowest", "Roll 1d6 seven times, discard none", "Roll 1d6 ten times, discard the three lowest"], answer: 1, page: 2 },
 ];
 
-const GM_PLAYER_HANDBOOK_QUESTIONS = [
-  { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
-  { q: "What does rolling two 0s on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
-  { q: "What does DIFS stand for in SORC?", options: ["Defense Index Factor Score", "Difficulty Score", "Damage Infliction Scale", "Dice Influence Factor"], answer: 1, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
-  { q: "In SORC, a D100 action roll must do what to the DIFS to succeed?", options: ["Fall below it", "Equal it exactly", "Meet or exceed it", "Exceed it by at least 5"], answer: 2, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
-  { q: "How many Attributes exist in SORC?", options: ["5", "6", "7", "8"], answer: 1, rulesHref: "/content/essentia_core/rules_character-creation.html#traits-tst" },
-  { q: "In SORC, does a Human's culture affect their base Traits and Stats?", options: ["Yes, significantly", "Yes, slightly", "No, every human begins with the same Traits and Stats", "Only in combat"], answer: 2, rulesHref: "/content/essentia_core/rules_playable-races.html#culture" },
-  { q: "How many size categories do SORC races fall into?", options: ["2", "3", "4", "5"], answer: 1, rulesHref: "/content/essentia_core/rules_playable-races.html#race-structure" },
-  { q: "How many Silver coins equal one Gold coin in SORC?", options: ["5", "10", "25", "100"], answer: 1, rulesHref: "/content/essentia_core/rules_currency.html#currency-system" },
-  { q: "How many Abilities are in a single Class Tree?", options: ["20", "25", "30", "40"], answer: 2, rulesHref: "/content/essentia_core/rules_playable-classes.html#playable-classes" },
-  { q: "What roll result counts as a Critical Hit in SORC?", options: ["Natural 1", "Natural 99 only", "96-100", "Any roll of 85+"], answer: 2, rulesHref: "/content/essentia_core/rules_statistics.html#formulas-reference" },
-];
-
-const GM_LOBBY_QUESTIONS = [
-  { q: "Which lobby tier can a Civilian join without an assessment?", options: ["Beginner", "Intermediate", "Advanced", "None"], answer: 0, rulesHref: "/content/features/lobbies.html#tierBar" },
-  { q: "What does an assessment allow a Player or GM to do in the lobby system?", options: ["Skip all lobby rules", "Reach higher lobby tiers according to their rank", "Create private Rooms without a lobby", "Change another user's role"], answer: 1, rulesHref: "/content/features/lobbies.html#tierBar" },
-  { q: "What is the primary purpose of a Lobby?", options: ["A private voice-only session", "Recruiting and party assembly through text chat", "A character-sheet editor", "A replacement for the GM Codex"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "What is launched from a Lobby when the party is ready to play?", options: ["A public forum thread", "A private Campaign Room", "A new assessment", "A store checkout"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "How many potential members can a Lobby support?", options: ["5", "10", "20", "50"], answer: 2, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "What does a private Lobby require from an invited Player?", options: ["A box set shipment", "The Lobby invite code", "An Admin promotion", "A second assessment"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "Who must be present before a private Campaign Room can launch?", options: ["Any Civilian", "A Player with Pro membership", "A Game Master", "An Owner"], answer: 2, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "Can a Civilian host a Lobby?", options: ["Yes, without restrictions", "Yes, but only an Advanced Lobby", "No, Civilians can join Beginner lobbies but cannot host", "Only with an Admin invitation"], answer: 2, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "How long does a role assessment remain valid for higher-tier lobby access?", options: ["7 days", "30 days", "90 days", "Forever"], answer: 1, rulesHref: "/content/features/lobbies.html#how-it-works" },
-  { q: "What happens when a Player or GM tries to enter a lobby above their assessed tier?", options: ["They are admitted automatically", "They are prompted to reassess to reach that tier", "The lobby tier changes to Beginner", "They become Admin"], answer: 1, rulesHref: "/content/features/lobbies.html#tierBar" },
+// GM-only Lobby and Room Tools bank. Ten are drawn for each GM attempt; keeping
+// a larger bank prevents the assessment from becoming a memorised answer key.
+const GM_TOOLS_QUESTIONS = [
+  { q: "Who may create a Basic lobby?", options: ["A Wanderer", "A real Basic member with the required assessment", "Any unassessed visitor", "Only an Owner"], answer: 1, page: 1 },
+  { q: "What does a Pro lobby creator need to provide?", options: ["Every joiner's code", "A valid box set code", "An admin invitation", "A room name only"], answer: 1, page: 1 },
+  { q: "Who may use GM-only lobby tools?", options: ["Any Player", "The selected GM owner", "The first person to join", "Wanderers"], answer: 1, page: 1 },
+  { q: "What is the maximum recruitment size of a lobby?", options: ["5", "10", "20", "30"], answer: 2, page: 1 },
+  { q: "Who chooses the GM owner of a lobby?", options: ["The server automatically", "The lobby creator", "The first GM to join", "The oldest member"], answer: 1, page: 1 },
+  { q: "What is the maximum number of participants in a regular Campaign Room, including its GM?", options: ["5", "10", "20", "Unlimited"], answer: 0, page: 1 },
+  { q: "What is the maximum number in a Raid Room, including its GM?", options: ["5", "8", "10", "20"], answer: 2, page: 1 },
+  { q: "Which room type is Pro-only?", options: ["Regular Campaign Room", "Raid Room", "Lobby Chat", "Ready Check"], answer: 1, page: 1 },
+  { q: "When launching a selected room group, who must be ready?", options: ["Everyone in the lobby", "Only selected participants", "Only Players outside the room", "No one"], answer: 1, page: 1 },
+  { q: "What enters a room when it launches?", options: ["The whole lobby", "The selected room group", "Only the creator", "All online users"], answer: 1, page: 1 },
+  { q: "Can a room launch without a GM?", options: ["Yes, if five Players are ready", "Yes, for Basic lobbies", "No", "Only in a Raid Room"], answer: 2, page: 1 },
+  { q: "Do joiners need to provide a box code?", options: ["Yes, always", "Only Players", "Only GMs", "No"], answer: 3, page: 1 },
+  { q: "What assessment is used to qualify a GM for a lobby?", options: ["The Player track only", "The GM track", "A Wanderer flag", "A box code alone"], answer: 1, page: 1 },
+  { q: "May an Advanced member host a Novice lobby?", options: ["Yes", "No", "Only if Pro", "Only with an invite"], answer: 0, page: 1 },
+  { q: "May an ordinary Player be promoted to GM owner?", options: ["Yes", "No, only a GM may be promoted", "Only in a Raid Room", "Automatically"], answer: 1, page: 1 },
+  { q: "What is the raid module name shown to players?", options: ["Valley of Darkness", "Into Asmodeus’ Lair", "The Veilwood", "Crown of Zailister"], answer: 1, page: 1 },
+  { q: "Wanderers may join which beta lobbies when Wanderer access permits it?", options: ["Advanced only", "Beginner/Novice", "Pro Raid only", "Any private lobby"], answer: 1, page: 1 },
+  { q: "Who can launch a room?", options: ["Any ready member", "Only the GM owner (or privileged bypass)", "The first Player", "A Wanderer"], answer: 1, page: 1 },
+  { q: "What membership tier is stored with lobby creation?", options: ["The creator's Basic or Pro tier", "The joiner's tier", "No tier", "The room's tier only"], answer: 0, page: 1 }
 ];
 
 const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+async function ensureAssessmentTracks(db: D1Database) {
+  for (const col of ['player_score INTEGER', 'player_role TEXT', 'player_taken_at TEXT', 'gm_score INTEGER', 'gm_role TEXT', 'gm_taken_at TEXT']) {
+    await db.prepare(`ALTER TABLE assessments ADD COLUMN ${col}`).run().catch(() => {});
+  }
+}
 
 // PC-track scoring, also used as the fallback grade for a GM-track attempt
 // that doesn't clear the perfect-score GM bar (see calcSorcRole below) - an
@@ -1842,21 +1860,24 @@ function calcPcRole(basicRulesScore: number): string {
   return 'PC-BEG';
 }
 
-// GM track requires a perfect score across all THREE sections (10 Player
-// Handbook + 10 GM Codex + 10 Lobby Features, 30 total) to be granted GM-ADV.
-// Anything less than a perfect 30/30 falls back to grading just the Player
-// Handbook portion as a normal PC
+// GM track requires a perfect score across BOTH sections (10 Basic Rules +
+// 10 GM Codex, 20 total) to be granted GM-ADV. Anything less than a perfect
+// 20/20 falls back to grading just the Basic Rules portion as a normal PC
 // attempt, rather than a blanket fail.
-function calcSorcRole(basicRulesScore: number, gmTrack: boolean, gmCodexScore?: number, lobbyScore?: number): string {
+function calcSorcRole(basicRulesScore: number, gmTrack: boolean, gmCodexScore?: number): string {
   if (gmTrack) {
-    if (basicRulesScore === 10 && gmCodexScore === 10 && lobbyScore === 10) return 'GM-ADV';
-    return calcPcRole(basicRulesScore);
+    const total = basicRulesScore + (gmCodexScore || 0);
+    if (total < 18) return 'FAIL';
+    if (total >= 27) return 'GM-ADV';
+    if (total >= 24) return 'GM-INT';
+    return 'GM-BEG';
   }
   return calcPcRole(basicRulesScore);
 }
 
 app.get('/api/assess', authMiddleware, async (c) => {
   const user = c.get('user') as any;
+  await ensureAssessmentTracks(c.env.sorc_db);
   const result = await c.env.sorc_db.prepare(
     `SELECT * FROM assessments WHERE user_id = ?`
   ).bind(user.id).first() as any;
@@ -1867,7 +1888,7 @@ app.get('/api/assess', authMiddleware, async (c) => {
     expires_at = new Date(takenMs + ASSESSMENT_EXPIRY_MS).toISOString();
     expired = Date.now() > takenMs + ASSESSMENT_EXPIRY_MS;
   }
-  return c.json({ assessment: result || null, expired, expires_at, needs_reassess: !!(user.needs_reassess) });
+  return c.json({ assessment: result || null, player_assessment: result?.player_role ? { score: result.player_score, role_granted: result.player_role, taken_at: result.player_taken_at } : null, gm_assessment: result?.gm_role ? { score: result.gm_score, role_granted: result.gm_role, taken_at: result.gm_taken_at } : null, expired, expires_at, needs_reassess: !!(user.needs_reassess) });
 });
 
 function shuffle<T>(arr: T[]): T[] {
@@ -1879,18 +1900,6 @@ function shuffle<T>(arr: T[]): T[] {
   return out;
 }
 
-function rulesHrefForQuestion(q: any): string | null {
-  if (q.rulesHref) return q.rulesHref;
-  const pageHref: Record<number, string> = {
-    1: '/content/essentia_core/rules_statistics.html#formulas-reference',
-    2: '/content/essentia_core/rules_character-creation.html#character-creation',
-    3: '/content/essentia_core/rules_playable-classes.html#playable-classes',
-    4: '/content/essentia_core/rules_currency.html#currency-system',
-    5: '/content/essentia_core/rules_conditions.html#active-conditions'
-  };
-  return pageHref[q.page] || null;
-}
-
 app.get('/api/assess/questions', authMiddleware, async (c) => {
   const gmTrack = c.req.query('gm_track') === '1';
   const basicPool = shuffle(ASSESSMENT_QUESTIONS.map((q, i) => ({ ...q, id: i, section: 'basic' })));
@@ -1898,10 +1907,11 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
 
   let questions = basicQuestions;
   if (gmTrack) {
-    const playerHandbook = shuffle(GM_PLAYER_HANDBOOK_QUESTIONS.map((q, i) => ({ ...q, id: 2000 + i, section: 'player_handbook' })));
+    // GM Codex ids are offset by 1000 so they never collide with the Basic
+    // Rules 0-based indices once both sections are combined for grading.
     const codexPool = shuffle(GM_CODEX_QUESTIONS.map((q, i) => ({ ...q, id: 1000 + i, section: 'gm_codex' })));
-    const lobbyFeatures = shuffle(GM_LOBBY_QUESTIONS.map((q, i) => ({ ...q, id: 3000 + i, section: 'lobby_features' })));
-    questions = playerHandbook.concat(codexPool.slice(0, 10), lobbyFeatures);
+    const toolsPool = shuffle(GM_TOOLS_QUESTIONS.map((q, i) => ({ ...q, id: 2000 + i, section: 'gm_tools' })));
+    questions = basicQuestions.concat(codexPool, toolsPool.slice(0, 10));
   }
 
   const out = questions.map(q => ({
@@ -1909,8 +1919,7 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
     q: q.q,
     options: q.options,
     page: q.page,
-    section: q.section,
-    rulesHref: rulesHrefForQuestion(q)
+    section: q.section
   }));
   /* Never cache: every request must return a freshly shuffled set of questions */
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
@@ -1986,22 +1995,20 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
      rate limit above (5 an hour), not by a one-shot gate, and community points
      are unaffected either way - assessment_rewarded is claimed once, so a
      retake re-grades without paying out again. */
+  await ensureAssessmentTracks(c.env.sorc_db);
+
   const { answers, gm_track } = await c.req.json() as any;
   const expectedCount = gm_track ? 30 : 10;
   if (!Array.isArray(answers) || answers.length !== expectedCount) {
     return c.json({ error: `Must answer all ${expectedCount} questions.` }, 400);
   }
-  // Replace the standing assessment only after the new submission has passed
-  // shape validation. Choosing reassessment alone does not erase the user's
-  // current role; the role changes only when this new result is saved below.
-  await c.env.sorc_db.prepare(`DELETE FROM assessments WHERE user_id = ?`).bind(user.id).run();
 
-  // GM track answers span three pools: Player Handbook ids start at 2000,
-  // GM Codex ids at 1000, and Lobby Feature ids at 3000. They are scored
+  // GM track answers span both pools: Basic Rules ids are 0-based (< 1000),
+  // GM Codex ids are offset by 1000 (see /api/assess/questions). Scored
   // separately so a GM attempt is graded per-section, not just combined.
   let basicScore = 0;
   let codexScore = 0;
-  let lobbyScore = 0;
+  let toolsScore = 0;
   // Review data for the result screen's wrong-answer breakdown (see
   // renderWrongReview in assess.html). Basic Rules is an 84-question pool
   // with only 10 drawn per attempt, so handing back the correct answer for
@@ -2015,22 +2022,12 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
     const qId = typeof entry === 'object' ? entry.id : null;
     const chosen = typeof entry === 'object' ? entry.answer : entry;
     if (qId === null) continue;
-    if (qId >= 3000) {
-      const lobbyId = qId - 3000;
-      if (lobbyId >= 0 && lobbyId < GM_LOBBY_QUESTIONS.length) {
-        if (chosen === GM_LOBBY_QUESTIONS[lobbyId].answer) lobbyScore++;
-        else wrong.push({ id: qId });
-      }
-    } else if (qId >= 2000) {
-      const handbookId = qId - 2000;
-      if (handbookId >= 0 && handbookId < GM_PLAYER_HANDBOOK_QUESTIONS.length) {
-        if (chosen === GM_PLAYER_HANDBOOK_QUESTIONS[handbookId].answer) basicScore++;
-        else wrong.push({ id: qId });
-      }
-    } else if (qId >= 1000) {
-      const codexId = qId - 1000;
-      if (codexId >= 0 && codexId < GM_CODEX_QUESTIONS.length) {
-        if (chosen === GM_CODEX_QUESTIONS[codexId].answer) codexScore++;
+    if (qId >= 1000) {
+      const isTools = qId >= 2000;
+      const poolId = qId - (isTools ? 2000 : 1000);
+      const pool = isTools ? GM_TOOLS_QUESTIONS : GM_CODEX_QUESTIONS;
+      if (poolId >= 0 && poolId < pool.length) {
+        if (chosen === pool[poolId].answer) { if (isTools) toolsScore++; else codexScore++; }
         else wrong.push({ id: qId });
       }
     } else if (qId >= 0 && qId < ASSESSMENT_QUESTIONS.length) {
@@ -2040,13 +2037,14 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
     }
   }
 
-  const role = calcSorcRole(basicScore, !!gm_track, gm_track ? codexScore : undefined, gm_track ? lobbyScore : undefined);
-  const score = gm_track ? basicScore + codexScore + lobbyScore : basicScore;
+  const gmScore = basicScore + codexScore + toolsScore;
+  const role = calcSorcRole(gm_track ? basicScore : basicScore, !!gm_track, gm_track ? codexScore + toolsScore : undefined);
+  const score = gm_track ? gmScore : basicScore;
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const siteRole = (role && role.startsWith('GM')) ? 'MASTER' : 'PLAYER';
 
-  if (role === 'FAIL') {
+  if (role === 'FAIL' && !gm_track) {
     /* FAIL downgrades to Civilian everywhere - record it and update user */
     try {
       await c.env.sorc_db.prepare(
@@ -2058,13 +2056,30 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
         ).bind(now, user.id).run();
       }
     } catch(_) {}
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, lobby_score: gm_track ? lobbyScore : undefined, role: 'FAIL', passed: false, message: 'Score too low - you have been downgraded to Civilian. Study the Player Handbook and reassess to regain lobby access.', wrong });
+    return c.json({ score, basic_score: basicScore, role: 'FAIL', passed: false, message: 'Score too low - you have been downgraded to Civilian. Study the Basic Rules and reassess to regain lobby access.', wrong });
+  }
+  if (role === 'FAIL' && gm_track) {
+    const old = await c.env.sorc_db.prepare(`SELECT id FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
+    if (old) {
+      await c.env.sorc_db.prepare(`UPDATE assessments SET gm_score=?, gm_role='FAIL', gm_taken_at=? WHERE user_id=?`).bind(score, now, user.id).run();
+    } else {
+      await c.env.sorc_db.prepare(`INSERT INTO assessments (id,user_id,score,role_granted,gm_track,taken_at,gm_score,gm_role,gm_taken_at) VALUES (?,?,?,?,?,?,?,?,?)`).bind(id,user.id,score,'FAIL',1,now,score,'FAIL',now).run();
+    }
+    return c.json({ score, basic_score: basicScore, codex_score: codexScore, tools_score: toolsScore, role: 'FAIL', passed: false, message: 'GM score too low. Your Player assessment remains unchanged.', wrong });
   }
 
   try {
-    await c.env.sorc_db.prepare(
-      `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at) VALUES (?, ?, ?, ?, ?, ?)`
-    ).bind(id, user.id, score, role, gm_track ? 1 : 0, now).run();
+    const old = await c.env.sorc_db.prepare(`SELECT id FROM assessments WHERE user_id = ?`).bind(user.id).first() as any;
+    if (old) {
+      await c.env.sorc_db.prepare(gm_track
+        ? `UPDATE assessments SET gm_score=?, gm_role=?, gm_taken_at=?, score=?, role_granted=?, gm_track=1, taken_at=? WHERE user_id=?`
+        : `UPDATE assessments SET player_score=?, player_role=?, player_taken_at=?, score=?, role_granted=?, gm_track=0, taken_at=? WHERE user_id=?`)
+        .bind(score, role, now, score, role, now, user.id).run();
+    } else {
+      await c.env.sorc_db.prepare(
+        `INSERT INTO assessments (id, user_id, score, role_granted, gm_track, taken_at, ${gm_track ? 'gm_score, gm_role, gm_taken_at' : 'player_score, player_role, player_taken_at'}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(id, user.id, score, role, gm_track ? 1 : 0, now, score, role, now).run();
+    }
 
     // Update both the site role (PLAYER/MASTER) and the sorc_role (PC-BEG/INT/ADV/GM-ADV)
     // Award community points only on first-ever assessment (assessment_rewarded = 0)
@@ -2107,7 +2122,7 @@ app.post('/api/assess/submit', authMiddleware, async (c) => {
       ).bind(now, user.id).run();
     }
 
-    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, lobby_score: gm_track ? lobbyScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: awarded, wrong });
+    return c.json({ score, basic_score: basicScore, codex_score: gm_track ? codexScore : undefined, tools_score: gm_track ? toolsScore : undefined, role, site_role: preserveRole ? user.role : siteRole, passed: true, points_awarded: awarded, wrong });
   } catch (error: any) {
     return c.json({ error: 'Failed to save assessment.', details: error.message }, 500);
   }
@@ -2630,6 +2645,7 @@ app.get('/api/lobbies', authMiddleware, async (c) => {
     lobbies: rows,
     assessed: !!assessment || isPrivileged(user),
     sorc_role: user.sorc_role || assessment?.role_granted || null,
+    is_pro: isPrivileged(user) || await isProMember(c.env.sorc_db, user),
     is_privileged: isPrivileged(user),
     needs_reassess: !!(user.needs_reassess),
     current_lobby: currentLobby || null,
@@ -2648,7 +2664,7 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   // rather than handing a tester a confusing code error.
   if (isGuestUser(user)) {
     return c.json({
-      error: 'Creating a lobby requires login and a box set code. Guests can join and play, but cannot host.',
+      error: 'Creating a lobby requires login and a box set code. Wanderers can join and play, but cannot host.',
       requires_login: true
     }, 403);
   }
@@ -2693,6 +2709,10 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
   /* A host opens a table at their own tier or below - the same ceiling that
      governs joining, so nobody can host a room they could not themselves walk
      into. Naming no tier opens one at their own rank. */
+  const proMember = isPrivileged(user) || await isProMember(c.env.sorc_db, user);
+  if (!isPrivileged(user) && !proMember && tier && String(tier).toUpperCase() !== 'BEG') {
+    return c.json({ error: 'Basic members may create Basic/Novice lobbies only.' }, 403);
+  }
   const hostCeiling = playerTierCeiling(user);
   const requestedTier = normalizeTier(tier) || hostCeiling;
   if (tierRank(requestedTier) > tierRank(hostCeiling)) {
@@ -2720,8 +2740,8 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
     }, 400);
   }
 
-  if (!isPrivileged(user)) {
-    if (!box_set_code) return c.json({ error: 'A box set code is required to create a lobby.' }, 400);
+  if (!isPrivileged(user) && proMember) {
+    if (!box_set_code) return c.json({ error: 'A valid box set code is required to create a Pro lobby.' }, 400);
     const codeCheck = await validateBoxSetCode(c.env.sorc_db, box_set_code, user.id);
     if (!codeCheck.valid) return c.json({ error: codeCheck.error || 'Invalid box set code.' }, 400);
   }
@@ -2737,9 +2757,9 @@ app.post('/api/lobbies', authMiddleware, async (c) => {
     }
 
     await c.env.sorc_db.prepare(
-      `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, tier, created_at, updated_at)
-       VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?, ?)`
-    ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, requestedTier, now, now).run();
+       `INSERT INTO lobbies (id, name, creator_uid, is_private, status, max_members, member_count, lobby_code, tier, membership_tier, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'open', 20, 1, ?, ?, ?, ?, ?)`
+    ).bind(lobbyId, name.trim().substring(0, 60), user.id, is_private ? 1 : 0, lobbyCode, requestedTier, proMember ? 'PRO' : 'BASIC', now, now).run();
 
     const creatorRole = assessment?.role_granted || user.sorc_role || user.role;
     await c.env.sorc_db.prepare(
@@ -3076,7 +3096,7 @@ app.post('/api/lobbies/:id/invite', authMiddleware, async (c) => {
     if (!username) return c.json({ error: 'Username required.' }, 400);
     const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
     if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-    if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can send invites.' }, 403);
+    if (!(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner can send invites.' }, 403);
     const target = await c.env.sorc_db.prepare(`SELECT id, username, display_name FROM users WHERE username = ?`).bind(username.trim()).first() as any;
     if (!target) return c.json({ error: 'Player not found.' }, 404);
     if (target.id === user.id) return c.json({ error: 'Cannot invite yourself.' }, 400);
@@ -3114,7 +3134,7 @@ app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
+  if (!(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner can view invite options.' }, 403);
 
   // Fellowships: accepted fellows not already in this lobby
   const fellowsRaw = await c.env.sorc_db.prepare(
@@ -3164,7 +3184,7 @@ app.post('/api/lobbies/:id/summon', authMiddleware, async (c) => {
     await c.env.sorc_db.prepare(SUMMON_DDL).run();
     const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
     if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-    if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Only the host can send summons.' }, 403);
+    if (!(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner can send summons.' }, 403);
     if (lobby.status === 'closed') return c.json({ error: 'Lobby is closed.' }, 400);
 
     const { to_uid, note } = await c.req.json() as any;
@@ -3352,7 +3372,7 @@ app.patch('/api/lobbies/:id/theme', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  if (!lobby || !(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner may change the lobby theme.' }, 403);
   const { theme } = await c.req.json() as any;
   const VALID_THEMES = ['default', 'terminal', 'veilwood', 'ember', 'arcane', 'lawful'];
   if (!theme || !VALID_THEMES.includes(theme)) return c.json({ error: 'Invalid theme.' }, 400);
@@ -3387,7 +3407,7 @@ app.delete('/api/lobbies/:id/messages', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  if (!(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'GM owner only.' }, 403);
   await c.env.sorc_db.prepare(`DELETE FROM lobby_messages WHERE lobby_id = ?`).bind(lobbyId).run();
   return c.json({ success: true });
 });
@@ -3396,9 +3416,9 @@ app.delete('/api/lobbies/:id/messages/:msgId', authMiddleware, async (c) => {
   const user = c.get('user') as any;
   const lobbyId = c.req.param('id');
   const msgId = c.req.param('msgId');
-  const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
+  const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'GM only.' }, 403);
+  if (!(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'GM owner only.' }, 403);
   await c.env.sorc_db.prepare(`DELETE FROM lobby_messages WHERE id = ? AND lobby_id = ?`).bind(msgId, lobbyId).run();
   return c.json({ success: true });
 });
@@ -3408,7 +3428,7 @@ app.post('/api/lobbies/:id/ready-check', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const lobby = await c.env.sorc_db.prepare(`SELECT creator_uid FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
-  if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Host only.' }, 403);
+  if (!(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner may start a ready check.' }, 403);
   const checkId = crypto.randomUUID();
   const now = new Date().toISOString();
   await c.env.sorc_db.prepare(`CREATE TABLE IF NOT EXISTS ready_checks (lobby_id TEXT PRIMARY KEY, check_id TEXT NOT NULL, initiated_at TEXT NOT NULL, initiated_by TEXT NOT NULL, initiated_name TEXT NOT NULL)`).run();
@@ -3485,7 +3505,7 @@ app.patch('/api/lobbies/:id/members/:uid/mute', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const targetUid = c.req.param('uid');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  if (!lobby || lobby.creator_uid !== user.id) return c.json({ error: 'Not authorized.' }, 403);
+  if (!lobby || !(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner may moderate members.' }, 403);
   const member = await c.env.sorc_db.prepare(`SELECT * FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).first() as any;
   if (!member) return c.json({ error: 'Member not found.' }, 404);
   const newMuted = member.is_muted ? 0 : 1;
@@ -3498,7 +3518,7 @@ app.delete('/api/lobbies/:id/members/:uid', authMiddleware, async (c) => {
   const lobbyId = c.req.param('id');
   const targetUid = c.req.param('uid');
   const lobby = await c.env.sorc_db.prepare(`SELECT * FROM lobbies WHERE id = ?`).bind(lobbyId).first() as any;
-  if (!lobby || (lobby.creator_uid !== user.id && !isPrivileged(user))) return c.json({ error: 'Not authorized.' }, 403);
+  if (!lobby || !(await isLobbyGmOwner(c.env.sorc_db, lobby, user))) return c.json({ error: 'Only the GM owner may remove members.' }, 403);
   if (targetUid === user.id) return c.json({ error: 'Cannot kick yourself.' }, 400);
   await c.env.sorc_db.prepare(`DELETE FROM lobby_members WHERE lobby_id = ? AND user_id = ?`).bind(lobbyId, targetUid).run();
   const now = new Date().toISOString();
@@ -3597,6 +3617,10 @@ app.post('/api/lobbies/:id/transfer-host', authMiddleware, async (c) => {
     `SELECT lm.*, u.role as live_role FROM lobby_members lm LEFT JOIN users u ON lm.user_id = u.id WHERE lm.lobby_id = ? AND lm.user_id = ?`
   ).bind(lobbyId, new_host_uid).first() as any;
   if (!member) return c.json({ error: 'That player is not in this lobby.' }, 404);
+  const targetRole = String(member.sorc_role || '').toUpperCase();
+  if (!targetRole.startsWith('GM-') && member.live_role !== 'MASTER' && !isPrivileged(member)) {
+    return c.json({ error: 'Only a GM may become the lobby owner.' }, 400);
+  }
   if (isAdmin && !isOwner && member.live_role === 'OWNER') return c.json({ error: 'Admins cannot promote over an Owner.' }, 403);
   // One lobby each. Promoting someone who already hosts would leave them the
   // lead of two, which they could not have arranged themselves.
@@ -3663,8 +3687,9 @@ app.post('/api/lobbies/:id/report/:uid', authMiddleware, async (c) => {
 // Ported from sorc-app (2026-08-24). This is the actual "Launch Room" backing
 // endpoint lobbies.html calls - it validates that whoever is designated GM
 // (gm_uid) genuinely holds a GM role, requires the caller to be the lobby
-// creator, the designated GM, or privileged, enforces a minimum party size
-// (GM + 2 players) and a fresh all-ready ready-check before letting play begin.
+// creator, the designated GM, or privileged. It enforces a selected group of
+// 2-5 for regular rooms or 2-10 for raids, plus a fresh ready-check for that
+// selected group before letting play begin.
 
 app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   const user = c.get('user') as any;
@@ -3679,9 +3704,13 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   const memberList = members.results as any[] || [];
 
   const body = await c.req.json() as any;
-  // Default gm_uid to the caller; default selected_members to everyone in the lobby
+  const room_type = body.room_type === 'raid' ? 'raid' : 'campaign';
+  // The creator promotes the GM owner before launch; never infer one from join order.
   const gm_uid: string = body.gm_uid || user.id;
-  const selected_members: string[] = body.selected_members || memberList.map((m: any) => m.user_id);
+  if (!Array.isArray(body.selected_members)) {
+    return c.json({ error: 'Select the lobby members who will enter this room.' }, 400);
+  }
+  const selected_members: string[] = body.selected_members.filter((id: any): id is string => typeof id === 'string');
 
   const gmMember = memberList.find((m: any) => m.user_id === gm_uid);
   if (!gmMember) return c.json({ error: 'GM must be a lobby member.' }, 400);
@@ -3690,21 +3719,24 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
     || gmMember.role === 'MASTER' || gmIsPrivileged;
   if (!gmRoleOk) return c.json({ error: 'Selected GM must hold a GM role.' }, 400);
 
-  const isCreatorOrGM = lobby.creator_uid === user.id || user.id === gm_uid || isPrivileged(user);
-  if (!isCreatorOrGM) return c.json({ error: 'Only the lobby creator or GM can launch a room.' }, 403);
+  if (lobby.creator_uid !== gm_uid || (user.id !== gm_uid && !isPrivileged(user))) {
+    return c.json({ error: 'Only the designated GM owner can launch a room.' }, 403);
+  }
 
-  /* ── Private Campaign Rooms are Pro-exclusive (see sorc-web.html's
-     Basic vs. Pro table). Lobby *creation* already requires a box code for
-     non-privileged creators, but that doesn't cover a non-Pro member who
-     was recruited in and is now the designated GM launching the room
-     themselves - gate the launch itself too. ── */
-  if (!(await isProMember(c.env.sorc_db, user))) {
+  /* Raids are Pro-exclusive. Regular Campaign Rooms remain available to
+     Basic members who have created a valid lobby. */
+  if (room_type === 'raid' && !(await isProMember(c.env.sorc_db, user))) {
     return c.json({ error: 'Launching a Private Campaign Room requires Pro Membership (a registered box set).' }, 403);
   }
 
-  /* ── Minimum party size: GM + at least 2 players ── */
-  if (memberList.length < 3) {
-    return c.json({ error: 'At least 2 players and a GM are required to launch a room.' }, 400);
+  const selectedSet = new Set(selected_members);
+  if (selectedSet.size !== selected_members.length || selected_members.some((uid) => !memberList.some((m) => m.user_id === uid))) {
+    return c.json({ error: 'Every selected room participant must be a current lobby member.' }, 400);
+  }
+  if (!selectedSet.has(gm_uid)) return c.json({ error: 'The GM must be selected for the room.' }, 400);
+  const roomLimit = room_type === 'raid' ? 10 : 5;
+  if (selectedSet.size < 2 || selectedSet.size > roomLimit) {
+    return c.json({ error: `Select 2-${roomLimit} total participants, including the GM.` }, 400);
   }
 
   /* ── Ready check: all members must have confirmed ready ── */
@@ -3720,7 +3752,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
       `SELECT user_id FROM ready_check_responses WHERE lobby_id = ? AND check_id = ? AND status = 'ready'`
     ).bind(lobbyId, rc.check_id).all();
     const readyUids = new Set((responses.results as any[]).map((r: any) => r.user_id));
-    const notReady = memberList.filter((m: any) => !readyUids.has(m.user_id));
+    const notReady = memberList.filter((m: any) => selectedSet.has(m.user_id) && !readyUids.has(m.user_id));
     if (notReady.length > 0) {
       const names = notReady.map((m: any) => m.display_name || m.username).join(', ');
       return c.json({ error: 'Not everyone is ready: ' + names }, 400);
@@ -3736,7 +3768,7 @@ app.post('/api/lobbies/:id/launch', authMiddleware, async (c) => {
   try {
     await c.env.sorc_db.prepare(
       `INSERT INTO private_rooms (id, lobby_id, room_name, gm_uid, status, jitsi_room, created_at) VALUES (?, ?, ?, ?, 'active', ?, ?)`
-    ).bind(roomId, lobbyId, lobby.name, gm_uid, jitsiRoom, now).run();
+    ).bind(roomId, lobbyId, room_type === 'raid' ? "Into Asmodeus’ Lair" : (body.room_name || lobby.name), gm_uid, jitsiRoom, now).run();
 
     const allParticipants = [gm_uid, ...selected_members.filter((id: string) => id !== gm_uid)];
     for (const uid of allParticipants) {
@@ -3987,6 +4019,8 @@ app.post('/api/rooms/:id/invite/:uid', authMiddleware, async (c) => {
 
   const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
   if (!room) return c.json({ error: 'Room not found.' }, 404);
+  return c.json({ error: 'Room membership was fixed at launch; only the selected lobby group may enter.' }, 403);
+  /*
   if (room.gm_uid !== user.id) return c.json({ error: 'Only the GM can send invites.' }, 403);
   if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
 
@@ -4013,6 +4047,7 @@ app.post('/api/rooms/:id/invite/:uid', authMiddleware, async (c) => {
   } catch (error: any) {
     return c.json({ error: 'Failed to send invite.', details: error.message }, 500);
   }
+  */
 });
 
 app.get('/api/rooms/invites/mine', authMiddleware, async (c) => {
@@ -4037,7 +4072,9 @@ app.post('/api/rooms/invites/:inviteId/accept', authMiddleware, async (c) => {
 
   const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ? AND status = 'active'`).bind(invite.room_id).first() as any;
   if (!room) return c.json({ error: 'Room is no longer active.' }, 400);
+  return c.json({ error: 'Room membership was fixed at launch; only the selected lobby group may enter.' }, 403);
 
+  /*
   const now = new Date().toISOString();
 
   await c.env.sorc_db.prepare(`UPDATE room_invites SET status = 'accepted' WHERE id = ?`).bind(inviteId).run();
@@ -4046,6 +4083,7 @@ app.post('/api/rooms/invites/:inviteId/accept', authMiddleware, async (c) => {
   ).bind(crypto.randomUUID(), invite.room_id, user.id, user.username, now).run();
 
   return c.json({ success: true, room_id: invite.room_id });
+  */
 });
 
 app.post('/api/rooms/invites/:inviteId/decline', authMiddleware, async (c) => {
@@ -4068,6 +4106,8 @@ app.post('/api/rooms/:id/request', authMiddleware, async (c) => {
 
   const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
   if (!room) return c.json({ error: 'Room not found.' }, 404);
+  return c.json({ error: 'Room membership was fixed at launch; only the selected lobby group may enter.' }, 403);
+  /*
   if (room.is_hidden) return c.json({ error: 'This room is not accepting requests.' }, 403);
   if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
   if (reqType === 'spectate' && !room.spectate_enabled) return c.json({ error: 'Spectate mode is off for this room.' }, 403);
@@ -4087,6 +4127,7 @@ app.post('/api/rooms/:id/request', authMiddleware, async (c) => {
   } catch (error: any) {
     return c.json({ error: 'Failed to send request.', details: error.message }, 500);
   }
+  */
 });
 
 app.get('/api/rooms/:id/requests', authMiddleware, async (c) => {
@@ -4111,6 +4152,8 @@ app.post('/api/rooms/:id/requests/:reqId/accept', authMiddleware, async (c) => {
 
   const room = await c.env.sorc_db.prepare(`SELECT * FROM private_rooms WHERE id = ?`).bind(roomId).first() as any;
   if (!room) return c.json({ error: 'Room not found.' }, 404);
+  return c.json({ error: 'Room membership was fixed at launch; only the selected lobby group may enter.' }, 403);
+  /*
   if (room.gm_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
 
   const req = await c.env.sorc_db.prepare(`SELECT * FROM room_requests WHERE id = ? AND room_id = ?`).bind(reqId, roomId).first() as any;
@@ -4133,6 +4176,7 @@ app.post('/api/rooms/:id/requests/:reqId/accept', authMiddleware, async (c) => {
   ).bind(crypto.randomUUID(), roomId, req.requester_uid, roomRole, requester?.username || 'Unknown', now).run();
 
   return c.json({ success: true });
+  */
 });
 
 app.post('/api/rooms/:id/requests/:reqId/decline', authMiddleware, async (c) => {
@@ -6422,7 +6466,7 @@ async function exchangeGate(c: any, user: any, what: string): Promise<any | null
   // guest holds no real account for property to belong to.
   if (isGuestUser(user)) {
     return c.json({
-      error: `Guests can browse the Bazaar but cannot trade. Create an account and assess to use ${what}.`,
+      error: `Wanderers can browse the Bazaar but cannot trade. Create an account and assess to use ${what}.`,
       guest_blocked: true,
     }, 403);
   }

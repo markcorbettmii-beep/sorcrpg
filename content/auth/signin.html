@@ -100,10 +100,10 @@
 
                 <div class="signin-divider"></div>
 
-                <!-- Guest Access -->
+                <!-- Wanderer Access -->
                 <div style="text-align:center;">
                     <p style="color:#2c2c2c;font-size:0.9rem;margin-bottom:1rem;">Want to try it out first?</p>
-                    <button class="signin-btn signin-btn-primary" onclick="joinAsGuestFromSignin()" style="background:#b9aa00;color:#111;">Join as Guest</button>
+                    <button class="signin-btn signin-btn-primary" onclick="joinAsGuestFromSignin()" style="background:#b9aa00;color:#111;">Join as Wanderer</button>
                     <div id="guestMsg" class="status-msg" style="margin-top:0.75rem;"></div>
                 </div>
 
@@ -495,7 +495,7 @@
 
         async function createGuestAccount() {
             var msgEl = document.getElementById('guestMsg');
-            msgEl.className = 'status-msg'; msgEl.style.display = 'block'; msgEl.textContent = 'Creating guest account...';
+                    msgEl.className = 'status-msg'; msgEl.style.display = 'block'; msgEl.textContent = 'Creating Wanderer account...';
             try {
                 var res = await fetch(API_URL + '/api/auth/guest', {
                     method: 'POST',
@@ -504,7 +504,7 @@
                 });
                 var data = await res.json();
                 if (data.user && data.authKey) {
-                    msgEl.className = 'status-msg success'; msgEl.textContent = 'Guest account created! Redirecting...';
+                    msgEl.className = 'status-msg success'; msgEl.textContent = 'Wanderer account created! Redirecting...';
                     // Store guest credentials
                     localStorage.setItem('sorc_user', JSON.stringify({
                         id: data.user.id,
@@ -517,7 +517,7 @@
                     }));
                     setTimeout(function() { window.location.href = 'lobbies.html'; }, 800);
                 } else {
-                    msgEl.className = 'status-msg error'; msgEl.textContent = data.error || 'Failed to create guest account.';
+                    msgEl.className = 'status-msg error'; msgEl.textContent = data.error || 'Failed to create Wanderer account.';
                 }
             } catch(e) {
                 msgEl.className = 'status-msg error'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e);

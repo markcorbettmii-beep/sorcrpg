@@ -221,6 +221,8 @@
     .room-badge.hidden { background: #2a2a2a; color: #555; }
     .launch-room-btn { padding: 5px 12px; background: #b9aa00; color: #111; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: bold; cursor: pointer; }
     .launch-room-btn:hover { background: #b9aa00; }
+    .room-pick { display: inline-flex; align-items: center; gap: 0.25rem; color: #888; font-size: 0.68rem; white-space: nowrap; }
+    .room-pick input { accent-color: #b9aa00; }
 
     /* ===== REPORT MODAL ===== */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
@@ -689,6 +691,7 @@
     var allLobbies = [];            // full lobby list for pagination
     var lobbyPage = 0;             // current page index (0-based)
     var LOBBIES_PER_PAGE = 5;
+    var selectedRoomMembers = new Set();
 
     var PLACEHOLDER_LOBBIES = [
       { id: 'ph-1', placeholder: true, name: 'The Siege of Veilmark',    _hostUid: 'ph-corby', _hostName: 'Corby', module: "Module .002 | Aseya's Crypt (LVLs 6 - 10)", member_count: 20, max_members: 20, is_private: false },
@@ -759,15 +762,15 @@
     // ===== HELPERS =====
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-    /* TEMPORARY - beta guest access. A guest has no profile: "Guest x" is a
-       chat name and nothing more. Anywhere a name would normally link to a
-       profile, character sheet or DM, a guest gets plain text instead. */
-    function isGuestName(n) { return /^Guest \d+$/.test(String(n || '').trim()); }
+    /* TEMPORARY - beta Wanderer access. A Wanderer has no profile: "Wanderer x"
+       is a chat name and nothing more. Anywhere a name would normally link to
+       a profile, character sheet or DM, a Wanderer gets plain text instead. */
+    function isWandererName(n) { return /^(?:Wanderer|Guest) \d+$/.test(String(n || '').trim()); }
 
-    /* A chat name. Guests are plain text - no profile to link to. */
+    /* A chat name. Wanderers are plain text - no profile to link to. */
     function chatNameHtml(username, isGM) {
       var cls = 'msg-name' + (isGM ? ' gm' : '');
-      if (isGuestName(username)) return '<span class="' + cls + '">' + esc(username) + '</span>';
+      if (isWandererName(username)) return '<span class="' + cls + '">' + esc(username) + '</span>';
       return '<a href="public-profile.html?username=' + encodeURIComponent(username || '') +
         '" class="' + cls + '" style="text-decoration:none;">' + esc(username) + '</a>';
     }
@@ -866,15 +869,15 @@
     function render() {
       var app = document.getElementById('lobbiesApp');
       if (!currentUser || !currentUser.authKey) {
-        /* Signed out. The guest option lives here too - a beta tester with no
-           account has to be able to reach it from this screen, or guest access
-           is unreachable. Hidden until the server confirms guests are on. */
+        /* Signed out. The Wanderer option lives here too - a beta tester with no
+           account has to be able to reach it from this screen, or Wanderer access
+           is unreachable. Hidden until the server confirms it is on. */
         app.innerHTML =
           '<div style="text-align:center;padding:3rem 1rem;color:#555;">' +
             '<p>Please <a href="signin.html" style="color:#b9aa00;">sign in</a> to access lobbies.</p>' +
             '<div id="guestSignedOut" style="display:none;margin-top:2rem;padding-top:1.75rem;border-top:1px solid #2a2a2a;">' +
               '<p style="margin-bottom:0.9rem;">Testing the beta? Join without an account.</p>' +
-              '<button class="l-btn red" style="max-width:240px;margin:0 auto;" onclick="joinAsGuest()">Join as Guest</button>' +
+              '<button class="l-btn red" style="max-width:240px;margin:0 auto;" onclick="joinAsGuest()">Join as Wanderer</button>' +
               '<div id="guestMsg" class="l-msg" style="margin-top:0.5rem;"></div>' +
             '</div>' +
           '</div>';
@@ -1090,8 +1093,8 @@
         '<input type="text" id="boxSetCode" class="l-input" placeholder="Box set code..." maxlength="40" />';
 
       var codeNote = priv
-        ? '<p style="color:#4caf50;font-size:0.78rem;margin:0;">&#10003; Admin account - box code not required. (Regular PC accounts see a GM/box set code entry here.)</p>'
-        : '<p>Host a live Campaign session. Enter your GM / box set code below.</p>';
+        ? '<p style="color:#4caf50;font-size:0.78rem;margin:0;">&#10003; Admin account - membership and assessment checks are bypassed.</p>'
+        : '<p>Basic members create Novice lobbies without a code. Pro members create higher-tier lobbies with a valid creator-only box set code.</p>';
 
       var adminCodeGen = priv
         ? '<div class="action-card" style="margin-top:1.25rem;">' +
@@ -1114,7 +1117,8 @@
           '<div class="section-scroll-wrapper">' +
             '<button class="section-scroll-btn" aria-label="Previous" onclick="var el=document.getElementById(\'howItWorksScroll\');el.scrollBy({left:-280,behavior:\'smooth\'});"><svg width="48" height="48" viewBox="0 0 48 48" fill="none"><polygon points="36,9 9,24 36,39"></polygon></svg></button>' +
             '<div class="how-it-works-list" id="howItWorksScroll">' +
-              '<div class="feature-card"><div class="feature-icon"></div><h3>Who Can Create</h3><p>Lobby creation requires a valid SORC box set code and a passing assessment. Admins and Owners can create lobbies without a code.</p></div>' +
+               '<div class="feature-card"><div class="feature-icon"></div><h3>Basic &amp; Pro Lobbies</h3><p>Real Basic members create Basic/Novice lobbies without a code. Pro members create Pro lobbies with their creator-only valid box set code; joiners never need a code. Admins and Owners bypass these checks.</p></div>' +
+               '<div class="feature-card"><div class="feature-icon"></div><h3>Ranks &amp; Ownership</h3><p>Novice, Intermediate, and Advanced are ceilings: a higher assessment may choose any lower level. The creator promotes a GM owner; only that GM can use GM tools or launch.</p></div>' +
               '<div class="feature-card"><div class="feature-icon"></div><h3>Who Can Join</h3><p>Any assessed Player can join open lobbies. No box set required to participate. Civilians must complete the <a href="lobbies.html" style="color:#b9aa00;">Role Assessment</a> first.</p></div>' +
               '<div class="feature-card"><div class="feature-icon"></div><h3>Lobbies vs. Rooms</h3><p><strong style="color:#b9aa00;">Lobbies</strong> are recruiting hubs - text chat and party assembly only.<br/><br/><strong style="color:#b9aa00;">Private Campaign Rooms</strong> are launched from lobbies by the GM. They include voice, dice, and full session tools.</p></div>' +
               '<div class="feature-card"><div class="feature-icon"></div><h3>Leave vs. Abandon</h3><p><strong style="color:#b9aa00;">Leave</strong> is free for everyone, the lobby starter included. Step out whenever you like and walk back in at will, in the same role you left with.<br/><br/><strong style="color:#b9aa00;">Abandon</strong> belongs to the lobby starter alone. It gives the lobby up for good, they cannot rejoin without permission or a new code. The lobby passes to the next GM in it; with no GM present it passes to the next member who joined, until a GM arrives. There is no closing a lobby: one closes on its own once its last member is gone.</p></div>' +
@@ -1132,7 +1136,8 @@
             '<h2 class="gold">Create Lobby</h2>' +
             codeNote +
             '<div style="color:#888;font-size:0.78rem;margin-bottom:-0.2rem;">Host: <strong style="color:#e0cfc0;">' + hostName + '</strong></div>' +
-            '<select id="lobbyModule" class="l-input" style="cursor:pointer;">' + moduleOptions + '</select>' +
+             '<select id="lobbyModule" class="l-input" style="cursor:pointer;">' + moduleOptions + '</select>' +
+             '<select id="lobbyTier" class="l-input" style="cursor:pointer;"><option value="BEG">Novice (Basic)</option><option value="INT">Intermediate</option><option value="ADV">Advanced (Pro)</option></select>' +
             codeField +
             '<label style="color:#555;font-size:0.78rem;display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" id="isPrivate" /> Private lobby (invite code only)</label>' +
             '<button class="l-btn gold" onclick="createLobby()">Create Lobby</button>' +
@@ -1146,12 +1151,12 @@
               '<button class="l-btn red" onclick="joinByCode()">Join</button>' +
               '<div id="joinMsg" class="l-msg"></div>' +
             '</div>' +
-            /* TEMPORARY - beta guest access. Hidden until the server confirms
+            /* TEMPORARY - beta Wanderer access. Hidden until the server confirms
                it is switched on (GUESTS_ENABLED); see refreshGuestCard(). */
             '<div class="action-card" id="guestCard" style="display:none;">' +
-              '<h2 class="red">Guest Access</h2>' +
-              '<p>Join as a guest to test the lobby and features. You will be assigned a unique guest name.</p>' +
-              '<button class="l-btn red" onclick="joinAsGuest()">Join as Guest</button>' +
+              '<h2 class="red">Wanderer Access</h2>' +
+              '<p>Join as a Wanderer to test the lobby and features. You will be assigned a unique Wanderer name.</p>' +
+              '<button class="l-btn red" onclick="joinAsGuest()">Join as Wanderer</button>' +
               '<div id="guestMsg" class="l-msg"></div>' +
             '</div>' +
             adminCodeGen +
@@ -1165,10 +1170,10 @@
       refreshGuestCard();
     }
 
-    /* TEMPORARY - beta guest access. The server owns the switch
+    /* TEMPORARY - beta Wanderer access. The server owns the switch
        (GUESTS_ENABLED); this only reveals the card when it says guests are on,
        so flipping the flag removes the button site-wide with no site change.
-       Delete this along with the guest card when guest access is retired. */
+       Delete this along with the Wanderer card when Wanderer access is retired. */
     async function refreshGuestCard() {
       var els = [document.getElementById('guestCard'), document.getElementById('guestSignedOut')]
         .filter(function(el) { return !!el; });
@@ -1192,6 +1197,8 @@
           return;
         }
         var lobbies = data.lobbies || [];
+         currentUser.is_pro = !!data.is_pro;
+         configureHostControls();
         // Track the user's own active lobby so summon works from list view too
         var myLobby = lobbies.find(function(l) { return currentUser && l.creator_uid === currentUser.id; });
         if (myLobby) { myActiveLobbyId = myLobby.id; loadWorldChat(); }
@@ -1209,6 +1216,22 @@
         renderLobbyPage();
       } catch(e) {
         if (listEl) listEl.innerHTML = '<div class="empty-state">Could not load lobbies.</div>' + buildPlaceholderLobbies();
+      }
+    }
+
+    function configureHostControls() {
+      var tierEl = document.getElementById('lobbyTier');
+      var codeEl = document.getElementById('boxSetCode');
+      if (!tierEl) return;
+      var pro = isPrivileged() || currentUser.is_pro === true;
+      Array.prototype.forEach.call(tierEl.options, function(option) {
+        option.disabled = !pro && option.value !== 'BEG';
+      });
+      if (!pro) tierEl.value = 'BEG';
+      if (codeEl) {
+        codeEl.style.display = pro ? '' : 'none';
+        codeEl.required = pro;
+        codeEl.placeholder = 'Valid box set code (Pro creator only)...';
       }
     }
 
@@ -1379,10 +1402,13 @@
       var isPrivate = document.getElementById('isPrivate').checked;
       var msgEl = document.getElementById('createMsg');
       if (!name) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Select a module.'; return; }
-      if (!isPrivileged() && !code) { msgEl.className = 'l-msg err'; msgEl.textContent = 'A box set code is required.'; return; }
+      var tierEl = document.getElementById('lobbyTier');
+      var requestedTier = tierEl ? tierEl.value : 'BEG';
+      var needsProCode = !isPrivileged() && (currentUser.is_pro === true || requestedTier !== 'BEG');
+      if (needsProCode && !code) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Pro lobbies require a valid creator-only box set code.'; return; }
       msgEl.className = 'l-msg'; msgEl.textContent = 'Creating...';
       try {
-        var body = { name: name, is_private: isPrivate };
+        var body = { name: name, is_private: isPrivate, tier: requestedTier };
         if (code) body.box_set_code = code;
         var res = await fetch(API_URL + '/api/lobbies', {
           method: 'POST',
@@ -1457,10 +1483,10 @@
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
-    // ===== JOIN AS GUEST =====
+    // ===== JOIN AS WANDERER =====
     window.joinAsGuest = async function() {
       var msgEl = document.getElementById('guestMsg');
-      msgEl.className = 'l-msg'; msgEl.textContent = 'Creating guest account...';
+      msgEl.className = 'l-msg'; msgEl.textContent = 'Creating Wanderer account...';
       try {
         var res = await fetch(API_URL + '/api/auth/guest', {
           method: 'POST',
@@ -1469,20 +1495,20 @@
         });
         var data = await readJson(res);
         if (data.user && data.authKey) {
-          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Guest account created! Reloading...';
-          // Store guest credentials
+          msgEl.className = 'l-msg ok'; msgEl.textContent = 'Wanderer account created! Reloading...';
+          // Store Wanderer credentials
           localStorage.setItem('sorc_user', JSON.stringify({
             id: data.user.id,
             username: data.user.username,
             email: data.user.email,
             authKey: data.authKey,
             display_name: data.user.display_name || data.user.username,
-            /* Both are needed or render() bounces the guest to the assessment */
+            /* Both are needed or render() bounces the Wanderer to the assessment */
             role: data.user.role,
             sorc_role: data.user.sorc_role
           }));
           setTimeout(function() { location.reload(); }, 800);
-        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create guest account.'; }
+        } else { msgEl.className = 'l-msg err'; msgEl.textContent = data.error || 'Failed to create Wanderer account.'; }
       } catch(e) { msgEl.className = 'l-msg err'; msgEl.textContent = 'Could not reach the server: ' + (e && e.message ? e.message : e); }
     };
 
@@ -1564,7 +1590,10 @@
         prevMemberMap = {};
         (data.members || []).forEach(function(m) { prevMemberMap[m.user_id] = m; });
         isCreator = currentUser && currentLobby.creator_uid === currentUser.id;
-        hasGMRights = isCreator || isPrivileged();
+        selectedRoomMembers = new Set([currentLobby.creator_uid]);
+        hasGMRights = isPrivileged() || (isCreator && (data.members || []).some(function(m) {
+          return m.user_id === currentUser.id && memberIsGM(m);
+        }));
         document.documentElement.classList.add('lobby-locked');
         renderLobbyDetail(data);
         startChatPoll(lobbyId);
@@ -1599,7 +1628,7 @@
         if (!isSelf) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
         menuItems += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
         if (isCreator && !isSelf) {
-          menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
+          if (hasGMRights) menuItems += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
           menuItems += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Promote to Host</button>';
         }
         var cuRole = currentUser ? currentUser.role : '';
@@ -1616,13 +1645,16 @@
           '<div class="member-name-menu">' + menuItems + '</div>' +
           '<span class="member-sheet-hint">for stats &#8250;</span>' +
         '</span>';
+        var roomPick = hasGMRights
+          ? '<label class="room-pick" title="Select this member for the next room"><input type="checkbox" ' + (selectedRoomMembers.has(m.user_id) ? 'checked' : '') + ' onchange="toggleRoomMember(\'' + esc(m.user_id) + '\',this.checked)" /> Room</label>'
+          : '';
         return '<div class="member-row">' +
           '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
           '<div class="member-info">' +
             nameWrap +
             '<div class="member-role' + (isGM ? ' gm' : '') + '">' + memberRoleLabel(m) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
           '</div>' +
-          '<div class="member-actions">' + actBtns + '</div>' +
+          '<div class="member-actions">' + roomPick + actBtns + '</div>' +
         '</div>';
       }).join('');
 
@@ -1646,7 +1678,7 @@
 
       var launchBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">Launch Room</button>' : '';
       var inviteBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
-      var readyCheckBtn = (isCreator && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var readyCheckBtn = (hasGMRights && lobby.status !== 'closed') ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
       /* Whoever holds the lobby now sets whether it is open or private. */
       var privacyBtn = (isCreator && lobby.status !== 'closed')
         ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a1505;color:#b9aa00;border:1px solid #5a4a00;" onclick="toggleLobbyPrivacy()">' +
@@ -1683,7 +1715,7 @@
         '</div>' +
         invitePanel +
         '<div style="background:#1a1200;border:1px solid #5a3a00;border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.25rem;color:#c87d00;font-size:0.85rem;line-height:1.5;">' +
-          '<strong>Role Assessment Requirement Skipped for Beta</strong> - We\'re testing lobbies and features with guests. Normally, members must complete the Role Assessment to join. This requirement is temporarily bypassed to allow broader testing.' +
+          '<strong>Role Assessment Requirement Skipped for Beta</strong> - We\'re testing lobbies and features with Wanderers. Normally, members must complete the Role Assessment to join. This requirement is temporarily bypassed to allow broader testing.' +
         '</div>' +
         '<div class="theme-selector" style="margin-bottom:1rem;">' +
           '<div class="theme-selector-label">Lobby Theme</div>' +
@@ -2193,11 +2225,14 @@
         var membersEl = document.getElementById('membersList');
         if (!membersEl) return;
 
-        /* Sync host transfer - update isCreator/hasGMRights when creator_uid changes */
-        if (data.lobby && data.lobby.creator_uid && data.lobby.creator_uid !== currentLobby.creator_uid) {
+        /* Sync host transfer and the GM-owner gate on every member refresh. */
+        if (data.lobby && data.lobby.creator_uid) {
           currentLobby.creator_uid = data.lobby.creator_uid;
           isCreator = !!(currentUser && currentLobby.creator_uid === currentUser.id);
-          hasGMRights = isCreator || isPrivileged();
+          selectedRoomMembers.add(currentLobby.creator_uid);
+          hasGMRights = isPrivileged() || (isCreator && data.members.some(function(m) {
+            return m.user_id === currentUser.id && memberIsGM(m);
+          }));
           rebuildHeaderBtns();
         }
 
@@ -2227,7 +2262,7 @@
           if (!isSelf) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();openLobbyMsgModal(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\')">Message</button>';
           menuItems2 += '<a href="' + esc(profileHref) + '" onclick="event.stopPropagation()">Profile</a>';
           if (isCreator && !isSelf) {
-            menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
+            if (hasGMRights) menuItems2 += '<button class="summon-opt" onclick="event.stopPropagation();summonPlayer(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Summon</button>';
             menuItems2 += '<button class="summon-opt" style="color:#b9aa00;" onclick="event.stopPropagation();makeHost(\'' + esc(m.user_id) + '\',\'' + esc(m.display_name||m.username) + '\',\'' + esc(currentLobby ? currentLobby.id : '') + '\')">Promote to Host</button>';
           }
           var cuRole2 = currentUser ? currentUser.role : '';
@@ -2244,13 +2279,16 @@
             '<div class="member-name-menu">' + menuItems2 + '</div>' +
             '<span class="member-sheet-hint">for stats &#8250;</span>' +
           '</span>';
+          var roomPick2 = hasGMRights
+            ? '<label class="room-pick" title="Select this member for the next room"><input type="checkbox" ' + (selectedRoomMembers.has(m.user_id) ? 'checked' : '') + ' onchange="toggleRoomMember(\'' + esc(m.user_id) + '\',this.checked)" /> Room</label>'
+            : '';
           return '<div class="member-row">' +
             '<div class="member-avatar">' + (m.avatar ? '<img src="images/avatars/' + esc(m.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentNode.innerHTML=\'' + esc((m.display_name||m.username||'?').charAt(0).toUpperCase()) + '\'" />' : esc((m.display_name||m.username||'?').charAt(0).toUpperCase())) + '</div>' +
             '<div class="member-info">' +
               nameWrap2 +
               '<div class="member-role' + (isGM ? ' gm' : '') + '">' + memberRoleLabel(m) + (m.is_muted ? ' <span class="muted-tag">muted</span>' : '') + '</div>' +
             '</div>' +
-            '<div class="member-actions">' + actBtns + '</div>' +
+            '<div class="member-actions">' + roomPick2 + actBtns + '</div>' +
           '</div>';
         }).join('');
         membersEl.innerHTML = html || '<div style="padding:1rem;color:#444;font-size:0.82rem;">No members.</div>';
@@ -2897,10 +2935,13 @@
     window.launchRoom = async function() {
       if (!currentLobby) return;
 
-      /* ── Pre-flight: member count ── */
-      var memberCount = Object.keys(prevMemberMap).length;
-      if (memberCount < 3) {
-        showToast('At least 2 Players and a GM are required to launch a room.', true);
+      var selected = Array.from(selectedRoomMembers).filter(function(uid) {
+        return !!prevMemberMap[uid];
+      });
+      var gmUid = currentLobby.creator_uid;
+      if (selected.indexOf(gmUid) === -1) selected.unshift(gmUid);
+      if (selected.length < 2) {
+        showToast('Select the GM and at least one Player for the room.', true);
         return;
       }
 
@@ -2912,7 +2953,7 @@
       var readyUids = (lastReadyCheckData.responses || [])
         .filter(function(r) { return r.status === 'ready'; })
         .map(function(r) { return r.user_id; });
-      var notReady = Object.keys(prevMemberMap).filter(function(uid) {
+      var notReady = selected.filter(function(uid) {
         return readyUids.indexOf(uid) === -1;
       });
       if (notReady.length > 0) {
@@ -2920,22 +2961,35 @@
           var m = prevMemberMap[uid];
           return m ? (m.display_name || m.username) : uid;
         }).join(', ');
-        if (!confirm('Not everyone is ready: ' + names + '\n\nLaunch anyway?')) return;
+        showToast('Every selected room participant must be Ready.', true);
+        return;
       }
 
-      var roomName = prompt('Name this campaign room:');
+       var roomType = prompt('Room type: enter "raid" for Into Asmodeus’ Lair, or press Enter for a regular Campaign Room:', '');
+       roomType = (roomType || '').toLowerCase() === 'raid' ? 'raid' : 'campaign';
+       var roomLimit = roomType === 'raid' ? 10 : 5;
+       if (selected.length > roomLimit) {
+         showToast('This room type allows ' + roomLimit + ' total participants, including the GM.', true);
+         return;
+       }
+       var roomName = roomType === 'raid' ? "Into Asmodeus’ Lair" : prompt('Name this campaign room:');
       if (!roomName || !roomName.trim()) return;
       try {
         var res = await fetch(API_URL + '/api/lobbies/' + currentLobby.id + '/launch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Auth-Key': currentUser.authKey },
-          body: JSON.stringify({ room_name: roomName.trim() })
+           body: JSON.stringify({ room_name: roomName.trim(), room_type: roomType, gm_uid: gmUid, selected_members: selected })
         });
         var data = await readJson(res);
         if (data.success && data.room_id) {
           window.location.href = 'room.html?id=' + data.room_id;
         } else { showToast(data.error || 'Could not launch room.', true); }
       } catch(e) { showToast('Could not reach server.', true); }
+    };
+
+    window.toggleRoomMember = function(uid, checked) {
+      if (checked) selectedRoomMembers.add(uid);
+      else selectedRoomMembers.delete(uid);
     };
 
     window.enterRoom = function(roomId) {
@@ -3891,7 +3945,7 @@
       var container = document.getElementById('lobbyHeaderBtns');
       if (!container) return;
       var lb = hasGMRights ? '<button class="l-btn gold" style="width:auto;padding:6px 16px;font-size:0.82rem;" onclick="launchRoom()">Launch Room</button>' : '';
-      var rcb = isCreator ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
+      var rcb = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#0d2a0d;color:#4caf50;border:1px solid #4caf50;" onclick="initiateReadyCheck()">&#10003; Ready Check</button>' : '';
       var ib = hasGMRights ? '<button class="l-btn" style="width:auto;padding:6px 16px;font-size:0.82rem;background:#1a3a6b;color:#9ecde8;border:1px solid #1a5a8a;" onclick="toggleInvitePanel()">Invite</button>' : '';
       var lvb = isCreator
         ? '<button class="leave-btn" onclick="leaveLobby()">Leave Lobby</button><button class="leave-btn" style="margin-left:0.4rem;" onclick="confirmAbandon(this)">Abandon</button>'

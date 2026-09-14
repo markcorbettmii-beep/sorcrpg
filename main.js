@@ -590,22 +590,9 @@ window.sorcUpdateNotifications = function() {
 // ========== LOGGED-OUT BADGE ==========
 function showLoggedOutBadge() {
   var existing = document.getElementById('navRoleBadge');
-  if (!existing) return;
-  // Hide badge on signin page
-  if (window.location.pathname.includes('signin')) {
-    existing.style.display = 'none';
-    return;
-  }
-  var isLawful = document.body.classList.contains('lawful-mode');
-  var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#ffffff' : '#000000';
-  var shadowColor = isLawful ? 'none' : 'rgba(0,0,0,0.5)';
-  // Default avatar icon (user circle) - mirror main login avatar colors
-  var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
-  var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
-  var defaultAvatar = '<span class="badge-avatar-default" style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';font-size:0.9rem;margin-right:4px;"></span>';
-  existing.style.cssText = 'display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:8px!important;padding:6px 14px!important;background:' + bgColor + '!important;border-radius:20px!important;font-size:0.85rem!important;margin:0!important;width:100%!important;box-sizing:border-box!important;';
-  existing.innerHTML = defaultAvatar + 'User · Lobbies · Inbox · <a href="/content/auth/signin.html" style="color:' + linkColor + ' !important;text-decoration:underline;">Login</a> · Fellowships · Forums · Content · Downloads';
+  // The modern hamburger menu owns signed-out navigation. Remove the legacy
+  // full-width strip instead of rendering a second account control.
+  if (existing) existing.remove();
 }
 
 // ========== AUTH STATE ==========

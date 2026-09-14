@@ -50,21 +50,6 @@ interface Variables {
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// Keep one canonical public origin. This also unifies host-scoped browser
-// storage, including the Lawful/Evil theme selection.
-app.use('*', async (c, next) => {
-  const url = new URL(c.req.url);
-  if (
-    url.hostname === 'www.sorcrpg.com' ||
-    url.hostname === 'slayersofringsncrowns.com' ||
-    url.hostname === 'www.slayersofringsncrowns.com'
-  ) {
-    url.hostname = 'sorcrpg.com';
-    return c.redirect(url.toString(), 301);
-  }
-  await next();
-});
-
 app.use('*', cors({
   origin: ['https://sorcrpg.com', 'https://www.sorcrpg.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -79,6 +64,23 @@ app.onError((err: any, c: any) => {
   console.error('Unhandled error:', c.req.method, c.req.path, err?.stack || err);
   return c.json({ error: 'Server error.', details: err?.message || String(err) }, 500);
 });
+
+const SHELL_EXCLUDED_PATHS = [
+  /^\/(?:content\/)?admin(?:\/|[-.])/i,
+  /^\/(?:content\/)?debug(?:\/|[-.])/i,
+  /^\/content\/archived-rules\//i,
+  /^\/content\/drafts\//i,
+  /^\/demos\//i,
+  /^\/images\/.*\.html$/i,
+];
+
+// Archived rules remain in the repository as editable backup material, but
+// their old public URLs must not remain live or compete with the focused pages.
+app.all('/content/archived-rules/*', (c) => c.text('Not found.', 404));
+
+function shouldInjectVisitorShell(pathname: string): boolean {
+  return !SHELL_EXCLUDED_PATHS.some((pattern) => pattern.test(pathname));
+}
 
 function injectVisitorShell(html: string): string {
   let output = html;
@@ -127,25 +129,6 @@ app.notFound(async (c: any) => {
     return c.json({ error: 'Not found.', path: c.req.path }, 404);
   }
 
-  const pdfMatch = c.req.path.match(/^\/(character-sheet-(?:fem|male)-musc\.pdf)$/i);
-  if (pdfMatch && !new URL(c.req.url).searchParams.has('v')) {
-    try {
-      const manifestUrl = new URL('/pdf-versions.json', c.req.url);
-      const manifestResponse = await c.env.ASSETS.fetch(manifestUrl);
-      if (manifestResponse.ok) {
-        const manifest = await manifestResponse.json() as Record<string, string>;
-        const version = manifest[pdfMatch[1]];
-        if (version) {
-          const versionedUrl = new URL(c.req.url);
-          versionedUrl.searchParams.set('v', version);
-          return c.redirect(versionedUrl.toString(), 302);
-        }
-      }
-    } catch {
-      // Fall through to the normal asset lookup if the manifest is unavailable.
-    }
-  }
-
   let assetResponse = await c.env.ASSETS.fetch(c.req.raw);
   let contentType = assetResponse.headers.get('content-type') || '';
   const acceptsHtml = (c.req.header('accept') || '').toLowerCase().includes('text/html');
@@ -163,15 +146,17 @@ app.notFound(async (c: any) => {
     }
   }
 
-  if (!contentType.toLowerCase().includes('text/html')) {
+  if (
+    !contentType.toLowerCase().includes('text/html') ||
+    !shouldInjectVisitorShell(c.req.path)
+  ) {
     return assetResponse;
   }
 
   const html = await assetResponse.text();
   const headers = new Headers(assetResponse.headers);
   headers.delete('content-length');
-  const isCharacterSheet = /^\/content\/character\/character-sheet-(?:fem|male)-musc(?:\.html)?$/i.test(c.req.path);
-  return new Response(isCharacterSheet ? html : injectVisitorShell(html), {
+  return new Response(injectVisitorShell(html), {
     status: assetResponse.status,
     statusText: assetResponse.statusText,
     headers,
