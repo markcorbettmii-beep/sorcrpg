@@ -359,11 +359,13 @@ class SORCNavigation {
     const displayName = isSignedIn
       ? (user.username || user.display_name || user.email || 'Adventurer')
       : 'Sign in';
-    const role = isSignedIn ? this.getEffectiveRole(user) : 'Wanderer';
+    const effectiveRole = isSignedIn ? this.getEffectiveRole(user) : 'CIVILIAN';
+    const role = isSignedIn ? this.getRoleLabel(effectiveRole) : 'Wanderer';
     const card = document.querySelector('.sorc-sidebar-profile-card');
     const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
     const name = document.querySelector('.sorc-sidebar-profile-name');
     const roleLabel = document.querySelector('.sorc-sidebar-profile-role');
+    const identity = document.querySelector('.sorc-sidebar-profile-identity');
     const membershipLabel = document.querySelector('.sorc-sidebar-profile-membership');
     const adminLink = document.querySelector('.sorc-sidebar-admin-link');
     const signout = document.querySelector('.sorc-sidebar-signout');
@@ -383,10 +385,17 @@ class SORCNavigation {
     }
     name.textContent = displayName;
     roleLabel.textContent = role;
+    if (identity) {
+      const roleTone = this.getRoleTone(effectiveRole);
+      identity.classList.remove('role-civ', 'role-player', 'role-gm', 'role-owner');
+      identity.classList.add(`role-${roleTone}`);
+    }
     if (membershipLabel) {
       const tier = isSignedIn ? this.getMembershipLabel(user) : '';
       membershipLabel.textContent = tier ? `${tier.toUpperCase()} ⭐` : '';
       membershipLabel.hidden = !isSignedIn;
+      membershipLabel.classList.toggle('basic', tier === 'Basic');
+      membershipLabel.classList.toggle('pro', tier === 'Pro');
     }
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
@@ -409,7 +418,7 @@ class SORCNavigation {
       if (floatingAvatar) makeImage(floatingAvatar);
     }
 
-    const canAdmin = role === 'OWNER' || role === 'ADMIN';
+    const canAdmin = effectiveRole === 'OWNER' || effectiveRole === 'ADMIN';
     if (adminLink) adminLink.hidden = !canAdmin;
     if (signout) {
       signout.hidden = !isSignedIn;
@@ -440,6 +449,25 @@ class SORCNavigation {
     if (storedRole === 'OWNER' || email === 'corbett@sorcrpg.com') return 'OWNER';
     if (storedRole === 'ADMIN' || email === 'markcorbett.mii@gmail.com') return 'ADMIN';
     return storedRole || 'CIVILIAN';
+  }
+
+  getRoleLabel(role) {
+    const normalizedRole = String(role || '').toUpperCase();
+    if (normalizedRole === 'OWNER') return 'OWN';
+    if (normalizedRole === 'ADMIN') return 'Admin';
+    if (['GM', 'MASTER', 'GAME_MASTER'].includes(normalizedRole)) return 'GM';
+    if (normalizedRole === 'PLAYER') return 'PC';
+    return 'CIV';
+  }
+
+  getRoleTone(role) {
+    const normalizedRole = String(role || '').toUpperCase();
+    if (normalizedRole === 'PLAYER') return 'player';
+    if (['GM', 'MASTER', 'GAME_MASTER', 'ADMIN'].includes(normalizedRole)) {
+      return 'gm';
+    }
+    if (normalizedRole === 'OWNER') return 'owner';
+    return 'civ';
   }
 
   refreshAuthenticatedUser() {
