@@ -9,11 +9,11 @@ const BASE = "../../../assets/";
 const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
 
 // Image paths for special layers
-const IMG_BG = `${BASE}highres-canvas-bg.png`;
-const IMG_ARMOR = `${BASE}set-epic-fur-mantle.png`;
-const IMG_HELMET = `${BASE}bear-skn-helmet.png`;
-const IMG_WEAPON_BACK = `${BASE}kaida-great-bow-bck.png`;
-const IMG_WEAPON_FRONT = `${BASE}kaida-btlax-frnt.png`;
+const IMG_BG = `${BASE}high-res-canvas-background.png`;
+const IMG_ARMOR = `${BASE}high-res-core-leathtaba3.png`;
+const IMG_ANIM_COMP = `${BASE}high-res-anim-comp.png`;
+const IMG_WEAS = `${BASE}high-res-weas.png`;
+const IMG_LETTERS = `${BASE}high-res-letters.png`;
 
 // ONLY MUSCULAR BODY TYPES
 const bodyOptions = [
@@ -59,9 +59,6 @@ let selected = {
   face: 0,
   facePaint: 0,
   hair: 0,
-  armor: false,
-  helmet: false,
-  weapon: false
 };
 
 let isPortraitView = false;
@@ -424,12 +421,13 @@ function renderAllPickers() {
 }
 
 function getCanvasSize() {
-  const maxWidth = 640, maxHeight = 1280;
+  const maxWidth = 768, maxHeight = 1104;
+  const sheetAspect = 1104 / 768;
   let vw = window.innerWidth;
   let vh = window.innerHeight;
   let width = Math.min(vw * 0.96, maxWidth);
-  let height = Math.min(width * 2, vh * 0.92, maxHeight);
-  if (height / 2 < width) width = height / 2;
+  let height = Math.min(width * sheetAspect, vh * 0.92, maxHeight);
+  if (height / sheetAspect < width) width = height / sheetAspect;
   return { width: Math.round(width), height: Math.round(height) };
 }
 
@@ -466,51 +464,13 @@ function renderCharacter(callback) {
     return;
   }
 
-  let layers = [];
-  
-  layers.push({ src: IMG_BG, layer: "bg" });
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
-  }
-  
-  let body = bodyOptions[selected.body];
-  if (body && body.src) {
-    layers.push({ src: body.src, layer: "body" });
-  }
-  
-  if (selected.armor) {
-    layers.push({ src: IMG_ARMOR, layer: "armor" });
-  }
-  
-  if (selected.face !== -1 && faceOptions[selected.face]) {
-    let face = faceOptions[selected.face];
-    if (face && face.src && face.enabled !== false) {
-      layers.push({ src: face.src, layer: "face" });
-    }
-  }
-  
-  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
-    let paint = facePaintOptions[selected.facePaint];
-    if (paint && paint.src && paint.enabled !== false) {
-      layers.push({ src: paint.src, layer: "facepaint" });
-    }
-  }
-  
-  if (selected.hair !== -1 && hairOptions[selected.hair]) {
-    let hair = hairOptions[selected.hair];
-    if (hair && hair.src && hair.enabled !== false) {
-      layers.push({ src: hair.src, layer: "hair" });
-    }
-  }
-  
-  if (selected.helmet) {
-    layers.push({ src: IMG_HELMET, layer: "helmet" });
-  }
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
-  }
+  const layers = [
+    { src: IMG_BG, layer: "bg" },
+    { src: IMG_ARMOR, layer: "armor" },
+    { src: IMG_WEAS, layer: "weas" },
+    { src: IMG_ANIM_COMP, layer: "anim_comp" },
+    { src: IMG_LETTERS, layer: "letters" }
+  ];
 
   Promise.all(
     layers.map(opt =>
@@ -530,7 +490,6 @@ function renderCharacter(callback) {
     imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
-    drawCompanionSizeLabels(ctx, canvas);
     if (callback) callback(canvas);
   });
 }
@@ -724,51 +683,13 @@ function renderFinalCharacter() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const gen = ++finalRenderGen;
 
-  let layers = [];
-  
-  layers.push({ src: IMG_BG, layer: "bg" });
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
-  }
-  
-  let body = bodyOptions[selected.body];
-  if (body && body.src) {
-    layers.push({ src: body.src, layer: "body" });
-  }
-  
-  if (selected.armor) {
-    layers.push({ src: IMG_ARMOR, layer: "armor" });
-  }
-  
-  if (selected.face !== -1 && faceOptions[selected.face]) {
-    let face = faceOptions[selected.face];
-    if (face && face.src && face.enabled !== false) {
-      layers.push({ src: face.src, layer: "face" });
-    }
-  }
-  
-  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
-    let paint = facePaintOptions[selected.facePaint];
-    if (paint && paint.src && paint.enabled !== false) {
-      layers.push({ src: paint.src, layer: "facepaint" });
-    }
-  }
-  
-  if (selected.hair !== -1 && hairOptions[selected.hair]) {
-    let hair = hairOptions[selected.hair];
-    if (hair && hair.src && hair.enabled !== false) {
-      layers.push({ src: hair.src, layer: "hair" });
-    }
-  }
-  
-  if (selected.helmet) {
-    layers.push({ src: IMG_HELMET, layer: "helmet" });
-  }
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
-  }
+  const layers = [
+    { src: IMG_BG, layer: "bg" },
+    { src: IMG_ARMOR, layer: "armor" },
+    { src: IMG_WEAS, layer: "weas" },
+    { src: IMG_ANIM_COMP, layer: "anim_comp" },
+    { src: IMG_LETTERS, layer: "letters" }
+  ];
 
   Promise.all(
     layers.map(opt =>
@@ -825,41 +746,6 @@ physiqueForm.addEventListener("submit", function(e) {
   resizeCanvasAndRender();
 });
 
-document.getElementById("equipArmorChk").addEventListener("change", function(e) {
-  selected.armor = e.target.checked;
-  document.getElementById("equipArmorChkFinal").checked = e.target.checked;
-  renderCharacter();
-  renderFinalCharacter();
-});
-document.getElementById("equipHelmetChk").addEventListener("change", function(e) {
-  selected.helmet = e.target.checked;
-  document.getElementById("equipHelmetChkFinal").checked = e.target.checked;
-  renderCharacter();
-  renderFinalCharacter();
-});
-document.getElementById("equipWeaponsChk").addEventListener("change", function(e) {
-  selected.weapon = e.target.checked;
-  document.getElementById("equipWeaponsChkFinal").checked = e.target.checked;
-  renderCharacter();
-  renderFinalCharacter();
-});
-
-document.getElementById("equipArmorChkFinal").addEventListener("change", function(e) {
-  selected.armor = e.target.checked;
-  document.getElementById("equipArmorChk").checked = e.target.checked;
-  renderFinalCharacter();
-});
-document.getElementById("equipHelmetChkFinal").addEventListener("change", function(e) {
-  selected.helmet = e.target.checked;
-  document.getElementById("equipHelmetChk").checked = e.target.checked;
-  renderFinalCharacter();
-});
-document.getElementById("equipWeaponsChkFinal").addEventListener("change", function(e) {
-  selected.weapon = e.target.checked;
-  document.getElementById("equipWeaponsChk").checked = e.target.checked;
-  renderFinalCharacter();
-});
-
 document.getElementById("randomBtn").addEventListener("click", function() {
   let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
   if (enabledBodiesIdx.length === 0) return;
@@ -893,13 +779,13 @@ showJpegBtn.addEventListener("click", function() {
   const charCanvas = document.getElementById("finalCanvas");
   const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
   localStorage.setItem("sorc_portrait", portraitDataUrl);
-  window.open("../../../../char-sheet-flip.html", "_blank");
+  window.open("/content/character/character-sheet-fem-musc.html", "_blank");
 });
 
 const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
 showBlankJpegBtn.addEventListener("click", function() {
   localStorage.removeItem("sorc_portrait");
-  window.open("../../../../char-sheet-flip.html", "_blank");
+  window.open("/content/character/character-sheet-fem-musc.html", "_blank");
 });
 
 function showPage(n) {
@@ -913,10 +799,6 @@ function showPage(n) {
   }
 
   if (n === 3) {
-    document.getElementById("equipWeaponsChkFinal").checked = selected.weapon;
-    document.getElementById("equipArmorChkFinal").checked = selected.armor;
-    document.getElementById("equipHelmetChkFinal").checked = selected.helmet;
-
     setTimeout(function() {
       const finalCanvas = document.getElementById("finalCanvas");
       if (finalCanvas) {

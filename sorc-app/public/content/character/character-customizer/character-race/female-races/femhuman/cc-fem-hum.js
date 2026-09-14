@@ -9,22 +9,11 @@ const BASE = "../../../assets/";
 const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
 
 // Image paths for special layers
-const IMG_BG = "/images/high-res-canvas-background.png_20260913_192531_0000.png";
-const IMG_COMPASS = "/images/high-res-anim-comp.png_20260913_014010_0000.png";
-const IMG_WEASEL = "/images/high-res-weas.png_20260913_013922_0000.png";
-const IMG_LETTERS = "/images/high-res-letters.png_20260913_013952_0000.png";
-const IMG_ARMOR = `${BASE}set-epic-fur-mantle.png`;
-const IMG_HELMET = `${BASE}bear-skn-helmet.png`;
-const IMG_WEAPON_BACK = `${BASE}kaida-great-bow-bck.png`;
-const IMG_WEAPON_FRONT = `${BASE}kaida-btlax-frnt.png`;
-const IMG_SHEET_FRAME = "/images/frame-fem-musc_20260822_235512_0000.png";
-
-// The Editable Character Sheet is 768x1104. This portrait window matches
-// the placement of the existing character/background composition.
-const FINAL_SHEET_SIZE = { width: 768, height: 1104 };
-const SHEET_PORTRAIT = { x: 250, y: 214, width: 264, height: 400 };
-const SHEET_CHARACTER_OFFSET_Y = 112;
-const SHEET_HAIR_OPACITY = 1;
+const IMG_BG = `${BASE}high-res-canvas-background.png`;
+const IMG_ARMOR = `${BASE}high-res-core-leathtaba3.png`;
+const IMG_ANIM_COMP = `${BASE}high-res-anim-comp.png`;
+const IMG_WEAS = `${BASE}high-res-weas.png`;
+const IMG_LETTERS = `${BASE}high-res-letters.png`;
 
 // ONLY MUSCULAR BODY TYPES
 const bodyOptions = [
@@ -67,40 +56,18 @@ const hairOptions = [
 
 let selected = {
   body: 2,
-  face: pickFirstEnabledFace("pale"),
+  face: 0,
   facePaint: 0,
-  hair: -1,
-  armor: false,
-  helmet: false,
-  weapon: false
+  hair: 0,
 };
 
 let isPortraitView = false;
 let charRenderGen = 0;
 let finalRenderGen = 0;
-const imageCache = new Map();
 
 function pickFirstEnabledFace(skin) {
   const index = faceOptions.findIndex(f => f.skin === skin && f.enabled);
   return index !== -1 ? index : 0;
-}
-
-function loadImage(src) {
-  if (!src) return Promise.resolve(null);
-  if (imageCache.has(src)) return imageCache.get(src);
-
-  const promise = new Promise(resolve => {
-    const img = new window.Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => {
-      console.warn(`Failed to load image: ${src}`);
-      resolve(null);
-    };
-    img.src = src;
-  });
-
-  imageCache.set(src, promise);
-  return promise;
 }
 
 const holdPreviewOverlay = document.getElementById("holdPreviewOverlay");
@@ -454,12 +421,13 @@ function renderAllPickers() {
 }
 
 function getCanvasSize() {
-  const maxWidth = 640, maxHeight = 1280;
+  const maxWidth = 768, maxHeight = 1104;
+  const sheetAspect = 1104 / 768;
   let vw = window.innerWidth;
   let vh = window.innerHeight;
   let width = Math.min(vw * 0.96, maxWidth);
-  let height = Math.min(width * 2, vh * 0.92, maxHeight);
-  if (height / 2 < width) width = height / 2;
+  let height = Math.min(width * sheetAspect, vh * 0.92, maxHeight);
+  if (height / sheetAspect < width) width = height / sheetAspect;
   return { width: Math.round(width), height: Math.round(height) };
 }
 
@@ -472,24 +440,6 @@ function resizeCanvasAndRender() {
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
     renderCharacter();
-  }
-}
-
-function resizeFinalCanvasForViewport() {
-  const canvas = document.getElementById("finalCanvas");
-  if (!canvas) return;
-
-  canvas.width = FINAL_SHEET_SIZE.width;
-  canvas.height = FINAL_SHEET_SIZE.height;
-
-  const displayWidth = Math.min(window.innerWidth * 0.96, FINAL_SHEET_SIZE.width);
-  const displayHeight = displayWidth * FINAL_SHEET_SIZE.height / FINAL_SHEET_SIZE.width;
-  canvas.style.width = Math.round(displayWidth) + "px";
-  canvas.style.height = Math.round(displayHeight) + "px";
-
-  const page3 = document.getElementById("page3");
-  if (page3 && page3.classList.contains("active")) {
-    renderFinalCharacter();
   }
 }
 
@@ -514,54 +464,27 @@ function renderCharacter(callback) {
     return;
   }
 
-  let layers = [];
-  
-  layers.push({ src: IMG_BG, layer: "bg" });
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
-  }
-  
-  let body = bodyOptions[selected.body];
-  if (body && body.src) {
-    layers.push({ src: body.src, layer: "body" });
-  }
-  
-  if (selected.armor) {
-    layers.push({ src: IMG_ARMOR, layer: "armor" });
-  }
-  
-  if (selected.face !== -1 && faceOptions[selected.face]) {
-    let face = faceOptions[selected.face];
-    if (face && face.src && face.enabled !== false) {
-      layers.push({ src: face.src, layer: "face" });
-    }
-  }
-  
-  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
-    let paint = facePaintOptions[selected.facePaint];
-    if (paint && paint.src && paint.enabled !== false) {
-      layers.push({ src: paint.src, layer: "facepaint" });
-    }
-  }
-  
-  if (selected.hair !== -1 && hairOptions[selected.hair]) {
-    let hair = hairOptions[selected.hair];
-    if (hair && hair.src && hair.enabled !== false) {
-      layers.push({ src: hair.src, layer: "hair" });
-    }
-  }
-  
-  if (selected.helmet) {
-    layers.push({ src: IMG_HELMET, layer: "helmet" });
-  }
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
-  }
+  const layers = [
+    { src: IMG_BG, layer: "bg" },
+    { src: IMG_ARMOR, layer: "armor" },
+    { src: IMG_WEAS, layer: "weas" },
+    { src: IMG_ANIM_COMP, layer: "anim_comp" },
+    { src: IMG_LETTERS, layer: "letters" }
+  ];
 
   Promise.all(
-    layers.map(opt => loadImage(opt && opt.src))
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve(im);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
   ).then(imgs => {
     if (gen !== charRenderGen) return;
     imgs.forEach(im => {
@@ -569,6 +492,60 @@ function renderCharacter(callback) {
     });
     if (callback) callback(canvas);
   });
+}
+
+function drawCompanionSizeLabels(ctx, canvas) {
+  ctx.save();
+  ctx.textAlign = "center";
+  const headerFont = `bold ${Math.round(canvas.width * 0.02)}px sans-serif`;
+  const labelFont = `bold ${Math.round(canvas.width * 0.024)}px sans-serif`;
+  const headerGap = canvas.height * 0.03;
+
+  const labelColor = "#FFEE00";
+  const outlineColor = "rgba(0,0,0,0.85)";
+  const outlineWidth = Math.max(2, canvas.width * 0.003);
+
+  function drawSlot(label, x, y, header) {
+    ctx.globalAlpha = 1;
+    ctx.font = headerFont;
+    ctx.lineWidth = outlineWidth;
+    ctx.strokeStyle = outlineColor;
+    ctx.strokeText(header || "Companion Slot", x, y - headerGap);
+    ctx.fillStyle = labelColor;
+    ctx.fillText(header || "Companion Slot", x, y - headerGap);
+
+    ctx.font = labelFont;
+    ctx.strokeText(label, x, y);
+    ctx.fillText(label, x, y);
+  }
+
+  drawSlot("Angelic (small/tiny)", canvas.width * 0.78, canvas.height * 0.18);
+  drawSlot("Goliath/Behemoth (empty)", canvas.width * 0.30, canvas.height * 0.18);
+  drawSlot("Pet (small/tiny)", canvas.width * 0.72, canvas.height * 0.49);
+  drawSlot("Standard (empty)", canvas.width * 0.22, canvas.height * 0.47);
+  drawSlot("Camp/Light Source", canvas.width * 0.22, canvas.height * 0.60, "Wayfarer Location");
+
+  const bootLines = [
+    "Character default in street clothes and TABA Boots.",
+    "Selections; Armaments, Companions and Physique must be earned",
+    "and approved by GM before submitting custom portraits (see rules)."
+  ];
+  const bootFontSize = Math.round(canvas.width * 0.02);
+  const bootFont = `bold ${bootFontSize}px sans-serif`;
+  const bootLineHeight = bootFontSize * 1.5;
+  const bootX = canvas.width * 0.5;
+  const bootStartY = canvas.height * 0.94;
+  ctx.font = bootFont;
+  ctx.lineWidth = outlineWidth;
+  ctx.strokeStyle = outlineColor;
+  ctx.fillStyle = labelColor;
+  bootLines.forEach((line, i) => {
+    const y = bootStartY + i * bootLineHeight;
+    ctx.strokeText(line, bootX, y);
+    ctx.fillText(line, bootX, y);
+  });
+
+  ctx.restore();
 }
 
 function renderFacePreview() {
@@ -706,115 +683,30 @@ function renderFinalCharacter() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const gen = ++finalRenderGen;
 
-  let layers = [];
-  
-  layers.push({ src: IMG_BG, layer: "bg" });
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_BACK, layer: "weapon_back" });
-  }
-  
-  let body = bodyOptions[selected.body];
-  if (body && body.src) {
-    layers.push({ src: body.src, layer: "body" });
-  }
-  
-  if (selected.armor) {
-    layers.push({ src: IMG_ARMOR, layer: "armor" });
-  }
-  
-  if (selected.face !== -1 && faceOptions[selected.face]) {
-    let face = faceOptions[selected.face];
-    if (face && face.src && face.enabled !== false) {
-      layers.push({ src: face.src, layer: "face" });
-    }
-  }
-  
-  if (selected.facePaint > 0 && facePaintOptions[selected.facePaint]) {
-    let paint = facePaintOptions[selected.facePaint];
-    if (paint && paint.src && paint.enabled !== false) {
-      layers.push({ src: paint.src, layer: "facepaint" });
-    }
-  }
-  
-  if (selected.hair !== -1 && hairOptions[selected.hair]) {
-    let hair = hairOptions[selected.hair];
-    if (hair && hair.src && hair.enabled !== false) {
-      layers.push({ src: hair.src, layer: "hair" });
-    }
-  }
-  
-  if (selected.helmet) {
-    layers.push({ src: IMG_HELMET, layer: "helmet" });
-  }
-  
-  if (selected.weapon) {
-    layers.push({ src: IMG_WEAPON_FRONT, layer: "weapon_front" });
-  }
-
-  const frameLayer = { src: IMG_SHEET_FRAME, layer: "sheet_frame" };
-  const foregroundLayers = [
-    { src: IMG_COMPASS, layer: "foreground_compass" },
-    { src: IMG_WEASEL, layer: "foreground_weasel" },
-    { src: IMG_LETTERS, layer: "foreground_letters" }
+  const layers = [
+    { src: IMG_BG, layer: "bg" },
+    { src: IMG_ARMOR, layer: "armor" },
+    { src: IMG_WEAS, layer: "weas" },
+    { src: IMG_ANIM_COMP, layer: "anim_comp" },
+    { src: IMG_LETTERS, layer: "letters" }
   ];
 
   Promise.all(
-    [...layers, frameLayer, ...foregroundLayers].map(opt => loadImage(opt && opt.src))
+    layers.map(opt =>
+      new Promise(resolve => {
+        if (!opt || !opt.src) return resolve(null);
+        const im = new window.Image();
+        im.src = opt.src;
+        im.onload = () => resolve(im);
+        im.onerror = () => {
+          console.warn(`Failed to load image: ${opt.src}`);
+          resolve(null);
+        };
+      })
+    )
   ).then(imgs => {
     if (gen !== finalRenderGen) return;
-
-    ctx.fillStyle = "#f5f5f0";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const frame = imgs[layers.length];
-    const background = imgs[0];
-
-    if (background) {
-      ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-    }
-
-    if (frame) ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(
-      SHEET_PORTRAIT.x,
-      SHEET_PORTRAIT.y,
-      SHEET_PORTRAIT.width,
-      SHEET_PORTRAIT.height
-    );
-    ctx.clip();
-
-    // The frame contains a sample portrait. Paint the same full-canvas
-    // background back through the portrait window before adding selections.
-    if (background) {
-      ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-    }
-
-    layers.slice(1).forEach((layer, index) => {
-      const imageIndex = index + 1;
-      const im = imgs[imageIndex];
-      if (im) {
-        const y = SHEET_PORTRAIT.y + (
-          layer.layer !== "bg" ? SHEET_CHARACTER_OFFSET_Y : 0
-        );
-        ctx.globalAlpha = layer.layer === "hair" ? SHEET_HAIR_OPACITY : 1;
-        ctx.drawImage(
-          im,
-          SHEET_PORTRAIT.x,
-          y,
-          SHEET_PORTRAIT.width,
-          SHEET_PORTRAIT.height
-        );
-      }
-    });
-
-    ctx.globalAlpha = 1;
-    ctx.restore();
-
-    foregroundLayers.forEach((layer, index) => {
-      const im = imgs[layers.length + 1 + index];
+    imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
   });
@@ -854,41 +746,6 @@ physiqueForm.addEventListener("submit", function(e) {
   resizeCanvasAndRender();
 });
 
-document.getElementById("equipArmorChk").addEventListener("change", function(e) {
-  selected.armor = e.target.checked;
-  document.getElementById("equipArmorChkFinal").checked = e.target.checked;
-  renderCharacter();
-  renderFinalCharacter();
-});
-document.getElementById("equipHelmetChk").addEventListener("change", function(e) {
-  selected.helmet = e.target.checked;
-  document.getElementById("equipHelmetChkFinal").checked = e.target.checked;
-  renderCharacter();
-  renderFinalCharacter();
-});
-document.getElementById("equipWeaponsChk").addEventListener("change", function(e) {
-  selected.weapon = e.target.checked;
-  document.getElementById("equipWeaponsChkFinal").checked = e.target.checked;
-  renderCharacter();
-  renderFinalCharacter();
-});
-
-document.getElementById("equipArmorChkFinal").addEventListener("change", function(e) {
-  selected.armor = e.target.checked;
-  document.getElementById("equipArmorChk").checked = e.target.checked;
-  renderFinalCharacter();
-});
-document.getElementById("equipHelmetChkFinal").addEventListener("change", function(e) {
-  selected.helmet = e.target.checked;
-  document.getElementById("equipHelmetChk").checked = e.target.checked;
-  renderFinalCharacter();
-});
-document.getElementById("equipWeaponsChkFinal").addEventListener("change", function(e) {
-  selected.weapon = e.target.checked;
-  document.getElementById("equipWeaponsChk").checked = e.target.checked;
-  renderFinalCharacter();
-});
-
 document.getElementById("randomBtn").addEventListener("click", function() {
   let enabledBodiesIdx = bodyOptions.map((body, idx) => body.enabled ? idx : -1).filter(idx => idx !== -1);
   if (enabledBodiesIdx.length === 0) return;
@@ -918,22 +775,18 @@ document.getElementById("randomBtn").addEventListener("click", function() {
 });
 
 const showJpegBtn = document.getElementById("showJpegBtn");
-if (showJpegBtn) {
-  showJpegBtn.addEventListener("click", function() {
-    const charCanvas = document.getElementById("finalCanvas");
-    const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
-    localStorage.setItem("sorc_portrait", portraitDataUrl);
-    window.open("../../../../char-sheet-flip.html", "_blank");
-  });
-}
+showJpegBtn.addEventListener("click", function() {
+  const charCanvas = document.getElementById("finalCanvas");
+  const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
+  localStorage.setItem("sorc_portrait", portraitDataUrl);
+  window.open("/content/character/character-sheet-fem-musc.html", "_blank");
+});
 
 const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
-if (showBlankJpegBtn) {
-  showBlankJpegBtn.addEventListener("click", function() {
-    localStorage.removeItem("sorc_portrait");
-    window.open("../../../../char-sheet-flip.html", "_blank");
-  });
-}
+showBlankJpegBtn.addEventListener("click", function() {
+  localStorage.removeItem("sorc_portrait");
+  window.open("/content/character/character-sheet-fem-musc.html", "_blank");
+});
 
 function showPage(n) {
   document.getElementById("page1").classList.toggle("active", n === 1);
@@ -946,14 +799,14 @@ function showPage(n) {
   }
 
   if (n === 3) {
-    document.getElementById("equipWeaponsChkFinal").checked = selected.weapon;
-    document.getElementById("equipArmorChkFinal").checked = selected.armor;
-    document.getElementById("equipHelmetChkFinal").checked = selected.helmet;
-
     setTimeout(function() {
       const finalCanvas = document.getElementById("finalCanvas");
       if (finalCanvas) {
-        resizeFinalCanvasForViewport();
+        const { width, height } = getCanvasSize();
+        finalCanvas.width = width;
+        finalCanvas.height = height;
+        finalCanvas.style.width = width + "px";
+        finalCanvas.style.height = height + "px";
         renderFinalCharacter();
       }
     }, 50);
@@ -984,9 +837,7 @@ window.addEventListener("popstate", function(e) {
 });
 
 window.addEventListener("resize", resizeCanvasAndRender);
-window.addEventListener("resize", resizeFinalCanvasForViewport);
 window.addEventListener("orientationchange", resizeCanvasAndRender);
-window.addEventListener("orientationchange", resizeFinalCanvasForViewport);
 
 const canvasEl = document.getElementById("charCanvas");
 let holdTimer = null;
@@ -1081,11 +932,8 @@ if (canvasEl) {
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
 resizeCanvasAndRender();
-resizeFinalCanvasForViewport();
-renderFinalCharacter();
 
 // Ensure character renders properly on initial load with retry for slow image loading
 setTimeout(() => {
   renderCharacter();
-  renderFinalCharacter();
 }, 100);
