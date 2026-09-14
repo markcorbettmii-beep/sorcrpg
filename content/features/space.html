@@ -20,7 +20,8 @@
         .space-avatar-large { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #c93f35; background: #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #555; overflow: hidden; flex-shrink: 0; }
         .space-name-block { flex: 1; padding-bottom: 0.5rem; }
         .space-username { font-size: 1.3rem; font-weight: bold; color: #e0cfc0; }
-        .space-role-tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; margin-top: 3px; }
+        .space-role-tag { display: inline-flex; align-items: center; padding: 2px 8px; border: 2px solid currentColor; border-radius: 999px; background: transparent; font-size: 0.75rem; font-weight: bold; margin-top: 3px; }
+        .space-status-help { display: inline-block; margin-left: 0.35rem; color: #b9aa00; font-size: 0.72rem; text-decoration: underline; }
         .space-section { padding: 1rem 1.5rem; border-top: 1px solid #2a2a2a; }
         .space-section h3 { color: #b9aa00; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 0.75rem 0; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
@@ -243,19 +244,19 @@
     }
 
     function getRoleColor(role) {
-        if (role === 'OWNER') return 'background:#b9aa00;color:#222;';
-        if (role === 'ADMIN') return 'background:#c93f35;color:#fff;';
-        if (role === 'MASTER') return 'background:#1a6b1a;color:#fff;';
-        if (role === 'PLAYER') return 'background:#1a3a6b;color:#fff;';
-        return 'background:#333;color:#e0cfc0;';
+        if (role === 'OWNER') return 'border-color:#c5a042;color:#c5a042;';
+        if (role === 'ADMIN') return 'border-color:#c87d00;color:#c87d00;';
+        if (role === 'MASTER' || role === 'GM') return 'border-color:#c87d00;color:#c87d00;';
+        if (role === 'PLAYER') return 'border-color:#2196f3;color:#2196f3;';
+        return 'border-color:#777;color:#777;';
     }
 
     function getRoleAbbr(role) {
-        if (role === 'OWNER') return '[OWN]';
-        if (role === 'ADMIN') return '[AD]';
-        if (role === 'MASTER') return '[GM]';
-        if (role === 'PLAYER') return '[PC]';
-        return '[CIV]';
+        if (role === 'OWNER') return 'OWN';
+        if (role === 'ADMIN') return 'Admin';
+        if (role === 'MASTER' || role === 'GM') return 'GM';
+        if (role === 'PLAYER') return 'PC';
+        return 'CIV';
     }
 
     function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -583,7 +584,9 @@
 
         var communityPoints = user.community_points || 0;
         var postCount = user.post_count || 0;
-        var membershipBadge = isPro ? '<span class="space-role-tag" style="background:#b9aa00;color:#222;">PRO</span>' : '';
+        var membershipBadge = isPro
+            ? '<span class="space-role-tag" style="border-color:#c5a042;color:#c5a042;">PRO</span>'
+            : '<span class="space-role-tag" style="border-color:#8c06a3;color:#8c06a3;">BASIC</span>';
 
         return '<div class="space-banner-title">Your Space</div>' +
             '<div class="space-card">' +
@@ -592,8 +595,9 @@
                 '<div class="space-avatar-large">' + avatarDisplay + '</div>' +
                 '<div class="space-name-block">' +
                     '<div class="space-username">' + esc(displayName) + '</div>' +
-                    '<span class="space-role-tag" style="' + getRoleColor(role) + '">' + role + ' ' + getRoleAbbr(role) + '</span>' +
+                    '<span class="space-role-tag" style="' + getRoleColor(role) + '">' + getRoleAbbr(role) + '</span>' +
                     membershipBadge +
+                    '<a class="space-status-help" href="../../sorc-web.html#roles-vs-membership">Roles &amp; membership</a>' +
                 '</div>' +
             '</div>' +
             '<div class="space-section">' +
