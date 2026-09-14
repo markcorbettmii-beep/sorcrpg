@@ -304,6 +304,9 @@ class SORCNavigation {
                       </details>
                     </li>
                   `).join('')}
+                  <li class="sorc-nav-chapter">
+                    <a class="sorc-nav-chapter-title" href="${pathToRoot}content/essentia_core/rules-index.html#chapter-6">Full Index Ch. 6 - 18</a>
+                  </li>
                 </ul>
               </div>
 
