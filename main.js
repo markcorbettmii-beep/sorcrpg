@@ -231,31 +231,6 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
-// ========== USER MINI POPUP ==========
-window.showUserMiniPopup = function(e, uid, name) {
-  e.stopPropagation();
-  var existing = document.querySelector('.user-mini-popup');
-  if (existing) { existing.remove(); return; }
-  var popup = document.createElement('div');
-  popup.className = 'user-mini-popup';
-  popup.style.cssText = 'position:fixed;background:#1a1a1a;border:1px solid #444;border-radius:8px;padding:0.75rem 1rem;z-index:999999;min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,0.6);font-size:0.85rem;';
-  var rect = e.target.getBoundingClientRect();
-  popup.style.top = (rect.bottom + 8) + 'px';
-  popup.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
-  popup.innerHTML =
-    '<div style="font-weight:bold;color:#e0cfc0;margin-bottom:0.5rem;font-size:0.9rem;">' + escapeHtml(name) + '</div>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;border-bottom:1px solid #2a2a2a;">View Profile</a>' +
-    '<a href="public-profile.html?uid=' + escapeHtml(uid) + '&msg=1" style="display:flex;align-items:center;gap:0.5rem;color:#b9aa00;text-decoration:none;padding:4px 0;">Send Message</a>';
-  document.body.appendChild(popup);
-  setTimeout(function() {
-    document.addEventListener('click', function removePopup() {
-      var p = document.querySelector('.user-mini-popup');
-      if (p) p.remove();
-      document.removeEventListener('click', removePopup);
-    });
-  }, 100);
-};
-
 // ========== NEWS CARDS SLIDER ==========
 document.addEventListener("DOMContentLoaded", function() {
   const newsCards = document.querySelectorAll('.news-card');
@@ -335,14 +310,6 @@ function getRoleAbbr(role) {
   if (role === 'MASTER') return '[GM]';
   if (role === 'PLAYER') return '[PC]';
   return '[CIV]';
-}
-
-function getRoleColor(role) {
-  if (role === 'OWNER') return { bg: '#b9aa00', color: '#222' };
-  if (role === 'ADMIN') return { bg: '#c93f35', color: '#fff' };
-  if (role === 'MASTER') return { bg: '#1a6b1a', color: '#fff' };
-  if (role === 'PLAYER') return { bg: '#1a3a6b', color: '#fff' };
-  return { bg: '#333', color: '#e0cfc0' };
 }
 
 function getAvatarPath(avatarId) {
@@ -436,36 +403,6 @@ window.showRolePopup = function(username, userId, role) {
   document.getElementById('closeRolePopup').addEventListener('click', function(e) { e.stopPropagation(); popup.remove(); });
 };
 
-// ========== ADMIN PANEL ==========
-window.showAdminPanel = function showAdminPanel() {
-  if (document.querySelector('.admin-panel')) return;
-  var panel = document.createElement('div');
-  panel.className = 'admin-panel';
-  panel.style.cssText = 'position:fixed;bottom:80px;right:10px;background:#222;color:#fff;padding:16px;border-radius:8px;z-index:9998;min-width:260px;border:2px solid #b9aa00;';
-  panel.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-      '<h3 style="color:#b9aa00;margin:0;">Admin Panel</h3>' +
-      '<button onclick="toggleAdminPanel()" style="background:none;border:none;color:#b9aa00;cursor:pointer;font-size:1.2rem;font-weight:bold;">−</button>' +
-    '</div>' +
-    '<div id="adminPanelContent">' +
-      '<button onclick="generateGMCode()" style="background:#b9aa00;color:#222;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:8px;">Generate Master Code</button>' +
-      '<div id="gmCodeOutput" style="margin-top:10px;font-size:0.85rem;"></div>' +
-    '</div>';
-  document.body.appendChild(panel);
-}
-
-window.toggleAdminPanel = function() {
-  var content = document.getElementById('adminPanelContent');
-  var btn = document.querySelector('.admin-panel button');
-  if (content.style.display === 'none') { content.style.display = 'block'; btn.textContent = '−'; }
-  else { content.style.display = 'none'; btn.textContent = '+'; }
-};
-
-window.generateGMCode = function() {
-  var code = 'MASTER-' + Math.random().toString(36).substr(2, 8).toUpperCase();
-  document.getElementById('gmCodeOutput').innerHTML = 'New Master Code: <strong>' + code + '</strong><br><small>Share this with your Master</small>';
-};
-
 // ========== TOAST NOTIFICATIONS ==========
 var _toastQueue = [];
 var _toastShowing = false;
@@ -480,7 +417,7 @@ function _showNextToast() {
   var el = document.createElement('div');
   el.style.cssText = 'position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(80px);background:' + t.color + ';color:' + (t.color === '#b9aa00' ? '#222' : '#fff') + ';padding:0.65rem 1.2rem;border-radius:24px;font-size:0.85rem;font-weight:bold;z-index:99999;box-shadow:0 4px 18px rgba(0,0,0,0.5);transition:transform 0.3s ease;max-width:90vw;text-align:center;';
   document.body.appendChild(el);
-  el.textContent = msg;
+  el.textContent = t.msg;
   setTimeout(function() { el.style.transform = 'translateX(-50%) translateY(0)'; }, 30);
   setTimeout(function() {
     el.style.transform = 'translateX(-50%) translateY(80px)';
