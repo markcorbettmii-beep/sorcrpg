@@ -361,14 +361,15 @@
             '</div>';
 
         var body;
-        /* A Wanderer account holds no sheets - character sheets start at
-           Civilian. Wanderers may still read everyone else's. */
-        var ownerIsWanderer = /^(?:Wanderer|Guest) \d+$/.test(String(ownerName).trim()) ||
-            /^(?:Wanderer|Guest) \d+$/.test(String(username).trim());
+        /* A guest account holds no sheets - character sheets start at Civilian.
+           Saying so beats "has not made one yet", which reads as though one
+           might turn up later. Guests may still read everyone else's. */
+        var ownerIsGuest = /^Guest \d+$/.test(String(ownerName).trim()) ||
+            /^Guest \d+$/.test(String(username).trim());
         if (sheets && sheets['private']) {
             body = '<p class="visitor-empty">' + esc2(ownerName) + ' keeps their character sheets private.</p>';
-        } else if (!list.length && ownerIsWanderer) {
-            body = '<p class="visitor-empty">Wanderers do not hold character sheets. A character sheet starts at Civilian.</p>';
+        } else if (!list.length && ownerIsGuest) {
+            body = '<p class="visitor-empty">Guests do not hold character sheets. A character sheet starts at Civilian.</p>';
         } else if (!list.length) {
             body = '<p class="visitor-empty">' + esc2(ownerName) + ' has not made a character sheet yet.</p>';
         } else {
@@ -420,7 +421,7 @@
             var me = '';
             try { me = String((JSON.parse(localStorage.getItem('sorc_user') || '{}') || {}).username || ''); } catch(e) {}
             if (note) {
-                note.textContent = /^(?:Wanderer|Guest) \d+$/.test(me.trim())
+                note.textContent = /^Guest \d+$/.test(me.trim())
                     ? 'A character sheet starts at Civilian. Sign up to keep one.'
                     : 'Make a character sheet to set whether it is public or private.';
             }
@@ -501,7 +502,7 @@
             data.incoming_requests.forEach(function(req) {
                 html += '<div style="display:flex;gap:1rem;padding:1rem;background:#1a1a1a;border-radius:6px;margin-bottom:0.5rem;align-items:center;">' +
                     '<div style="width:48px;height:48px;border-radius:50%;background:#333;flex-shrink:0;border:2px solid #b9aa00;display:flex;align-items:center;justify-content:center;color:#666;font-size:0.9rem;">' +
-                    (req.from_avatar ? '<img src="../../images/avatars/' + esc(req.from_avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : esc(req.from_display_name).charAt(0)) +
+                    (req.from_avatar ? '<img src="../../images/avatars/" + req.from_avatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />' : req.from_display_name.charAt(0)) +
                     '</div>' +
                     '<div style="flex:1;">' +
                         '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;">' + esc(req.from_display_name) + '</p>' +
@@ -534,7 +535,7 @@
                 var statusColor = friend.status === 'online' ? '#1a6b1a' : '#666';
                 html += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:all 0.2s;hover:border-color:#b9aa00;">' +
                     '<div style="width:64px;height:64px;border-radius:50%;margin:0 auto 0.75rem;background:#333;border:3px solid ' + statusColor + ';display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
-                    (friend.avatar ? '<img src="../../images/avatars/' + esc(friend.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />' : '<span style="font-size:1.5rem;color:#666;">' + esc(friend.display_name).charAt(0) + '</span>') +
+                    (friend.avatar ? '<img src="../../images/avatars/" + friend.avatar + '" style="width:100%;height:100%;object-fit:cover;" />' : '<span style="font-size:1.5rem;color:#666;">' + friend.display_name.charAt(0) + '</span>') +
                     '</div>' +
                     '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(friend.display_name) + '</p>' +
                     '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + (friend.status === 'online' ? '🟢 Online' : '⚫ Offline') + '</p>' +
@@ -577,7 +578,7 @@
         var displayName = user.display_name || user.username || 'Adventurer';
         var avatar = user.avatar;
         var avatarDisplay = avatar
-            ? '<img src="../../images/avatars/' + esc(avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
+            ? '<img src="../../images/avatars/" + avatar + '" style="width:100%;height:100%;object-fit:cover;" />'
             : '<span style="font-size:1.5rem;"></span>';
 
         var communityPoints = user.community_points || 0;
@@ -651,7 +652,7 @@
                                 '<div class="card"><h4>Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' +
                                 '<a href="javascript:void(0);" onclick="switchTab(\'settings\');return false;" style="color:#b9aa00;text-decoration:underline;">Edit in Settings</a></p></div>' +
                                 '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
-                                '<div class="card"><h4>Active Characters</h4><p>You have <span id="overviewCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start with the Rules Index to create your character.</a></p></div>' +
+                                '<div class="card"><h4>Active Characters</h4><p>You have <span id="overviewCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start with Character Creation.</a></p></div>' +
                                 '<div class="card"><h4>SORC Web</h4><p>Membership tiers, features, community points, and everything about SORC Web. <a href="sorc-web.html" style="color:#b9aa00;text-decoration:underline;">Explore SORC Web</a></p></div>' +
                             '</div>';
                         break;
@@ -687,7 +688,7 @@
                                     '<a href="https://sorcrpg.com/character-customizer/creation-overview" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Customize Portrait</a>' +
                                 '</div>' +
                                 '<div style="margin-top:2rem;">' +
-                                    '<a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html" target="_blank" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Refer to character creation</a>' +
+                                    '<a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Refer to character creation</a>' +
                                 '</div>' +
                             '</div>' +
                             '';
@@ -859,7 +860,7 @@
                             '<div style="margin-top:1.5rem;">' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Active Characters</h4>' +
-                                    '<p style="color:#e0cfc0;margin:0 0 0.5rem 0;">You have <span id="activeCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start with the Rules Index to create your character.</a></p>' +
+                                    '<p style="color:#e0cfc0;margin:0 0 0.5rem 0;">You have <span id="activeCharacterCount">0</span> active characters. <a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start with Character Creation.</a></p>' +
                                 '</div>' +
                                 '<div style="background:#222;border-radius:8px;padding:1.5rem;margin-bottom:1.5rem;">' +
                                     '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Avatar</h4>' +
