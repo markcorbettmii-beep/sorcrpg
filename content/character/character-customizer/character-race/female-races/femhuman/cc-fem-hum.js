@@ -59,6 +59,7 @@ let selected = {
   face: 0,
   facePaint: 0,
   hair: 0,
+  armor: false,
 };
 
 let isPortraitView = false;
@@ -423,9 +424,12 @@ function renderAllPickers() {
 function getCanvasSize() {
   const maxWidth = 768, maxHeight = 1104;
   const sheetAspect = 1104 / 768;
-  let vw = window.innerWidth;
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const canvasContainer = document.getElementById("characterCanvasContainer");
+  const containerWidth = canvasContainer ? canvasContainer.clientWidth : viewportWidth;
+  let vw = Math.min(viewportWidth, containerWidth || viewportWidth);
   let vh = window.innerHeight;
-  let width = Math.min(vw * 0.96, maxWidth);
+  let width = Math.min(vw * 0.9, maxWidth);
   let height = Math.min(width * sheetAspect, vh * 0.92, maxHeight);
   if (height / sheetAspect < width) width = height / sheetAspect;
   return { width: Math.round(width), height: Math.round(height) };
@@ -466,11 +470,11 @@ function renderCharacter(callback) {
 
   const layers = [
     { src: IMG_BG, layer: "bg" },
-    { src: IMG_ARMOR, layer: "armor" },
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
   ];
+  if (selected.armor) layers.splice(1, 0, { src: IMG_ARMOR, layer: "armor" });
 
   Promise.all(
     layers.map(opt =>
@@ -685,11 +689,11 @@ function renderFinalCharacter() {
 
   const layers = [
     { src: IMG_BG, layer: "bg" },
-    { src: IMG_ARMOR, layer: "armor" },
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
   ];
+  if (selected.armor) layers.splice(1, 0, { src: IMG_ARMOR, layer: "armor" });
 
   Promise.all(
     layers.map(opt =>
@@ -709,6 +713,58 @@ function renderFinalCharacter() {
     imgs.forEach(im => {
       if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
     });
+  });
+}
+
+function renderArmorCardState() {
+  const status = document.getElementById("armorCardStatus");
+  const cardButtons = [
+    document.getElementById("armorCardButton"),
+    document.getElementById("genericArmorCard")
+  ].filter(Boolean);
+
+  cardButtons.forEach(button => button.classList.toggle("selected", selected.armor));
+  if (status) {
+    status.textContent = selected.armor
+      ? "Generic Armor selected."
+      : "No armor selected.";
+  }
+}
+
+function openArmorPicker() {
+  const overlay = document.getElementById("armorPickerOverlay");
+  if (!overlay) return;
+  overlay.classList.add("open");
+  overlay.setAttribute("aria-hidden", "false");
+  renderArmorCardState();
+}
+
+function closeArmorPicker() {
+  const overlay = document.getElementById("armorPickerOverlay");
+  if (!overlay) return;
+  overlay.classList.remove("open");
+  overlay.setAttribute("aria-hidden", "true");
+}
+
+function selectGenericArmor() {
+  selected.armor = true;
+  renderArmorCardState();
+  closeArmorPicker();
+  renderCharacter();
+  renderFinalCharacter();
+}
+
+const armorCardButton = document.getElementById("armorCardButton");
+const genericArmorCard = document.getElementById("genericArmorCard");
+const armorPickerClose = document.getElementById("armorPickerClose");
+const armorPickerOverlay = document.getElementById("armorPickerOverlay");
+
+if (armorCardButton) armorCardButton.addEventListener("click", openArmorPicker);
+if (genericArmorCard) genericArmorCard.addEventListener("click", selectGenericArmor);
+if (armorPickerClose) armorPickerClose.addEventListener("click", closeArmorPicker);
+if (armorPickerOverlay) {
+  armorPickerOverlay.addEventListener("click", function(e) {
+    if (e.target === armorPickerOverlay) closeArmorPicker();
   });
 }
 
@@ -935,6 +991,7 @@ if (canvasEl) {
 
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
+renderArmorCardState();
 resizeCanvasAndRender();
 
 // Ensure character renders properly on initial load with retry for slow image loading
