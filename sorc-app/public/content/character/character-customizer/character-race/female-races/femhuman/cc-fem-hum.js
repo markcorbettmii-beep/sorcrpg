@@ -11,6 +11,8 @@ const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.pn
 // Image paths for special layers
 const IMG_BG = `${BASE}high-res-canvas-background.png`;
 const IMG_ARMOR = `${BASE}high-res-core-leathtaba3.png`;
+const IMG_DRAKE = `${BASE}high-res-drake.png`;
+const IMG_ANGELIC = `${BASE}high-res-angelic.png`;
 const IMG_ANIM_COMP = `${BASE}high-res-anim-comp.png`;
 const IMG_WEAS = `${BASE}high-res-weas.png`;
 const IMG_LETTERS = `${BASE}high-res-letters.png`;
@@ -472,6 +474,8 @@ function renderCharacter(callback) {
 
   const layers = [
     { src: IMG_BG, layer: "bg" },
+    { src: IMG_DRAKE, layer: "drake" },
+    { src: IMG_ANGELIC, layer: "angelic" },
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
@@ -691,6 +695,8 @@ function renderFinalCharacter() {
 
   const layers = [
     { src: IMG_BG, layer: "bg" },
+    { src: IMG_DRAKE, layer: "drake" },
+    { src: IMG_ANGELIC, layer: "angelic" },
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
