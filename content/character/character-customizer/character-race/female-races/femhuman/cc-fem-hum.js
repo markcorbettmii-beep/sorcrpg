@@ -775,18 +775,22 @@ document.getElementById("randomBtn").addEventListener("click", function() {
 });
 
 const showJpegBtn = document.getElementById("showJpegBtn");
-showJpegBtn.addEventListener("click", function() {
-  const charCanvas = document.getElementById("finalCanvas");
-  const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
-  localStorage.setItem("sorc_portrait", portraitDataUrl);
-  window.open("/content/character/character-sheet-fem-musc.html", "_blank");
-});
+if (showJpegBtn) {
+  showJpegBtn.addEventListener("click", function() {
+    const charCanvas = document.getElementById("finalCanvas");
+    const portraitDataUrl = charCanvas.toDataURL("image/jpeg", 0.92);
+    localStorage.setItem("sorc_portrait", portraitDataUrl);
+    window.open("/content/character/character-sheet-fem-musc.html", "_blank");
+  });
+}
 
 const showBlankJpegBtn = document.getElementById("showBlankJpegBtn");
-showBlankJpegBtn.addEventListener("click", function() {
-  localStorage.removeItem("sorc_portrait");
-  window.open("/content/character/character-sheet-fem-musc.html", "_blank");
-});
+if (showBlankJpegBtn) {
+  showBlankJpegBtn.addEventListener("click", function() {
+    localStorage.removeItem("sorc_portrait");
+    window.open("/content/character/character-sheet-fem-musc.html", "_blank");
+  });
+}
 
 function showPage(n) {
   document.getElementById("page1").classList.toggle("active", n === 1);
