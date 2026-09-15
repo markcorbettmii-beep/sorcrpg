@@ -221,6 +221,7 @@
     var API_URL = 'https://api.sorcrpg.com';
     var OWNER_EMAILS = ['corbett@sorcrpg.com'];
     var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
+    var DEFAULT_AVATAR_URL = '/images/avatars/' + encodeURIComponent('Fang, a Pinkling rogue._20260504_220543_0000.png');
 
     // Tab definitions with access control
     var PROFILE_TABS = [
@@ -235,7 +236,7 @@
         { id: 'standing', label: 'Standing', access: 'PUBLIC', pro: false },
         { id: 'essentia-exchange', label: 'Essentia Exchange', access: 'PRIVATE', pro: false },
         { id: 'mailbox', label: 'Mailbox', access: 'PRIVATE', pro: false },
-        { id: 'settings', label: 'Settings', access: 'PRIVATE', pro: false }
+        { id: 'settings', label: 'Settings tab for Avatars', access: 'PRIVATE', pro: false }
     ];
 
     function canViewTab(tab, isOwner, isPro) {
@@ -296,6 +297,14 @@
             .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function avatarImageMarkup(avatar, altText) {
+        var imageUrl = avatar
+            ? '/images/avatars/' + encodeURIComponent(String(avatar))
+            : DEFAULT_AVATAR_URL;
+        var avatarStyle = 'width:100%;height:100%;object-fit:cover;' + (avatar ? '' : 'opacity:0.55;');
+        return '<img src="' + esc2(imageUrl) + '" alt="' + esc2(altText || 'Avatar') + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR_URL + '\';this.style.opacity=\'0.55\';" style="' + avatarStyle + '" />';
+    }
+
     function renderVisitorSheet(ch) {
         var data = (ch && ch.data && typeof ch.data === 'object') ? ch.data : {};
         var keys = Object.keys(data).filter(function(k) {
@@ -347,9 +356,7 @@
 
         var ownerName = (sheets && sheets.owner && (sheets.owner.display_name || sheets.owner.username)) ||
             (owner && (owner.display_name || owner.username)) || username;
-        var avatar = owner && owner.avatar
-            ? '<img src="../../images/avatars/' + esc2(owner.avatar) + '" style="width:100%;height:100%;object-fit:cover;" />'
-            : '<span style="font-size:1.5rem;">' + esc2(String(ownerName).charAt(0).toUpperCase()) + '</span>';
+        var avatar = avatarImageMarkup(owner && owner.avatar, ownerName);
 
         var list = (sheets && sheets.characters) || [];
 
@@ -580,9 +587,7 @@
     function renderProfileHeader(user, role, isPro) {
         var displayName = user.display_name || user.username || 'Adventurer';
         var avatar = user.avatar;
-        var avatarDisplay = avatar
-            ? '<img src="../../images/avatars/' + avatar + '" style="width:100%;height:100%;object-fit:cover;" />'
-            : '<span style="font-size:1.5rem;"></span>';
+        var avatarDisplay = avatarImageMarkup(avatar, displayName);
 
         var communityPoints = user.community_points || 0;
         var postCount = user.post_count || 0;
