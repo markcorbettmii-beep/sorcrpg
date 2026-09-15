@@ -11,8 +11,8 @@
     main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 100%; }
     .rules-section { margin-bottom: 2.5rem; }
     .rules-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
-    .rules-section h3 { color: #8c06a3; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
-    .rules-section h4 { color: #be0500; }
+    .rules-section h3 { color: inherit; font-size: 1.05rem; letter-spacing: 1px; margin: 1.2rem 0 0.5rem; opacity: 0.85; }
+    .rules-section h4 { color: inherit; }
     .def-block h4 { color: #ffffff; }
     .rules-section p, .rules-section li { font-size: 0.97rem; line-height: 1.75; opacity: 0.85; }
     .rules-section ul, .rules-section ol { padding-left: 1.4rem; }
@@ -55,11 +55,7 @@
       border: 2px solid rgba(186,85,211,0.55);
       background: rgba(0,110,215,0.24); color: #0058aa;
     }
-    details.play-toggle > summary::-webkit-details-marker { display: none; }
-    details.play-toggle > summary::marker { content: ""; }
-    details.play-toggle > summary::after { content: "Expand for Complex"; }
-    details.play-toggle[open] > summary::after { content: "Collapse for Bare Bones"; }
-    details.play-toggle[open] > summary { background: rgba(197,160,66,0.24); color: #c5a042; }
+    details.play-toggle > summary { display: none !important; }
     .play-style-bar { text-align: center; margin: 0.5rem 0 1.5rem; }
     .play-style-switch {
       cursor: pointer; font: inherit; font-size: 0.8rem; font-weight: bold;
@@ -222,16 +218,8 @@
     }
 
 
-    /* Migration annotations: current Apex framing is black, imported legacy text is red,
-       and conflict notes are purple. Black footnotes remain explanatory. */
     .apex-current { background:#ffffff; color:#000000; padding:1rem 1.25rem; margin-bottom:1.5rem; border:1px solid #000000; }
     .apex-current h1, .apex-current p { color:#000000 !important; }
-    .migration-note { color:#8c06a3 !important; border-left:3px solid #8c06a3; padding-left:0.75rem; }
-    .legacy-migration { display:none !important; }
-    .legacy-migration, .legacy-migration p, .legacy-migration li,
-    .legacy-migration td, .legacy-migration th, .legacy-migration h2,
-    .legacy-migration h3, .legacy-migration h4, .legacy-migration a { color:#be0500 !important; }
-    .legacy-migration .migration-footnote { color:#000000 !important; }
   </style>
 </head>
 <body>
@@ -257,9 +245,9 @@
       <section class="apex-current">
         <h1>Combat &amp; Movement</h1>
         <p>This Apex section groups movement, combat, game-engine cards, exploration, and game modes in one rules destination.</p>
-        <p>Legacy passages, conflict notes, and migration footnotes are draft-only and are not displayed on the live rules page.</p>
+        <p>Current movement, combat, exploration, and game-engine rules.</p>
       </section>
-      <div class="legacy-migration" hidden>
+      <div class="rules-content">
 
 
       <div class="rules-section">
@@ -1799,26 +1787,6 @@
   <script src="../../nav.js?v=2"></script>
   <script src="../../main.js?v=26"></script>
   <script src="../../play-style.js?v=5"></script>
-  <script>
-    (() => {
-      const focus = window.location.hash.slice(1);
-      if (focus !== "combat" && focus !== "movement") return;
-      const section = document.querySelector(`.legacy-migration .rules-section h2#${focus}`)?.closest(".rules-section");
-      if (!section) return;
-      document.querySelectorAll(".legacy-migration > *").forEach((child) => {
-        child.hidden = child !== section;
-      });
-      const title = focus === "combat" ? "Combat" : "Movement & Environment";
-      document.title = `SORC Apex Rules - ${title}`;
-      document.querySelector(".apex-current h1").textContent = title;
-      document.querySelector(".apex-current p:not(.migration-note)").textContent =
-        focus === "combat"
-          ? "Combat mechanics including attacks, defense, damage, techniques, and encounter rules."
-          : "Movement, terrain, encumbrance, visibility, hazards, rest, and travel rules.";
-      document.querySelector(".page-nav-current").textContent = title;
-      requestAnimationFrame(() => section.scrollIntoView({ block: "start" }));
-    })();
-  </script>
   <script src="../../nav-system.js?v=2"></script>
 </body>
 </html>
