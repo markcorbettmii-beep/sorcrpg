@@ -122,6 +122,35 @@
             transition: border-color 0.15s, box-shadow 0.15s; }
         .sheet-thumb:hover { border-color: #6a6320; }
         .sheet-thumb.selected { border-color: #b9aa00; box-shadow: 0 0 0 2px rgba(185,170,0,0.28); }
+        .character-showcase { max-width: 620px; margin: 1.5rem auto 2rem; text-align: center; }
+        .character-canvas-frame { position: relative; overflow: hidden; min-height: 430px; padding: 1rem;
+            background: linear-gradient(145deg, #141414 0%, #292317 100%); border: 2px solid #b9aa00;
+            border-radius: 12px; box-shadow: 0 0 0 4px rgba(185,170,0,0.12), inset 0 0 28px rgba(0,0,0,0.55); }
+        .character-canvas-frame::before { content: 'ACTIVE CHARACTER'; display: block; color: #b9aa00; font-size: 0.68rem;
+            font-weight: bold; letter-spacing: 0.14em; margin-bottom: 0.7rem; }
+        .character-canvas { width: 100%; height: 360px; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; border-radius: 8px; background: #080808; }
+        .character-canvas img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+        .character-canvas-name { margin-top: 0.7rem; color: #e0cfc0; font-size: 1.05rem; font-weight: bold; }
+        .character-thumb-heading { margin: 1.2rem 0 0.5rem; color: #b9aa00; font-size: 0.76rem;
+            font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; }
+        .character-thumb-row { display: flex; justify-content: center; gap: 0.65rem; flex-wrap: wrap; }
+        .character-thumb { width: 76px; padding: 0.25rem; border: 2px solid #b9aa00; border-radius: 8px;
+            background: #211d0f; color: #d4c24a; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+        .character-thumb:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(185,170,0,0.28); }
+        .character-thumb.selected { border-color: #fff0a0; box-shadow: 0 0 0 2px rgba(255,240,160,0.35); }
+        .character-thumb img { display: block; width: 64px; height: 72px; object-fit: cover; border-radius: 5px; }
+        .character-thumb span { display: block; margin-top: 0.25rem; font-size: 0.62rem; font-weight: bold; }
+        .character-thumb.pro { border-color: #8e44ad; background: #211329; color: #d7a8ee; }
+        .character-thumb.pro img { filter: hue-rotate(245deg) saturate(1.3); }
+        .character-thumb.pro:hover { box-shadow: 0 4px 12px rgba(142,68,173,0.35); }
+        .character-thumb.pro.selected { border-color: #edc7ff; box-shadow: 0 0 0 2px rgba(215,168,238,0.4); }
+        .character-tier-note { margin: 0.7rem 0 0; color: #777; font-size: 0.76rem; line-height: 1.45; }
+        body.lawful-mode .character-canvas-frame { background: linear-gradient(145deg, #fffdf6 0%, #eee5ce 100%); }
+        body.lawful-mode .character-canvas { background: #f4eee2; }
+        body.lawful-mode .character-canvas-name { color: #333; }
+        body.lawful-mode .character-thumb { background: #fffbea; }
+        body.lawful-mode .character-thumb.pro { background: #f5eafb; }
 
         /* Who may read this sheet. Public is the useful setting for anyone
            looking for a table, so the recommendation sits with the control
@@ -304,6 +333,30 @@
             : DEFAULT_AVATAR_URL;
         var avatarStyle = 'width:100%;height:100%;object-fit:cover;' + (avatar ? '' : 'opacity:0.55;');
         return '<img src="' + esc2(imageUrl) + '" alt="' + esc2(altText || 'Avatar') + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR_URL + '\';this.style.opacity=\'0.55\';" style="' + avatarStyle + '" />';
+    }
+
+    function characterThumbnailMarkup(name, fileName, tier) {
+        var imageUrl = '/images/avatars/' + encodeURIComponent(fileName);
+        return '<button type="button" class="character-thumb ' + (tier === 'pro' ? 'pro' : 'basic') + '"' +
+            ' data-character-name="' + esc2(name) + '" data-character-src="' + esc2(imageUrl) + '"' +
+            ' onclick="selectCharacterThumbnail(this)" aria-label="Select ' + esc2(name) + '">' +
+            '<img src="' + esc2(imageUrl) + '" alt="' + esc2(name) + '" />' +
+            '<span>' + esc2(name) + '</span>' +
+        '</button>';
+    }
+
+    function selectCharacterThumbnail(button) {
+        if (!button) return;
+        var canvas = document.getElementById('activeCharacterCanvas');
+        var name = document.getElementById('activeCharacterName');
+        var imageUrl = button.getAttribute('data-character-src');
+        if (!canvas || !imageUrl) return;
+        canvas.innerHTML = '<img src="' + esc2(imageUrl) + '" alt="' + esc2(button.getAttribute('data-character-name') || 'Active Character') + '" />';
+        if (name) name.textContent = button.getAttribute('data-character-name') || 'Active Character';
+        document.querySelectorAll('.character-thumb').forEach(function(thumb) {
+            thumb.classList.toggle('selected', thumb === button);
+            thumb.setAttribute('aria-pressed', thumb === button ? 'true' : 'false');
+        });
     }
 
     function renderVisitorSheet(ch) {
@@ -693,6 +746,23 @@
                                     '<button type="button" class="privacy-btn" id="sheetPrivateBtn" onclick="setSheetPrivacy(false)" disabled>Private</button>' +
                                 '</div>' +
                                 '<p class="sheet-privacy-note" id="sheetPrivacyNote">Recommend public in lobbies for GM recruiting.</p>' +
+                                 '<div class="character-showcase">' +
+                                     '<div class="character-canvas-frame">' +
+                                         '<div class="character-canvas" id="activeCharacterCanvas">' + avatarImageMarkup(user.avatar, displayName + ' active character') + '</div>' +
+                                         '<div class="character-canvas-name" id="activeCharacterName">' + esc(displayName) + '</div>' +
+                                     '</div>' +
+                                     '<div class="character-thumb-heading">Other Characters</div>' +
+                                     '<div class="character-thumb-row">' +
+                                         characterThumbnailMarkup('Basic 1', '01deb0d8-fb1e-4e18-8048-020d8ea56272.png', 'basic') +
+                                         characterThumbnailMarkup('Basic 2', '037b9199-2abf-47a3-9b34-0b912a0675a6.png', 'basic') +
+                                         (isPro ? characterThumbnailMarkup('Pro 1', '1dc7c652-c366-4ed6-babb-50e9db131cf6.png', 'pro') : '') +
+                                         (isPro ? characterThumbnailMarkup('Pro 2', '1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png', 'pro') : '') +
+                                         (isPro ? characterThumbnailMarkup('Pro 3', 'Fang, a Pinkling rogue._20260504_220543_0000.png', 'pro') : '') +
+                                     '</div>' +
+                                     '<p class="character-tier-note">' + (isPro
+                                         ? 'Pro Members have three additional character highlights in a different hue.'
+                                         : 'Basic Members have two additional character highlights.') + '</p>' +
+                                 '</div>' +
                                 '<div style="margin-bottom:1.5rem;">' +
                                     '<a href="https://sorcrpg.com/library" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Edit Character stats</a>' +
                                 '</div>' +
