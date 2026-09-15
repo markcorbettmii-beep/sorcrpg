@@ -14,6 +14,8 @@ const IMG_ARMOR = `${BASE}high-res-core-leathtaba3.png`;
 const IMG_ANIM_COMP = `${BASE}high-res-anim-comp.png`;
 const IMG_WEAS = `${BASE}high-res-weas.png`;
 const IMG_LETTERS = `${BASE}high-res-letters.png`;
+const CANVAS_RENDER_WIDTH = 2304;
+const CANVAS_RENDER_HEIGHT = 3312;
 
 // ONLY MUSCULAR BODY TYPES
 const bodyOptions = [
@@ -439,8 +441,8 @@ function resizeCanvasAndRender() {
   const canvas = document.getElementById("charCanvas");
   if (canvas) {
     const { width, height } = getCanvasSize();
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = CANVAS_RENDER_WIDTH;
+    canvas.height = CANVAS_RENDER_HEIGHT;
     canvas.style.width = width + "px";
     canvas.style.height = height + "px";
     renderCharacter();
@@ -863,8 +865,8 @@ function showPage(n) {
       const finalCanvas = document.getElementById("finalCanvas");
       if (finalCanvas) {
         const { width, height } = getCanvasSize();
-        finalCanvas.width = width;
-        finalCanvas.height = height;
+        finalCanvas.width = CANVAS_RENDER_WIDTH;
+        finalCanvas.height = CANVAS_RENDER_HEIGHT;
         finalCanvas.style.width = width + "px";
         finalCanvas.style.height = height + "px";
         renderFinalCharacter();
