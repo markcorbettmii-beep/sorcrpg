@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>The Vault | Slayers of Rings &amp; Crowns</title>
+  <title>Property | Slayers of Rings &amp; Crowns</title>
   <link rel="stylesheet" href="../../styles.css?v=9" />
   <style>
     .v-wrap { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
@@ -98,11 +98,11 @@
     </ul>
 
     <div class="v-wrap">
-      <span class="v-private">PRIVATE &middot; ONLY YOU CAN SEE THIS</span>
-      <h1>Vault</h1>
-      <p class="v-sub">Your personal vault containing SORC Cards, valuables, and in-game currency.</p>
+       <span class="v-private">PRIVATE &middot; ONLY YOU CAN SEE THIS</span>
+      <h1>Property</h1>
+      <p class="v-sub">Your personal Property for SORC Cards, Armaments, Accessories, valuables, Companions, and in-game currency.</p>
 
-      <section class="v-structure" aria-label="Vault contents">
+      <section class="v-structure" aria-label="Property contents">
         <div class="v-structure-section" style="margin-bottom:0.75rem;">
           <h2>SORC Cards</h2>
           <p class="v-structure-muted"><strong>On Person</strong> &mdash; anything Readied or on the Character at the time.</p>
@@ -120,14 +120,14 @@
             </ul>
           </div>
           <div class="v-structure-section">
-            <h2>Storage</h2>
-            <p>These are things you have stored.</p>
+            <h2>Guild and Clan</h2>
+            <p>Shared Property and storage available through your Guild and Clan.</p>
             <ul>
               <li><strong>Stash</strong></li>
-              <li><strong>Guild Vault</strong></li>
+              <li><strong>Guild Storage</strong></li>
               <li><strong>Guild Armory</strong></li>
               <li><strong>Clan Hall Bank</strong></li>
-              <li><strong>Freight Hangar</strong><br><span class="v-freight-note">Neutral massive commercial space available for lease when your Home properties run out of room. This cavernous industrial bay accommodates heavy Spacecraft, specialized Armor, bulk Weapons, and larger Biological Companions. Assets are held safely regardless of faction Standing; keep monthly rental fees current or the property may be auctioned.</span></li>
+              <li><strong>Syltorsge Hangar</strong><br><span class="v-freight-note">Neutral massive commercial space available for lease when your Home properties run out of room. This cavernous industrial bay accommodates heavy Spacecraft, specialized Armor, bulk Weapons, and larger Biological Companions. Assets are held safely regardless of faction Standing; keep monthly rental fees current or the property may be auctioned.</span></li>
             </ul>
           </div>
         </div>
@@ -187,7 +187,7 @@
     }
     async function readJson(res) { try { return await res.json(); } catch(e) { return {}; } }
 
-    /* There is no uid parameter here on purpose. The Vault reads whoever is
+     /* There is no uid parameter here on purpose. Property reads whoever is
        signed in and nobody else - there is no address that opens someone
        else's, because none should exist. */
     var vTab = 'all', vQuery = '', vPage = 1, vSearchTimer = null;
@@ -204,11 +204,11 @@
       var grid = document.getElementById('vGrid');
       if (!currentUser || !currentUser.authKey) {
         document.getElementById('vGate').innerHTML =
-          '<div class="v-note locked">Your Vault is private. <a href="/content/auth/signin.html">Sign in</a> to open it.</div>';
+          '<div class="v-note locked">Your Property is private. <a href="/content/auth/signin.html">Sign in</a> to open it.</div>';
         grid.innerHTML = '';
         return;
       }
-      grid.innerHTML = '<div class="v-empty">Opening the Vault...</div>';
+       grid.innerHTML = '<div class="v-empty">Opening Property...</div>';
       try {
         var wRes = await fetch(API_URL + '/api/exchange/wallet', { headers: authHeaders() });
         var w = await readJson(wRes);
@@ -240,12 +240,12 @@
           var flag = c.bound
             ? '<div class="v-flag readied">Readied &middot; not tradeable</div>'
             : (c.locked
-              ? '<div class="v-flag locked">Locked in the Vault</div>'
+             ? '<div class="v-flag locked">Locked in Property</div>'
               : (c.listed ? '<div class="v-flag listed">On the Exchange</div>'
                 : '<div class="v-flag free">Available</div>'));
           var lockButton = c.bound ? '' :
             '<button class="v-unlock" onclick="event.stopPropagation();toggleVaultLock(\'' + esc(c.ref_code) + '\',' + (c.locked ? 'false' : 'true') + ')">' +
-              (c.locked ? 'Take out of the Vault' : 'Lock in the Vault') + '</button>';
+               (c.locked ? 'Take out of Property' : 'Lock in Property') + '</button>';
           return '<div class="v-card">' + art +
             '<div class="v-meta">' +
               '<div class="v-name">' + esc(c.item_name) + (c.qty > 1 ? ' &times;' + c.qty : '') + '</div>' +
@@ -255,7 +255,7 @@
             '</div></div>';
         }).join('');
       } catch(e) {
-        grid.innerHTML = '<div class="v-empty">Could not open your Vault.<br/><span style="color:#444;font-size:0.78rem;">' +
+        grid.innerHTML = '<div class="v-empty">Could not open your Property.<br/><span style="color:#444;font-size:0.78rem;">' +
           esc(e && e.message ? e.message : e) + '</span></div>';
       }
     }

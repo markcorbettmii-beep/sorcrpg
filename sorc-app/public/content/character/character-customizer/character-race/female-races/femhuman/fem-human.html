@@ -214,80 +214,54 @@ h1 {
       opacity: 1;
     }
 
-    /* Temporary Armor card picker. The card and preview window use the
-       same proportions and bounds as the lobby Card picker. */
-    .armor-card-picker {
+    /* Favorites pickers. Each row always keeps four card positions, matching
+       the four favorite cards the player can assign to that category. */
+    .favorite-launchers {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0.55rem;
-      max-width: 640px;
     }
 
-    .armor-card {
-      display: block;
-      width: 100%;
-      padding: 0;
-      overflow: hidden;
-      text-align: left;
+    .sentimental-launchers {
+      grid-template-columns: minmax(0, 18rem);
+    }
+
+    .favorite-launcher {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 0;
+      padding: 0.7rem 0.45rem;
       background: #161616;
-      border: 1px solid #262626;
+      border: 1px solid #3a2a2a;
       border-radius: 9px;
       color: #e0cfc0;
       cursor: pointer;
-      transition: border-color 0.15s, transform 0.1s;
-    }
-
-    .armor-card:hover,
-    .armor-card.selected {
-      border-color: #b9aa00;
-      transform: translateY(-2px);
-      background: #161616;
-    }
-
-    .armor-card-art {
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.7rem;
-      box-sizing: border-box;
-      background:
-        radial-gradient(circle at 50% 35%, rgba(201,63,53,0.55), transparent 32%),
-        linear-gradient(145deg, #241313, #080808 72%);
-      color: #ded463;
-      font-size: 1rem;
-      font-weight: bold;
-      letter-spacing: 0.12em;
+      font-size: 0.78rem;
       text-align: center;
     }
 
-    .armor-card-meta {
-      padding: 0.4rem 0.5rem;
+    .favorite-launcher:hover,
+    .favorite-launcher.selected {
+      background: #1a1505;
+      border-color: #b9aa00;
+      color: #ded463;
     }
 
-    .armor-card-name {
-      color: #e0cfc0;
-      font-size: 0.76rem;
-      font-weight: bold;
+    .favorite-launcher-detail {
+      color: #888;
+      font-size: 0.66rem;
       line-height: 1.25;
     }
 
-    .armor-card-ref {
-      margin-top: 0.1rem;
-      color: #8a7f00;
-      font-family: ui-monospace, Menlo, monospace;
-      font-size: 0.66rem;
-    }
-
-    .armor-card-status {
+    .favorite-status {
       margin: 0.7rem 0 0;
       color: #ded463;
       font-size: 0.82rem;
       text-align: center;
     }
 
-    .armor-picker-overlay {
+    .favorites-picker-overlay {
       position: fixed;
       inset: 0;
       display: none;
@@ -298,11 +272,11 @@ h1 {
       z-index: 5000;
     }
 
-    .armor-picker-overlay.open {
+    .favorites-picker-overlay.open {
       display: flex;
     }
 
-    .armor-picker-window {
+    .favorites-picker-window {
       display: flex;
       flex-direction: column;
       width: 100%;
@@ -314,12 +288,12 @@ h1 {
       border-radius: 14px;
     }
 
-    .armor-picker-head {
+    .favorites-picker-head {
       padding: 0.85rem 1rem 0.6rem;
       border-bottom: 1px solid #222;
     }
 
-    .armor-picker-head h3 {
+    .favorites-picker-head h3 {
       margin: 0;
       color: #b9aa00;
       font-size: 0.95rem;
@@ -327,22 +301,118 @@ h1 {
       text-transform: uppercase;
     }
 
-    .armor-picker-grid {
-      overflow-y: auto;
-      padding: 0.7rem 1rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-      gap: 0.55rem;
+    .favorites-picker-note {
+      margin: 0.35rem 0 0;
+      color: #888;
+      font-size: 0.72rem;
+      line-height: 1.35;
     }
 
-    .armor-picker-foot {
+    .favorites-picker-rows {
+      overflow-y: auto;
+      padding: 0.7rem 1rem;
+    }
+
+    .favorite-row {
+      margin-bottom: 0.8rem;
+    }
+
+    .favorite-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .favorite-row-title {
+      margin: 0 0 0.35rem;
+      color: #ded463;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .favorite-row-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.45rem;
+    }
+
+    .favorite-card {
+      display: block;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #161616;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      color: #e0cfc0;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .favorite-card:hover,
+    .favorite-card.selected {
+      background: #161616;
+      border-color: #b9aa00;
+    }
+
+    .favorite-card:disabled {
+      cursor: default;
+      opacity: 0.55;
+    }
+
+    .favorite-card-art {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.3rem;
+      box-sizing: border-box;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(201,63,53,0.45), transparent 32%),
+        linear-gradient(145deg, #241313, #080808 72%);
+      color: #ded463;
+      font-size: clamp(0.48rem, 1.6vw, 0.72rem);
+      font-weight: bold;
+      letter-spacing: 0.06em;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .favorite-card.empty .favorite-card-art {
+      background: #0c0c0c;
+      color: #555;
+      font-size: clamp(0.42rem, 1.4vw, 0.62rem);
+      letter-spacing: 0.02em;
+    }
+
+    .favorite-card-meta {
+      min-height: 2.4rem;
+      padding: 0.3rem 0.35rem;
+    }
+
+    .favorite-card-name {
+      overflow-wrap: anywhere;
+      color: #e0cfc0;
+      font-size: clamp(0.48rem, 1.6vw, 0.68rem);
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+    .favorite-card-ref {
+      margin-top: 0.12rem;
+      color: #8a7f00;
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: clamp(0.4rem, 1.35vw, 0.58rem);
+    }
+
+    .favorites-picker-foot {
       display: flex;
       justify-content: flex-end;
       padding: 0.6rem 1rem;
       border-top: 1px solid #222;
     }
 
-    .armor-picker-close {
+    .favorites-picker-close {
       padding: 0.35rem 0.9rem;
       border: 1px solid #3a3a3a;
       border-radius: 7px;
@@ -351,6 +421,12 @@ h1 {
       cursor: pointer;
       font-size: 0.78rem;
       font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      .favorite-launchers {
+        grid-template-columns: 1fr;
+      }
     }
     
     /* Feature Rows */
@@ -760,18 +836,30 @@ h1 {
           <canvas id="finalCanvas" width="768" height="1104"></canvas>
         </div>
 
-        <section class="feature-row" id="armor-row">
-          <h2>Armor <span style="font-size:0.9em;color:#888;">(optional)</span></h2>
-          <div class="armor-card-picker">
-            <button type="button" class="armor-card" id="armorCardButton" aria-label="Open armor card picker">
-              <div class="armor-card-art">ARMOR<br>CARD</div>
-              <div class="armor-card-meta">
-                <div class="armor-card-name">Generic Armor</div>
-                <div class="armor-card-ref">#ARM000</div>
-              </div>
+        <section class="feature-row" id="sentimental-row">
+          <h2>Sentimental</h2>
+          <div class="favorite-launchers sentimental-launchers">
+            <button type="button" class="favorite-launcher" id="sentimentalButton">
+              <strong>Sentimental Item</strong>
+              <span class="favorite-launcher-detail">One Armament or Accessory</span>
             </button>
           </div>
-          <p class="armor-card-status" id="armorCardStatus">No armor selected.</p>
+          <p class="favorite-status" id="sentimentalStatus">No Sentimental item selected.</p>
+        </section>
+
+        <section class="feature-row" id="favorites-row">
+          <h2>Favorites</h2>
+          <div class="favorite-launchers">
+            <button type="button" class="favorite-launcher" id="armorFavoritesButton">
+              <strong>Armor Favorites</strong>
+              <span class="favorite-launcher-detail">Core</span>
+            </button>
+            <button type="button" class="favorite-launcher" id="companionsFavoritesButton">
+              <strong>Companions Favorites</strong>
+              <span class="favorite-launcher-detail">Tiny · Small · Standard · Goliath · Behemoth</span>
+            </button>
+          </div>
+          <p class="favorite-status" id="favoriteStatus">No Favorites selected. Favorites come from Your Property.</p>
         </section>
 
         <div id="character-actions">
@@ -820,22 +908,15 @@ h1 {
     </div>
   </div>
 
-  <div class="armor-picker-overlay" id="armorPickerOverlay" aria-hidden="true">
-    <div class="armor-picker-window" role="dialog" aria-modal="true" aria-labelledby="armorPickerTitle">
-      <div class="armor-picker-head">
-        <h3 id="armorPickerTitle">Choose Armor</h3>
+  <div class="favorites-picker-overlay" id="favoritesPickerOverlay" aria-hidden="true">
+    <div class="favorites-picker-window" role="dialog" aria-modal="true" aria-labelledby="favoritesPickerTitle">
+      <div class="favorites-picker-head">
+        <h3 id="favoritesPickerTitle">Favorites</h3>
+        <p class="favorites-picker-note" id="favoritesPickerNote"></p>
       </div>
-      <div class="armor-picker-grid">
-        <button type="button" class="armor-card" id="genericArmorCard" aria-label="Select generic armor">
-          <div class="armor-card-art">ARMOR<br>CARD</div>
-          <div class="armor-card-meta">
-            <div class="armor-card-name">Generic Armor</div>
-            <div class="armor-card-ref">#ARM000</div>
-          </div>
-        </button>
-      </div>
-      <div class="armor-picker-foot">
-        <button type="button" class="armor-picker-close" id="armorPickerClose">Cancel</button>
+      <div class="favorites-picker-rows" id="favoritesPickerRows"></div>
+      <div class="favorites-picker-foot">
+        <button type="button" class="favorites-picker-close" id="favoritesPickerClose">Cancel</button>
       </div>
     </div>
   </div>

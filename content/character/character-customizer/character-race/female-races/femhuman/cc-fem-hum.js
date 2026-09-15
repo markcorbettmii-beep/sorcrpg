@@ -10,7 +10,11 @@ const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.pn
 
 // Image paths for special layers
 const IMG_BG = `${BASE}high-res-canvas-background.png`;
+const IMG_BOOTS = `${BASE}high-res-boots-leathtaba3.png_20260915_021749_0000.png`;
 const IMG_ARMOR = `${BASE}high-res-core-leathtaba3.png`;
+const IMG_GLOVES = `${BASE}high-res-gloves-leathtaba3.png_20260915_021700_0000.png`;
+const IMG_HELM = `${BASE}high-res-helm-leathtaba3.png_20260915_021632_0000.png`;
+const IMG_DUAL_WIELD = `${BASE}high-res-dw-taw3.png_20260915_021606_0000.png`;
 const IMG_DRAKE = `${BASE}high-res-drake.png`;
 const IMG_ANGELIC = `${BASE}high-res-angelic.png`;
 const IMG_ANIM_COMP = `${BASE}high-res-anim-comp.png`;
@@ -64,6 +68,10 @@ let selected = {
   facePaint: 0,
   hair: 0,
   armor: false,
+  boots: false,
+  gloves: false,
+  helm: false,
+  dualWield: false,
 };
 
 let isPortraitView = false;
@@ -451,6 +459,16 @@ function resizeCanvasAndRender() {
   }
 }
 
+function selectedEquipmentLayers() {
+  const layers = [];
+  if (selected.boots) layers.push({ src: IMG_BOOTS, layer: "boots" });
+  if (selected.armor) layers.push({ src: IMG_ARMOR, layer: "armor" });
+  if (selected.gloves) layers.push({ src: IMG_GLOVES, layer: "gloves" });
+  if (selected.helm) layers.push({ src: IMG_HELM, layer: "helm" });
+  if (selected.dualWield) layers.push({ src: IMG_DUAL_WIELD, layer: "dual_wield" });
+  return layers;
+}
+
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   if (!canvas) return;
@@ -476,11 +494,11 @@ function renderCharacter(callback) {
     { src: IMG_BG, layer: "bg" },
     { src: IMG_DRAKE, layer: "drake" },
     { src: IMG_ANGELIC, layer: "angelic" },
+    ...selectedEquipmentLayers(),
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
   ];
-  if (selected.armor) layers.splice(1, 0, { src: IMG_ARMOR, layer: "armor" });
 
   Promise.all(
     layers.map(opt =>
@@ -697,11 +715,11 @@ function renderFinalCharacter() {
     { src: IMG_BG, layer: "bg" },
     { src: IMG_DRAKE, layer: "drake" },
     { src: IMG_ANGELIC, layer: "angelic" },
+    ...selectedEquipmentLayers(),
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
   ];
-  if (selected.armor) layers.splice(1, 0, { src: IMG_ARMOR, layer: "armor" });
 
   Promise.all(
     layers.map(opt =>
@@ -724,57 +742,142 @@ function renderFinalCharacter() {
   });
 }
 
-function renderArmorCardState() {
-  const status = document.getElementById("armorCardStatus");
-  const cardButtons = [
-    document.getElementById("armorCardButton"),
-    document.getElementById("genericArmorCard")
-  ].filter(Boolean);
-
-  cardButtons.forEach(button => button.classList.toggle("selected", selected.armor));
-  if (status) {
-    status.textContent = selected.armor
-      ? "Generic Armor selected."
-      : "No armor selected.";
+const emptyFavoriteRow = () => [null, null, null, null];
+const FAVORITE_PICKERS = {
+  sentimental: {
+    title: "Sentimental",
+    note: "Choose one Armament or Accessory. Each Character gets one Sentimental item.",
+    rows: [
+      { label: "Sentimental Item", items: [null] }
+    ]
+  },
+  armor: {
+    title: "Armor Favorites",
+    note: "Your Property will supply four Core favorites.",
+    rows: [
+      { label: "Core", items: emptyFavoriteRow() }
+    ]
+  },
+  companions: {
+    title: "Companions Favorites",
+    note: "Your Property will supply four favorites per row. A Behemoth occupies both the Goliath and Behemoth slots.",
+    rows: [
+      { label: "Tiny", items: emptyFavoriteRow() },
+      { label: "Small", items: emptyFavoriteRow() },
+      { label: "Standard", items: emptyFavoriteRow() },
+      { label: "Goliath", items: emptyFavoriteRow() },
+      { label: "Behemoth", items: emptyFavoriteRow() }
+    ]
   }
+};
+
+let activeFavoritePicker = null;
+
+function renderFavoriteStatus() {
+  const status = document.getElementById("favoriteStatus");
+  const sentimentalStatus = document.getElementById("sentimentalStatus");
+  const armorLauncher = document.getElementById("armorFavoritesButton");
+  const sentimentalLauncher = document.getElementById("sentimentalButton");
+  if (armorLauncher) armorLauncher.classList.remove("selected");
+  if (sentimentalLauncher) sentimentalLauncher.classList.remove("selected");
+  if (status) status.textContent = "No Favorites selected. Favorites come from Your Property.";
+  if (sentimentalStatus) sentimentalStatus.textContent = "No Sentimental item selected.";
 }
 
-function openArmorPicker() {
-  const overlay = document.getElementById("armorPickerOverlay");
-  if (!overlay) return;
+function renderFavoriteRows(kind) {
+  const config = FAVORITE_PICKERS[kind];
+  const rowsContainer = document.getElementById("favoritesPickerRows");
+  if (!config || !rowsContainer) return;
+
+  rowsContainer.replaceChildren();
+  config.rows.forEach(row => {
+    const rowSection = document.createElement("section");
+    rowSection.className = "favorite-row";
+
+    const rowTitle = document.createElement("h4");
+    rowTitle.className = "favorite-row-title";
+    rowTitle.textContent = row.label;
+    rowSection.appendChild(rowTitle);
+
+    const rowGrid = document.createElement("div");
+    rowGrid.className = "favorite-row-grid";
+    row.items.forEach(item => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "favorite-card";
+
+      const art = document.createElement("div");
+      art.className = "favorite-card-art";
+      art.textContent = item ? item.art : "EMPTY";
+      card.appendChild(art);
+
+      const meta = document.createElement("div");
+      meta.className = "favorite-card-meta";
+
+      const name = document.createElement("div");
+      name.className = "favorite-card-name";
+      name.textContent = item ? item.name : "Empty Favorite";
+      meta.appendChild(name);
+
+      const ref = document.createElement("div");
+      ref.className = "favorite-card-ref";
+      ref.textContent = item ? item.ref : "—";
+      meta.appendChild(ref);
+      card.appendChild(meta);
+
+      if (!item) {
+        card.disabled = true;
+        card.classList.add("empty");
+      }
+      rowGrid.appendChild(card);
+    });
+
+    rowSection.appendChild(rowGrid);
+    rowsContainer.appendChild(rowSection);
+  });
+}
+
+function openFavoritesPicker(kind) {
+  const config = FAVORITE_PICKERS[kind];
+  const overlay = document.getElementById("favoritesPickerOverlay");
+  const title = document.getElementById("favoritesPickerTitle");
+  const note = document.getElementById("favoritesPickerNote");
+  if (!config || !overlay || !title || !note) return;
+
+  activeFavoritePicker = kind;
+  title.textContent = config.title;
+  note.textContent = config.note;
+  renderFavoriteRows(kind);
   overlay.classList.add("open");
   overlay.setAttribute("aria-hidden", "false");
-  renderArmorCardState();
 }
 
-function closeArmorPicker() {
-  const overlay = document.getElementById("armorPickerOverlay");
+function closeFavoritesPicker() {
+  const overlay = document.getElementById("favoritesPickerOverlay");
   if (!overlay) return;
   overlay.classList.remove("open");
   overlay.setAttribute("aria-hidden", "true");
+  activeFavoritePicker = null;
 }
 
-function selectGenericArmor() {
-  selected.armor = true;
-  renderArmorCardState();
-  closeArmorPicker();
-  renderCharacter();
-  renderFinalCharacter();
-}
+const sentimentalButton = document.getElementById("sentimentalButton");
+const armorFavoritesButton = document.getElementById("armorFavoritesButton");
+const companionsFavoritesButton = document.getElementById("companionsFavoritesButton");
+const favoritesPickerClose = document.getElementById("favoritesPickerClose");
+const favoritesPickerOverlay = document.getElementById("favoritesPickerOverlay");
 
-const armorCardButton = document.getElementById("armorCardButton");
-const genericArmorCard = document.getElementById("genericArmorCard");
-const armorPickerClose = document.getElementById("armorPickerClose");
-const armorPickerOverlay = document.getElementById("armorPickerOverlay");
-
-if (armorCardButton) armorCardButton.addEventListener("click", openArmorPicker);
-if (genericArmorCard) genericArmorCard.addEventListener("click", selectGenericArmor);
-if (armorPickerClose) armorPickerClose.addEventListener("click", closeArmorPicker);
-if (armorPickerOverlay) {
-  armorPickerOverlay.addEventListener("click", function(e) {
-    if (e.target === armorPickerOverlay) closeArmorPicker();
+if (sentimentalButton) sentimentalButton.addEventListener("click", () => openFavoritesPicker("sentimental"));
+if (armorFavoritesButton) armorFavoritesButton.addEventListener("click", () => openFavoritesPicker("armor"));
+if (companionsFavoritesButton) companionsFavoritesButton.addEventListener("click", () => openFavoritesPicker("companions"));
+if (favoritesPickerClose) favoritesPickerClose.addEventListener("click", closeFavoritesPicker);
+if (favoritesPickerOverlay) {
+  favoritesPickerOverlay.addEventListener("click", function(e) {
+    if (e.target === favoritesPickerOverlay) closeFavoritesPicker();
   });
 }
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape" && activeFavoritePicker) closeFavoritesPicker();
+});
 
 const physiqueForm = document.getElementById("physiqueForm");
 const physiqueInput = document.getElementById("physiqueInput");
@@ -999,7 +1102,7 @@ if (canvasEl) {
 
 selected.face = pickFirstEnabledFace(bodyOptions[selected.body].skin);
 renderAllPickers();
-renderArmorCardState();
+renderFavoriteStatus();
 resizeCanvasAndRender();
 
 // Ensure character renders properly on initial load with retry for slow image loading
