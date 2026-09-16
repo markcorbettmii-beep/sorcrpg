@@ -223,6 +223,13 @@
 
         /* Property draft: a card-first Armory inside the Space tab. */
         .property-draft { margin-top: 1rem; }
+        .property-access-block { margin: 0.35rem 0 1rem; }
+        .property-access-pill { display: inline-flex; align-items: center; overflow: hidden; border: 1px solid #6d5c16; border-radius: 999px; background: #17130a; font-size: 0.66rem; font-weight: bold; letter-spacing: 0.08em; line-height: 1; }
+        .property-access-pill-public, .property-access-pill-private { padding: 0.38rem 0.55rem; }
+        .property-access-pill-public { background: #1a3a6b; color: #fff; }
+        .property-access-pill-private { background: #3a1a1a; color: #fff; }
+        .property-access-divider { color: #f0d879; padding: 0 0.12rem; }
+        .property-gm-note { color: #999; font-size: 0.72rem; line-height: 1.45; margin: 0.45rem 0 0; }
         .property-page-label { color: #b9aa00; font-size: 0.7rem; font-weight: bold; letter-spacing: 0.1em; text-transform: uppercase; }
         .property-page-title { color: #e0cfc0; margin: 0.2rem 0 0.35rem; font-size: 1.45rem; }
         .property-page-description { color: #999; font-size: 0.84rem; line-height: 1.55; margin: 0 0 1rem; }
@@ -674,9 +681,11 @@
             '<button class="' + (page === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button>' +
             '<button class="future" onclick="selectPropertyPage(\'home\')">Home</button>' +
             '<button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button>' +
-            '<button class="future" onclick="selectPropertyPage(\'rented\')">Rented Storage</button>' +
+            '<button class="future" onclick="selectPropertyPage(\'rented\')">Renting &amp; Care</button>' +
+            '<button class="future" onclick="selectPropertyPage(\'ordnance\')">Ordnance Berth</button>' +
             '<button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button>' +
         '</div>';
+        var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>';
         if (page !== 'on-person') {
             if (page === 'containers') {
                 return nav + '<h4 class="property-page-title">Containers</h4>' +
@@ -693,15 +702,15 @@
                     ['Cargo Wagon','Wagon Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">wagon-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
                     '</div></div></div>';
             }
-            var titles = { home:'Home', guild:'Guild and Clan', rented:'Rented Storage', stash:'Stash' };
+            var titles = { home:'Home', guild:'Guild and Clan', rented:'Renting & Care', ordnance:'Ordnance Berth', stash:'Stash' };
             return nav + '<h4 class="property-page-title">' + esc2(titles[page] || 'Property') + '</h4>' +
-                '<div class="property-container-page"><p class="property-container-note">This category has its own Property page and its own Card capacity. The visual Card index will be added after the On Person Armory draft is approved.</p></div>';
+                access + '<div class="property-container-page"><p class="property-container-note">This category has its own Property page and its own Card capacity. The visual Card index will be added after the On Person Armory draft is approved.</p></div>';
         }
         var filtered = PROPERTY_DRAFT_CARDS;
         var visibleIndex = filtered.filter(function(card) { return card.owned; }).concat(
             filtered.filter(function(card) { return !card.owned; }).slice(0, 5)
         );
-        return nav + '<h4 class="property-page-title">On Person</h4>' +
+        return nav + '<h4 class="property-page-title">On Person</h4>' + access +
             '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div>' +
             '<div id="propertySearchMessage" class="property-search-message" hidden></div>' +
             '<div class="property-armory-layout">' + propertyDraftCanvas(selected) +
@@ -1264,8 +1273,8 @@
 
                     case 'property':
                         html += '<h3>Property</h3>' +
-                            '<span class="access-badge PRIVATE">PRIVATE</span>' +
-                            '<p>Your Property system is organized as focused Card pages. Each category follows the same indexed `pg. x &#187;` navigation.</p>' +
+                            '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>' +
+                            '<p>Property organizes your Cards by category, with an index and page controls for browsing and managing each category.</p>' +
                             renderPropertyDraft(user);
                         break;
 
