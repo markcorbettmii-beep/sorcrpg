@@ -67,10 +67,10 @@
     function selectedCompanion(selected) { return storedSelection('sorc.property.selectedCompanions', 'sorc.property.selectedCompanion', selected, 'type'); }
     var CHARACTER_PICKERS = [
         { id:'character-picker-basic-1', name:'Kaida', art:'/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png', tier:'basic', available:true },
-        { id:'character-picker-basic-2', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'basic', available:false },
-        { id:'character-picker-pro-1', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'pro', available:false },
-        { id:'character-picker-pro-2', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'pro', available:false },
-        { id:'character-picker-pro-3', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'pro', available:false }
+        { id:'character-picker-basic-2', name:'Male Muscular Group', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'basic', available:false },
+        { id:'character-picker-pro-1', name:'Male Muscular Group', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false },
+        { id:'character-picker-pro-2', name:'Male Muscular Group', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false },
+        { id:'character-picker-pro-3', name:'Male Muscular Group', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false }
     ];
     function selectedCharacterPicker() {
         var id = '';
@@ -86,7 +86,7 @@
             CHARACTER_PICKERS.map(function(picker) {
                 var disabled = picker.available ? '' : ' unavailable';
                 var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected && characterPickerVisible() ? 'true' : 'false') + '"' : ' aria-disabled="true"');
-                var pickerImage = picker.available ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '';
+                var pickerImage = picker.art ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '';
                 return '<button type="button" class="property-character-picker-thumb ' + picker.tier + disabled + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '"' + interaction + ' aria-label="' + esc(picker.name) + (picker.available ? '' : ' (not available)') + '">' + pickerImage + '</button>';
             }).join('') +
         '</div></div>';
