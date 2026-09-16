@@ -107,8 +107,9 @@
         if (!src) return '';
         return '<img class="property-canvas-layer ' + className + (index == null ? '' : ' property-canvas-layer-' + index) + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
     }
+    var HAND_FOREGROUND_ART = '/content/character/assets/female/firstborn/human/physiques/muscular/body/hands-foreground.png_20260916_163927_0000.png';
     function characterHandLayer(src, side) {
-        return '<img class="property-canvas-layer property-canvas-layer-character-hand-' + side + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
+        return '<img class="property-canvas-layer property-canvas-layer-character-hand-' + side + '" src="' + HAND_FOREGROUND_ART + '" alt="" aria-hidden="true" />';
     }
     var ARMAMENT_LAYER_ORDER = { 'armor-boots': 1, 'armor-core': 2, 'armor-gloves': 3, 'weapon-taw': 4, 'armor-helm': 5 };
     function selectedArmamentOccludesBody(selectedArmaments) {
