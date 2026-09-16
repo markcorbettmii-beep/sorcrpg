@@ -125,8 +125,8 @@ class SORCNavigation {
     const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
       <div class="sorc-global-brand-banner" data-sorc-page-banner>
         <a href="${pathToRoot}index.html" class="sorc-global-brand-link" aria-label="SORC home">
-          <img src="/images/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
-          <img src="/images/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
+          <img src="/content/site-presentation/assets/branding/logos/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
+          <img src="/content/site-presentation/assets/branding/logos/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
         </a>
       </div>
     ` : '';
