@@ -107,9 +107,6 @@
         if (!src) return '';
         return '<img class="property-canvas-layer ' + className + (index == null ? '' : ' property-canvas-layer-' + index) + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
     }
-    function characterHandLayer(src, side) {
-        return '<img class="property-canvas-layer property-canvas-layer-character-hand-' + side + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
-    }
     var ARMAMENT_LAYER_ORDER = { 'armor-boots': 1, 'armor-core': 2, 'armor-gloves': 3, 'weapon-taw': 4, 'armor-helm': 5 };
     function selectedArmamentOccludesBody(selectedArmaments) {
         return selectedArmaments.some(function(id) {
@@ -128,8 +125,7 @@
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
             (characterPickerVisible() ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
             companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
-            armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') +
-            selectedCharacterLayers(selectedArmaments).map(function(src) { return characterHandLayer(src, 'left') + characterHandLayer(src, 'right'); }).join('') : '') +
+            armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') : '') +
         '</div></div>';
     }
     function canvas(selected) {
