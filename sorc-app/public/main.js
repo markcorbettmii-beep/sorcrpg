@@ -37,11 +37,11 @@
   existing.forEach(function(el) { el.parentNode.removeChild(el); });
   var link = document.createElement('link');
   link.rel = 'icon';
-  link.href = '/images/favicon-zailister-crown.png';
+  link.href = '/content/site-presentation/assets/branding/favicons/favicon-zailister-crown.png';
   document.head.appendChild(link);
   var touchLink = document.createElement('link');
   touchLink.rel = 'apple-touch-icon';
-  touchLink.href = '/images/apple-touch-icon-crown.png';
+  touchLink.href = '/content/site-presentation/assets/branding/favicons/apple-touch-icon-crown.png';
   document.head.appendChild(touchLink);
 })();
 
