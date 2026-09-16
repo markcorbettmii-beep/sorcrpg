@@ -21,7 +21,7 @@ const PORTRAIT_EXAMPLE = `${PROFILE_BASE}sorc-blank-profile-page_20260519_113341
 
 // Image paths for special layers
 const IMG_BG = `${CANVAS_BASE}high-res-canvas-background.png`;
-const IMG_BOOTS = `${TECHAD_ARMOR_BASE}high-res-boots-leathtaba3.png_20260915_021749_0000.png`;
+const IMG_BOOTS = `${TECHAD_ARMOR_BASE}high-res-boots-leathtaba3.png_20260916_124704_0000.png`;
 const IMG_ARMOR = `${TECHAD_ARMOR_BASE}high-res-core-leathtaba3.png_20260916_103316_0000.png`;
 const IMG_GLOVES = `${TECHAD_ARMOR_BASE}high-res-gloves-leathtaba3.png_20260915_021700_0000.png`;
 const IMG_HELM = `${TECHAD_ARMOR_BASE}high-res-helm-leathtaba3.png_20260915_021632_0000.png`;
