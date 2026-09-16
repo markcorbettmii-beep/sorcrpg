@@ -74,8 +74,8 @@ const hairOptions = [
 let selected = {
   body: 2,
   face: 0,
-  facePaint: 0,
-  hair: 0,
+  facePaint: 3,
+  hair: 8,
   armor: false,
   boots: false,
   gloves: false,
