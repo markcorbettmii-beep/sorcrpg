@@ -77,12 +77,15 @@
         try { id = localStorage.getItem('sorc.property.characterPicker') || ''; } catch(e) {}
         return CHARACTER_PICKERS.some(function(picker) { return picker.available && picker.id === id; }) ? id : CHARACTER_PICKERS[0].id;
     }
+    function characterPickerVisible() {
+        try { return localStorage.getItem('sorc.property.characterVisible') !== 'false'; } catch(e) { return true; }
+    }
     function characterPickerMarkup() {
         var selected = selectedCharacterPicker();
         return '<div class="property-character-picker"><div class="property-character-picker-tiers"><div class="property-character-picker-tier basic">Basic</div><div class="property-character-picker-tier pro">Pro</div></div><div class="property-character-picker-thumbs">' +
             CHARACTER_PICKERS.map(function(picker) {
                 var disabled = picker.available ? '' : ' unavailable';
-                var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected ? 'true' : 'false') + '"' : ' aria-disabled="true"');
+                var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected && characterPickerVisible() ? 'true' : 'false') + '"' : ' aria-disabled="true"');
                 var pickerImage = picker.available ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '';
                 return '<button type="button" class="property-character-picker-thumb ' + picker.tier + disabled + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '"' + interaction + ' aria-label="' + esc(picker.name) + (picker.available ? '' : ' (not available)') + '">' + pickerImage + '</button>';
             }).join('') +
@@ -113,9 +116,9 @@
         });
         var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
-            selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
+            (characterPickerVisible() ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
             companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
-            armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') +
+            armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') : '') +
         '</div></div>';
     }
     function canvas(selected) {
@@ -142,8 +145,8 @@
             '</div></div></section>';
     }
     function page(pageName, selected) {
-        var nav = '<div class="property-page-nav" aria-label="Property pages"><button class="' + (pageName === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button><button class="future" onclick="selectPropertyPage(\'home\')">Home</button><button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button><button class="future" onclick="selectPropertyPage(\'rented\')">Rented Storage</button><button class="future" onclick="selectPropertyPage(\'ordnance\')">Ordnance Berth</button><button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button></div>';
-        var pageTitles = { home:'Home', guild:'Guild and Clan', rented:'Rented Storage', ordnance:'Ordnance Berth', stash:'Stash' };
+        var nav = '<div class="property-page-nav" aria-label="Property pages"><button class="' + (pageName === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button><button class="future" onclick="selectPropertyPage(\'home\')">Home</button><button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button><button class="future" onclick="selectPropertyPage(\'rented\')">Renting &amp; Care</button><button class="future" onclick="selectPropertyPage(\'ordnance\')">Ordnance Berth</button><button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button></div>';
+        var pageTitles = { home:'Home', guild:'Guild and Clan', rented:'Renting & Care', ordnance:'Ordnance Berth', stash:'Stash' };
         var pageDescriptions = {
             home: "The Character's Armory, Safes, Closets, Companion Quarters, Deployments, and Trophy Room Items.",
             guild: 'Storage, Armory and Hall Banks.',
@@ -180,7 +183,7 @@
     window.cancelPropertyCardHold = window.endPropertyCardHold;
     window.showPropertyLongPressCard = function(id) { var card = get(id) || CHARACTER_PICKERS.filter(function(picker) { return picker.id === id; })[0]; if (!card) return; var existing = document.getElementById('propertyLongPressCard'); if (existing) existing.remove(); var image = card.art ? '<img src="' + esc(card.art) + '" alt="' + esc(card.name) + '" />' : '<span class="property-long-press-placeholder" aria-hidden="true">&#9672;</span>'; var cardInfo = [card.rank, card.role].filter(Boolean).join(' · '); var overlay = document.createElement('div'); overlay.id = 'propertyLongPressCard'; overlay.className = 'property-long-press-overlay'; overlay.innerHTML = '<section class="property-long-press-card' + rankClass(card) + '" role="dialog" aria-modal="true" aria-label="' + esc(card.name) + ' Card" onclick="event.stopPropagation()"><button type="button" class="property-long-press-close" onclick="closePropertyLongPressCard()" aria-label="Close Card">&times;</button><div class="property-long-press-art">' + image + '</div><div class="property-long-press-meta"><div class="property-long-press-name">' + esc(card.name) + '</div>' + (cardInfo ? '<div class="property-long-press-rank">' + esc(cardInfo) + '</div>' : '') + '<div class="property-long-press-note">SORC Cards under development.</div></div></section>'; overlay.setAttribute('onclick', 'closePropertyLongPressCard()'); document.body.appendChild(overlay); window.setTimeout(function() { suppressNextCompanionClick = false; }, 900); };
     window.closePropertyLongPressCard = function() { var overlay = document.getElementById('propertyLongPressCard'); if (overlay) overlay.remove(); };
-    window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { localStorage.setItem('sorc.property.characterPicker', id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+    window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { if (selectedCharacterPicker() === id) localStorage.setItem('sorc.property.characterVisible', characterPickerVisible() ? 'false' : 'true'); else { localStorage.setItem('sorc.property.characterPicker', id); localStorage.setItem('sorc.property.characterVisible', 'true'); } } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
     window.selectPropertyRowPage = function(type, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var typeCards = cards.filter(function(card) { return card.type === type; }), pageCount = Math.max(1, Math.ceil(typeCards.length / 5)), pageNumber = rowPages[type] || 0; rowPages[type] = (pageNumber + direction + pageCount) % pageCount; draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
     window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem('sorc.property.safeHaven', id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {
