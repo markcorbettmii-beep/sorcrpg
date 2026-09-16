@@ -5,61 +5,70 @@
  * All rights reserved.
  */
 
-const BASE = "../../../assets/";
-const PORTRAIT_EXAMPLE = `${BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
+const ASSET_BASE = "../../../../assets/";
+const CHARACTER_BASE = `${ASSET_BASE}female/firstborn/human/`;
+const BODY_BASE = `${CHARACTER_BASE}physiques/muscular/body/`;
+const FACE_BASE = `${CHARACTER_BASE}faces/`;
+const FACE_PAINT_BASE = `${CHARACTER_BASE}face-paint/`;
+const HAIR_BASE = `${CHARACTER_BASE}hair/`;
+const CANVAS_BASE = `${ASSET_BASE}shared/canvas/`;
+const EQUIPMENT_BASE = `${ASSET_BASE}shared/equipment/layers/`;
+const COMPANION_BASE = `${ASSET_BASE}shared/companions/layers/`;
+const PROFILE_BASE = `${ASSET_BASE}shared/profile/`;
+const PORTRAIT_EXAMPLE = `${PROFILE_BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
 
 // Image paths for special layers
-const IMG_BG = `${BASE}high-res-canvas-background.png`;
-const IMG_BOOTS = `${BASE}high-res-boots-leathtaba3.png_20260915_021749_0000.png`;
-const IMG_ARMOR = `${BASE}high-res-core-leathtaba3.png`;
-const IMG_GLOVES = `${BASE}high-res-gloves-leathtaba3.png_20260915_021700_0000.png`;
-const IMG_HELM = `${BASE}high-res-helm-leathtaba3.png_20260915_021632_0000.png`;
-const IMG_DUAL_WIELD = `${BASE}high-res-dw-taw3.png_20260915_021606_0000.png`;
-const IMG_DRAKE = `${BASE}high-res-drake.png`;
-const IMG_ANGELIC = `${BASE}high-res-angelic.png`;
-const IMG_ANIM_COMP = `${BASE}high-res-anim-comp.png`;
-const IMG_WEAS = `${BASE}high-res-weas.png`;
-const IMG_LETTERS = `${BASE}high-res-letters.png`;
+const IMG_BG = `${CANVAS_BASE}high-res-canvas-background.png`;
+const IMG_BOOTS = `${EQUIPMENT_BASE}high-res-boots-leathtaba3.png_20260915_021749_0000.png`;
+const IMG_ARMOR = `${EQUIPMENT_BASE}high-res-core-leathtaba3.png`;
+const IMG_GLOVES = `${EQUIPMENT_BASE}high-res-gloves-leathtaba3.png_20260915_021700_0000.png`;
+const IMG_HELM = `${EQUIPMENT_BASE}high-res-helm-leathtaba3.png_20260915_021632_0000.png`;
+const IMG_DUAL_WIELD = `${EQUIPMENT_BASE}high-res-dw-taw3.png_20260915_021606_0000.png`;
+const IMG_DRAKE = `${COMPANION_BASE}high-res-drake.png`;
+const IMG_ANGELIC = `${COMPANION_BASE}high-res-angelic.png`;
+const IMG_ANIM_COMP = `${COMPANION_BASE}high-res-anim-comp.png`;
+const IMG_WEAS = `${COMPANION_BASE}high-res-weas.png`;
+const IMG_LETTERS = `${CANVAS_BASE}high-res-letters.png`;
 const CANVAS_RENDER_WIDTH = 2304;
 const CANVAS_RENDER_HEIGHT = 3312;
 
 // ONLY MUSCULAR BODY TYPES
 const bodyOptions = [
-  { src: `${BASE}fbody-musc-drk.png`, thumb: `${BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
-  { src: `${BASE}fbody-musc-med.png`, thumb: `${BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
-  { src: `${BASE}fbody-musc-pale.png`, thumb: `${BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
+  { src: `${BODY_BASE}fbody-musc-drk.png`, thumb: `${BODY_BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BODY_BASE}fbody-musc-med.png`, thumb: `${BODY_BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
+  { src: `${BODY_BASE}fbody-musc-pale.png`, thumb: `${BODY_BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
 ];
 
 const faceOptions = [
   // Pale skin faces - all available once Pale body is selected
-  { src: `${BASE}femface2-pale-grn.png`, thumb: `${BASE}femface2-pale-grn-tmb.png`, clup: `${BASE}fface-pale-green_20260618_175154_0000.png`, skin: "pale", eyes: "grn", enabled: true, closeupExtraYShift: 6 },
-  { src: `${BASE}femface4-pale-brn.png`, thumb: `${BASE}femface4-pale-brn-tmb.png`, clup: `${BASE}fface-pale-brown_20260618_175523_0000.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: 6 },
-  { src: `${BASE}femface5-pale-blu-mkp.png`, thumb: `${BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${BASE}fface-pale-violet_20260618_175420_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 16 }
+  { src: `${FACE_BASE}femface2-pale-grn.png`, thumb: `${FACE_BASE}femface2-pale-grn-tmb.png`, clup: `${FACE_BASE}fface-pale-green_20260618_175154_0000.png`, skin: "pale", eyes: "grn", enabled: true, closeupExtraYShift: 6 },
+  { src: `${FACE_BASE}femface4-pale-brn.png`, thumb: `${FACE_BASE}femface4-pale-brn-tmb.png`, clup: `${FACE_BASE}fface-pale-brown_20260618_175523_0000.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: 6 },
+  { src: `${FACE_BASE}femface5-pale-blu-mkp.png`, thumb: `${FACE_BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${FACE_BASE}fface-pale-violet_20260618_175420_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 16 }
 ];
 
 const facePaintOptions = [
   { src: "", thumb: "", clup: "", label: "None", enabled: true },
-  { src: `${BASE}facepnt1-blu.png`, thumb: `${BASE}facepnt1-blu-tmb.png`, clup: `${BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt2-blu.png`, thumb: `${BASE}facepnt2-blu-tmb.png`, clup: `${BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
-  { src: `${BASE}facepnt3-red.png`, thumb: `${BASE}facepnt3-red-tmb.png`, clup: `${BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
-  { src: `${BASE}facepnt4-blk.png`, thumb: `${BASE}facepnt4-blk-tmb.png`, clup: `${BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
-  { src: `${BASE}facepnt5-blk.png`, thumb: `${BASE}facepnt5-blk-tmb.png`, clup: `${BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
-  { src: `${BASE}facepnt5-red.png`, thumb: `${BASE}facepnt5-red-tmb.png`, clup: `${BASE}facepnt5-red-clup.png`, color: "red", enabled: true }
+  { src: `${FACE_PAINT_BASE}facepnt1-blu.png`, thumb: `${FACE_PAINT_BASE}facepnt1-blu-tmb.png`, clup: `${FACE_PAINT_BASE}facepnt1-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${FACE_PAINT_BASE}facepnt2-blu.png`, thumb: `${FACE_PAINT_BASE}facepnt2-blu-tmb.png`, clup: `${FACE_PAINT_BASE}facepnt2-blu-clup.png`, color: "blu", enabled: true },
+  { src: `${FACE_PAINT_BASE}facepnt3-red.png`, thumb: `${FACE_PAINT_BASE}facepnt3-red-tmb.png`, clup: `${FACE_PAINT_BASE}facepnt3-red-clup.png`, color: "red", enabled: true },
+  { src: `${FACE_PAINT_BASE}facepnt4-blk.png`, thumb: `${FACE_PAINT_BASE}facepnt4-blk-tmb.png`, clup: `${FACE_PAINT_BASE}facepnt4-blk-clup.png`, color: "blk", enabled: true },
+  { src: `${FACE_PAINT_BASE}facepnt5-blk.png`, thumb: `${FACE_PAINT_BASE}facepnt5-blk-tmb.png`, clup: `${FACE_PAINT_BASE}facepnt5-blk-clup.png`, color: "blk", enabled: true },
+  { src: `${FACE_PAINT_BASE}facepnt5-red.png`, thumb: `${FACE_PAINT_BASE}facepnt5-red-tmb.png`, clup: `${FACE_PAINT_BASE}facepnt5-red-clup.png`, color: "red", enabled: true }
 ];
 
 const hairOptions = [
-  { src: `${BASE}femhair1.png`, thumb: `${BASE}femhair1-tmb.png`, clup: `${BASE}femhair1-clup.png`, enabled: true },
-  { src: `${BASE}femhair2.png`, thumb: `${BASE}femhair2-tmb.png`, clup: `${BASE}femhair2-clup.png`, enabled: true },
-  { src: `${BASE}femhair3.png`, thumb: `${BASE}femhair3-tmb.png`, clup: `${BASE}femhair3-clup.png`, enabled: true },
-  { src: `${BASE}femhair4.png`, thumb: `${BASE}femhair4-tmb.png`, clup: `${BASE}femhair4-clup.png`, enabled: true },
-  { src: `${BASE}femhair5.png?v=2`, thumb: `${BASE}femhair5-tmb.png`, clup: `${BASE}femhair5-clup.png`, enabled: true },
-  { src: `${BASE}femhair6.png`, thumb: `${BASE}femhair6-tmb.png`, clup: `${BASE}femhair6-clup.png`, enabled: true },
-  { src: `${BASE}femhair7.png`, thumb: `${BASE}femhair7-tmb.png`, clup: `${BASE}femhair7-clup.png`, enabled: true, closeupExtraXShift: 4 },
-  { src: `${BASE}femhair8.png`, thumb: `${BASE}femhair8-tmb.png`, clup: `${BASE}femhair8-clup.png`, enabled: true },
-  { src: `${BASE}femhair9.png`, thumb: `${BASE}femhair9-tmb.png`, clup: `${BASE}femhair9-clup.png`, enabled: true },
-  { src: `${BASE}femhair10.png`, thumb: `${BASE}femhair10-tmb.png`, clup: `${BASE}femhair10-clup.png`, enabled: true },
-  { src: `${BASE}femhair11.png`, thumb: `${BASE}femhair11-tmb.png`, clup: `${BASE}femhair11-clup.png`, enabled: true },
-  { src: `${BASE}femhair12.png`, thumb: `${BASE}femhair12-tmb.png`, clup: `${BASE}femhair12-clup.png?v=7`, enabled: true, closeupExtraXShift: -4 }
+  { src: `${HAIR_BASE}femhair1.png`, thumb: `${HAIR_BASE}femhair1-tmb.png`, clup: `${HAIR_BASE}femhair1-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair2.png`, thumb: `${HAIR_BASE}femhair2-tmb.png`, clup: `${HAIR_BASE}femhair2-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair3.png`, thumb: `${HAIR_BASE}femhair3-tmb.png`, clup: `${HAIR_BASE}femhair3-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair4.png`, thumb: `${HAIR_BASE}femhair4-tmb.png`, clup: `${HAIR_BASE}femhair4-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair5.png?v=2`, thumb: `${HAIR_BASE}femhair5-tmb.png`, clup: `${HAIR_BASE}femhair5-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair6.png`, thumb: `${HAIR_BASE}femhair6-tmb.png`, clup: `${HAIR_BASE}femhair6-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair7.png`, thumb: `${HAIR_BASE}femhair7-tmb.png`, clup: `${HAIR_BASE}femhair7-clup.png`, enabled: true, closeupExtraXShift: 4 },
+  { src: `${HAIR_BASE}femhair8.png`, thumb: `${HAIR_BASE}femhair8-tmb.png`, clup: `${HAIR_BASE}femhair8-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair9.png`, thumb: `${HAIR_BASE}femhair9-tmb.png`, clup: `${HAIR_BASE}femhair9-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair10.png`, thumb: `${HAIR_BASE}femhair10-tmb.png`, clup: `${HAIR_BASE}femhair10-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair11.png`, thumb: `${HAIR_BASE}femhair11-tmb.png`, clup: `${HAIR_BASE}femhair11-clup.png`, enabled: true },
+  { src: `${HAIR_BASE}femhair12.png`, thumb: `${HAIR_BASE}femhair12-tmb.png`, clup: `${HAIR_BASE}femhair12-clup.png?v=7`, enabled: true, closeupExtraXShift: -4 }
 ];
 
 let selected = {

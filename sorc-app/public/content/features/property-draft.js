@@ -5,23 +5,23 @@
         { id:'character-stats', type:'Character Cards', name:'Stats Sheet', ref:'char-pg.A-003', summary:'Core scores and current tracked values.', art:'', owned:true, worn:false },
         { id:'character-placeholder-1', type:'Character Cards', name:'Progression Card', ref:'char-pg.A-004', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
         { id:'character-placeholder-2', type:'Character Cards', name:'Talent Card', ref:'char-pg.A-005', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
-        { id:'companion-drake', type:'Companion Cards', name:'Guardian Drake', ref:'comp-pg.A-101', rank:'Divine', role:'Guardian', size:'Behemoth', race:'Drake', summary:'A Guardian Companion carried On Person.', art:'/content/character/character-customizer/assets/companion-picker-drake.png', owned:true, worn:false },
-        { id:'companion-weasel', type:'Companion Cards', name:'Pet Weasel', ref:'comp-pg.A-102', rank:'Rare', role:'Pet', size:'Small', race:'Weasel', summary:'A Pet Companion carried On Person.', art:'/content/character/character-customizer/assets/companion-picker-weasel.png', owned:true, worn:false },
-        { id:'companion-angelic', type:'Companion Cards', name:'Angelic', ref:'comp-pg.A-103', rank:'Legendary', role:'Angelic', size:'Tiny', race:'Angelic', summary:"An Angelic Companion that hovers at Kaida's shoulder.", art:'/content/character/character-customizer/assets/companion-picker-angelic.png', owned:true, worn:false },
-        { id:'companion-common', type:'Companion Cards', name:'Anim. Compass', ref:'comp-pg.A-104', companionTop:'Anim. Compass', companionBottom:'LVL 30 Changeling', summary:'An Adult Companion carried On Person.', art:'/content/character/character-customizer/assets/companion-picker-anim-compass.png', owned:true, worn:false },
+        { id:'companion-drake', type:'Companion Cards', name:'Guardian Drake', ref:'comp-pg.A-101', rank:'Divine', role:'Guardian', size:'Behemoth', race:'Drake', summary:'A Guardian Companion carried On Person.', art:'/content/character/assets/customizer/pickers/companions/companion-picker-drake.png', layerArt:'/content/character/assets/shared/companions/layers/high-res-drake.png', owned:true, worn:false },
+        { id:'companion-weasel', type:'Companion Cards', name:'Pet Weasel', ref:'comp-pg.A-102', rank:'Rare', role:'Pet', size:'Small', race:'Weasel', summary:'A Pet Companion carried On Person.', art:'/content/character/assets/customizer/pickers/companions/companion-picker-weasel.png', layerArt:'/content/character/assets/shared/companions/layers/high-res-weas.png', owned:true, worn:false },
+        { id:'companion-angelic', type:'Companion Cards', name:'Angelic', ref:'comp-pg.A-103', rank:'Legendary', role:'Angelic', size:'Tiny', race:'Angelic', summary:"An Angelic Companion that hovers at Kaida's shoulder.", art:'/content/character/assets/customizer/pickers/companions/companion-picker-angelic.png', layerArt:'/content/character/assets/shared/companions/layers/high-res-angelic.png', owned:true, worn:false },
+        { id:'companion-common', type:'Companion Cards', name:'Anim. Compass', ref:'comp-pg.A-104', companionTop:'Anim. Compass', companionBottom:'LVL 30 Changeling', summary:'An Adult Companion carried On Person.', art:'/content/character/assets/customizer/pickers/companions/companion-picker-anim-compass.png', layerArt:'/content/character/assets/shared/companions/layers/high-res-anim-comp.png', owned:true, worn:false },
         { id:'companion-placeholder-2', type:'Companion Cards', name:'Goliath Companion', ref:'comp-pg.A-105', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
         { id:'safe-haven-default', type:'Compass Safe Havens', name:'Default', ref:'haven-pg.A-400', summary:'The nearest Safe Haven to where the campaign began. Its map-area image is supplied by the current module.', art:'', safeHaven:'default', owned:true, worn:false },
-        { id:'safe-haven-secret-glades', type:'Compass Safe Havens', name:'Secret Glades', ref:'haven-pg.A-401', summary:'Map-area location marked for the Animated Compass and selected as the current canvas background.', art:'/content/character/character-customizer/assets/high-res-canvas-background.png', safeHaven:'secret-glades', owned:true, worn:false },
+        { id:'safe-haven-secret-glades', type:'Compass Safe Havens', name:'Secret Glades', ref:'haven-pg.A-401', summary:'Map-area location marked for the Animated Compass and selected as the current canvas background.', art:'/content/character/assets/shared/canvas/high-res-canvas-background.png', safeHaven:'secret-glades', owned:true, worn:false },
         { id:'item-pouch', type:'Item Cards', name:'Small Pouch', ref:'item-pg.A-201', summary:'Tiny container. One stack or small item slot.', art:'', owned:true, worn:false },
         { id:'item-potion', type:'Item Cards', name:'Potion Stack', ref:'item-pg.A-202', summary:'Stackable consumable. Stack cap is recorded on its Card.', art:'', owned:true, worn:false },
         { id:'item-tool', type:'Item Cards', name:'Field Tool', ref:'item-pg.A-203', summary:'A carried practical tool.', art:'', owned:true, worn:false },
         { id:'item-placeholder-1', type:'Item Cards', name:'Material Stack', ref:'item-pg.A-204', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
         { id:'item-placeholder-2', type:'Item Cards', name:'Quest Item', ref:'item-pg.A-205', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
-        { id:'armor-core', type:'Armament Cards', name:'Leather Core Set', ref:'arm-pg.A-301', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/character-customizer/assets/high-res-core-leathtaba3.png', owned:true, worn:true },
-        { id:'armor-helm', type:'Armament Cards', name:'Leather Helm', ref:'arm-pg.A-302', summary:'Separate worn piece. 1 slot.', art:'/content/character/character-customizer/assets/high-res-helm-leathtaba3.png_20260915_021632_0000.png', owned:true, worn:true },
-        { id:'armor-gloves', type:'Armament Cards', name:'Leather Gloves', ref:'arm-pg.A-303', summary:'Separate worn piece. 1 slot.', art:'/content/character/character-customizer/assets/high-res-gloves-leathtaba3.png_20260915_021700_0000.png', owned:true, worn:true },
-        { id:'armor-boots', type:'Armament Cards', name:'Leather Boots', ref:'arm-pg.A-304', summary:'Separate worn piece. 1 slot.', art:'/content/character/character-customizer/assets/high-res-boots-leathtaba3.png_20260915_021749_0000.png', owned:true, worn:true },
-        { id:'weapon-taw', type:'Armament Cards', name:'Dual-Wield TAW', ref:'arm-pg.A-305', summary:'Readied dual-wield TAW Armament.', art:'/content/character/character-customizer/assets/high-res-dw-taw3.png_20260915_021606_0000.png', owned:true, worn:true },
+        { id:'armor-core', type:'Armament Cards', name:'Leather Core Set', ref:'arm-pg.A-301', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit1', layerArt:'/content/character/assets/shared/equipment/layers/high-res-core-leathtaba3.png', owned:true, worn:true },
+        { id:'armor-helm', type:'Armament Cards', name:'Leather Helm', ref:'arm-pg.A-302', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-helm.png?v=fit1', layerArt:'/content/character/assets/shared/equipment/layers/high-res-helm-leathtaba3.png_20260915_021632_0000.png', owned:true, worn:true },
+        { id:'armor-gloves', type:'Armament Cards', name:'Leather Gloves', ref:'arm-pg.A-303', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-gloves.png?v=fit1', layerArt:'/content/character/assets/shared/equipment/layers/high-res-gloves-leathtaba3.png_20260915_021700_0000.png', owned:true, worn:true },
+        { id:'armor-boots', type:'Armament Cards', name:'Leather Boots', ref:'arm-pg.A-304', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-boots.png?v=fit1', layerArt:'/content/character/assets/shared/equipment/layers/high-res-boots-leathtaba3.png_20260915_021749_0000.png', owned:true, worn:true },
+        { id:'weapon-taw', type:'Armament Cards', name:'Dual-Wield TAW', ref:'arm-pg.A-305', summary:'Readied dual-wield TAW Armament.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-taw.png?v=fit1', layerArt:'/content/character/assets/shared/equipment/layers/high-res-dw-taw3.png_20260915_021606_0000.png', owned:true, worn:true },
         { id:'armament-placeholder', type:'Armament Cards', name:'Readied Armament', ref:'arm-pg.A-306', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false }
     ];
     var esc = function(value) { return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
@@ -41,7 +41,7 @@
     function indexItem(card, selected) {
         return '<button type="button" class="property-card-index-item' + (card.id === selected ? ' selected' : '') + (card.owned ? '' : ' unowned') + '" onclick="selectPropertyCard(\'' + esc(card.id) + '\')" aria-label="Open ' + esc(card.name) + '"><span class="property-card-index-name">' + esc(card.name) + '</span><span class="property-card-index-meta">' + esc(card.ref) + ' &middot; ' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></button>';
     }
-    var SAFE_HAVEN_ART = '/content/character/character-customizer/assets/high-res-canvas-background.png';
+    var SAFE_HAVEN_ART = '/content/character/assets/shared/canvas/high-res-canvas-background.png';
     var SAFE_HAVENS = [{ id:'default', name:'Default', art:'' }, { id:'secret-glades', name:'Secret Glades', art:SAFE_HAVEN_ART }];
     function selectedSafeHaven() { var id = 'default'; try { id = localStorage.getItem('sorc.property.safeHaven') || id; } catch(e) {} return SAFE_HAVENS.filter(function(haven) { return haven.id === id; })[0] || SAFE_HAVENS[0]; }
     function safeHavenControl(haven) { return '<details class="property-safe-haven-control"><summary aria-label="Select Safe Haven">Safe Haven</summary><div class="property-safe-haven-options" role="listbox" aria-label="Safe Haven choices">' + SAFE_HAVENS.map(function(item) { return '<button type="button" class="property-safe-haven-option' + (item.id === haven.id ? ' selected' : '') + '" onclick="selectPropertySafeHaven(\'' + esc(item.id) + '\')" role="option" aria-selected="' + (item.id === haven.id ? 'true' : 'false') + '">' + esc(item.name) + '</button>'; }).join('') + '</div></details>'; }
@@ -57,17 +57,64 @@
     function selectedArmament(selected) { return storedSelection('sorc.property.selectedArmaments', 'sorc.property.lastReadied', selected, 'worn'); }
     function selectedCompanion(selected) { return storedSelection('sorc.property.selectedCompanions', 'sorc.property.selectedCompanion', selected, 'type'); }
     var CHARACTER_PICKERS = [
-        { id:'character-picker-basic-1', name:'Basic 1', art:'/content/character/character-customizer/assets/character-picker-basic-1.png', tier:'basic' },
-        { id:'character-picker-basic-2', name:'Basic 2', art:'/content/character/character-customizer/assets/character-picker-basic-2.png', tier:'basic' },
-        { id:'character-picker-pro-1', name:'Pro 1', art:'/content/character/character-customizer/assets/character-picker-pro-1.png', tier:'pro' },
-        { id:'character-picker-pro-2', name:'Pro 2', art:'/content/character/character-customizer/assets/character-picker-pro-2.png', tier:'pro' },
-        { id:'character-picker-pro-3', name:'Pro 3', art:'/content/character/character-customizer/assets/character-picker-pro-3.png', tier:'pro' }
+        { id:'character-picker-basic-1', name:'Basic 1', art:'/content/character/assets/customizer/pickers/characters/character-picker-basic-1.png', tier:'basic' },
+        { id:'character-picker-basic-2', name:'Basic 2', art:'/content/character/assets/customizer/pickers/characters/character-picker-basic-2.png', tier:'basic' },
+        { id:'character-picker-pro-1', name:'Pro 1', art:'/content/character/assets/customizer/pickers/characters/character-picker-pro-1.png', tier:'pro' },
+        { id:'character-picker-pro-2', name:'Pro 2', art:'/content/character/assets/customizer/pickers/characters/character-picker-pro-2.png', tier:'pro' },
+        { id:'character-picker-pro-3', name:'Pro 3', art:'/content/character/assets/customizer/pickers/characters/character-picker-pro-3.png', tier:'pro' }
     ];
-    function selectedCharacterPicker() { var id = ''; try { id = localStorage.getItem('sorc.property.characterPicker') || ''; } catch(e) {} return id === 'none' ? '' : (id || CHARACTER_PICKERS[0].id); }
+    function selectedCharacterPicker() { var id = ''; try { id = localStorage.getItem('sorc.property.characterPicker') || ''; } catch(e) {} return id === 'none' ? 'none' : (id || CHARACTER_PICKERS[0].id); }
     function characterPickerMarkup() {
         var selected = selectedCharacterPicker();
         return '<div class="property-character-picker"><div class="property-character-picker-tiers"><div class="property-character-picker-tier basic">Basic</div><div class="property-character-picker-tier pro">Pro</div></div><div class="property-character-picker-thumbs">' +
             CHARACTER_PICKERS.map(function(picker) { return '<button type="button" class="property-character-picker-thumb ' + picker.tier + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '" onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-label="Select ' + esc(picker.name) + '" aria-pressed="' + (picker.id === selected ? 'true' : 'false') + '"><img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" /></button>'; }).join('') +
+        '</div></div>';
+    }
+    var CHARACTER_LAYER_SETS = {
+        'character-picker-basic-1': [
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+        ],
+        'character-picker-basic-2': [
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+        ],
+        'character-picker-pro-1': [
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+        ],
+        'character-picker-pro-2': [
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+        ],
+        'character-picker-pro-3': [
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+        ]
+    };
+    function selectedCharacterLayers(selectedArmaments) {
+        var selected = selectedCharacterPicker();
+        if (selected === 'none') return [];
+        var layers = CHARACTER_LAYER_SETS[selected] || CHARACTER_LAYER_SETS['character-picker-basic-1'];
+        return selectedArmaments.indexOf('armor-core') !== -1 ? layers.slice(1) : layers;
+    }
+    function canvasLayer(card, className, index) {
+        var src = card && (card.layerArt || card.art);
+        if (!src) return '';
+        return '<img class="property-canvas-layer ' + className + (index == null ? '' : ' property-canvas-layer-' + index) + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
+    }
+    function canvasLayers(selectedArmaments, selectedCompanions) {
+        var armaments = selectedArmaments.map(function(id) { return get(id); }).filter(Boolean);
+        var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
+        return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
+            selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
+            companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
+            armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') +
         '</div></div>';
     }
     function canvas(selected) {
@@ -75,7 +122,7 @@
         var worn = cards.filter(function(c) { return c.worn && c.owned; });
         var companions = cards.filter(function(c) { return c.type === 'Companion Cards' && c.owned; }), highlightedCompanion = selectedCompanion(selected);
         var canvasBackground = haven.art ? ' style="background-image:url(\'' + esc(haven.art) + '\')"' : '';
-        return '<section class="property-canvas"><div class="property-canvas-kicker">Center canvas &middot; Kaida &middot; Safe Haven background' + safeHavenControl(haven) + '</div><div class="property-canvas-stage" aria-label="Kaida portrait with worn Armaments and Companions"' + canvasBackground + '><div class="property-canvas-location"><strong>Haven</strong><span>' + esc(haven.name) + '</span></div><div class="property-canvas-orbit worn"><div class="property-canvas-orbit-title">Worn Armaments</div>' + worn.map(function(c) { return orbitPiece(c, highlightedArmament); }).join('') + '</div><div class="property-canvas-orbit companions"><div class="property-canvas-orbit-title">Companions</div>' + companions.map(function(c) { return orbitPiece(c, highlightedCompanion); }).join('') + '</div></div><div class="property-canvas-caption"><strong>' + esc(card.name) + '</strong><span>' + (card.owned ? esc(card.summary) : 'You do not yet own this Card.') + '</span>' + characterPickerMarkup() + '<div class="property-canvas-stats"><span class="property-canvas-stat">#' + esc(card.ref) + '</span><span class="property-canvas-stat">' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></div></div></section>';
+        return '<section class="property-canvas"><div class="property-canvas-heading"><div class="property-canvas-heading-haven"><span>Haven</span><strong>' + esc(haven.name) + '</strong></div><div class="property-canvas-heading-title">Worn Armaments</div></div><div class="property-canvas-stage" aria-label="Kaida portrait with worn Armaments and Companions"' + canvasBackground + '>' + safeHavenControl(haven) + canvasLayers(highlightedArmament, highlightedCompanion) + '<div class="property-canvas-orbit worn">' + worn.map(function(c) { return orbitPiece(c, highlightedArmament); }).join('') + '</div><div class="property-canvas-orbit companions"><div class="property-canvas-orbit-title">Companions</div>' + companions.map(function(c) { return orbitPiece(c, highlightedCompanion); }).join('') + '</div></div><div class="property-canvas-caption"><strong>' + esc(card.name) + '</strong><span>' + (card.owned ? esc(card.summary) : 'You do not yet own this Card.') + '</span>' + characterPickerMarkup() + '<div class="property-canvas-stats"><span class="property-canvas-stat">#' + esc(card.ref) + '</span><span class="property-canvas-stat">' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></div></div></section>';
     }
     function page(pageName, selected) {
         var nav = '<div class="property-page-nav" aria-label="Property pages"><button class="' + (pageName === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button><button class="future" onclick="selectPropertyPage(\'home\')">Home</button><button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button><button class="future" onclick="selectPropertyPage(\'rented\')">Rented Storage</button><button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button></div>';
