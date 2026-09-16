@@ -503,6 +503,20 @@ function selectedCharacterLayers() {
   return layers;
 }
 
+function drawLayerWithBodyOcclusion(ctx, image, layer, canvas) {
+  if (!image) return;
+  if (layer && layer.layer === "body" && selected.armor) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, canvas.width, canvas.height * 0.34);
+    ctx.clip();
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    return;
+  }
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+}
+
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   if (!canvas) return;
@@ -550,8 +564,8 @@ function renderCharacter(callback) {
     )
   ).then(imgs => {
     if (gen !== charRenderGen) return;
-    imgs.forEach(im => {
-      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+    imgs.forEach((im, index) => {
+      if (im) drawLayerWithBodyOcclusion(ctx, im, layers[index], canvas);
     });
     if (callback) callback(canvas);
   });
@@ -772,8 +786,8 @@ function renderFinalCharacter() {
     )
   ).then(imgs => {
     if (gen !== finalRenderGen) return;
-    imgs.forEach(im => {
-      if (im) ctx.drawImage(im, 0, 0, canvas.width, canvas.height);
+    imgs.forEach((im, index) => {
+      if (im) drawLayerWithBodyOcclusion(ctx, im, layers[index], canvas);
     });
   });
 }

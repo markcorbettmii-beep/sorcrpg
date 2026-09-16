@@ -17,7 +17,7 @@
         { id:'item-tool', type:'Item Cards', name:'Field Tool', ref:'item-pg.A-203', summary:'A carried practical tool.', art:'', owned:true, worn:false },
         { id:'item-placeholder-1', type:'Item Cards', name:'Material Stack', ref:'item-pg.A-204', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
         { id:'item-placeholder-2', type:'Item Cards', name:'Quest Item', ref:'item-pg.A-205', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
-        { id:'armor-core', type:'Armament Cards', name:'Leather Core Set', ref:'arm-pg.A-301', rank:'Rare', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-core-leathtaba3.png_20260916_103316_0000.png', owned:true, worn:true },
+        { id:'armor-core', type:'Armament Cards', name:'Leather Core Set', ref:'arm-pg.A-301', rank:'Rare', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-core-leathtaba3.png_20260916_103316_0000.png', occludesBody:true, owned:true, worn:true },
         { id:'armor-helm', type:'Armament Cards', name:'Leather Helm', ref:'arm-pg.A-302', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-helm.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-helm-leathtaba3.png_20260915_021632_0000.png', owned:true, worn:true },
         { id:'armor-gloves', type:'Armament Cards', name:'Leather Gloves', ref:'arm-pg.A-303', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-gloves.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-gloves-leathtaba3.png_20260915_021700_0000.png', owned:true, worn:true },
         { id:'armor-boots', type:'Armament Cards', name:'Leather Boots', ref:'arm-pg.A-304', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-boots.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-boots-leathtaba3.png_20260916_124704_0000.png', owned:true, worn:true },
@@ -108,6 +108,12 @@
         return '<img class="property-canvas-layer ' + className + (index == null ? '' : ' property-canvas-layer-' + index) + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
     }
     var ARMAMENT_LAYER_ORDER = { 'armor-boots': 1, 'armor-core': 2, 'armor-gloves': 3, 'weapon-taw': 4, 'armor-helm': 5 };
+    function selectedArmamentOccludesBody(selectedArmaments) {
+        return selectedArmaments.some(function(id) {
+            var card = get(id);
+            return card && card.occludesBody === true;
+        });
+    }
     function canvasLayers(selectedArmaments, selectedCompanions) {
         var armaments = selectedArmaments.map(function(id) { return get(id); }).filter(Boolean);
         armaments.sort(function(a, b) {
@@ -115,8 +121,9 @@
             return aOrder - bOrder;
         });
         var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
+        var bodyOcclusion = selectedArmamentOccludesBody(selectedArmaments) ? ' property-character-occluded-by-armor' : '';
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
-            (characterPickerVisible() ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
+            (characterPickerVisible() ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
             companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
             armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') : '') +
         '</div></div>';
