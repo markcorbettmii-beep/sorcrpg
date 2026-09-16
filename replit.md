@@ -21,3 +21,17 @@ Do not reintroduce alternate Enhancement names, the old one-line Resonating rule
 ## URL host convention
 
 Use the `www.sorcrpg.com` hostname for Evil Mode links so the mode is visible in the URL. Use the apex `sorcrpg.com` hostname for the other canonical links.
+
+## Canonical Armament asset hierarchy
+
+Shared Armament assets use this hierarchy:
+
+```text
+shared/armaments/<variant>/<armor-or-weapons-subtype>/<rank>/
+```
+
+The variants are `telluric`, `techad`, `cthonic`, `oxidize`, and `malign`.
+
+The active Techad subtypes are `armor-taba` and `weapons-taw`. The other variant folders remain reserved for future Armament assets.
+
+Both active subtypes contain all eight rank folders: `common`, `uncommon`, `rare`, `unique`, `heroic`, `elite`, `legendary`, and `divine`.

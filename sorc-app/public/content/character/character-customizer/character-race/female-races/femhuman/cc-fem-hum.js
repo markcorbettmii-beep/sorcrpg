@@ -12,18 +12,20 @@ const FACE_BASE = `${CHARACTER_BASE}faces/`;
 const FACE_PAINT_BASE = `${CHARACTER_BASE}face-paint/`;
 const HAIR_BASE = `${CHARACTER_BASE}hair/`;
 const CANVAS_BASE = `${ASSET_BASE}shared/canvas/`;
-const EQUIPMENT_BASE = `${ASSET_BASE}shared/equipment/layers/`;
+const ARMAMENT_BASE = `${ASSET_BASE}shared/armaments/`;
+const TECHAD_ARMOR_BASE = `${ARMAMENT_BASE}techad/armor-taba/rare/`;
+const TECHAD_WEAPONS_BASE = `${ARMAMENT_BASE}techad/weapons-taw/rare/`;
 const COMPANION_BASE = `${ASSET_BASE}shared/companions/layers/`;
 const PROFILE_BASE = `${ASSET_BASE}shared/profile/`;
 const PORTRAIT_EXAMPLE = `${PROFILE_BASE}sorc-blank-profile-page_20260519_113341_0000.png`;
 
 // Image paths for special layers
 const IMG_BG = `${CANVAS_BASE}high-res-canvas-background.png`;
-const IMG_BOOTS = `${EQUIPMENT_BASE}high-res-boots-leathtaba3.png_20260915_021749_0000.png`;
-const IMG_ARMOR = `${EQUIPMENT_BASE}high-res-core-leathtaba3.png`;
-const IMG_GLOVES = `${EQUIPMENT_BASE}high-res-gloves-leathtaba3.png_20260915_021700_0000.png`;
-const IMG_HELM = `${EQUIPMENT_BASE}high-res-helm-leathtaba3.png_20260915_021632_0000.png`;
-const IMG_DUAL_WIELD = `${EQUIPMENT_BASE}high-res-dw-taw3.png_20260915_021606_0000.png`;
+const IMG_BOOTS = `${TECHAD_ARMOR_BASE}high-res-boots-leathtaba3.png_20260915_021749_0000.png`;
+const IMG_ARMOR = `${TECHAD_ARMOR_BASE}high-res-core-leathtaba3.png`;
+const IMG_GLOVES = `${TECHAD_ARMOR_BASE}high-res-gloves-leathtaba3.png_20260915_021700_0000.png`;
+const IMG_HELM = `${TECHAD_ARMOR_BASE}high-res-helm-leathtaba3.png_20260915_021632_0000.png`;
+const IMG_DUAL_WIELD = `${TECHAD_WEAPONS_BASE}high-res-dw-taw3.png_20260915_021606_0000.png`;
 const IMG_DRAKE = `${COMPANION_BASE}high-res-drake.png`;
 const IMG_ANGELIC = `${COMPANION_BASE}high-res-angelic.png`;
 const IMG_ANIM_COMP = `${COMPANION_BASE}high-res-anim-comp.png`;
@@ -41,7 +43,7 @@ const bodyOptions = [
 
 const faceOptions = [
   // Pale skin faces - all available once Pale body is selected
-  { src: `${FACE_BASE}femface2-pale-grn.png`, thumb: `${FACE_BASE}femface2-pale-grn-tmb.png`, clup: `${FACE_BASE}fface-pale-green_20260618_175154_0000.png`, skin: "pale", eyes: "grn", enabled: true, closeupExtraYShift: 6 },
+  { src: `${FACE_BASE}fem-face2-pale-green.png_20260916_103252_0000.png`, thumb: `${FACE_BASE}femface2-pale-grn-tmb.png_20260916_104451_0000.png`, clup: `${FACE_BASE}fface-pale-green_20260618_175154_0000.png`, skin: "pale", eyes: "grn", enabled: true, closeupExtraYShift: 6 },
   { src: `${FACE_BASE}femface4-pale-brn.png`, thumb: `${FACE_BASE}femface4-pale-brn-tmb.png`, clup: `${FACE_BASE}fface-pale-brown_20260618_175523_0000.png`, skin: "pale", eyes: "brn", enabled: true, closeupExtraYShift: 6 },
   { src: `${FACE_BASE}femface5-pale-blu-mkp.png`, thumb: `${FACE_BASE}femface5-pale-blu-mkp-tmb.png`, clup: `${FACE_BASE}fface-pale-violet_20260618_175420_0000.png`, skin: "pale", eyes: "vlt", enabled: true, closeupExtraYShift: 16 }
 ];
@@ -468,7 +470,7 @@ function resizeCanvasAndRender() {
   }
 }
 
-function selectedEquipmentLayers() {
+function selectedArmamentLayers() {
   const layers = [];
   if (selected.boots) layers.push({ src: IMG_BOOTS, layer: "boots" });
   if (selected.armor) layers.push({ src: IMG_ARMOR, layer: "armor" });
@@ -527,7 +529,7 @@ function renderCharacter(callback) {
     ...selectedCharacterLayers(),
     { src: IMG_DRAKE, layer: "drake" },
     { src: IMG_ANGELIC, layer: "angelic" },
-    ...selectedEquipmentLayers(),
+    ...selectedArmamentLayers(),
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
@@ -749,7 +751,7 @@ function renderFinalCharacter() {
     ...selectedCharacterLayers(),
     { src: IMG_DRAKE, layer: "drake" },
     { src: IMG_ANGELIC, layer: "angelic" },
-    ...selectedEquipmentLayers(),
+    ...selectedArmamentLayers(),
     { src: IMG_WEAS, layer: "weas" },
     { src: IMG_ANIM_COMP, layer: "anim_comp" },
     { src: IMG_LETTERS, layer: "letters" }
