@@ -476,7 +476,59 @@
        set, and the buttons say so rather than pretending to save. */
     var privacySheet = null;
 
+    function renderPropertyAccess() {
+        var publicControls = document.querySelectorAll('.property-access-public');
+        var privateControls = document.querySelectorAll('.property-access-private');
+        if (!publicControls.length && !privateControls.length) return;
+        var hasSheet = !!privacySheet;
+        publicControls.forEach(function(control) {
+            control.classList.toggle('is-active', hasSheet && !!privacySheet.is_public);
+            control.setAttribute('aria-disabled', hasSheet ? 'false' : 'true');
+            control.tabIndex = hasSheet ? 0 : -1;
+        });
+        privateControls.forEach(function(control) {
+            control.classList.toggle('is-active', hasSheet && !privacySheet.is_public);
+            control.setAttribute('aria-disabled', hasSheet ? 'false' : 'true');
+            control.tabIndex = hasSheet ? 0 : -1;
+        });
+    }
+
+    function bindPropertyAccessControls() {
+        document.querySelectorAll('.property-access-public').forEach(function(control) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = control.className;
+            button.textContent = control.textContent;
+            control.parentNode.replaceChild(button, control);
+            control = button;
+            control.onclick = function() { if (privacySheet) setSheetPrivacy(true); };
+            control.onkeydown = function(event) {
+                if ((event.key === 'Enter' || event.key === ' ') && privacySheet) {
+                    event.preventDefault();
+                    setSheetPrivacy(true);
+                }
+            };
+        });
+        document.querySelectorAll('.property-access-private').forEach(function(control) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = control.className;
+            button.textContent = control.textContent;
+            control.parentNode.replaceChild(button, control);
+            control = button;
+            control.onclick = function() { if (privacySheet) setSheetPrivacy(false); };
+            control.onkeydown = function(event) {
+                if ((event.key === 'Enter' || event.key === ' ') && privacySheet) {
+                    event.preventDefault();
+                    setSheetPrivacy(false);
+                }
+            };
+        });
+        renderPropertyAccess();
+    }
+
     function renderSheetPrivacy() {
+        renderPropertyAccess();
         var pub = document.getElementById('sheetPublicBtn');
         var priv = document.getElementById('sheetPrivateBtn');
         var note = document.getElementById('sheetPrivacyNote');
@@ -509,6 +561,9 @@
         var note = document.getElementById('sheetPrivacyNote');
         if (pub) pub.disabled = true;
         if (priv) priv.disabled = true;
+        document.querySelectorAll('.property-access-public, .property-access-private').forEach(function(control) {
+            control.setAttribute('aria-disabled', 'true');
+        });
         try {
             var res = await fetch(API_URL + '/api/characters/' + encodeURIComponent(privacySheet.id), {
                 method: 'PUT',
@@ -536,6 +591,7 @@
         if (btn) btn.classList.add('active');
         var panel = document.getElementById('tab-' + tabId);
         if (panel) panel.classList.add('active');
+        bindPropertyAccessControls();
         window.history.replaceState(null, null, '?tab=' + tabId);
 
         // Load Fellows data when Fellows tab is selected

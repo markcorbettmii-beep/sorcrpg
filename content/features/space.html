@@ -226,9 +226,17 @@
         .property-draft, #tab-property { min-width: 0; max-width: 100%; }
         .property-access-block { max-width: 100%; margin: 0.35rem 0 1rem; }
         .property-access-pill { display: inline-flex; align-items: center; max-width: 100%; overflow: hidden; border: 1px solid #6d5c16; border-radius: 999px; background: #17130a; font-size: 0.66rem; font-weight: bold; letter-spacing: 0.08em; line-height: 1; white-space: nowrap; }
-        .property-access-pill-public, .property-access-pill-private { padding: 0.38rem 0.55rem; font-size: inherit; }
+        .property-access-pill-public, .property-access-pill-private { appearance: none; border: 0; padding: 0.38rem 0.55rem; font: inherit; color: #fff; cursor: pointer; }
         .property-access-pill-public { background: #1a3a6b; color: #fff; }
         .property-access-pill-private { background: #3a1a1a; color: #fff; }
+        .property-access-public, .property-access-private { appearance: none; display: inline-block; border: 0; padding: 0.38rem 0.55rem; font: inherit; color: #fff; cursor: pointer; }
+        .property-access-public { background: #1a3a6b; }
+        .property-access-private { background: #3a1a1a; }
+        .property-access-public:not(.is-active), .property-access-private:not(.is-active) { opacity: 0.62; }
+        .property-access-public.is-active, .property-access-private.is-active { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.72); }
+        .property-access-pill-public:not(.is-active), .property-access-pill-private:not(.is-active) { opacity: 0.62; }
+        .property-access-pill-public.is-active, .property-access-pill-private.is-active { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.72); }
+        .property-access-pill-public:disabled, .property-access-pill-private:disabled { cursor: default; }
         .property-access-divider { color: #f0d879; padding: 0 0.12rem; }
         .property-gm-note { max-width: 100%; color: #999; font-size: 0.72rem; line-height: 1.45; overflow-wrap: anywhere; word-break: break-word; margin: 0.45rem 0 0; }
         #tab-property > p { max-width: 100%; font-size: 0.95rem; line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; }
@@ -926,7 +934,59 @@
        set, and the buttons say so rather than pretending to save. */
     var privacySheet = null;
 
+    function renderPropertyAccess() {
+        var publicControls = document.querySelectorAll('.property-access-public');
+        var privateControls = document.querySelectorAll('.property-access-private');
+        if (!publicControls.length && !privateControls.length) return;
+        var hasSheet = !!privacySheet;
+        publicControls.forEach(function(control) {
+            control.classList.toggle('is-active', hasSheet && !!privacySheet.is_public);
+            control.setAttribute('aria-disabled', hasSheet ? 'false' : 'true');
+            control.tabIndex = hasSheet ? 0 : -1;
+        });
+        privateControls.forEach(function(control) {
+            control.classList.toggle('is-active', hasSheet && !privacySheet.is_public);
+            control.setAttribute('aria-disabled', hasSheet ? 'false' : 'true');
+            control.tabIndex = hasSheet ? 0 : -1;
+        });
+    }
+
+    function bindPropertyAccessControls() {
+        document.querySelectorAll('.property-access-public').forEach(function(control) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = control.className;
+            button.textContent = control.textContent;
+            control.parentNode.replaceChild(button, control);
+            control = button;
+            control.onclick = function() { if (privacySheet) setSheetPrivacy(true); };
+            control.onkeydown = function(event) {
+                if ((event.key === 'Enter' || event.key === ' ') && privacySheet) {
+                    event.preventDefault();
+                    setSheetPrivacy(true);
+                }
+            };
+        });
+        document.querySelectorAll('.property-access-private').forEach(function(control) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = control.className;
+            button.textContent = control.textContent;
+            control.parentNode.replaceChild(button, control);
+            control = button;
+            control.onclick = function() { if (privacySheet) setSheetPrivacy(false); };
+            control.onkeydown = function(event) {
+                if ((event.key === 'Enter' || event.key === ' ') && privacySheet) {
+                    event.preventDefault();
+                    setSheetPrivacy(false);
+                }
+            };
+        });
+        renderPropertyAccess();
+    }
+
     function renderSheetPrivacy() {
+        renderPropertyAccess();
         var pub = document.getElementById('sheetPublicBtn');
         var priv = document.getElementById('sheetPrivateBtn');
         var note = document.getElementById('sheetPrivacyNote');
@@ -959,6 +1019,9 @@
         var note = document.getElementById('sheetPrivacyNote');
         if (pub) pub.disabled = true;
         if (priv) priv.disabled = true;
+        document.querySelectorAll('.property-access-public, .property-access-private').forEach(function(control) {
+            control.setAttribute('aria-disabled', 'true');
+        });
         try {
             var res = await fetch(API_URL + '/api/characters/' + encodeURIComponent(privacySheet.id), {
                 method: 'PUT',
@@ -986,6 +1049,7 @@
         if (btn) btn.classList.add('active');
         var panel = document.getElementById('tab-' + tabId);
         if (panel) panel.classList.add('active');
+        bindPropertyAccessControls();
         window.history.replaceState(null, null, '?tab=' + tabId);
 
         // Load Fellows data when Fellows tab is selected
