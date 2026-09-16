@@ -74,34 +74,39 @@
         'character-picker-basic-1': [
             '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
         ],
         'character-picker-basic-2': [
             '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
         ],
         'character-picker-pro-1': [
             '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
         ],
         'character-picker-pro-2': [
             '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
         ],
         'character-picker-pro-3': [
             '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair1.png'
+            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
+            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
         ]
     };
     function selectedCharacterLayers(selectedArmaments) {
         var selected = selectedCharacterPicker();
         if (selected === 'none') return [];
         var layers = CHARACTER_LAYER_SETS[selected] || CHARACTER_LAYER_SETS['character-picker-basic-1'];
-        return selectedArmaments.indexOf('armor-core') !== -1 ? layers.slice(1) : layers;
+        return layers;
     }
     function canvasLayer(card, className, index) {
         var src = card && (card.layerArt || card.art);

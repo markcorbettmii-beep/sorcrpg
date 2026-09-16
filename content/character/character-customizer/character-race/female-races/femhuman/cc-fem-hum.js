@@ -478,6 +478,29 @@ function selectedEquipmentLayers() {
   return layers;
 }
 
+function selectedCharacterLayers() {
+  const layers = [];
+  const body = bodyOptions[selected.body];
+  const face = faceOptions[selected.face];
+  const facePaint = facePaintOptions[selected.facePaint];
+  const hair = hairOptions[selected.hair];
+
+  if (body && body.enabled !== false && body.src) {
+    layers.push({ src: body.src, layer: "body" });
+  }
+  if (face && face.enabled !== false && face.src) {
+    layers.push({ src: face.src, layer: "face" });
+  }
+  if (selected.facePaint > 0 && facePaint && facePaint.enabled !== false && facePaint.src) {
+    layers.push({ src: facePaint.src, layer: "facepaint" });
+  }
+  if (hair && hair.enabled !== false && hair.src) {
+    layers.push({ src: hair.src, layer: "hair" });
+  }
+
+  return layers;
+}
+
 function renderCharacter(callback) {
   const canvas = document.getElementById("charCanvas");
   if (!canvas) return;
@@ -501,6 +524,7 @@ function renderCharacter(callback) {
 
   const layers = [
     { src: IMG_BG, layer: "bg" },
+    ...selectedCharacterLayers(),
     { src: IMG_DRAKE, layer: "drake" },
     { src: IMG_ANGELIC, layer: "angelic" },
     ...selectedEquipmentLayers(),
@@ -722,6 +746,7 @@ function renderFinalCharacter() {
 
   const layers = [
     { src: IMG_BG, layer: "bg" },
+    ...selectedCharacterLayers(),
     { src: IMG_DRAKE, layer: "drake" },
     { src: IMG_ANGELIC, layer: "angelic" },
     ...selectedEquipmentLayers(),
