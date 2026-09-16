@@ -473,8 +473,8 @@ function selectedEquipmentLayers() {
   if (selected.boots) layers.push({ src: IMG_BOOTS, layer: "boots" });
   if (selected.armor) layers.push({ src: IMG_ARMOR, layer: "armor" });
   if (selected.gloves) layers.push({ src: IMG_GLOVES, layer: "gloves" });
-  if (selected.helm) layers.push({ src: IMG_HELM, layer: "helm" });
   if (selected.dualWield) layers.push({ src: IMG_DUAL_WIELD, layer: "dual_wield" });
+  if (selected.helm) layers.push({ src: IMG_HELM, layer: "helm" });
   return layers;
 }
 

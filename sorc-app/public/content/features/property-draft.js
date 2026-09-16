@@ -57,49 +57,30 @@
     function selectedArmament(selected) { return storedSelection('sorc.property.selectedArmaments', 'sorc.property.lastReadied', selected, 'worn'); }
     function selectedCompanion(selected) { return storedSelection('sorc.property.selectedCompanions', 'sorc.property.selectedCompanion', selected, 'type'); }
     var CHARACTER_PICKERS = [
-        { id:'character-picker-basic-1', name:'Basic 1', art:'/content/character/assets/customizer/pickers/characters/character-picker-basic-1.png', tier:'basic' },
-        { id:'character-picker-basic-2', name:'Basic 2', art:'/content/character/assets/customizer/pickers/characters/character-picker-basic-2.png', tier:'basic' },
-        { id:'character-picker-pro-1', name:'Pro 1', art:'/content/character/assets/customizer/pickers/characters/character-picker-pro-1.png', tier:'pro' },
-        { id:'character-picker-pro-2', name:'Pro 2', art:'/content/character/assets/customizer/pickers/characters/character-picker-pro-2.png', tier:'pro' },
-        { id:'character-picker-pro-3', name:'Pro 3', art:'/content/character/assets/customizer/pickers/characters/character-picker-pro-3.png', tier:'pro' }
+        { id:'character-picker-basic-1', name:'Kaida', art:'/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png', tier:'basic', available:true },
+        { id:'character-picker-basic-2', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'basic', available:false },
+        { id:'character-picker-pro-1', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'pro', available:false },
+        { id:'character-picker-pro-2', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'pro', available:false },
+        { id:'character-picker-pro-3', name:'Male Muscular', art:'/content/character/assets/customizer/pickers/characters/character-picker-male-musc-silhouette.png?v=sheet-musc-2', tier:'pro', available:false }
     ];
-    function selectedCharacterPicker() { var id = ''; try { id = localStorage.getItem('sorc.property.characterPicker') || ''; } catch(e) {} return id === 'none' ? 'none' : (id || CHARACTER_PICKERS[0].id); }
+    function selectedCharacterPicker() {
+        var id = '';
+        try { id = localStorage.getItem('sorc.property.characterPicker') || ''; } catch(e) {}
+        return CHARACTER_PICKERS.some(function(picker) { return picker.available && picker.id === id; }) ? id : CHARACTER_PICKERS[0].id;
+    }
     function characterPickerMarkup() {
         var selected = selectedCharacterPicker();
         return '<div class="property-character-picker"><div class="property-character-picker-tiers"><div class="property-character-picker-tier basic">Basic</div><div class="property-character-picker-tier pro">Pro</div></div><div class="property-character-picker-thumbs">' +
-            CHARACTER_PICKERS.map(function(picker) { return '<button type="button" class="property-character-picker-thumb ' + picker.tier + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '" onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-label="Select ' + esc(picker.name) + '" aria-pressed="' + (picker.id === selected ? 'true' : 'false') + '"><img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" /></button>'; }).join('') +
+            CHARACTER_PICKERS.map(function(picker) {
+                var disabled = picker.available ? '' : ' unavailable';
+                var interaction = picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected ? 'true' : 'false') + '"' : ' disabled aria-disabled="true"';
+                return '<button type="button" class="property-character-picker-thumb ' + picker.tier + disabled + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '"' + interaction + ' aria-label="' + esc(picker.name) + (picker.available ? '' : ' (not available)') + '"><img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" /></button>';
+            }).join('') +
         '</div></div>';
     }
     var CHARACTER_LAYER_SETS = {
         'character-picker-basic-1': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
-            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
-        ],
-        'character-picker-basic-2': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
-            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
-        ],
-        'character-picker-pro-1': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
-            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
-        ],
-        'character-picker-pro-2': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
-            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
-        ],
-        'character-picker-pro-3': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
-            '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
-            '/content/character/assets/female/firstborn/human/face-paint/facepnt3-red.png',
-            '/content/character/assets/female/firstborn/human/hair/femhair11.png'
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png'
         ]
     };
     function selectedCharacterLayers(selectedArmaments) {
@@ -113,8 +94,13 @@
         if (!src) return '';
         return '<img class="property-canvas-layer ' + className + (index == null ? '' : ' property-canvas-layer-' + index) + '" src="' + esc(src) + '" alt="" aria-hidden="true" />';
     }
+    var ARMAMENT_LAYER_ORDER = { 'armor-boots': 1, 'armor-core': 2, 'armor-gloves': 3, 'weapon-taw': 4, 'armor-helm': 5 };
     function canvasLayers(selectedArmaments, selectedCompanions) {
         var armaments = selectedArmaments.map(function(id) { return get(id); }).filter(Boolean);
+        armaments.sort(function(a, b) {
+            var aOrder = ARMAMENT_LAYER_ORDER[a.id] || 99, bOrder = ARMAMENT_LAYER_ORDER[b.id] || 99;
+            return aOrder - bOrder;
+        });
         var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
             selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
@@ -127,7 +113,16 @@
         var worn = cards.filter(function(c) { return c.worn && c.owned; });
         var companions = cards.filter(function(c) { return c.type === 'Companion Cards' && c.owned; }), highlightedCompanion = selectedCompanion(selected);
         var canvasBackground = haven.art ? ' style="background-image:url(\'' + esc(haven.art) + '\')"' : '';
-        return '<section class="property-canvas"><div class="property-canvas-heading"><div class="property-canvas-heading-haven"><span>Haven</span><strong>' + esc(haven.name) + '</strong></div><div class="property-canvas-heading-title">Worn Armaments</div></div><div class="property-canvas-stage" aria-label="Kaida portrait with worn Armaments and Companions"' + canvasBackground + '>' + safeHavenControl(haven) + canvasLayers(highlightedArmament, highlightedCompanion) + '<div class="property-canvas-orbit worn">' + worn.map(function(c) { return orbitPiece(c, highlightedArmament); }).join('') + '</div><div class="property-canvas-orbit companions"><div class="property-canvas-orbit-title">Companions</div>' + companions.map(function(c) { return orbitPiece(c, highlightedCompanion); }).join('') + '</div></div><div class="property-canvas-caption"><strong>' + esc(card.name) + '</strong><span>' + (card.owned ? esc(card.summary) : 'You do not yet own this Card.') + '</span>' + characterPickerMarkup() + '<div class="property-canvas-stats"><span class="property-canvas-stat">#' + esc(card.ref) + '</span><span class="property-canvas-stat">' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></div></div></section>';
+        return '<section class="property-canvas">' +
+            '<div class="property-canvas-pickers property-canvas-pickers-top"><div class="property-canvas-picker-title">Worn Armaments</div><div class="property-canvas-orbit worn">' + worn.map(function(c) { return orbitPiece(c, highlightedArmament); }).join('') + '</div></div>' +
+            '<div class="property-canvas-stage" aria-label="Kaida portrait with worn Armaments and Companions"' + canvasBackground + '>' +
+                safeHavenControl(haven) +
+                '<div class="property-canvas-card-detail"><strong>' + esc(card.name) + '</strong><span>' + (card.owned ? esc(card.summary) : 'You do not yet own this Card.') + '</span></div>' +
+                canvasLayers(highlightedArmament, highlightedCompanion) +
+            '</div>' +
+            '<div class="property-canvas-pickers property-canvas-pickers-bottom"><div class="property-canvas-orbit companions">' + companions.map(function(c) { return orbitPiece(c, highlightedCompanion); }).join('') + '</div></div>' +
+            '<div class="property-canvas-caption">' + characterPickerMarkup() + '</div>' +
+        '</section>';
     }
     function page(pageName, selected) {
         var nav = '<div class="property-page-nav" aria-label="Property pages"><button class="' + (pageName === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button><button class="future" onclick="selectPropertyPage(\'home\')">Home</button><button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button><button class="future" onclick="selectPropertyPage(\'rented\')">Rented Storage</button><button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button></div>';
@@ -154,7 +149,7 @@
     };
     window.selectPropertyPage = function(name) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var selected = draft.getAttribute('data-selected') || 'armor-core'; draft.innerHTML = page(name, selected); };
     window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core'; draft.setAttribute('data-selected', id); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem('sorc.property.selectedArmaments', JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem('sorc.property.selectedCompanions', JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem('sorc.property.safeHaven', card.safeHaven); } catch(e) {} draft.innerHTML = page('on-person', id); };
-    window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'); if (!draft) return; try { localStorage.setItem('sorc.property.characterPicker', selectedCharacterPicker() === id ? 'none' : id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+    window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { localStorage.setItem('sorc.property.characterPicker', id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
     window.selectPropertyRowPage = function(type, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var typeCards = cards.filter(function(card) { return card.type === type; }), pageCount = Math.max(1, Math.ceil(typeCards.length / 5)), pageNumber = rowPages[type] || 0; rowPages[type] = (pageNumber + direction + pageCount) % pageCount; draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
     window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem('sorc.property.safeHaven', id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {
