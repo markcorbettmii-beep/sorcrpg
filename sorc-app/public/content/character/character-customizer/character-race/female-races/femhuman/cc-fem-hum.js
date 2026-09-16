@@ -36,7 +36,7 @@ const CANVAS_RENDER_HEIGHT = 3312;
 const bodyOptions = [
   { src: `${BODY_BASE}fbody-musc-drk.png`, thumb: `${BODY_BASE}fbody-musc-drk-tmb.png`, skin: "drk", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
   { src: `${BODY_BASE}fbody-musc-med.png`, thumb: `${BODY_BASE}fbody-musc-med-tmb.png`, skin: "med", type: "muscular", enabled: false, disabledNote: "Not available in Beta" },
-  { src: `${BODY_BASE}fbody-musc-pale.png`, thumb: `${BODY_BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
+  { src: `${BODY_BASE}fbody-musc-pale.png_20260916_001443_0000.png`, thumb: `${BODY_BASE}fbody-musc-pale-tmb.png`, skin: "pale", type: "muscular", enabled: true }
 ];
 
 const faceOptions = [

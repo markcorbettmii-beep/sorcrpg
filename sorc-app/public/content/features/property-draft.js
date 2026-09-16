@@ -72,27 +72,27 @@
     }
     var CHARACTER_LAYER_SETS = {
         'character-picker-basic-1': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
             '/content/character/assets/female/firstborn/human/hair/femhair1.png'
         ],
         'character-picker-basic-2': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
             '/content/character/assets/female/firstborn/human/hair/femhair1.png'
         ],
         'character-picker-pro-1': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
             '/content/character/assets/female/firstborn/human/hair/femhair1.png'
         ],
         'character-picker-pro-2': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
             '/content/character/assets/female/firstborn/human/hair/femhair1.png'
         ],
         'character-picker-pro-3': [
-            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png',
+            '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png',
             '/content/character/assets/female/firstborn/human/faces/femface2-pale-grn.png',
             '/content/character/assets/female/firstborn/human/hair/femhair1.png'
         ]
