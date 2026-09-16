@@ -32,6 +32,6 @@ shared/armaments/<variant>/<armor-or-weapons-subtype>/<rank>/
 
 The variants are `telluric`, `techad`, `cthonic`, `oxidize`, and `malign`.
 
-The active Techad subtypes are `armor-taba` and `weapons-taw`. The other variant folders remain reserved for future Armament assets.
+The Techad subtypes are `armor-taba` and `weapons-taw`. The other variants use `armor-<variant>` and `weapons-<variant>` subtypes.
 
-Both active subtypes contain all eight rank folders: `common`, `uncommon`, `rare`, `unique`, `heroic`, `elite`, `legendary`, and `divine`.
+Every subtype contains all eight rank folders: `common`, `uncommon`, `rare`, `unique`, `heroic`, `elite`, `legendary`, and `divine`. Empty rank folders use `.gitkeep`.
