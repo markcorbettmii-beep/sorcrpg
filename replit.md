@@ -32,6 +32,6 @@ shared/armaments/<variant>/<armor-or-weapons-subtype>/<rank>/
 
 The variants are `telluric`, `techad`, `cthonic`, `oxidize`, and `malign`.
 
-The Techad subtypes are `armor-taba` and `weapons-taw`. The other variants use `armor-<variant>` and `weapons-<variant>` subtypes.
+The Techad subtypes are `armor-taba` and `weapons-taw`. The other variants use `armor-<variant>` and `weapons-<variant>` subtypes. Telluric, Cthonic, and Malign also use an `artifacts` Armament subtype.
 
-Every subtype contains all eight rank folders: `common`, `uncommon`, `rare`, `unique`, `heroic`, `elite`, `legendary`, and `divine`. Empty rank folders use `.gitkeep`.
+Every subtype contains all eight rank folders: `common`, `uncommon`, `rare`, `unique`, `heroic`, `elite`, `legendary`, and `divine`. Empty rank folders use `.gitkeep`. Artifacts are Armament Weapon Cards, not Items.
