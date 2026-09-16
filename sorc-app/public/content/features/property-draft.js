@@ -47,7 +47,7 @@
     }
     function button(card, selected) {
         return '<button type="button" class="property-armory-card' + rankClass(card) + ' ' + (card.owned ? 'owned' : 'unowned') + (card.worn ? ' readied' : '') + (card.id === selected ? ' selected' : '') + '" data-property-card="' + esc(card.id) + '" data-property-name="' + esc(card.name + ' ' + card.ref + ' ' + card.summary) + '"' + companionInteraction(card) + ' aria-pressed="' + (card.id === selected ? 'true' : 'false') + '">' +
-            companionMeta(card, 'top') + '<span class="property-armory-card-art' + (card.art ? '' : ' placeholder') + '">' + art(card) + '</span>' + companionMeta(card, 'bottom') + '<span class="property-armory-card-name">' + esc(card.name) + '</span><span class="property-armory-card-ref">#' + esc(card.ref) + '</span><span class="property-armory-card-state">' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></button>';
+            companionMeta(card, 'top') + '<span class="property-armory-card-art' + (card.art ? '' : ' placeholder') + '">' + art(card) + '</span><span class="property-armory-card-name">' + esc(card.name) + '</span><span class="property-armory-card-ref">#' + esc(card.ref) + '</span><span class="property-armory-card-state">' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></button>';
     }
     function indexItem(card, selected) {
         return '<button type="button" class="property-card-index-item' + rankClass(card) + (card.id === selected ? ' selected' : '') + (card.owned ? '' : ' unowned') + '"' + companionInteraction(card) + ' aria-label="Open ' + esc(card.name) + '"><span class="property-card-index-name">' + esc(card.name) + '</span><span class="property-card-index-meta">' + esc(card.ref) + ' &middot; ' + (card.owned ? (card.worn ? 'Readied' : 'Carried') : 'Not owned') + '</span></button>';
@@ -61,8 +61,7 @@
         if (!card || !card.art) return '';
         var companion = card.type === 'Companion Cards';
         var top = companion ? (card.companionTop || [card.rank, card.role].filter(Boolean).join(' · ')) : '';
-        var bottom = companion ? (card.companionBottom || [card.size, card.race].filter(Boolean).join(' · ')) : '';
-        return '<button type="button" class="property-orbit-piece' + rankClass(card) + ' ' + (companion ? 'property-companion-orbit-piece ' : '') + (isSelected(selected, card.id) ? 'property-highlighted' : 'property-subdued') + '"' + companionInteraction(card) + ' aria-label="Open ' + esc(card.name) + '">' + (top ? '<span class="property-orbit-meta property-orbit-meta-top">' + esc(top) + '</span>' : '') + '<img src="' + esc(card.art) + '" alt="" />' + (bottom ? '<span class="property-orbit-meta property-orbit-meta-bottom">' + esc(bottom) + '</span>' : '') + '<span>' + esc(card.name) + '</span></button>';
+        return '<button type="button" class="property-orbit-piece' + rankClass(card) + ' ' + (isSelected(selected, card.id) ? 'property-highlighted' : 'property-subdued') + '"' + companionInteraction(card) + ' aria-label="Open ' + esc(card.name) + '">' + (top ? '<span class="property-orbit-meta property-orbit-meta-top">' + esc(top) + '</span>' : '') + '<img src="' + esc(card.art) + '" alt="" />' + '<span>' + esc(card.name) + '</span></button>';
     }
     function storedSelection(key, legacyKey, selected, type) { var raw = null; try { raw = localStorage.getItem(key); } catch(e) {} if (raw !== null) { try { var parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; } catch(e) {} if (raw === 'none') return []; return [raw]; } var legacy = ''; try { legacy = localStorage.getItem(legacyKey) || ''; } catch(e) {} if (legacy && legacy !== 'none') return [legacy]; return type === 'worn' ? ['armor-core'] : []; }
     function selectedArmament(selected) { return storedSelection('sorc.property.selectedArmaments', 'sorc.property.lastReadied', selected, 'worn'); }
@@ -120,7 +119,7 @@
         '</div></div>';
     }
     function canvas(selected) {
-        var card = get(selected) || cards[0], haven = selectedSafeHaven(), highlightedArmament = selectedArmament(selected);
+        var haven = selectedSafeHaven(), highlightedArmament = selectedArmament(selected);
         var worn = cards.filter(function(c) { return c.worn && c.owned; });
         var companions = cards.filter(function(c) { return c.type === 'Companion Cards' && c.owned; }), highlightedCompanion = selectedCompanion(selected);
         var canvasBackground = haven.art ? ' style="background-image:url(\'' + esc(haven.art) + '\')"' : '';
@@ -128,7 +127,6 @@
             '<div class="property-canvas-pickers property-canvas-pickers-top"><div class="property-canvas-picker-title">Worn Armaments</div><div class="property-canvas-orbit worn">' + worn.map(function(c) { return orbitPiece(c, highlightedArmament); }).join('') + '</div></div>' +
             '<div class="property-canvas-stage" aria-label="Kaida portrait with worn Armaments and Companions"' + canvasBackground + '>' +
                 safeHavenControl(haven) +
-                '<div class="property-canvas-card-detail"><strong>' + esc(card.name) + '</strong><span>' + (card.owned ? esc(card.summary) : 'You do not yet own this Card.') + '</span></div>' +
                 canvasLayers(highlightedArmament, highlightedCompanion) +
             '</div>' +
             '<div class="property-canvas-pickers property-canvas-pickers-bottom"><div class="property-canvas-orbit companions">' + companions.map(function(c) { return orbitPiece(c, highlightedCompanion); }).join('') + '</div><div class="property-companion-instruction">select or long press to view Card</div></div>' +
