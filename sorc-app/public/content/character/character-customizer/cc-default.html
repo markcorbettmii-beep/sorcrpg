@@ -11,12 +11,14 @@
   <title>Character Customizer</title>
  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes, minimum-scale=0.5, maximum-scale=3">
   <link rel="stylesheet" href="/styles.css?v=9">
+  <link rel="stylesheet" href="/content/character/workspace-nav.css">
 </head>
 <body>
   <div class="page-wrapper">
     <header class="header-container">
       <span class="sorc-letters">S O R C</span>
     </header>
+    <div data-character-workspace-nav data-current="customize"></div>
   <h1>SORC Character Customizer</h1>
   <p class="coming-soon">Armaments and Gear coming soon…</p>
   <div class="main-layout">
@@ -71,6 +73,9 @@
         <br>
         <div style="margin:10px 0; font-weight:bold; color:#444; font-size:1.1em;">
           Companion displays coming soon
+        </div>
+        <div id="ownedPropertyItems" style="margin-top:1rem;padding:0.75rem;border:1px solid #c9b400;border-radius:6px;font-size:0.9rem;">
+          Loading owned Property Cards&hellip;
         </div>
       </div>
       <div id="fellowship-controls" style="margin:1em 0;">
@@ -138,6 +143,25 @@
       </div>
     </section>
   <script type="module" src="/main.js?v=26"></script>
+  <script src="/content/character/workspace-nav.js"></script>
+  <script src="/content/features/property-draft.js?v=20260917-property56"></script>
+  <script>
+    (function() {
+      var id = new URLSearchParams(window.location.search).get('characterId');
+      var frame = document.querySelector('iframe[title="SORC Character Sheet"]');
+      if (id && frame) frame.src = '/content/character/character-sheet-fem-musc.html?characterId=' + encodeURIComponent(id);
+      var target = document.getElementById('ownedPropertyItems');
+      var inventory = window.SORCPropertyInventory;
+      if (target && inventory) {
+        var owned = inventory.owned();
+        target.innerHTML = '<strong>Owned gear and Companions available to this Character</strong><ul style="margin:0.5rem 0 0 1.2rem;padding:0;">' +
+          owned.filter(function(card) { return card.type === 'Armament Cards' || card.type === 'Companion Cards'; }).map(function(card) {
+            return '<li>' + card.name + ' <span style="opacity:0.7;">(' + card.type.replace(' Cards', '') + ' · ' + card.ref + ')</span></li>';
+          }).join('') +
+          '</ul><a href="/content/features/space.html?tab=property" title="Manage Property & Cards">Manage Property &amp; Cards</a>';
+      }
+    })();
+  </script>
   <div id="footer"></div>
 </body>
 </html>

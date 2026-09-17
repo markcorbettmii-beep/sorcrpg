@@ -1,4 +1,16 @@
 (function() {
+    function propertyCharacterId() {
+        var id = '';
+        try { id = new URLSearchParams(window.location.search).get('characterId') || ''; } catch(e) {}
+        if (!id) {
+            try { id = localStorage.getItem('sorc.characterId') || ''; } catch(e) {}
+        }
+        return id || 'default';
+    }
+    function propertyStorageKey(name) {
+        return 'sorc.property.' + propertyCharacterId() + '.' + name;
+    }
+    window.SORCPropertyCharacterId = propertyCharacterId;
     var cards = [
         { id:'character-sheet', type:'Character Cards', name:'Kaida Character Sheet', ref:'char-pg.A-001', summary:'Kaida, Level 30. The active Character profile and indexed statistics.', art:'', owned:true, worn:false },
         { id:'character-profile', type:'Character Cards', name:'Kaida Character Profile', ref:'char-pg.A-002', summary:'Kaida, Level 30. Identity, class, level, and current state.', art:'', owned:true, worn:false },
@@ -24,6 +36,16 @@
         { id:'weapon-taw', type:'Armament Cards', name:'Dual-Wield TAW', ref:'arm-pg.A-305', rank:'Rare', summary:'Readied dual-wield TAW Armament.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-taw.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/weapons-taw/rare/hand/dw/high-res-dw-taw3.png_20260916_103435_0000.png', owned:true, worn:true },
         { id:'armament-placeholder', type:'Armament Cards', name:'Readied Armament', ref:'arm-pg.A-306', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false }
     ];
+    window.SORCPropertyInventory = {
+        characterId: propertyCharacterId,
+        owned: function(type) {
+            return cards.filter(function(card) {
+                return card.owned && (!type || card.type === type);
+            }).map(function(card) {
+                return { id: card.id, type: card.type, name: card.name, ref: card.ref, summary: card.summary, worn: !!card.worn };
+            });
+        }
+    };
     var esc = function(value) { return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
     var get = function(id) { return cards.filter(function(card) { return card.id === id; })[0]; };
     var art = function(card) { return card.art ? '<img src="' + esc(card.art) + '" alt="" loading="lazy" />' : '<span aria-hidden="true">&#9672;</span>'; };
@@ -54,7 +76,7 @@
     }
     var SAFE_HAVEN_ART = '/content/character/assets/shared/canvas/high-res-canvas-background.png';
     var SAFE_HAVENS = [{ id:'default', name:'Default', art:'' }, { id:'secret-glades', name:'Secret Glades', art:SAFE_HAVEN_ART }];
-    function selectedSafeHaven() { var id = 'default'; try { id = localStorage.getItem('sorc.property.safeHaven') || id; } catch(e) {} return SAFE_HAVENS.filter(function(haven) { return haven.id === id; })[0] || SAFE_HAVENS[0]; }
+    function selectedSafeHaven() { var id = 'default'; try { id = localStorage.getItem(propertyStorageKey('safeHaven')) || id; } catch(e) {} return SAFE_HAVENS.filter(function(haven) { return haven.id === id; })[0] || SAFE_HAVENS[0]; }
     function safeHavenControl(haven) { return '<details class="property-safe-haven-control"><summary aria-label="Select Safe Haven">Safe Haven</summary><div class="property-safe-haven-options" role="listbox" aria-label="Safe Haven choices">' + SAFE_HAVENS.map(function(item) { return '<button type="button" class="property-safe-haven-option' + (item.id === haven.id ? ' selected' : '') + '" onclick="selectPropertySafeHaven(\'' + esc(item.id) + '\')" role="option" aria-selected="' + (item.id === haven.id ? 'true' : 'false') + '">' + esc(item.name) + '</button>'; }).join('') + '</div></details>'; }
     function isSelected(selected, id) { return Array.isArray(selected) ? selected.indexOf(id) !== -1 : selected === id; }
     function orbitPiece(card, selected) {
@@ -62,9 +84,9 @@
         var companion = card.type === 'Companion Cards';
         return '<button type="button" class="property-orbit-piece' + rankClass(card) + ' ' + (isSelected(selected, card.id) ? 'property-highlighted' : 'property-subdued') + '"' + companionInteraction(card) + ' aria-label="Open ' + esc(card.name) + '"><img src="' + esc(card.art) + '" alt="" /></button>';
     }
-    function storedSelection(key, legacyKey, selected, type) { var raw = null; try { raw = localStorage.getItem(key); } catch(e) {} if (raw !== null) { try { var parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; } catch(e) {} if (raw === 'none') return []; return [raw]; } var legacy = ''; try { legacy = localStorage.getItem(legacyKey) || ''; } catch(e) {} if (legacy && legacy !== 'none') return [legacy]; return type === 'worn' ? ['armor-core'] : []; }
-    function selectedArmament(selected) { return storedSelection('sorc.property.selectedArmaments', 'sorc.property.lastReadied', selected, 'worn'); }
-    function selectedCompanion(selected) { return storedSelection('sorc.property.selectedCompanions', 'sorc.property.selectedCompanion', selected, 'type'); }
+    function storedSelection(key, legacyKey, selected, type) { var raw = null; try { raw = localStorage.getItem(propertyStorageKey(key)); } catch(e) {} if (raw !== null) { try { var parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; } catch(e) {} if (raw === 'none') return []; return [raw]; } var legacy = ''; try { legacy = localStorage.getItem(propertyStorageKey(legacyKey)) || ''; } catch(e) {} if (legacy && legacy !== 'none') return [legacy]; return type === 'worn' ? ['armor-core'] : []; }
+    function selectedArmament(selected) { return storedSelection('selectedArmaments', 'lastReadied', selected, 'worn'); }
+    function selectedCompanion(selected) { return storedSelection('selectedCompanions', 'selectedCompanion', selected, 'type'); }
     var CHARACTER_PICKERS = [
         { id:'character-picker-basic-1', name:'Kaida', previewSuffix:' - First Basic Member Character Slot.', art:'/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png', tier:'basic', available:true },
         { id:'character-picker-basic-2', name:'Second Basic Member Slot', previewSuffix:' - Create another character now', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'basic', available:false },
@@ -74,11 +96,11 @@
     ];
     function selectedCharacterPicker() {
         var id = '';
-        try { id = localStorage.getItem('sorc.property.characterPicker') || ''; } catch(e) {}
+        try { id = localStorage.getItem(propertyStorageKey('characterPicker')) || ''; } catch(e) {}
         return CHARACTER_PICKERS.some(function(picker) { return picker.available && picker.id === id; }) ? id : CHARACTER_PICKERS[0].id;
     }
     function characterPickerVisible() {
-        try { return localStorage.getItem('sorc.property.characterVisible') !== 'false'; } catch(e) { return true; }
+        try { return localStorage.getItem(propertyStorageKey('characterVisible')) !== 'false'; } catch(e) { return true; }
     }
     function characterPickerMarkup() {
         var selected = selectedCharacterPicker();
@@ -185,20 +207,20 @@
         }).join('') + '</div>';
     }
     window.renderPropertyDraft = function() {
-        var selected = 'armor-core'; try { selected = localStorage.getItem('sorc.property.lastReadied') || selected; } catch(e) {}
+        var selected = 'armor-core'; try { selected = localStorage.getItem(propertyStorageKey('lastReadied')) || selected; } catch(e) {}
         return '<div class="property-draft" id="propertyDraft" data-selected="' + esc(selected) + '">' + page('on-person', selected) + '</div>';
     };
     window.selectPropertyPage = function(name) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var selected = draft.getAttribute('data-selected') || 'armor-core'; draft.innerHTML = page(name, selected); };
-    window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core', detailSelected = card.type === 'Companion Cards' ? previous : id; draft.setAttribute('data-selected', detailSelected); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem('sorc.property.selectedArmaments', JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem('sorc.property.selectedCompanions', JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem('sorc.property.safeHaven', card.safeHaven); } catch(e) {} draft.innerHTML = page('on-person', detailSelected); };
+     window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core', detailSelected = card.type === 'Companion Cards' ? previous : id; draft.setAttribute('data-selected', detailSelected); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem(propertyStorageKey('selectedArmaments'), JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem(propertyStorageKey('selectedCompanions'), JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem(propertyStorageKey('safeHaven'), card.safeHaven); } catch(e) {} draft.innerHTML = page('on-person', detailSelected); };
     window.propertyCompanionTap = function(id) { if (suppressNextCompanionClick) { suppressNextCompanionClick = false; return; } window.selectPropertyCard(id); };
     window.startPropertyCardHold = function(event, id) { if (event.pointerType === 'mouse' && event.button !== 0) return; window.cancelPropertyCardHold(); propertyHoldTimer = window.setTimeout(function() { suppressNextCompanionClick = true; window.showPropertyLongPressCard(id); }, 600); };
     window.endPropertyCardHold = function() { if (propertyHoldTimer) { window.clearTimeout(propertyHoldTimer); propertyHoldTimer = null; } };
     window.cancelPropertyCardHold = window.endPropertyCardHold;
      window.showPropertyLongPressCard = function(id) { var card = get(id) || CHARACTER_PICKERS.filter(function(picker) { return picker.id === id; })[0]; if (!card) return; var existing = document.getElementById('propertyLongPressCard'); if (existing) existing.remove(); var image = card.art ? '<img src="' + esc(card.art) + '" alt="' + esc(card.name) + '" />' : '<span class="property-long-press-placeholder" aria-hidden="true">&#9672;</span>'; var cardInfo = [card.rank, card.role].filter(Boolean).join(' · '); var isCharacterPicker = id.indexOf('character-picker-') === 0; var displayName = card.name + (isCharacterPicker && card.previewSuffix ? card.previewSuffix : ''); var developmentNote = isCharacterPicker ? '' : '<div class="property-long-press-note">SORC Cards under development.</div>'; var overlay = document.createElement('div'); overlay.id = 'propertyLongPressCard'; overlay.className = 'property-long-press-overlay'; overlay.innerHTML = '<section class="property-long-press-card' + rankClass(card) + '" role="dialog" aria-modal="true" aria-label="' + esc(displayName) + ' Card" onclick="event.stopPropagation()"><button type="button" class="property-long-press-close" onclick="closePropertyLongPressCard()" aria-label="Close Card">&times;</button><div class="property-long-press-art">' + image + '</div><div class="property-long-press-meta"><div class="property-long-press-name">' + esc(displayName) + '</div>' + (cardInfo ? '<div class="property-long-press-rank">' + esc(cardInfo) + '</div>' : '') + developmentNote + '</div></section>'; overlay.setAttribute('onclick', 'closePropertyLongPressCard()'); document.body.appendChild(overlay); window.setTimeout(function() { suppressNextCompanionClick = false; }, 900); };
     window.closePropertyLongPressCard = function() { var overlay = document.getElementById('propertyLongPressCard'); if (overlay) overlay.remove(); };
-    window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { if (selectedCharacterPicker() === id) localStorage.setItem('sorc.property.characterVisible', characterPickerVisible() ? 'false' : 'true'); else { localStorage.setItem('sorc.property.characterPicker', id); localStorage.setItem('sorc.property.characterVisible', 'true'); } } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+     window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { if (selectedCharacterPicker() === id) localStorage.setItem(propertyStorageKey('characterVisible'), characterPickerVisible() ? 'false' : 'true'); else { localStorage.setItem(propertyStorageKey('characterPicker'), id); localStorage.setItem(propertyStorageKey('characterVisible'), 'true'); } } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
     window.selectPropertyRowPage = function(type, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var typeCards = cards.filter(function(card) { return card.type === type; }), pageCount = Math.max(1, Math.ceil(typeCards.length / 5)), pageNumber = rowPages[type] || 0; rowPages[type] = (pageNumber + direction + pageCount) % pageCount; draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
-    window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem('sorc.property.safeHaven', id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
+     window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem(propertyStorageKey('safeHaven'), id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {
         var q = String(query || '').trim().toLowerCase(), matches = cards.filter(function(card) { return !q || (card.name + ' ' + card.ref + ' ' + card.summary + ' ' + card.type).toLowerCase().indexOf(q) !== -1; });
         document.querySelectorAll('#propertyDraftRows .property-armory-card').forEach(function(button) { button.style.display = (!q || (button.getAttribute('data-property-name') || '').toLowerCase().indexOf(q) !== -1) ? '' : 'none'; });
