@@ -11,13 +11,7 @@
   }
 
   var current = host.getAttribute('data-current') || '';
-  var links = [
-    { id: 'sheet', label: 'Character Sheet', title: 'View Character Sheet', href: '/content/character/character-sheet-fem-musc.html' },
-    { id: 'customize', label: 'Customize', title: 'Customize Character', href: '/content/character/character-customizer/cc-default.html' },
-    { id: 'property', label: 'Property & Cards', title: 'Manage Property & Cards', href: '/content/features/space.html?tab=property' },
-    { id: 'home', label: 'Home & Family', title: 'Open Home & Family', href: '/content/pages/home-and-family.html' },
-    { id: 'journal', label: 'Journal', title: 'Open Journal', href: '/content/pages/journal.html' }
-  ];
+  var links = [];
 
   function withCharacterId(href) {
     var url = new URL(href, window.location.origin);
