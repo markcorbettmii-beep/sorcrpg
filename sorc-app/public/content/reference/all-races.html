@@ -2281,6 +2281,11 @@
       const classLabel = findRaceLabel(card, /Favored Classes|Favorite Main Classes Tree Abilities/);
       const companionLabel = findRaceLabel(card, /Favored Companions/);
       const cultureLabel = findRaceLabel(card, /^Race Culture$/);
+      const backgroundLabel = findRaceLabel(card, /^Background$/);
+      const languageLabel = findRaceLabel(card, /^Languages?$/);
+      const dietLabel = findRaceLabel(card, /^Diet$/);
+      const skillLabel = findRaceLabel(card, /^Skills?$/);
+      const talentLabel = findRaceLabel(card, /^Talents?$/);
       const traitLabel = findRaceLabel(card, /^Innate Trait Adjustments$/);
       const aptitudeLabel = findRaceLabel(card, /^(Innate Aptitude|Aptitudes)$/);
       const inaptitudeLabel = findRaceLabel(card, /^(Innate Inaptitude|Inaptitudes)$/);
@@ -2312,21 +2317,43 @@
       const defaultArmor = 'Race-specific armor rules are not yet specified.';
       const fallback = (values, text) => values.length ? values.map((value) => '<p>' + value + '</p>').join('') : '<p class="firstborn-canonical-note">' + text + '</p>';
       const variantHeading = armamentLabel ? armamentLabel.textContent.trim() : 'Cultural Armament Variant';
+      const planet = card.dataset.race === 'race-neandereti'
+        ? 'Zailister'
+        : (raceCardValue(planetLabel) || '');
+      const geography = raceGeography(card, planet, raceName);
+      const mappedArea = mapAreas.find((name) => card.textContent.includes(name));
+      const nativePlanetArea = planet
+        ? planet + (mappedArea ? '<br>Area: ' + mappedArea + ' is an Area of ' + geography.region + '.' : '')
+        : 'Not yet specified.';
+      const ageMatch = oldAge && oldAge.textContent.match(/Starting Age:\s*([^|]+)/i);
+      const startingAge = ageMatch ? ageMatch[1].trim() : 'Not yet specified.';
+      const cultureValue = (label, text) => {
+        const values = label ? raceCardSection(label) : [];
+        return values.length ? values.join('<br>') : text;
+      };
       const cultureContent = [];
-      if (cultureValues.length) cultureContent.push(...cultureValues);
-      if (planetLabel) cultureContent.push('<strong>Native Planet:</strong> ' + raceCardSection(planetLabel).join('<br>'));
-      if (armamentLabel && culturalValues.length) cultureContent.push('<strong>Cultural Armaments:</strong> ' + culturalValues.join('<br>'));
-      if (classLabel) cultureContent.push('<strong>Favored Classes:</strong> ' + raceCardSection(classLabel).join('<br>'));
-      if (companionLabel) {
-        const companions = raceCardSection(companionLabel).filter((value) => !/^Refer to Specific Companion Cards/i.test(value.replace(/<[^>]+>/g, '')));
-        if (companions.length) cultureContent.push('<strong>Favored Companions:</strong> ' + companions.join('<br>'));
-      }
-      [planetLabel, armamentLabel, weaponLabel, armorLabel, classLabel, companionLabel, cultureLabel, traitLabel, startingAttrLabel, spiritLabel, aptitude, inaptitude, abilityLabel, vulnerabilityLabel].forEach(hideRaceSection);
+      if (cultureValues.length) cultureContent.push('<p>' + cultureValues.join('<br>') + '</p>');
+      const companions = companionLabel
+        ? raceCardSection(companionLabel).filter((value) => !/^Refer to Specific Companion Cards/i.test(value.replace(/<[^>]+>/g, '')))
+        : [];
+      cultureContent.push(
+        '<p><strong>1. Native Planet and Area (if available)</strong><br>' + nativePlanetArea + '</p>',
+        '<p><strong>2. Background</strong><br>' + cultureValue(backgroundLabel, 'Not yet specified.') + '</p>',
+        '<p><strong>3. Languages</strong><br>' + cultureValue(languageLabel, 'Not yet specified.') + '</p>',
+        '<p><strong>4. Starting age</strong><br>' + startingAge + '</p>',
+        '<p><strong>5. Favorites</strong></p>',
+        '<p><strong>Favorite Class Paths</strong><br>' + cultureValue(classLabel, 'Not yet specified.') + '</p>',
+        '<p><strong>Diet</strong><br>' + cultureValue(dietLabel, 'Not yet specified.') + '</p>',
+        '<p><strong>Companions</strong><br>' + (companions.length ? companions.join('<br>') : cultureValue(null, 'Not yet specified.')) + '</p>',
+        '<p><strong>Skills</strong><br>' + cultureValue(skillLabel, 'Not yet specified.') + '</p>',
+        '<p><strong>Talents</strong><br>' + cultureValue(talentLabel, 'Not yet specified.') + '</p>'
+      );
+      [planetLabel, armamentLabel, weaponLabel, armorLabel, classLabel, companionLabel, cultureLabel, backgroundLabel, languageLabel, dietLabel, skillLabel, talentLabel, traitLabel, startingAttrLabel, spiritLabel, aptitude, inaptitude, abilityLabel, vulnerabilityLabel].forEach(hideRaceSection);
       if (oldAge) oldAge.style.display = 'none';
       if (lifespan) lifespan.style.display = 'none';
       const culture = document.createElement('div');
       culture.className = 'firstborn-canonical-block';
-      culture.innerHTML = '<p class="race-template-heading">Race Culture</p>' + fallback(cultureContent, 'No separate cultural details are specified on this race card.');
+      culture.innerHTML = '<p class="race-template-heading">Race Culture</p>' + cultureContent.join('');
       const variant = document.createElement('div');
       variant.className = 'firstborn-canonical-block';
       variant.innerHTML = '<p class="race-template-heading">' + variantHeading + '</p>' + fallback(culturalValues, 'Race-specific armament variant rules are not yet specified.');
