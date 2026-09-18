@@ -675,117 +675,214 @@
         '</section>';
     }
 
-    var PROPERTY_DRAFT_ROW_PAGES = {};
+var PROPERTY_DRAFT_ROW_PAGES = {};
+var PROPERTY_SECTION_PAGES = {};
 
-    function propertyDraftRows(selected) {
-        var types = ['Character Cards', 'Companion Cards', 'Compass Safe Havens', 'Item Cards', 'Armament Cards'];
-        return types.map(function(type) {
-            var cards = PROPERTY_DRAFT_CARDS.filter(function(card) { return card.type === type; });
-            var pageSize = 5;
-            var pageCount = Math.max(1, Math.ceil(cards.length / pageSize));
-            var page = Math.min(PROPERTY_DRAFT_ROW_PAGES[type] || 0, pageCount - 1);
-            PROPERTY_DRAFT_ROW_PAGES[type] = page;
-            var visibleCards = cards.slice(page * pageSize, page * pageSize + pageSize);
-            var controls = pageCount > 1
-                ? '<div class="property-armory-row-controls"><button type="button" onclick="selectPropertyRowPage(\'' + esc2(type) + '\', -1)' + (page === 0 ? ' disabled' : '') + ' aria-label="Previous ' + esc2(type) + ' page">&#171;</button><span>' + (page + 1) + '/' + pageCount + '</span><button type="button" onclick="selectPropertyRowPage(\'' + esc2(type) + '\', 1)" aria-label="Next ' + esc2(type) + ' page">&#187;</button></div>'
-                : '<span>5 Cards per page</span>';
-            return '<section class="property-armory-row" data-property-row="' + esc2(type) + '">' +
-                '<div class="property-armory-row-head"><h4>' + esc2(type) + '</h4>' + controls + '</div>' +
-                '<div class="property-card-row">' + visibleCards.map(function(card) { return propertyDraftCardButton(card, selected); }).join('') + '</div>' +
-            '</section>';
-        }).join('');
+function propertyDraftPicker(section, row, index) {
+    return '<button type="button" class="property-armory-card unowned" ' +
+        'aria-label="' + esc2(section + ', ' + row + ', picker ' + index) + '">' +
+            '<span class="property-armory-card-art placeholder">&#9672;</span>' +
+        '</button>';
+}
+
+function propertyDraftFivePickers(section, row) {
+    var html = '';
+
+    for (var i = 1; i <= 5; i++) {
+        html += propertyDraftPicker(section, row, i);
     }
 
-    function propertyDraftPage(page, selected) {
-        var nav = '<div class="property-page-nav" aria-label="Property pages">' +
-            '<button class="' + (page === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button>' +
-            '<button class="future" onclick="selectPropertyPage(\'home\')">Home</button>' +
-            '<button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button>' +
-            '<button class="future" onclick="selectPropertyPage(\'rented\')">Renting &amp; Care</button>' +
-            '<button class="future" onclick="selectPropertyPage(\'ordnance\')">Ordnance Berth</button>' +
-            '<button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button>' +
+    return '<div class="property-card-row">' + html + '</div>';
+}
+
+function propertyDraftPagedRow(section, row, pageKey) {
+    var page = PROPERTY_SECTION_PAGES[pageKey] || 0;
+
+    if (page > 0) {
+        return '<div class="property-picker-text-page">' +
+            '<button type="button" class="property-picker-page-back" ' +
+                'onclick="selectPropertySectionPage(\'' + esc2(pageKey) + '\', 0)">' +
+                '&#171;&#171; Back' +
+            '</button>' +
+            '<p>' + esc2(section + ' — ' + row) + '</p>' +
         '</div>';
-        var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>';
-        if (page !== 'on-person') {
-            if (page === 'containers') {
-                return nav + '<h4 class="property-page-title">Containers</h4>' +
-                    '<p class="property-page-description">Companions, Harnesses, and Wagons remain separate from what the Character is wearing. Their size controls their visual scale and the Cards they can carry.</p>' +
-                    '<div class="property-container-page">' +
-                    '<p class="property-container-note">This nested page is the next On Person surface. It will use one row per container type and each container will display its capacity in Card slots.</p>' +
-                    '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Companions</h4><span class="property-container-size">Tiny &middot; Small &middot; Standard &middot; Goliath</span></div><div class="property-card-row">' +
-                    ['Fellowship Companion','Pack Mule','Tiny Companion','Goliath Companion','Behemoth Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i < 2 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">container-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i < 2 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-                    '</div></div>' +
-                    '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Harnesses</h4><span class="property-container-size">Small</span></div><div class="property-card-row">' +
-                    ['Leather Harness','Pack Harness','Harness Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">harness-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-                    '</div></div>' +
-                    '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Wagons</h4><span class="property-container-size">Goliath</span></div><div class="property-card-row">' +
-                    ['Cargo Wagon','Wagon Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">wagon-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-                    '</div></div></div>';
-            }
-            var titles = { home:'Home', guild:'Guild and Clan', rented:'Renting & Care', ordnance:'Ordnance Berth', stash:'Stash' };
-            return nav + '<h4 class="property-page-title">' + esc2(titles[page] || 'Property') + '</h4>' +
-                access + '<div class="property-container-page"><p class="property-container-note">This category has its own Property page and its own Card capacity. The visual Card index will be added after the On Person Armory draft is approved.</p></div>';
-        }
-        var filtered = PROPERTY_DRAFT_CARDS;
-        var visibleIndex = filtered.filter(function(card) { return card.owned; }).concat(
-            filtered.filter(function(card) { return !card.owned; }).slice(0, 5)
-        );
-        return nav + '<h4 class="property-page-title">On Person</h4>' + access +
-            '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div>' +
-            '<div id="propertySearchMessage" class="property-search-message" hidden></div>' +
-            '<div class="property-armory-layout">' + propertyDraftCanvas(selected) +
-            '<aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas keeps Kaida, her worn Armaments, her Companions, and her Safe Haven visible while the selected Card is marked.</p><div class="property-card-index-list" id="propertyCardIndex">' +
-            visibleIndex.map(function(card) { return propertyDraftIndexItem(card, selected); }).join('') + '</div></aside></div>' +
-            '<div id="propertyDraftRows">' + propertyDraftRows(selected) + '</div>' +
-            '<section class="property-container-category"><div class="property-armory-row-head"><h4>Containers</h4><span>Storage carried On Person</span></div>' +
-            '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Companions</h4><span class="property-container-size">Tiny &middot; Small &middot; Standard &middot; Goliath</span></div><div class="property-card-row">' +
-            ['Fellowship Companion','Pack Mule','Tiny Companion','Goliath Companion','Behemoth Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i < 2 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">container-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i < 2 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-            '</div></div><div class="property-armory-row"><div class="property-armory-row-head"><h4>Harnesses</h4><span class="property-container-size">Small</span></div><div class="property-card-row">' +
-            ['Leather Harness','Pack Harness','Harness Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">harness-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-            '</div></div><div class="property-armory-row"><div class="property-armory-row-head"><h4>Wagons</h4><span class="property-container-size">Goliath</span></div><div class="property-card-row">' +
-            ['Cargo Wagon','Wagon Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc2(n) + '</span><span class="property-armory-card-ref">wagon-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-            '</div></div></section>';
     }
 
-    function renderPropertyDraft(user) {
-        var saved = '';
-        try { saved = localStorage.getItem('sorc.property.lastReadied') || 'armor-core'; } catch(e) { saved = 'armor-core'; }
-        return '<div class="property-draft" id="propertyDraft" data-selected="' + esc2(saved) + '">' + propertyDraftPage('on-person', saved) + '</div>';
+    return '<div class="property-picker-row">' +
+        '<div class="property-armory-row-head">' +
+            '<h4>' + esc2(row) + '</h4>' +
+        '</div>' +
+        '<div class="property-picker-row-content">' +
+            propertyDraftFivePickers(section, row) +
+            '<button type="button" class="property-picker-page-next" ' +
+                'onclick="selectPropertySectionPage(\'' + esc2(pageKey) + '\', 1)" ' +
+                'aria-label="Next ' + esc2(row) + ' page">' +
+                '&#187;&#187;' +
+            '</button>' +
+        '</div>' +
+    '</div>';
+}
+
+function propertyArmamentsOwnedPage() {
+    var page = PROPERTY_SECTION_PAGES['armaments-owned'] || 0;
+
+    if (page > 0) {
+        return '<div class="property-picker-text-page">' +
+            '<button type="button" class="property-picker-page-back" ' +
+                'onclick="selectPropertySectionPage(\'armaments-owned\', 0)">' +
+                '&#171;&#171; Back' +
+            '</button>' +
+            '<p>Armaments Owned</p>' +
+        '</div>';
     }
 
-    window.selectPropertyPage = function(page) {
-        var draft = document.getElementById('propertyDraft');
-        if (!draft) return;
-        var selected = draft.getAttribute('data-selected') || 'armor-core';
-        draft.innerHTML = propertyDraftPage(page, selected);
-        if (page === 'on-person') {
-            var input = document.getElementById('propertyDraftSearch');
-            if (input) input.focus();
-        }
-    };
+    return '<div class="property-picker-row">' +
+            propertyDraftFivePickers('Armaments Owned', 'Row 1') +
+        '</div>' +
+        '<div class="property-picker-row">' +
+            '<div class="property-picker-row-content">' +
+                propertyDraftFivePickers('Armaments Owned', 'Row 2') +
+                '<button type="button" class="property-picker-page-next" ' +
+                    'onclick="selectPropertySectionPage(\'armaments-owned\', 1)" ' +
+                    'aria-label="Next Armaments Owned page">' +
+                    '&#187;&#187;' +
+                '</button>' +
+            '</div>' +
+        '</div>';
+}
 
-    window.selectPropertyCard = function(id) {
-        var card = PROPERTY_DRAFT_CARDS.filter(function(c) { return c.id === id; })[0];
-        var draft = document.getElementById('propertyDraft');
-        if (!card || !draft) return;
-        var previous = draft.getAttribute('data-selected') || 'armor-core';
-        draft.setAttribute('data-selected', id);
-        try {
-            if (card.worn && card.owned) {
-                var armaments = propertySelectedArmament(previous), armamentIndex = armaments.indexOf(id);
-                if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1);
-                localStorage.setItem('sorc.property.selectedArmaments', JSON.stringify(armaments));
-            }
-            if (card.type === 'Companion Cards' && card.owned) {
-                var companions = propertySelectedCompanion(previous), companionIndex = companions.indexOf(id);
-                if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1);
-                localStorage.setItem('sorc.property.selectedCompanions', JSON.stringify(companions));
-            }
-            if (card.safeHaven) localStorage.setItem('sorc.property.safeHaven', card.safeHaven);
-        } catch(e) {}
-        var page = document.getElementById('propertyDraftRows') ? 'on-person' : 'containers';
-        draft.innerHTML = propertyDraftPage(page, id);
-    };
+function propertyDraftRows(selected) {
+    var companionRanks = [
+        'Common',
+        'Uncommon',
+        'Rare Companions',
+        'Heroic',
+        'Elite',
+        'Unique',
+        'Legendary',
+        'Divine'
+    ];
+
+    var companionRows = companionRanks.map(function(rank) {
+        var key = 'companions-' +
+            rank.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+        return propertyDraftPagedRow('Companions', rank, key);
+    }).join('');
+
+    return '<section class="property-armory-section">' +
+            '<h3 class="property-armory-section-title">Sentimental Arms</h3>' +
+            '<div class="property-picker-row">' +
+                propertyDraftFivePickers(
+                    'Sentimental Arms',
+                    'Sentimental Arms'
+                ) +
+            '</div>' +
+        '</section>' +
+
+        '<section class="property-armory-section">' +
+            '<h3 class="property-armory-section-title">Armaments</h3>' +
+
+            '<div class="property-armory-subsection">' +
+                '<h4 class="property-armory-subsection-title">Arms Readied</h4>' +
+                '<div class="property-picker-row">' +
+                    propertyDraftFivePickers('Arms Readied', 'Row 1') +
+                '</div>' +
+                '<div class="property-picker-row">' +
+                    propertyDraftFivePickers('Arms Readied', 'Row 2') +
+                '</div>' +
+                '<div class="property-picker-row">' +
+                    propertyDraftFivePickers('Arms Readied', 'Row 3') +
+                '</div>' +
+            '</div>' +
+
+            '<div class="property-armory-subsection">' +
+                '<h4 class="property-armory-subsection-title">Weapons</h4>' +
+                '<div class="property-picker-row">' +
+                    propertyDraftFivePickers('Weapons', 'Weapons') +
+                '</div>' +
+            '</div>' +
+
+            '<div class="property-armory-subsection">' +
+                '<h4 class="property-armory-subsection-title">Armor</h4>' +
+                '<div class="property-picker-row">' +
+                    propertyDraftFivePickers('Armor', 'Armor') +
+                '</div>' +
+            '</div>' +
+
+            '<div class="property-armory-subsection">' +
+                '<h4 class="property-armory-subsection-title">Armaments Owned</h4>' +
+                '<div id="propertyArmamentsOwnedPage">' +
+                    propertyArmamentsOwnedPage() +
+                '</div>' +
+            '</div>' +
+        '</section>' +
+
+        '<section class="property-armory-section">' +
+            '<h3 class="property-armory-section-title">Companions</h3>' +
+            companionRows +
+        '</section>';
+}
+
+function propertyDraftPage(page, selected) {
+    var access =
+        '<div class="property-access-block">' +
+            '<span class="property-access-pill" aria-label="PUBLIC / PRIVATE">' +
+                '<span class="property-access-public">PUBLIC</span>' +
+                '<span class="property-access-divider"> / </span>' +
+                '<span class="property-access-private">PRIVATE</span>' +
+            '</span>' +
+            '<p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p>' +
+        '</div>';
+
+    return '<h4 class="property-page-title">On Person</h4>' +
+        access +
+        '<div class="property-draft-tools">' +
+            '<input class="property-draft-search" ' +
+                'id="propertyDraftSearch" ' +
+                'type="search" ' +
+                'placeholder="Search Cards by name or ref #..." ' +
+                'oninput="filterPropertyDraft(this.value)" />' +
+        '</div>' +
+        '<div id="propertySearchMessage" class="property-search-message" hidden></div>' +
+        '<div class="property-armory-layout">' +
+            propertyDraftCanvas(selected) +
+        '</div>' +
+        '<div id="propertyDraftRows">' +
+            propertyDraftRows(selected) +
+        '</div>';
+}
+
+window.selectPropertySectionPage = function(pageKey, page) {
+    PROPERTY_SECTION_PAGES[pageKey] = page;
+
+    var draft = document.getElementById('propertyDraft');
+    if (!draft) return;
+
+    draft.innerHTML = propertyDraftPage(
+        'on-person',
+        draft.getAttribute('data-selected') || 'armor-core'
+    );
+};
+
+function renderPropertyDraft(user) {
+    var saved = '';
+
+    try {
+        saved =
+            localStorage.getItem('sorc.property.lastReadied') ||
+            'armor-core';
+    } catch(e) {
+        saved = 'armor-core';
+    }
+
+    return '<div class="property-draft" ' +
+        'id="propertyDraft" ' +
+        'data-selected="' + esc2(saved) + '">' +
+            propertyDraftPage('on-person', saved) +
+        '</div>';
+}
+
 
     window.selectPropertyCharacterPicker = function(id) {
         var draft = document.getElementById('propertyDraft');
