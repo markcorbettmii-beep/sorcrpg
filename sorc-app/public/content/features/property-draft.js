@@ -113,6 +113,19 @@
             }).join('') +
         '</div></div>';
     }
+    window.SORCPropertyCharacterPickerId = selectedCharacterPicker;
+    window.SORCPropertyCharacterName = function() {
+        var selected = selectedCharacterPicker();
+        var picker = CHARACTER_PICKERS.filter(function(item) { return item.id === selected; })[0];
+        return picker ? picker.name : 'Character';
+    };
+    window.SORCPropertyCharacterPickerMarkup = function(handlerName) {
+        var markup = characterPickerMarkup();
+        if (handlerName === 'selectSpaceCharacterPicker') {
+            markup = markup.replace(/onclick="selectPropertyCharacterPicker\(/g, 'onclick="selectSpaceCharacterPicker(');
+        }
+        return markup;
+    };
     var CHARACTER_LAYER_SETS = {
         'character-picker-basic-1': [
             '/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png'
@@ -179,19 +192,64 @@
             '</div></div></section>';
     }
     function page(pageName, selected) {
-        var nav = '<div class="property-page-nav" aria-label="Property pages"><button class="' + (pageName === 'on-person' ? 'active' : '') + '" onclick="selectPropertyPage(\'on-person\')">On Person</button><button class="future" onclick="selectPropertyPage(\'home\')">Home</button><button class="future" onclick="selectPropertyPage(\'guild\')">Guild &amp; Clan</button><button class="future" onclick="selectPropertyPage(\'rented\')">Renting &amp; Care</button><button class="future" onclick="selectPropertyPage(\'ordnance\')">Ordnance Berth</button><button class="future" onclick="selectPropertyPage(\'stash\')">Stash</button></div>';
         var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>';
-        var pageTitles = { home:'Home', guild:'Guild and Clan', rented:'Renting & Care', ordnance:'Ordnance Berth', stash:'Stash' };
-        var pageDescriptions = {
-            home: "The Character's Armory, Safes, Closets, Companion Quarters, Deployments, and Trophy Room Items.",
-            guild: 'Storage, Armory and Hall Banks.',
-            rented: 'Storage leased outside your Home, Guild, or Clan.',
-            ordnance: 'Neutral massive commercial space available for lease when your Home properties run out of room. This cavernous industrial bay accommodates heavy Spacecraft, specialized Armor, bulk Weapons, and larger Biological Companions. Assets are held safely regardless of faction Standing; keep monthly rental fees current or the property may be auctioned.',
-            stash: 'Things you have buried, stashed, or hidden. An Animated Compass Safe Haven is an example of a place where hidden things can be kept.'
+        var pageTitles = {
+            'on-person': 'Worn',
+            'carried-hauled': 'Carried-Hauled',
+            quarters: 'Quarters',
+            'storage-stash': 'Storage & Stash',
+            vaults: 'Vaults',
+            'force-station': 'Force Station'
         };
-        if (pageName !== 'on-person') return nav + '<h4 class="property-page-title">' + esc(pageTitles[pageName] || 'Property') + '</h4>' + access + '<div class="property-container-page"><p class="property-container-note">' + esc(pageDescriptions[pageName] || '') + '</p></div>';
+        var nextPages = {
+            'on-person': { id: 'carried-hauled', label: 'Carried-Hauled PG. 2 »»' },
+            'carried-hauled': { id: 'quarters', label: 'Quarters pg. 3' },
+            quarters: { id: 'storage-stash', label: 'Storage & Stash pg. 4' },
+            'storage-stash': { id: 'vaults', label: 'Vaults pg. 5' },
+            vaults: { id: 'force-station', label: 'Force Station pg. 6' }
+        };
+        function pageHeader() {
+            var next = nextPages[pageName];
+            return '<div class="property-page-header"><h4 class="property-page-title">' + esc(pageTitles[pageName] || 'Property') + '</h4>' +
+                (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')">' + esc(next.label) + '</button>' : '') +
+                '</div>';
+        }
+        var pageDescriptions = {
+            'storage-stash': 'Home storage, rented storage, and things you have buried, stashed, or hidden.',
+            vaults: 'Secure storage for safes, vaults, armories, and banks.',
+            'force-station': 'Neutral massive commercial space for lease when Home properties run out of room. This cavernous industrial bay accommodates heavy Spacecraft, specialized Armor, bulk Weapons, and larger Biological Companions. Keep monthly rental fees current or the property may be auctioned.'
+        };
+        if (pageName === 'carried-hauled') {
+            return pageHeader() + access +
+                '<div class="property-container-page"><p class="property-container-note">Property carried or hauled by the Character.</p></div>';
+        }
+        if (pageName === 'quarters') {
+            var familyMarkup = typeof window.renderSpaceFamilyPropertyPage === 'function'
+                ? window.renderSpaceFamilyPropertyPage()
+                : '<p class="property-container-note">Character and Family information is unavailable.</p>';
+            return pageHeader() + access + familyMarkup;
+        }
+        if (pageName === 'storage-stash') {
+            return pageHeader() + access + '<div class="property-container-grid">' +
+                '<section class="property-container-section"><h5>Home Storage</h5><p>Home closets, storage containers, Deployments, and Trophy Room items.</p></section>' +
+                '<section class="property-container-section"><h5>Rented Storage</h5><p>Storage leased outside your Home.</p></section>' +
+                '<section class="property-container-section"><h5>Stash</h5><p>Things you have buried, stashed, or hidden. An Animated Compass Safe Haven is one example of a place to keep hidden items.</p></section>' +
+                '</div>';
+        }
+        if (pageName === 'vaults') {
+            return pageHeader() + access + '<div class="property-container-grid">' +
+                '<section class="property-container-section"><h5>Personal Vaults</h5><p>Secure personal storage for safes and vaults.</p></section>' +
+                '<section class="property-container-section"><h5>Guild &amp; Clan</h5><p>Storage, Armory, and Hall Banks.</p></section>' +
+                '</div>';
+        }
+        if (pageName === 'force-station') {
+            return pageHeader() + access + '<div class="property-container-grid">' +
+                '<section class="property-container-section"><h5>Force Station</h5><p>' + esc(pageDescriptions['force-station']) + '</p></section>' +
+                '</div>';
+        }
+        if (pageName !== 'on-person') return pageHeader() + access + '<div class="property-container-page"><p class="property-container-note">' + esc(pageDescriptions[pageName] || '') + '</p></div>';
         var owned = cards.filter(function(card) { return card.owned; }), unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
-        return nav + '<h4 class="property-page-title">On Person</h4>' + access + '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout">' + canvas(selected) + '<aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas keeps Kaida, her worn Armaments, her Companions, and her Safe Haven visible while the selected Card is marked.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside></div>' + rows(selected) + haulingSection();
+        return pageHeader() + access + '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout">' + canvas(selected) + '<aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas keeps Kaida, her worn Armaments, her Companions, and her Safe Haven visible while the selected Card is marked.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside></div>' + rows(selected) + haulingSection();
     }
     var rowPages = {};
     function rows(selected) {
@@ -208,9 +266,18 @@
     }
     window.renderPropertyDraft = function() {
         var selected = 'armor-core'; try { selected = localStorage.getItem(propertyStorageKey('lastReadied')) || selected; } catch(e) {}
-        return '<div class="property-draft" id="propertyDraft" data-selected="' + esc(selected) + '">' + page('on-person', selected) + '</div>';
+        return '<div class="property-draft" id="propertyDraft" data-page="on-person" data-selected="' + esc(selected) + '">' + page('on-person', selected) + '</div>';
     };
-    window.selectPropertyPage = function(name) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var selected = draft.getAttribute('data-selected') || 'armor-core'; draft.innerHTML = page(name, selected); };
+    window.selectPropertyPage = function(name) {
+        var draft = document.getElementById('propertyDraft');
+        if (!draft) return;
+        var selected = draft.getAttribute('data-selected') || 'armor-core';
+        draft.setAttribute('data-page', name);
+        draft.innerHTML = page(name, selected);
+        if (name === 'quarters') {
+            if (typeof window.refreshSpaceHomeCharacterRecords === 'function') window.refreshSpaceHomeCharacterRecords();
+        }
+    };
      window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core', detailSelected = card.type === 'Companion Cards' ? previous : id; draft.setAttribute('data-selected', detailSelected); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem(propertyStorageKey('selectedArmaments'), JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem(propertyStorageKey('selectedCompanions'), JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem(propertyStorageKey('safeHaven'), card.safeHaven); } catch(e) {} draft.innerHTML = page('on-person', detailSelected); };
     window.propertyCompanionTap = function(id) { if (suppressNextCompanionClick) { suppressNextCompanionClick = false; return; } window.selectPropertyCard(id); };
     window.startPropertyCardHold = function(event, id) { if (event.pointerType === 'mouse' && event.button !== 0) return; window.cancelPropertyCardHold(); propertyHoldTimer = window.setTimeout(function() { suppressNextCompanionClick = true; window.showPropertyLongPressCard(id); }, 600); };
@@ -219,6 +286,25 @@
      window.showPropertyLongPressCard = function(id) { var card = get(id) || CHARACTER_PICKERS.filter(function(picker) { return picker.id === id; })[0]; if (!card) return; var existing = document.getElementById('propertyLongPressCard'); if (existing) existing.remove(); var image = card.art ? '<img src="' + esc(card.art) + '" alt="' + esc(card.name) + '" />' : '<span class="property-long-press-placeholder" aria-hidden="true">&#9672;</span>'; var cardInfo = [card.rank, card.role].filter(Boolean).join(' · '); var isCharacterPicker = id.indexOf('character-picker-') === 0; var displayName = card.name + (isCharacterPicker && card.previewSuffix ? card.previewSuffix : ''); var developmentNote = isCharacterPicker ? '' : '<div class="property-long-press-note">SORC Cards under development.</div>'; var overlay = document.createElement('div'); overlay.id = 'propertyLongPressCard'; overlay.className = 'property-long-press-overlay'; overlay.innerHTML = '<section class="property-long-press-card' + rankClass(card) + '" role="dialog" aria-modal="true" aria-label="' + esc(displayName) + ' Card" onclick="event.stopPropagation()"><button type="button" class="property-long-press-close" onclick="closePropertyLongPressCard()" aria-label="Close Card">&times;</button><div class="property-long-press-art">' + image + '</div><div class="property-long-press-meta"><div class="property-long-press-name">' + esc(displayName) + '</div>' + (cardInfo ? '<div class="property-long-press-rank">' + esc(cardInfo) + '</div>' : '') + developmentNote + '</div></section>'; overlay.setAttribute('onclick', 'closePropertyLongPressCard()'); document.body.appendChild(overlay); window.setTimeout(function() { suppressNextCompanionClick = false; }, 900); };
     window.closePropertyLongPressCard = function() { var overlay = document.getElementById('propertyLongPressCard'); if (overlay) overlay.remove(); };
      window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { if (selectedCharacterPicker() === id) localStorage.setItem(propertyStorageKey('characterVisible'), characterPickerVisible() ? 'false' : 'true'); else { localStorage.setItem(propertyStorageKey('characterPicker'), id); localStorage.setItem(propertyStorageKey('characterVisible'), 'true'); } } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+    window.selectSpaceCharacterPicker = function(id) {
+        var picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0];
+        if (!picker) return;
+        try {
+            if (selectedCharacterPicker() !== id) {
+                localStorage.setItem(propertyStorageKey('characterPicker'), id);
+                localStorage.setItem(propertyStorageKey('characterVisible'), 'true');
+            }
+        } catch(e) {}
+        var draft = document.getElementById('propertyDraft');
+        if (draft) {
+            var pageName = draft.getAttribute('data-page') || 'on-person';
+            draft.innerHTML = page(pageName, draft.getAttribute('data-selected') || 'armor-core');
+            if (pageName === 'quarters' && typeof window.refreshSpaceHomeCharacterRecords === 'function') {
+                window.refreshSpaceHomeCharacterRecords();
+            }
+        }
+        if (typeof window.refreshSpaceCharacterIdentity === 'function') window.refreshSpaceCharacterIdentity();
+    };
     window.selectPropertyRowPage = function(type, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var typeCards = cards.filter(function(card) { return card.type === type; }), pageCount = Math.max(1, Math.ceil(typeCards.length / 5)), pageNumber = rowPages[type] || 0; rowPages[type] = (pageNumber + direction + pageCount) % pageCount; draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
      window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem(propertyStorageKey('safeHaven'), id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {

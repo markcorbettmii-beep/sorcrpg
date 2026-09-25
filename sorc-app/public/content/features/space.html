@@ -17,7 +17,19 @@
         .space-card { background: #1a1a1a; border-radius: 1rem; border: 1px solid #333; overflow: hidden; margin-bottom: 1rem; }
         .space-banner { width: 100%; height: 120px; background: linear-gradient(135deg, #1a0a0a, #2a0808, #c93f3522); display: flex; align-items: center; justify-content: center; color: #b9aa00; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; position: relative; padding: 1rem 2rem; box-sizing: border-box; text-align: center; }
         .space-banner-title { color: #b9aa00; font-size: 1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1; margin: 0 0 0.5rem 0; padding: 0 1.5rem; display: block; }
+        .space-title-picker-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; margin: 0 0 0.35rem; }
+        .space-title-picker-row .space-banner-title { flex: 0 0 auto; margin: 0; padding: 0; line-height: 1.2; text-align: left; text-transform: none; white-space: nowrap; font-size: 1.2rem; letter-spacing: 0; }
+        .space-header-character-pickers { flex: 0 1 250px; min-width: 210px; }
+        .space-header-character-pickers .property-character-picker { margin: 0; }
+        .space-header-character-pickers .property-character-picker-tiers { margin-top: 0; }
+        .property-character-room-title { margin: 1rem 0 0.4rem; color: #b9aa00; font-size: 0.92rem; }
+        @media (max-width: 600px) {
+            .space-title-picker-row { flex-wrap: wrap; justify-content: center; gap: 0.6rem 1rem; }
+            .space-title-picker-row .space-banner-title { text-align: center; }
+            .space-header-character-pickers { flex-basis: 230px; min-width: 210px; }
+        }
         body.lawful-mode .space-banner-title { color: #c93f35; }
+        body.lawful-mode .property-character-room-title { color: #7a6a00; }
         .space-assessment-prompt { color: #e0cfc0; font-size: 0.82rem; line-height: 1.4; margin: 0 1.5rem 0.75rem; }
         .space-assessment-prompt a { color: #b9aa00; text-decoration: underline; }
         .space-info-row { display: flex; align-items: flex-end; gap: 1rem; padding: 0 1.5rem; margin-top: -40px; margin-bottom: 1rem; position: relative; z-index: 1; }
@@ -823,6 +835,10 @@
 
     function renderProfileHeader(user, role, isPro) {
         var displayName = user.display_name || user.username || 'Adventurer';
+        var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
+        var characterPickers = typeof window.SORCPropertyCharacterPickerMarkup === 'function'
+            ? window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker')
+            : '';
         var avatar = user.avatar;
         var avatarDisplay = avatarImageMarkup(avatar, displayName);
 
@@ -832,7 +848,10 @@
             ? '<span class="space-role-tag" style="border-color:#c5a042;color:#c5a042;">PRO</span>'
             : '<span class="space-role-tag" style="border-color:#8c06a3;color:#8c06a3;">BASIC</span>';
 
-        return '<div class="space-banner-title">Space</div>' +
+        return '<div class="space-title-picker-row">' +
+            '<div class="space-banner-title" id="spaceCharacterTitle">' + esc(characterName + "'s Space") + '</div>' +
+            '<div class="space-header-character-pickers" id="spaceCharacterPickers" role="group" aria-label="Character Card Pickers">' + characterPickers + '</div>' +
+            '</div>' +
             '<div class="space-assessment-prompt">Take the reigns and assess into or create advanced Lobbies <a href="../reference/take-assessment.html">now</a></div>' +
             '<div class="space-card">' +
             '<div class="space-banner"></div>' +
@@ -896,6 +915,155 @@
         controls[1].disabled = next === pages.length - 1;
         card.querySelector('.home-card-page-number').textContent = (next + 1) + ' / ' + pages.length;
     }
+
+    var homeCharacterRecordsData = null;
+    function renderHomeCharacterRecords(characters) {
+        if (Array.isArray(characters)) homeCharacterRecordsData = characters;
+        var container = document.getElementById('homeCharacterRecords');
+        if (!container) return;
+        if (!Array.isArray(homeCharacterRecordsData)) {
+            container.innerHTML = '<p class="home-character-empty">Could not load Character records.</p>';
+            return;
+        }
+        if (!homeCharacterRecordsData.length) {
+            container.innerHTML = '<p class="home-character-empty">No saved Character records yet.</p>';
+            return;
+        }
+        container.innerHTML = '<ul>' + homeCharacterRecordsData.map(function(character) {
+            character = character || {};
+            var data = character.data && typeof character.data === 'object' ? character.data : {};
+            var name = character.name || character.character_name || character.characterName || data.name || 'Unnamed Character';
+            return '<li>' + esc2(name) + (character.is_default ? ' <small>(Default)</small>' : '') + '</li>';
+        }).join('') + '</ul>';
+    }
+    window.refreshSpaceHomeCharacterRecords = function() {
+        renderHomeCharacterRecords();
+    };
+    window.refreshSpaceCharacterIdentity = function() {
+        var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
+        var title = document.getElementById('spaceCharacterTitle');
+        if (title) title.textContent = characterName + "'s Space";
+        var roomTitle = document.getElementById('spaceCharacterRoomTitle');
+        if (roomTitle) roomTitle.textContent = characterName + ' Room';
+        var pickerHost = document.getElementById('spaceCharacterPickers');
+        if (pickerHost && typeof window.SORCPropertyCharacterPickerMarkup === 'function') {
+            pickerHost.innerHTML = window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker');
+        }
+    };
+    function observeSpaceCharacterPickerSelection() {
+        var container = document.getElementById('profileContainer');
+        if (!container || !window.MutationObserver) return;
+        function watchDraft(draft) {
+            var observer = new MutationObserver(function() {
+                window.refreshSpaceCharacterIdentity();
+            });
+            observer.observe(draft, { childList: true, subtree: true });
+        }
+        var draft = document.getElementById('propertyDraft');
+        if (draft) {
+            watchDraft(draft);
+            return;
+        }
+        var containerObserver = new MutationObserver(function() {
+            var availableDraft = document.getElementById('propertyDraft');
+            if (!availableDraft) return;
+            containerObserver.disconnect();
+            watchDraft(availableDraft);
+        });
+        containerObserver.observe(container, { childList: true, subtree: true });
+    }
+
+    function homeRoomStorageKey() {
+        var characterId = 'default';
+        try {
+            if (typeof window.SORCPropertyCharacterId === 'function') characterId = window.SORCPropertyCharacterId();
+        } catch(e) {}
+        var pickerId = 'default';
+        try {
+            if (typeof window.SORCPropertyCharacterPickerId === 'function') pickerId = window.SORCPropertyCharacterPickerId();
+        } catch(f) {}
+        return 'sorc.property.' + characterId + '.' + pickerId + '.homeRooms';
+    }
+    function getHomeRoomTypes() {
+        try {
+            var rooms = JSON.parse(localStorage.getItem(homeRoomStorageKey()) || '[]');
+            if (Array.isArray(rooms) && rooms.length) {
+                return rooms.map(function(room) { return String(room == null ? '' : room); });
+            }
+        } catch(e) {
+        }
+        return [''];
+    }
+    function saveHomeRoomTypes(rooms) {
+        try {
+            localStorage.setItem(homeRoomStorageKey(), JSON.stringify(rooms));
+            return true;
+        } catch(e) {
+            console.error('[Space] Failed to save Home room types:', e);
+            return false;
+        }
+    }
+    function homeRoomTypesMarkup() {
+        var rooms = getHomeRoomTypes();
+        if (!rooms.length) return '<p class="property-room-empty">No rooms added yet.</p>';
+        return rooms.map(function(roomType, index) {
+            return '<div class="property-room-item"><label for="propertyHomeRoomType' + index + '">Room Type</label>' +
+                '<input class="property-room-input" id="propertyHomeRoomType' + index + '" type="text" value="' + esc2(roomType) + '" placeholder="Enter a room type" oninput="updateSpaceHomeRoomType(' + index + ', this.value)" autocomplete="off" /></div>';
+        }).join('');
+    }
+    window.renderSpaceHomeRooms = function() {
+        var list = document.getElementById('propertyHomeRoomList');
+        if (list) list.innerHTML = homeRoomTypesMarkup();
+    };
+    window.addSpaceHomeRoom = function() {
+        var rooms = getHomeRoomTypes();
+        rooms.push('');
+        if (saveHomeRoomTypes(rooms)) {
+            window.renderSpaceHomeRooms();
+            var input = document.getElementById('propertyHomeRoomType' + (rooms.length - 1));
+            if (input) input.focus();
+        }
+    };
+    window.updateSpaceHomeRoomType = function(index, value) {
+        var rooms = getHomeRoomTypes();
+        if (index < 0 || index >= rooms.length) return;
+        rooms[index] = String(value == null ? '' : value);
+        saveHomeRoomTypes(rooms);
+    };
+
+    window.renderSpaceFamilyPropertyPage = function() {
+        var masterBedroom = '<section class="property-quarter-section property-quarter-master">' +
+            '<h3>Character Records</h3>' +
+            '<p>Character records associated with this Home.</p>' +
+            '<div class="home-character-records property-quarter-character-records" id="homeCharacterRecords" aria-live="polite"><p class="home-character-empty">Loading saved Characters…</p></div>' +
+            '</section>';
+        var family = '<section class="property-quarter-section">' +
+            '<h3>Family &amp; Fellowship (Optional)</h3>' +
+            '<p>If present, family members and Fellowship Companions may be assigned as keepers for Companions left in their quarters.</p>' +
+            '</section>';
+        var armory = '<section class="property-quarter-section">' +
+            '<h3>Armory</h3>' +
+            '<p>Stored Armaments and armor held at Home, separate from what is currently Worn.</p>' +
+            '</section>';
+        var rooms = '<section class="property-quarter-section property-rooms-section">' +
+            '<h3>Rooms</h3>' +
+            '<p>Rooms may be indoor or outdoor spaces for Characters, Companions, or Fellowship members. Set each room’s type as needed; changes save automatically for this Character.</p>' +
+            '<h4 class="property-character-room-title" id="spaceCharacterRoomTitle">' + esc2(typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character') + ' Room</h4>' +
+            '<div class="property-room-list" id="propertyHomeRoomList" aria-live="polite">' + homeRoomTypesMarkup() + '</div>' +
+            '<button type="button" class="property-room-add" onclick="addSpaceHomeRoom()">Add Room</button>' +
+            '</section>';
+        var companionQuarters = '<section class="property-quarter-section property-companion-quarters">' +
+            '<h3>Companion Quarters &amp; Duties</h3>' +
+            '<p>Companion quarters and assigned duties for this Character.</p>' +
+            '</section>';
+        return '<div class="property-quarter-content">' +
+            '<p class="property-quarter-intro">Quarters may be indoors or outdoors, from a room or tent to a den, stable, or another suitable space.</p>' +
+            '<h3 class="property-quarter-group-title">Character and Household</h3>' +
+            '<div class="property-quarter-grid">' + masterBedroom + family + armory + '</div>' +
+            '<div class="property-quarter-grid">' + rooms + '</div>' +
+            '<div class="property-quarter-grid">' + companionQuarters + '</div>' +
+            '</div>';
+    };
 
     function renderTabContent(user, role, isPro) {
         var displayName = user.display_name || user.username || 'Adventurer';
@@ -1088,6 +1256,10 @@
                                 renderHomeCard('8. Taxes and Fees', [
                                     '<p>Maintaining ownership of a plot requires players to pay a recurring upkeep tax directly to the ruling merchant guild or imperial crown. If these fees are missed, the estate falls into a protected late state that freezes all room modifications and halts Companion functionality until the back-taxes are fully cleared.</p>',
                                     '<p>Furthermore, transactions require a certified appraisal document which levies a fixed processing fee based on the final gold value of the property sale.</p>'
+                                ]) +
+                                renderHomeCard('Plot', [
+                                    '<p>Every Character must have a Plot for their Home. A Plot may be part of an Area, an entire Area, or a Region, but cannot be larger than one Region.</p>',
+                                    '<p>A Home can range from a tent or cottage to a mansion, estate, or even a city.</p>'
                                 ]) +
                             '</div>' +
                             '<div class="card" style="margin-top:1rem;"><p>Home is the owned space. Home Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p></div>';
@@ -1305,6 +1477,8 @@
             container.innerHTML = renderProfileHeader(user, role, isPro) +
                 renderTabNav(user, role, isPro) +
                 renderTabContent(user, role, isPro);
+            window.refreshSpaceCharacterIdentity();
+            observeSpaceCharacterPickerSelection();
             injectSpaceTabPrivacyControls();
             loadSpaceTabPrivacy();
 
@@ -1344,11 +1518,15 @@
                             overviewCountEl.textContent = charCount;
                         }
                         var list = Array.isArray(charData) ? charData : (charData.characters || []);
+                        renderHomeCharacterRecords(list);
                         privacySheet = list.filter(function(ch) { return ch.is_default; })[0] || list[0] || null;
                         renderSheetPrivacy();
+                    } else {
+                        renderHomeCharacterRecords(null);
                     }
                 } catch(e) {
                     console.error('[Space] Failed to fetch character count:', e);
+                    renderHomeCharacterRecords(null);
                 }
             })();
 
