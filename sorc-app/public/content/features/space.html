@@ -833,12 +833,15 @@
         .catch(e => console.error('Failed to decline friend:', e));
     }
 
+    function renderSpaceCharacterTitle() {
+        var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
+        return '<div class="space-title-picker-row">' +
+            '<div class="space-banner-title" id="spaceCharacterTitle">' + esc(characterName + "'s Space") + '</div>' +
+            '</div>';
+    }
+
     function renderProfileHeader(user, role, isPro) {
         var displayName = user.display_name || user.username || 'Adventurer';
-        var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
-        var characterPickers = typeof window.SORCPropertyCharacterPickerMarkup === 'function'
-            ? window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker')
-            : '';
         var avatar = user.avatar;
         var avatarDisplay = avatarImageMarkup(avatar, displayName);
 
@@ -848,11 +851,7 @@
             ? '<span class="space-role-tag" style="border-color:#c5a042;color:#c5a042;">PRO</span>'
             : '<span class="space-role-tag" style="border-color:#8c06a3;color:#8c06a3;">BASIC</span>';
 
-        return '<div class="space-title-picker-row">' +
-            '<div class="space-banner-title" id="spaceCharacterTitle">' + esc(characterName + "'s Space") + '</div>' +
-            '<div class="space-header-character-pickers" id="spaceCharacterPickers" role="group" aria-label="Character Card Pickers">' + characterPickers + '</div>' +
-            '</div>' +
-            '<div class="space-assessment-prompt">Take the reigns and assess into or create advanced Lobbies <a href="../reference/take-assessment.html">now</a></div>' +
+        return '<div class="space-assessment-prompt">Take the reigns and assess into or create advanced Lobbies <a href="../reference/take-assessment.html">now</a></div>' +
             '<div class="space-card">' +
             '<div class="space-banner"></div>' +
             '<div class="space-info-row">' +
@@ -945,10 +944,6 @@
         if (title) title.textContent = characterName + "'s Space";
         var roomTitle = document.getElementById('spaceCharacterRoomTitle');
         if (roomTitle) roomTitle.textContent = characterName + ' Room';
-        var pickerHost = document.getElementById('spaceCharacterPickers');
-        if (pickerHost && typeof window.SORCPropertyCharacterPickerMarkup === 'function') {
-            pickerHost.innerHTML = window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker');
-        }
     };
     function observeSpaceCharacterPickerSelection() {
         var container = document.getElementById('profileContainer');
@@ -1476,6 +1471,7 @@
 
             container.innerHTML = renderProfileHeader(user, role, isPro) +
                 renderTabNav(user, role, isPro) +
+                renderSpaceCharacterTitle() +
                 renderTabContent(user, role, isPro);
             window.refreshSpaceCharacterIdentity();
             observeSpaceCharacterPickerSelection();
