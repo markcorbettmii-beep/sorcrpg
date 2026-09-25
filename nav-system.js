@@ -224,10 +224,10 @@ class SORCNavigation {
                   <span class="sorc-nav-section-label">COMMUNITY</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
-                <p class="sorc-nav-section-description">Connect with players through rankings, fellowships, and forums.</p>
+                <p class="sorc-nav-section-description">Connect with players through rankings, cohorts, and forums.</p>
                 <ul class="sorc-nav-section-menu" id="community-menu">
                   <li><a href="${pathToRoot}content/features/leaderboard.html">Leaderboard</a></li>
-                  <li><a href="${pathToRoot}content/features/fellowships.html">Fellowships</a></li>
+                  <li><a href="${pathToRoot}content/features/fellowships.html">Cohorts</a></li>
                   <li><a href="${pathToRoot}content/features/forum.html">Forums</a></li>
                 </ul>
               </div>

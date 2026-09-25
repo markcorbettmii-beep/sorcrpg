@@ -57,7 +57,7 @@
 - Achievements, Trophies & Collectables (combined)
 - Characters
 - Leaderboards
-- Fellowship
+- Cohort
 - Games (?)
 - Vault
 - Session History
@@ -97,7 +97,7 @@ category.
 Seven categories, each with its own **Standing** tag and **Contributions** tag:
 - **Family** - the Character's kin (replaced Household)
 - **Affiliations** - formal faction membership
-- **Companions** - Pets, Guardians, mounts, pack animals, **and Fellowships**; Standing recorded as Mood
+- **Companions** - Pets, Guardians, mounts, pack animals, **and Cohorts**; Standing recorded as Mood
 - **Campaign** - **the people you have partied with** (not campaigns run)
 - **Fellows** - the friends list
 - **Neighbours** - those sharing or bordering your coordinates
@@ -144,7 +144,7 @@ Four decisions still needed from owner - see that doc's closing section.
 
 ## 5. Neighbours - CONFIRMED, extended
 - A neighbour's Home, or part of it, may appear on your **offline maps**
-- Neighbours may be sent a **Fellowship request** and campaign together
+- Neighbours may be sent a **Cohort request** and campaign together
   regularly
 - **Standing applies to Friends who party together and to neighbours** -
   written into the Basic Rules Contribution & Family section under Standing

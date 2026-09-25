@@ -582,7 +582,7 @@ app.put('/api/profile', authMiddleware, async (c) => {
   }
 });
 
-// ===== FELLOWSHIPS =====
+// ===== FELLOWS (USER FRIENDS) =====
 
 app.get('/api/fellowships', authMiddleware, async (c) => {
   const user = c.get('user') as any;
@@ -597,7 +597,7 @@ app.get('/api/fellowships', authMiddleware, async (c) => {
     ).bind(user.id, user.id, user.id).all();
     return c.json({ fellows: result.results || [] });
   } catch (error: any) {
-    return c.json({ error: 'Failed to load fellowships', details: error.message }, 500);
+    return c.json({ error: 'Failed to load Fellows', details: error.message }, 500);
   }
 });
 
@@ -2023,7 +2023,7 @@ app.get('/api/lobbies/:id/invite-pool', authMiddleware, async (c) => {
   if (!lobby) return c.json({ error: 'Lobby not found.' }, 404);
   if (lobby.creator_uid !== user.id && !isPrivileged(user)) return c.json({ error: 'Not authorized.' }, 403);
 
-  // Fellowships: accepted fellows not already in this lobby
+  // Fellows: accepted user friends not already in this lobby
   const fellowsRaw = await c.env.sorc_db.prepare(
     `SELECT u.id, u.username, u.display_name, u.sorc_role
      FROM fellowships f
@@ -2856,7 +2856,7 @@ app.post('/api/rooms/:id/invite/:uid', authMiddleware, async (c) => {
   if (room.gm_uid !== user.id) return c.json({ error: 'Only the GM can send invites.' }, 403);
   if (room.status !== 'active') return c.json({ error: 'Room is not active.' }, 400);
 
-  // Must be a fellowship connection
+  // Must be an accepted Fellow connection
   const fellowship = await c.env.sorc_db.prepare(
     `SELECT id FROM fellowship_requests WHERE status = 'accepted'
      AND ((sender_uid = ? AND receiver_uid = ?) OR (sender_uid = ? AND receiver_uid = ?))`

@@ -236,7 +236,7 @@
                 actionSection = '<div class="profile-section">'
                     + '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">'
                         + '<button onclick="startMessage()" style="padding:9px 18px;background:#c93f35;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Message</button>'
-                        + '<button id="fellowshipBtn" onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Add Fellowship</button>'
+                        + '<button id="fellowshipBtn" onclick="sendFellowship()" style="padding:9px 18px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Add Fellow</button>'
                         + '<button id="blockBtn" onclick="toggleBlock(false)" style="padding:9px 18px;background:#333;color:#e0cfc0;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Block</button>'
                         + '<button onclick="reportUser()" style="padding:9px 18px;background:#222;color:#555;border:1px solid #333;border-radius:8px;font-weight:bold;cursor:pointer;font-size:0.85rem;">Report</button>'
                     + '</div>'
@@ -457,7 +457,7 @@
                     fellowBtn.style.opacity = '0.55';
                     fellowBtn.style.cursor = 'default';
                 } else if (fellowStatus.status === 'pending_received') {
-                    fellowBtn.textContent = 'Accept Fellowship';
+                    fellowBtn.textContent = 'Accept Fellow';
                     fellowBtn.style.background = '#1a6b1a';
                     fellowBtn.setAttribute('onclick', 'acceptIncomingFellowship(\'' + (fellowStatus.id || '') + '\')');
                 }
@@ -487,7 +487,7 @@
                 if (blockBtn) { blockBtn.textContent = 'Block'; blockBtn.setAttribute('onclick', 'toggleBlock(false)'); }
                 if (msgEl) { msgEl.className = 'msg success'; msgEl.textContent = 'Member unblocked.'; }
             } else {
-                if (!confirm('Block this member? They will not be able to send you messages or fellowship requests.')) return;
+                if (!confirm('Block this member? They will not be able to send you messages or fellow requests.')) return;
                 await fetch(API_URL + '/api/blocks/' + uid, { method: 'POST', headers: { 'X-Auth-Key': currentUser.authKey } });
                 if (blockBtn) { blockBtn.textContent = 'Unblock'; blockBtn.setAttribute('onclick', 'toggleBlock(true)'); }
                 if (msgEl) { msgEl.className = 'msg success'; msgEl.textContent = 'Member blocked.'; }
@@ -498,7 +498,7 @@
     };
 
     window.acceptIncomingFellowship = async function(fellowshipId) {
-        if (!confirm('Accept fellowship request from this Player?')) return;
+        if (!confirm('Accept Fellow request from this Player?')) return;
         var currentUser = null;
         try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!currentUser || !currentUser.authKey) { window.location.href = 'signin.html'; return; }
@@ -515,12 +515,12 @@
             var data = await res.json();
             if (data.success) {
                 msgEl.className = 'msg success';
-                msgEl.textContent = 'Fellowship accepted!';
+                msgEl.textContent = 'Fellow added!';
                 var btn = document.getElementById('fellowshipBtn');
                 if (btn) { btn.textContent = '✓ Fellows'; btn.disabled = true; btn.style.opacity = '0.55'; btn.style.cursor = 'default'; }
             } else {
                 msgEl.className = 'msg error';
-                msgEl.textContent = data.error || 'Could not accept fellowship.';
+                msgEl.textContent = data.error || 'Could not accept Fellow request.';
             }
         } catch(e) {
             msgEl.className = 'msg error';
@@ -532,7 +532,7 @@
         var currentUser = null;
         try { currentUser = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
         if (!currentUser || !currentUser.authKey) { window.location.href = 'signin.html'; return; }
-        // Fellowship requests are free for every member - there is no unlock
+        // Fellow requests are free for every member - there is no unlock
         // gate for this on the server, so none is enforced here either.
         var msgEl = document.getElementById('actionMsg');
         var params = new URLSearchParams(window.location.search);
@@ -545,7 +545,7 @@
             });
             var data = await res.json();
             msgEl.className = 'msg ' + (data.success ? 'success' : 'error');
-            msgEl.textContent = data.success ? 'Fellowship request sent!' : (data.error || 'Failed to send request.');
+            msgEl.textContent = data.success ? 'Fellow request sent!' : (data.error || 'Failed to send request.');
             if (data.success) {
                 var btn = document.getElementById('fellowshipBtn');
                 if (btn) { btn.textContent = '⏳ Request Sent'; btn.disabled = true; btn.style.opacity = '0.55'; btn.style.cursor = 'default'; }

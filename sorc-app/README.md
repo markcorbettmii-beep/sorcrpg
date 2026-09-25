@@ -16,7 +16,7 @@ Complete backend replacement for Firebase using Cloudflare Workers, D1, and R2.
   - Forums (threads, posts, likes)
   - Profiles (get, update)
   - Characters (create, list)
-  - Fellowships (requests)
+  - Cohorts (requests)
 
 ### Database
 - **schema.sql** - D1 database schema (all tables)

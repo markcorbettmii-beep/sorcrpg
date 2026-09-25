@@ -367,7 +367,7 @@ function showRoleBadge(user) {
     ' · <a href="/content/features/space.html" style="color:' + linkColor + ';text-decoration:underline;">Space</a>' +
     ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
     ' · <a id="badgeInboxLink" href="/content/features/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
-    ' · <a id="badgeFellowshipsLink" href="/content/features/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Fellowships</a>' +
+    ' · <a id="badgeFellowshipsLink" href="/content/features/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Cohorts</a>' +
     ' · <a href="/content/features/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
     ' · <a href="/content/content-index.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
     adminLink +
@@ -452,7 +452,7 @@ async function checkNotifications(user) {
       }
     } catch(e) {}
 
-    // ---- Fellowship badge ----
+    // ---- Cohort badge ----
     var lastSeen = parseInt(localStorage.getItem('sorc_f_last_seen') || '0');
     var incomingCount = data.fellowship_incoming_count || 0;
     var acceptedCount = (data.fellowship_recently_accepted || []).filter(function(f) {
@@ -497,8 +497,8 @@ async function checkNotifications(user) {
         var notifBg = '#fff';
         var notifColor = isLawfulBadge ? '#222' : '#222';
         fellowLink.innerHTML = fellowBadge > 0
-          ? 'Fellowships <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
-          : 'Fellowships';
+          ? 'Cohorts <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
+          : 'Cohorts';
       }
       var profileLink = badgeEl.querySelector('a[href="/space.html"]');
       if (profileLink) {
