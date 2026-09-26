@@ -129,6 +129,10 @@ app.notFound(async (c: any) => {
     return c.json({ error: 'Not found.', path: c.req.path }, 404);
   }
 
+  const isDuplicatePropertyRoute = /^\/content\/features\/space(?:\.html)?$/i.test(c.req.path)
+    && new URL(c.req.url).searchParams.get('tab') === 'property';
+  if (isDuplicatePropertyRoute) return c.redirect('/content', 302);
+
   let assetResponse = await c.env.ASSETS.fetch(c.req.raw);
   let contentType = assetResponse.headers.get('content-type') || '';
   const acceptsHtml = (c.req.header('accept') || '').toLowerCase().includes('text/html');
