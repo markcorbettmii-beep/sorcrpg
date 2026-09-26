@@ -19,14 +19,13 @@ const checks = [
     ],
   },
   {
-    name: "Space role row published copy",
-    path: "sorc-app/public/content/features/space.html",
+    name: "Space Property page flow",
+    path: "sorc-app/public/content/features/property-draft.js",
     markers: [
-      ".space-role-membership-line",
-      "flex-wrap: nowrap",
-      "white-space: nowrap",
-      '<div class="space-role-membership-line">',
-      "Roles &amp; membership",
+      "'on-person': 'Worn'",
+      "'carried-hauled': 'Carried-Hauled'",
+      "Carried-Hauled PG. 2",
+      "Quarters pg. 3",
     ],
   },
 ];
@@ -50,6 +49,29 @@ for (const check of checks) {
   }
 
   console.log(`PASS ${check.name}`);
+}
+
+const staleSpaceCopy = join(
+  repository,
+  "sorc-app",
+  "public",
+  "content",
+  "features",
+  "space.html",
+);
+const extraSpacePages = [
+  join(repository, "sorc-app", "public", "space.html"),
+  join(repository, "content", "admin", "debug-space.html"),
+  join(repository, "sorc-app", "public", "content", "admin", "debug-space.html"),
+].filter(existsSync);
+if (existsSync(staleSpaceCopy) || extraSpacePages.length) {
+  console.error(
+    "FAIL Only the canonical Space page remains: found " +
+      [staleSpaceCopy, ...extraSpacePages].filter(existsSync).join(", "),
+  );
+  failures++;
+} else {
+  console.log("PASS Only the canonical Space page remains");
 }
 
 if (failures) {

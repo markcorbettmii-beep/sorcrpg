@@ -500,7 +500,7 @@ async function checkNotifications(user) {
           ? 'Cohorts <span style="background:' + notifBg + ' !important;color:' + notifColor + ' !important;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;text-shadow:none !important;text-decoration:none !important;">' + fellowBadge + '</span>'
           : 'Cohorts';
       }
-      var profileLink = badgeEl.querySelector('a[href="/space.html"]');
+      var profileLink = badgeEl.querySelector('a[href="/content/features/space.html"]');
       if (profileLink) {
         profileLink.innerHTML = data.admin_invite
           ? 'Profile <span style="background:#c93f35;color:#fff;border-radius:10px;padding:1px 6px;font-size:0.7rem;font-weight:bold;">!</span>'
