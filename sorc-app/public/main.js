@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
   window._updateProfileBtnColors();
 
+  var propertySpacePath = '/content/features/space.html?tab=property';
   window._profileBtn_loggedIn = function(avatarFilename, displayName) {
     var initial = (displayName || '').trim().charAt(0).toUpperCase() || 'S';
     if (avatarFilename) {
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     profileBtn.onclick = function(e) {
       e.stopPropagation();
-      window.location.href = '/content/features/space.html';
+      window.location.href = propertySpacePath;
     };
   };
 
@@ -150,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     e.stopPropagation();
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch (e2) {}
-    window.location.href = (saved && saved.authKey) ? '/content/features/space.html' : '/content/auth/signin.html';
+    window.location.href = (saved && saved.authKey) ? propertySpacePath : '/content/auth/signin.html';
   });
 
   headerControls.appendChild(profileBtn);

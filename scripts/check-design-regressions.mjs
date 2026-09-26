@@ -26,6 +26,19 @@ const checks = [
       "'carried-hauled': 'Carried-Hauled'",
       "Carried-Hauled PG. 2",
       "Quarters pg. 3",
+      "label: 'Worn'",
+      "label: 'Carried-Hauled'",
+      "label: 'Quarters'",
+      'aria-label="Property pages"',
+      'aria-current="page"',
+    ],
+  },
+  {
+    name: "Signed-in profile opens the Property tab",
+    path: "sorc-app/public/main.js",
+    markers: [
+      "var propertySpacePath = '/content/features/space.html?tab=property';",
+      "window.location.href = propertySpacePath;",
     ],
   },
 ];

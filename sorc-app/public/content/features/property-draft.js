@@ -201,6 +201,11 @@
             vaults: 'Vaults',
             'force-station': 'Force Station'
         };
+        var pageTabs = [
+            { id: 'on-person', label: 'Worn' },
+            { id: 'carried-hauled', label: 'Carried-Hauled' },
+            { id: 'quarters', label: 'Quarters' }
+        ];
         var nextPages = {
             'on-person': { id: 'carried-hauled', label: 'Carried-Hauled PG. 2 »»' },
             'carried-hauled': { id: 'quarters', label: 'Quarters pg. 3' },
@@ -208,11 +213,24 @@
             'storage-stash': { id: 'vaults', label: 'Vaults pg. 5' },
             vaults: { id: 'force-station', label: 'Force Station pg. 6' }
         };
+        function pageNavigation() {
+            return '<nav class="property-page-nav" aria-label="Property pages">' +
+                pageTabs.map(function(tab) {
+                    var active = tab.id === pageName;
+                    return '<button type="button" class="' + (active ? 'active' : '') + '"' +
+                        (active ? ' aria-current="page"' : '') +
+                        ' onclick="selectPropertyPage(\'' + tab.id + '\')">' + esc(tab.label) + '</button>';
+                }).join('') +
+                '</nav>';
+        }
         function pageHeader() {
             var next = nextPages[pageName];
             return '<div class="property-page-header"><h4 class="property-page-title">' + esc(pageTitles[pageName] || 'Property') + '</h4>' +
                 (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')">' + esc(next.label) + '</button>' : '') +
                 '</div>';
+        }
+        function pageFrame(content) {
+            return pageHeader() + pageNavigation() + access + content;
         }
         var pageDescriptions = {
             'storage-stash': 'Home storage, rented storage, and things you have buried, stashed, or hidden.',
@@ -220,36 +238,35 @@
             'force-station': 'Neutral massive commercial space for lease when Home properties run out of room. This cavernous industrial bay accommodates heavy Spacecraft, specialized Armor, bulk Weapons, and larger Biological Companions. Keep monthly rental fees current or the property may be auctioned.'
         };
         if (pageName === 'carried-hauled') {
-            return pageHeader() + access +
-                '<div class="property-container-page"><p class="property-container-note">Property carried or hauled by the Character.</p></div>';
+            return pageFrame('<div class="property-container-page"><p class="property-container-note">Property carried or hauled by the Character.</p></div>');
         }
         if (pageName === 'quarters') {
             var familyMarkup = typeof window.renderSpaceFamilyPropertyPage === 'function'
                 ? window.renderSpaceFamilyPropertyPage()
                 : '<p class="property-container-note">Character and Family information is unavailable.</p>';
-            return pageHeader() + access + familyMarkup;
+            return pageFrame(familyMarkup);
         }
         if (pageName === 'storage-stash') {
-            return pageHeader() + access + '<div class="property-container-grid">' +
+            return pageFrame('<div class="property-container-grid">' +
                 '<section class="property-container-section"><h5>Home Storage</h5><p>Home closets, storage containers, Deployments, and Trophy Room items.</p></section>' +
                 '<section class="property-container-section"><h5>Rented Storage</h5><p>Storage leased outside your Home.</p></section>' +
                 '<section class="property-container-section"><h5>Stash</h5><p>Things you have buried, stashed, or hidden. An Animated Compass Safe Haven is one example of a place to keep hidden items.</p></section>' +
-                '</div>';
+                '</div>');
         }
         if (pageName === 'vaults') {
-            return pageHeader() + access + '<div class="property-container-grid">' +
+            return pageFrame('<div class="property-container-grid">' +
                 '<section class="property-container-section"><h5>Personal Vaults</h5><p>Secure personal storage for safes and vaults.</p></section>' +
                 '<section class="property-container-section"><h5>Guild &amp; Clan</h5><p>Storage, Armory, and Hall Banks.</p></section>' +
-                '</div>';
+                '</div>');
         }
         if (pageName === 'force-station') {
-            return pageHeader() + access + '<div class="property-container-grid">' +
+            return pageFrame('<div class="property-container-grid">' +
                 '<section class="property-container-section"><h5>Force Station</h5><p>' + esc(pageDescriptions['force-station']) + '</p></section>' +
-                '</div>';
+                '</div>');
         }
-        if (pageName !== 'on-person') return pageHeader() + access + '<div class="property-container-page"><p class="property-container-note">' + esc(pageDescriptions[pageName] || '') + '</p></div>';
+        if (pageName !== 'on-person') return pageFrame('<div class="property-container-page"><p class="property-container-note">' + esc(pageDescriptions[pageName] || '') + '</p></div>');
         var owned = cards.filter(function(card) { return card.owned; }), unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
-        return pageHeader() + access + '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout">' + canvas(selected) + '<aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas keeps Kaida, her worn Armaments, her Companions, and her Safe Haven visible while the selected Card is marked.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside></div>' + rows(selected) + haulingSection();
+        return pageHeader() + pageNavigation() + access + '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout">' + canvas(selected) + '<aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas keeps Kaida, her worn Armaments, her Companions, and her Safe Haven visible while the selected Card is marked.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside></div>' + rows(selected) + haulingSection();
     }
     var rowPages = {};
     function rows(selected) {
@@ -270,13 +287,14 @@
     };
     window.selectPropertyPage = function(name) {
         var draft = document.getElementById('propertyDraft');
-        if (!draft) return;
+        if (!draft || ['on-person', 'carried-hauled', 'quarters', 'storage-stash', 'vaults', 'force-station'].indexOf(name) === -1) return;
         var selected = draft.getAttribute('data-selected') || 'armor-core';
         draft.setAttribute('data-page', name);
         draft.innerHTML = page(name, selected);
         if (name === 'quarters') {
             if (typeof window.refreshSpaceHomeCharacterRecords === 'function') window.refreshSpaceHomeCharacterRecords();
         }
+        draft.scrollIntoView({ block: 'start', behavior: 'smooth' });
     };
      window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core', detailSelected = card.type === 'Companion Cards' ? previous : id; draft.setAttribute('data-selected', detailSelected); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem(propertyStorageKey('selectedArmaments'), JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem(propertyStorageKey('selectedCompanions'), JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem(propertyStorageKey('safeHaven'), card.safeHaven); } catch(e) {} draft.innerHTML = page('on-person', detailSelected); };
     window.propertyCompanionTap = function(id) { if (suppressNextCompanionClick) { suppressNextCompanionClick = false; return; } window.selectPropertyCard(id); };
