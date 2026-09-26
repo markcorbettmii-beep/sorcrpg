@@ -10,6 +10,7 @@ on:
       - claude/character-sheets-fix
       - claude/character-sheets-text-color
     paths:
+      - 'content/features/space.html'
       - 'sorc-app/**'
       - '*.html'
       - '_redirects'
@@ -22,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check publish sources and protected design
+        run: npm run check-publish && npm run check-design
       - run: npm install
         working-directory: sorc-app
       - name: Copy root HTML files to public
@@ -34,6 +37,8 @@ jobs:
       # this the /lobbies/beg, /int and /adv rewrites never ship.
       - name: Copy _redirects to public
         run: cp _redirects sorc-app/public/_redirects
+      - name: Stage canonical Space page for Worker assets
+        run: cp content/features/space.html sorc-app/public/content/features/space.html
       - run: npx wrangler deploy
         working-directory: sorc-app
         env:
