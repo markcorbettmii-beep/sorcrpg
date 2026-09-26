@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../../styles.css?v=10" />
     <link rel="stylesheet" href="/nav-system.css?v=3">
     <link rel="stylesheet" href="/content/character/workspace-nav.css">
-    <link rel="stylesheet" href="property-draft.css?v=20260917-property56">
+    <link rel="stylesheet" href="property-draft.css?v=20260926-property57">
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; }
         .space-container { max-width: 1000px; margin: 2rem auto; padding: 1rem 0.75rem; }
@@ -278,8 +278,8 @@
   <script data-sorc-theme-bootstrap>(function(){try{if((localStorage.getItem("themeSelected")||"lawful")==="lawful")document.body.classList.add("lawful-mode");}catch(e){document.body.classList.add("lawful-mode");}})();</script>
   <div class="page-wrapper">
     <div class="header-container">
-      <img src="../site-presentation/assets/branding/logos/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-letters-img evil-only" />
-      <img src="../site-presentation/assets/branding/logos/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-letters-img lawful-only" />
+      <img src="/sorc-letters-evil.png" alt="SORC" class="sorc-letters-img evil-only" />
+      <img src="/sorc-letters-lawful.png" alt="SORC" class="sorc-letters-img lawful-only" />
     </div>
     <nav id="sorc-nav"></nav>
     <script>(function(){var t=localStorage.getItem('themeSelected')||'lawful';if(t==='lawful')document.body.classList.add('lawful-mode');})();</script>
@@ -301,7 +301,7 @@
     <script src="../../nav.js?v=2"></script>
     <script src="../../main.js?v=26"></script>
     <script src="../../play-style.js?v=5"></script>
-    <script src="property-draft.js?v=20260917-property56"></script>
+    <script src="property-draft.js?v=20260926-property57"></script>
     <script src="/content/character/workspace-nav.js"></script>
     <script>
     var API_URL = 'https://api.sorcrpg.com';
@@ -378,6 +378,7 @@
     var VIEW_USERNAME = (function() {
         try { return new URLSearchParams(window.location.search).get('username') || ''; } catch(e) { return ''; }
     })();
+    var IS_WANDERER_VIEW = false;
 
     function esc2(str) {
         return String(str == null ? '' : str)
@@ -721,6 +722,10 @@
     };
 
     function switchTab(tabId) {
+        if (IS_WANDERER_VIEW) {
+            var requestedTab = PROFILE_TABS.find(function(tab) { return tab.id === tabId; });
+            if (!requestedTab || requestedTab.access !== 'PUBLIC') tabId = 'overview';
+        }
         document.querySelectorAll('.tab-nav button').forEach(function(btn) { btn.classList.remove('active'); });
         document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
         var btn = document.querySelector('.tab-nav button[data-tab="' + tabId + '"]');
@@ -834,11 +839,67 @@
         .catch(e => console.error('Failed to decline friend:', e));
     }
 
-    function renderSpaceCharacterTitle() {
+    function renderSpaceCharacterTitle(isWanderer) {
+        if (isWanderer) {
+            return '<div class="space-title-picker-row">' +
+                '<div class="space-banner-title" id="spaceCharacterTitle">Space</div>' +
+                '</div>';
+        }
         var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
         return '<div class="space-title-picker-row">' +
             '<div class="space-banner-title" id="spaceCharacterTitle">' + esc(characterName + "'s Space") + '</div>' +
             '</div>';
+    }
+
+    function renderWandererNotice() {
+        return '<div class="space-wanderer-notice" role="status" style="margin:0 auto 1.25rem;padding:1rem 1.25rem;max-width:1000px;background:#1d1b12;border:1px solid #655b21;border-left:4px solid #b9aa00;border-radius:8px;color:#e0cfc0;">' +
+            '<h2 style="margin:0 0 0.5rem;color:#f0e5c5;font-size:1.2rem;">Hello, Wanderer.</h2>' +
+            '<p style="margin:0 0 0.75rem;">You are viewing Space in read-only mode. Sign in to personalize your Space and use account features.</p>' +
+            '<a href="/content/auth/signin.html" style="color:#e0c94c;text-decoration:underline;">Sign in</a>' +
+            '</div>';
+    }
+
+    function applyWandererReadOnly(container) {
+        container.setAttribute('data-space-mode', 'read-only');
+        container.querySelectorAll('button:not(.tab-btn), input, select, textarea, [contenteditable="true"]').forEach(function(control) {
+            control.disabled = true;
+            control.setAttribute('aria-disabled', 'true');
+        });
+        container.querySelectorAll('a[onclick]').forEach(function(link) {
+            link.removeAttribute('onclick');
+            var href = String(link.getAttribute('href') || '').trim().toLowerCase();
+            if (href === '#' || href.indexOf('javascript:') === 0) {
+                link.removeAttribute('href');
+                link.setAttribute('aria-disabled', 'true');
+            }
+        });
+        container.querySelectorAll('form').forEach(function(form) {
+            form.addEventListener('submit', function(event) { event.preventDefault(); });
+        });
+    }
+
+    function renderWandererSpace() {
+        var container = document.getElementById('profileContainer');
+        if (!container) return;
+
+        IS_WANDERER_VIEW = true;
+        var wanderer = { username: 'Wanderer', display_name: 'Wanderer', avatar: null };
+        container.innerHTML = renderWandererNotice() +
+            renderTabNav(wanderer, 'WANDERER', false, true) +
+            renderSpaceCharacterTitle(true) +
+            renderTabContent(wanderer, 'WANDERER', false, true);
+
+        var tabNav = container.querySelector('.tab-nav');
+        if (tabNav) {
+            tabNav.addEventListener('click', function(event) {
+                var btn = event.target.closest('button[data-tab]');
+                if (btn && !btn.disabled) switchTab(btn.getAttribute('data-tab'));
+            }, false);
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        switchTab(params.get('tab') || 'overview');
+        applyWandererReadOnly(container);
     }
 
     function renderProfileHeader(user, role, isPro) {
@@ -876,10 +937,11 @@
         '</div>';
     }
 
-    function renderTabNav(user, role, isPro) {
+    function renderTabNav(user, role, isPro, isWanderer) {
         var html = '<div class="tab-nav">';
         PROFILE_TABS.forEach(function(tab) {
-            var canView = canViewTab(tab, true, isPro);
+            if (isWanderer && tab.access !== 'PUBLIC') return;
+            var canView = canViewTab(tab, !isWanderer, isPro);
             var disabled = !canView ? ' disabled' : '';
             var proClass = tab.pro ? ' pro' : '';
             html += '<button class="tab-btn' + proClass + '" data-tab="' + tab.id + '" onclick="switchTab(\'' + tab.id + '\')"' + disabled + '>' + tab.label + '</button>';
@@ -889,14 +951,16 @@
     }
 
     function renderHomeCard(title, pages) {
+        pages = Array.isArray(pages) ? pages : [];
         var html = '<div class="card home-paged-card"><h4>' + title + '</h4>';
+        if (!pages.length) return html + '</div>';
         pages.forEach(function(page, index) {
             html += '<div class="home-card-page' + (index === 0 ? ' active' : '') + '" data-home-page="' + index + '">' + page + '</div>';
         });
         html += '<div class="home-card-nav">' +
-            '<button type="button" onclick="changeHomePage(this, -1)" aria-label="Previous page">&laquo;&laquo;</button>' +
+            '<button type="button" onclick="changeHomePage(this, -1)" aria-label="Previous page"' + (pages.length <= 1 ? ' disabled' : '') + '>&laquo;</button>' +
             '<span class="home-card-page-number">1 / ' + pages.length + '</span>' +
-            '<button type="button" onclick="changeHomePage(this, 1)" aria-label="Next page">&raquo;&raquo;</button>' +
+            '<button type="button" onclick="changeHomePage(this, 1)" aria-label="Next page"' + (pages.length <= 1 ? ' disabled' : '') + '>&raquo;</button>' +
             '</div></div>';
         return html;
     }
@@ -905,7 +969,9 @@
         var card = button && button.closest('.home-paged-card');
         if (!card) return;
         var pages = Array.prototype.slice.call(card.querySelectorAll('.home-card-page'));
+        if (!pages.length) return;
         var current = pages.findIndex(function(page) { return page.classList.contains('active'); });
+        if (current < 0) current = 0;
         var next = Math.max(0, Math.min(pages.length - 1, current + direction));
         pages.forEach(function(page, index) {
             page.classList.toggle('active', index === next);
@@ -1061,11 +1127,11 @@
             '</div>';
     };
 
-    function renderTabContent(user, role, isPro) {
+    function renderTabContent(user, role, isPro, isWanderer) {
         var displayName = user.display_name || user.username || 'Adventurer';
         var html = '';
         PROFILE_TABS.forEach(function(tab) {
-            var canView = canViewTab(tab, true, isPro);
+            var canView = canViewTab(tab, !isWanderer, isPro);
             var active = tab.id === 'overview' ? ' active' : '';
 
             html += '<div class="tab-content' + active + '" id="tab-' + tab.id + '">';
@@ -1088,13 +1154,18 @@
                 // Render tab content based on ID
                 switch (tab.id) {
                     case 'overview':
+                        var editSpaceLink = isWanderer
+                            ? 'Sign in to personalize your Space.'
+                            : '<a href="javascript:void(0);" onclick="switchTab(\'settings\');return false;" style="color:#b9aa00;text-decoration:underline;">Edit in Settings</a>';
+                        var activeCharactersText = isWanderer
+                            ? 'Sign in to view your active characters.'
+                            : 'You have <span id="overviewCharacterCount">0</span> active characters. <a href="/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a>';
                         html += '<h3>Space</h3>' +
                             '<p>Space is your corner of Essentia. Build your reputation, showcase your treasures, and chart your path. What you see here is what others see on your public Space.</p>' +
                             '<div class="content-grid">' +
-                                '<div class="card"><h4>Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' +
-                                '<a href="javascript:void(0);" onclick="switchTab(\'settings\');return false;" style="color:#b9aa00;text-decoration:underline;">Edit in Settings</a></p></div>' +
+                                '<div class="card"><h4>Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' + editSpaceLink + '</p></div>' +
                                 '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
-                                '<div class="card"><h4>Active Characters</h4><p>You have <span id="overviewCharacterCount">0</span> active characters. <a href="/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a></p></div>' +
+                                '<div class="card"><h4>Active Characters</h4><p>' + activeCharactersText + '</p></div>' +
                                 '<div class="card"><h4>SORC Web</h4><p>Membership tiers, features, community points, and everything about SORC Web. <a href="sorc-web.html" style="color:#b9aa00;text-decoration:underline;">Explore SORC Web</a></p></div>' +
                             '</div>';
                         break;
@@ -1110,6 +1181,11 @@
                         break;
 
                     case 'characters':
+                        if (isWanderer) {
+                            html += '<h3>Characters</h3>' +
+                                '<p>Sign in to view your character previews and records.</p>';
+                            break;
+                        }
                         html += '<h3>Your Characters</h3>' +
                             '<p>View summaries of your characters. Only public character Spaces are visible to others.</p>' +
                             '<div style="margin:2rem auto;max-width:600px;text-align:center;">' +
@@ -1152,6 +1228,11 @@
                         break;
 
                     case 'leaderboards':
+                        if (isWanderer) {
+                            html += '<h3>Leaderboards</h3>' +
+                                '<p>Sign in to view game-mode standings.</p>';
+                            break;
+                        }
                         html += '<h3>Leaderboards</h3>' +
                             '<p>Ranked standings by Game Mode. Wins, ranks, and awards are displayed in your Home\'s Trophy Room.</p>' +
                             '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
@@ -1173,6 +1254,11 @@
                         break;
 
                     case 'fellows':
+                        if (isWanderer) {
+                            html += '<h3>Fellows</h3>' +
+                                '<p>Sign in to view your Fellows and friend requests.</p>';
+                            break;
+                        }
                         html += '<h3>Fellows</h3>' +
                             '<p>Your network of adventurers. See who\'s online, send friend requests, and join Fellow campaigns.</p>' +
 
@@ -1239,26 +1325,26 @@
                                 renderHomeCard('5. Upkeep status', [
                                     '<p>Fellowships, Draft Animals, and Ruminants keep the Home maintained and ecologically sound.</p>'
                                 ]) +
-                                renderHomeCard('6. Available Plots', [
+                                renderHomeCard('6. Available Lots', [
                                     '<p>Land is only available if it is actively being sold by an individual or sovereign authority and is not already occupied by another player.</p>',
-                                    '<p>Properties instantly become unavailable if the owner is currently caught up on their upkeep or if the territory enters a state of war or siege. If an owner falls into tax default and misses payments for too long, the property faces system reclamation and demolition, which frees the physical plot for the next player to claim.</p>',
-                                    '<p>Players may sell and buy Plots and Homes between one another.</p>'
+                                    '<p>Properties instantly become unavailable if the owner is currently caught up on their upkeep or if the territory enters a state of war or siege. If an owner falls into tax default and misses payments for too long, the property faces system reclamation and demolition, which frees the physical Lot for the next player to claim.</p>',
+                                    '<p>Players may sell and buy Lots and Homes between one another.</p>'
                                 ]) +
                                 renderHomeCard('7. Demolition and Rebuilding', [
-                                    '<p>Properties face demolition if an owner falls into deep tax default or voluntarily chooses to clear their own land plot. When demolition triggers, the existing structure is flattened, and any remaining storage containers, armories, or personal belongings are packed up and sent directly to the player&#39;s Property section or an off-site recovery vault.</p>',
+                                    '<p>Properties face demolition if an owner falls into deep tax default or voluntarily chooses to clear their own Lot. When demolition triggers, the existing structure is flattened, and any remaining storage containers, armories, or personal belongings are packed up and sent directly to the player&#39;s Property section or an off-site recovery vault.</p>',
                                     '<p>Companions find their way back to you, if they want to. Once the structural layout is completely wiped away, the physical land coordinates instantly return to the open market, allowing any nearby player to purchase the rights from an authority and place down a brand-new blueprint to begin rebuilding.</p>',
                                     '<p>Homes are also subject to environmental and unnatural collateral damage.</p>'
                                 ]) +
                                 renderHomeCard('8. Taxes and Fees', [
-                                    '<p>Maintaining ownership of a plot requires players to pay a recurring upkeep tax directly to the ruling merchant guild or imperial crown. If these fees are missed, the estate falls into a protected late state that freezes all room modifications and halts Companion functionality until the back-taxes are fully cleared.</p>',
+                                    '<p>Maintaining ownership of a Lot requires players to pay a recurring upkeep tax directly to the ruling merchant guild or imperial crown. If these fees are missed, the estate falls into a protected late state that freezes all room modifications and halts Companion functionality until the back-taxes are fully cleared.</p>',
                                     '<p>Furthermore, transactions require a certified appraisal document which levies a fixed processing fee based on the final gold value of the property sale.</p>'
                                 ]) +
-                                renderHomeCard('Plot', [
-                                    '<p>Every Character must have a Plot for their Home. A Plot may be part of an Area, an entire Area, or a Region, but cannot be larger than one Region.</p>',
-                                    '<p>A Home can range from a tent or cottage to a mansion, estate, or even a city.</p>'
+                                renderHomeCard('Domain and Land', [
+                                    '<p>A Home occupies a Lot within a Parcel and Tract in a Domain. A Lot is the build site for one Home, storefront, or structure.</p>',
+                                    '<p>A Domain is the Character&#39;s sovereign territory. Read the <a href="/content/essentia_core/rules_game-features.html#domains">Domain</a> and <a href="/content/essentia_core/rules_game-features.html#land-divisions">Land Division</a> rules.</p>'
                                 ]) +
                             '</div>' +
-                            '<div class="card" style="margin-top:1rem;"><p>Home is the owned space. Home Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p></div>';
+                            '<div class="card" style="margin-top:1rem;"><p>Home is the living space, whether owned or rented. Home Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p></div>';
                         break;
 
                     case 'essentia-exchange':
@@ -1291,6 +1377,7 @@
                                 '</div>' +
                                 '<div class="card"><h4>Companions</h4>' +
                                     '<p>Pets, Guardians, mounts, pack animals, and Fellowships. A Companion&#39;s Standing is recorded as Mood.</p>' +
+                                    '<p>Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.</p>' +
                                     '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
                                 '</div>' +
                                 '<div class="card"><h4>Campaign</h4>' +
@@ -1302,7 +1389,7 @@
                                     '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
                                 '</div>' +
                                 '<div class="card"><h4>Neighbours</h4>' +
-                                    '<p>Those whose plot or Home shares or borders your coordinates.</p>' +
+                                    '<p>Those whose Lot or Home shares or borders your coordinates.</p>' +
                                     '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
                                 '</div>' +
                                 '<div class="card"><h4>Wellness</h4>' +
@@ -1424,9 +1511,8 @@
             console.log('[Space] User data loaded: ' + (saved ? 'Yes' : 'No'));
 
             if (!saved || !saved.authKey) {
-                console.log('[Space] No auth key, showing signin');
-                document.getElementById('profileContainer').innerHTML =
-                    '<div class="not-logged-in"><h2>Not logged in</h2><p><a href="../../auth/signin.html">Sign in to view your profile</a></p></div>';
+                console.log('[Space] No auth key, showing read-only Wanderer view');
+                renderWandererSpace();
                 return;
             }
 
