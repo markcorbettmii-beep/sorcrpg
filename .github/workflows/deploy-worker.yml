@@ -4,16 +4,12 @@ on:
   push:
     branches:
       - main
-      - claude/coding-session-lkoorx
-      - claude/verification-email-issue-w3qskj
-      - claude/continued-work-16946
-      - claude/character-sheets-fix
-      - claude/character-sheets-text-color
     paths:
       - 'content/features/space.html'
       - 'sorc-app/**'
       - '*.html'
       - '_redirects'
+      - 'scripts/check-publish-consistency.mjs'
 
 jobs:
   deploy:
@@ -27,18 +23,8 @@ jobs:
         run: npm run check-publish && npm run check-design
       - run: npm install
         working-directory: sorc-app
-      - name: Copy root HTML files to public
-        run: |
-          for f in *.html; do
-            [[ "$f" != "brunn_build.html" && "$f" != "build-brunn-flip.html" ]] && cp "$f" sorc-app/public/
-          done 2>/dev/null || true
-      # _redirects lives at the repo root but is only honoured from inside the
-      # asset directory, so it has to be copied in like the HTML above. Without
-      # this the /lobbies/beg, /int and /adv rewrites never ship.
-      - name: Copy _redirects to public
-        run: cp _redirects sorc-app/public/_redirects
-      - name: Stage canonical Space page for Worker assets
-        run: cp content/features/space.html sorc-app/public/content/features/space.html
+      - name: Stage canonical Worker assets
+        run: node sorc-app/scripts/stage-worker-assets.mjs
       - run: npx wrangler deploy
         working-directory: sorc-app
         env:

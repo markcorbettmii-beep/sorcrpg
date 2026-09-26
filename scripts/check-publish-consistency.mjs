@@ -64,7 +64,13 @@ for (const path of publicFiles.keys()) {
 
 const protectedFiles = {
   "sorc-app/public/main.js": ["lawful-mode", "themeSelected", "sorcSyncHtmlBg"],
-  "sorc-app/public/nav-system.js": ["evil-mode", "lawful-mode", "themeSelected"],
+  "sorc-app/public/nav-system.js": [
+    "evil-mode",
+    "lawful-mode",
+    "themeSelected",
+    "sorc-nav-plain-item",
+    "sorc-nav-item-lock-status",
+  ],
   "sorc-app/public/styles.css": ["body.evil-mode", "body.lawful-mode"],
 };
 
@@ -96,6 +102,36 @@ if (!existsSync(publicIndexPath)) {
   const indexText = readFileSync(publicIndexPath, "utf8");
   if (!indexText.includes("slayers-letters_20260510_111419_0000.jpg")) {
     protectedFailures.push("Public index page no longer uses its existing SORC banner");
+  }
+}
+const required404LogoPaths = [
+  "/content/site-presentation/assets/branding/logos/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png",
+  "/content/site-presentation/assets/branding/logos/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png",
+];
+for (const [path, label] of [
+  [join(repository, "404.html"), "Root 404 page"],
+  [join(repository, "sorc-app", "public", "404.html"), "Worker 404 page"],
+]) {
+  if (!existsSync(path)) {
+    protectedFailures.push(`${label} is missing`);
+    continue;
+  }
+  const text = readFileSync(path, "utf8");
+  for (const logoPath of required404LogoPaths) {
+    if (!text.includes(logoPath)) {
+      protectedFailures.push(`${label} is missing the deployed paired logo path ${logoPath}`);
+    }
+  }
+}
+for (const logoPath of required404LogoPaths) {
+  const workerAssetPath = join(
+    repository,
+    "sorc-app",
+    "public",
+    logoPath.slice(1),
+  );
+  if (!existsSync(workerAssetPath)) {
+    protectedFailures.push(`Worker logo asset is missing: ${logoPath}`);
   }
 }
 const publicSiteRoot = join(repository, "sorc-app", "public");
@@ -169,10 +205,12 @@ if (!existsSync(canonicalSpacePath)) {
     }
   }
 }
-if (existsSync(publicSpacePath)) {
-  spaceFailures.push(
-    "Stale public Space duplicate exists at sorc-app/public/content/features/space.html",
-  );
+if (existsSync(publicSpacePath) && existsSync(canonicalSpacePath)) {
+  if (!readFileSync(publicSpacePath).equals(readFileSync(canonicalSpacePath))) {
+    spaceFailures.push(
+      "Generated public Space copy differs from content/features/space.html",
+    );
+  }
 }
 for (const [path, label] of [
   [join(repository, "sorc-app", "public", "space.html"), "Legacy /space.html alias"],
@@ -193,6 +231,57 @@ for (const [relativePath, markers] of Object.entries(protectedFiles)) {
   for (const marker of markers) {
     if (!text.includes(marker)) {
       protectedFailures.push(`${relativePath}: missing ${marker}`);
+    }
+  }
+}
+
+const navigationPath = join(repository, "sorc-app", "public", "nav-system.js");
+if (existsSync(navigationPath)) {
+  const navigationText = readFileSync(navigationPath, "utf8");
+  const bareBonesEntry = [...navigationText.matchAll(/<li\b[\s\S]*?<\/li>/gi)]
+    .map((match) => match[0])
+    .find((entry) => entry.includes("Bare Bones Rules"));
+  if (!bareBonesEntry) {
+    protectedFailures.push("Bare Bones Rules menu entry is missing");
+  } else {
+    if (/<a\b/i.test(bareBonesEntry)) {
+      protectedFailures.push("Bare Bones Rules menu entry must remain plain text");
+    }
+    if (!/class="sorc-nav-item-lock-status">Locked<\/span>/i.test(bareBonesEntry)) {
+      protectedFailures.push("Bare Bones Rules menu entry must be marked Locked");
+    }
+  }
+}
+
+const requiredRulesIndexAnchors = [
+  ["rules_time.html", "aura"],
+  ["rules_prestige.html", "legacy"],
+  ["rules_combat-movement.html", "game-engine-cards"],
+];
+for (const [contentDirectory, label] of [
+  [sourceRoot, "Canonical"],
+  [publicRoot, "Worker public"],
+]) {
+  const rulesIndexPath = join(contentDirectory, "essentia_core", "rules-index.html");
+  if (!existsSync(rulesIndexPath)) {
+    protectedFailures.push(`${label} Rules Index is missing`);
+    continue;
+  }
+  const rulesIndexText = readFileSync(rulesIndexPath, "utf8");
+  for (const [target, id] of requiredRulesIndexAnchors) {
+    const link = `href="${target}#${id}"`;
+    if (!rulesIndexText.includes(link)) {
+      protectedFailures.push(`${label} Rules Index is missing ${link}`);
+    }
+
+    const targetPath = join(contentDirectory, "essentia_core", target);
+    if (!existsSync(targetPath)) {
+      protectedFailures.push(`${label} Rules Index target is missing: ${target}`);
+      continue;
+    }
+    const targetText = readFileSync(targetPath, "utf8");
+    if (!targetText.includes(`id="${id}"`)) {
+      protectedFailures.push(`${label} Rules Index target ${target} is missing #${id}`);
     }
   }
 }

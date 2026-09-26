@@ -290,7 +290,7 @@ class SORCNavigation {
                 <p class="sorc-nav-section-description">Learn the rules that guide characters, items, and play.</p>
                 <ul class="sorc-nav-section-menu" id="rules-menu">
                   <li><a href="${pathToRoot}content/essentia_core/rules-index.html">Complex Rules</a><span class="sorc-nav-item-description">The crunchy version of SORC, includes all planets, detailed stat tracking and a Modular version for stripping it down.</span></li>
-                  <li><a href="${pathToRoot}content/drafts/bare-bones.html">Bare Bones Rules</a><span class="sorc-nav-item-description">Bare Bones rules locked in. Less data and tracking, and easier to manage play. Playable Races only from Zailister.</span></li>
+                  <li><span class="sorc-nav-plain-item"><span>Bare Bones Rules</span><span class="sorc-nav-item-lock-status">Locked</span></span><span class="sorc-nav-item-description">Bare Bones rules locked in. Less data and tracking, and easier to manage play. Playable Races only from Zailister.</span></li>
                   <li><a href="${pathToRoot}content/essentia_core/rules_in-the-box.html#in-the-box">In the Box · Sheets &amp; Booklets</a></li>
                   <li><a href="${pathToRoot}content/essentia_core/rules_sorc-cards.html#sorc-cards">SORC Cards · Tracking &amp; Recharge</a></li>
                   ${RULES_CHAPTERS.map((ch, idx) => `
