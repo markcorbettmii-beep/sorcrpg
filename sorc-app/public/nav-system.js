@@ -73,7 +73,6 @@ const SORC_AUTH_REQUIRED_PATHS = new Set([
   '/content/features/threads.html',
   '/content/features/trading-post.html',
   '/content/features/trials-of-combat.html',
-  '/content/features/vault.html'
 ]);
 
 class SORCNavigation {

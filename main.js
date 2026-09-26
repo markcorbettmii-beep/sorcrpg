@@ -21,7 +21,6 @@
     '/content/features/threads.html': true,
     '/content/features/trading-post.html': true,
     '/content/features/trials-of-combat.html': true,
-    '/content/features/vault.html': true
   };
   var currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
   if (!protectedPaths[currentPath]) return;
