@@ -69,10 +69,9 @@ const SORC_AUTH_REQUIRED_PATHS = new Set([
   '/content/features/lobbies.html',
   '/content/features/room.html',
   '/content/features/sorc-store.html',
-  '/content/features/space.html',
   '/content/features/threads.html',
   '/content/features/trading-post.html',
-  '/content/features/trials-of-combat.html',
+  '/content/features/trials-of-combat.html'
 ]);
 
 class SORCNavigation {
@@ -194,12 +193,12 @@ class SORCNavigation {
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play" aria-expanded="false" aria-controls="play-menu">
-                  <span class="sorc-nav-section-label">YOUR SPACE</span>
+                  <span class="sorc-nav-section-label sorc-play-section-label">SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
-                <p class="sorc-nav-section-description">Manage your character, lobbies, room, and personal progression.</p>
+                <p class="sorc-nav-section-description sorc-play-section-description">Login Wanderer, to manage your character, lobbies, room, and personal progression.</p>
                 <ul class="sorc-nav-section-menu" id="play-menu">
-                  <li><a href="${pathToRoot}content/features/space.html">Your Space Profile</a></li>
+                  <li><a class="sorc-space-nav-link" href="${pathToRoot}content/features/space.html">Space</a></li>
                   <li><a href="${pathToRoot}lobbies.html">My Lobbies</a></li>
                   <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
                   <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
@@ -375,6 +374,16 @@ class SORCNavigation {
     const floatingLink = document.querySelector('.sorc-floating-profile-link');
     const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
     if (!card || !avatar || !name || !roleLabel) return;
+    const playSectionLabel = document.querySelector('.sorc-play-section-label');
+    const playSectionDescription = document.querySelector('.sorc-play-section-description');
+    const spaceLink = document.querySelector('.sorc-space-nav-link');
+    if (playSectionLabel) playSectionLabel.textContent = isSignedIn ? 'My Space' : 'SPACE';
+    if (playSectionDescription) {
+      playSectionDescription.textContent = isSignedIn
+        ? 'Manage your character, lobbies, room, and personal progression.'
+        : 'Login Wanderer, to manage your character, lobbies, room, and personal progression.';
+    }
+    if (spaceLink) spaceLink.textContent = isSignedIn ? 'My Space' : 'Space';
 
     card.href = isSignedIn
       ? '/content/features/space.html'

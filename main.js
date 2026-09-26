@@ -17,10 +17,9 @@
     '/content/features/lobbies.html': true,
     '/content/features/room.html': true,
     '/content/features/sorc-store.html': true,
-    '/content/features/space.html': true,
     '/content/features/threads.html': true,
     '/content/features/trading-post.html': true,
-    '/content/features/trials-of-combat.html': true,
+    '/content/features/trials-of-combat.html': true
   };
   var currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
   if (!protectedPaths[currentPath]) return;

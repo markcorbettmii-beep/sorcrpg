@@ -69,10 +69,9 @@ const SORC_AUTH_REQUIRED_PATHS = new Set([
   '/content/features/lobbies.html',
   '/content/features/room.html',
   '/content/features/sorc-store.html',
-  '/content/features/space.html',
   '/content/features/threads.html',
   '/content/features/trading-post.html',
-  '/content/features/trials-of-combat.html',
+  '/content/features/trials-of-combat.html'
 ]);
 
 class SORCNavigation {
@@ -118,14 +117,20 @@ class SORCNavigation {
     const pathToRoot = this.getPathToRoot();
     const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
     const isHomePage = currentPath === '/' || currentPath === '/index.html';
+    document.querySelectorAll('.sorc-letters-img.evil-only').forEach((image) => {
+      image.src = '/sorc-letters-evil.png';
+    });
+    document.querySelectorAll('.sorc-letters-img.lawful-only').forEach((image) => {
+      image.src = '/sorc-letters-lawful.png';
+    });
     const hasPageBanner = !!document.querySelector(
       '.header-container .sorc-letters-img, .header-container .sorc-letters, .header-container img[src*="sorc" i], [data-sorc-page-banner]'
     );
     const brandBannerHTML = (!isHomePage && !hasPageBanner) ? `
       <div class="sorc-global-brand-banner" data-sorc-page-banner>
         <a href="${pathToRoot}index.html" class="sorc-global-brand-link" aria-label="SORC home">
-          <img src="/content/site-presentation/assets/branding/logos/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" class="sorc-global-brand-image evil-only" alt="SORC">
-          <img src="/content/site-presentation/assets/branding/logos/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" class="sorc-global-brand-image lawful-only" alt="SORC">
+          <img src="/sorc-letters-evil.png" class="sorc-global-brand-image evil-only" alt="SORC">
+          <img src="/sorc-letters-lawful.png" class="sorc-global-brand-image lawful-only" alt="SORC">
         </a>
       </div>
     ` : '';
@@ -194,12 +199,12 @@ class SORCNavigation {
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play" aria-expanded="false" aria-controls="play-menu">
-                  <span class="sorc-nav-section-label">YOUR SPACE</span>
+                  <span class="sorc-nav-section-label sorc-play-section-label">SPACE</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
-                <p class="sorc-nav-section-description">Manage your character, lobbies, room, and personal progression.</p>
+                <p class="sorc-nav-section-description sorc-play-section-description">Login Wanderer, to manage your character, lobbies, room, and personal progression.</p>
                 <ul class="sorc-nav-section-menu" id="play-menu">
-                  <li><a href="${pathToRoot}content/features/space.html">Your Space Profile</a></li>
+                  <li><a class="sorc-space-nav-link" href="${pathToRoot}content/features/space.html">Space</a></li>
                   <li><a href="${pathToRoot}lobbies.html">My Lobbies</a></li>
                   <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
                   <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
@@ -375,6 +380,16 @@ class SORCNavigation {
     const floatingLink = document.querySelector('.sorc-floating-profile-link');
     const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
     if (!card || !avatar || !name || !roleLabel) return;
+    const playSectionLabel = document.querySelector('.sorc-play-section-label');
+    const playSectionDescription = document.querySelector('.sorc-play-section-description');
+    const spaceLink = document.querySelector('.sorc-space-nav-link');
+    if (playSectionLabel) playSectionLabel.textContent = isSignedIn ? 'My Space' : 'SPACE';
+    if (playSectionDescription) {
+      playSectionDescription.textContent = isSignedIn
+        ? 'Manage your character, lobbies, room, and personal progression.'
+        : 'Login Wanderer, to manage your character, lobbies, room, and personal progression.';
+    }
+    if (spaceLink) spaceLink.textContent = isSignedIn ? 'My Space' : 'Space';
 
     card.href = isSignedIn
       ? '/content/features/space.html'

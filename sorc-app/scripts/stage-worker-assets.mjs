@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { copyFileSync, mkdirSync, readdirSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,6 +30,15 @@ copyFileSync(
   resolve(publicRoot, "_redirects"),
 );
 
+const logoAssets = ["sorc-letters-evil.png", "sorc-letters-lawful.png"].map(
+  (logo) => {
+    const source = resolve(repositoryRoot, logo);
+    const destination = resolve(publicRoot, logo);
+    copyFileSync(source, destination);
+    return destination;
+  },
+);
+
 const spaceSource = resolve(repositoryRoot, "content/features/space.html");
 const spaceDestination = resolve(
   publicRoot,
@@ -38,6 +47,12 @@ const spaceDestination = resolve(
 mkdirSync(dirname(spaceDestination), { recursive: true });
 copyFileSync(spaceSource, spaceDestination);
 
+for (const asset of [...logoAssets, spaceDestination]) {
+  if (statSync(asset).size === 0) {
+    throw new Error(`Required Worker asset was staged empty: ${asset}`);
+  }
+}
+
 console.log(
-  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, and canonical Space page.`,
+  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, and canonical Space page.`,
 );
