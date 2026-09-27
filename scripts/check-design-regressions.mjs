@@ -41,6 +41,15 @@ const checks = [
       "window.location.href = propertySpacePath;",
     ],
   },
+  {
+    name: "Property URL serves the Space page",
+    path: "sorc-app/src/index.ts",
+    markers: ["let assetResponse = await c.env.ASSETS.fetch(c.req.raw);"],
+    forbiddenMarkers: [
+      "isDuplicatePropertyRoute",
+      "c.redirect('/content', 302)",
+    ],
+  },
 ];
 
 let failures = 0;
@@ -55,8 +64,16 @@ for (const check of checks) {
 
   const text = readFileSync(path, "utf8");
   const missing = check.markers.filter((marker) => !text.includes(marker));
+  const forbidden = (check.forbiddenMarkers || []).filter((marker) =>
+    text.includes(marker),
+  );
   if (missing.length) {
     console.error(`FAIL ${check.name}: missing ${missing.join(", ")}`);
+    failures++;
+    continue;
+  }
+  if (forbidden.length) {
+    console.error(`FAIL ${check.name}: found ${forbidden.join(", ")}`);
     failures++;
     continue;
   }
