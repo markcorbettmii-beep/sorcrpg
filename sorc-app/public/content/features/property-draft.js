@@ -29,12 +29,12 @@
         { id:'item-tool', type:'Item Cards', name:'Field Tool', ref:'item-pg.A-203', summary:'A carried practical tool.', art:'', owned:true, worn:false },
         { id:'item-placeholder-1', type:'Item Cards', name:'Material Stack', ref:'item-pg.A-204', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
         { id:'item-placeholder-2', type:'Item Cards', name:'Quest Item', ref:'item-pg.A-205', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
-        { id:'armor-core', type:'Armament Cards', name:'Leather Core Set', ref:'arm-pg.A-301', rank:'Rare', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-core-leathtaba3.png_20260916_103316_0000.png', occludesBody:true, owned:true, worn:true },
-        { id:'armor-helm', type:'Armament Cards', name:'Leather Helm', ref:'arm-pg.A-302', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-helm.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-helm-leathtaba3.png_20260915_021632_0000.png', owned:true, worn:true },
-        { id:'armor-gloves', type:'Armament Cards', name:'Leather Gloves', ref:'arm-pg.A-303', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-gloves.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-gloves-leathtaba3.png_20260915_021700_0000.png', owned:true, worn:true },
-        { id:'armor-boots', type:'Armament Cards', name:'Leather Boots', ref:'arm-pg.A-304', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-boots.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-boots-leathtaba3.png_20260916_124704_0000.png', owned:true, worn:true },
-        { id:'weapon-taw', type:'Armament Cards', name:'Dual-Wield TAW', ref:'arm-pg.A-305', rank:'Rare', summary:'Readied dual-wield TAW Armament.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-taw.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/weapons-taw/rare/hand/dw/high-res-dw-taw3.png_20260916_103435_0000.png', owned:true, worn:true },
-        { id:'armament-placeholder', type:'Armament Cards', name:'Readied Armament', ref:'arm-pg.A-306', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false }
+        { id:'armor-core', type:'Armament Cards', category:'Armor', name:'Leather Core Set', ref:'arm-pg.A-301', rank:'Rare', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-core-leathtaba3.png_20260916_103316_0000.png', occludesBody:true, owned:true, worn:true },
+        { id:'armor-helm', type:'Armament Cards', category:'Armor', name:'Leather Helm', ref:'arm-pg.A-302', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-helm.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-helm-leathtaba3.png_20260915_021632_0000.png', owned:true, worn:true },
+        { id:'armor-gloves', type:'Armament Cards', category:'Armor', name:'Leather Gloves', ref:'arm-pg.A-303', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-gloves.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-gloves-leathtaba3.png_20260915_021700_0000.png', owned:true, worn:true },
+        { id:'armor-boots', type:'Armament Cards', category:'Armor', name:'Leather Boots', ref:'arm-pg.A-304', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-boots.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-boots-leathtaba3.png_20260916_124704_0000.png', owned:true, worn:true },
+        { id:'weapon-taw', type:'Armament Cards', category:'Weapons', name:'Dual-Wield TAW', ref:'arm-pg.A-305', rank:'Rare', summary:'Readied dual-wield TAW Armament.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-taw.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/weapons-taw/rare/hand/dw/high-res-dw-taw3.png_20260916_103435_0000.png', owned:true, worn:true },
+        { id:'armament-placeholder', type:'Armament Cards', category:'Readied Armaments', name:'Readied Armament', ref:'arm-pg.A-306', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false }
     ];
     window.SORCPropertyInventory = {
         characterId: propertyCharacterId,
@@ -68,7 +68,7 @@
         return pickerInteraction(card, clickHandler);
     }
     function button(card, selected) {
-        return '<button type="button" class="property-armory-card' + rankClass(card) + ' ' + (card.owned ? 'owned' : 'unowned') + (card.worn ? ' readied' : '') + (card.id === selected ? ' selected' : '') + '" data-property-card="' + esc(card.id) + '" data-property-name="' + esc(card.name + ' ' + card.ref + ' ' + card.summary) + '"' + companionInteraction(card) + ' aria-pressed="' + (card.id === selected ? 'true' : 'false') + '">' +
+        return '<button type="button" class="property-armory-card' + rankClass(card) + ' ' + (card.owned ? 'owned' : 'unowned') + (card.worn ? ' readied' : '') + (card.id === selected ? ' selected' : '') + '" data-property-card="' + esc(card.id) + '" data-property-name="' + esc(card.name + ' ' + card.ref + ' ' + card.summary + ' ' + card.type + ' ' + (card.category || '')) + '"' + companionInteraction(card) + ' aria-pressed="' + (card.id === selected ? 'true' : 'false') + '">' +
             '<span class="property-armory-card-art' + (card.art ? '' : ' placeholder') + '">' + art(card) + '</span></button>';
     }
     function indexItem(card, selected) {
@@ -144,7 +144,7 @@
     }
     var HAND_FOREGROUND_ART = '/content/character/assets/female/firstborn/human/physiques/muscular/body/hands-foreground.png_20260916_163927_0000.png';
     function characterHandLayer(src, side) {
-        return '<img class="property-canvas-layer property-canvas-layer-character-hand-' + side + '" src="' + HAND_FOREGROUND_ART + '" alt="" aria-hidden="true" />';
+        return '<img class="property-canvas-layer property-canvas-layer-character-hand-' + side + '" style="-webkit-mask-image:url(\'' + esc(HAND_FOREGROUND_ART) + '\');mask-image:url(\'' + esc(HAND_FOREGROUND_ART) + '\')" src="' + esc(src) + '" alt="" aria-hidden="true" />';
     }
     var ARMAMENT_LAYER_ORDER = { 'armor-boots': 1, 'armor-core': 2, 'armor-gloves': 3, 'weapon-taw': 4, 'armor-helm': 5 };
     function selectedArmamentOccludesBody(selectedArmaments) {
@@ -180,65 +180,57 @@
                 canvasLayers(highlightedArmament, highlightedCompanion) +
             '</div>' +
             '<div class="property-canvas-pickers property-canvas-pickers-bottom"><div class="property-canvas-orbit companions">' + companions.map(function(c) { return orbitPiece(c, highlightedCompanion); }).join('') + '</div><div class="property-companion-instruction">Select to view on canvas or long press to view card</div></div>' +
-            '<div class="property-canvas-caption">' + characterPickerMarkup() + '</div>' +
         '</section>';
     }
     function haulingSection() {
         return '<section class="property-container-category"><div class="property-armory-row-head"><h4>Hauling</h4><span>Companions and wagons</span></div>' +
-            '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Companions</h4><span class="property-container-size">Tiny &middot; Small &middot; Standard &middot; Goliath</span></div><div class="property-card-row">' +
+            '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Companions</h4><span class="property-container-size">Tiny &middot; Small &middot; Standard &middot; Goliath</span></div><p class="property-container-note">Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.</p><div class="property-card-row">' +
             ['Fellowship Companion','Pack Mule','Tiny Companion','Goliath Companion','Behemoth Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i < 2 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc(n) + '</span><span class="property-armory-card-ref">container-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i < 2 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
             '</div></div><div class="property-armory-row"><div class="property-armory-row-head"><h4>Wagons</h4><span class="property-container-size">Goliath</span></div><div class="property-card-row">' +
             ['Cargo Wagon','Wagon Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc(n) + '</span><span class="property-armory-card-ref">wagon-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
             '</div></div></section>';
     }
+    var PROPERTY_TAB_PAGES = [
+        { id:'on-person', title:'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
+        { id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
+        { id:'quarters', title:'Quarters', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
+        { id:'vaults', title:'Vault', description:'Personal vaults may be rented or owned; town banks, guilds, and clans also provide secure storage.' },
+        { id:'storage-stash', title:'Stash/Stored', description:'Home or rented storage for containers, deployed items, trophies, and things the Character has buried, hidden, or stashed.' },
+        { id:'force-station', title:'Force Station', descriptionMarkup:'Space for vehicles and spacecraft too large to fit on a <a href="/content/essentia_core/rules_game-features.html#land-divisions">Lot</a>.' }
+    ];
+    var PROPERTY_CARD_ROWS = [
+        { id:'readied-armaments', title:'Readied Armaments', matches:function(card) { return card.type === 'Armament Cards' && ((card.owned && card.worn) || card.category === 'Readied Armaments'); } },
+        { id:'sentimental-arms', title:'Sentimental Arms', matches:function(card) { return card.sentimental === true || card.isSentimental === true || card.category === 'Sentimental Arms' || card.type === 'Sentimental Arms'; } },
+        { id:'weapons', title:'Weapons', matches:function(card) { return card.category === 'Weapons' || card.type === 'Weapon Cards'; } },
+        { id:'armor', title:'Armor', matches:function(card) { return card.category === 'Armor' || card.type === 'Armor Cards'; } },
+        { id:'companion', title:'Companion', matches:function(card) { return card.type === 'Companion Cards' || card.category === 'Companion'; } }
+    ];
+    function propertyRowCards(rowId) {
+        var row = PROPERTY_CARD_ROWS.filter(function(item) { return item.id === rowId; })[0];
+        return row ? cards.filter(row.matches) : [];
+    }
     function page(pageName, selected) {
         var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>';
-        var pageTitles = {
-            'on-person': 'Worn',
-            'carried-hauled': 'Carried-Hauled',
-            quarters: 'Quarters',
-            'storage-stash': 'Storage & Stash',
-            vaults: 'Vaults',
-            'force-station': 'Force Station'
-        };
-        var pageTabs = [
-            { id: 'on-person', label: 'Worn' },
-            { id: 'carried-hauled', label: 'Carried-Hauled' },
-            { id: 'quarters', label: 'Quarters' }
-        ];
-        var nextPages = {
-            'on-person': { id: 'carried-hauled', label: 'Carried-Hauled PG. 2 »»' },
-            'carried-hauled': { id: 'quarters', label: 'Quarters pg. 3' },
-            quarters: { id: 'storage-stash', label: 'Storage & Stash pg. 4' },
-            'storage-stash': { id: 'vaults', label: 'Vaults pg. 5' },
-            vaults: { id: 'force-station', label: 'Force Station pg. 6' }
-        };
-        function pageNavigation() {
-            return '<nav class="property-page-nav" aria-label="Property pages">' +
-                pageTabs.map(function(tab) {
-                    var active = tab.id === pageName;
-                    return '<button type="button" class="' + (active ? 'active' : '') + '"' +
-                        (active ? ' aria-current="page"' : '') +
-                        ' onclick="selectPropertyPage(\'' + tab.id + '\')">' + esc(tab.label) + '</button>';
-                }).join('') +
-                '</nav>';
-        }
+        var pageIndex = PROPERTY_TAB_PAGES.findIndex(function(item) { return item.id === pageName; });
+        var pageInfo = pageIndex >= 0 ? PROPERTY_TAB_PAGES[pageIndex] : { title:'Property', description:'' };
         function pageHeader() {
-            var next = nextPages[pageName];
-            return '<div class="property-page-header"><h4 class="property-page-title">' + esc(pageTitles[pageName] || 'Property') + '</h4>' +
-                (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')">' + esc(next.label) + '</button>' : '') +
+            var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
+            var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
+            var nextPageNumber = pageIndex + 2;
+            var nextLabel = next ? (next.navigationTitle || next.title) + ' PG. ' + nextPageNumber + ' »»' : '';
+            return '<div class="property-page-header"><div class="property-page-intro"><div class="property-page-heading-row">' +
+                (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + (pageIndex) + '. ' + esc(previous.title) + '">&#171;</button>' : '') +
+                '<h4 class="property-page-title">' + esc(pageInfo.title) + '</h4></div>' +
+                (pageInfo.descriptionMarkup || pageInfo.description ? '<p class="property-page-description">' + (pageInfo.descriptionMarkup || esc(pageInfo.description)) + '</p>' : '') +
+                '</div>' +
+                (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + nextPageNumber + '. ' + esc(next.navigationTitle || next.title) + '">' + esc(nextLabel) + '</button>' : '') +
                 '</div>';
         }
         function pageFrame(content) {
-            return pageHeader() + pageNavigation() + access + content;
+            return pageHeader() + access + content;
         }
-        var pageDescriptions = {
-            'storage-stash': 'Home storage, rented storage, and things you have buried, stashed, or hidden.',
-            vaults: 'Secure storage for safes, vaults, armories, and banks.',
-            'force-station': 'Neutral massive commercial space for lease when Home properties run out of room. This cavernous industrial bay accommodates heavy Spacecraft, specialized Armor, bulk Weapons, and larger Biological Companions. Keep monthly rental fees current or the property may be auctioned.'
-        };
         if (pageName === 'carried-hauled') {
-            return pageFrame('<div class="property-container-page"><p class="property-container-note">Property carried or hauled by the Character.</p></div>');
+            return pageFrame(haulingSection());
         }
         if (pageName === 'quarters') {
             var familyMarkup = typeof window.renderSpaceFamilyPropertyPage === 'function'
@@ -255,39 +247,46 @@
         }
         if (pageName === 'vaults') {
             return pageFrame('<div class="property-container-grid">' +
-                '<section class="property-container-section"><h5>Personal Vaults</h5><p>Secure personal storage for safes and vaults.</p></section>' +
-                '<section class="property-container-section"><h5>Guild &amp; Clan</h5><p>Storage, Armory, and Hall Banks.</p></section>' +
+                '<section class="property-container-section"><h5>Personal Vaults</h5><p>Personal safes and vaults may be rented or owned.</p></section>' +
+                '<section class="property-container-section"><h5>Town Banks</h5><p>Secure vault storage is available through town banks.</p></section>' +
+                '<section class="property-container-section"><h5>Guild &amp; Clan</h5><p>Guilds and clans may provide vault storage, Armories, and Hall Banks.</p></section>' +
                 '</div>');
         }
         if (pageName === 'force-station') {
             return pageFrame('<div class="property-container-grid">' +
-                '<section class="property-container-section"><h5>Force Station</h5><p>' + esc(pageDescriptions['force-station']) + '</p></section>' +
+                '<section class="property-container-section"><h5>Force Station</h5><p>Keep monthly rental fees current or the property may be auctioned. Vehicles and spacecraft too large for a Lot are kept here.</p></section>' +
                 '</div>');
         }
-        if (pageName !== 'on-person') return pageFrame('<div class="property-container-page"><p class="property-container-note">' + esc(pageDescriptions[pageName] || '') + '</p></div>');
+        if (pageName !== 'on-person') return pageFrame('');
         var owned = cards.filter(function(card) { return card.owned; }), unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
-        return pageHeader() + pageNavigation() + access + '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout">' + canvas(selected) + '<aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas keeps Kaida, her worn Armaments, her Companions, and her Safe Haven visible while the selected Card is marked.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside></div>' + rows(selected) + haulingSection();
+        return pageFrame('<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five columns per row</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout"><aside class="property-card-index"><h4>Character Index</h4><p>Choose any Card. The center canvas reflects the chosen Character\'s Assets.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside>' + canvas(selected) + '</div><p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the center canvas above. For the Character&rsquo;s full inventory and container types, refer to the Hone Tab of User Space.</p>' + rows(selected));
     }
     var rowPages = {};
     function rows(selected) {
-        return '<div id="propertyDraftRows">' + ['Character Cards','Companion Cards','Compass Safe Havens','Item Cards','Armament Cards'].map(function(type) {
-            var typeCards = cards.filter(function(card) { return card.type === type; }), pageSize = 5;
-            var pageCount = Math.max(1, Math.ceil(typeCards.length / pageSize));
-            var pageNumber = Math.min(rowPages[type] || 0, pageCount - 1);
-            rowPages[type] = pageNumber;
-            var controls = pageCount > 1
-                ? '<div class="property-armory-row-controls"><button type="button" onclick="selectPropertyRowPage(\'' + esc(type) + '\', -1)' + (pageNumber === 0 ? ' disabled' : '') + ' aria-label="Previous ' + esc(type) + ' page">&#171;</button><span>' + (pageNumber + 1) + '/' + pageCount + '</span><button type="button" onclick="selectPropertyRowPage(\'' + esc(type) + '\', 1)" aria-label="Next ' + esc(type) + ' page">&#187;</button></div>'
-                : '<span>5 Cards per page</span>';
-            return '<section class="property-armory-row"><div class="property-armory-row-head"><h4>' + esc(type) + '</h4>' + controls + '</div><div class="property-card-row">' + typeCards.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize).map(function(card) { return button(card, selected); }).join('') + '</div></section>';
+        return '<div id="propertyDraftRows">' + PROPERTY_CARD_ROWS.map(function(row) {
+            var rowCards = propertyRowCards(row.id), pageSize = 9;
+            var pageCount = Math.ceil(rowCards.length / pageSize);
+            var pageNumber = pageCount ? Math.min(rowPages[row.id] || 0, pageCount - 1) : 0;
+            rowPages[row.id] = pageNumber;
+            var visibleCards = rowCards.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize);
+            var rowContent = rowCards.length
+                ? visibleCards.map(function(card) { return button(card, selected); }).join('')
+                : '<div class="property-card-row-empty">No cards yet.</div>';
+            var more = pageNumber < pageCount - 1
+                ? '<button type="button" class="property-card-row-more" onclick="selectPropertyRowPage(\'' + esc(row.id) + '\', 1)" aria-label="More ' + esc(row.title) + ' cards">&#187;&#187;</button>'
+                : '<span class="property-card-row-more is-end" aria-label="No more ' + esc(row.title) + ' cards">&#187;&#187;</span>';
+            return '<section class="property-armory-row" data-property-row="' + esc(row.id) + '"><div class="property-armory-row-head"><h4>' + esc(row.title) + '</h4></div><div class="property-card-row">' + rowContent + more + '</div></section>';
         }).join('') + '</div>';
     }
     window.renderPropertyDraft = function() {
         var selected = 'armor-core'; try { selected = localStorage.getItem(propertyStorageKey('lastReadied')) || selected; } catch(e) {}
-        return '<div class="property-draft" id="propertyDraft" data-page="on-person" data-selected="' + esc(selected) + '">' + page('on-person', selected) + '</div>';
+        var firstPage = PROPERTY_TAB_PAGES[0];
+        if (!firstPage) return '<div class="property-draft" id="propertyDraft" data-page="" data-selected="' + esc(selected) + '"><p class="property-container-note">No Property pages are available.</p></div>';
+        return '<div class="property-draft" id="propertyDraft" data-page="' + esc(firstPage.id) + '" data-selected="' + esc(selected) + '">' + page(firstPage.id, selected) + '</div>';
     };
     window.selectPropertyPage = function(name) {
         var draft = document.getElementById('propertyDraft');
-        if (!draft || ['on-person', 'carried-hauled', 'quarters', 'storage-stash', 'vaults', 'force-station'].indexOf(name) === -1) return;
+        if (!draft || !PROPERTY_TAB_PAGES.some(function(item) { return item.id === name; })) return;
         var selected = draft.getAttribute('data-selected') || 'armor-core';
         draft.setAttribute('data-page', name);
         draft.innerHTML = page(name, selected);
@@ -323,10 +322,10 @@
         }
         if (typeof window.refreshSpaceCharacterIdentity === 'function') window.refreshSpaceCharacterIdentity();
     };
-    window.selectPropertyRowPage = function(type, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var typeCards = cards.filter(function(card) { return card.type === type; }), pageCount = Math.max(1, Math.ceil(typeCards.length / 5)), pageNumber = rowPages[type] || 0; rowPages[type] = (pageNumber + direction + pageCount) % pageCount; draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+    window.selectPropertyRowPage = function(rowId, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var pageCount = Math.ceil(propertyRowCards(rowId).length / 9); if (!pageCount) return; var pageNumber = Math.min(Math.max(rowPages[rowId] || 0, 0), pageCount - 1); rowPages[rowId] = Math.max(0, Math.min(pageCount - 1, pageNumber + direction)); draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
      window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem(propertyStorageKey('safeHaven'), id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {
-        var q = String(query || '').trim().toLowerCase(), matches = cards.filter(function(card) { return !q || (card.name + ' ' + card.ref + ' ' + card.summary + ' ' + card.type).toLowerCase().indexOf(q) !== -1; });
+        var q = String(query || '').trim().toLowerCase(), matches = cards.filter(function(card) { return !q || (card.name + ' ' + card.ref + ' ' + card.summary + ' ' + card.type + ' ' + (card.category || '')).toLowerCase().indexOf(q) !== -1; });
         document.querySelectorAll('#propertyDraftRows .property-armory-card').forEach(function(button) { button.style.display = (!q || (button.getAttribute('data-property-name') || '').toLowerCase().indexOf(q) !== -1) ? '' : 'none'; });
         var index = document.getElementById('propertyCardIndex'); if (index) index.innerHTML = matches.filter(function(card) { return card.owned; }).concat(matches.filter(function(card) { return !card.owned; }).slice(0, 5)).map(function(card) { return indexItem(card, document.getElementById('propertyDraft').getAttribute('data-selected') || 'armor-core'); }).join('');
         var message = document.getElementById('propertySearchMessage'); if (message) { message.hidden = !q || matches.length > 0; message.textContent = matches.length ? '' : 'No Card matches that search. Try the Card name, its ref #, or a Card type such as Armament, Companion, or Item.'; }
