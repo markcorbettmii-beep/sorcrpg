@@ -192,13 +192,18 @@
             '</div></div></section>';
     }
     var PROPERTY_TAB_PAGES = [
-        { id:'on-person', title:'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
-        { id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
-        { id:'quarters', title:'Quarters', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
+        { id:'on-person', title:'Worn', label: 'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
+        { id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled', label: 'Carried-Hauled', navigationLabel:'Carried-Hauled PG. 2 »»', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
+        { id:'quarters', title:'Quarters', label: 'Quarters', navigationLabel:'Quarters pg. 3', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
         { id:'vaults', title:'Vault', description:'Personal vaults may be rented or owned; town banks, guilds, and clans also provide secure storage.' },
         { id:'storage-stash', title:'Stash/Stored', description:'Home or rented storage for containers, deployed items, trophies, and things the Character has buried, hidden, or stashed.' },
         { id:'force-station', title:'Force Station', descriptionMarkup:'Space for vehicles and spacecraft too large to fit on a <a href="/content/essentia_core/rules_game-features.html#land-divisions">Lot</a>.' }
     ];
+    var PROPERTY_PAGE_LABELS = {
+        'on-person': 'Worn',
+        'carried-hauled': 'Carried-Hauled',
+        'quarters': 'Quarters'
+    };
     var PROPERTY_CARD_ROWS = [
         { id:'readied-armaments', title:'Readied Armaments', matches:function(card) { return card.type === 'Armament Cards' && ((card.owned && card.worn) || card.category === 'Readied Armaments'); } },
         { id:'sentimental-arms', title:'Sentimental Arms', matches:function(card) { return card.sentimental === true || card.isSentimental === true || card.category === 'Sentimental Arms' || card.type === 'Sentimental Arms'; } },
@@ -218,7 +223,7 @@
             var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
             var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
             var nextPageNumber = pageIndex + 2;
-            var nextLabel = next ? (next.navigationTitle || next.title) + ' PG. ' + nextPageNumber + ' »»' : '';
+            var nextLabel = next ? (next.navigationLabel || (next.navigationTitle || next.title) + ' PG. ' + nextPageNumber + ' »»') : '';
             return '<div class="property-page-header"><div class="property-page-intro"><div class="property-page-heading-row">' +
                 (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + (pageIndex) + '. ' + esc(previous.title) + '">&#171;</button>' : '') +
                 '<h4 class="property-page-title">' + esc(pageInfo.title) + '</h4></div>' +
@@ -227,8 +232,19 @@
                 (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + nextPageNumber + '. ' + esc(next.navigationTitle || next.title) + '">' + esc(nextLabel) + '</button>' : '') +
                 '</div>';
         }
+        function pageNavigation() {
+            return '<nav class="property-page-nav" aria-label="Property pages">' +
+                PROPERTY_TAB_PAGES.slice(0, 3).map(function(item) {
+                    var active = item.id === pageName;
+                    return '<button type="button" class="' + (active ? 'active' : '') + '"' +
+                        (active ? ' aria-current="page"' : '') +
+                        ' onclick="selectPropertyPage(\'' + item.id + '\')">' +
+                        esc(PROPERTY_PAGE_LABELS[item.id] || item.label || item.title) + '</button>';
+                }).join('') +
+                '</nav>';
+        }
         function pageFrame(content) {
-            return pageHeader() + access + content;
+            return pageHeader() + pageNavigation() + access + content;
         }
         if (pageName === 'carried-hauled') {
             return pageFrame(haulingSection());
