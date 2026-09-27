@@ -89,10 +89,10 @@
     function selectedCompanion(selected) { return storedSelection('selectedCompanions', 'selectedCompanion', selected, 'type'); }
     var CHARACTER_PICKERS = [
         { id:'character-picker-basic-1', name:'Kaida', previewSuffix:' - First Basic Member Character Slot.', art:'/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png', tier:'basic', available:true },
-        { id:'character-picker-basic-2', name:'Second Basic Member Slot', previewSuffix:' - Create another character now', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'basic', available:false },
-        { id:'character-picker-pro-1', name:'First Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'pro', available:false },
-        { id:'character-picker-pro-2', name:'Second Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'pro', available:false },
-        { id:'character-picker-pro-3', name:'Third Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'pro', available:false }
+        { id:'character-picker-basic-2', name:'Second Basic Member Slot', previewSuffix:' - Create another character now', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'basic', available:false },
+        { id:'character-picker-pro-1', name:'First Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false },
+        { id:'character-picker-pro-2', name:'Second Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false },
+        { id:'character-picker-pro-3', name:'Third Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false }
     ];
     function selectedCharacterPicker() {
         var id = '';
@@ -107,8 +107,8 @@
         return '<div class="property-character-picker"><div class="property-character-picker-tiers"><div class="property-character-picker-tier basic">Basic</div><div class="property-character-picker-tier pro">Pro</div></div><div class="property-character-picker-thumbs">' +
             CHARACTER_PICKERS.map(function(picker) {
                 var disabled = picker.available ? '' : ' unavailable';
-                var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected ? 'true' : 'false') + '"' : ' aria-disabled="true"');
-                var pickerImage = picker.available ? canvasLayers(selectedArmament(), [], true) : (picker.art ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '');
+                var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected && characterPickerVisible() ? 'true' : 'false') + '"' : ' aria-disabled="true"');
+                var pickerImage = picker.art ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '';
                 return '<button type="button" class="property-character-picker-thumb ' + picker.tier + disabled + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '"' + interaction + ' aria-label="' + esc(picker.name) + (picker.available ? '' : ' (not available)') + '">' + pickerImage + '</button>';
             }).join('') +
         '</div></div>';
@@ -153,7 +153,7 @@
             return card && card.occludesBody === true;
         });
     }
-    function canvasLayers(selectedArmaments, selectedCompanions, forceCharacterVisible) {
+    function canvasLayers(selectedArmaments, selectedCompanions) {
         var armaments = selectedArmaments.map(function(id) { return get(id); }).filter(Boolean);
         armaments.sort(function(a, b) {
             var aOrder = ARMAMENT_LAYER_ORDER[a.id] || 99, bOrder = ARMAMENT_LAYER_ORDER[b.id] || 99;
@@ -161,9 +161,8 @@
         });
         var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
         var bodyOcclusion = selectedArmamentOccludesBody(selectedArmaments) ? ' property-character-occluded-by-armor' : '';
-        var includeCharacter = forceCharacterVisible || characterPickerVisible();
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
-            (includeCharacter ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
+            (characterPickerVisible() ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
             companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
             armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') +
             selectedCharacterLayers(selectedArmaments).map(function(src) { return characterHandLayer(src, 'left') + characterHandLayer(src, 'right'); }).join('') : '') +
@@ -192,21 +191,16 @@
             '</div></div></section>';
     }
     var PROPERTY_TAB_PAGES = [
-        { id:'on-person', title:'Worn', label: 'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
-        { id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled', label: 'Carried-Hauled', navigationLabel:'Carried-Hauled PG. 2 »»', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
-        { id:'quarters', title:'Quarters', label: 'Quarters', navigationLabel:'Quarters pg. 3', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
+        { id:'on-person', title:'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
+        { id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
+        { id:'quarters', title:'Quarters', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
         { id:'vaults', title:'Vault', description:'Personal vaults may be rented or owned; town banks, guilds, and clans also provide secure storage.' },
         { id:'storage-stash', title:'Stash/Stored', description:'Home or rented storage for containers, deployed items, trophies, and things the Character has buried, hidden, or stashed.' },
-        { id:'force-station', title:'Force Station', descriptionMarkup:'Space for vehicles and spacecraft too large to fit on a <a href="/content/essentia_core/rules_game-features.html#land-divisions">Lot</a>.' }
+        { id:'force-station', title:'Force Station', descriptionMarkup:'Area for vehicles and spacecraft too large to fit on a <a href="/content/essentia_core/rules_game-features.html#land-divisions">Lot</a>.' }
     ];
-    var PROPERTY_PAGE_LABELS = {
-        'on-person': 'Worn',
-        'carried-hauled': 'Carried-Hauled',
-        'quarters': 'Quarters'
-    };
     var PROPERTY_CARD_ROWS = [
         { id:'readied-armaments', title:'Readied Armaments', matches:function(card) { return card.type === 'Armament Cards' && ((card.owned && card.worn) || card.category === 'Readied Armaments'); } },
-        { id:'sentimental-arms', title:'Sentimental Arms', matches:function(card) { return card.sentimental === true || card.isSentimental === true || card.category === 'Sentimental Arms' || card.type === 'Sentimental Arms'; } },
+        { id:'sentimental-arms', title:'Sentimental Arms', matches:function(card) { return card.category === 'Sentimental Arms' || card.type === 'Sentimental Arms'; } },
         { id:'weapons', title:'Weapons', matches:function(card) { return card.category === 'Weapons' || card.type === 'Weapon Cards'; } },
         { id:'armor', title:'Armor', matches:function(card) { return card.category === 'Armor' || card.type === 'Armor Cards'; } },
         { id:'companion', title:'Companion', matches:function(card) { return card.type === 'Companion Cards' || card.category === 'Companion'; } }
@@ -223,7 +217,7 @@
             var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
             var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
             var nextPageNumber = pageIndex + 2;
-            var nextLabel = next ? (next.navigationLabel || (next.navigationTitle || next.title) + ' PG. ' + nextPageNumber + ' »»') : '';
+            var nextLabel = next ? (next.navigationTitle || next.title) + ' PG. ' + nextPageNumber + ' »»' : '';
             return '<div class="property-page-header"><div class="property-page-intro"><div class="property-page-heading-row">' +
                 (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + (pageIndex) + '. ' + esc(previous.title) + '">&#171;</button>' : '') +
                 '<h4 class="property-page-title">' + esc(pageInfo.title) + '</h4></div>' +
@@ -232,19 +226,8 @@
                 (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + nextPageNumber + '. ' + esc(next.navigationTitle || next.title) + '">' + esc(nextLabel) + '</button>' : '') +
                 '</div>';
         }
-        function pageNavigation() {
-            return '<nav class="property-page-nav" aria-label="Property pages">' +
-                PROPERTY_TAB_PAGES.slice(0, 3).map(function(item) {
-                    var active = item.id === pageName;
-                    return '<button type="button" class="' + (active ? 'active' : '') + '"' +
-                        (active ? ' aria-current="page"' : '') +
-                        ' onclick="selectPropertyPage(\'' + item.id + '\')">' +
-                        esc(PROPERTY_PAGE_LABELS[item.id] || item.label || item.title) + '</button>';
-                }).join('') +
-                '</nav>';
-        }
         function pageFrame(content) {
-            return pageHeader() + pageNavigation() + access + content;
+            return pageHeader() + access + content;
         }
         if (pageName === 'carried-hauled') {
             return pageFrame(haulingSection());
@@ -276,23 +259,22 @@
         }
         if (pageName !== 'on-person') return pageFrame('');
         var owned = cards.filter(function(card) { return card.owned; }), unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
-        return pageFrame('<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five columns per row</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout"><aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas reflects the chosen Character\'s Assets.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside>' + canvas(selected) + '</div><p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the center canvas above. For the Character&rsquo;s full inventory and container types, refer to the Hone Tab of User Space.</p>' + rows(selected));
+        return pageFrame('<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five Cards per row &middot; &#187; for more</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout"><aside class="property-card-index"><h4>Character Index</h4><p>Choose any Card. The center canvas reflects the chosen Character\'s Assets.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside>' + canvas(selected) + '</div><p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the center canvas above. For the Character&rsquo;s full inventory and container types, refer to the Haven tab.</p>' + rows(selected));
     }
     var rowPages = {};
     function rows(selected) {
         return '<div id="propertyDraftRows">' + PROPERTY_CARD_ROWS.map(function(row) {
-            var rowCards = propertyRowCards(row.id), pageSize = 9;
+            var rowCards = propertyRowCards(row.id), pageSize = 5;
             var pageCount = Math.ceil(rowCards.length / pageSize);
             var pageNumber = pageCount ? Math.min(rowPages[row.id] || 0, pageCount - 1) : 0;
             rowPages[row.id] = pageNumber;
-            var visibleCards = rowCards.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize);
-            var rowContent = rowCards.length
-                ? visibleCards.map(function(card) { return button(card, selected); }).join('')
+            var controls = pageCount > 1
+                ? '<div class="property-armory-row-controls"><button type="button" onclick="selectPropertyRowPage(\'' + esc(row.id) + '\', -1)"' + (pageNumber === 0 ? ' disabled' : '') + ' aria-label="Previous ' + esc(row.title) + ' page">&#171;</button><span>' + (pageNumber + 1) + '/' + pageCount + '</span><button type="button" onclick="selectPropertyRowPage(\'' + esc(row.id) + '\', 1)"' + (pageNumber === pageCount - 1 ? ' disabled' : '') + ' aria-label="Next ' + esc(row.title) + ' page">&#187;</button></div>'
+                : (pageCount ? '<span>5 Cards per page</span>' : '');
+            var rowContent = pageCount
+                ? rowCards.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize).map(function(card) { return button(card, selected); }).join('')
                 : '<div class="property-card-row-empty">No cards yet.</div>';
-            var more = pageNumber < pageCount - 1
-                ? '<button type="button" class="property-card-row-more" onclick="selectPropertyRowPage(\'' + esc(row.id) + '\', 1)" aria-label="More ' + esc(row.title) + ' cards">&#187;&#187;</button>'
-                : '<span class="property-card-row-more is-end" aria-label="No more ' + esc(row.title) + ' cards">&#187;&#187;</span>';
-            return '<section class="property-armory-row" data-property-row="' + esc(row.id) + '"><div class="property-armory-row-head"><h4>' + esc(row.title) + '</h4></div><div class="property-card-row">' + rowContent + more + '</div></section>';
+            return '<section class="property-armory-row" data-property-row="' + esc(row.id) + '"><div class="property-armory-row-head"><h4>' + esc(row.title) + '</h4>' + controls + '</div><div class="property-card-row">' + rowContent + '</div></section>';
         }).join('') + '</div>';
     }
     window.renderPropertyDraft = function() {
@@ -337,11 +319,9 @@
                 window.refreshSpaceHomeCharacterRecords();
             }
         }
-        var pickerControls = document.getElementById('spaceCharacterPickerControls');
-        if (pickerControls) pickerControls.innerHTML = window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker');
         if (typeof window.refreshSpaceCharacterIdentity === 'function') window.refreshSpaceCharacterIdentity();
     };
-    window.selectPropertyRowPage = function(rowId, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var pageCount = Math.ceil(propertyRowCards(rowId).length / 9); if (!pageCount) return; var pageNumber = Math.min(Math.max(rowPages[rowId] || 0, 0), pageCount - 1); rowPages[rowId] = Math.max(0, Math.min(pageCount - 1, pageNumber + direction)); draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+    window.selectPropertyRowPage = function(rowId, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var pageCount = Math.ceil(propertyRowCards(rowId).length / 5); if (!pageCount) return; var pageNumber = Math.min(Math.max(rowPages[rowId] || 0, 0), pageCount - 1); rowPages[rowId] = Math.max(0, Math.min(pageCount - 1, pageNumber + direction)); draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
      window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem(propertyStorageKey('safeHaven'), id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {
         var q = String(query || '').trim().toLowerCase(), matches = cards.filter(function(card) { return !q || (card.name + ' ' + card.ref + ' ' + card.summary + ' ' + card.type + ' ' + (card.category || '')).toLowerCase().indexOf(q) !== -1; });

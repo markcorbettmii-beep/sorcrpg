@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { copyFileSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,20 +39,21 @@ const logoAssets = ["sorc-letters-evil.png", "sorc-letters-lawful.png"].map(
   },
 );
 
-const spaceSource = resolve(repositoryRoot, "content/features/space.html");
-const spaceDestination = resolve(
+const havenSource = resolve(repositoryRoot, "content/features/haven.html");
+const havenDestination = resolve(
   publicRoot,
-  "content/features/space.html",
+  "content/features/haven.html",
 );
-mkdirSync(dirname(spaceDestination), { recursive: true });
-copyFileSync(spaceSource, spaceDestination);
+rmSync(resolve(publicRoot, "content/features/space.html"), { force: true });
+mkdirSync(dirname(havenDestination), { recursive: true });
+copyFileSync(havenSource, havenDestination);
 
-for (const asset of [...logoAssets, spaceDestination]) {
+for (const asset of [...logoAssets, havenDestination]) {
   if (statSync(asset).size === 0) {
     throw new Error(`Required Worker asset was staged empty: ${asset}`);
   }
 }
 
 console.log(
-  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, and canonical Space page.`,
+  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, and canonical Haven page.`,
 );

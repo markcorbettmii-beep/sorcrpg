@@ -148,41 +148,49 @@ for (const pageRoot of [publicSiteRoot, sourceRoot, join(repository, "demos")]) 
   }
 }
 
-const canonicalSpacePath = join(sourceRoot, "features", "space.html");
-const publicSpacePath = join(publicRoot, "features", "space.html");
-if (!existsSync(canonicalSpacePath)) {
-  spaceFailures.push("Canonical Space source is missing: content/features/space.html");
+const canonicalHavenPath = join(sourceRoot, "features", "haven.html");
+const publicHavenPath = join(publicRoot, "features", "haven.html");
+if (!existsSync(canonicalHavenPath)) {
+  spaceFailures.push("Canonical Haven source is missing: content/features/haven.html");
 } else {
-  const spaceText = readFileSync(canonicalSpacePath, "utf8");
+  const havenText = readFileSync(canonicalHavenPath, "utf8");
   const requiredSpaceMarkers = [
     "property-draft.css",
     "property-draft.js",
   ];
   for (const marker of requiredSpaceMarkers) {
-    if (!spaceText.includes(marker)) {
-      spaceFailures.push(`Canonical Space source is missing ${marker}`);
+    if (!havenText.includes(marker)) {
+      spaceFailures.push(`Canonical Haven source is missing ${marker}`);
     }
   }
 
   const propertyDraftJsPath = join(publicRoot, "features", "property-draft.js");
   const propertyDraftCssPath = join(publicRoot, "features", "property-draft.css");
   if (!existsSync(propertyDraftJsPath)) {
-    spaceFailures.push("Canonical Space Property navigation helper is missing");
+    spaceFailures.push("Canonical Haven Property navigation helper is missing");
   } else {
     const propertyDraftText = readFileSync(propertyDraftJsPath, "utf8");
     for (const marker of [
-      "'on-person': 'Worn'",
-      "'carried-hauled': 'Carried-Hauled'",
-      "Carried-Hauled PG. 2",
-      "Quarters pg. 3",
+      "var PROPERTY_TAB_PAGES = [",
+      "{ id:'on-person', title:'Worn'",
+      "{ id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled'",
+      "{ id:'quarters', title:'Quarters'",
+      "{ id:'vaults', title:'Vault'",
+      "{ id:'storage-stash', title:'Stash/Stored'",
+      "{ id:'force-station', title:'Force Station'",
+      "PROPERTY_TAB_PAGES.length - 1",
+      "nextPageNumber = pageIndex + 2",
+      "' PG. ' + nextPageNumber + ' »»'",
+      "Previous Property page:",
+      "Next Property page:",
     ]) {
       if (!propertyDraftText.includes(marker)) {
-        spaceFailures.push(`Canonical Space Property navigation is missing ${marker}`);
+        spaceFailures.push(`Canonical Haven Property navigation is missing ${marker}`);
       }
     }
   }
   if (!existsSync(propertyDraftCssPath)) {
-    spaceFailures.push("Canonical Space Property styles are missing");
+    spaceFailures.push("Canonical Haven Property styles are missing");
   }
 
   const pickerAssetDirectory = join(
@@ -201,18 +209,20 @@ if (!existsSync(canonicalSpacePath)) {
     "character-picker-pro-3.png",
   ]) {
     if (!existsSync(join(pickerAssetDirectory, asset))) {
-      spaceFailures.push(`Space picker image is missing from public assets: ${asset}`);
+      spaceFailures.push(`Haven picker image is missing from public assets: ${asset}`);
     }
   }
 }
-if (existsSync(publicSpacePath) && existsSync(canonicalSpacePath)) {
-  if (!readFileSync(publicSpacePath).equals(readFileSync(canonicalSpacePath))) {
+if (existsSync(publicHavenPath) && existsSync(canonicalHavenPath)) {
+  if (!readFileSync(publicHavenPath).equals(readFileSync(canonicalHavenPath))) {
     spaceFailures.push(
-      "Generated public Space copy differs from content/features/space.html",
+      "Generated public Haven copy differs from content/features/haven.html",
     );
   }
 }
 for (const [path, label] of [
+  [join(sourceRoot, "features", "space.html"), "Legacy Space source"],
+  [join(publicRoot, "features", "space.html"), "Legacy public Space copy"],
   [join(repository, "sorc-app", "public", "space.html"), "Legacy /space.html alias"],
   [join(sourceRoot, "admin", "debug-space.html"), "Source Space debugger"],
   [join(publicRoot, "admin", "debug-space.html"), "Public Space debugger"],
@@ -288,13 +298,13 @@ for (const [contentDirectory, label] of [
 
 console.log(`Compared ${commonPaths.length} common content paths.`);
 const rootOnlyNonSpacePaths = [...sourceFiles.keys()].filter(
-  (path) => !publicFiles.has(path) && path !== "features/space.html",
+  (path) => !publicFiles.has(path) && path !== "features/haven.html",
 );
 console.log(`Root-only content paths not deployed: ${rootOnlyNonSpacePaths.length}.`);
 
 if (mismatches.length > 0) {
   console.warn(
-    "\nInformational: root content copies differ from public copies; Space is built from its canonical root source.",
+    "\nInformational: root content copies differ from public copies; Haven is built from its canonical root source.",
   );
   for (const path of mismatches) console.error(`- ${path}`);
 }
