@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../../styles.css?v=10" />
     <link rel="stylesheet" href="/nav-system.css?v=3">
     <link rel="stylesheet" href="/content/character/workspace-nav.css">
-    <link rel="stylesheet" href="property-draft.css?v=20260926-property57">
+    <link rel="stylesheet" href="property-draft.css?v=20260927-property59">
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; }
         .space-container { max-width: 1000px; margin: 2rem auto; padding: 1rem 0.75rem; }
@@ -301,7 +301,7 @@
     <script src="../../nav.js?v=2"></script>
     <script src="../../main.js?v=26"></script>
     <script src="../../play-style.js?v=5"></script>
-    <script src="property-draft.js?v=20260926-property57"></script>
+    <script src="property-draft.js?v=20260927-property59"></script>
     <script src="/content/character/workspace-nav.js"></script>
     <script>
     var API_URL = 'https://api.sorcrpg.com';
@@ -732,6 +732,12 @@
         if (btn) btn.classList.add('active');
         var panel = document.getElementById('tab-' + tabId);
         if (panel) panel.classList.add('active');
+        var spaceCharacterIndex = document.getElementById('spaceCharacterIndex');
+        if (spaceCharacterIndex) {
+            spaceCharacterIndex.style.display = tabId === 'property' ? 'block' : 'none';
+            var spaceTitle = document.querySelector('.space-title-picker-row');
+            if (spaceTitle) spaceTitle.style.display = tabId === 'property' ? 'none' : '';
+        }
         bindPropertyAccessControls();
         var nextParams = new URLSearchParams(window.location.search);
         nextParams.set('tab', tabId);
@@ -851,6 +857,16 @@
             '</div>';
     }
 
+    function renderSpaceCharacterIndex() {
+        return '<section id=\"spaceCharacterIndex\" class=\"space-character-index\" style=\"display:none\">' +
+            '<h4>Character Index</h4>' +
+            '<p>Choose a character to view their Space.</p>' +
+            '<div id=\"spaceCharacterPickerControls\">' +
+                window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker') +
+            '</div>' +
+            '</section>';
+    }
+
     function renderWandererNotice() {
         return '<div class="space-wanderer-notice" role="status" style="margin:0 auto 1.25rem;padding:1rem 1.25rem;max-width:1000px;background:#1d1b12;border:1px solid #655b21;border-left:4px solid #b9aa00;border-radius:8px;color:#e0cfc0;">' +
             '<h2 style="margin:0 0 0.5rem;color:#f0e5c5;font-size:1.2rem;">Hello, Wanderer.</h2>' +
@@ -913,7 +929,7 @@
             ? '<span class="space-role-tag" style="border-color:#c5a042;color:#c5a042;">PRO</span>'
             : '<span class="space-role-tag" style="border-color:#8c06a3;color:#8c06a3;">BASIC</span>';
 
-        return '<div class="space-assessment-prompt">Take the reigns and assess into or create advanced Lobbies <a href="../reference/take-assessment.html">now</a></div>' +
+        return '<div class="space-assessment-prompt">Essentia is waiting. Take the reins now. <a href="../reference/take-assessment.html">Assess into Lobbies</a> of various advancement to join others in GM led Campaigns and Raids.</div>' +
             '<div class="space-card">' +
             '<div class="space-banner"></div>' +
             '<div class="space-info-row">' +
@@ -1101,7 +1117,7 @@
             '</section>';
         var family = '<section class="property-quarter-section">' +
             '<h3>Family &amp; Fellowship (Optional)</h3>' +
-            '<p>If present, family members and Fellowship Companions may be assigned as keepers for Companions left in their quarters.</p>' +
+            '<p>Family members and Fellowship Companions may be assigned as keepers for Companions left in their quarters.</p>' +
             '</section>';
         var armory = '<section class="property-quarter-section">' +
             '<h3>Armory</h3>' +
@@ -1160,8 +1176,8 @@
                         var activeCharactersText = isWanderer
                             ? 'Sign in to view your active characters.'
                             : 'You have <span id="overviewCharacterCount">0</span> active characters. <a href="/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a>';
-                        html += '<h3>Space</h3>' +
-                            '<p>Space is your corner of Essentia. Build your reputation, showcase your treasures, and chart your path. What you see here is what others see on your public Space.</p>' +
+                        html += '<h3>Haven</h3>' +
+                            '<p>The ultimate command center to record and track your Character’s Legacy. Your User Space tracks everything tied to your profile: your active character sheets, earned trophies, session journals, owned properties, and faction standings. Complete your profile setup to connect with fellow adventurers, climb the leaderboards, and manage your inventory across various User Space tabs.</p>' +
                             '<div class="content-grid">' +
                                 '<div class="card"><h4>Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' + editSpaceLink + '</p></div>' +
                                 '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
@@ -1290,7 +1306,7 @@
                     case 'property':
                         html += '<h3>Property</h3>' +
                             '<p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p>' +
-                            '<p>The Property tab is where you organize various types of property you own to track everything across different spaces. Use the filters below to browse and manage each category.</p>' +
+                            '<p>Property includes Worn, Carried-Hauled, Quarters, Storage &amp; Stash, Vaults, and Force Station.</p>' +
                             renderPropertyDraft();
                         break;
 
@@ -1304,17 +1320,17 @@
                         html += '<h3>Home</h3>' +
                             '<div class="home-category-grid">' +
                                 renderHomeCard('Home Overview', [
-                                    '<p>A Home is the Character&#39;s property and living space, beginning with just the land itself and growing into whatever is desired: a tent, estate, castle, or even your own town.</p>',
+                                    '<p>Home is the owned space. Home User Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p>',
                                     '<img src="../essentia_core/br-images/home-blueprints-reference.png_20260916_213128_0000.png" alt="Blueprint reference showing bungalow, shelter varieties, estates and mansions, and a safe haven" style="display:block;width:min(100%,280px);height:auto;margin:1rem auto 0;border-radius:6px;opacity:.92;">',
                                     '<p>Homes come in many forms built to sustain their respective environmental conditions, such as desert domes, swamp bungalows, modular pod complexes, city townhouses, forest cabins, or even a tent pitched in the freezing arctic.</p>',
                                     '<p>Players maintain a record of all owned, rented, or accessible plots. This includes cataloging specific rooms, such as storage, armories, trophy rooms, and Companion facilities. Companions, such as Fellowships (Family and Friends), Pets, or Guardians, are often used for upkeep and security purposes and tracked on a separate ledger.</p>'
                                 ]) +
                                 renderHomeCard('1. Location (coordinates)', [
                                     '<p>Build your Home wherever land may be sold by any given authority, whether merchant or imperial. Many areas may be restricted by divine decree or harsh environments themselves.</p>',
-                                    '<p>During online campaigns, the GM&#39;s map is used. In the unlikely event that two Homes share the same coordinates, the GM places them as neighbors for the GM&#39;s map.</p>'
+                                    '<p>During online campaigns, the GM&#39;s map is used.</p><p>In the unlikely event that two Homes share the same coordinates, the GM places them as neighbors for the GM&#39;s map.</p>'
                                 ]) +
                                 renderHomeCard('2. Blueprints and Materials', [
-                                    '<p>Plan your Home&#39;s layout to calculate the materials needed.</p>'
+                                    '<p>Blueprints and materials are planned together before building begins.</p>'
                                 ]) +
                                 renderHomeCard('3. Capacity', [
                                     '<p>How many people can safely dwell in your Home?</p>'
@@ -1578,6 +1594,7 @@
 
             container.innerHTML = renderProfileHeader(user, role, isPro) +
                 renderTabNav(user, role, isPro) +
+                renderSpaceCharacterIndex() +
                 renderSpaceCharacterTitle() +
                 renderTabContent(user, role, isPro);
             window.refreshSpaceCharacterIdentity();
