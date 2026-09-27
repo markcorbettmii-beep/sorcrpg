@@ -89,10 +89,10 @@
     function selectedCompanion(selected) { return storedSelection('selectedCompanions', 'selectedCompanion', selected, 'type'); }
     var CHARACTER_PICKERS = [
         { id:'character-picker-basic-1', name:'Kaida', previewSuffix:' - First Basic Member Character Slot.', art:'/content/character/assets/female/firstborn/human/physiques/muscular/body/fbody-musc-pale.png_20260916_001443_0000.png', tier:'basic', available:true },
-        { id:'character-picker-basic-2', name:'Second Basic Member Slot', previewSuffix:' - Create another character now', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'basic', available:false },
-        { id:'character-picker-pro-1', name:'First Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false },
-        { id:'character-picker-pro-2', name:'Second Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false },
-        { id:'character-picker-pro-3', name:'Third Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260916_140532_0000.png', tier:'pro', available:false }
+        { id:'character-picker-basic-2', name:'Second Basic Member Slot', previewSuffix:' - Create another character now', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'basic', available:false },
+        { id:'character-picker-pro-1', name:'First Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'pro', available:false },
+        { id:'character-picker-pro-2', name:'Second Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'pro', available:false },
+        { id:'character-picker-pro-3', name:'Third Pro Member Slot', previewSuffix:' - enter Box Code to create another Character', art:'/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png', tier:'pro', available:false }
     ];
     function selectedCharacterPicker() {
         var id = '';
@@ -259,7 +259,7 @@
         }
         if (pageName !== 'on-person') return pageFrame('');
         var owned = cards.filter(function(card) { return card.owned; }), unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
-        return pageFrame('<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five columns per row</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout"><aside class="property-card-index"><h4>Character Index</h4><p>Choose any Card. The center canvas reflects the chosen Character\'s Assets.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside>' + canvas(selected) + '</div><p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the center canvas above. For the Character&rsquo;s full inventory and container types, refer to the Hone Tab of User Space.</p>' + rows(selected));
+        return pageFrame('<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five columns per row</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout"><aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas reflects the chosen Character\'s Assets.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside>' + canvas(selected) + '</div><p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the center canvas above. For the Character&rsquo;s full inventory and container types, refer to the Hone Tab of User Space.</p>' + rows(selected));
     }
     var rowPages = {};
     function rows(selected) {
@@ -320,6 +320,8 @@
                 window.refreshSpaceHomeCharacterRecords();
             }
         }
+        var pickerControls = document.getElementById('spaceCharacterPickerControls');
+        if (pickerControls) pickerControls.innerHTML = window.SORCPropertyCharacterPickerMarkup('selectSpaceCharacterPicker');
         if (typeof window.refreshSpaceCharacterIdentity === 'function') window.refreshSpaceCharacterIdentity();
     };
     window.selectPropertyRowPage = function(rowId, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var pageCount = Math.ceil(propertyRowCards(rowId).length / 9); if (!pageCount) return; var pageNumber = Math.min(Math.max(rowPages[rowId] || 0, 0), pageCount - 1); rowPages[rowId] = Math.max(0, Math.min(pageCount - 1, pageNumber + direction)); draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
