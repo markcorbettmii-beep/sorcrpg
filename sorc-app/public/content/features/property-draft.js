@@ -107,8 +107,8 @@
         return '<div class="property-character-picker"><div class="property-character-picker-tiers"><div class="property-character-picker-tier basic">Basic</div><div class="property-character-picker-tier pro">Pro</div></div><div class="property-character-picker-thumbs">' +
             CHARACTER_PICKERS.map(function(picker) {
                 var disabled = picker.available ? '' : ' unavailable';
-                var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected && characterPickerVisible() ? 'true' : 'false') + '"' : ' aria-disabled="true"');
-                var pickerImage = picker.art ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '';
+                var interaction = pickerInteraction(picker, picker.available ? ' onclick="selectPropertyCharacterPicker(\'' + esc(picker.id) + '\')" aria-pressed="' + (picker.id === selected ? 'true' : 'false') + '"' : ' aria-disabled="true"');
+                var pickerImage = picker.available ? canvasLayers(selectedArmament(), [], true) : (picker.art ? '<img src="' + esc(picker.art) + '" alt="' + esc(picker.name) + '" />' : '');
                 return '<button type="button" class="property-character-picker-thumb ' + picker.tier + disabled + ' ' + picker.id + (picker.id === selected ? ' selected' : '') + '"' + interaction + ' aria-label="' + esc(picker.name) + (picker.available ? '' : ' (not available)') + '">' + pickerImage + '</button>';
             }).join('') +
         '</div></div>';
@@ -153,7 +153,7 @@
             return card && card.occludesBody === true;
         });
     }
-    function canvasLayers(selectedArmaments, selectedCompanions) {
+    function canvasLayers(selectedArmaments, selectedCompanions, forceCharacterVisible) {
         var armaments = selectedArmaments.map(function(id) { return get(id); }).filter(Boolean);
         armaments.sort(function(a, b) {
             var aOrder = ARMAMENT_LAYER_ORDER[a.id] || 99, bOrder = ARMAMENT_LAYER_ORDER[b.id] || 99;
@@ -161,8 +161,9 @@
         });
         var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
         var bodyOcclusion = selectedArmamentOccludesBody(selectedArmaments) ? ' property-character-occluded-by-armor' : '';
+        var includeCharacter = forceCharacterVisible || characterPickerVisible();
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
-            (characterPickerVisible() ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
+            (includeCharacter ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
             companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
             armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') +
             selectedCharacterLayers(selectedArmaments).map(function(src) { return characterHandLayer(src, 'left') + characterHandLayer(src, 'right'); }).join('') : '') +
