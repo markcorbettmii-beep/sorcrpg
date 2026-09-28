@@ -95,6 +95,19 @@ for (const [sourcePath, publicPath, mode] of bannerAssetPairs) {
     protectedFailures.push(`${mode} SORC banner in public assets differs from the approved banner`);
   }
 }
+const havenWatermarkLogoPairs = [
+  ["sorc-letters-evil.png", "Evil"],
+  ["sorc-letters-lawful.png", "Lawful"],
+];
+for (const [asset, mode] of havenWatermarkLogoPairs) {
+  const sourcePath = join(repository, asset);
+  const publicPath = join(repository, "sorc-app", "public", asset);
+  if (!existsSync(sourcePath) || !existsSync(publicPath)) {
+    protectedFailures.push(`Haven ${mode} SORC watermark artwork is missing`);
+  } else if (!readFileSync(sourcePath).equals(readFileSync(publicPath))) {
+    protectedFailures.push(`Haven ${mode} SORC watermark artwork differs from its source`);
+  }
+}
 const publicIndexPath = join(repository, "sorc-app", "public", "index.html");
 if (!existsSync(publicIndexPath)) {
   protectedFailures.push("Public index page is missing");
@@ -150,6 +163,8 @@ for (const pageRoot of [publicSiteRoot, sourceRoot, join(repository, "demos")]) 
 
 const canonicalSpacePath = join(sourceRoot, "features", "space.html");
 const publicSpacePath = join(publicRoot, "features", "space.html");
+const canonicalHavenHudPath = join(sourceRoot, "features", "haven-hud.html");
+const publicHavenHudPath = join(publicRoot, "features", "haven-hud.html");
 if (!existsSync(canonicalSpacePath)) {
   spaceFailures.push("Canonical Space source is missing: content/features/space.html");
 } else {
@@ -157,6 +172,10 @@ if (!existsSync(canonicalSpacePath)) {
   const requiredSpaceMarkers = [
     "property-draft.css",
     "property-draft.js",
+    "havenHudTheme",
+    "data-haven-theme",
+    "openHavenHudTab",
+    "rules_mapping.html#mapping",
   ];
   for (const marker of requiredSpaceMarkers) {
     if (!spaceText.includes(marker)) {
@@ -204,7 +223,77 @@ if (!existsSync(canonicalSpacePath)) {
       spaceFailures.push(`Space picker image is missing from public assets: ${asset}`);
     }
   }
+
+  const havenHudAssetDirectory = join(
+    sourceRoot,
+    "character",
+    "assets",
+    "shared",
+    "haven-app",
+  );
+  const publicHavenHudAssetDirectory = join(
+    publicRoot,
+    "character",
+    "assets",
+    "shared",
+    "haven-app",
+  );
+  for (const asset of [
+    "default-haven-app-hud_20260927_234628_0000.png",
+    "omné-terminal-haven-app-hud_20260927_222728_0000.png",
+    "the-veilwood-haven-app-hud_20260927_222654_0000.png",
+  ]) {
+    const sourceAsset = join(havenHudAssetDirectory, asset);
+    const publicAsset = join(publicHavenHudAssetDirectory, asset);
+    if (!existsSync(sourceAsset)) {
+      spaceFailures.push(`Haven HUD source artwork is missing: ${asset}`);
+    }
+    if (!existsSync(publicAsset)) {
+      spaceFailures.push(`Haven HUD Worker artwork is missing: ${asset}`);
+    } else if (
+      existsSync(sourceAsset) &&
+      !readFileSync(sourceAsset).equals(readFileSync(publicAsset))
+    ) {
+      spaceFailures.push(`Haven HUD Worker artwork differs from source: ${asset}`);
+    }
+  }
 }
+if (!existsSync(canonicalHavenHudPath)) {
+  spaceFailures.push("Compact Haven HUD shortcut is missing");
+} else if (!existsSync(publicHavenHudPath)) {
+  spaceFailures.push("Compact Haven HUD shortcut is missing from Worker assets");
+} else if (
+  !readFileSync(canonicalHavenHudPath).equals(readFileSync(publicHavenHudPath))
+) {
+  spaceFailures.push("Compact Haven HUD Worker shortcut differs from source");
+}
+
+const mapGridDirectory = join(sourceRoot, "maps", "assets", "grids");
+const publicMapGridDirectory = join(publicRoot, "maps", "assets", "grids");
+for (const asset of [
+  "5x5-graph-paper_20260903_135837_0000.png",
+  "close-qtr-grph-dark_20260928_010415_0000.png",
+  "close-qtr-grph-dim_20260928_010448_0000.png",
+  "close-qtr-grph-full-light_20260928_010025_0000.png",
+  "close-qtr-grph-hazy_20260928_010527_0000.png",
+  "close-qtr-grph-pitch-black_20260928_010059_0000.png",
+  "close-qtr-grph-very-dark_20260928_010339_0000.png",
+]) {
+  const sourceAsset = join(mapGridDirectory, asset);
+  const publicAsset = join(publicMapGridDirectory, asset);
+  if (!existsSync(sourceAsset)) {
+    spaceFailures.push(`Structure-map grid source artwork is missing: ${asset}`);
+  }
+  if (!existsSync(publicAsset)) {
+    spaceFailures.push(`Structure-map grid Worker artwork is missing: ${asset}`);
+  } else if (
+    existsSync(sourceAsset) &&
+    !readFileSync(sourceAsset).equals(readFileSync(publicAsset))
+  ) {
+    spaceFailures.push(`Structure-map grid Worker artwork differs from source: ${asset}`);
+  }
+}
+
 if (existsSync(publicSpacePath) && existsSync(canonicalSpacePath)) {
   if (!readFileSync(publicSpacePath).equals(readFileSync(canonicalSpacePath))) {
     spaceFailures.push(

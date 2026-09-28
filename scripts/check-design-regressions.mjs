@@ -19,6 +19,56 @@ const checks = [
     ],
   },
   {
+    name: "Haven HUD themes and destinations",
+    path: "content/features/space.html",
+    markers: [
+      "havenHudTheme",
+      "localStorage.setItem(themeKey, theme)",
+      "window.terminalTheme.start()",
+      "window.veilwoodTheme.start()",
+      "default-haven-app-hud_20260927_234628_0000.png",
+      "omné-terminal-haven-app-hud_20260927_222728_0000.png",
+      "the-veilwood-haven-app-hud_20260927_222654_0000.png",
+      "data-haven-hud-view",
+      "haven-hud-only",
+      ".sorc-nav-wrapper",
+      "#profileBtn",
+      "fitHavenHudFrame",
+      "window.location.assign",
+      'href="space.html" aria-label="Open full Haven"',
+      'href="/content/essentia_core/rules_mapping.html#mapping"',
+      'href="lobbies.html"',
+      'id="trophies"',
+      'id="achievements"',
+    ],
+  },
+  {
+    name: "Compact Haven HUD route",
+    path: "content/features/haven-hud.html",
+    markers: [
+      "space.html?view=hud",
+      'href="space.html?view=hud"',
+    ],
+  },
+  {
+    name: "Wanderer Haven HUD preview gate",
+    path: "content/features/space.html",
+    markers: [
+      "haven-wanderer-view",
+      'id="haven-hud-access-gate"',
+      "/sorc-letters-evil.png",
+      "/sorc-letters-lawful.png",
+      "window.setHavenHudAccess = function(isWanderer)",
+      "hudLinks.inert = isLocked",
+      "button.disabled = isLocked",
+      "body.haven-wanderer-view .haven-hud-links { pointer-events: none; }",
+      'href="/content/auth/signin.html"',
+      "body.haven-wanderer-view .haven-hud-sign-in a,",
+      "Sign in to open Haven’s sections and controls.",
+      "window.setHavenHudAccess(false)",
+    ],
+  },
+  {
     name: "Space Property page flow",
     path: "sorc-app/public/content/features/property-draft.js",
     markers: [
@@ -81,7 +131,13 @@ for (const check of checks) {
   console.log(`PASS ${check.name}`);
 }
 
-const staleSpaceCopy = join(
+const canonicalSpaceSource = join(
+  repository,
+  "content",
+  "features",
+  "space.html",
+);
+const generatedSpaceCopy = join(
   repository,
   "sorc-app",
   "public",
@@ -94,14 +150,32 @@ const extraSpacePages = [
   join(repository, "content", "admin", "debug-space.html"),
   join(repository, "sorc-app", "public", "content", "admin", "debug-space.html"),
 ].filter(existsSync);
-if (existsSync(staleSpaceCopy) || extraSpacePages.length) {
+const staleGeneratedSpaceCopy =
+  existsSync(generatedSpaceCopy) &&
+  (!existsSync(canonicalSpaceSource) ||
+    !readFileSync(generatedSpaceCopy).equals(readFileSync(canonicalSpaceSource)));
+if (staleGeneratedSpaceCopy || extraSpacePages.length) {
   console.error(
-    "FAIL Only the canonical Space page remains: found " +
-      [staleSpaceCopy, ...extraSpacePages].filter(existsSync).join(", "),
+    "FAIL The generated Space page matches its canonical source and no duplicate routes remain: found " +
+      [staleGeneratedSpaceCopy ? generatedSpaceCopy : null, ...extraSpacePages]
+        .filter(Boolean)
+        .join(", "),
   );
   failures++;
 } else {
-  console.log("PASS Only the canonical Space page remains");
+  console.log("PASS Canonical Space source and generated Worker page agree");
+}
+
+const havenHudPath = join(repository, "content", "features", "space.html");
+if (existsSync(havenHudPath)) {
+  const havenHudText = readFileSync(havenHudPath, "utf8");
+  const hudLinkCount = (havenHudText.match(/class="haven-hud-link"/g) || []).length;
+  if (hudLinkCount !== 15) {
+    console.error(`FAIL Haven HUD has 15 clickable icon targets: found ${hudLinkCount}`);
+    failures++;
+  } else {
+    console.log("PASS Haven HUD has 15 clickable icon targets");
+  }
 }
 
 if (failures) {
