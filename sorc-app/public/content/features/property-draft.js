@@ -29,7 +29,7 @@
         { id:'item-tool', type:'Item Cards', name:'Field Tool', ref:'item-pg.A-203', summary:'A carried practical tool.', art:'', owned:true, worn:false },
         { id:'item-placeholder-1', type:'Item Cards', name:'Material Stack', ref:'item-pg.A-204', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
         { id:'item-placeholder-2', type:'Item Cards', name:'Quest Item', ref:'item-pg.A-205', summary:'Placeholder Card awaiting its image.', art:'', owned:false, worn:false },
-        { id:'armor-core', type:'Armament Cards', category:'Armor', name:'Leather Core Set', ref:'arm-pg.A-301', rank:'Rare', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-core-leathtaba3.png_20260916_103316_0000.png', occludesBody:true, owned:true, worn:true },
+        { id:'armor-core', type:'Armament Cards', category:'Armor', name:'Leather Core Set', ref:'arm-pg.A-301', rank:'Rare', summary:'Cuirass, greaves, and pauldrons. Core Set: 4 slots.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-core.png?v=fit2', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-core-leathtaba3.png_20260916_103316_0000.png', occludesBody:true, owned:true, worn:true },
         { id:'armor-helm', type:'Armament Cards', category:'Armor', name:'Leather Helm', ref:'arm-pg.A-302', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-helm.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-helm-leathtaba3.png_20260915_021632_0000.png', owned:true, worn:true },
         { id:'armor-gloves', type:'Armament Cards', category:'Armor', name:'Leather Gloves', ref:'arm-pg.A-303', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-gloves.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-gloves-leathtaba3.png_20260915_021700_0000.png', owned:true, worn:true },
         { id:'armor-boots', type:'Armament Cards', category:'Armor', name:'Leather Boots', ref:'arm-pg.A-304', rank:'Rare', summary:'Separate worn piece. 1 slot.', art:'/content/character/assets/customizer/pickers/armaments/armament-picker-boots.png?v=fit1', layerArt:'/content/character/assets/shared/armaments/techad/armor-taba/rare/high-res-boots-leathtaba3.png_20260916_124704_0000.png', owned:true, worn:true },
@@ -162,11 +162,14 @@
         var companions = selectedCompanions.map(function(id) { return get(id); }).filter(Boolean);
         var bodyOcclusion = selectedArmamentOccludesBody(selectedArmaments) ? ' property-character-occluded-by-armor' : '';
         var includeCharacter = forceCharacterVisible || characterPickerVisible();
+        var characterLayers = selectedCharacterLayers(selectedArmaments);
+        var characterImages = characterLayers.map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('');
+        var characterHands = forceCharacterVisible ? '' : characterLayers.map(function(src) { return characterHandLayer(src, 'left') + characterHandLayer(src, 'right'); }).join('');
         return '<div class="property-canvas-layer-stack" aria-label="Selected canvas layers"><div class="property-canvas-composition">' +
-            (includeCharacter ? selectedCharacterLayers(selectedArmaments).map(function(src, index) { return '<img class="property-canvas-layer property-canvas-layer-character-' + index + (index === 0 ? bodyOcclusion : '') + '" src="' + src + '" alt="" aria-hidden="true" />'; }).join('') +
+            (includeCharacter ? characterImages +
             companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('') +
             armaments.map(function(card) { return canvasLayer(card, 'property-canvas-layer-armament ' + card.id); }).join('') +
-            selectedCharacterLayers(selectedArmaments).map(function(src) { return characterHandLayer(src, 'left') + characterHandLayer(src, 'right'); }).join('') : '') +
+            characterHands : '') +
         '</div></div>';
     }
     function canvas(selected) {
@@ -233,11 +236,9 @@
             var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
             var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
             return '<nav class="property-page-nav" aria-label="Property pages">' +
-                '<div class="property-page-nav-side property-page-nav-left">' +
-                    (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page">&#171;&#171;</button>' : '') +
-                    '<span class="property-page-current" aria-current="page">PG. ' + (pageIndex + 1) + ' ' + esc(pageInfo.title) + '</span>' +
-                '</div>' +
-                (next ? '<div class="property-page-nav-side property-page-nav-right"><button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page">&#187;&#187;</button><span class="property-page-next-label">' + esc(next.title) + '</span></div>' : '<div class="property-page-nav-side property-page-nav-right" aria-hidden="true"></div>') +
+                (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + esc(previous.title) + '"><span aria-hidden="true">&#171;&#171;</span><span class="property-page-nav-link-label">' + esc(previous.title) + '</span></button>' : '<span class="property-page-nav-spacer" aria-hidden="true"></span>') +
+                '<span class="property-page-current" aria-current="page">PG. ' + (pageIndex + 1) + ' ' + esc(pageInfo.title) + '</span>' +
+                (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + esc(next.title) + '"><span class="property-page-nav-link-label">' + esc(next.title) + '</span><span aria-hidden="true">&#187;&#187;</span></button>' : '<span class="property-page-nav-spacer" aria-hidden="true"></span>') +
                 '</nav>';
         }
         function pageFrame(content) {
