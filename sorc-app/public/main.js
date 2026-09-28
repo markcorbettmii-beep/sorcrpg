@@ -324,62 +324,9 @@ window.sorcSignOut = function() {
 };
 
 // ========== ROLE BADGE ==========
-function showRoleBadge(user) {
+function showRoleBadge() {
   var existing = document.getElementById('navRoleBadge');
-  if (!existing) return;
-
-  // Remove any leftover logged-out avatar span
-  var oldAvatar = existing.querySelector('.badge-avatar-default');
-  if (oldAvatar) oldAvatar.remove();
-
-  var role = user.role || 'CIVILIAN';
-  if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
-  else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
-
-  var displayName = escapeHtml(user.username || user.display_name || user.email.split('@')[0]);
-  var abbr = getRoleAbbr(role);
-  var safeId = escapeHtml(String(user.id || ''));
-  var isAdminUser = OWNER_EMAILS.includes(user.email) || ADMIN_EMAILS.includes(user.email);
-
-  var isLawful = document.body.classList.contains('lawful-mode');
-  var avatarHtml = '';
-  if (user.avatar) {
-    var avatarPath = getAvatarPath(user.avatar);
-    var avatarBg = isLawful ? '#b9aa00' : '#c93f35';
-    var avatarBorder = isLawful ? '#2196f3' : '#9c27b0';
-    avatarHtml = '<img src="' + avatarPath + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;background:' + avatarBg + ';border:1px solid ' + avatarBorder + ';vertical-align:middle;margin-right:4px;" onerror="this.style.display=\'none\'" />';
-  }
-  var bgColor = isLawful ? '#2196f3' : '#9c27b0';
-  var linkColor = isLawful ? '#ffffff' : '#ffffff';
-  var shadowColor = isLawful ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)';
-  existing.style.cssText = 'display:flex !important;flex-wrap:wrap !important;align-items:center !important;gap:8px !important;padding:6px 14px !important;background:' + bgColor + ' !important;color:' + linkColor + ' !important;border-radius:20px !important;font-size:0.85rem !important;margin:0 !important;width:100% !important;box-sizing:border-box;';
-
-  var adminLink = isAdminUser
-    ? ' <a href="/admin.html" style="color:' + linkColor + ';text-decoration:underline;">' + (role === 'OWNER' ? 'Owner Panel' : 'Admin Panel') + '</a>'
-    : '';
-
-  var hasAssessed = !!(user.sorc_role) || isAdminUser || role === 'PLAYER' || role === 'MASTER';
-  var lobbiesHref = hasAssessed ? '/content/features/lobbies.html' : '/content/reference/assess.html';
-
-  existing.innerHTML = avatarHtml + displayName +
-    ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;color:' + linkColor + ' !important;background:transparent !important;">' + abbr + '</span>' +
-    ' · <a href="/content/features/space.html" style="color:' + linkColor + ';text-decoration:underline;">User Space</a>' +
-    ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
-    ' · <a id="badgeInboxLink" href="/content/features/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
-    ' · <a id="badgeFellowshipsLink" href="/content/features/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Cohorts</a>' +
-    ' · <a href="/content/features/forum.html" style="color:' + linkColor + ';text-decoration:underline;">Forums</a>' +
-    ' · <a href="/content/content-index.html" style="color:' + linkColor + ';text-decoration:underline;">Content</a>' +
-    adminLink +
-    ' · <button onclick="sorcSignOut()" style="background:none;border:none;color:' + linkColor + ';cursor:pointer;font-size:0.85rem;text-decoration:underline;"><strong>Logout</strong></button>';
-
-  var roleTag = existing.querySelector('.role-tag');
-  if (roleTag) {
-    roleTag.addEventListener('click', function(e) {
-      e.stopPropagation();
-      e.preventDefault();
-      showRolePopup(this.dataset.username, this.dataset.userid, this.dataset.role);
-    });
-  }
+  if (existing) existing.remove();
 }
 
 // ========== ROLE POPUP ==========
@@ -525,10 +472,7 @@ window.sorcUpdateNotifications = function() {
 
 // ========== LOGGED-OUT BADGE ==========
 function showLoggedOutBadge() {
-  var existing = document.getElementById('navRoleBadge');
-  // The modern hamburger menu owns signed-out navigation. Remove the legacy
-  // full-width strip instead of rendering a second account control.
-  if (existing) existing.remove();
+  showRoleBadge();
 }
 
 // ========== AUTH STATE ==========

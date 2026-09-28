@@ -193,7 +193,7 @@ class SORCNavigation {
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play" aria-expanded="false" aria-controls="play-menu">
-                  <span class="sorc-nav-section-label sorc-play-section-label">SPACE</span>
+                  <span class="sorc-nav-section-label sorc-play-section-label">User Space</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
                 <p class="sorc-nav-section-description sorc-play-section-description">Login Wanderer, to manage your character, lobbies, room, and personal progression.</p>

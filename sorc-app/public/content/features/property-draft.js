@@ -220,7 +220,7 @@
             '</aside>';
     }
     function page(pageName, selected) {
-        var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>';
+        var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span></div>';
         var pageIndex = PROPERTY_TAB_PAGES.findIndex(function(item) { return item.id === pageName; });
         var pageInfo = pageIndex >= 0 ? PROPERTY_TAB_PAGES[pageIndex] : { title:'Property', description:'' };
         function pageHeader() {
@@ -237,7 +237,7 @@
                     (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page">&#171;&#171;</button>' : '') +
                     '<span class="property-page-current" aria-current="page">PG. ' + (pageIndex + 1) + ' ' + esc(pageInfo.title) + '</span>' +
                 '</div>' +
-                (next ? '<div class="property-page-nav-side property-page-nav-right"><button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page">&#187;&#187;</button><span class="property-page-next-label">' + esc(next.title) + '</span></div>' : '') +
+                (next ? '<div class="property-page-nav-side property-page-nav-right"><button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page">&#187;&#187;</button><span class="property-page-next-label">' + esc(next.title) + '</span></div>' : '<div class="property-page-nav-side property-page-nav-right" aria-hidden="true"></div>') +
                 '</nav>';
         }
         function pageFrame(content) {

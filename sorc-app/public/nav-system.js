@@ -139,23 +139,22 @@ class SORCNavigation {
       <div id="sorc-nav-wrapper" class="sorc-nav-wrapper">
         <!-- Hamburger Menu -->
         <nav class="sorc-nav">
-          <!-- Home Icon (Far Left) -->
           <a href="${pathToRoot}index.html" class="sorc-nav-home-icon" aria-label="Home">
-            <svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 10.8 12 3l9 7.8"></path>
-              <path d="M5.5 9.5V21h13V9.5"></path>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m3 10 9-7 9 7"></path>
+              <path d="M5 9v11h14V9"></path>
+              <path d="M9 20v-6h6v6"></path>
             </svg>
           </a>
 
-          <!-- Search Bar -->
+          <!-- Search -->
           <div class="sorc-nav-search-container">
-            <svg class="sorc-nav-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="sorc-nav-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
-            <input type="text" class="sorc-nav-search-input" placeholder="Delve" aria-label="Search">
+            <input type="text" class="sorc-nav-search-input" placeholder="Search Essentia..." aria-label="Search Essentia">
           </div>
-
 
           <!-- Right Side Controls (Hamburger) -->
           <div class="sorc-nav-right">
@@ -199,7 +198,7 @@ class SORCNavigation {
               <!-- YOUR SPACE - First Section (Submenu) -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play" aria-expanded="false" aria-controls="play-menu">
-                  <span class="sorc-nav-section-label sorc-play-section-label">SPACE</span>
+                  <span class="sorc-nav-section-label sorc-play-section-label">User Space</span>
                   <span class="sorc-nav-section-icon">›</span>
                 </button>
                 <p class="sorc-nav-section-description sorc-play-section-description">Login Wanderer, to manage your character, lobbies, room, and personal progression.</p>
@@ -559,7 +558,7 @@ class SORCNavigation {
       overlay.addEventListener('click', () => this.closeMenu());
     }
 
-    // "Delve" searches the destinations exposed by the global navigation.
+    // Search Essentia finds destinations exposed by the global navigation.
     // Enter opens the best matching destination without sending the query
     // to an unrelated third-party search engine.
     const searchInput = document.querySelector('.sorc-nav-search-input');

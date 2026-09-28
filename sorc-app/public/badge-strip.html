@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Legacy Account Strip</title>
+  <style>
+    :root { font-family: Georgia, "Times New Roman", serif; color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      background: #0a0a0a;
+      color: #eee;
+      transition: background .2s, color .2s;
+    }
+    body.lawful-mode { background: #f5f5f0; color: #2c2c2c; color-scheme: light; }
+    main { width: min(960px, 100%); margin: 0 auto; }
+    h1 { margin: 0 0 .5rem; font-size: 1.5rem; }
+    .description { margin: 0 0 1.5rem; color: #aaa; }
+    body.lawful-mode .description { color: #555; }
+    .mode-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+    .mode-controls button {
+      border: 1px solid #777;
+      border-radius: 4px;
+      padding: .45rem .8rem;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+    .mode-controls button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+    #navRoleBadge {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .55rem .8rem;
+      width: 100%;
+      padding: .7rem 1rem;
+      border: 1px solid #8c06a3;
+      border-radius: 12px;
+      background: #9c27b0;
+      color: #080808;
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    body.lawful-mode #navRoleBadge { background: #2196f3; border-color: #b9aa00; color: #fff; }
+    .badge-user { display: inline-flex; align-items: center; gap: .5rem; }
+    .badge-avatar {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid #c93f35;
+      border-radius: 50%;
+      background: #c93f35;
+      color: #fff;
+      font-size: 1rem;
+    }
+    body.lawful-mode .badge-avatar { background: #b9aa00; border-color: #2196f3; color: #222; }
+    #navRoleBadge a, #navRoleBadge button {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .badge-separator { opacity: .7; }
+    .badge-count {
+      display: inline-block;
+      min-width: 1.2rem;
+      margin-left: .15rem;
+      padding: 0 .32rem;
+      border-radius: 1rem;
+      background: #fff;
+      color: #222;
+      text-align: center;
+      font-size: .72rem;
+      line-height: 1.4;
+    }
+    .note { margin-top: 1rem; font-size: .88rem; color: #aaa; }
+    body.lawful-mode .note { color: #555; }
+    @media (max-width: 520px) {
+      body { padding: 1.25rem .75rem; }
+      #navRoleBadge { gap: .6rem; padding: .7rem; }
+      .badge-separator { display: none; }
+    }
+  </style>
+</head>
+<body class="evil-mode">
+  <main>
+    <h1>Legacy Account / Navigation Strip</h1>
+    <p class="description">Standalone sample of the former colored account strip. Switch modes to preview both palettes.</p>
+    <div class="mode-controls" aria-label="Preview theme">
+      <button type="button" data-theme="evil" aria-pressed="true">Evil mode</button>
+      <button type="button" data-theme="lawful" aria-pressed="false">Lawful mode</button>
+    </div>
+    <nav id="navRoleBadge" aria-label="Sample account navigation">
+      <span class="badge-user"><span class="badge-avatar" aria-hidden="true">A</span>Sample Adventurer <span aria-label="Player Character">[PC]</span></span>
+      <span class="badge-separator" aria-hidden="true">·</span><a href="/content/features/space.html">User Space</a>
+      <span class="badge-separator" aria-hidden="true">·</span><a href="/lobbies.html">Lobbies</a>
+      <span class="badge-separator" aria-hidden="true">·</span><a href="/content/features/inbox.html">Inbox <span class="badge-count">2</span></a>
+      <span class="badge-separator" aria-hidden="true">·</span><a href="/content/features/fellowships.html">Cohorts <span class="badge-count">1</span></a>
+      <span class="badge-separator" aria-hidden="true">·</span><a href="/content/features/forum.html">Forums</a>
+      <span class="badge-separator" aria-hidden="true">·</span><a href="/content/content-index.html">Content</a>
+      <span class="badge-separator" aria-hidden="true">·</span><button type="button" id="sampleLogout">Logout</button>
+    </nav>
+    <p class="note" id="sampleStatus" aria-live="polite">Example identity and counts only; no account actions are connected.</p>
+  </main>
+  <script>
+    document.querySelectorAll('[data-theme]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var lawful = button.dataset.theme === 'lawful';
+        document.body.classList.toggle('lawful-mode', lawful);
+        document.body.classList.toggle('evil-mode', !lawful);
+        document.querySelectorAll('[data-theme]').forEach(function (item) {
+          item.setAttribute('aria-pressed', String(item === button));
+        });
+      });
+    });
+    document.getElementById('sampleLogout').addEventListener('click', function () {
+      document.getElementById('sampleStatus').textContent = 'Sample logout selected. This standalone example does not sign out of an account.';
+    });
+  </script>
+</body>
+</html>
