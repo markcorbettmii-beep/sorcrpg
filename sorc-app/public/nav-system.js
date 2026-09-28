@@ -246,7 +246,7 @@ class SORCNavigation {
                   <li><a href="${pathToRoot}content/content-index.html">Content Index</a></li>
                   <li><a href="${pathToRoot}content/sorc-web-index.html">SORC Web</a></li>
                   <li><a href="${pathToRoot}content/features/sorc-store.html">SORC Store</a></li>
-                  <li><a href="${pathToRoot}content/features/exchange.html">Essentia Exchange</a></li>
+                  <li><a href="${pathToRoot}content/features/exchange.html">The Exchange</a></li>
                   <li><a href="${pathToRoot}content/features/collection.html">Collection</a></li>
                 </ul>
               </div>
