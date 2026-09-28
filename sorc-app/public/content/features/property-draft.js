@@ -193,17 +193,12 @@
     }
     var PROPERTY_TAB_PAGES = [
         { id:'on-person', title:'Worn', label: 'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
-        { id:'carried-hauled', title:'Carried/Hauled', navigationTitle:'Carried-Hauled', label: 'Carried-Hauled', navigationLabel:'Carried-Hauled PG. 2 »»', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
-        { id:'quarters', title:'Quarters', label: 'Quarters', navigationLabel:'Quarters pg. 3', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
+        { id:'carried-hauled', title:'Carried-Hauled', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
+        { id:'quarters', title:'Quarters', description:'A Character’s living spaces and household, including rooms, Family, armories, and Companion quarters. Quarters may be rented or owned.' },
         { id:'vaults', title:'Vault', description:'Personal vaults may be rented or owned; town banks, guilds, and clans also provide secure storage.' },
         { id:'storage-stash', title:'Stash/Stored', description:'Home or rented storage for containers, deployed items, trophies, and things the Character has buried, hidden, or stashed.' },
         { id:'force-station', title:'Force Station', descriptionMarkup:'Space for vehicles and spacecraft too large to fit on a <a href="/content/essentia_core/rules_game-features.html#land-divisions">Lot</a>.' }
     ];
-    var PROPERTY_PAGE_LABELS = {
-        'on-person': 'Worn',
-        'carried-hauled': 'Carried-Hauled',
-        'quarters': 'Quarters'
-    };
     var PROPERTY_CARD_ROWS = [
         { id:'readied-armaments', title:'Readied Armaments', matches:function(card) { return card.type === 'Armament Cards' && ((card.owned && card.worn) || card.category === 'Readied Armaments'); } },
         { id:'sentimental-arms', title:'Sentimental Arms', matches:function(card) { return card.sentimental === true || card.isSentimental === true || card.category === 'Sentimental Arms' || card.type === 'Sentimental Arms'; } },
@@ -215,39 +210,41 @@
         var row = PROPERTY_CARD_ROWS.filter(function(item) { return item.id === rowId; })[0];
         return row ? cards.filter(row.matches) : [];
     }
+    function cardIndex(selected) {
+        var owned = cards.filter(function(card) { return card.owned; });
+        var unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
+        return '<aside class="property-card-index" aria-label="Property Cards">' +
+            '<p>Choose any Card. The selected Character&rsquo;s Assets appear on the Worn page&rsquo;s center canvas.</p>' +
+            '<div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div>' +
+            '<p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the Worn page&rsquo;s center canvas. For the Character&rsquo;s full inventory and container types, refer to the Home tab of User Space.</p>' +
+            '</aside>';
+    }
     function page(pageName, selected) {
         var access = '<div class="property-access-block"><span class="property-access-pill" aria-label="PUBLIC / PRIVATE"><span class="property-access-public">PUBLIC</span><span class="property-access-divider"> / </span><span class="property-access-private">PRIVATE</span></span><p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p></div>';
         var pageIndex = PROPERTY_TAB_PAGES.findIndex(function(item) { return item.id === pageName; });
         var pageInfo = pageIndex >= 0 ? PROPERTY_TAB_PAGES[pageIndex] : { title:'Property', description:'' };
         function pageHeader() {
-            var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
-            var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
-            var nextPageNumber = pageIndex + 2;
-            var nextLabel = next ? (next.navigationLabel || (next.navigationTitle || next.title) + ' PG. ' + nextPageNumber + ' »»') : '';
             return '<div class="property-page-header"><div class="property-page-intro"><div class="property-page-heading-row">' +
-                (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + (pageIndex) + '. ' + esc(previous.title) + '">&#171;</button>' : '') +
                 '<h4 class="property-page-title">' + esc(pageInfo.title) + '</h4></div>' +
                 (pageInfo.descriptionMarkup || pageInfo.description ? '<p class="property-page-description">' + (pageInfo.descriptionMarkup || esc(pageInfo.description)) + '</p>' : '') +
-                '</div>' +
-                (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + nextPageNumber + '. ' + esc(next.navigationTitle || next.title) + '">' + esc(nextLabel) + '</button>' : '') +
-                '</div>';
+                '</div></div>';
         }
         function pageNavigation() {
+            var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
+            var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
             return '<nav class="property-page-nav" aria-label="Property pages">' +
-                PROPERTY_TAB_PAGES.slice(0, 3).map(function(item) {
-                    var active = item.id === pageName;
-                    return '<button type="button" class="' + (active ? 'active' : '') + '"' +
-                        (active ? ' aria-current="page"' : '') +
-                        ' onclick="selectPropertyPage(\'' + item.id + '\')">' +
-                        esc(PROPERTY_PAGE_LABELS[item.id] || item.label || item.title) + '</button>';
-                }).join('') +
+                '<div class="property-page-nav-side property-page-nav-left">' +
+                    (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page">&#171;&#171;</button>' : '') +
+                    '<span class="property-page-current" aria-current="page">PG. ' + (pageIndex + 1) + ' ' + esc(pageInfo.title) + '</span>' +
+                '</div>' +
+                (next ? '<div class="property-page-nav-side property-page-nav-right"><button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page">&#187;&#187;</button><span class="property-page-next-label">' + esc(next.title) + '</span></div>' : '') +
                 '</nav>';
         }
         function pageFrame(content) {
             return pageHeader() + pageNavigation() + access + content;
         }
         if (pageName === 'carried-hauled') {
-            return pageFrame(haulingSection());
+            return pageFrame(cardIndex(selected) + haulingSection());
         }
         if (pageName === 'quarters') {
             var familyMarkup = typeof window.renderSpaceFamilyPropertyPage === 'function'
@@ -275,12 +272,11 @@
                 '</div>');
         }
         if (pageName !== 'on-person') return pageFrame('');
-        var owned = cards.filter(function(card) { return card.owned; }), unowned = cards.filter(function(card) { return !card.owned; }).slice(0, 5);
-        return pageFrame('<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /><span class="property-draft-cap">Five columns per row</span></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div class="property-armory-layout"><aside class="property-card-index"><h4>Card Index</h4><p>Choose any Card. The center canvas reflects the chosen Character\'s Assets.</p><div class="property-card-index-list" id="propertyCardIndex">' + owned.concat(unowned).map(function(card) { return indexItem(card, selected); }).join('') + '</div></aside>' + canvas(selected) + '</div><p class="property-card-index-note">Full list of Armament and Companion SORC Cards. Armaments Readied and Accompanying Companions are displayed with the Character on the center canvas above. For the Character&rsquo;s full inventory and container types, refer to the Hone Tab of User Space.</p>' + rows(selected));
+        return pageFrame(canvas(selected) + rows(selected));
     }
     var rowPages = {};
     function rows(selected) {
-        return '<div id="propertyDraftRows">' + PROPERTY_CARD_ROWS.map(function(row) {
+        return '<div class="property-draft-tools"><input class="property-draft-search" id="propertyDraftSearch" type="search" placeholder="Search Cards by name or ref #..." oninput="filterPropertyDraft(this.value)" /></div><div id="propertySearchMessage" class="property-search-message" hidden></div><div id="propertyDraftRows">' + PROPERTY_CARD_ROWS.map(function(row) {
             var rowCards = propertyRowCards(row.id), pageSize = 9;
             var pageCount = Math.ceil(rowCards.length / pageSize);
             var pageNumber = pageCount ? Math.min(rowPages[row.id] || 0, pageCount - 1) : 0;
@@ -312,14 +308,14 @@
         }
         draft.scrollIntoView({ block: 'start', behavior: 'smooth' });
     };
-     window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core', detailSelected = card.type === 'Companion Cards' ? previous : id; draft.setAttribute('data-selected', detailSelected); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem(propertyStorageKey('selectedArmaments'), JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem(propertyStorageKey('selectedCompanions'), JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem(propertyStorageKey('safeHaven'), card.safeHaven); } catch(e) {} draft.innerHTML = page('on-person', detailSelected); };
+      window.selectPropertyCard = function(id) { var card = get(id), draft = document.getElementById('propertyDraft'); if (!card || !draft) return; var previous = draft.getAttribute('data-selected') || 'armor-core', detailSelected = card.type === 'Companion Cards' ? previous : id, pageName = draft.getAttribute('data-page') || 'on-person'; draft.setAttribute('data-selected', detailSelected); try { if (card.worn && card.owned) { var armaments = selectedArmament(previous), armamentIndex = armaments.indexOf(id); if (armamentIndex === -1) armaments.push(id); else armaments.splice(armamentIndex, 1); localStorage.setItem(propertyStorageKey('selectedArmaments'), JSON.stringify(armaments)); } if (card.type === 'Companion Cards' && card.owned) { var companions = selectedCompanion(previous), companionIndex = companions.indexOf(id); if (companionIndex === -1) companions.push(id); else companions.splice(companionIndex, 1); localStorage.setItem(propertyStorageKey('selectedCompanions'), JSON.stringify(companions)); } if (card.safeHaven) localStorage.setItem(propertyStorageKey('safeHaven'), card.safeHaven); } catch(e) {} draft.innerHTML = page(pageName, detailSelected); };
     window.propertyCompanionTap = function(id) { if (suppressNextCompanionClick) { suppressNextCompanionClick = false; return; } window.selectPropertyCard(id); };
     window.startPropertyCardHold = function(event, id) { if (event.pointerType === 'mouse' && event.button !== 0) return; window.cancelPropertyCardHold(); propertyHoldTimer = window.setTimeout(function() { suppressNextCompanionClick = true; window.showPropertyLongPressCard(id); }, 600); };
     window.endPropertyCardHold = function() { if (propertyHoldTimer) { window.clearTimeout(propertyHoldTimer); propertyHoldTimer = null; } };
     window.cancelPropertyCardHold = window.endPropertyCardHold;
      window.showPropertyLongPressCard = function(id) { var card = get(id) || CHARACTER_PICKERS.filter(function(picker) { return picker.id === id; })[0]; if (!card) return; var existing = document.getElementById('propertyLongPressCard'); if (existing) existing.remove(); var image = card.art ? '<img src="' + esc(card.art) + '" alt="' + esc(card.name) + '" />' : '<span class="property-long-press-placeholder" aria-hidden="true">&#9672;</span>'; var cardInfo = [card.rank, card.role].filter(Boolean).join(' · '); var isCharacterPicker = id.indexOf('character-picker-') === 0; var displayName = card.name + (isCharacterPicker && card.previewSuffix ? card.previewSuffix : ''); var developmentNote = isCharacterPicker ? '' : '<div class="property-long-press-note">SORC Cards under development.</div>'; var overlay = document.createElement('div'); overlay.id = 'propertyLongPressCard'; overlay.className = 'property-long-press-overlay'; overlay.innerHTML = '<section class="property-long-press-card' + rankClass(card) + '" role="dialog" aria-modal="true" aria-label="' + esc(displayName) + ' Card" onclick="event.stopPropagation()"><button type="button" class="property-long-press-close" onclick="closePropertyLongPressCard()" aria-label="Close Card">&times;</button><div class="property-long-press-art">' + image + '</div><div class="property-long-press-meta"><div class="property-long-press-name">' + esc(displayName) + '</div>' + (cardInfo ? '<div class="property-long-press-rank">' + esc(cardInfo) + '</div>' : '') + developmentNote + '</div></section>'; overlay.setAttribute('onclick', 'closePropertyLongPressCard()'); document.body.appendChild(overlay); window.setTimeout(function() { suppressNextCompanionClick = false; }, 900); };
     window.closePropertyLongPressCard = function() { var overlay = document.getElementById('propertyLongPressCard'); if (overlay) overlay.remove(); };
-     window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { if (selectedCharacterPicker() === id) localStorage.setItem(propertyStorageKey('characterVisible'), characterPickerVisible() ? 'false' : 'true'); else { localStorage.setItem(propertyStorageKey('characterPicker'), id); localStorage.setItem(propertyStorageKey('characterVisible'), 'true'); } } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
+      window.selectPropertyCharacterPicker = function(id) { var draft = document.getElementById('propertyDraft'), picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0]; if (!draft || !picker) return; try { if (selectedCharacterPicker() === id) localStorage.setItem(propertyStorageKey('characterVisible'), characterPickerVisible() ? 'false' : 'true'); else { localStorage.setItem(propertyStorageKey('characterPicker'), id); localStorage.setItem(propertyStorageKey('characterVisible'), 'true'); } } catch(e) {} var pageName = draft.getAttribute('data-page') || 'on-person'; draft.innerHTML = page(pageName, draft.getAttribute('data-selected') || 'armor-core'); if (pageName === 'quarters' && typeof window.refreshSpaceHomeCharacterRecords === 'function') window.refreshSpaceHomeCharacterRecords(); };
     window.selectSpaceCharacterPicker = function(id) {
         var picker = CHARACTER_PICKERS.filter(function(item) { return item.id === id && item.available; })[0];
         if (!picker) return;
@@ -342,7 +338,7 @@
         if (typeof window.refreshSpaceCharacterIdentity === 'function') window.refreshSpaceCharacterIdentity();
     };
     window.selectPropertyRowPage = function(rowId, direction) { var draft = document.getElementById('propertyDraft'); if (!draft) return; var pageCount = Math.ceil(propertyRowCards(rowId).length / 9); if (!pageCount) return; var pageNumber = Math.min(Math.max(rowPages[rowId] || 0, 0), pageCount - 1); rowPages[rowId] = Math.max(0, Math.min(pageCount - 1, pageNumber + direction)); draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'armor-core'); };
-     window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem(propertyStorageKey('safeHaven'), id); } catch(e) {} draft.innerHTML = page('on-person', draft.getAttribute('data-selected') || 'character-sheet'); };
+      window.selectPropertySafeHaven = function(id) { var draft = document.getElementById('propertyDraft'), haven = SAFE_HAVENS.filter(function(item) { return item.id === id; })[0]; if (!draft || !haven) return; try { localStorage.setItem(propertyStorageKey('safeHaven'), id); } catch(e) {} var pageName = draft.getAttribute('data-page') || 'on-person'; draft.innerHTML = page(pageName, draft.getAttribute('data-selected') || 'character-sheet'); };
     window.filterPropertyDraft = function(query) {
         var q = String(query || '').trim().toLowerCase(), matches = cards.filter(function(card) { return !q || (card.name + ' ' + card.ref + ' ' + card.summary + ' ' + card.type + ' ' + (card.category || '')).toLowerCase().indexOf(q) !== -1; });
         document.querySelectorAll('#propertyDraftRows .property-armory-card').forEach(function(button) { button.style.display = (!q || (button.getAttribute('data-property-name') || '').toLowerCase().indexOf(q) !== -1) ? '' : 'none'; });

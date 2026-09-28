@@ -204,7 +204,7 @@ class SORCNavigation {
                 </button>
                 <p class="sorc-nav-section-description sorc-play-section-description">Login Wanderer, to manage your character, lobbies, room, and personal progression.</p>
                 <ul class="sorc-nav-section-menu" id="play-menu">
-                  <li><a class="sorc-space-nav-link" href="${pathToRoot}content/features/space.html">Space</a></li>
+                  <li><a class="sorc-space-nav-link" href="${pathToRoot}content/features/space.html">User Space</a></li>
                   <li><a href="${pathToRoot}lobbies.html">My Lobbies</a></li>
                   <li><a href="${pathToRoot}content/character-customization-index.html">Character Customization</a></li>
                   <li><a href="${pathToRoot}content/features/room.html">Room</a></li>
@@ -383,13 +383,13 @@ class SORCNavigation {
     const playSectionLabel = document.querySelector('.sorc-play-section-label');
     const playSectionDescription = document.querySelector('.sorc-play-section-description');
     const spaceLink = document.querySelector('.sorc-space-nav-link');
-    if (playSectionLabel) playSectionLabel.textContent = isSignedIn ? 'Haven APP' : 'SPACE';
+    if (playSectionLabel) playSectionLabel.textContent = 'User Space';
     if (playSectionDescription) {
       playSectionDescription.textContent = isSignedIn
         ? 'Manage your character, lobbies, room, and personal progression.'
         : 'Login Wanderer, to manage your character, lobbies, room, and personal progression.';
     }
-    if (spaceLink) spaceLink.textContent = isSignedIn ? 'Haven APP' : 'Space';
+    if (spaceLink) spaceLink.textContent = 'User Space';
 
     card.href = isSignedIn
       ? '/content/features/space.html'
@@ -398,7 +398,7 @@ class SORCNavigation {
       floatingLink.href = card.href;
       floatingLink.setAttribute(
         'aria-label',
-        isSignedIn ? `Open ${displayName}'s Space` : 'Wanderer welcome page'
+        isSignedIn ? `Open ${displayName}'s User Space` : 'Wanderer welcome page'
       );
     }
     name.textContent = displayName;

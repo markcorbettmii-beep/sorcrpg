@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var profileBtn = document.createElement('button');
   profileBtn.id = 'profileBtn';
-  profileBtn.title = 'Space';
+  profileBtn.title = 'User Space';
   profileBtn.style.cssText = 'border:2px solid;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;font-size:1.2rem;overflow:hidden;padding:0;';
   profileBtn.textContent = 'W';
 
@@ -363,7 +363,7 @@ function showRoleBadge(user) {
 
   existing.innerHTML = avatarHtml + displayName +
     ' <span class="role-tag" data-username="' + displayName + '" data-userid="' + safeId + '" data-role="' + role + '" data-isadmin="' + isAdminUser + '" style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none;-webkit-user-select:none;color:' + linkColor + ' !important;background:transparent !important;">' + abbr + '</span>' +
-    ' · <a href="/content/features/space.html" style="color:' + linkColor + ';text-decoration:underline;">Space</a>' +
+    ' · <a href="/content/features/space.html" style="color:' + linkColor + ';text-decoration:underline;">User Space</a>' +
     ' · <a href="' + lobbiesHref + '" style="color:' + linkColor + ';text-decoration:underline;">Lobbies</a>' +
     ' · <a id="badgeInboxLink" href="/content/features/inbox.html" style="color:' + linkColor + ';text-decoration:underline;">Inbox</a>' +
     ' · <a id="badgeFellowshipsLink" href="/content/features/fellowships.html" style="color:' + linkColor + ';text-decoration:underline;">Cohorts</a>' +
@@ -475,7 +475,7 @@ async function checkNotifications(user) {
     // ---- Admin invite toast (once per session) ----
     if (data.admin_invite && !sessionStorage.getItem('sorc_invite_toasted')) {
       sessionStorage.setItem('sorc_invite_toasted', '1');
-      sorcToast('You have an Admin invitation! Visit your Space to respond.', '#c93f35');
+      sorcToast('You have an Admin invitation! Visit your User Space to respond.', '#c93f35');
     }
 
     // ---- Update nav badges ----
