@@ -377,13 +377,13 @@ class SORCNavigation {
     const playSectionLabel = document.querySelector('.sorc-play-section-label');
     const playSectionDescription = document.querySelector('.sorc-play-section-description');
     const spaceLink = document.querySelector('.sorc-space-nav-link');
-    if (playSectionLabel) playSectionLabel.textContent = isSignedIn ? 'My Space' : 'SPACE';
+    if (playSectionLabel) playSectionLabel.textContent = isSignedIn ? 'Haven APP' : 'SPACE';
     if (playSectionDescription) {
       playSectionDescription.textContent = isSignedIn
         ? 'Manage your character, lobbies, room, and personal progression.'
         : 'Login Wanderer, to manage your character, lobbies, room, and personal progression.';
     }
-    if (spaceLink) spaceLink.textContent = isSignedIn ? 'My Space' : 'Space';
+    if (spaceLink) spaceLink.textContent = isSignedIn ? 'Haven APP' : 'Space';
 
     card.href = isSignedIn
       ? '/content/features/space.html'
