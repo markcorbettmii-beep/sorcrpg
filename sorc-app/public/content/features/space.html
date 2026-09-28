@@ -89,6 +89,7 @@
             z-index: 2;
         }
         .tab-nav button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .tab-nav button.static-tab:disabled { opacity: 1; cursor: default; }
         .tab-content { display: none; padding: 1.75rem 1.5rem; background: #1a1a1a; border-radius: 0 0 10px 10px; min-height: 300px; }
         .tab-content.active { display: block; }
         /* Tabs scale with viewport so they never read as empty bars on desktop */
@@ -1051,10 +1052,7 @@
     };
 
     function switchTab(tabId) {
-        if (IS_WANDERER_VIEW) {
-            var requestedTab = PROFILE_TABS.find(function(tab) { return tab.id === tabId; });
-            if (!requestedTab || requestedTab.access !== 'PUBLIC') tabId = 'overview';
-        }
+        if (IS_WANDERER_VIEW) return;
         document.querySelectorAll('.tab-nav button').forEach(function(btn) { btn.classList.remove('active'); });
         document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
         var btn = document.querySelector('.tab-nav button[data-tab="' + tabId + '"]');
@@ -1204,7 +1202,6 @@
 
     function renderSpaceCharacterIndex() {
         return '<section id=\"spaceCharacterIndex\" class=\"space-character-index\" style=\"display:none\">' +
-            '<p class=\"property-tab-intro\">Property includes Worn, Carried-Hauled, Quarters, Storage &amp; Stash, Vaults, and Force Station.</p>' +
             '<h4>Character Index</h4>' +
             '<p>Choose a character to view their User Space.</p>' +
             '<div id=\"spaceCharacterPickerControls\">' +
@@ -1251,16 +1248,6 @@
             renderSpaceCharacterTitle(true) +
             renderTabContent(wanderer, 'WANDERER', false, true);
 
-        var tabNav = container.querySelector('.tab-nav');
-        if (tabNav) {
-            tabNav.addEventListener('click', function(event) {
-                var btn = event.target.closest('button[data-tab]');
-                if (btn && !btn.disabled) switchTab(btn.getAttribute('data-tab'));
-            }, false);
-        }
-
-        var params = new URLSearchParams(window.location.search);
-        switchTab(params.get('tab') || 'overview');
         applyWandererReadOnly(container);
     }
 
@@ -1302,11 +1289,13 @@
     function renderTabNav(user, role, isPro, isWanderer) {
         var html = '<div class="tab-nav">';
         PROFILE_TABS.forEach(function(tab) {
-            if (isWanderer && tab.access !== 'PUBLIC') return;
             var canView = canViewTab(tab, !isWanderer, isPro);
-            var disabled = !canView ? ' disabled' : '';
+            var disabled = (isWanderer || !canView) ? ' disabled' : '';
             var proClass = tab.pro ? ' pro' : '';
-            html += '<button class="tab-btn' + proClass + '" data-tab="' + tab.id + '" onclick="switchTab(\'' + tab.id + '\')"' + disabled + '>' + tab.label + '</button>';
+            var staticClass = isWanderer ? ' static-tab' : '';
+            var activeClass = isWanderer && tab.id === 'overview' ? ' active' : '';
+            var clickHandler = isWanderer ? '' : ' onclick="switchTab(\'' + tab.id + '\')"';
+            html += '<button type="button" class="tab-btn' + proClass + staticClass + activeClass + '" data-tab="' + tab.id + '"' + clickHandler + disabled + '>' + tab.label + '</button>';
         });
         html += '</div>';
         return html;
@@ -1370,9 +1359,11 @@
     window.refreshSpaceCharacterIdentity = function() {
         var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
         var title = document.getElementById('spaceCharacterTitle');
-        if (title) title.textContent = characterName + "'s User Space";
+        var titleText = characterName + "'s User Space";
+        if (title && title.textContent !== titleText) title.textContent = titleText;
         var roomTitle = document.getElementById('spaceCharacterRoomTitle');
-        if (roomTitle) roomTitle.textContent = characterName + ' Room';
+        var roomTitleText = characterName + ' Room';
+        if (roomTitle && roomTitle.textContent !== roomTitleText) roomTitle.textContent = roomTitleText;
     };
     function observeSpaceCharacterPickerSelection() {
         var container = document.getElementById('profileContainer');
@@ -1493,6 +1484,7 @@
         var displayName = user.display_name || user.username || 'Adventurer';
         var html = '';
         PROFILE_TABS.forEach(function(tab) {
+            if (isWanderer && tab.id !== 'overview') return;
             var canView = canViewTab(tab, !isWanderer, isPro);
             var active = tab.id === 'overview' ? ' active' : '';
 
@@ -1522,7 +1514,7 @@
                         var activeCharactersText = isWanderer
                             ? 'Sign in to view your active characters.'
                             : 'You have <span id="overviewCharacterCount">0</span> active characters. <a href="/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a>';
-                        html += '<h3>Haven</h3>' +
+                        html += '<h3>User Space</h3>' +
                             '<p>The ultimate command center to record and track your Character’s Legacy. Your User Space tracks everything tied to your profile: your active character sheets, earned trophies, session journals, owned properties, and faction standings. Complete your profile setup to connect with fellow adventurers, climb the leaderboards, and manage your inventory across various User Space tabs.</p>' +
                             '<div class="content-grid">' +
                                 '<div class="card"><h4>User Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' + editSpaceLink + '</p></div>' +
@@ -1651,7 +1643,7 @@
 
                     case 'property':
                         html += '<h3>Property</h3>' +
-                            '<p class="property-gm-note">Some features are available to GMs upon assessing into lobbies for online campaigns.</p>' +
+                            '<p class="property-tab-intro">The Property category of your User Space brings your character&rsquo;s equipment, companions, living spaces, and stored belongings together. Use Worn, Carried-Hauled, Quarters, Storage &amp; Stash, Vaults, and Force Station to manage each part of your character&rsquo;s property.</p>' +
                             renderPropertyDraft();
                         break;
 
@@ -1666,7 +1658,7 @@
                             '<div class="home-category-grid">' +
                                 renderHomeCard('Home Overview', [
                                     '<p>Home is the owned space. Home User Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p>',
-                                    '<img src="../essentia_core/br-images/home-blueprints-reference.png_20260916_213128_0000.png" alt="Blueprint reference showing bungalow, shelter varieties, estates and mansions, and a safe haven" style="display:block;width:min(100%,280px);height:auto;margin:1rem auto 0;border-radius:6px;opacity:.92;">',
+                                    '<img src="../essentia_core/br-images/home-blueprints-reference.png_20260916_213128_0000.png" alt="Blueprint reference showing bungalow, shelter varieties, estates and mansions" style="display:block;width:min(100%,280px);height:auto;margin:1rem auto 0;border-radius:6px;opacity:.92;">',
                                     '<p>Homes come in many forms built to sustain their respective environmental conditions, such as desert domes, swamp bungalows, modular pod complexes, city townhouses, forest cabins, or even a tent pitched in the freezing arctic.</p>',
                                     '<p>Players maintain a record of all owned, rented, or accessible plots. This includes cataloging specific rooms, such as storage, armories, trophy rooms, and Companion facilities. Companions, such as Fellowships (Family and Friends), Pets, or Guardians, are often used for upkeep and security purposes and tracked on a separate ledger.</p>'
                                 ]) +
