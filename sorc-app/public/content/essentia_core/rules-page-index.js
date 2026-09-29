@@ -8,6 +8,17 @@
   if (!main) return;
 
   var file = location.pathname.split("/").pop();
+  var indexTitles = {
+    "rules_character-creation.html": "Character Creation",
+    "rules_character-progression.html": "Character Progression",
+    "rules_combat-movement.html": "Combat & Movement",
+    "rules_equipment.html": "Armaments & Equipment",
+    "rules_playable-classes.html": "Playable Classes",
+    "rules_playable-races.html": "Playable Races",
+    "rules_sorc-cards.html": "SORC Cards",
+    "rules_companions.html": "Companions",
+  };
+  var indexTitle = indexTitles[file.toLowerCase()] || "Rules";
   var classPage = /rules_playable-classes\.html$/i.test(file);
   var racePage = /rules_playable-races\.html$/i.test(file);
   var paginated = /rules_(character-creation|character-progression|combat-movement|equipment|playable-classes|playable-races|sorc-cards|companions)\.html$/i.test(file);
@@ -211,14 +222,17 @@
       ? (current === 1 ? hs.filter(function (h) { return !h.closest(".class-card,.race-card"); }) : [])
       : (total > 1 ? hs.filter(function (h) { return (pageOf.get(h) || 1) === current; }) : hs);
     if (!selected.length) return;
-    var n = document.createElement("nav"); n.className = "rules-page-index"; n.setAttribute("aria-label", "Page section index");
-    var d = document.createElement("details"), s = document.createElement("summary"); s.textContent = "Page " + current + " index — jump to a section"; d.appendChild(s);
+    var n = document.createElement("nav"); n.className = "rules-page-index"; n.setAttribute("aria-label", indexTitle + " section index");
+    var d = document.createElement("details"), s = document.createElement("summary");
+    var label = document.createElement("span"); label.textContent = indexTitle + " Index";
+    var indicator = document.createElement("span"); indicator.className = "rules-page-index-indicator"; indicator.setAttribute("aria-hidden", "true"); indicator.textContent = "🔽";
+    s.appendChild(label); s.appendChild(indicator); d.appendChild(s);
     var ul = document.createElement("ul");
     selected.forEach(function (h) { var li = document.createElement("li"); li.dataset.level = h.tagName.slice(1); var a = document.createElement("a"), p = pageOf.get(h) || 1, u = new URL(location.href); if (!rosterListNode) u.searchParams.set("rulesPage", p); u.hash = h.id; a.href = u.pathname + u.search + u.hash; a.textContent = h.textContent.trim(); li.appendChild(a); ul.appendChild(li); });
     d.appendChild(ul); n.appendChild(d); (selected[0] || main.firstChild).insertAdjacentElement("afterend", n);
   }
   function styles() {
-    var s = document.createElement("style"); s.textContent = ".rules-page-index{margin:1rem 0 1.5rem;padding:.75rem 1rem;border:1px solid rgba(160,140,200,.35);border-radius:8px;background:rgba(120,80,200,.07)}.rules-page-index summary{cursor:pointer;font-weight:700;letter-spacing:.04em}.rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem 1.25rem;padding:0;margin:.8rem 0;list-style:none}.rules-page-index li[data-level='3']{padding-left:1rem}.rules-page-index li[data-level='4']{padding-left:2rem}.rules-page-controls{margin:1rem 0;padding:.6rem .8rem;border:1px solid rgba(160,140,200,.35);border-radius:8px;background:rgba(120,80,200,.07)}.rules-page-controls ul{display:flex!important;flex-wrap:wrap;gap:.4rem .8rem;list-style:none;margin:0;padding:0}.rules-page-controls a,.rules-page-controls span{display:inline-block;padding:.25rem .5rem;color:inherit}.rules-page-controls [aria-current=page]{font-weight:700;background:rgba(160,140,200,.2)}";
+    var s = document.createElement("style"); s.textContent = ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(160,140,200,.35);border-radius:6px;background:rgba(120,80,200,.07)}.rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;font-size:.9rem;font-weight:700;letter-spacing:.03em}.rules-page-index summary::-webkit-details-marker{display:none}.rules-page-index summary::marker{content:''}.rules-page-index-indicator{display:inline-block;transition:transform .15s ease}.rules-page-index details[open] .rules-page-index-indicator{transform:rotate(180deg)}.rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem 1.25rem;padding:0;margin:.8rem 0;list-style:none}.rules-page-index li[data-level='3']{padding-left:1rem}.rules-page-index li[data-level='4']{padding-left:2rem}.rules-page-controls{margin:1rem 0;padding:.6rem .8rem;border:1px solid rgba(160,140,200,.35);border-radius:8px;background:rgba(120,80,200,.07)}.rules-page-controls ul{display:flex!important;flex-wrap:wrap;gap:.4rem .8rem;list-style:none;margin:0;padding:0}.rules-page-controls a,.rules-page-controls span{display:inline-block;padding:.25rem .5rem;color:inherit}.rules-page-controls [aria-current=page]{font-weight:700;background:rgba(160,140,200,.2)}";
     document.head.appendChild(s);
   }
   function show(n) {

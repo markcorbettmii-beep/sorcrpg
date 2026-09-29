@@ -162,7 +162,6 @@ for (const pageRoot of [publicSiteRoot, sourceRoot, join(repository, "demos")]) 
 }
 
 const canonicalSpacePath = join(sourceRoot, "features", "space.html");
-const publicSpacePath = join(publicRoot, "features", "space.html");
 const canonicalHavenHudPath = join(sourceRoot, "features", "haven-hud.html");
 const publicHavenHudPath = join(publicRoot, "features", "haven-hud.html");
 if (!existsSync(canonicalSpacePath)) {
@@ -172,10 +171,12 @@ if (!existsSync(canonicalSpacePath)) {
   const requiredSpaceMarkers = [
     "property-draft.css",
     "property-draft.js",
-    "havenHudTheme",
-    "data-haven-theme",
-    "openHavenHudTab",
-    "rules_mapping.html#mapping",
+    "{ id: 'property', label: 'Property', access: 'PRIVATE', pro: false }",
+    "spaceCharacterIndex.style.display = tabId === 'property' ? 'block' : 'none';",
+    "nextParams.set('tab', tabId);",
+    "var initialTab = params.get('tab') || 'overview';",
+    "switchTab(initialTab);",
+    "renderPropertyDraft()",
   ];
   for (const marker of requiredSpaceMarkers) {
     if (!spaceText.includes(marker)) {
@@ -190,10 +191,16 @@ if (!existsSync(canonicalSpacePath)) {
   } else {
     const propertyDraftText = readFileSync(propertyDraftJsPath, "utf8");
     for (const marker of [
-      "'on-person': 'Worn'",
-      "'carried-hauled': 'Carried-Hauled'",
-      "Carried-Hauled PG. 2",
-      "Quarters pg. 3",
+      "{ id:'on-person', title:'Worn'",
+      "{ id:'carried-hauled', title:'Carried-Hauled'",
+      "{ id:'quarters', title:'Quarters'",
+      "{ id:'vaults', title:'Vault'",
+      "{ id:'storage-stash', title:'Stash/Stored'",
+      "{ id:'force-station', title:'Force Station'",
+      'aria-label="Property pages"',
+      'aria-current="page"',
+      "window.selectPropertyPage = function(name)",
+      "PROPERTY_TAB_PAGES.some(function(item) { return item.id === name; })",
     ]) {
       if (!propertyDraftText.includes(marker)) {
         spaceFailures.push(`Canonical Space Property navigation is missing ${marker}`);
@@ -202,6 +209,27 @@ if (!existsSync(canonicalSpacePath)) {
   }
   if (!existsSync(propertyDraftCssPath)) {
     spaceFailures.push("Canonical Space Property styles are missing");
+  }
+
+  const stageWorkerAssetsPath = join(
+    repository,
+    "sorc-app",
+    "scripts",
+    "stage-worker-assets.mjs",
+  );
+  if (!existsSync(stageWorkerAssetsPath)) {
+    spaceFailures.push("Worker asset staging script is missing");
+  } else {
+    const stageWorkerAssetsText = readFileSync(stageWorkerAssetsPath, "utf8");
+    for (const marker of [
+      'resolve(repositoryRoot, "content/features/space.html")',
+      '"content/features/space.html"',
+      "copyFileSync(spaceSource, spaceDestination)",
+    ]) {
+      if (!stageWorkerAssetsText.includes(marker)) {
+        spaceFailures.push(`Worker staging does not copy canonical Space source: ${marker}`);
+      }
+    }
   }
 
   const pickerAssetDirectory = join(
@@ -221,6 +249,35 @@ if (!existsSync(canonicalSpacePath)) {
   ]) {
     if (!existsSync(join(pickerAssetDirectory, asset))) {
       spaceFailures.push(`Space picker image is missing from public assets: ${asset}`);
+    }
+  }
+
+  for (const [asset, label] of [
+    [
+      "character/assets/female/firstborn/human/physiques/muscular/body/hands-foreground.png_20260916_163927_0000.png",
+      "Character hand foreground",
+    ],
+    [
+      "character/assets/customizer/pickers/companions/companion-picker-weasel.png",
+      "Weasel picker",
+    ],
+    [
+      "character/assets/shared/companions/layers/high-res-weas.png",
+      "Weasel companion layer",
+    ],
+  ]) {
+    const sourceAsset = join(sourceRoot, asset);
+    const publicAsset = join(publicRoot, asset);
+    if (!existsSync(sourceAsset)) {
+      spaceFailures.push(`${label} source artwork is missing`);
+    }
+    if (!existsSync(publicAsset)) {
+      spaceFailures.push(`${label} Worker artwork is missing`);
+    } else if (
+      existsSync(sourceAsset) &&
+      !readFileSync(sourceAsset).equals(readFileSync(publicAsset))
+    ) {
+      spaceFailures.push(`${label} Worker artwork differs from source`);
     }
   }
 
@@ -294,13 +351,6 @@ for (const asset of [
   }
 }
 
-if (existsSync(publicSpacePath) && existsSync(canonicalSpacePath)) {
-  if (!readFileSync(publicSpacePath).equals(readFileSync(canonicalSpacePath))) {
-    spaceFailures.push(
-      "Generated public Space copy differs from content/features/space.html",
-    );
-  }
-}
 for (const [path, label] of [
   [join(repository, "sorc-app", "public", "space.html"), "Legacy /space.html alias"],
   [join(sourceRoot, "admin", "debug-space.html"), "Source Space debugger"],

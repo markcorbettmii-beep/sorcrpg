@@ -19,68 +19,54 @@ const checks = [
     ],
   },
   {
-    name: "Haven HUD themes and destinations",
+    name: "Space Property tab routing",
     path: "content/features/space.html",
     markers: [
-      "havenHudTheme",
-      "localStorage.setItem(themeKey, theme)",
-      "window.terminalTheme.start()",
-      "window.veilwoodTheme.start()",
-      "default-haven-app-hud_20260927_234628_0000.png",
-      "omné-terminal-haven-app-hud_20260927_222728_0000.png",
-      "the-veilwood-haven-app-hud_20260927_222654_0000.png",
-      "data-haven-hud-view",
-      "haven-hud-only",
-      ".sorc-nav-wrapper",
-      "#profileBtn",
-      "fitHavenHudFrame",
-      "window.location.assign",
-      'href="space.html" aria-label="Open full Haven"',
-      'href="/content/essentia_core/rules_mapping.html#mapping"',
-      'href="lobbies.html"',
-      'id="trophies"',
-      'id="achievements"',
+      "{ id: 'property', label: 'Property', access: 'PRIVATE', pro: false }",
+      "function switchTab(tabId)",
+      "spaceCharacterIndex.style.display = tabId === 'property' ? 'block' : 'none';",
+      "nextParams.set('tab', tabId);",
+      "var initialTab = params.get('tab') || 'overview';",
+      "switchTab(initialTab);",
+      "renderPropertyDraft()",
     ],
   },
   {
-    name: "Compact Haven HUD route",
+    name: "Haven shortcut redirects to Space",
     path: "content/features/haven-hud.html",
     markers: [
-      "space.html?view=hud",
-      'href="space.html?view=hud"',
+      '<meta http-equiv="refresh" content="0; url=space.html">',
+      'window.location.replace(new URL("space.html", window.location.href).href);',
+      '<a href="space.html">Open User Space</a>',
     ],
   },
   {
-    name: "Wanderer Haven HUD preview gate",
-    path: "content/features/space.html",
+    name: "Property canvas hands and Weasel companion",
+    path: "sorc-app/public/content/features/property-draft.js",
     markers: [
-      "haven-wanderer-view",
-      'id="haven-hud-access-gate"',
-      "/sorc-letters-evil.png",
-      "/sorc-letters-lawful.png",
-      "window.setHavenHudAccess = function(isWanderer)",
-      "hudLinks.inert = isLocked",
-      "button.disabled = isLocked",
-      "body.haven-wanderer-view .haven-hud-links { pointer-events: none; }",
-      'href="/content/auth/signin.html"',
-      "body.haven-wanderer-view .haven-hud-sign-in a,",
-      "Sign in to open Haven’s sections and controls.",
-      "window.setHavenHudAccess(false)",
+      "{ id:'companion-weasel', type:'Companion Cards', name:'Pet Weasel'",
+      "art:'/content/character/assets/customizer/pickers/companions/companion-picker-weasel.png'",
+      "layerArt:'/content/character/assets/shared/companions/layers/high-res-weas.png'",
+      "var HAND_FOREGROUND_ART = '/content/character/assets/female/firstborn/human/physiques/muscular/body/hands-foreground.png_20260916_163927_0000.png';",
+      "function characterHandLayer(src, side)",
+      "characterHandLayer(src, 'left') + characterHandLayer(src, 'right')",
+      "companions.map(function(card) { return canvasLayer(card, 'property-canvas-layer-companion ' + card.id); }).join('')",
     ],
   },
   {
     name: "Space Property page flow",
     path: "sorc-app/public/content/features/property-draft.js",
     markers: [
-      "'on-person': 'Worn'",
-      "'carried-hauled': 'Carried-Hauled'",
-      "Carried-Hauled PG. 2",
-      "Quarters pg. 3",
-      "label: 'Worn'",
-      "label: 'Carried-Hauled'",
-      "label: 'Quarters'",
+      "{ id:'on-person', title:'Worn'",
+      "{ id:'carried-hauled', title:'Carried-Hauled'",
+      "{ id:'quarters', title:'Quarters'",
+      "{ id:'vaults', title:'Vault'",
+      "{ id:'storage-stash', title:'Stash/Stored'",
+      "{ id:'force-station', title:'Force Station'",
       'aria-label="Property pages"',
       'aria-current="page"',
+      "window.selectPropertyPage = function(name)",
+      "PROPERTY_TAB_PAGES.some(function(item) { return item.id === name; })",
     ],
   },
   {
@@ -137,45 +123,36 @@ const canonicalSpaceSource = join(
   "features",
   "space.html",
 );
-const generatedSpaceCopy = join(
+const workerAssetStagingScript = join(
   repository,
   "sorc-app",
-  "public",
-  "content",
-  "features",
-  "space.html",
+  "scripts",
+  "stage-worker-assets.mjs",
 );
 const extraSpacePages = [
   join(repository, "sorc-app", "public", "space.html"),
   join(repository, "content", "admin", "debug-space.html"),
   join(repository, "sorc-app", "public", "content", "admin", "debug-space.html"),
 ].filter(existsSync);
-const staleGeneratedSpaceCopy =
-  existsSync(generatedSpaceCopy) &&
-  (!existsSync(canonicalSpaceSource) ||
-    !readFileSync(generatedSpaceCopy).equals(readFileSync(canonicalSpaceSource)));
-if (staleGeneratedSpaceCopy || extraSpacePages.length) {
+let invalidSpaceStaging = !existsSync(workerAssetStagingScript);
+if (!invalidSpaceStaging) {
+  const stagingText = readFileSync(workerAssetStagingScript, "utf8");
+  invalidSpaceStaging = [
+    'resolve(repositoryRoot, "content/features/space.html")',
+    'const spaceDestination = resolve(\n  publicRoot,\n  "content/features/space.html",\n);',
+    "copyFileSync(spaceSource, spaceDestination)",
+  ].some((marker) => !stagingText.includes(marker));
+}
+if (invalidSpaceStaging || extraSpacePages.length) {
   console.error(
-    "FAIL The generated Space page matches its canonical source and no duplicate routes remain: found " +
-      [staleGeneratedSpaceCopy ? generatedSpaceCopy : null, ...extraSpacePages]
+    "FAIL Worker staging uses the canonical Space source and no duplicate routes remain: found " +
+      [invalidSpaceStaging ? workerAssetStagingScript : null, ...extraSpacePages]
         .filter(Boolean)
         .join(", "),
   );
   failures++;
 } else {
-  console.log("PASS Canonical Space source and generated Worker page agree");
-}
-
-const havenHudPath = join(repository, "content", "features", "space.html");
-if (existsSync(havenHudPath)) {
-  const havenHudText = readFileSync(havenHudPath, "utf8");
-  const hudLinkCount = (havenHudText.match(/class="haven-hud-link"/g) || []).length;
-  if (hudLinkCount !== 15) {
-    console.error(`FAIL Haven HUD has 15 clickable icon targets: found ${hudLinkCount}`);
-    failures++;
-  } else {
-    console.log("PASS Haven HUD has 15 clickable icon targets");
-  }
+  console.log("PASS Worker stages Space from the canonical source");
 }
 
 if (failures) {
