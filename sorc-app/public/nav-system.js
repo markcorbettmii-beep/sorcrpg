@@ -171,8 +171,17 @@ class SORCNavigation {
           <!-- Navigation Sidebar -->
           <div class="sorc-nav-sidebar">
             <div class="sorc-nav-header">
-              <a href="${pathToRoot}index.html" class="sorc-nav-logo">Into Essentia</a>
-              <button class="sorc-nav-close" aria-label="Close menu">✕</button>
+              <img
+                src="/images/menu/menu-textnclose-evil.png"
+                class="sorc-nav-header-image evil-only"
+                alt="Explore Essentia"
+              >
+              <img
+                src="/images/menu/menu-textnclose-lawful.png"
+                class="sorc-nav-header-image lawful-only"
+                alt="Explore Essentia"
+              >
+              <button class="sorc-nav-close" aria-label="Close menu"></button>
             </div>
 
             <div class="sorc-avatar-theme-toggle-wrapper sorc-sidebar-theme-toggle">
@@ -183,7 +192,6 @@ class SORCNavigation {
             </div>
 
             <a class="sorc-sidebar-profile-card" href="${pathToRoot}content/auth/signin.html">
-              <span class="sorc-sidebar-profile-avatar sorc-visitor-avatar">W</span>
               <span class="sorc-sidebar-profile-copy">
                 <span class="sorc-sidebar-profile-identity">
                   <strong class="sorc-sidebar-profile-name">Sign in</strong>
@@ -369,7 +377,6 @@ class SORCNavigation {
     const effectiveRole = isSignedIn ? this.getEffectiveRole(user) : 'CIVILIAN';
     const role = isSignedIn ? this.getRoleLabel(effectiveRole) : 'Wanderer';
     const card = document.querySelector('.sorc-sidebar-profile-card');
-    const avatar = document.querySelector('.sorc-sidebar-profile-avatar');
     const name = document.querySelector('.sorc-sidebar-profile-name');
     const roleLabel = document.querySelector('.sorc-sidebar-profile-role');
     const identity = document.querySelector('.sorc-sidebar-profile-identity');
@@ -378,7 +385,7 @@ class SORCNavigation {
     const signout = document.querySelector('.sorc-sidebar-signout');
     const floatingLink = document.querySelector('.sorc-floating-profile-link');
     const floatingAvatar = document.querySelector('.sorc-floating-profile-avatar');
-    if (!card || !avatar || !name || !roleLabel) return;
+    if (!card || !name || !roleLabel) return;
     const playSectionLabel = document.querySelector('.sorc-play-section-label');
     const playSectionDescription = document.querySelector('.sorc-play-section-description');
     const spaceLink = document.querySelector('.sorc-space-nav-link');
@@ -417,7 +424,6 @@ class SORCNavigation {
     const initial = isSignedIn
       ? (displayName.trim().charAt(0).toUpperCase() || 'S')
       : 'W';
-    avatar.textContent = initial;
     if (floatingAvatar) floatingAvatar.textContent = initial;
     if (isSignedIn && user.avatar) {
       const makeImage = (target) => {
@@ -431,7 +437,6 @@ class SORCNavigation {
         target.textContent = '';
         target.appendChild(image);
       };
-      makeImage(avatar);
       if (floatingAvatar) makeImage(floatingAvatar);
     }
 
@@ -471,7 +476,7 @@ class SORCNavigation {
   getRoleLabel(role) {
     const normalizedRole = String(role || '').toUpperCase();
     if (normalizedRole === 'OWNER') return 'OWN';
-    if (normalizedRole === 'ADMIN') return 'Admin';
+    if (normalizedRole === 'ADMIN') return 'AD';
     if (['GM', 'MASTER', 'GAME_MASTER'].includes(normalizedRole)) return 'GM';
     if (normalizedRole === 'PLAYER') return 'PC';
     return 'CIV';

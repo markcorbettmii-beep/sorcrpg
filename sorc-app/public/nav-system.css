@@ -271,9 +271,10 @@ body.lawful-mode .sorc-global-brand-image.evil-only {
   position: fixed;
   top: 0;
   left: 0;
-  width: min(65vw, 480px);
-  max-width: 65vw;
+  width: 90vw;
+  max-width: 90vw;
   height: 100vh;
+  height: 100dvh;
   background: var(--sorc-nav-bg);
   border-right: 1px solid var(--sorc-nav-border);
   transform: translateX(-100%);
@@ -306,44 +307,45 @@ body.lawful-mode .sorc-global-brand-image.evil-only {
 }
 
 .sorc-nav-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
+  position: relative;
+  display: block;
+  padding: 0;
   border-bottom: 1px solid var(--sorc-nav-border);
+  line-height: 0;
 }
 
-.sorc-nav-logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--sorc-nav-accent);
-  text-decoration: none;
-  letter-spacing: 2px;
-  transition: color 0.3s ease;
+.sorc-nav-header-image {
+  display: none;
+  width: 100%;
+  height: auto;
 }
 
-.sorc-nav-logo:hover {
-  color: #8c06a3;
+body.lawful-mode .sorc-nav-header-image.lawful-only,
+body.evil-mode .sorc-nav-header-image.evil-only {
+  display: block;
 }
 
 .sorc-nav-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--sorc-nav-text);
+  position: absolute;
+  top: 0;
+  right: 0.5%;
+  width: 7%;
+  height: 40%;
+  min-width: 32px;
+  min-height: 32px;
   padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 0;
   border-radius: 4px;
-  transition: background 0.2s ease;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  opacity: 0;
 }
 
-.sorc-nav-close:hover {
-  background: var(--sorc-nav-hover-bg);
+.sorc-nav-close:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--sorc-nav-accent);
+  outline-offset: 2px;
 }
 
 /* ============================================
@@ -880,7 +882,8 @@ body.lawful-mode .sorc-global-brand-image.evil-only {
   }
 
   .sorc-nav-sidebar {
-    width: 100%;
+    width: 90vw;
+    max-width: 90vw;
   }
 
   .sorc-nav-section-menu a,
@@ -908,7 +911,7 @@ body.lawful-mode .sorc-global-brand-image.evil-only {
 .sorc-sidebar-profile-card {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   padding: 0.9rem 1rem;
   color: var(--sorc-nav-text);
   background: var(--sorc-nav-bg);
@@ -920,52 +923,26 @@ body.lawful-mode .sorc-global-brand-image.evil-only {
   background: var(--sorc-nav-hover-bg);
 }
 
-.sorc-sidebar-profile-avatar {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 2px solid var(--sorc-rank-gold);
-  border-radius: 50%;
-  background: #2196f3;
-  color: #fff;
-  font-weight: 800;
-}
-
-.sorc-visitor-avatar {
-  font-size: 0.58rem;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
-}
-
-.sorc-sidebar-profile-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
 .sorc-sidebar-profile-copy {
   min-width: 0;
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.35rem;
 }
 
 .sorc-sidebar-profile-identity {
   display: flex;
+  flex: 0 1 auto;
   align-self: center;
   align-items: baseline;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   max-width: 100%;
-  width: fit-content;
+  width: auto;
   padding: 0.2rem 0.55rem;
   border: 2px solid var(--sorc-badge-border);
   border-radius: 999px;
@@ -998,6 +975,8 @@ body.evil-mode .sorc-sidebar-profile-identity {
 }
 
 .sorc-sidebar-profile-name {
+  min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   color: inherit;
   text-overflow: ellipsis;
@@ -1008,12 +987,14 @@ body.evil-mode .sorc-sidebar-profile-identity {
 }
 
 .sorc-sidebar-profile-role {
+  flex: 0 0 auto;
   color: inherit;
   font-family: 'EB Garamond', Georgia, serif;
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .sorc-sidebar-profile-role::before {
@@ -1024,6 +1005,7 @@ body.evil-mode .sorc-sidebar-profile-identity {
 
 .sorc-sidebar-profile-membership {
   display: inline-flex;
+  flex: 0 0 auto;
   align-self: center;
   align-items: center;
   gap: 0.25rem;
@@ -1033,13 +1015,18 @@ body.evil-mode .sorc-sidebar-profile-identity {
   background: var(--sorc-badge-bg);
   color: var(--sorc-badge-text);
   width: fit-content;
-  max-width: 100%;
+  max-width: none;
   font-family: 'EB Garamond', Georgia, serif;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sorc-sidebar-profile-membership[hidden] {
+  display: none;
 }
 
 .sorc-sidebar-profile-membership.basic {
@@ -1055,6 +1042,12 @@ body.evil-mode .sorc-sidebar-profile-identity {
 .sorc-sidebar-profile-arrow {
   color: var(--sorc-nav-accent);
   font-size: 1.4rem;
+}
+
+.sorc-visitor-avatar {
+  font-size: 0.58rem;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
 }
 
 .sorc-floating-profile-link {
