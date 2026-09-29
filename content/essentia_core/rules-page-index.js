@@ -440,12 +440,12 @@
     var style = document.createElement("style");
     style.id = "rules-page-index-styles";
     style.textContent =
-      ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(197,160,66,.35);border-radius:4px;background:rgba(10,12,22,.28)}" +
-      ".rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;color:#c5a042;font-size:.9rem;font-weight:700;letter-spacing:.03em}" +
+      ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(197,117,0,.5);border-radius:4px;background:rgba(197,117,0,.07)}" +
+      ".rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;color:#c57500;font-size:.9rem;font-weight:700;letter-spacing:.03em}" +
       ".rules-page-index summary::-webkit-details-marker{display:none}" +
       ".rules-page-index summary::marker{content:''}" +
-      ".rules-page-index-indicator{display:inline-block;transition:transform .15s ease}" +
-      ".rules-page-index details[open] .rules-page-index-indicator{transform:rotate(180deg)}" +
+      ".rules-page-index-indicator{display:inline-block;flex:0 0 .48rem;width:.48rem;height:.48rem;margin:0 .15rem .2rem 0;border:solid #c57500;border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .15s ease}" +
+      ".rules-page-index details[open] .rules-page-index-indicator{transform:rotate(225deg)}" +
       ".rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:.6rem 0 0;padding-left:1.2rem;gap:.25rem 1rem}" +
       ".rules-page-index li{break-inside:avoid;margin:.2rem 0}" +
       ".rules-page-index a{color:inherit;text-decoration-color:rgba(197,160,66,.55)}" +
@@ -459,6 +459,44 @@
     document.head.appendChild(style);
   }
 
+  function supplementalIndexEntries(headings) {
+    if (rosterListNode || headings.length !== 1 || currentPage !== 1) return [];
+
+    var entries = [];
+    var usedIds = new Set(Array.from(main.querySelectorAll("[id]")).map(function (element) { return element.id; }).filter(Boolean));
+
+    function addEntry(target, value) {
+      var label = String(value || "").replace(/\s+/g, " ").replace(/:\s*$/, "").trim();
+      if (!target || !label) return;
+
+      var id = target.id;
+      if (!id) {
+        var base = label.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "index-entry";
+        id = base;
+        var suffix = 2;
+        while (usedIds.has(id)) id = base + "-" + suffix++;
+        target.id = id;
+      }
+      usedIds.add(id);
+      entries.push({ label: label, id: id });
+    }
+
+    main.querySelectorAll("table").forEach(function (table) {
+      table.querySelectorAll("tr").forEach(function (row) {
+        if (row.closest("thead") || row.closest("table") !== table) return;
+        var firstCell = row.querySelector("th, td");
+        if (firstCell) addEntry(row, firstCell.textContent);
+      });
+    });
+
+    main.querySelectorAll(".callout > strong:first-child").forEach(function (label) {
+      var callout = label.closest(".callout");
+      if (callout) addEntry(callout, label.textContent);
+    });
+
+    return entries;
+  }
+
   function addHeadingIndex(headings) {
     var selection;
     if (rosterListNode) {
@@ -470,19 +508,22 @@
         ? headings
         : headings.filter(function (heading) { return pageForElement(heading) === currentPage; });
     }
-    if (!selection.length) return;
+    var rosterLinks = rosterListNode
+      ? Array.from(rosterListNode.querySelectorAll(".rules-roster-page a"))
+      : [];
+    var extraEntries = supplementalIndexEntries(headings);
+    if (!selection.length && !rosterLinks.length && !extraEntries.length) return;
 
     var nav = document.createElement("nav");
     nav.className = "rules-page-index";
-    nav.setAttribute("aria-label", pageIndexTitle + " section index");
+    nav.setAttribute("aria-label", "Chapter Index");
     var details = document.createElement("details");
     var summary = document.createElement("summary");
     var summaryLabel = document.createElement("span");
-    summaryLabel.textContent = pageIndexTitle + " Index";
+    summaryLabel.textContent = "Chapter Index";
     var indicator = document.createElement("span");
     indicator.className = "rules-page-index-indicator";
     indicator.setAttribute("aria-hidden", "true");
-    indicator.textContent = "🔽";
     summary.appendChild(summaryLabel);
     summary.appendChild(indicator);
     var list = document.createElement("ul");
@@ -506,6 +547,26 @@
       list.appendChild(item);
     });
 
+    rosterLinks.forEach(function (sourceLink) {
+      var item = document.createElement("li");
+      item.className = "index-level-3";
+      var link = document.createElement("a");
+      link.href = sourceLink.getAttribute("href");
+      link.textContent = sourceLink.textContent.trim().replace(/\s+/g, " ");
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+
+    extraEntries.forEach(function (entry) {
+      var item = document.createElement("li");
+      item.className = "index-level-3";
+      var link = document.createElement("a");
+      link.href = "#" + encodeURIComponent(entry.id);
+      link.textContent = entry.label;
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+
     details.appendChild(summary);
     details.appendChild(list);
     nav.appendChild(details);
@@ -514,7 +575,9 @@
       var view = heading.closest(".rules-page-content");
       return !heading.closest(".class-card, .race-card") && (!view || !view.hidden);
     });
-    if (firstVisibleHeading) firstVisibleHeading.insertAdjacentElement("afterend", nav);
+    var indexAnchor = firstVisibleHeading || main.firstElementChild;
+    if (indexAnchor) indexAnchor.insertAdjacentElement("afterend", nav);
+    else main.appendChild(nav);
   }
 
   var headings = Array.from(main.querySelectorAll("h2, h3, h4")).filter(function (heading) {
