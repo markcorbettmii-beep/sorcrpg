@@ -283,7 +283,7 @@
     <div class="rules-section">
       <h2 id="race-previews" style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">All Races</h2>
       <p style="font-size:0.85rem;opacity:0.75;">36 base races. Kinborns and bloodline variants appear beneath their base race, with the lore that differs and only the racial stats that change.</p>
-      <div class="callout"><strong>Companion mounting notes:</strong> Tiny Companions are never mountable. Small Companions can only be mounted by Small-sized riders. Standard Companions can be mounted by Small or Standard riders. Goliath Companions can be mounted by Standard or Goliath riders. Behemoths can be mounted by any rider, but always require a Strength check and occupy the Behemoth, Goliath, and Standard slots. A significant size gap may require a Strength check even when the size pairing normally permits mounting; the GM sets the difficulty.</div>
+      <div class="callout"><strong>Companion mounting notes:</strong> A Companion can be mounted when it can bear the rider's weight and practical size, likes the rider (see <a href="../essentia_core/rules_companions.html#companion-mood">Mood</a>), and the rider has the STR and/or AGI to ride it. Tiny Companions can be mounted by Tiny entities, including those temporarily shrunk by magic, when these conditions are met. Behemoths occupy the Behemoth, Goliath, and Standard slots. See the <a href="../essentia_core/rules_companions.html#companion-mounting">Companion Mounting rules</a>.</div>
       <div class="race-grid" style="grid-template-columns: 1fr;">
           <div class="race-card" data-race="race-bast">
             <h4 id="race-bast">Bast</h4>
@@ -2410,45 +2410,18 @@
       card.dataset.canonicalFormat = 'firstborn-v1';
     }
     document.querySelectorAll('.race-card[data-race]').forEach(addRaceTemplate);
-    const raceRiderSizes = {
-      'race-bast':'Standard', 'race-brownling':'Small', 'race-bugbear':'Standard',
-      'race-caelen':'Standard', 'race-centyr':'Goliath', 'race-draco-blood':'Standard',
-      'race-drevane':'Small', 'race-dwarf-glimmerstone':'Small', 'race-dwarf':'Standard',
-      'race-elf':'Standard', 'race-emberscale':'Standard', 'race-firbolg':'Goliath',
-      'race-gnoll':'Standard', 'race-gnome':'Small', 'race-goblorc':'Standard',
-      'race-helf':'Standard', 'race-halfling':'Small', 'race-hobbling':'Small',
-      'race-hawkbear':'Goliath', 'race-human':'Standard', 'race-imperials':'Standard',
-      'race-leshy':'Goliath', 'race-miceling':'Small', 'race-neandereti':'Standard',
-      'race-ogre':'Goliath', 'race-omne':'Small', 'race-orcus':'Standard',
-      'race-ossein':'Standard', 'race-pinkling':'Small', 'race-primal':'Standard',
-      'race-ratkin':'Small', 'race-skrath':'Standard', 'race-troll':'Goliath',
-      'race-snow-dwarf':'Standard', 'race-sylvan':'Standard', 'race-wood-elf':'Standard',
-      'race-yawnie':'Small'
-    };
     function companionSize(text) {
       const match = text.match(/\b(Behemoth|Goliath|Standard|Small|Tiny)(?:-sized)?\b/i);
       return match ? match[1][0].toUpperCase() + match[1].slice(1).toLowerCase() : null;
     }
-    function mountingText(rider, size) {
-      if (size === 'Tiny') return 'never mountable; no Trait check changes this.';
-      if (size === 'Behemoth') return 'mountable by any rider, but always requires a Strength check.';
-      if (rider === 'Small') {
-        return size === 'Small'
-          ? 'mountable by a Small-sized rider; no ordinary Trait check unless the GM finds the size gap significant.'
-          : 'mountable by a Small-sized rider; a significant size gap requires a Strength check.';
+    function mountingText(size) {
+      const moodReference = '<a href="../essentia_core/rules_companions.html#companion-mood">Mood</a>';
+      if (size === 'Tiny') {
+        return 'If its Companion Card permits mounting, Tiny entities, including those temporarily shrunk by magic, can mount it when it can bear their weight and practical size, likes the rider (see ' + moodReference + '), and they have the STR and/or AGI to ride it.';
       }
-      if (rider === 'Standard') {
-        if (size === 'Small') return 'companion-only for a Standard-sized rider; it is not mountable.';
-        if (size === 'Standard') return 'mountable by a Standard-sized rider; no ordinary Trait check unless the GM finds the size gap significant.';
-        return 'mountable by a Standard-sized rider; a significant size gap requires a Strength check.';
-      }
-      if (size === 'Goliath') return 'mountable by a Goliath-sized rider; no ordinary Trait check unless the GM finds the size gap significant.';
-      if (size === 'Standard') return 'mountable only under the strong-rider exception; requires a Strength check.';
-      return 'companion-only for a Goliath-sized rider; it is not mountable.';
+      return 'If its Companion Card permits mounting, it can be mounted when it can bear the rider\'s weight and practical size, likes the rider (see ' + moodReference + '), and the rider has the STR and/or AGI to ride it.';
     }
     document.querySelectorAll('.race-card[data-race]').forEach((card) => {
-      const rider = raceRiderSizes[card.dataset.race];
-      if (!rider) return;
       const label = [...card.querySelectorAll(':scope > .race-section-label.race-favored')]
         .find((node) => node.textContent.includes('Favored Companions'));
       if (!label) return;
@@ -2459,7 +2432,7 @@
         const name = node.textContent.replace(/^\s*\d+\.\s*/, '').split(',')[0].trim();
         const note = document.createElement('p');
         note.className = 'companion-mounting-note';
-        note.innerHTML = '<strong>Mounting ' + name + ':</strong> ' + (size ? mountingText(rider, size) : 'check the Companion Card; a significant size gap requires a Strength check.');
+        note.innerHTML = '<strong>Mounting ' + name + ':</strong> ' + mountingText(size);
         node.insertAdjacentElement('afterend', note);
         node = next;
       }
