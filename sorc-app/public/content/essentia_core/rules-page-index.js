@@ -221,18 +221,91 @@
     var selected = rosterListNode
       ? (current === 1 ? hs.filter(function (h) { return !h.closest(".class-card,.race-card"); }) : [])
       : (total > 1 ? hs.filter(function (h) { return (pageOf.get(h) || 1) === current; }) : hs);
-    if (!selected.length) return;
-    var n = document.createElement("nav"); n.className = "rules-page-index"; n.setAttribute("aria-label", indexTitle + " section index");
+
+    var rosterLinks = rosterListNode
+      ? Array.from(rosterListNode.querySelectorAll(".rules-roster-page a"))
+      : [];
+    var extraEntries = [];
+    if (!rosterListNode && hs.length === 1 && current === 1) {
+      var usedIds = new Set(Array.from(main.querySelectorAll("[id]")).map(function (element) { return element.id; }).filter(Boolean));
+
+      function addEntry(target, value) {
+        var entryLabel = String(value || "").replace(/\s+/g, " ").replace(/:\s*$/, "").trim();
+        if (!target || !entryLabel) return;
+        var id = target.id;
+        if (!id) {
+          var base = entryLabel.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "index-entry";
+          id = base;
+          var suffix = 2;
+          while (usedIds.has(id)) id = base + "-" + suffix++;
+          target.id = id;
+        }
+        usedIds.add(id);
+        extraEntries.push({ label: entryLabel, id: id });
+      }
+
+      main.querySelectorAll("table").forEach(function (table) {
+        table.querySelectorAll("tr").forEach(function (row) {
+          if (row.closest("thead") || row.closest("table") !== table) return;
+          var firstCell = row.querySelector("th, td");
+          if (firstCell) addEntry(row, firstCell.textContent);
+        });
+      });
+
+      main.querySelectorAll(".callout > strong:first-child").forEach(function (labelNode) {
+        var callout = labelNode.closest(".callout");
+        if (callout) addEntry(callout, labelNode.textContent);
+      });
+    }
+
+    if (!selected.length && !rosterLinks.length && !extraEntries.length) return;
+    var n = document.createElement("nav");
+    n.className = "rules-page-index";
+    n.setAttribute("aria-label", "Chapter Index");
     var d = document.createElement("details"), s = document.createElement("summary");
-    var label = document.createElement("span"); label.textContent = indexTitle + " Index";
-    var indicator = document.createElement("span"); indicator.className = "rules-page-index-indicator"; indicator.setAttribute("aria-hidden", "true"); indicator.textContent = "🔽";
+    var label = document.createElement("span"); label.textContent = "Chapter Index";
+    var indicator = document.createElement("span"); indicator.className = "rules-page-index-indicator"; indicator.setAttribute("aria-hidden", "true");
     s.appendChild(label); s.appendChild(indicator); d.appendChild(s);
     var ul = document.createElement("ul");
-    selected.forEach(function (h) { var li = document.createElement("li"); li.dataset.level = h.tagName.slice(1); var a = document.createElement("a"), p = pageOf.get(h) || 1, u = new URL(location.href); if (!rosterListNode) u.searchParams.set("rulesPage", p); u.hash = h.id; a.href = u.pathname + u.search + u.hash; a.textContent = h.textContent.trim(); li.appendChild(a); ul.appendChild(li); });
-    d.appendChild(ul); n.appendChild(d); (selected[0] || main.firstChild).insertAdjacentElement("afterend", n);
+    selected.forEach(function (h) {
+      var li = document.createElement("li");
+      li.dataset.level = h.tagName.slice(1);
+      var a = document.createElement("a");
+      var p = pageOf.get(h) || 1;
+      var u = new URL(location.href);
+      if (!rosterListNode) u.searchParams.set("rulesPage", p);
+      u.hash = h.id;
+      a.href = u.pathname + u.search + u.hash;
+      a.textContent = h.textContent.trim().replace(/\s+/g, " ");
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    rosterLinks.forEach(function (sourceLink) {
+      var li = document.createElement("li");
+      li.dataset.level = "3";
+      var a = document.createElement("a");
+      a.href = sourceLink.getAttribute("href");
+      a.textContent = sourceLink.textContent.trim().replace(/\s+/g, " ");
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    extraEntries.forEach(function (entry) {
+      var li = document.createElement("li");
+      li.dataset.level = "3";
+      var a = document.createElement("a");
+      a.href = "#" + encodeURIComponent(entry.id);
+      a.textContent = entry.label;
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    d.appendChild(ul);
+    n.appendChild(d);
+    var indexAnchor = selected[0] || hs.find(function (h) { return !h.closest(".class-card,.race-card"); }) || main.firstElementChild;
+    if (indexAnchor) indexAnchor.insertAdjacentElement("afterend", n);
+    else main.appendChild(n);
   }
   function styles() {
-    var s = document.createElement("style"); s.textContent = ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(160,140,200,.35);border-radius:6px;background:rgba(120,80,200,.07)}.rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;font-size:.9rem;font-weight:700;letter-spacing:.03em}.rules-page-index summary::-webkit-details-marker{display:none}.rules-page-index summary::marker{content:''}.rules-page-index-indicator{display:inline-block;transition:transform .15s ease}.rules-page-index details[open] .rules-page-index-indicator{transform:rotate(180deg)}.rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem 1.25rem;padding:0;margin:.8rem 0;list-style:none}.rules-page-index li[data-level='3']{padding-left:1rem}.rules-page-index li[data-level='4']{padding-left:2rem}.rules-page-controls{margin:1rem 0;padding:.6rem .8rem;border:1px solid rgba(160,140,200,.35);border-radius:8px;background:rgba(120,80,200,.07)}.rules-page-controls ul{display:flex!important;flex-wrap:wrap;gap:.4rem .8rem;list-style:none;margin:0;padding:0}.rules-page-controls a,.rules-page-controls span{display:inline-block;padding:.25rem .5rem;color:inherit}.rules-page-controls [aria-current=page]{font-weight:700;background:rgba(160,140,200,.2)}";
+    var s = document.createElement("style"); s.textContent = ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(197,117,0,.5);border-radius:6px;background:rgba(197,117,0,.07)}.rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;color:#c57500;font-size:.9rem;font-weight:700;letter-spacing:.03em}.rules-page-index summary::-webkit-details-marker{display:none}.rules-page-index summary::marker{content:''}.rules-page-index-indicator{display:inline-block;flex:0 0 .48rem;width:.48rem;height:.48rem;margin:0 .15rem .2rem 0;border:solid #c57500;border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .15s ease}.rules-page-index details[open] .rules-page-index-indicator{transform:rotate(225deg)}.rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem 1.25rem;padding:0;margin:.8rem 0;list-style:none}.rules-page-index li[data-level='3']{padding-left:1rem}.rules-page-index li[data-level='4']{padding-left:2rem}.rules-page-controls{margin:1rem 0;padding:.6rem .8rem;border:1px solid rgba(160,140,200,.35);border-radius:8px;background:rgba(120,80,200,.07)}.rules-page-controls ul{display:flex!important;flex-wrap:wrap;gap:.4rem .8rem;list-style:none;margin:0;padding:0}.rules-page-controls a,.rules-page-controls span{display:inline-block;padding:.25rem .5rem;color:inherit}.rules-page-controls [aria-current=page]{font-weight:700;background:rgba(160,140,200,.2)}";
     document.head.appendChild(s);
   }
   function show(n) {
