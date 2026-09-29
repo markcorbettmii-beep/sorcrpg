@@ -8,6 +8,17 @@
   if (!main) return;
 
   var fileName = window.location.pathname.split("/").pop() || "";
+  var pageIndexTitles = {
+    "rules_character-creation.html": "Character Creation",
+    "rules_character-progression.html": "Character Progression",
+    "rules_combat-movement.html": "Combat & Movement",
+    "rules_equipment.html": "Armaments & Equipment",
+    "rules_playable-classes.html": "Playable Classes",
+    "rules_playable-races.html": "Playable Races",
+    "rules_sorc-cards.html": "SORC Cards",
+    "rules_companions.html": "Companions",
+  };
+  var pageIndexTitle = pageIndexTitles[fileName.toLowerCase()] || "Rules";
   var canPaginate = /^rules_(character-creation|character-progression|combat-movement|equipment|playable-classes|playable-races|sorc-cards|companions)\.html$/i.test(fileName);
   var isClassPage = /rules_playable-classes\.html$/i.test(fileName);
   var isRacePage = /rules_playable-races\.html$/i.test(fileName);
@@ -429,8 +440,12 @@
     var style = document.createElement("style");
     style.id = "rules-page-index-styles";
     style.textContent =
-      ".rules-page-index{margin:1rem 0 1.5rem;padding:.8rem 1rem;border:1px solid rgba(197,160,66,.35);border-radius:4px;background:rgba(10,12,22,.28)}" +
-      ".rules-page-index summary{cursor:pointer;color:#c5a042;font-weight:700;letter-spacing:.04em}" +
+      ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(197,160,66,.35);border-radius:4px;background:rgba(10,12,22,.28)}" +
+      ".rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;color:#c5a042;font-size:.9rem;font-weight:700;letter-spacing:.03em}" +
+      ".rules-page-index summary::-webkit-details-marker{display:none}" +
+      ".rules-page-index summary::marker{content:''}" +
+      ".rules-page-index-indicator{display:inline-block;transition:transform .15s ease}" +
+      ".rules-page-index details[open] .rules-page-index-indicator{transform:rotate(180deg)}" +
       ".rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:.6rem 0 0;padding-left:1.2rem;gap:.25rem 1rem}" +
       ".rules-page-index li{break-inside:avoid;margin:.2rem 0}" +
       ".rules-page-index a{color:inherit;text-decoration-color:rgba(197,160,66,.55)}" +
@@ -459,10 +474,17 @@
 
     var nav = document.createElement("nav");
     nav.className = "rules-page-index";
-    nav.setAttribute("aria-label", currentPage === 1 ? "Page 1 section index" : "Page section index");
+    nav.setAttribute("aria-label", pageIndexTitle + " section index");
     var details = document.createElement("details");
     var summary = document.createElement("summary");
-    summary.textContent = currentPage === 1 ? "Page 1 index — jump to a section" : "Page " + currentPage + " index — jump to a section";
+    var summaryLabel = document.createElement("span");
+    summaryLabel.textContent = pageIndexTitle + " Index";
+    var indicator = document.createElement("span");
+    indicator.className = "rules-page-index-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    indicator.textContent = "🔽";
+    summary.appendChild(summaryLabel);
+    summary.appendChild(indicator);
     var list = document.createElement("ul");
 
     selection.forEach(function (heading) {
