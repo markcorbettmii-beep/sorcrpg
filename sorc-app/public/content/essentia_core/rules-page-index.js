@@ -24,6 +24,91 @@
   var paginated = /rules_(character-creation|character-progression|combat-movement|equipment|playable-classes|playable-races|sorc-cards|companions)\.html$/i.test(file);
   var views = [], cards = [], pageOf = new Map(), current = 1, total = 1;
   var rosterListNode = null, rosterListPages = [], rosterKind = "";
+  var activeIndexFrame = null, activeIndexDetails = null, activeIndexCloseButton = null, activeIndexClosePin = null;
+  var closePositionPending = false, closeReanchorPending = false;
+  var closeResizeObserver = window.ResizeObserver
+    ? new window.ResizeObserver(function () { scheduleActiveIndexClosePosition(true); })
+    : null;
+
+  function updateActiveIndexClosePosition(reanchor) {
+    var frame = activeIndexFrame;
+    var details = activeIndexDetails;
+    var button = activeIndexCloseButton;
+    if (!frame || !details || !button || !details.open || button.hidden) {
+      if (button) button.classList.remove("is-pinned");
+      if (!details || !details.open || !button) activeIndexClosePin = null;
+      return;
+    }
+
+    var frameRect = frame.getBoundingClientRect();
+    var viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    var viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+    if (
+      frameRect.width <= 0 ||
+      frameRect.height <= 0 ||
+      frameRect.right <= 0 ||
+      frameRect.left >= viewportWidth ||
+      frameRect.bottom <= 0 ||
+      frameRect.top >= viewportHeight
+    ) {
+      button.classList.remove("is-pinned");
+      return;
+    }
+
+    button.style.maxWidth = Math.max(0, Math.min(frameRect.width - 8, viewportWidth - 8)) + "px";
+    var buttonRect = button.getBoundingClientRect();
+    if (reanchor || !activeIndexClosePin) {
+      var top = Math.max(4, frameRect.top + 4);
+      var right = Math.min(frameRect.right - 4, viewportWidth - 4);
+      var left = Math.max(frameRect.left + 4, right - buttonRect.width);
+      activeIndexClosePin = { top: top, left: left };
+      button.style.top = top + "px";
+      button.style.left = left + "px";
+    }
+
+    buttonRect = button.getBoundingClientRect();
+    var insideFrame =
+      buttonRect.left >= frameRect.left + 2 &&
+      buttonRect.right <= frameRect.right - 2 &&
+      buttonRect.top >= frameRect.top + 2 &&
+      buttonRect.bottom <= frameRect.bottom - 2;
+    var insideViewport =
+      buttonRect.left >= 0 &&
+      buttonRect.right <= viewportWidth &&
+      buttonRect.top >= 0 &&
+      buttonRect.bottom <= viewportHeight;
+    button.classList.toggle("is-pinned", insideFrame && insideViewport);
+  }
+
+  function scheduleActiveIndexClosePosition(reanchor) {
+    if (reanchor) closeReanchorPending = true;
+    if (closePositionPending) return;
+    closePositionPending = true;
+    window.requestAnimationFrame(function () {
+      closePositionPending = false;
+      var shouldReanchor = closeReanchorPending;
+      closeReanchorPending = false;
+      updateActiveIndexClosePosition(shouldReanchor);
+    });
+  }
+
+  window.addEventListener("scroll", function () {
+    scheduleActiveIndexClosePosition(false);
+  }, { passive: true });
+  document.addEventListener("scroll", function () {
+    scheduleActiveIndexClosePosition(false);
+  }, { capture: true, passive: true });
+  window.addEventListener("resize", function () {
+    scheduleActiveIndexClosePosition(true);
+  }, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("scroll", function () {
+      scheduleActiveIndexClosePosition(false);
+    }, { passive: true });
+    window.visualViewport.addEventListener("resize", function () {
+      scheduleActiveIndexClosePosition(true);
+    }, { passive: true });
+  }
 
   function text(node) {
     if (!node) return 0;
@@ -216,7 +301,14 @@
     var host = main.querySelector(".rules-content") || main; host.insertBefore(nav(), host.firstChild); main.appendChild(nav());
   }
   function index() {
+    if (closeResizeObserver && activeIndexFrame) closeResizeObserver.unobserve(activeIndexFrame);
+    if (activeIndexCloseButton) activeIndexCloseButton.remove();
+    activeIndexFrame = null;
+    activeIndexDetails = null;
+    activeIndexCloseButton = null;
+    activeIndexClosePin = null;
     document.querySelectorAll(".rules-page-index").forEach(function (x) { x.remove(); });
+    document.querySelectorAll(".rules-page-index-close").forEach(function (x) { x.remove(); });
     var hs = Array.from(main.querySelectorAll("h2,h3,h4,h5")).filter(function (h) { return !h.closest("nav"); });
     var selected = rosterListNode
       ? (current === 1 ? hs.filter(function (h) { return !h.closest(".class-card,.race-card"); }) : [])
@@ -263,6 +355,7 @@
     n.className = "rules-page-index";
     n.setAttribute("aria-label", "Chapter Index");
     var d = document.createElement("details"), s = document.createElement("summary");
+    d.id = "rules-page-index-details";
     var label = document.createElement("span"); label.textContent = "Chapter Index";
     var indicator = document.createElement("span"); indicator.className = "rules-page-index-indicator"; indicator.setAttribute("aria-hidden", "true");
     s.appendChild(label); s.appendChild(indicator); d.appendChild(s);
@@ -270,6 +363,7 @@
     close.type = "button";
     close.className = "rules-page-index-close";
     close.setAttribute("aria-label", "Close Chapter Index");
+    close.setAttribute("aria-controls", d.id);
     close.hidden = true;
     var closeLabel = document.createElement("span");
     closeLabel.textContent = "Close Ch. Index";
@@ -280,8 +374,13 @@
     close.appendChild(closeLabel);
     close.appendChild(closeIcon);
     close.addEventListener("click", function () { d.open = false; s.focus(); });
-    d.addEventListener("toggle", function () { close.hidden = !d.open; });
-    d.appendChild(close);
+    d.addEventListener("toggle", function () {
+      close.hidden = !d.open;
+      if (activeIndexCloseButton !== close) return;
+      activeIndexClosePin = null;
+      close.classList.remove("is-pinned");
+      if (d.open) scheduleActiveIndexClosePosition(true);
+    });
     var ul = document.createElement("ul");
     selected.forEach(function (h) {
       var li = document.createElement("li");
@@ -319,10 +418,16 @@
     var indexAnchor = selected[0] || hs.find(function (h) { return !h.closest(".class-card,.race-card"); }) || main.firstElementChild;
     if (indexAnchor) indexAnchor.insertAdjacentElement("afterend", n);
     else main.appendChild(n);
+    activeIndexFrame = n;
+    activeIndexDetails = d;
+    activeIndexCloseButton = close;
+    document.body.appendChild(close);
+    if (closeResizeObserver) closeResizeObserver.observe(n);
   }
   function styles() {
     var s = document.createElement("style"); s.textContent = ".rules-page-index{display:inline-block;max-width:100%;margin:.6rem 0 1rem;padding:.45rem .7rem;border:1px solid rgba(197,117,0,.5);border-radius:6px;background:rgba(197,117,0,.07)}.rules-page-index summary{display:flex;align-items:center;justify-content:space-between;gap:.5rem;cursor:pointer;color:#c57500;font-size:.9rem;font-weight:700;letter-spacing:.03em}.rules-page-index summary::-webkit-details-marker{display:none}.rules-page-index summary::marker{content:''}.rules-page-index-indicator{display:inline-block;flex:0 0 .48rem;width:.48rem;height:.48rem;margin:0 .15rem .2rem 0;border:solid #c57500;border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .15s ease}.rules-page-index details[open] .rules-page-index-indicator{transform:rotate(225deg)}.rules-page-index ul{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem 1.25rem;padding:0;margin:.8rem 0;list-style:none}.rules-page-index li[data-level='3']{padding-left:1rem}.rules-page-index li[data-level='4']{padding-left:2rem}.rules-page-controls{margin:1rem 0;padding:.6rem .8rem;border:1px solid rgba(160,140,200,.35);border-radius:8px;background:rgba(120,80,200,.07)}.rules-page-controls ul{display:flex!important;flex-wrap:wrap;gap:.4rem .8rem;list-style:none;margin:0;padding:0}.rules-page-controls a,.rules-page-controls span{display:inline-block;padding:.25rem .5rem;color:inherit}.rules-page-controls [aria-current=page]{font-weight:700;background:rgba(160,140,200,.2)}";
-    s.textContent += ".rules-page-index-close{position:sticky;top:8px;z-index:2;display:flex;align-items:center;gap:.35rem;width:max-content;max-width:100%;margin:.55rem 0 .55rem auto;padding:.4rem .65rem;min-height:44px;border:1px solid rgba(197,117,0,.6);border-radius:6px;background:rgba(197,117,0,.12);color:#c57500;font:inherit;font-size:.84rem;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}.rules-page-index-close[hidden]{display:none!important}.rules-page-index-close:focus-visible{outline:2px solid #c57500;outline-offset:2px}.rules-page-index-close-icon{font-size:1.1rem;line-height:1}body.lawful-mode .rules-page-index-close{background:rgba(185,170,0,.14);border-color:rgba(120,95,20,.35);color:#78600f}";
+    s.textContent += ".rules-page-index-close{position:fixed;top:0;left:0;z-index:1001;display:flex;align-items:center;gap:.25rem;width:max-content;max-width:calc(100vw - 8px);margin:0;padding:.15rem .4rem;min-height:32px;border:1px solid rgba(197,117,0,.6);border-radius:3px;background:rgba(197,117,0,.14);color:#c57500;font:inherit;font-size:.72rem;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.16);visibility:hidden;pointer-events:none}.rules-page-index-close.is-pinned{visibility:visible;pointer-events:auto}.rules-page-index-close[hidden]{display:none!important}.rules-page-index-close:focus-visible{outline:2px solid #c57500;outline-offset:2px}.rules-page-index-close-icon{font-size:1.1rem;line-height:1}body.lawful-mode .rules-page-index-close{background:rgba(185,170,0,.14);border-color:rgba(120,95,20,.35);color:#78600f}";
+    s.textContent += ".rules-page-index details[open] .rules-page-index-indicator{visibility:hidden}";
     document.head.appendChild(s);
   }
   function show(n) {
