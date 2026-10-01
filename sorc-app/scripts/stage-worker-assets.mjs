@@ -112,7 +112,7 @@ const raceContentPaths = [
   "content/essentia_core/rules_race-pinkling.html",
   "content/essentia_core/rusalkas.html",
   "content/reference/all-races.html",
-  "content/character/assets/reference/races/playable/litbits/litbit-height-demo_20260930_152758_0000.png",
+  "content/character/assets/reference/races/playable/litbit-demo/litbit-height-demo_20260930_234904_0000.png",
 ];
 const raceContentAssets = raceContentPaths.map((relativePath) => {
   const source = resolve(repositoryRoot, relativePath);
