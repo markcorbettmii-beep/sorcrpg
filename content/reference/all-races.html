@@ -23,8 +23,16 @@
     .race-lineage-suffix { color: #92793a; font-weight: 700; }
     .race-starter-status { color: #008601; font-weight: 700; }
     .race-starter-status.unavailable { color: #be0500; }
-    .race-grid > .race-card:nth-child(odd) { background: rgba(0,88,170,0.08); }
-    .race-grid > .race-card:nth-child(even) { background: rgba(140,6,163,0.07); }
+    .race-grid > .race-card:nth-child(odd) {
+      --race-table-row-odd: rgba(0,88,170,0.13);
+      --race-table-row-even: rgba(0,88,170,0.2);
+      background: rgba(0,88,170,0.08);
+    }
+    .race-grid > .race-card:nth-child(even) {
+      --race-table-row-odd: rgba(140,6,163,0.1);
+      --race-table-row-even: rgba(140,6,163,0.16);
+      background: rgba(140,6,163,0.07);
+    }
     .race-grid > .race-card.data-unavailable { border: 2px solid rgba(190,5,0,0.6); }
     .race-data-status { color: #be0500; font-weight: 700; }
     .kinborn-variant-card .variant-name, .kinborn-variant-card .variant-label { color: #8c06a3; }
@@ -224,21 +232,6 @@
     body.lawful-mode .kinborn-variant-card .variant-label { color: #6a4fa0; }
     body.lawful-mode .kinborn-lore-section { background: rgba(185,170,0,0.08); border-color: rgba(140,120,60,0.2); }
   
-    .playable-race-chapter-index {
-      margin: 1.25rem 0 2rem;
-      padding: 1rem 1.15rem;
-      background: rgba(0, 88, 170, 0.08);
-      border-left: 3px solid rgba(0, 88, 170, 0.35);
-      border-radius: 4px;
-    }
-    .playable-race-chapter-index h2 { margin-top: 0; }
-    .playable-race-chapter-index ul {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem 1.35rem;
-      margin: 0;
-      padding-left: 1.25rem;
-    }
     .race-card .race-data-table {
       width: 100%;
       border-collapse: collapse;
@@ -263,9 +256,12 @@
       vertical-align: top;
       border: 1px solid rgba(197, 160, 66, 0.22);
     }
-    .race-card .race-data-table tbody tr:nth-child(odd) td { background: rgba(0, 88, 170, 0.13); }
-    .race-card .race-data-table tbody tr:nth-child(even) td { background: rgba(140, 6, 163, 0.1); }
-    .race-card .race-data-table tbody tr:nth-child(4n + 3) td { background: rgba(0, 88, 170, 0.2); }
+    .race-card .race-data-table tbody tr:nth-child(odd) td {
+      background: var(--race-table-row-odd, rgba(0,88,170,0.13)) !important;
+    }
+    .race-card .race-data-table tbody tr:nth-child(even) td {
+      background: var(--race-table-row-even, rgba(140,6,163,0.1)) !important;
+    }
     .race-card .race-table-section { margin: 0.75rem 0 1.25rem; }
     .race-card .race-table-entry { margin: 0.15rem 0; }
     .race-card .race-data-status { opacity: 0.72; font-style: italic; }
@@ -316,20 +312,6 @@
       <h2 id="race-previews" style="margin-bottom:0.2rem; border-bottom:none; padding-bottom:0;">Playable Races - Full Details</h2>
       <p style="font-size:0.85rem;opacity:0.75;">38 base races. Kinborns and bloodline variants appear beneath their base race, with the lore that differs and only the racial stats that change.</p>
       <div class="callout"><strong>Companion mounting notes:</strong> A Companion can be mounted when it can bear the rider's weight and practical size, likes the rider (see <a href="../essentia_core/rules_companions.html#companion-mood">Mood</a>), and the rider has the STR and/or AGI to ride it. Tiny Companions can be mounted by Tiny entities, including those temporarily shrunk by magic, when these conditions are met. Behemoths occupy the Behemoth, Goliath, and Standard slots. See the <a href="../essentia_core/rules_companions.html#companion-mounting">Companion Mounting rules</a>.</div>
-
-      <nav class="playable-race-chapter-index" aria-labelledby="playable-race-index-title">
-        <h2 id="playable-race-index-title">Playable Races Chapter Index</h2>
-        <ul>
-          <li><a href="../essentia_core/rules_playable-races.html#playable-races">Playable Races</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#race-structure">Race Structure</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#race-section-goliath">Goliath Size Races</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#race-section-standard">Standard Sized Races</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#race-section-small">Small Size Races</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#races-from-afar">Races from Afar</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#notable-races">Notable Races and Cameo NPCs</a></li>
-          <li><a href="../essentia_core/rules_playable-races.html#forbidden-races">Forbidden Races</a></li>
-        </ul>
-      </nav>
 
       <div class="race-grid" style="grid-template-columns: 1fr;">
           <div class="race-card" data-race="race-bast">
@@ -2775,12 +2757,16 @@
       document.querySelectorAll('.race-card').forEach((card) => {
         const back = document.createElement('p');
         back.className = 'back-to-race-previews';
-        back.innerHTML = '<a href="#race-previews">Back to Race Previews</a>';
+        const link = document.createElement('a');
+        link.href = '../essentia_core/rules_playable-races.html#' + encodeURIComponent(card.dataset.race);
+        link.textContent = 'Back to Race Previews';
+        back.appendChild(link);
         card.appendChild(back);
       });
       document.documentElement.dataset.raceCardsReady = 'true';
     }
     initializeRaceCards();
   </script>
+  <script src="../essentia_core/rules-page-index.js" defer></script>
 </body>
 </html>
