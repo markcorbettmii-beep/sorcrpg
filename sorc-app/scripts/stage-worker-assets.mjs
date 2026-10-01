@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 
-import { copyFileSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -97,12 +105,54 @@ const havenMapGridAssets = [
   return destination;
 });
 
+const raceContentPaths = [
+  "content/essentia_core/rules-index.html",
+  "content/essentia_core/rules_playable-races.html",
+  "content/essentia_core/rules_race-caelen.html",
+  "content/essentia_core/rules_race-pinkling.html",
+  "content/essentia_core/rusalkas.html",
+  "content/reference/all-races.html",
+  "content/character/assets/reference/races/playable/litbits/litbit-height-demo_20260930_152758_0000.png",
+];
+const raceContentAssets = raceContentPaths.map((relativePath) => {
+  const source = resolve(repositoryRoot, relativePath);
+  const destination = resolve(publicRoot, relativePath);
+  if (!existsSync(source)) {
+    throw new Error(`Canonical race asset is missing: ${relativePath}`);
+  }
+  mkdirSync(dirname(destination), { recursive: true });
+  copyFileSync(source, destination);
+  return { source, destination };
+});
+
+const notableRacePageSource = resolve(
+  repositoryRoot,
+  "content/essentia_core/rules_notable-races.html",
+);
+const notableRacePageDestination = resolve(
+  publicRoot,
+  "content/essentia_core/rules_notable-races.html",
+);
+if (existsSync(notableRacePageSource)) {
+  mkdirSync(dirname(notableRacePageDestination), { recursive: true });
+  copyFileSync(notableRacePageSource, notableRacePageDestination);
+} else {
+  rmSync(notableRacePageDestination, { force: true });
+}
+
+for (const { source, destination } of raceContentAssets) {
+  if (!readFileSync(source).equals(readFileSync(destination))) {
+    throw new Error(`Canonical race asset differs after staging: ${destination}`);
+  }
+}
+
 for (const asset of [
   ...logoAssets,
   spaceDestination,
   havenHudShortcutDestination,
   ...havenHudAssets,
   ...havenMapGridAssets,
+  ...raceContentAssets.map(({ destination }) => destination),
 ]) {
   if (statSync(asset).size === 0) {
     throw new Error(`Required Worker asset was staged empty: ${asset}`);
@@ -110,5 +160,5 @@ for (const asset of [
 }
 
 console.log(
-  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, canonical Space and Haven HUD pages, three Haven HUD artworks, and seven structure-map grids.`,
+  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, canonical Space and Haven HUD pages, three Haven HUD artworks, seven structure-map grids, and ${raceContentAssets.length} canonical playable-race pages and artwork.`,
 );
