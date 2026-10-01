@@ -42,7 +42,8 @@ for (const path of commonPaths) {
 
 const staleReferences = [];
 for (const path of publicFiles.keys()) {
-  if (!path.endsWith(".html")) continue;
+  // Archived rules retain their historical filenames and cross-links.
+  if (!path.endsWith(".html") || path.startsWith("archived-rules/")) continue;
 
   const fullPath = publicFiles.get(path);
   const text = readFileSync(fullPath, "utf8");
