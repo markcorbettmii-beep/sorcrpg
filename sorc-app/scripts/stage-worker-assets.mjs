@@ -9,7 +9,7 @@ import {
   rmSync,
   statSync,
 } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -125,45 +125,13 @@ const raceContentAssets = raceContentPaths.map((relativePath) => {
   return { source, destination };
 });
 
-const archivedRulesSourceRoot = resolve(
-  repositoryRoot,
-  "content/archived-rules",
-);
 const archivedRulesDestinationRoot = resolve(
   publicRoot,
   "content/archived-rules",
 );
-if (
-  !existsSync(archivedRulesSourceRoot) ||
-  !statSync(archivedRulesSourceRoot).isDirectory()
-) {
-  throw new Error("Canonical archived-rules directory is missing.");
-}
-
-function collectArchivedRulesFiles(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = resolve(directory, entry.name);
-    if (entry.isDirectory()) return collectArchivedRulesFiles(path);
-    return entry.isFile() ? [path] : [];
-  });
-}
-
-const archivedRulesAssets = collectArchivedRulesFiles(
-  archivedRulesSourceRoot,
-)
-  .sort()
-  .map((source) => {
-    const destination = resolve(
-      archivedRulesDestinationRoot,
-      relative(archivedRulesSourceRoot, source),
-    );
-    mkdirSync(dirname(destination), { recursive: true });
-    copyFileSync(source, destination);
-    return { source, destination };
-  });
-if (archivedRulesAssets.length === 0) {
-  throw new Error("Canonical archived-rules directory contains no files.");
-}
+// Archived rules are retained in the root content tree as source-only backup.
+// Clear any older public copies so they are not included in Worker deployments.
+rmSync(archivedRulesDestinationRoot, { recursive: true, force: true });
 
 const notableRacePageSource = resolve(
   repositoryRoot,
@@ -182,7 +150,6 @@ if (existsSync(notableRacePageSource)) {
 
 for (const { source, destination } of [
   ...raceContentAssets,
-  ...archivedRulesAssets,
 ]) {
   if (!readFileSync(source).equals(readFileSync(destination))) {
     throw new Error(`Canonical Worker asset differs after staging: ${destination}`);
@@ -196,7 +163,6 @@ for (const asset of [
   ...havenHudAssets,
   ...havenMapGridAssets,
   ...raceContentAssets.map(({ destination }) => destination),
-  ...archivedRulesAssets.map(({ destination }) => destination),
 ]) {
   if (statSync(asset).size === 0) {
     throw new Error(`Required Worker asset was staged empty: ${asset}`);
@@ -204,5 +170,5 @@ for (const asset of [
 }
 
 console.log(
-  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, canonical Space and Haven HUD pages, three Haven HUD artworks, seven structure-map grids, ${archivedRulesAssets.length} canonical archived-rules files, and ${raceContentAssets.length} canonical playable-race pages and artwork.`,
+  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, canonical Space and Haven HUD pages, three Haven HUD artworks, seven structure-map grids, and ${raceContentAssets.length} canonical playable-race pages and artwork.`,
 );
