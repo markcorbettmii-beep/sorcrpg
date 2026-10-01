@@ -446,7 +446,8 @@
       ".rules-page-index summary::marker{content:''}" +
       ".rules-page-index-indicator{display:inline-block;flex:0 0 .48rem;width:.48rem;height:.48rem;margin:0 .15rem .2rem 0;border:solid #c57500;border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .15s ease}" +
       ".rules-page-index details[open] .rules-page-index-indicator{transform:rotate(225deg)}" +
-      ".rules-page-index-close{position:sticky;top:8px;z-index:2;display:flex;align-items:center;gap:.35rem;width:max-content;max-width:100%;margin:.55rem 0 .55rem auto;padding:.4rem .65rem;min-height:44px;border:1px solid rgba(197,117,0,.6);border-radius:4px;background:rgba(197,117,0,.12);color:#c57500;font:inherit;font-size:.84rem;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}" +
+      ".rules-page-index-close{position:fixed;top:0;left:0;z-index:1001;display:flex;align-items:center;gap:.25rem;width:max-content;max-width:calc(100vw - 8px);margin:0;padding:.15rem .4rem;min-height:32px;border:1px solid rgba(197,117,0,.6);border-radius:3px;background:rgba(197,117,0,.14);color:#c57500;font:inherit;font-size:.72rem;font-weight:700;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.16);visibility:hidden;pointer-events:none}" +
+      ".rules-page-index-close.is-pinned{visibility:visible;pointer-events:auto}" +
       ".rules-page-index-close[hidden]{display:none!important}" +
       ".rules-page-index-close:focus-visible{outline:2px solid #c57500;outline-offset:2px}" +
       ".rules-page-index-close-icon{font-size:1.1rem;line-height:1}" +
@@ -523,6 +524,7 @@
     nav.className = "rules-page-index";
     nav.setAttribute("aria-label", "Chapter Index");
     var details = document.createElement("details");
+    details.id = "rules-page-index-details";
     var summary = document.createElement("summary");
     var summaryLabel = document.createElement("span");
     summaryLabel.textContent = "Chapter Index";
@@ -536,6 +538,7 @@
     closeButton.type = "button";
     closeButton.className = "rules-page-index-close";
     closeButton.setAttribute("aria-label", "Close Chapter Index");
+    closeButton.setAttribute("aria-controls", details.id);
     closeButton.hidden = true;
     var closeLabel = document.createElement("span");
     closeLabel.textContent = "Close Ch. Index";
@@ -545,13 +548,102 @@
     closeIcon.textContent = "×";
     closeButton.appendChild(closeLabel);
     closeButton.appendChild(closeIcon);
+    var closeButtonPin = null;
+    var closeButtonPositionPending = false;
+    var closeButtonReanchorPending = false;
+
+    function updateCloseButtonPosition(reanchor) {
+      if (!details.open || closeButton.hidden) {
+        closeButtonPin = null;
+        closeButton.classList.remove("is-pinned");
+        return;
+      }
+
+      var frameRect = nav.getBoundingClientRect();
+      var viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+      var viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+      if (
+        frameRect.width <= 0 ||
+        frameRect.height <= 0 ||
+        frameRect.right <= 0 ||
+        frameRect.left >= viewportWidth ||
+        frameRect.bottom <= 0 ||
+        frameRect.top >= viewportHeight
+      ) {
+        closeButton.classList.remove("is-pinned");
+        return;
+      }
+
+      closeButton.style.maxWidth = Math.max(0, Math.min(frameRect.width - 8, viewportWidth - 8)) + "px";
+      var buttonRect = closeButton.getBoundingClientRect();
+      if (reanchor || !closeButtonPin) {
+        var top = Math.max(4, frameRect.top + 4);
+        var right = Math.min(frameRect.right - 4, viewportWidth - 4);
+        var left = Math.max(frameRect.left + 4, right - buttonRect.width);
+        closeButtonPin = { top: top, left: left };
+        closeButton.style.top = top + "px";
+        closeButton.style.left = left + "px";
+      }
+
+      buttonRect = closeButton.getBoundingClientRect();
+      var insideFrame =
+        buttonRect.left >= frameRect.left + 2 &&
+        buttonRect.right <= frameRect.right - 2 &&
+        buttonRect.top >= frameRect.top + 2 &&
+        buttonRect.bottom <= frameRect.bottom - 2;
+      var insideViewport =
+        buttonRect.left >= 0 &&
+        buttonRect.right <= viewportWidth &&
+        buttonRect.top >= 0 &&
+        buttonRect.bottom <= viewportHeight;
+      closeButton.classList.toggle("is-pinned", insideFrame && insideViewport);
+    }
+
+    function scheduleCloseButtonPosition(reanchor) {
+      if (reanchor) closeButtonReanchorPending = true;
+      if (closeButtonPositionPending) return;
+      closeButtonPositionPending = true;
+      window.requestAnimationFrame(function () {
+        closeButtonPositionPending = false;
+        var shouldReanchor = closeButtonReanchorPending;
+        closeButtonReanchorPending = false;
+        updateCloseButtonPosition(shouldReanchor);
+      });
+    }
+
     closeButton.addEventListener("click", function () {
       details.open = false;
       summary.focus();
     });
     details.addEventListener("toggle", function () {
       closeButton.hidden = !details.open;
+      closeButtonPin = null;
+      closeButton.classList.remove("is-pinned");
+      if (details.open) scheduleCloseButtonPosition(true);
     });
+    window.addEventListener("scroll", function () {
+      scheduleCloseButtonPosition(false);
+    }, { passive: true });
+    document.addEventListener("scroll", function () {
+      scheduleCloseButtonPosition(false);
+    }, { capture: true, passive: true });
+    window.addEventListener("resize", function () {
+      scheduleCloseButtonPosition(true);
+    }, { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("scroll", function () {
+        scheduleCloseButtonPosition(false);
+      }, { passive: true });
+      window.visualViewport.addEventListener("resize", function () {
+        scheduleCloseButtonPosition(true);
+      }, { passive: true });
+    }
+    if (window.ResizeObserver) {
+      var closeButtonResizeObserver = new window.ResizeObserver(function () {
+        scheduleCloseButtonPosition(true);
+      });
+      closeButtonResizeObserver.observe(nav);
+    }
 
     selection.forEach(function (heading) {
       var item = document.createElement("li");
@@ -593,7 +685,6 @@
     });
 
     details.appendChild(summary);
-    details.appendChild(closeButton);
     details.appendChild(list);
     nav.appendChild(details);
 
@@ -604,6 +695,7 @@
     var indexAnchor = firstVisibleHeading || main.firstElementChild;
     if (indexAnchor) indexAnchor.insertAdjacentElement("afterend", nav);
     else main.appendChild(nav);
+    document.body.appendChild(closeButton);
   }
 
   var headings = Array.from(main.querySelectorAll("h2, h3, h4")).filter(function (heading) {
