@@ -321,7 +321,7 @@
       border-bottom: 1px solid rgba(160,140,200,0.3); opacity: 1; }
     .race-size-stats { margin: 0.75rem 0 1rem; padding: 0.7rem 0.85rem; }
     .race-size-stats p { margin: 0.2rem 0; line-height: 1.55; }
-    .race-size-stats .race-template-heading { margin: 0 0 0.45rem !important; }
+    .race-size-stats .spirit-apex-heading { margin: 0.85rem 0 0.45rem !important; padding-top: 0.65rem; border-top: 1px solid rgba(160,140,200,0.25); }
   </style>
 </head>
 <body class="lawful-mode">
@@ -2828,17 +2828,24 @@
 
       const sizeStats = raceSizeBaseStats[card.dataset.size];
       if (!sizeStats) throw new Error('Missing base statistics for ' + card.dataset.race + ' (' + card.dataset.size + ').');
+      const sizeHeading = document.createElement('p');
+      sizeHeading.className = 'race-template-heading rank-legendary rank-purple-centered';
+      sizeHeading.textContent = 'Size & Base Vitality and Speed';
       const sizeSummary = document.createElement('div');
       sizeSummary.className = 'race-template-section race-size-stats';
       sizeSummary.innerHTML =
-        '<p class="race-template-heading rank-legendary rank-purple-centered">Size &amp; Base Vitality and Speed</p>' +
         '<p><strong>Size:</strong> ' + escapeHtml(card.dataset.size) + '</p>' +
         '<p><strong>Movement Speed:</strong> ' + sizeStats.speed + ' ft.</p>' +
         '<p><strong>Life:</strong> ' + sizeStats.life + ' | <strong>Mana:</strong> ' + sizeStats.mana +
         ' | <strong>Stam:</strong> ' + sizeStats.stamina + ' | <strong>Endur.:</strong> ' + sizeStats.endurance + '</p>';
       const firstSourceLabel = card.querySelector(':scope > .race-section-label');
-      if (firstSourceLabel) firstSourceLabel.insertAdjacentElement('beforebegin', sizeSummary);
-      else descriptionHeading.insertAdjacentElement('afterend', sizeSummary);
+      if (firstSourceLabel) {
+        firstSourceLabel.insertAdjacentElement('beforebegin', sizeHeading);
+        sizeHeading.insertAdjacentElement('afterend', sizeSummary);
+      } else {
+        descriptionHeading.insertAdjacentElement('afterend', sizeHeading);
+        sizeHeading.insertAdjacentElement('afterend', sizeSummary);
+      }
 
       const labels = [...card.querySelectorAll(':scope > .race-section-label')];
       const planetLabel = findRaceLabel(card, /^(?:Native Planet|1\. Planet, Region, and Area)$/);
@@ -2860,10 +2867,12 @@
             return value + '<br><span class="companion-mounting-note"><strong>Mounting ' + escapeHtml(name) + ':</strong> ' + mountingText(companionSize(text)) + '</span>';
           })
         : [];
+      const cultureHeading = document.createElement('p');
+      cultureHeading.className = 'race-template-heading rank-legendary rank-purple-centered';
+      cultureHeading.textContent = 'Culture';
       const culture = document.createElement('div');
       culture.className = 'race-template-section culture-template';
       culture.innerHTML =
-        '<p class="race-template-heading rank-legendary rank-purple-centered">Culture</p>' +
         '<p><strong>1. Planet, Region, and Area</strong><br>Planet: ' + escapeHtml(geography.planet) + '<br>Region: ' + escapeHtml(geography.region) + '<br>Area: ' + escapeHtml(geography.area) + '</p>' +
         '<p><strong>3. Favorite Class Paths</strong><br>' + sectionText(classPathsLabel) + '</p>' +
         '<p><strong>3. Favorite Class, Path and Branch Abilities</strong><br>' + sectionText(classAbilitiesLabel) + '</p>' +
@@ -2874,8 +2883,13 @@
         '<p><strong>8. Favorite Talents</strong><br>' + sectionText(talentsLabel) + '</p>' +
         '<p><strong>9. Cultural Armaments</strong><br>' + sectionText(armamentLabel) + '</p>';
       const firstLabel = labels[0];
-      if (firstLabel) firstLabel.insertAdjacentElement('beforebegin', culture);
-      else card.appendChild(culture);
+      if (firstLabel) {
+        firstLabel.insertAdjacentElement('beforebegin', cultureHeading);
+        cultureHeading.insertAdjacentElement('afterend', culture);
+      } else {
+        card.appendChild(cultureHeading);
+        card.appendChild(culture);
+      }
       [planetLabel, armamentLabel, classPathsLabel, classAbilitiesLabel, languageLabel, dietLabel, companionLabel, skillsLabel, talentsLabel].forEach(hideRaceSection);
 
       [...card.querySelectorAll(':scope > .race-section-label')]
@@ -2902,19 +2916,15 @@
       const floorValues = floorValueList.length
         ? [floorValueList.join(', ') + ' (see aligned Trait Val. Below).']
         : [];
-      const extras = document.createElement('div');
-      extras.className = 'race-template-section race-extra-data';
       if (spiritLabel) {
-        const group = document.createElement('div');
-        group.innerHTML = '<p class="race-template-heading rank-legendary rank-purple-centered">Spirit &amp; Apex Base Scores</p>' + valuesMarkup(spiritValues);
-        extras.appendChild(group);
+        const spiritHeading = document.createElement('p');
+        spiritHeading.className = 'race-template-heading rank-legendary rank-purple-centered spirit-apex-heading';
+        spiritHeading.textContent = 'Spirit & Apex Base Scores';
+        sizeSummary.appendChild(spiritHeading);
+        sizeSummary.insertAdjacentHTML('beforeend', valuesMarkup(spiritValues));
       }
       [spiritLabel, floorLabel].forEach((label) => { if (label) takeRaceSection(card, (text) => text === label.textContent.trim()); });
-      let insertionAnchor = culture;
-      if (extras.children.length) {
-        culture.insertAdjacentElement('afterend', extras);
-        insertionAnchor = extras;
-      }
+      const insertionAnchor = culture;
 
       const aptitudes = takeRaceSection(card, /^Aptitudes$/);
       const inaptitudes = takeRaceSection(card, /^Inaptitudes$/);
@@ -2944,7 +2954,7 @@
       const armamentHeading = document.createElement('p');
       armamentHeading.className = 'race-template-heading rank-legendary rank-purple-centered';
       armamentHeading.textContent = 'Armament Proficiencies';
-      armaments.appendChild(armamentHeading);
+      tables.appendChild(armamentHeading);
       if (variant.values.length) {
         const variantNote = document.createElement('div');
         variantNote.className = 'race-armament-variant';
