@@ -2662,7 +2662,15 @@
       const skillsLabel = findRaceLabel(card, /^(?:Favorite Skills|7\. Favorite Skills)$/);
       const talentsLabel = findRaceLabel(card, /^(?:Favorite Talents|8\. Favorite Talents)$/);
       const geography = geographyFor(planetLabel, card);
-      const companionValues = companionLabel ? usefulValues(raceCardSection(companionLabel).filter((value) => !/^Refer to Specific Companion Cards/i.test(textFromHtml(value)))) : [];
+      const companionValues = companionLabel
+        ? usefulValues(raceCardSection(companionLabel).filter((value) => !/^Refer to Specific Companion Cards/i.test(textFromHtml(value))))
+          .map((value) => {
+            const text = textFromHtml(value);
+            const name = text.replace(/^\s*\d+\.\s*/, '').split(',')[0].trim();
+            if (!name) return value;
+            return value + '<br><span class="companion-mounting-note"><strong>Mounting ' + escapeHtml(name) + ':</strong> ' + mountingText(companionSize(text)) + '</span>';
+          })
+        : [];
       const culture = document.createElement('div');
       culture.className = 'race-template-section culture-template';
       culture.innerHTML =
@@ -2774,22 +2782,6 @@
         const metadata = previewMetadata.get(card.dataset.race) || null;
         if (!metadata) console.error('No matching preview card for ' + card.dataset.race);
         addRaceTemplate(card, metadata);
-      });
-      document.querySelectorAll('.race-card[data-race]').forEach((card) => {
-        const label = [...card.querySelectorAll(':scope > .race-section-label.race-favored')]
-          .find((node) => node.textContent.includes('Favored Companions'));
-        if (!label) return;
-        let node = label.nextElementSibling;
-        while (node && node.tagName === 'P' && !node.textContent.trim().startsWith('Refer to')) {
-          const next = node.nextElementSibling;
-          const size = companionSize(node.textContent);
-          const name = node.textContent.replace(/^\s*\d+\.\s*/, '').split(',')[0].trim();
-          const note = document.createElement('p');
-          note.className = 'companion-mounting-note';
-          note.innerHTML = '<strong>Mounting ' + name + ':</strong> ' + mountingText(size);
-          node.insertAdjacentElement('afterend', note);
-          node = next;
-        }
       });
       document.querySelectorAll('.race-card').forEach((card) => {
         const back = document.createElement('p');
