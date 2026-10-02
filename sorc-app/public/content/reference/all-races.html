@@ -19,7 +19,10 @@
     .race-template-section { margin: 1rem 0; padding: 0.85rem 1rem; border: 1px solid rgba(160,140,200,0.2); border-left: 3px solid rgba(197,160,66,0.7); background: rgba(120,80,200,0.045); }
     .race-template-heading { color: #c5a042 !important; font-size: 0.78rem !important; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin: 1rem 0 0.3rem !important; opacity: 1 !important; }
     .race-canonical-tables > .race-template-heading.rank-legendary { color: #8c06a3 !important; }
-    .armament-proficiency-section > .race-template-heading.rank-legendary { color: #8c06a3 !important; text-align: center; }
+    .race-template-heading.rank-legendary.rank-purple-centered { color: #8c06a3 !important; text-align: center; }
+    .race-card .trait-adjustment-table .trait-adjustment-title,
+    .race-card .trait-adjustment-table .attribute-floor-heading,
+    .race-card .trait-adjustment-table .attribute-floor-value { width: 100%; text-align: center; }
     .race-template-section p { margin: 0.25rem 0; }
     .race-template-section strong { color: #c5a042; }
     .race-lineage-suffix { color: #92793a; font-weight: 700; }
@@ -2535,6 +2538,54 @@
       parent.appendChild(group);
       return group;
     }
+    function addTraitAdjustmentTable(parent, positiveValues, negativeValues, floorValues) {
+      const group = document.createElement('section');
+      group.className = 'race-table-section';
+      const table = document.createElement('table');
+      table.className = 'race-data-table trait-adjustment-table';
+      const head = document.createElement('thead');
+      const titleRow = document.createElement('tr');
+      const titleCell = document.createElement('th');
+      titleCell.colSpan = 2;
+      titleCell.scope = 'colgroup';
+      titleCell.className = 'trait-adjustment-title';
+      titleCell.textContent = 'Innate Trait Adjustments';
+      titleRow.appendChild(titleCell);
+      head.appendChild(titleRow);
+      table.appendChild(head);
+      const body = document.createElement('tbody');
+      const positive = usefulValues(positiveValues);
+      const negative = usefulValues(negativeValues);
+      const rowCount = Math.max(positive.length, negative.length, 1);
+      for (let index = 0; index < rowCount; index += 1) {
+        const row = document.createElement('tr');
+        [positive[index], negative[index]].forEach((value) => {
+          const cell = document.createElement('td');
+          cell.innerHTML = value || raceDataUnavailable;
+          row.appendChild(cell);
+        });
+        body.appendChild(row);
+      }
+      const floorHeadingRow = document.createElement('tr');
+      const floorHeadingCell = document.createElement('th');
+      floorHeadingCell.colSpan = 2;
+      floorHeadingCell.scope = 'row';
+      floorHeadingCell.className = 'attribute-floor-heading';
+      floorHeadingCell.textContent = 'ATTR. Floor';
+      floorHeadingRow.appendChild(floorHeadingCell);
+      body.appendChild(floorHeadingRow);
+      const floorValueRow = document.createElement('tr');
+      const floorValueCell = document.createElement('td');
+      floorValueCell.colSpan = 2;
+      floorValueCell.className = 'attribute-floor-value';
+      floorValueCell.innerHTML = valuesMarkup(floorValues);
+      floorValueRow.appendChild(floorValueCell);
+      body.appendChild(floorValueRow);
+      table.appendChild(body);
+      group.appendChild(table);
+      parent.appendChild(group);
+      return group;
+    }
     function splitTraitAdjustments(values) {
       const text = values.map(textFromHtml).join(' ').trim();
       if (!text) return { positive: [], negative: [] };
@@ -2780,7 +2831,7 @@
       const sizeSummary = document.createElement('div');
       sizeSummary.className = 'race-template-section race-size-stats';
       sizeSummary.innerHTML =
-        '<p class="race-template-heading">Size &amp; Base Vitality and Speed</p>' +
+        '<p class="race-template-heading rank-legendary rank-purple-centered">Size &amp; Base Vitality and Speed</p>' +
         '<p><strong>Size:</strong> ' + escapeHtml(card.dataset.size) + '</p>' +
         '<p><strong>Movement Speed:</strong> ' + sizeStats.speed + ' ft.</p>' +
         '<p><strong>Life:</strong> ' + sizeStats.life + ' | <strong>Mana:</strong> ' + sizeStats.mana +
@@ -2812,7 +2863,7 @@
       const culture = document.createElement('div');
       culture.className = 'race-template-section culture-template';
       culture.innerHTML =
-        '<p class="race-template-heading">Culture</p>' +
+        '<p class="race-template-heading rank-legendary rank-purple-centered">Culture</p>' +
         '<p><strong>1. Planet, Region, and Area</strong><br>Planet: ' + escapeHtml(geography.planet) + '<br>Region: ' + escapeHtml(geography.region) + '<br>Area: ' + escapeHtml(geography.area) + '</p>' +
         '<p><strong>3. Favorite Class Paths</strong><br>' + sectionText(classPathsLabel) + '</p>' +
         '<p><strong>3. Favorite Class, Path and Branch Abilities</strong><br>' + sectionText(classAbilitiesLabel) + '</p>' +
@@ -2832,11 +2883,9 @@
         .forEach((label) => label.remove());
       const oldAge = [...card.querySelectorAll(':scope > p')].find((node) => /^(?:Starting Age|Race Base):/i.test(node.textContent.trim()));
       const lifespan = card.querySelector(':scope > .lifespan-tag');
-      const age = document.createElement('div');
-      age.className = 'race-template-section';
-      age.innerHTML = '<p><strong>10. Starting Age</strong><br>' + (oldAge ? oldAge.innerHTML : raceDataUnavailable) + '</p>' +
-        '<p><strong>11. Lifespan</strong><br>' + (lifespan ? escapeHtml(lifespan.textContent) : raceDataUnavailable) + '</p>';
-      culture.insertAdjacentElement('afterend', age);
+      culture.insertAdjacentHTML('beforeend',
+        '<p><strong>10. Starting Age</strong><br>' + (oldAge ? oldAge.innerHTML : raceDataUnavailable) + '</p>' +
+        '<p><strong>11. Lifespan</strong><br>' + (lifespan ? escapeHtml(lifespan.textContent) : raceDataUnavailable) + '</p>');
       if (oldAge) oldAge.remove();
       if (lifespan) lifespan.remove();
 
@@ -2857,18 +2906,13 @@
       extras.className = 'race-template-section race-extra-data';
       if (spiritLabel) {
         const group = document.createElement('div');
-        group.innerHTML = '<p><strong>Spirit &amp; Apex Base Scores</strong></p>' + valuesMarkup(spiritValues);
-        extras.appendChild(group);
-      }
-      if (floorLabel || floorValues.length) {
-        const group = document.createElement('div');
-        group.innerHTML = '<p><strong>ATTR. Floor</strong></p>' + valuesMarkup(floorValues);
+        group.innerHTML = '<p class="race-template-heading rank-legendary rank-purple-centered">Spirit &amp; Apex Base Scores</p>' + valuesMarkup(spiritValues);
         extras.appendChild(group);
       }
       [spiritLabel, floorLabel].forEach((label) => { if (label) takeRaceSection(card, (text) => text === label.textContent.trim()); });
-      let insertionAnchor = age;
+      let insertionAnchor = culture;
       if (extras.children.length) {
-        age.insertAdjacentElement('afterend', extras);
+        culture.insertAdjacentElement('afterend', extras);
         insertionAnchor = extras;
       }
 
@@ -2892,13 +2936,13 @@
       tables.appendChild(raceStatsHeading);
       addTableGroup(tables, 'Aptitudes and Inaptitudes', 'Aptitudes', 'Inaptitudes', aptitudes.values, inaptitudes.values, 'aptitude-table');
       const adjustments = splitTraitAdjustments(traitAdjustments.values);
-      addTableGroup(tables, 'Innate Trait Adjustments', 'Positive Adjustments', 'Negative Adjustments', adjustments.positive, adjustments.negative, 'trait-adjustment-table');
+      addTraitAdjustmentTable(tables, adjustments.positive, adjustments.negative, floorValues);
       addTableGroup(tables, 'Innate Abilities and Vulnerabilities', 'Innate Abilities', 'Innate Vulnerabilities', explicitAbilities.values.length ? explicitAbilities.values : fallbackAbilities.values, explicitVulnerabilities.values.length ? explicitVulnerabilities.values : fallbackVulnerabilities.values, 'innate-ability-table');
 
       const armaments = document.createElement('section');
       armaments.className = 'race-table-section armament-proficiency-section';
       const armamentHeading = document.createElement('p');
-      armamentHeading.className = 'race-template-heading rank-legendary';
+      armamentHeading.className = 'race-template-heading rank-legendary rank-purple-centered';
       armamentHeading.textContent = 'Armament Proficiencies';
       armaments.appendChild(armamentHeading);
       if (variant.values.length) {
