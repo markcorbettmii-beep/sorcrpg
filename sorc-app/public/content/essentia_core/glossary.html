@@ -1,234 +1,391 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SORC Glossary - Slayers of Rings & Crowns</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="../../styles.css?v=9">
-  <link rel="stylesheet" href="../../nav-system.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A consolidated glossary for Slayers of Rings & Crowns.">
+  <title>SORC Glossary</title>
   <style>
-    main { padding: 3rem 2rem 4rem; margin: 0 auto; max-width: 900px; }
-    .glossary-section { margin-bottom: 2.5rem; }
-    .glossary-section h2 { color: #c5a042; font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid rgba(160,140,200,0.3); padding-bottom: 0.4rem; margin-bottom: 1rem; }
-    .glossary-term { margin-bottom: 1.5rem; }
-    .glossary-term dt { color: #c5a042; font-weight: bold; font-size: 1.05rem; margin-bottom: 0.3rem; }
-    .glossary-term dd { margin-left: 1.5rem; opacity: 0.85; line-height: 1.7; }
-
-    body.lawful-mode main { background: #f5f5f0; }
-    body.lawful-mode .glossary-section h2 { border-color: rgba(100,60,0,0.2); }
-    body.lawful-mode .glossary-term dt { color: #92793a; }
-
-    .apex-current { background:#ffffff; color:#000000; padding:1rem 1.25rem; margin:1.5rem 0; border:1px solid #000000; }
-    .apex-current h2, .apex-current p { color:#000000 !important; }
+    :root { color-scheme:light; --ink:#172126; --muted:#57666d; --gold:#92793a; --line:#d8dedf; --paper:#f5f4ef; --card:#fff; --soft:#eef0ed; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.65 system-ui,sans-serif; }
+    header,main,footer { width:min(1050px,100%); margin:auto; padding:1.5rem 1.25rem; }
+    header { padding-top:3rem; }
+    h1,h2,h3 { line-height:1.2; }
+    h1 { margin:0; font-size:clamp(2rem,5vw,3.2rem); }
+    h2 { margin:2.7rem 0 .6rem; padding-bottom:.45rem; font-size:1.45rem; border-bottom:1px solid var(--line); }
+    h3 { margin:1.6rem 0 .4rem; font-size:1.1rem; color:#59460f; }
+    p { margin:.55rem 0; }
+    .subtitle,.muted { color:var(--muted); }
+    .notice { padding:1rem 1.2rem; margin:1.3rem 0; background:var(--card); border:1px solid var(--line); border-left:4px solid var(--gold); border-radius:.45rem; }
+    .glossary-index { margin:1.2rem 0 .8rem; background:var(--card); border:1px solid var(--line); border-radius:.45rem; }
+    .glossary-index details { padding:.35rem .75rem; }
+    .glossary-index summary { display:flex; align-items:center; min-height:44px; cursor:pointer; color:#59460f; font-weight:700; }
+    .glossary-index ul { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.2rem 1rem; max-height:50vh; overflow:auto; margin:.5rem 0 0; padding:.35rem .5rem .35rem 1.7rem; }
+    .glossary-index li { break-inside:avoid; }
+    .glossary-index a { text-decoration:none; }
+    .glossary-index a:hover, a:focus-visible { text-decoration:underline; }
+    .glossary-pages { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.35rem; margin:1rem 0; }
+    .glossary-pages a, .glossary-pages .page-number, .glossary-pages .page-direction { display:inline-flex; align-items:center; justify-content:center; min-width:2.7rem; min-height:44px; padding:.35rem .65rem; background:var(--card); border:1px solid var(--line); border-radius:.35rem; color:#59460f; text-decoration:none; }
+    .glossary-pages [aria-current="page"] { background:var(--soft); color:var(--ink); font-weight:700; }
+    .glossary-pages [aria-disabled="true"] { color:var(--muted); }
+    .glossary-page-count { margin:0 .35rem; color:var(--muted); font-size:.9rem; }
+    dl { margin:0; }
+    .glossary-grid { display:grid; grid-template-columns:1fr; gap:0 2rem; }
+    .glossary-page h2 { margin-top:1.5rem; }
+    .entry { padding:.8rem 0; border-bottom:1px solid var(--line); }
+    dt { font-weight:700; color:#59460f; }
+    dd { margin:.18rem 0 0; }
+    .tag { display:inline-block; margin-left:.35rem; padding:.05rem .4rem; border-radius:999px; background:var(--soft); color:#435057; font-size:.72rem; font-weight:600; vertical-align:.12rem; }
+    .tag.dev { background:#fff1d6; color:#704b05; }
+    .source-note { padding:.8rem 1rem; margin:1rem 0; background:var(--soft); border-radius:.4rem; color:#3c4b51; }
+    footer { padding-bottom:3rem; color:var(--muted); font-size:.9rem; }
+    a { color:#59460f; }
+    @media (min-width:760px) {
+      header,main,footer { padding-left:2rem; padding-right:2rem; }
+      .glossary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
   </style>
 </head>
 <body>
-  <div class="page-wrapper">
-    <div class="header-container">
-      <img src="../site-presentation/assets/branding/logos/newest-sorc-redev-letters-jpeg_20260808_072206_0000.png" alt="SORC" class="sorc-letters-img evil-only" />
-      <img src="../site-presentation/assets/branding/logos/newest-sorc-goldlaw-letters-jpeg_20260808_072143_0000.png" alt="SORC" class="sorc-letters-img lawful-only" />
-    </div>
-    <nav>
-      <div id="navRoleBadge"></div>
-    </nav>
-    <main>
-      <div class="glossary-section">
-        <h1>SORC Glossary</h1>
-        <p><em>Essential terms and definitions for understanding Slayers of Rings & Crowns.</em></p>
-      </div>
+<header>
+  <h1>SORC Glossary</h1>
+  <p class="subtitle">Alphabetized SORC terms, with a linked index and page navigation.</p>
+  <noscript><p class="notice">Enable JavaScript to use the glossary index and page navigation. All entries remain listed below.</p></noscript>
+</header>
+<main>
+  <section id="people-setting">
+    <dl>
+      <div class="entry"><dt>Player</dt><dd>A participant who creates and controls one or more Player Characters, makes their choices in play, and collaborates with the other Players and Game Master.</dd></div>
+      <div class="entry"><dt>Character</dt><dd>A person or being represented in play. A Player Character is controlled by a player; a Non-Player Character is controlled by the Game Master or the game.</dd></div>
+      <div class="entry"><dt>GM</dt><dd>The Game Master who presents the world, portrays its Hosts, applies the rules, and resolves the outcomes of Character actions.</dd></div>
+      <div class="entry"><dt>Host</dt><dd>A living being placed in the game world by the game's development team or the GM. Hosts include characters, adversaries, animals, and other creatures.</dd></div>
+      <div class="entry"><dt>Race</dt><dd>A Character's people or lineage, selected during creation and determining qualities such as size, Starting Age, innate Traits and Aptitudes, favored Class Trees, and Companion affinities.</dd></div>
+      <div class="entry"><dt>Species</dt><dd>A distinct group of living beings classified by shared biological, cultural, or magical characteristics. A Species may have its own Traits, Abilities, and cultural significance. A Character can belong to multiple Species at once—for example, Draco Blood are both Humanoid and Reptilian. A Race is a playable lineage within one Species or a blend of several. A Fae can be Humanoid or Beast. Species come in forms of various types and sizes, including Higher Power, Humanoid, Mythical, Supernatural, Beast, Pest, Elemental, Non-Organic, Extraterrestrial, Reptilian, Amphibian, Fish, Mammal, Bird, Insect, Flora, Fauna (Animals), and Fae. For more on Species, refer to 'Book of Behemoths, Beasts &amp; Bugs'.</dd></div>
+      <div class="entry"><dt>Flora</dt><dd>Plant life in the game world, including trees, shrubs, flowers, herbs, and magical plants. Flora may provide resources, create obstacles, or be discovered, harvested, communicated with, or encountered in play.</dd></div>
+      <div class="entry"><dt>Fauna</dt><dd>Animal life in the game world, from common wildlife to fantastical or mythical beasts. Fauna may be allies or threats and can provide resources through hunting, taming, farming, quests, or exploration.</dd></div>
+      <div class="entry"><dt>Class</dt><dd>A Character's chosen progression, organized through a Class Tree of Tiers, Paths, Branches, and Ability choices; eligibility to use an Ability also depends on its requirements and the Character's Alignment.</dd></div>
+      <div class="entry"><dt>Class Tree</dt><dd>A finite progression structure for a Class's Abilities, organized into Tiers, Paths, Branches, and choice Slots; the Main Class Tree grants choices on its own level and midpoint schedule.</dd></div>
+      <div class="entry"><dt>Essentia</dt><dd>The universe in which SORC is set and whose maps are arranged from Planet to Space.</dd></div>
+      <div class="entry"><dt>Universe</dt><dd>The largest map scale in SORC; the universe is named Essentia.</dd></div>
+      <div class="entry"><dt>Planet</dt><dd>A world within Essentia; Zailister is one example in the setting.</dd></div>
+      <div class="entry"><dt>Continent</dt><dd>A sovereign land mass on a Planet that contains Regions and the smaller map scales below them.</dd></div>
+      <div class="entry"><dt>Region</dt><dd>A large area that divides a Continent.</dd></div>
+      <div class="entry"><dt>Territory</dt><dd>A large area within a Region, such as a settlement or metropolis.</dd></div>
+      <div class="entry"><dt>Area</dt><dd>A place within a Character's view.</dd></div>
+      <div class="entry"><dt>Space</dt><dd>A structure or small area within a Character's reach.</dd></div>
+      <div class="entry"><dt>Zailister</dt><dd>A planet in Essentia and a setting for SORC adventures.</dd></div>
+      <div class="entry"><dt>Adoria</dt><dd>One of the two suns named in the saved setting reference.</dd></div>
+      <div class="entry"><dt>Tawdry Dwarf</dt><dd>The second sun named in the saved setting reference.</dd></div>
+      <div class="entry" id="term-mac"><dt>MAC</dt><dd>Monsters, Animals, Creatures, or Critters; the rules use MAC for Encounter Cards representing living entities.</dd></div>
+    </dl>
+  </section>
 
-      <section class="apex-current">
-        <h2>Terminology Expansion</h2>
-        <p>The current Apex glossary remains authoritative. Additional legacy definitions are integrated below only when the term is not already defined above.</p>
-        <p>Legacy definitions and migration notes are draft-only and are not displayed on the live glossary.</p>
-      </section>
+  <section id="rules-development">
+    <dl>
+      <div class="entry"><dt>Ruleset</dt><dd>A campaign configuration chosen before play and kept for the campaign: Bare Bones, Modular, or Complex.</dd></div>
+      <div class="entry"><dt>Bare Bones</dt><dd>A fixed preset that keeps the rules needed to roll, hit, hurt, and advance, while omitting selected systems. It is not a menu of optional rules. Alignment remains in force in every Rule Set.</dd></div>
+      <div class="entry"><dt>Modular</dt><dd>A campaign configuration that starts from Complex and removes selected features by category. The group agrees on the choices before the campaign and keeps them for its duration.</dd></div>
+      <div class="entry"><dt>Complex</dt><dd>The Rule Set with every rule in force and nothing omitted. Every Race is available in Complex mode.</dd></div>
+      <div class="entry"><dt>Tier</dt><dd>A stage of a Main Class Tree that groups its Ability choices and Slots by progression level.</dd></div>
+      <div class="entry"><dt>Path <span class="tag">source conflict</span></dt><dd>A named progression within a Main Class Tree that groups Path Abilities and leads to Branch choices. The saved class rules disagree on when a Path opens, so this glossary does not state a Character Level threshold.</dd></div>
+      <div class="entry"><dt>Branch <span class="tag">source conflict</span></dt><dd>A narrower progression within a chosen Path, with its own Abilities. The saved class rules disagree on when Branch selection opens, so this glossary does not state a Character Level threshold.</dd></div>
+      <div class="entry"><dt>Ability</dt><dd>A selectable Class Tree option with a defined effect; a selected Ability becomes usable only after training with a matching Class Trainer and paying the required fee.</dd></div>
+      <div class="entry"><dt>ATTR</dt><dd>Attribute; the six current Attributes are Artistry (ART), Fortitude (FRT), Intellect (INT), Physique (PHY), Vigilance (VIG), and Wisdom (WIS), while older sources use ATT and different abbreviations.</dd></div>
+      <div class="entry"><dt>ATTR SCR</dt><dd>Attribute Score; the numerical value of an Attribute used in checks and prerequisites.</dd></div>
+      <div class="entry"><dt>Trait</dt><dd>A Character-development statistic aligned with an Attribute; its score modifies relevant checks and unlocks Trait-specific passive effects, while older sources list a different grouping of survival Traits.</dd></div>
+      <div class="entry"><dt>Trait SCR <span class="tag">source conflict</span></dt><dd>The numerical score of an individual Trait; saved rules disagree about its limit and relationship to the aligned Attribute, so no cap is stated here.</dd></div>
+      <div class="entry"><dt>Willpower</dt><dd>Mental determination and the ability to resist intellectual mind control, temptation, and confusion. It is aligned with Fortitude and adds a bonus to resist mental influence; charm, seduction, and persuasion-based effects oppose it with the source's Charisma, while other spells use their DIFS.</dd></div>
+      <div class="entry"><dt>Talent</dt><dd>An individual action or technique within a Talent Tree. A Character must open the relevant Expertise before buying and raising individual Talents; the Talent's rules determine its use and checks.</dd></div>
+      <div class="entry"><dt>Skill</dt><dd>A profession-linked capability for crafting and other noncombat tasks. A Skill check uses d100 plus the Skill Score and aligned Attribute modifier against DIFS; Skills advance through Expertise. Saved rules conflict on Skill-score limits, so no universal cap is stated here.</dd></div>
+      <div class="entry" id="term-tst"><dt>TST</dt><dd>Talents, Skills, and Traits: the three character-development categories, developed with REM points aligned to their Attributes.</dd></div>
+      <div class="entry"><dt>REM</dt><dd>Rem Points, or Remnant (REM) Points, are progression points tied to individual Attributes. Spend them on that Attribute’s score or its aligned Talents, Skills, and Traits; unspent points become Remnants that carry forward, and may be moved permanently to the REM Item Pool for Companion or Item Cards. See the Companions and Equipment &amp; Items chapters for their respective purchase rules.</dd></div>
+      <div class="entry"><dt>Expertise</dt><dd>An ordered progression tier for Talents and Skills. Expertise tiers must be unlocked in order; opening a tier makes its options available, while each Talent or Skill is purchased and improved separately.</dd></div>
+      <div class="entry"><dt>LVL</dt><dd>Character Level, the XP-driven progression track that governs REM-point development and Class Tree Ability choices; it is separate from age-based Growth and achievement-driven Rank.</dd></div>
+      <div class="entry"><dt>Rank</dt><dd>A Character's standing, advanced with Rank PTS through Pauper, Peasant, Commoner, Adventurer, Hero, Uber, Elite, and Legend. Items and Armaments use a separate Rank ladder from Common through Divine; Character Rank governs access to them.</dd></div>
+      <div class="entry"><dt>Rank PTS</dt><dd>Rank Points, the achievement-driven progression points that advance Rank. They are earned through achievements, exceptional actions, and exploration; they do not advance Character Level.</dd></div>
+      <div class="entry"><dt>XP</dt><dd>Experience Points, which advance Character Level; they do not advance Rank.</dd></div>
+      <div class="entry"><dt>Growth</dt><dd>The time-based maturity track that advances as a Character ages on an escalating schedule, increasing Vitality and advancing Aura and Innate Aptitude; it is separate from XP-driven Character Level and Rank.</dd></div>
+      <div class="entry"><dt>Age and Retirement</dt><dd>A Character's Starting Age is about one quarter of the Race's natural lifespan, or an effective 400 years for Immortal Races; the Player chooses an actual age within a five-year range centered on that age. Every Character has a 40-year adventuring window and retires at Starting Age plus 40, ending active play; Immortals remain as NPCs, while Mortals eventually pass into the world's memory.</dd></div>
+    </dl>
+  </section>
 
-      <div class="glossary-section">
-        <h2>Core Mechanics</h2>
-        <p>Core Mechanics defines the foundational statistics, protections, traits, ranks, and combat modifiers used throughout SORC rules.</p>
-        <dl>
-          <div class="glossary-term">
-            <dt>ATTR (Attribute)</dt>
-            <dd>Short for Attribute. The six core statistics that define a character: Strength, Agility, Cognition, Perception, Acuity, and Spirit. Each ranges from -5 to +12 and affects various character capabilities.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>PROTS (Protection Score)</dt>
-            <dd>The target number for attack rolls and ability checks. Calculated from Defense Trait, armor, buffs, and conditions. Attacks and abilities roll d100 + modifiers vs. PROTS to hit.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Trait</dt>
-            <dd>A specialized modifier derived from ATTRs, ranging from +0 to +12. Applied to damage rolls, hit bonuses, and various checks depending on the weapon or ability used.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Rank</dt>
-            <dd>A character's power level, ranging from Common through Divine. Determines access to equipment and abilities. Weapons, armor, and items also carry rank designations matching the character's rank to use them.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Hit Bonus</dt>
-            <dd>Modifiers added to attack rolls from weapon rank, Trait, and proficiency. Off-hand attacks roll at half the main-hand hit bonus, reduced damage output, and reduced accuracy.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Dual-Wield</dt>
-            <dd>Fighting with two one-handed weapons. Requires a Nature Ability to unlock. Both hands attack on one BASE combat strike action. Off-hand rolls at half main-hand hit bonus with reduced damage.</dd>
-          </div>
-        </dl>
-      </div>
+  <section id="combat">
+    <dl>
+      <div class="entry"><dt>Combat</dt><dd>A structured encounter in which Players declare actions and resolve attacks and effects against targets using the combat rules.</dd></div>
+      <div class="entry" id="term-prots"><dt>PROTS</dt><dd>Protection Score, the target number an attack or Ability roll must meet or exceed, calculated from Armor Scr. and applicable defensive modifiers.</dd></div>
+      <div class="entry" id="term-difs"><dt>DIFS</dt><dd>Difficulty Score, the target number for noncombat Skill checks, Panic Checks, and other tasks whose rules call for a Difficulty Score.</dd></div>
+      <div class="entry" id="term-as"><dt>Armor SCR</dt><dd>Armor Score; the armor protection value used in calculating PROTS.</dd></div>
+      <div class="entry"><dt>Hit Bonus</dt><dd>The weapon Rank's base hit modifier from the Main-Hand or Off-Hand table row. Add applicable modifiers to the d100 attack roll, then compare the result with the target's PROTS.</dd></div>
+      <div class="entry"><dt>Action</dt><dd>A rules-defined activity a Character can perform. Endurance limits actions across the day; combat actions may also spend Stamina and follow per-turn limits.</dd></div>
+      <div class="entry"><dt>BASE Combat Strike</dt><dd>A basic weapon attack that costs 1 action. The combat rules list a Dual-Wield BASE Combat Strike with both hands for the same 1 action.</dd></div>
+      <div class="entry"><dt>Critical Hit <span class="tag">source conflict</span></dt><dd>A d100 result within the weapon's Critical Window. It deals twice the weapon's damage dice plus the source bonus: Strength for melee, Agility for martial ranged attacks, or Acuity for spells. Saved combat tables disagree on whether the Critical Window widens by Rank, so no Rank-specific window is stated here.</dd></div>
+      <div class="entry"><dt>Incapacitated</dt><dd>A Character state reached at 0 Life. An incapacitated Character cannot take actions. At -(10 + Constitution) Life, the Character must undergo rejuvenation.</dd></div>
+      <div class="entry"><dt>Condition</dt><dd>A rules-defined state or effect that changes what a Character can do or how a mechanic resolves.</dd></div>
+      <div class="entry"><dt>Dual-Wield</dt><dd>Attacking with a Main-Hand and Off-Hand weapon in one Dual-Wield BASE Combat Strike action. Use the applicable hand-specific attack values for each weapon.</dd></div>
+      <div class="entry"><dt>LST</dt><dd>Limb-Specific Targeting; targeting a limb changes hit chance and damage.</dd></div>
+      <div class="entry"><dt>Target</dt><dd>A being or object selected for an attack or Ability; a single-target effect affects one Target.</dd></div>
+      <div class="entry"><dt>AoE</dt><dd>Area of Effect, an attack or Ability that affects an area.</dd></div>
+      <div class="entry"><dt>CC</dt><dd>Crowd Control; effects restrict or interrupt an opponent's actions.</dd></div>
+      <div class="entry"><dt>DoT</dt><dd>Damage over Time, an effect that applies damage over a period rather than all at once.</dd></div>
+      <div class="entry"><dt>HoT</dt><dd>Heal over Time, an effect that restores Life over a period rather than all at once.</dd></div>
+    </dl>
+  </section>
 
-      <div class="glossary-section">
-        <h2>Combat Terms</h2>
-        <p>Combat Terms identifies the actions, attacks, critical results, incapacitation states, and temporary conditions that structure encounters.</p>
-        <dl>
-          <div class="glossary-term">
-            <dt>Action</dt>
-            <dd>A discrete unit of time in combat, measured in individual turns. Characters spend actions to attack, cast abilities, move, and interact with the environment.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>BASE Combat Strike</dt>
-            <dd>A standard weapon attack that consumes 1 action. Includes main-hand attack and, if dual-wielding, off-hand attack on the same action.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Critical Hit</dt>
-            <dd>An attack that rolls within the Critical Window for the weapon's rank, dealing 2x damage dice. May trigger additional Status effects or severe injuries depending on the location hit.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Incapacitated</dt>
-            <dd>A condition where a character has reached 0 Life and can no longer take actions. May result in death, unconsciousness, or severe injury depending on damage severity.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Condition</dt>
-            <dd>A temporary status effect applied to characters during combat or exploration, such as Poisoned, Burning, Stunned, or Fatigued. May impose penalties or restrict actions.</dd>
-          </div>
-        </dl>
-      </div>
+  <section id="equipment">
+    <dl>
+      <div class="entry"><dt>Equipment</dt><dd>Gear and Items a Character carries that are not Armaments; Gear is functional equipment, while Items are cargo such as consumables, materials, and collectibles.</dd></div>
+      <div class="entry"><dt>Armaments</dt><dd>The parent category for combat equipment: Weapons, ammunition, and Armor. Shared Armament rules cover Rank, Grade, Quality, Condition, Materials, and Variant; Weapon and Armor have separate card details.</dd></div>
+      <div class="entry"><dt>Artifacts</dt><dd>In SORC, Artifacts are Armament Weapon Cards, not Item Cards.</dd></div>
+      <div class="entry"><dt>Armor</dt><dd>A defensive Armament whose Armor Score (Armor SCR) contributes to PROTS. Armor Cards record Grade, Mould, Materials, Rank, Quality, Condition, and Armor Score. The five set parts are Armor Core (pauldrons, cuirass, and greaves), helmet, gloves or bracers, boots, and accessories; Set Bonus explains their effects.</dd></div>
+      <div class="entry"><dt>Set Bonus</dt><dd>Additional benefits granted by the required combination of related armor parts. Set Bonuses are a Complex-rule mechanic available to Heroic Rank and higher sets. The set has five parts: Armor Core (pauldrons, cuirass, and greaves, which stay together), helmet, gloves or bracers, boots, and accessories. The Main Bonus requires the complete set. Gloves and Boots Bonuses apply when the matching set piece is equipped. Replacing gloves or boots grants the replacement item's stats, removes that slot's bonus, and reduces the Main Bonus's numerical stats by 25% for each replaced slot. Only the Cuirass can receive a set-level Enhancement.</dd></div>
+      <div class="entry"><dt>Variants</dt><dd>Forms of Armaments, Gear, and Items based on where their working power comes from. Armaments use Telluric, TAA, Chthonic, Oxidize, or Malign; Gear and Items use Telluric, TA-Equip, Chthonic, Oxidize, or Malign.</dd></div>
+      <div class="entry"><dt>Weapon Rank</dt><dd>The Rank assigned to a weapon. Weapon Rank determines its Rank-based hit bonus and damage dice.</dd></div>
+      <div class="entry"><dt>Grade</dt><dd>An Armament construction tier, separate from Rank and Quality. Armor Grade governs protection, weight, and mobility; Weapon Grade is set by the striking material and governs damage modifiers and weapon prerequisites.</dd></div>
+      <div class="entry"><dt>Hand</dt><dd>Weapon Proficiency considers one- or two-handed use and Main-Hand or Off-Hand placement; each hand has its own attack values and restrictions.</dd></div>
+      <div class="entry"><dt>Mould</dt><dd>An Armament's style and pattern. Armor Moulds include forms such as plate, chainmail, scale, and studded; they affect appearance and function, and determine base price.</dd></div>
+      <div class="entry"><dt>Weapon Style</dt><dd>A weapon's combat form, such as Slashing, Blunt, or Piercing; Style affects damage modifiers against Armor Moulds and is distinct from Weapon Type.</dd></div>
+      <div class="entry"><dt>Weapon Type</dt><dd>Tactical, Magic, TAW, or Chthonic. Type gates which Class Abilities can be readied: Martial requires Tactical, Spell requires Magic, and TAW or Chthonic satisfy neither.</dd></div>
+      <div class="entry"><dt>1H Weapon</dt><dd>One-Handed Weapon; a weapon held in one hand.</dd></div>
+      <div class="entry"><dt>2H Weapon</dt><dd>Two-Handed Weapon; a weapon wielded with both hands.</dd></div>
+      <div class="entry"><dt>Gear</dt><dd>Practical tools for exploration and survival; Gear Cards have no class restriction and carry Quality, Value, and Weight, but no Rank, Grade, or Condition.</dd></div>
+      <div class="entry"><dt>Item</dt><dd>Item Cards represent consumables, materials, collectibles, Relics, quest items, skins, meat, and other cargo, and may stack multiple objects on one card. Rem Points may be used to purchase Items; see the Equipment &amp; Items chapter.</dd></div>
+      <div class="entry"><dt>Special Item</dt><dd>Special Item Cards represent unique and often Rare objects such as event tickets, quest items, appearance items, scroll Spells, and buff potions.</dd></div>
+      <div class="entry"><dt>Weapon</dt><dd>An offensive Armament, explained separately within the Armaments category. Weapon Cards describe each Weapon and record its Variant, Type, Style, Hand, Distance, Grade, Rank, Quality, Condition, Materials, statistics, prerequisites, and special properties.</dd></div>
+      <div class="entry"><dt>Lore</dt><dd>Lore Cards lead Players to special Lore Quests built into a module and guide the party toward the related encounter and item drop.</dd></div>
+      <div class="entry"><dt>Encounter</dt><dd>Encounter Cards represent beings, hazards, phenomena, or features a party may face, including NPCs, creatures, traps, and environmental conditions.</dd></div>
+      <div class="entry"><dt>Companion</dt><dd>A creature or Cohort that accompanies a Character; Companion Cards record type, Rank, size, statistics, Abilities, and compatibility. Characters have four slots: Tiny, Small, Standard, and a shared larger slot for a Large and Goliath together or a single Behemoth. Rem Points may be used to purchase Companions; see the Companions chapter.</dd></div>
+      <div class="entry"><dt>Prize</dt><dd>Prize Cards are not tied to a module or LVL, may represent any SORC Card category, are tradable, and may be used only at or below the Character's Rank.</dd></div>
+      <div class="entry"><dt>SORC Cards</dt><dd>The game's physical and digital card system; categories include Ability Cards, Armaments (Armor and Weapon), Gear, Items (including Special Items), Lore, Encounters, Companions, and Prizes. Each card's reference number links it to its module page and digital content.</dd></div>
+      <div class="entry"><dt>Loot</dt><dd>Items, resources, currency, and materials obtained from encounters, discovery, or other rewards.</dd></div>
+      <div class="entry"><dt>Consumable</dt><dd>An Item used up to gain an effect, such as a potion or food.</dd></div>
+      <div class="entry"><dt>TAW</dt><dd>Technologically Advanced Weapons, an Armament family named in the current rules.</dd></div>
+      <div class="entry"><dt>TABA</dt><dd>Technologically Advanced Body Armor, an Armament category named in the current rules.</dd></div>
+      <div class="entry"><dt>Life</dt><dd>A Character's damage-bearing Vitality resource. At 0 Life the Character is Incapacitated; the rules define the consequences of further Life loss.</dd></div>
+      <div class="entry"><dt>Mana</dt><dd>The Vitality resource spent to cast Spells. At 0 Mana, a Character cannot cast until Mana returns.</dd></div>
+      <div class="entry"><dt>Stamina</dt><dd>The Vitality resource spent on combat Abilities and movement in structured encounters. At 0 Stamina, a Character cannot use combat Abilities or move until it returns.</dd></div>
+      <div class="entry"><dt>Vitality</dt><dd>A Character's four resources: Life, Mana, Stamina, and Endurance. Apex determines their capacity, while Spirit determines recovery for Life, Mana, and Stamina.</dd></div>
+      <div class="entry"><dt>Endurance</dt><dd>The daily-action Vitality resource, spent at one Chip per action and restored by rests; it resets to full at the start of each day.</dd></div>
+      <div class="entry" id="term-vit-score"><dt>VIT SCR</dt><dd>The number of Chips a Vitality resource can hold; its VIT SCR is its capacity.</dd></div>
+      <div class="entry"><dt>Apex <span class="tag">source conflict</span></dt><dd>A race-specific Vitality score allocated among Life, Mana, Stamina, and Endurance to determine their capacity. Saved rules disagree on the points-to-Chip conversion, so no rate is stated here.</dd></div>
+      <div class="entry"><dt>Spirit <span class="tag">source conflict</span></dt><dd>A race-specific Vitality score that determines regeneration for Life, Mana, and Stamina. The saved rules disagree on whether Spirit also affects Endurance restored during rests.</dd></div>
+      <div class="entry"><dt>Wellness</dt><dd>A 0% to 150% measure of a Character's day-to-day care and conditioning that responds to lifestyle, injury, illness, practice, and rest and directly alters Apex and Spirit.</dd></div>
+    </dl>
+  </section>
 
-      <div class="glossary-section">
-        <h2>Progression & Character Building</h2>
-        <p>Progression &amp; Character Building explains the class-tree choices, advancement currencies, and TST resources used to develop a Character.</p>
-        <dl>
-          <div class="glossary-term">
-            <dt>Ability</dt>
-            <dd>A special action learned from a Class Tree that provides unique combat, utility, or roleplay capabilities. Abilities are never purchased; they are granted when choosing from a Class Tree's available Slots.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Class Tree</dt>
-            <dd>A structured progression system offering Abilities in Paths and Branches. Players gain one Ability choice per level from any available Class Tree matching their alignment Spectrum.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Path</dt>
-            <dd>A thematic grouping of Abilities within a Class Tree, unlocked at level 4. Staying on one Path through level 20 opens access to a Branch at level 21.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Branch</dt>
-            <dd>A deeper progression within a Path, unlocked at level 21. Following one Branch through level 30 leads to the Class Tree's 30-Ability capstone.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>XP (Experience Points) & Rank PTS</dt>
-            <dd>Experience earned through gameplay that advances characters. Rank PTS unlock higher-rank items and abilities, while general XP supports specific progression paths.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Talent, Skill, Trait (TST)</dt>
-            <dd>The three currency types for character customization. TST points are purchased with gold during character creation and throughout career advancement to gain Talents (passive abilities), Skills (expertise), and Traits (stat increases).</dd>
-          </div>
-        </dl>
-      </div>
+  <section id="features">
+    <dl>
+      <div class="entry"><dt>Cohort</dt><dd>A player organization or guild that characters may join; current rules also use Cohort for a humanoid NPC companion who can assist, provide care, or carry gear.</dd></div>
+      <div class="entry"><dt>Achievements</dt><dd>Milestones tracked by the SORC site.</dd></div>
+      <div class="entry"><dt>Leaderboard</dt><dd>A site feature that ranks players using the metrics shown on its page.</dd></div>
+      <div class="entry"><dt>Trading Post <span class="tag">source conflict</span></dt><dd>A fixed-price buy/sell room in The Exchange; another saved site page labels the feature in development, so current availability remains unconfirmed.</dd></div>
+      <div class="entry"><dt>Trials of Combat <span class="tag">source conflict</span></dt><dd>A structured combat-trial feature and tabletop rules term; saved sources disagree on its current SORC Web availability.</dd></div>
+      <div class="entry"><dt>Character Sheet</dt><dd>A record of a Character's details, statistics, Abilities, equipment, and progression; SORC Web can save and export Characters as images or printouts.</dd></div>
+      <div class="entry"><dt>UID</dt><dd>A Character's unique identification number for online tracking, trading, and Achievements.</dd></div>
+      <div class="entry"><dt>AP <span class="tag">meaning varies by source</span></dt><dd>The saved terminology uses AP for Action Points, Attack Power, and Achievement Points; the current rules do not establish one shared meaning.</dd></div>
+      <div class="entry"><dt>SP</dt><dd>Spirit Points; older shorthand; current rules define Spirit as a score.</dd></div>
+      <div class="entry"><dt>FP</dt><dd>Forth Points; source names points without specifying their use.</dd></div>
+      <div class="entry"><dt>Background</dt><dd>A Character's backstory, selected or created during Character creation; it informs their outlook, initial Standing, and cultural equipment access.</dd></div>
+      <div class="entry"><dt>Objective</dt><dd>A goal given to Players to earn rewards or advance the story.</dd></div>
+      <div class="entry"><dt>Dungeon</dt><dd>An area designed for a group, typically with multiple challenges and adversaries.</dd></div>
+      <div class="entry"><dt>Raid</dt><dd>A large encounter designed for multiple players.</dd></div>
+      <div class="entry"><dt>Lore Quest</dt><dd>A special quest built into a module and triggered by a Lore Card, which guides the party to it.</dd></div>
+      <div class="entry"><dt>Animated Compass</dt><dd>A living magical companion described in the saved reference as finding Safe Havens, transporting its owner and party, and developing additional forms and abilities.</dd></div>
+      <div class="entry"><dt>Boneyard</dt><dd>Where fallen Rare-or-higher Companions, broken gear, spent items, and incapacitated Cards are held for recovery. Common and Uncommon Companions that die are permanently lost.</dd></div>
+      <div class="entry"><dt>Rare Find</dt><dd>A rare creature or pet discovery that a Hunter may attempt to calm, capture, and tame, as described in the saved reference.</dd></div>
+    </dl>
+  </section>
 
-      <div class="glossary-section">
-        <h2>Equipment & Resources</h2>
-        <p>Equipment &amp; Resources defines the ranks, weapons, armor, and restorative or travel resources that determine what a Character can carry and use.</p>
-        <dl>
-          <div class="glossary-term">
-            <dt>Weapon Rank</dt>
-            <dd>The tier of a weapon (Common, Uncommon, Rare, Unique, Heroic, Elite, Legendary, Divine). Higher ranks grant increased hit bonuses and damage dice. Characters must match a weapon's rank to use it.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>1H Weapon</dt>
-            <dd>A one-handed weapon with base damage listed in the weapon damage table. When used in the off-hand during dual-wield, damage is half the main-hand value, rounded up.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>2H Weapon</dt>
-            <dd>A two-handed weapon with higher base damage than 1H equivalents. Cannot be used with shields or dual-wield; requires both hands and grants no off-hand attack bonus.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Armor</dt>
-            <dd>Protective equipment worn by characters. Provides PROTS bonuses and may impose movement penalties (see Encumbrance). Must match character rank to use.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Life</dt>
-            <dd>A character's health pool. Damage subtracts from Life; reaching 0 incapacitates the character. Maximum Life is determined by race size and modifiers like Endurance.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Mana</dt>
-            <dd>A resource consumed by spellcasters and ability users. Restored through rest. Characters without Acuity Trait or relevant abilities typically have 0 Mana.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Stamina</dt>
-            <dd>A resource used for movement in structured encounters and certain abilities. Depletes with distance traveled or action usage, restored through rest.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Endurance</dt>
-            <dd>A character's fatigue threshold for long-distance travel. Foot travel requires recovery after every 10 miles; mounts extend this to 50 miles before requiring a Breather.</dd>
-          </div>
-        </dl>
-      </div>
+  <section id="terms">
+    <dl>
+      <div class="entry"><dt>Prestige</dt><dd>A measure of how a Character is seen by the world, shaped by their appearance, Background, actions, choices, achievements, and failures; it informs Reputation and Legacy.</dd></div>
+      <div class="entry"><dt>Legacy</dt><dd>The lasting recognition a Character builds through their deeds and Prestige; at retirement, a Legend is remembered in monuments, statues, and songs, while lower Ranks receive quieter recognition.</dd></div>
+      <div class="entry"><dt>Aura</dt><dd>A Character's physical presence, sensed before their name or deeds through Sight, Smell, Sound, Touch, and Gut. One Aura evolves with age and life circumstances, stands apart from and is not fed by Prestige, can affect Reputation and first impressions, and has seven named stages—Untested, Marked, Seasoned, Renowned, Ascendant, Fading, and Transcendent/Hollow—whose transitions remain unsettled; it does not mechanically govern Standing or Title effects.</dd></div>
+      <div class="entry"><dt>Title</dt><dd>A recognition for a Character's notable actions, achievements, or infamous deeds; Boasted, Shamed, and Exposed Titles can affect how factions perceive the Character and adjust Standing.</dd></div>
+      <div class="entry"><dt>SORC Web</dt><dd>SORC's companion online platform with Basic and Pro memberships, community features, Character profiles, and additional digital content and tools.</dd></div>
+      <div class="entry"><dt>Mission Statement</dt><dd>A Character's statement tying them to specific factions and NPCs who have a stake in whether it succeeds or fails. How the Character pursues or neglects it directly affects Standing with those factions and NPCs.</dd></div>
+      <div class="entry"><dt>Faction</dt><dd>An organized group a Character may have a relationship with. Standing is tracked separately for each faction and NPC.</dd></div>
+      <div class="entry"><dt>Standing</dt><dd>A Character's relationship level with a faction, NPC, or Standing category, tracked on eight tiers: Exalted (+4), Cherished (+3), Adored (+2), Respected (+1), Neutral (0), Tolerable (-1), Disliked (-2), and Hated (-3). It is recorded separately across Family, Affiliations, Companions, Campaign, Fellows, Neighbours, and Wellness.</dd></div>
+      <div class="entry"><dt>Affiliation</dt><dd>Formal membership in a faction. It brings deeper access, obligations, and consequences; Standing with the faction is still tracked separately.</dd></div>
+      <div class="entry"><dt>Reputation</dt><dd>A Character's ongoing actions build their reputation. Reputation is directly tied to Standing with factions and NPCs; recognized Boasted Titles can raise Standing, while Shamed or exposed titles can lower it.</dd></div>
+      <div class="entry"><dt>Contribution</dt><dd>What a Character gives to a Standing category, such as time, Coin, labour, and reputation. It is tracked separately from Standing; Contribution and Neglect are opposite directions on one line, and Contribution has no Mark.</dd></div>
+      <div class="entry"><dt>Neglect</dt><dd>The downward direction of a category's Contribution line. Neglect can move a Character only toward Neutral; falling below Neutral requires a deliberate act.</dd></div>
+      <div class="entry"><dt>Mark</dt><dd>The highest Standing a Character has ever held with a party, recorded alongside current Standing and never decaying. A deliberate act can lower Standing below Neutral by the same number of tiers the Mark stood above Neutral; a Bond Quest can seal a Mark without erasing it.</dd></div>
+      <div class="entry"><dt>Praise</dt><dd>Standing movement received from the allies of a party when the Character's Standing with that party changes. Allies move in the same direction by half the tiers changed, rounded down, minimum one.</dd></div>
+      <div class="entry"><dt>Blowback</dt><dd>Standing movement received from the enemies of a party when the Character's Standing with that party changes. Enemies move in the opposite direction by the Praise amount.</dd></div>
+    </dl>
+    <dl>
+      <div class="entry"><dt>HP</dt><dd>Hit Points, a general term for a health pool; current SORC rules call this resource Life.</dd></div>
+      <div class="entry"><dt>DPS</dt><dd>Damage Per Second; also names a damage-focused role.</dd></div>
+      <div class="entry"><dt>HPS</dt><dd>Healing Per Second; measures healing delivered each second.</dd></div>
+      <div class="entry"><dt>PvE</dt><dd>Player versus Environment; play against the world's enemies and challenges.</dd></div>
+      <div class="entry"><dt>PvP</dt><dd>Player versus Player; players compete or fight against one another.</dd></div>
+      <div class="entry"><dt>PK</dt><dd>Player Kill; one player kills another player.</dd></div>
+      <div class="entry"><dt>LFM</dt><dd>Looking for More; recruits additional players to join a group.</dd></div>
+      <div class="entry"><dt>AFK</dt><dd>Away From Keyboard; signals that a player is temporarily away.</dd></div>
+      <div class="entry"><dt>OT</dt><dd>Off Tank; secondary tank handles additional adversaries.</dd></div>
+      <div class="entry"><dt>MT</dt><dd>Main Tank; primary tank manages the encounter's main threat.</dd></div>
+      <div class="entry"><dt>RNG</dt><dd>Random Number Generator; determines random outcomes, including loot and effects.</dd></div>
+      <div class="entry"><dt>OOC</dt><dd>Out of Character; communication outside a Character's role in the story.</dd></div>
+      <div class="entry"><dt>OOM <span class="tag">unresolved source meanings</span></dt><dd>The attached terminology PDF uses OOM for “Out of Spirit”; the saved migration glossary uses it for “Out of Mana.” The current rules do not define this abbreviation.</dd></div>
+      <div class="entry"><dt>OOS</dt><dd>Out of Spirit; source term current rules do not define.</dd></div>
+      <div class="entry"><dt>LOS</dt><dd>Line of Sight; unobstructed view is needed to see or target something.</dd></div>
+      <div class="entry"><dt>Link</dt><dd>A term for nearby adversaries joining a fight when one of them is attacked.</dd></div>
+      <div class="entry"><dt>BAM</dt><dd>Big Ass Monster; a notable and powerful adversary.</dd></div>
+      <div class="entry"><dt>SD</dt><dd>Spell Damage; damage dealt by a spell or spell effect.</dd></div>
+      <div class="entry"><dt>CD</dt><dd>Cooldown; wait before a Skill or Ability can be used again.</dd></div>
+      <div class="entry"><dt>TBD</dt><dd>To Be Determined; marks a detail that has not yet been decided.</dd></div>
+      <div class="entry"><dt>RP <span class="tag">meaning varies by source</span></dt><dd>In saved glossary shorthand, RP means Role Play, acting and speaking as a Character in the story. Current progression rules also use RP for Rank PTS; context determines which meaning applies.</dd></div>
+      <div class="entry"><dt>WB</dt><dd>World Boss; a powerful adversary found in the open world.</dd></div>
+      <div class="entry"><dt>CAP</dt><dd>No expansion is given; means highest unbuffed Skill or Ability value.</dd></div>
+      <div class="entry"><dt>BG</dt><dd>Battleground; an area for structured player-versus-player activity.</dd></div>
+      <div class="entry"><dt>Zerg</dt><dd>Overwhelming an opponent with a large number of participants.</dd></div>
+      <div class="entry"><dt>Guild</dt><dd>A player community group.</dd></div>
+      <div class="entry"><dt>Clan</dt><dd>A smaller player community group, as described in the attached reference.</dd></div>
+      <div class="entry"><dt>Gang</dt><dd>A smaller player-community group than a Guild or Clan.</dd></div>
+      <div class="entry"><dt>Associate</dt><dd>A term listed in the attached terminology reference without a definition.</dd></div>
+      <div class="entry"><dt>Nerf</dt><dd>A reduction in the power or effectiveness of a class, item, or Ability.</dd></div>
+      <div class="entry"><dt>Buff</dt><dd>A beneficial effect applied to a Character, oneself, or allies that can enhance statistics, Abilities, or performance.</dd></div>
+      <div class="entry"><dt>Debuff</dt><dd>A negative effect applied to an adversary or Character.</dd></div>
+      <div class="entry"><dt>Res</dt><dd>Resurrection; brings a defeated Character or Companion back to life.</dd></div>
+      <div class="entry"><dt>Kite</dt><dd>Move to keep distance from an adversary and avoid its attacks.</dd></div>
+      <div class="entry"><dt>Wipe</dt><dd>The defeat or incapacitation of an entire party during an encounter.</dd></div>
+      <div class="entry"><dt>Healer</dt><dd>A role focused on recovery and support.</dd></div>
+      <div class="entry"><dt>Tank</dt><dd>A role focused on taking damage and controlling adversary attention.</dd></div>
+      <div class="entry"><dt>Support</dt><dd>A role that helps teammates with effects or resources. The attached reference distinguishes it from healing.</dd></div>
+    </dl>
+  </section>
 
-      <div class="glossary-section">
-        <h2>World & Setting</h2>
-        <p>World &amp; Setting introduces Essentia's cosmic structure, starting world, suns, and player organizations that frame the game's campaigns.</p>
-        <dl>
-          <div class="glossary-term">
-            <dt>Essentia</dt>
-            <dd>The universe in which SORC is set. Features two suns (Adoria and Tawdry Dwarf), 13 planets, multiple moons, diverse worlds, and an ancient prophecy.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Zailister</dt>
-            <dd>The primary starting planet for most characters. Features medieval combat, magic, advanced technology, and serves as the origin for many player campaigns.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Adoria</dt>
-            <dd>The primary magic-radiating sun of Essentia, the source of magical energy and divine power in the universe.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Tawdry Dwarf</dt>
-            <dd>The dying secondary star of Essentia, slowly fading and influencing cosmic events in the SORC universe.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Cohort</dt>
-            <dd>A player organization or guild that characters can join. Cohorts have member caps (Basic tier: capped, Pro tier: unlimited) and provide group chat, shared resources, and collaborative gameplay.</dd>
-          </div>
-        </dl>
-      </div>
+</main>
+<script>
+  const main = document.querySelector("main");
+  const entries = [...main.querySelectorAll(".entry")];
+  const termFor = (entry) => {
+    const term = entry.querySelector("dt").cloneNode(true);
+    term.querySelectorAll(".tag").forEach((tag) => tag.remove());
+    return term.textContent.trim();
+  };
+  entries.sort((a, b) => termFor(a).localeCompare(termFor(b), "en", { sensitivity: "base", numeric: true }));
 
-      <div class="glossary-section">
-        <h2>Game Modes & Features</h2>
-        <p>Game Modes &amp; Features describes the platform-supported activities and account features available for combat, trading, character records, achievements, and rankings.</p>
-        <dl>
-          <div class="glossary-term">
-            <dt>Trials of Combat</dt>
-            <dd>An advanced gameplay mode featuring ranked combat challenges. Basic tier receives limited access; Pro tier unlocks full features and exclusive perks.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Trading Post</dt>
-            <dd>A Pro-exclusive marketplace for trading items, cards, and resources between players. Basic tier players cannot access this feature.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Character Sheet</dt>
-            <dd>A digital representation of a character's stats, abilities, equipment, and progress. Basic tier: 2 sheets, Pro tier: 5 sheets.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Achievements</dt>
-            <dd>Milestones and accomplishments tracked during gameplay. Basic tier: limited achievement set, Pro tier: full achievement set with exclusive rewards.</dd>
-          </div>
-          <div class="glossary-term">
-            <dt>Leaderboard</dt>
-            <dd>Rankings of top players by various metrics. Basic tier: top 100 visible, Pro tier: top 200 visible with expanded details.</dd>
-          </div>
-        </dl>
-      </div>
-    </main>
-  </div>
+  const pageSize = 34;
+  const pages = [];
+  for (let start = 0; start < entries.length; start += pageSize) {
+    pages.push(entries.slice(start, start + pageSize));
+  }
+  const requestedPage = new URLSearchParams(window.location.search).get("rulesPage");
+  const parsedPage = /^\d+$/.test(requestedPage || "") ? Number(requestedPage) : 1;
+  const pageForEntry = new Map();
+  const usedIds = new Set();
 
-  <script src="../../nav-system.js?v=2"></script>
-  <script src="../../scripts.js"></script>
-<script src="rules-page-index.js" defer></script>
+  entries.forEach((entry, index) => {
+    const term = termFor(entry);
+    const baseId = `glossary-${term.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "term"}`;
+    let id = baseId;
+    let suffix = 2;
+    while (usedIds.has(id)) id = `${baseId}-${suffix++}`;
+    usedIds.add(id);
+    entry.querySelector("dt").id = id;
+    pageForEntry.set(entry, Math.floor(index / pageSize) + 1);
+  });
+
+  const requestedAnchor = window.location.hash
+    ? decodeURIComponent(window.location.hash.slice(1))
+    : "";
+  const linkedEntry = requestedAnchor
+    ? entries.find((entry) =>
+      entry.id === requestedAnchor || entry.querySelector("dt").id === requestedAnchor
+    )
+    : null;
+  const currentPage = Math.max(
+    1,
+    Math.min(pages.length, linkedEntry ? pageForEntry.get(linkedEntry) : parsedPage)
+  );
+
+  const pageUrl = (pageNumber, anchor = "") => {
+    const url = new URL(window.location.href);
+    if (pageNumber === 1) url.searchParams.delete("rulesPage");
+    else url.searchParams.set("rulesPage", String(pageNumber));
+    url.hash = anchor ? encodeURIComponent(anchor) : "";
+    return `${url.pathname}${url.search}${url.hash}`;
+  };
+
+  const index = document.createElement("nav");
+  index.className = "glossary-index";
+  index.setAttribute("aria-label", "Glossary term index");
+  const indexDetails = document.createElement("details");
+  const indexSummary = document.createElement("summary");
+  indexSummary.textContent = `Browse all ${entries.length} glossary terms`;
+  const indexList = document.createElement("ul");
+  entries.forEach((entry) => {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    const pageNumber = pageForEntry.get(entry);
+    const id = entry.querySelector("dt").id;
+    link.href = pageNumber === currentPage ? `#${encodeURIComponent(id)}` : pageUrl(pageNumber, id);
+    link.textContent = termFor(entry);
+    item.append(link);
+    indexList.append(item);
+  });
+  indexDetails.append(indexSummary, indexList);
+  index.append(indexDetails);
+
+  const makePageControls = () => {
+    const nav = document.createElement("nav");
+    nav.className = "glossary-pages";
+    nav.setAttribute("aria-label", "Glossary page navigation");
+
+    const addDirection = (label, pageNumber, disabled) => {
+      const control = document.createElement(disabled ? "span" : "a");
+      control.className = "page-direction";
+      control.textContent = label;
+      control.setAttribute("aria-label", label);
+      if (disabled) control.setAttribute("aria-disabled", "true");
+      else control.href = pageUrl(pageNumber);
+      nav.append(control);
+    };
+    addDirection("Previous", currentPage - 1, currentPage === 1);
+
+    const count = document.createElement("span");
+    count.className = "glossary-page-count";
+    count.textContent = `Page ${currentPage} of ${pages.length}`;
+    nav.append(count);
+
+    pages.forEach((_, index) => {
+      const pageNumber = index + 1;
+      const control = document.createElement(pageNumber === currentPage ? "span" : "a");
+      control.className = "page-number";
+      control.textContent = String(pageNumber);
+      control.setAttribute("aria-label", `Page ${pageNumber}`);
+      if (pageNumber === currentPage) control.setAttribute("aria-current", "page");
+      else control.href = pageUrl(pageNumber);
+      nav.append(control);
+    });
+
+    addDirection("Next", currentPage + 1, currentPage === pages.length);
+    return nav;
+  };
+
+  const activeEntries = pages[currentPage - 1] || [];
+  const page = document.createElement("section");
+  page.className = "glossary-page";
+  const pageHeading = document.createElement("h2");
+  pageHeading.id = `glossary-page-${currentPage}`;
+  pageHeading.textContent = activeEntries.length
+    ? `Terms ${termFor(activeEntries[0])}–${termFor(activeEntries[activeEntries.length - 1])}`
+    : "No glossary entries";
+  page.setAttribute("aria-labelledby", pageHeading.id);
+  const glossary = document.createElement("dl");
+  glossary.className = "glossary-grid";
+  activeEntries.forEach((entry) => glossary.append(entry));
+  page.append(pageHeading, glossary);
+
+  main.replaceChildren(index, makePageControls(), page, makePageControls());
+  if (window.location.hash) {
+    requestAnimationFrame(() => {
+      const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+      if (target) target.scrollIntoView();
+    });
+  }
+</script>
 </body>
 </html>
