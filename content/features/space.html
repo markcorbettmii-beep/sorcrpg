@@ -1496,37 +1496,73 @@
         saveHomeRoomTypes(rooms);
     };
 
+    function propertyQuarterPickerMarkup(label, ariaLabel, isRoom) {
+        return '<div class="property-quarter-picker' + (isRoom ? ' is-room' : ' is-placeholder') + '" role="img" aria-label="' + esc2(ariaLabel) + '">' +
+            '<span class="property-quarter-picker-art" aria-hidden="true">&#9672;</span>' +
+            (label ? '<span class="property-quarter-picker-label">' + esc2(label) + '</span>' : '') +
+            '</div>';
+    }
+    function propertyQuarterPlaceholderRow(title, options) {
+        options = options || {};
+        var slots = '';
+        for (var i = 1; i <= 5; i++) {
+            slots += propertyQuarterPickerMarkup('', title + ' placeholder ' + i, false);
+        }
+        var more = options.more
+            ? '<span class="property-quarter-more" aria-label="More ' + esc2(title) + ' rooms">&#187;&#187;</span>'
+            : '';
+        return '<section class="property-quarter-row">' +
+            '<h4>' + esc2(title) + '</h4>' +
+            (options.note ? '<p class="property-quarter-row-note">' + esc2(options.note) + '</p>' : '') +
+            '<div class="property-quarter-picker-row' + (options.more ? ' has-more' : ' no-more') + '">' + slots + more + '</div>' +
+            '</section>';
+    }
+    window.showSpaceCohortRooms = function(pageNumber) {
+        var firstPage = document.getElementById('spaceCohortRooms1');
+        var secondPage = document.getElementById('spaceCohortRooms2');
+        if (!firstPage || !secondPage) return;
+        var showSecondPage = pageNumber === 2;
+        firstPage.hidden = showSecondPage;
+        secondPage.hidden = !showSecondPage;
+    };
     window.renderSpaceFamilyPropertyPage = function() {
-        var masterBedroom = '<section class="property-quarter-section property-quarter-master">' +
-            '<h3>Character Records</h3>' +
-            '<p>Character records associated with this Home.</p>' +
-            '<div class="home-character-records property-quarter-character-records" id="homeCharacterRecords" aria-live="polite"><p class="home-character-empty">Loading saved Characters…</p></div>' +
-            '</section>';
-        var family = '<section class="property-quarter-section">' +
-            '<h3>Family &amp; Fellowship (Optional)</h3>' +
-            '<p>Family members and Fellowship Companions may be assigned as keepers for Companions left in their quarters.</p>' +
-            '</section>';
-        var armory = '<section class="property-quarter-section">' +
-            '<h3>Armory</h3>' +
-            '<p>Stored Armaments and armor held at Home, separate from what is currently Worn.</p>' +
-            '</section>';
-        var rooms = '<section class="property-quarter-section property-rooms-section">' +
-            '<h3>Rooms</h3>' +
-            '<p>Rooms may be indoor or outdoor spaces for Characters, Companions, or Fellowship members. Set each room’s type as needed; changes save automatically for this Character.</p>' +
-            '<h4 class="property-character-room-title" id="spaceCharacterRoomTitle">' + esc2(typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character') + ' Room</h4>' +
-            '<div class="property-room-list" id="propertyHomeRoomList" aria-live="polite">' + homeRoomTypesMarkup() + '</div>' +
-            '<button type="button" class="property-room-add" onclick="addSpaceHomeRoom()">Add Room</button>' +
-            '</section>';
-        var companionQuarters = '<section class="property-quarter-section property-companion-quarters">' +
-            '<h3>Companion Quarters &amp; Duties</h3>' +
-            '<p>Companion quarters and assigned duties for this Character.</p>' +
-            '</section>';
+        var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : '';
+        var firstRoomLabel = characterName && characterName !== 'Character' ? characterName + "'s Rm." : 'Fam. Mbr. Rm.';
+        var familyRooms = '';
+        for (var i = 1; i <= 5; i++) {
+            familyRooms += propertyQuarterPickerMarkup(i === 1 ? firstRoomLabel : "X's Rm.", i === 1 ? firstRoomLabel : 'Family room placeholder ' + i, i === 1);
+        }
+        var cohortFirstPage = '', cohortSecondPage = '';
+        for (var cohort = 1; cohort <= 5; cohort++) {
+            cohortFirstPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder ' + cohort, false);
+        }
+        for (var nextCohort = 6; nextCohort <= 10; nextCohort++) {
+            cohortSecondPage += propertyQuarterPickerMarkup(nextCohort === 6 ? 'Room 6' : '', nextCohort === 6 ? 'Cohort 6 actual room' : 'Cohort room placeholder ' + nextCohort, nextCohort === 6);
+        }
         return '<div class="property-quarter-content">' +
-            '<p class="property-quarter-intro">Quarters may be indoors or outdoors, from a room or tent to a den, stable, or another suitable space.</p>' +
-            '<h3 class="property-quarter-group-title">Character and Household</h3>' +
-            '<div class="property-quarter-grid">' + masterBedroom + family + armory + '</div>' +
-            '<div class="property-quarter-grid">' + rooms + '</div>' +
-            '<div class="property-quarter-grid">' + companionQuarters + '</div>' +
+            '<section class="property-quarter-row">' +
+                '<h4>Family Rooms</h4>' +
+                '<div class="property-quarter-picker-row no-more">' + familyRooms + '</div>' +
+            '</section>' +
+            '<section class="property-quarter-group">' +
+                '<h4>Companion Quarters</h4>' +
+                '<div class="property-quarter-row property-quarter-cohort-row">' +
+                    '<h5>Cohort Rooms</h5>' +
+                    '<div class="property-quarter-picker-row has-more" id="spaceCohortRooms1">' + cohortFirstPage +
+                        '<a class="property-quarter-more-link" href="#spaceCohortRooms2" onclick="showSpaceCohortRooms(2); return false;" aria-label="Show Cohort rooms 6 through 10">&#187;&#187;</a>' +
+                    '</div>' +
+                    '<div class="property-quarter-picker-row has-more" id="spaceCohortRooms2" hidden>' + cohortSecondPage +
+                        '<a class="property-quarter-more-link" href="#spaceCohortRooms1" onclick="showSpaceCohortRooms(1); return false;" aria-label="Show Cohort rooms 1 through 5">&#171;&#171;</a>' +
+                    '</div>' +
+                '</div>' +
+            '</section>' +
+            propertyQuarterPlaceholderRow('Free Range - In Doors', { note:'Pets, Guardians etc' }) +
+            propertyQuarterPlaceholderRow('Free Range - Outdoors') +
+            propertyQuarterPlaceholderRow('Tethered/Gated', { more:true }) +
+            propertyQuarterPlaceholderRow('Stables', { more:true }) +
+            propertyQuarterPlaceholderRow('Kennels', { more:true }) +
+            propertyQuarterPlaceholderRow('Barn', { more:true }) +
+            propertyQuarterPlaceholderRow('Garage', { more:true }) +
             '</div>';
     };
 
