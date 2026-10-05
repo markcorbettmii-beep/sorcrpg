@@ -46,10 +46,10 @@
         .stat-box .stat-val { font-size: 1.2rem; font-weight: bold; color: #b9aa00; }
         .stat-box .stat-label { font-size: 0.7rem; color: #666; margin-top: 2px; }
 
-        /* Tab Navigation - paper folder tabs, 3 columns */
+        /* Tab Navigation - paper folder tabs, four columns on tablet and desktop */
         .tab-nav {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 3px 4px;
             padding: 6px 6px 0 6px;
             background: #141414;
@@ -97,7 +97,7 @@
             .tab-nav button { padding: 11px 9px 10px; min-width: 50px; }
         }
         @media (min-width: 600px) {
-            .tab-nav { gap: 4px 6px; padding: 8px 8px 0 8px; }
+            .tab-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px 6px; padding: 8px 8px 0 8px; }
             .tab-nav button { font-size: 0.72rem; padding: 13px 12px 11px; letter-spacing: 0.05em; min-width: 70px; }
         }
         @media (min-width: 900px) {
@@ -642,17 +642,16 @@
     // Tab definitions with access control
     var PROFILE_TABS = [
         { id: 'overview', label: 'Overview', access: 'PUBLIC', pro: false },
-        { id: 'trophy-room', label: 'Trophy Room', access: 'PUBLIC', pro: false },
         { id: 'characters', label: 'Characters', access: 'PUBLIC', pro: false },
-        { id: 'leaderboards', label: 'Leaderboards', access: 'PUBLIC', pro: false },
+        { id: 'sorc-web', label: 'SORC Web', access: 'PUBLIC', pro: false },
         { id: 'fellows', label: 'Fellows', access: 'PUBLIC', pro: false },
+        { id: 'game-modes', label: 'Game Modes', access: 'PUBLIC', pro: false },
+        { id: 'trophy-room', label: 'Leaders & Trophies', access: 'PUBLIC', pro: false },
+        { id: 'forums', label: 'Forums', access: 'PUBLIC', pro: false },
+        { id: 'mailbox', label: 'Messages', access: 'PRIVATE', pro: false },
+        { id: 'home', label: 'Domains', access: 'PUBLIC', pro: false },
         { id: 'property', label: 'Property', access: 'PRIVATE', pro: false },
-        { id: 'online-journal', label: 'Online Journal', access: 'PRIVATE', pro: false },
-        // Home is available to Basic and Pro; membership changes capacity, not access.
-        { id: 'home', label: 'Home', access: 'PUBLIC', pro: false },
-        { id: 'standing', label: 'Standing', access: 'PUBLIC', pro: false },
         { id: 'essentia-exchange', label: 'The Exchange', access: 'PRIVATE', pro: false },
-        { id: 'mailbox', label: 'Mailbox', access: 'PRIVATE', pro: false },
         { id: 'settings', label: 'Settings', access: 'PRIVATE', pro: false }
     ];
 
@@ -1051,8 +1050,15 @@
         }
     };
 
+    var PROFILE_TAB_ALIASES = {
+        'leaderboards': 'trophy-room',
+        'online-journal': 'characters',
+        'standing': 'home'
+    };
+
     function switchTab(tabId) {
         if (IS_WANDERER_VIEW) return;
+        tabId = PROFILE_TAB_ALIASES[tabId] || tabId;
         document.querySelectorAll('.tab-nav button').forEach(function(btn) { btn.classList.remove('active'); });
         document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
         var btn = document.querySelector('.tab-nav button[data-tab="' + tabId + '"]');
@@ -1316,6 +1322,50 @@
         return html;
     }
 
+    function renderStandingContent() {
+        return '<h3>Standing</h3>' +
+            '<p>Your Standing across seven categories. Each carries its own <strong>Standing</strong> and its own <strong>Contributions</strong>, tracked apart, so you may stand Exalted in one and Hated in another.</p>' +
+            '<div class="content-grid">' +
+                '<div class="card"><h4>Family</h4>' +
+                    '<p>Your own kin. Each member carries their own Character Sheet and stats.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+                '<div class="card"><h4>Affiliations</h4>' +
+                    '<p>Formal faction membership, with its access, obligations, and consequences.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+                '<div class="card"><h4>Companions</h4>' +
+                    '<p>Pets, Guardians, mounts, pack animals, and Fellowships. A Companion&#39;s Standing is recorded as Mood.</p>' +
+                    '<p>Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+                '<div class="card"><h4>Campaign</h4>' +
+                    '<p>The people you have partied with. Standing won at one table follows you to the next.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+                '<div class="card"><h4>Fellows</h4>' +
+                    '<p>Your Fellows, the friends on your list and the parties you ride with regularly.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+                '<div class="card"><h4>Neighbours</h4>' +
+                    '<p>Those whose Lot or Home shares or borders your coordinates.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+                '<div class="card"><h4>Wellness</h4>' +
+                    '<p>Your Standing with yourself. The one category whose Contributions are self-directed.</p>' +
+                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
+                '</div>' +
+            '</div>' +
+            '<div class="card" style="margin-top:1rem;">' +
+                '<h4>Praise &amp; Blowback</h4>' +
+                '<p>Standing ripples. <strong>Praise</strong> comes from the friends of those you stand well with; <strong>Blowback</strong> comes from their enemies. Both arrive unasked, so there is no neutral gain.</p>' +
+            '</div>' +
+            '<p style="margin-top:1rem;color:#888;font-size:0.85rem;">Refer to your Journal booklet or ' +
+            '<a href="#" onclick="switchTab(\'online-journal\');return false;" style="color:#b9aa00;text-decoration:underline;">Online Journal</a> for details. ' +
+            'Full rules: Standing and Praise &amp; Blowback under Prestige, Basic Rules pg. 2. ' +
+            'Your Home and its rooms live in <a href="/home-and-family.html" style="color:#b9aa00;text-decoration:underline;">Home &amp; Family</a>.</p>';
+    }
+
     function changeHomePage(button, direction) {
         var card = button && button.closest('.home-paged-card');
         if (!card) return;
@@ -1515,10 +1565,10 @@
                             ? 'Sign in to view your active characters.'
                             : 'You have <span id="overviewCharacterCount">0</span> active characters. <a href="/content/essentia_core/rules-index.html" target="_blank" style="color:#b9aa00;text-decoration:underline;">Start on pages 1-2 to create your character.</a>';
                         html += '<h3>User Space</h3>' +
+                            '<p>Your User Space at a glance: profile details, featured Character, and quick access to your SORC areas.</p>' +
                             '<p>The ultimate command center to record and track your Character’s Legacy. Your User Space tracks everything tied to your profile: your active character sheets, earned trophies, session journals, owned properties, and faction standings. Complete your profile setup to connect with fellow adventurers, climb the leaderboards, and manage your inventory across various User Space tabs.</p>' +
                             '<div class="content-grid">' +
                                 '<div class="card"><h4>User Space Completeness</h4><p>Your avatar, display name, bio, and social links. ' + editSpaceLink + '</p></div>' +
-                                '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
                                 '<div class="card"><h4>Active Characters</h4><p>' + activeCharactersText + '</p></div>' +
                                 '<div class="card"><h4>SORC Web</h4><p>Membership tiers, features, community points, and everything about SORC Web. <a href="sorc-web.html" style="color:#b9aa00;text-decoration:underline;">Explore SORC Web</a></p></div>' +
                             '</div>';
@@ -1526,11 +1576,34 @@
 
                     case 'trophy-room':
                         html += '<h3>Trophy Room</h3>' +
+                            '<p>Track your placements across game modes and review the trophies and awards you&rsquo;ve earned.</p>' +
                             '<p>Your earned badges, trophies, and collectible SORC Cards. Show off your conquests and rare finds.</p>' +
                             '<div class="content-grid">' +
-                                '<div class="card" id="achievements"><h4>Achievements</h4><p>Earn badges by playing campaigns, winning tournaments, and completing quests. Basic set public, full set Pro.</p></div>' +
                                 '<div class="card" id="trophies"><h4>Trophies</h4><p>Combat victories, tournament placements, and special accomplishments tracked in your trophy case.</p></div>' +
                                 '<div class="card" id="collectibles"><h4>Collectables</h4><p>Rare and special SORC Cards you\'ve collected. Display your rarest finds to other adventurers.</p></div>' +
+                            '</div>';
+                        if (isWanderer) {
+                            html += '<h3>Leaderboards</h3>' +
+                                '<p>Sign in to view game-mode standings.</p>';
+                            break;
+                        }
+                        html += '<h3>Leaderboards</h3>' +
+                            '<p>Ranked standings by Game Mode. Wins, ranks, and awards are displayed in your Home\'s Trophy Room.</p>' +
+                            '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+                                '<button class="subtab active" onclick="switchGameMode(event, \'campaign\')">Campaign Mode</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'trials-combat\')">Trials of Combat</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'trials-zailister\')">Trials of Zailister</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'omne\')">Omn&eacute; Chronicles</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'crownmaster\')">Crownmaster</button>' +
+                                '<button class="subtab" onclick="switchGameMode(event, \'legend\')">Legend (Pro)</button>' +
+                            '</div>' +
+                            '<div id="gameBoard" style="padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
+                                '<p>Campaign Mode standings loading...</p>' +
+                            '</div>' +
+                            '<div class="card" style="margin-top:1rem;">' +
+                                '<h4>Trophy Room</h4>' +
+                                '<p>Wins, ranks, and tournament awards are displayed in your Home\'s Trophy Room. ' +
+                                '<a href="/home-and-family.html#trophy-room" style="color:#b9aa00;text-decoration:underline;">Open Trophy Room</a></p>' +
                             '</div>';
                         break;
 
@@ -1541,6 +1614,7 @@
                             break;
                         }
                         html += '<h3>Your Characters</h3>' +
+                            '<p>Keep each Character&rsquo;s sheet, progression, achievements, and session Journal together.</p>' +
                             '<p>View summaries of your characters. Only public User Spaces are visible to others.</p>' +
                             '<div style="margin:2rem auto;max-width:600px;text-align:center;">' +
                                 '<div class="sheet-privacy">' +
@@ -1578,33 +1652,29 @@
                                     '<a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Refer to character creation</a>' +
                                 '</div>' +
                             '</div>' +
-                            '';
+                            '<div class="content-grid" style="margin-top:2rem;">' +
+                                '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
+                                '<div class="card" id="achievements"><h4>Achievements</h4><p>Earn badges by playing campaigns, winning tournaments, and completing quests. Basic set public, full set Pro.</p></div>' +
+                                '<div class="card" id="online-journal"><h4>Journal</h4><p>Your completed sessions and campaign records. This is the online counterpart to your Journal booklet.</p><div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;color:#666;">No sessions yet.</div></div>' +
+                            '</div>';
                         break;
 
-                    case 'leaderboards':
-                        if (isWanderer) {
-                            html += '<h3>Leaderboards</h3>' +
-                                '<p>Sign in to view game-mode standings.</p>';
-                            break;
-                        }
-                        html += '<h3>Leaderboards</h3>' +
-                            '<p>Ranked standings by Game Mode. Wins, ranks, and awards are displayed in your Home\'s Trophy Room.</p>' +
-                            '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
-                                '<button class="subtab active" onclick="switchGameMode(event, \'campaign\')">Campaign Mode</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'trials-combat\')">Trials of Combat</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'trials-zailister\')">Trials of Zailister</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'omne\')">Omn&eacute; Chronicles</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'crownmaster\')">Crownmaster</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'legend\')">Legend (Pro)</button>' +
-                            '</div>' +
-                            '<div id="gameBoard" style="padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
-                                '<p>Campaign Mode standings loading...</p>' +
-                            '</div>' +
-                            '<div class="card" style="margin-top:1rem;">' +
-                                '<h4>Trophy Room</h4>' +
-                                '<p>Wins, ranks, and tournament awards are displayed in your Home\'s Trophy Room. ' +
-                                '<a href="/home-and-family.html#trophy-room" style="color:#b9aa00;text-decoration:underline;">Open Trophy Room</a></p>' +
-                            '</div>';
+                    case 'game-modes':
+                        html += '<h3>Game Modes</h3>' +
+                            '<p>Choose a way to play SORC—from Campaign Mode and Trials of Combat to the other available modes.</p>' +
+                            '<div class="card"><h4>Explore Game Modes</h4><p>Browse the available ways to play.</p><a href="/content/game-modes-index.html" style="color:#b9aa00;text-decoration:underline;">Open Game Modes</a></div>';
+                        break;
+
+                    case 'sorc-web':
+                        html += '<h3>SORC Web</h3>' +
+                            '<p>Explore the SORC Web across Personal Space, Gameplay &amp; Combat, Marketplace &amp; Economy, Community &amp; Social, and Membership &amp; Benefits.</p>' +
+                            '<div class="card"><h4>SORC Web</h4><p>Explore the systems, spaces, and experiences available on SORC Web.</p><a href="/content/sorc-web-index.html" style="color:#b9aa00;text-decoration:underline;">Open SORC Web</a></div>';
+                        break;
+
+                    case 'forums':
+                        html += '<h3>Forums</h3>' +
+                            '<p>Welcome to the SORC community—discuss, explore, and connect. Sign in or create an account to post, like, and join the conversation.</p>' +
+                            '<div class="card"><h4>SORC Forums</h4><p>Browse discussions and connect with the community.</p><a href="/content/features/forum.html" style="color:#b9aa00;text-decoration:underline;">Open Forums</a></div>';
                         break;
 
                     case 'fellows':
@@ -1643,18 +1713,13 @@
 
                     case 'property':
                         html += '<h3>Property</h3>' +
-                            '<p class="property-tab-intro">The Property category of your User Space brings your character&rsquo;s equipment, companions, living spaces, and stored belongings together. Use Worn, Carried-Hauled, Quarters, Storage &amp; Stash, Vaults, and Force Station to manage each part of your character&rsquo;s property.</p>' +
+                            '<p class=\"property-tab-intro\">The Property category of your User Space brings your character&rsquo;s equipment, companions, living spaces, and stored belongings together. Use Worn, Carried-Hauled, Quarters, Storage &amp; Stash, Vaults, and Force Station to manage each part of your character&rsquo;s property.</p>' +
                             renderPropertyDraft();
-                        break;
-
-                    case 'online-journal':
-                        html += '<h3>Online Journal</h3>' +
-                            '<p>Your completed sessions and campaign records. This is the online counterpart to your Journal booklet.</p>' +
-                            '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;color:#666;">No sessions yet.</div>';
                         break;
 
                     case 'home':
                         html += '<h3>Home</h3>' +
+                            '<p>Manage the sovereign territory your Character controls, including its population, economy, and military presence.</p>' +
                             '<div class="home-category-grid">' +
                                 renderHomeCard('Home Overview', [
                                     '<p>Home is the owned space. Home User Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p>',
@@ -1698,6 +1763,7 @@
                                 ]) +
                             '</div>' +
                             '<div class="card" style="margin-top:1rem;"><p>Home is the living space, whether owned or rented. Home Spaces are the areas and functions inside it. Home Types and Home Rules define how each home works.</p></div>';
+                        html += renderStandingContent();
                         break;
 
                     case 'essentia-exchange':
@@ -1716,54 +1782,11 @@
                             '</div>';
                         break;
 
-                    case 'standing':
-                        html += '<h3>Standing</h3>' +
-                            '<p>Your Standing across seven categories. Each carries its own <strong>Standing</strong> and its own <strong>Contributions</strong>, tracked apart, so you may stand Exalted in one and Hated in another.</p>' +
-                            '<div class="content-grid">' +
-                                '<div class="card"><h4>Family</h4>' +
-                                    '<p>Your own kin. Each member carries their own Character Sheet and stats.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                                '<div class="card"><h4>Affiliations</h4>' +
-                                    '<p>Formal faction membership, with its access, obligations, and consequences.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                                '<div class="card"><h4>Companions</h4>' +
-                                    '<p>Pets, Guardians, mounts, pack animals, and Fellowships. A Companion&#39;s Standing is recorded as Mood.</p>' +
-                                    '<p>Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                                '<div class="card"><h4>Campaign</h4>' +
-                                    '<p>The people you have partied with. Standing won at one table follows you to the next.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                                '<div class="card"><h4>Fellows</h4>' +
-                                    '<p>Your Fellows, the friends on your list and the parties you ride with regularly.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                                '<div class="card"><h4>Neighbours</h4>' +
-                                    '<p>Those whose Lot or Home shares or borders your coordinates.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                                '<div class="card"><h4>Wellness</h4>' +
-                                    '<p>Your Standing with yourself. The one category whose Contributions are self-directed.</p>' +
-                                    '<p class="fam-tags"><span class="fam-tag">Standing</span><span class="fam-tag">Contributions</span></p>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div class="card" style="margin-top:1rem;">' +
-                                '<h4>Praise &amp; Blowback</h4>' +
-                                '<p>Standing ripples. <strong>Praise</strong> comes from the friends of those you stand well with; <strong>Blowback</strong> comes from their enemies. Both arrive unasked, so there is no neutral gain.</p>' +
-                            '</div>' +
-                            '<p style="margin-top:1rem;color:#888;font-size:0.85rem;">Refer to your Journal booklet or ' +
-                            '<a href="#" onclick="switchTab(\'online-journal\');return false;" style="color:#b9aa00;text-decoration:underline;">Online Journal</a> for details. ' +
-                            'Full rules: Standing and Praise &amp; Blowback under Prestige, Basic Rules pg. 2. ' +
-                            'Your Home and its rooms live in <a href="/home-and-family.html" style="color:#b9aa00;text-decoration:underline;">Home &amp; Family</a>.</p>';
-                        break;
-
                     case 'mailbox':
                         // IMPORTANT: When implementing mailbox message loading, fetch from /api/mailbox or /api/me/messages
                         // NOT from /api/lobbies/{id}/messages - keep lobby messages separate from Space mailbox
                         html += '<h3>Mailbox</h3>' +
+                            '<p>Private messages, Fellowship requests, and notifications in one place.</p>' +
                             '<p>Private messages, fellowship requests, and notifications.</p>' +
                             '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;border-left:3px solid #b9aa00;">' +
                                 '<div style="color:#e0cfc0;margin-bottom:1rem;">' +
