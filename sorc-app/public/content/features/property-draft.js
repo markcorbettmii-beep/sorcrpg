@@ -249,7 +249,7 @@
             return pageHeader() + pageNavigation() + access + content;
         }
         if (pageName === 'carried-hauled') {
-            return pageFrame(cardIndex(selected) + haulingSection());
+            return pageFrame(haulingSection());
         }
         if (pageName === 'quarters') {
             var familyMarkup = typeof window.renderSpaceFamilyPropertyPage === 'function'
