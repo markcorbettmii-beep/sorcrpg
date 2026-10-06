@@ -1496,25 +1496,26 @@
         saveHomeRoomTypes(rooms);
     };
 
-    function propertyQuarterPickerMarkup(label, ariaLabel, isRoom) {
-        return '<div class="property-quarter-picker' + (isRoom ? ' is-room' : ' is-placeholder') + '" role="img" aria-label="' + esc2(ariaLabel) + '">' +
+    function propertyQuarterPickerMarkup(label, ariaLabel, isRoom, moreMarkup) {
+        var hasMoreControl = !!moreMarkup;
+        return '<div class="property-quarter-picker' + (isRoom ? ' is-room' : ' is-placeholder') + '" role="' + (hasMoreControl ? 'group' : 'img') + '" aria-label="' + esc2(ariaLabel) + '">' +
             '<span class="property-quarter-picker-art" aria-hidden="true">&#9672;</span>' +
-            (label ? '<span class="property-quarter-picker-label">' + esc2(label) + '</span>' : '') +
+            '<span class="property-quarter-picker-label' + (label ? '' : ' is-empty') + '"' + (label ? '' : ' aria-hidden="true"') + '>' + (label ? esc2(label) : '&nbsp;') + '</span>' +
+            (moreMarkup || '') +
             '</div>';
     }
     function propertyQuarterPlaceholderRow(title, options) {
         options = options || {};
         var slots = '';
-        for (var i = 1; i <= 5; i++) {
+        for (var i = 1; i <= 4; i++) {
             slots += propertyQuarterPickerMarkup('', title + ' placeholder ' + i, false);
         }
-        var more = options.more
-            ? '<span class="property-quarter-more" aria-label="More ' + esc2(title) + ' rooms">&#187;&#187;</span>'
-            : '';
+        slots += propertyQuarterPickerMarkup('', title + ' placeholder 5', false,
+            '<span class="property-quarter-more-pill" aria-hidden="true">&#187;&#187;</span>');
         return '<section class="property-quarter-row">' +
             '<h4>' + esc2(title) + '</h4>' +
             (options.note ? '<p class="property-quarter-row-note">' + esc2(options.note) + '</p>' : '') +
-            '<div class="property-quarter-picker-row' + (options.more ? ' has-more' : ' no-more') + '">' + slots + more + '</div>' +
+            '<div class="property-quarter-picker-row">' + slots + '</div>' +
             '</section>';
     }
     window.showSpaceCohortRooms = function(pageNumber) {
@@ -1529,40 +1530,44 @@
         var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : '';
         var firstRoomLabel = characterName && characterName !== 'Character' ? characterName + "'s Rm." : 'Fam. Mbr. Rm.';
         var familyRooms = '';
-        for (var i = 1; i <= 5; i++) {
+        for (var i = 1; i <= 4; i++) {
             familyRooms += propertyQuarterPickerMarkup(i === 1 ? firstRoomLabel : "X's Rm.", i === 1 ? firstRoomLabel : 'Family room placeholder ' + i, i === 1);
         }
+        familyRooms += propertyQuarterPickerMarkup('', 'Family room placeholder 5', false,
+            '<span class="property-quarter-more-pill" aria-hidden="true">&#187;&#187;</span>');
         var cohortFirstPage = '', cohortSecondPage = '';
-        for (var cohort = 1; cohort <= 5; cohort++) {
+        for (var cohort = 1; cohort <= 4; cohort++) {
             cohortFirstPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder ' + cohort, false);
         }
-        for (var nextCohort = 6; nextCohort <= 10; nextCohort++) {
+        cohortFirstPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder 5', false,
+            '<a class="property-quarter-more-link" href="#spaceCohortRooms2" onclick="showSpaceCohortRooms(2); return false;" aria-label="Show Cohort rooms 6 through 10">&#187;&#187;</a>');
+        for (var nextCohort = 6; nextCohort <= 9; nextCohort++) {
             cohortSecondPage += propertyQuarterPickerMarkup(nextCohort === 6 ? 'Room 6' : '', nextCohort === 6 ? 'Cohort 6 actual room' : 'Cohort room placeholder ' + nextCohort, nextCohort === 6);
         }
+        cohortSecondPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder 10', false,
+            '<a class="property-quarter-more-link" href="#spaceCohortRooms1" onclick="showSpaceCohortRooms(1); return false;" aria-label="Show Cohort rooms 1 through 5">&#171;&#171;</a>');
         return '<div class="property-quarter-content">' +
             '<section class="property-quarter-row">' +
                 '<h4>Family Rooms</h4>' +
-                '<div class="property-quarter-picker-row no-more">' + familyRooms + '</div>' +
+                '<div class="property-quarter-picker-row">' + familyRooms + '</div>' +
             '</section>' +
             '<section class="property-quarter-group">' +
                 '<h4>Companion Quarters</h4>' +
                 '<div class="property-quarter-row property-quarter-cohort-row">' +
                     '<h5>Cohort Rooms</h5>' +
-                    '<div class="property-quarter-picker-row has-more" id="spaceCohortRooms1">' + cohortFirstPage +
-                        '<a class="property-quarter-more-link" href="#spaceCohortRooms2" onclick="showSpaceCohortRooms(2); return false;" aria-label="Show Cohort rooms 6 through 10">&#187;&#187;</a>' +
+                    '<div class="property-quarter-picker-row" id="spaceCohortRooms1">' + cohortFirstPage +
                     '</div>' +
-                    '<div class="property-quarter-picker-row has-more" id="spaceCohortRooms2" hidden>' + cohortSecondPage +
-                        '<a class="property-quarter-more-link" href="#spaceCohortRooms1" onclick="showSpaceCohortRooms(1); return false;" aria-label="Show Cohort rooms 1 through 5">&#171;&#171;</a>' +
+                    '<div class="property-quarter-picker-row" id="spaceCohortRooms2" hidden>' + cohortSecondPage +
                     '</div>' +
                 '</div>' +
             '</section>' +
             propertyQuarterPlaceholderRow('Free Range - In Doors', { note:'Pets, Guardians etc' }) +
             propertyQuarterPlaceholderRow('Free Range - Outdoors') +
-            propertyQuarterPlaceholderRow('Tethered/Gated', { more:true }) +
-            propertyQuarterPlaceholderRow('Stables', { more:true }) +
-            propertyQuarterPlaceholderRow('Kennels', { more:true }) +
-            propertyQuarterPlaceholderRow('Barn', { more:true }) +
-            propertyQuarterPlaceholderRow('Garage', { more:true }) +
+            propertyQuarterPlaceholderRow('Tethered/Gated') +
+            propertyQuarterPlaceholderRow('Stables') +
+            propertyQuarterPlaceholderRow('Kennels') +
+            propertyQuarterPlaceholderRow('Barn') +
+            propertyQuarterPlaceholderRow('Garage') +
             '</div>';
     };
 
