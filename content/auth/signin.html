@@ -179,15 +179,18 @@
         var lastUnverifiedEmail = null;
         var trackParam = new URLSearchParams(window.location.search).get('track'); // 'pc' | 'gm', from take-assessment.html
 
-        /* Where to send an already-authenticated visitor. Only a plain relative
-           path on this site is accepted (a leading slash, a scheme, or a host
-           is ignored), so this can't be used as an open redirect. */
+        /* Accept only a simple same-site .html path. Take Assessment lives
+           outside this directory, so map its allowed relative form to the
+           canonical route instead of resolving it under /content/auth. */
         function postSigninDest() {
             try {
                 var next = new URLSearchParams(window.location.search).get('next');
-                if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) return next;
+                if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) {
+                    if (next.indexOf('take-assessment.html') === 0) return '/content/reference/' + next;
+                    return next;
+                }
             } catch(e) {}
-            return 'take-assessment.html';
+            return '/content/reference/take-assessment.html';
         }
 
         // Alert when page loads to check Google script status
@@ -254,13 +257,14 @@
                     // checkVerification), which lands here directly instead of via
                     // login-welcome.html. Route through choose-username.html either way.
                     if (user.needs_username) {
-                        window.location.href = '/choose-username.html?user=' + encodeURIComponent(userData) +
+                        window.location.href = '/content/auth/choose-username.html?user=' + encodeURIComponent(userData) +
                             (params.get('next') ? '&next=' + encodeURIComponent(params.get('next')) : '');
                         return;
                     }
+                    var redirectDest = postSigninDest();
                     localStorage.setItem('sorc_user', JSON.stringify(user));
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    window.location.href = postSigninDest();
+                    window.location.href = redirectDest;
                     return;
                 } catch (e) {
                     window.location.href = '/signin.html';
