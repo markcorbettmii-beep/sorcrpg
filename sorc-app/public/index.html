@@ -352,7 +352,7 @@
     <main>
         <!-- About -->
         <section class="about">
-            <p style="margin-bottom:1rem;font-size:0.85rem;">Not a member? Join as a Civilian,<br>or Assess as a Player or Game Master <a href="content/reference/take-assessment.html">Now</a></p>
+            <p id="notAMemberCta" style="margin-bottom:1rem;font-size:0.85rem;">Not a member? Join as a Civilian,<br>or Assess as a Player or Game Master <a href="content/reference/take-assessment.html">Now</a></p>
             <h2>Explore Essentia</h2>
             <p>Begin on Zailister, a lush life-sustainable planet, where arcane sorcery and steel meet advanced technology. Journey between 13 planetary worlds using rifts, portals, starships, and forbidden hell gates.</p>
             <p>Zailister is torn by war. Noble, Feral, and Purge factions unite against the Omn&egrave;, invaders from a desperate planet whose fate relies on the death of Adoria's sister star, Taedry Dwarf.</p>
@@ -547,6 +547,15 @@
     <script>
     /* Section scroll navigation */
     document.addEventListener('DOMContentLoaded', function() {
+        var memberCta = document.getElementById('notAMemberCta');
+        try {
+            var signedInUser = JSON.parse(localStorage.getItem('sorc_user') || 'null');
+            if (memberCta && signedInUser && signedInUser.authKey) {
+                memberCta.hidden = true;
+                memberCta.style.display = 'none';
+            }
+        } catch (e) {}
+
         document.querySelectorAll('.section-scroll-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var targetId = btn.getAttribute('data-target');
