@@ -238,9 +238,30 @@
         function pageNavigation() {
             var previous = pageIndex > 0 ? PROPERTY_TAB_PAGES[pageIndex - 1] : null;
             var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
+            var navIndex = pageIndex >= 0 ? pageIndex : 0;
+            var navImages = [
+                '/images/propert-tabs-nav/prop-tab-navpgs1-4_20261006_115702_0000.png',
+                '/images/propert-tabs-nav/prop-tab-navpgs1-4_20261006_115702_0001.png',
+                '/images/propert-tabs-nav/prop-tab-navpgs1-4_20261006_115702_0002.png',
+                '/images/propert-tabs-nav/prop-tab-navpgs1-4_20261006_115702_0003.png',
+                '/images/propert-tabs-nav/prop-tab-navpgs1-4_20261006_115702_0004.png'
+            ];
+            var navHotspots = [
+                { next:{ left:75.469, width:22.083 } },
+                { previous:{ left:0.833, width:18.542 }, next:{ left:72.760, width:25.260 } },
+                { previous:{ left:0.833, width:22.135 }, next:{ left:81.042, width:17.448 } },
+                { previous:{ left:0.833, width:25.208 }, next:{ left:64.479, width:34.427 } },
+                { previous:{ left:0.833, width:17.448 } }
+            ];
+            var hotspots = navHotspots[navIndex];
+            function navButton(pageInfo, side, region, direction) {
+                if (!pageInfo || !region) return '';
+                return '<button type="button" class="property-page-nav-hit property-page-' + side + '" style="left:' + region.left + '%;width:' + region.width + '%" onclick="selectPropertyPage(\'' + pageInfo.id + '\')" aria-label="' + direction + ' Property page: ' + esc(pageInfo.title) + '"></button>';
+            }
             return '<nav class="property-page-nav" aria-label="Property pages">' +
-                (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + esc(previous.title) + '"><span aria-hidden="true">&#171;&#171;</span><span class="property-page-nav-link-label">' + esc(previous.title) + '</span></button>' : '<span class="property-page-nav-spacer" aria-hidden="true"></span>') +
-                (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + esc(next.title) + '"><span class="property-page-nav-link-label">' + esc(next.title) + '</span><span aria-hidden="true">&#187;&#187;</span></button>' : '<span class="property-page-nav-spacer" aria-hidden="true"></span>') +
+                '<img class="property-page-nav-art" src="' + navImages[navIndex] + '" alt="" aria-hidden="true">' +
+                navButton(previous, 'prev', hotspots.previous, 'Previous') +
+                navButton(next, 'next', hotspots.next, 'Next') +
                 '</nav>';
         }
         function pageFrame(content) {
