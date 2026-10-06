@@ -202,13 +202,20 @@ if (!existsSync(canonicalSpacePath)) {
       "<h5>Rented Storage</h5>",
       "<h5>Stash</h5>",
       'aria-label="Property pages"',
-      'aria-current="page"',
+      'class="property-page-nav"',
+      "<h4>Vehicles</h4>",
       "window.selectPropertyPage = function(name)",
       "PROPERTY_TAB_PAGES.some(function(item) { return item.id === name; })",
     ]) {
       if (!propertyDraftText.includes(marker)) {
         spaceFailures.push(`Canonical Space Property navigation is missing ${marker}`);
       }
+    }
+    if (propertyDraftText.includes("property-page-current") || propertyDraftText.includes('aria-current="page"')) {
+      spaceFailures.push("Canonical Space Property navigation repeats the current page label");
+    }
+    if (propertyDraftText.includes("property-container-size")) {
+      spaceFailures.push("Canonical Space Property navigation retains removed container size labels");
     }
   }
   if (!existsSync(propertyDraftCssPath)) {
