@@ -238,14 +238,17 @@
       return null;
     }
 
-    // Same allowlist as signin.html's postSigninDest() - only same-site .html
-    // paths, optionally carrying the track/from=join query shape or a hash.
+    // Accept only a simple same-site .html path, and map the assessment page
+    // to its canonical route outside /content/auth.
     function postSigninDest() {
       try {
         var next = new URLSearchParams(window.location.search).get('next');
-        if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) return next;
+        if (next && /^[a-zA-Z0-9._-]+\.html(\?track=(pc|gm)(&from=join)?)?(#[a-zA-Z0-9._-]+)?$/.test(next)) {
+          if (next.indexOf('take-assessment.html') === 0) return '/content/reference/' + next;
+          return next;
+        }
       } catch(e) {}
-      return 'take-assessment.html';
+      return '/content/reference/take-assessment.html';
     }
 
     var params = new URLSearchParams(window.location.search);
