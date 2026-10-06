@@ -1496,13 +1496,19 @@
         saveHomeRoomTypes(rooms);
     };
 
-    function propertyQuarterPickerMarkup(label, ariaLabel, isRoom, moreMarkup) {
-        var hasMoreControl = !!moreMarkup;
-        return '<div class="property-quarter-picker' + (isRoom ? ' is-room' : ' is-placeholder') + '" role="' + (hasMoreControl ? 'group' : 'img') + '" aria-label="' + esc2(ariaLabel) + '">' +
+    function propertyQuarterPickerMarkup(label, ariaLabel, isRoom) {
+        return '<div class="property-quarter-picker' + (isRoom ? ' is-room' : ' is-placeholder') + '" role="img" aria-label="' + esc2(ariaLabel) + '">' +
             '<span class="property-quarter-picker-art" aria-hidden="true">&#9672;</span>' +
             '<span class="property-quarter-picker-label' + (label ? '' : ' is-empty') + '"' + (label ? '' : ' aria-hidden="true"') + '>' + (label ? esc2(label) : '&nbsp;') + '</span>' +
-            (moreMarkup || '') +
             '</div>';
+    }
+    function propertyQuarterMorePillMarkup(ariaLabel, arrows) {
+        return '<div class="property-quarter-more-slot" role="img" aria-label="' + esc2(ariaLabel) + '">' +
+            '<span class="property-quarter-more-pill" aria-hidden="true">' + arrows + '</span>' +
+            '</div>';
+    }
+    function propertyQuarterMoreLinkMarkup(targetPage, ariaLabel, arrows) {
+        return '<a class="property-quarter-more-slot property-quarter-more-link" href="#spaceCohortRooms' + targetPage + '" onclick="showSpaceCohortRooms(' + targetPage + '); return false;" aria-label="' + esc2(ariaLabel) + '">' + arrows + '</a>';
     }
     function propertyQuarterPlaceholderRow(title, options) {
         options = options || {};
@@ -1510,8 +1516,7 @@
         for (var i = 1; i <= 4; i++) {
             slots += propertyQuarterPickerMarkup('', title + ' placeholder ' + i, false);
         }
-        slots += propertyQuarterPickerMarkup('', title + ' placeholder 5', false,
-            '<span class="property-quarter-more-pill" aria-hidden="true">&#187;&#187;</span>');
+        slots += propertyQuarterMorePillMarkup('More ' + title, '&#187;&#187;');
         return '<section class="property-quarter-row">' +
             '<h4>' + esc2(title) + '</h4>' +
             (options.note ? '<p class="property-quarter-row-note">' + esc2(options.note) + '</p>' : '') +
@@ -1533,19 +1538,16 @@
         for (var i = 1; i <= 4; i++) {
             familyRooms += propertyQuarterPickerMarkup(i === 1 ? firstRoomLabel : "X's Rm.", i === 1 ? firstRoomLabel : 'Family room placeholder ' + i, i === 1);
         }
-        familyRooms += propertyQuarterPickerMarkup('', 'Family room placeholder 5', false,
-            '<span class="property-quarter-more-pill" aria-hidden="true">&#187;&#187;</span>');
+        familyRooms += propertyQuarterMorePillMarkup('More family rooms', '&#187;&#187;');
         var cohortFirstPage = '', cohortSecondPage = '';
         for (var cohort = 1; cohort <= 4; cohort++) {
             cohortFirstPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder ' + cohort, false);
         }
-        cohortFirstPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder 5', false,
-            '<a class="property-quarter-more-link" href="#spaceCohortRooms2" onclick="showSpaceCohortRooms(2); return false;" aria-label="Show Cohort rooms 6 through 10">&#187;&#187;</a>');
+        cohortFirstPage += propertyQuarterMoreLinkMarkup(2, 'Show Cohort rooms 6 through 10', '&#187;&#187;');
         for (var nextCohort = 6; nextCohort <= 9; nextCohort++) {
             cohortSecondPage += propertyQuarterPickerMarkup(nextCohort === 6 ? 'Room 6' : '', nextCohort === 6 ? 'Cohort 6 actual room' : 'Cohort room placeholder ' + nextCohort, nextCohort === 6);
         }
-        cohortSecondPage += propertyQuarterPickerMarkup('', 'Cohort room placeholder 10', false,
-            '<a class="property-quarter-more-link" href="#spaceCohortRooms1" onclick="showSpaceCohortRooms(1); return false;" aria-label="Show Cohort rooms 1 through 5">&#171;&#171;</a>');
+        cohortSecondPage += propertyQuarterMoreLinkMarkup(1, 'Show Cohort rooms 1 through 5', '&#171;&#171;');
         return '<div class="property-quarter-content">' +
             '<section class="property-quarter-row">' +
                 '<h4>Family Rooms</h4>' +
