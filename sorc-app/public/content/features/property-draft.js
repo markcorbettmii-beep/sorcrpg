@@ -284,8 +284,12 @@
             var visibleCards = rowCards.slice(pageNumber * pageSize, pageNumber * pageSize + pageSize);
             var rowContent = rowCards.length
                 ? visibleCards.map(function(card) { return button(card, selected); }).join('')
+                : row.id === 'sentimental-arms'
+                    ? [0, 1, 2, 3, 4].map(function() { return '<div class="property-armory-card property-card-picker-placeholder" aria-hidden="true"><span class="property-armory-card-art placeholder">&#9672;</span></div>'; }).join('')
                 : '<div class="property-card-row-empty">No cards yet.</div>';
-            var more = pageNumber < pageCount - 1
+            var more = row.id === 'sentimental-arms' && !rowCards.length
+                ? ''
+                : pageNumber < pageCount - 1
                 ? '<button type="button" class="property-card-row-more" onclick="selectPropertyRowPage(\'' + esc(row.id) + '\', 1)" aria-label="More ' + esc(row.title) + ' cards"><span class="property-quarter-more-pill" aria-hidden="true">&#187;&#187;</span></button>'
                 : '<span class="property-card-row-more is-end" role="img" aria-label="No more ' + esc(row.title) + ' cards"><span class="property-quarter-more-pill" aria-hidden="true">&#187;&#187;</span></span>';
             return '<section class="property-armory-row" data-property-row="' + esc(row.id) + '"><div class="property-armory-row-head"><h4>' + esc(row.title) + '</h4></div><div class="property-card-row">' + rowContent + more + '</div></section>';
