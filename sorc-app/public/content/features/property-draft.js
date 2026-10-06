@@ -202,8 +202,7 @@
         { id:'on-person', title:'Worn', label: 'Worn', description:'Armaments, gear, and other items the Character is currently wearing or has readied.' },
         { id:'carried-hauled', title:'Carried-Hauled', descriptionMarkup:'These are things the Character is Carrying (on their person) and/or is having Hauled (<a href="/content/essentia_core/rules_companions.html#draft-animals">Draft Animals</a>, Vehicles, etc) during their adventures. Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.' },
         { id:'quarters', title:'Quarters', description:'' },
-        { id:'vaults', title:'Vault', description:'Personal vaults may be rented or owned; town banks, guilds, and clans also provide secure storage.' },
-        { id:'storage-stash', title:'Stash/Stored', description:'Home or rented storage for containers, deployed items, trophies, and things the Character has buried, hidden, or stashed.' },
+        { id:'vaults', title:'Vault', description:'Categories for personal vaults, home and rented storage, stashes, town banks, guilds, and clans.' },
         { id:'force-station', title:'Force Station', descriptionMarkup:'Space for vehicles and spacecraft too large to fit on a <a href="/content/essentia_core/rules_game-features.html#land-divisions">Lot</a>.' }
     ];
     var PROPERTY_CARD_ROWS = [
@@ -257,18 +256,14 @@
                 : '<p class="property-container-note">Character and Family information is unavailable.</p>';
             return pageFrame(familyMarkup);
         }
-        if (pageName === 'storage-stash') {
-            return pageFrame('<div class="property-container-grid">' +
-                '<section class="property-container-section"><h5>Home Storage</h5><p>Home closets, storage containers, Deployments, and Trophy Room items.</p></section>' +
-                '<section class="property-container-section"><h5>Rented Storage</h5><p>Storage leased outside your Home.</p></section>' +
-                '<section class="property-container-section"><h5>Stash</h5><p>Things you have buried, stashed, or hidden. An Animated Compass Safe Haven is one example of a place to keep hidden items.</p></section>' +
-                '</div>');
-        }
         if (pageName === 'vaults') {
             return pageFrame('<div class="property-container-grid">' +
                 '<section class="property-container-section"><h5>Personal Vaults</h5><p>Personal safes and vaults may be rented or owned.</p></section>' +
                 '<section class="property-container-section"><h5>Town Banks</h5><p>Secure vault storage is available through town banks.</p></section>' +
                 '<section class="property-container-section"><h5>Guild &amp; Clan</h5><p>Guilds and clans may provide vault storage, Armories, and Hall Banks.</p></section>' +
+                '<section class="property-container-section"><h5>Home Storage</h5><p>Home closets, storage containers, Deployments, and Trophy Room items.</p></section>' +
+                '<section class="property-container-section"><h5>Rented Storage</h5><p>Storage leased outside your Home.</p></section>' +
+                '<section class="property-container-section"><h5>Stash</h5><p>Things you have buried, stashed, or hidden. An Animated Compass Safe Haven is one example of a place to keep hidden items.</p></section>' +
                 '</div>');
         }
         if (pageName === 'force-station') {
