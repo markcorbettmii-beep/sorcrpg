@@ -635,6 +635,8 @@
     <script src="/content/character/workspace-nav.js"></script>
     <script>
     var API_URL = 'https://api.sorcrpg.com';
+    var selectedAvatarFilename = null;
+    var savedAvatarFilename = null;
     var OWNER_EMAILS = ['corbett@sorcrpg.com'];
     var ADMIN_EMAILS = ['markcorbett.mii@gmail.com'];
     var DEFAULT_AVATAR_URL = '/images/avatars/' + encodeURIComponent('Fang, a Pinkling rogue._20260504_220543_0000.png');
@@ -1853,11 +1855,13 @@
                                     settingsPrivacyMarkup('settings-avatar', 'Avatar') + '</div>' +
                                     '<div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">' +
                                         '<div id="avatarPreview" style="width:80px;height:80px;border-radius:50%;border:2px solid #b9aa00;background:#2a2a2a;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;align-self:flex-start;">' +
-                                            '<span style="font-size:1.2rem;color:#666;">M</span>' +
+                                            avatarImageMarkup(user.avatar, displayName) +
                                         '</div>' +
                                         '<div style="flex:1;width:100%;">' +
                                             '<p style="color:#e0cfc0;font-size:0.9rem;margin:0 0 0.5rem 0;font-weight:bold;">Select from Default Avatars (Free)</p>' +
                                             '<div id="defaultAvatarGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.5rem;margin-bottom:0.75rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;"></div>' +
+                                            '<button id="saveAvatarBtn" type="button" onclick="saveAvatarSelection()" disabled style="padding:0.5rem 1rem;margin-bottom:0.75rem;background:#b9aa00;color:#1a1a1a;border:none;border-radius:6px;font-weight:bold;cursor:not-allowed;opacity:0.6;">Save Avatar</button>' +
+                                            '<p id="avatarSaveStatus" role="status" aria-live="polite" style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;display:none;"></p>' +
                                             '<p style="color:#e0cfc0;font-size:0.9rem;margin:0.5rem 0 0.5rem 0;font-weight:bold;">Upload Custom Avatar (<span id="cpRequired">100</span> Community Points)</p>' +
                                             '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">' +
                                                 '<input type="file" id="avatarUpload" accept="image/*" style="flex:1;min-width:200px;padding:0.5rem;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#888;font-size:0.85rem;box-sizing:border-box;" />' +
@@ -1993,6 +1997,9 @@
             } catch(e) {
                 console.error('[Space] API fetch failed:', e);
             }
+
+            selectedAvatarFilename = user.avatar || null;
+            savedAvatarFilename = selectedAvatarFilename;
 
             // Render profile
             var container = document.getElementById('profileContainer');
@@ -2181,6 +2188,7 @@
                         uploadBtn.textContent = this.files.length > 0 ? 'Upload (' + AVATAR_POINTS_REQUIRED + ' CP)' : 'Upload';
                     };
                 }
+                setAvatarSaveButtonState();
             })();
         } catch(err) {
             console.error('[Space] Error:', err);
@@ -2193,7 +2201,29 @@
     });
 
     // Global avatar functions
+    function setAvatarSaveButtonState() {
+        var saveButton = document.getElementById('saveAvatarBtn');
+        if (!saveButton) return;
+        var hasUnsavedSelection = !!selectedAvatarFilename && selectedAvatarFilename !== savedAvatarFilename;
+        saveButton.disabled = !hasUnsavedSelection;
+        saveButton.style.opacity = hasUnsavedSelection ? '1' : '0.6';
+        saveButton.style.cursor = hasUnsavedSelection ? 'pointer' : 'not-allowed';
+    }
+
     function selectDefaultAvatar(imageUrl) {
+        var path = String(imageUrl || '').split(/[?#]/)[0];
+        var avatarPrefix = '/images/avatars/';
+        if (path.indexOf(avatarPrefix) !== 0) return;
+        try {
+            selectedAvatarFilename = decodeURIComponent(path.slice(avatarPrefix.length));
+        } catch(e) {
+            selectedAvatarFilename = path.slice(avatarPrefix.length);
+        }
+        if (!selectedAvatarFilename || selectedAvatarFilename.indexOf('/') !== -1 || selectedAvatarFilename.indexOf('\\') !== -1) {
+            selectedAvatarFilename = null;
+            setAvatarSaveButtonState();
+            return;
+        }
         var preview = document.getElementById('avatarPreview');
         if (preview) {
             preview.style.backgroundImage = 'url(' + imageUrl + ')';
@@ -2201,7 +2231,74 @@
             preview.style.backgroundPosition = 'center';
             preview.textContent = '';
         }
+        var saveStatus = document.getElementById('avatarSaveStatus');
+        if (saveStatus) saveStatus.style.display = 'none';
+        setAvatarSaveButtonState();
         console.log('[Avatar] Selected default avatar:', imageUrl);
+    }
+
+    async function saveAvatarSelection() {
+        var saveButton = document.getElementById('saveAvatarBtn');
+        var statusEl = document.getElementById('avatarSaveStatus');
+        var saved = null;
+        try { saved = JSON.parse(localStorage.getItem('sorc_user')); } catch(e) {}
+
+        function showStatus(message, color) {
+            if (!statusEl) return;
+            statusEl.textContent = message;
+            statusEl.style.color = color;
+            statusEl.style.display = 'block';
+        }
+
+        if (!selectedAvatarFilename) {
+            showStatus('Select a default avatar first.', '#f44');
+            return;
+        }
+        if (!saved || !saved.authKey) {
+            showStatus('Please sign in again to save your avatar.', '#f44');
+            return;
+        }
+
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving...';
+        }
+        try {
+            var response = await fetch(API_URL + '/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Auth-Key': saved.authKey
+                },
+                body: JSON.stringify({ avatar: selectedAvatarFilename })
+            });
+            var data = await response.json().catch(function() { return {}; });
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Could not save your avatar.');
+            }
+
+            var avatarFilename = data.user && typeof data.user.avatar === 'string'
+                ? data.user.avatar
+                : selectedAvatarFilename;
+            saved.avatar = avatarFilename;
+            localStorage.setItem('sorc_user', JSON.stringify(saved));
+            selectedAvatarFilename = avatarFilename;
+            savedAvatarFilename = avatarFilename;
+
+            var profileAvatar = document.querySelector('.space-avatar-large');
+            if (profileAvatar) {
+                profileAvatar.innerHTML = avatarImageMarkup(avatarFilename, saved.display_name || saved.username || 'Adventurer');
+            }
+            if (typeof window._profileBtn_loggedIn === 'function') {
+                window._profileBtn_loggedIn(avatarFilename, saved.display_name || saved.username || 'Adventurer');
+            }
+            showStatus('Avatar saved.', '#4ECDC4');
+        } catch(error) {
+            showStatus(error && error.message ? error.message : 'Could not save your avatar.', '#f44');
+        } finally {
+            if (saveButton) saveButton.textContent = 'Save Avatar';
+            setAvatarSaveButtonState();
+        }
     }
 
     function uploadCustomAvatar() {
@@ -2248,6 +2345,8 @@
 
         var reader = new FileReader();
         reader.onload = function(e) {
+            selectedAvatarFilename = null;
+            setAvatarSaveButtonState();
             var preview = document.getElementById('avatarPreview');
             if (preview) {
                 preview.style.backgroundImage = 'url(' + e.target.result + ')';
@@ -2257,8 +2356,8 @@
             }
 
             if (statusEl) {
-                statusEl.textContent = 'Avatar uploaded (will save with profile)';
-                statusEl.style.color = '#4ECDC4';
+                statusEl.textContent = 'Custom avatar previewed. Choose a default avatar to save it.';
+                statusEl.style.color = '#888';
                 statusEl.style.display = 'block';
             }
 

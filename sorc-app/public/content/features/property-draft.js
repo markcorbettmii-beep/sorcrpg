@@ -192,9 +192,9 @@
     }
     function haulingSection() {
         return '<section class="property-container-category"><div class="property-armory-row-head"><h4>Hauling</h4><span>Companions and wagons</span></div>' +
-            '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Companions</h4><span class="property-container-size">Tiny &middot; Small &middot; Standard &middot; Goliath</span></div><p class="property-container-note">Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.</p><div class="property-card-row">' +
+            '<div class="property-armory-row"><div class="property-armory-row-head"><h4>Companions</h4></div><p class="property-container-note">Companions may be Tearhered or Parked for periods of time, with the right equipment, but this effects their Mood. Vehicles are at risk of theft.</p><div class="property-card-row">' +
             ['Fellowship Companion','Pack Mule','Tiny Companion','Goliath Companion','Behemoth Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i < 2 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc(n) + '</span><span class="property-armory-card-ref">container-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i < 2 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
-            '</div></div><div class="property-armory-row"><div class="property-armory-row-head"><h4>Wagons</h4><span class="property-container-size">Goliath</span></div><div class="property-card-row">' +
+            '</div></div><div class="property-armory-row"><div class="property-armory-row-head"><h4>Vehicles</h4></div><div class="property-card-row">' +
             ['Cargo Wagon','Wagon Placeholder'].map(function(n, i) { return '<button type="button" class="property-armory-card ' + (i === 0 ? 'owned' : 'unowned') + '"><span class="property-armory-card-art placeholder">&#9672;</span><span class="property-armory-card-name">' + esc(n) + '</span><span class="property-armory-card-ref">wagon-' + (i + 1) + '</span><span class="property-armory-card-state">' + (i === 0 ? 'Capacity pending' : 'Not owned') + '</span></button>'; }).join('') +
             '</div></div></section>';
     }
@@ -240,7 +240,6 @@
             var next = pageIndex >= 0 && pageIndex < PROPERTY_TAB_PAGES.length - 1 ? PROPERTY_TAB_PAGES[pageIndex + 1] : null;
             return '<nav class="property-page-nav" aria-label="Property pages">' +
                 (previous ? '<button type="button" class="property-page-prev" onclick="selectPropertyPage(\'' + previous.id + '\')" aria-label="Previous Property page: ' + esc(previous.title) + '"><span aria-hidden="true">&#171;&#171;</span><span class="property-page-nav-link-label">' + esc(previous.title) + '</span></button>' : '<span class="property-page-nav-spacer" aria-hidden="true"></span>') +
-                '<span class="property-page-current" aria-current="page">' + esc(pageInfo.title) + '</span>' +
                 (next ? '<button type="button" class="property-page-next" onclick="selectPropertyPage(\'' + next.id + '\')" aria-label="Next Property page: ' + esc(next.title) + '"><span class="property-page-nav-link-label">' + esc(next.title) + '</span><span aria-hidden="true">&#187;&#187;</span></button>' : '<span class="property-page-nav-spacer" aria-hidden="true"></span>') +
                 '</nav>';
         }
