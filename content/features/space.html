@@ -193,7 +193,7 @@
         .character-slot-groups { display: flex; justify-content: center; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
         .character-slot-group { text-align: center; }
         .character-slot-group .character-thumb-heading { margin-top: 0; }
-        .character-thumb { width: 76px; padding: 0.25rem; border: 2px solid #b9aa00; border-radius: 8px;
+        .character-thumb { position: relative; width: 76px; padding: 0.25rem; border: 2px solid #b9aa00; border-radius: 8px;
             background: #211d0f; color: #d4c24a; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
         .character-thumb:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(185,170,0,0.28); }
         .character-thumb.selected { border-color: #fff0a0; box-shadow: 0 0 0 2px rgba(255,240,160,0.35); }
@@ -203,7 +203,18 @@
         .character-thumb.pro.property-rank-elite { border-color: var(--property-rank-color, #be0500); background: rgba(190,5,0,0.1); color: var(--property-rank-color, #be0500); }
         .character-thumb.pro.property-rank-elite:hover { box-shadow: 0 4px 12px rgba(190,5,0,0.35); }
         .character-thumb.pro.property-rank-elite.selected { border-color: var(--property-rank-color, #be0500); box-shadow: 0 0 0 2px rgba(190,5,0,0.4); }
-        .character-tier-note { margin: 0.7rem 0 0; color: #777; font-size: 0.76rem; line-height: 1.45; }
+        .character-thumb.locked { cursor: not-allowed; opacity: 0.86; }
+        .character-thumb.locked:hover { transform: none; box-shadow: none; }
+        .character-thumb.locked::after {
+            content: attr(data-tooltip); position: absolute; z-index: 10; left: 50%; bottom: calc(100% + 0.45rem);
+            transform: translateX(-50%); padding: 0.35rem 0.5rem; border: 1px solid #be0500; border-radius: 4px;
+            background: #16100f; color: #fff; font-size: 0.64rem; line-height: 1.25; white-space: nowrap;
+            opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.15s;
+        }
+        .character-thumb.locked:focus-visible::after,
+        .character-thumb.locked.show-tooltip::after { opacity: 1; visibility: visible; }
+        body.lawful-mode .character-thumb.locked::after { background: #fff; color: #222; }
+        .character-tier-note { margin: 0.7rem 0 0; color: #777; font-size: 0.76rem; line-height: 1.45; text-align: left; }
         .journal-character-creation { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #333; }
         .journal-character-creation h5 { color: #e0cfc0; margin: 0 0 0.5rem; font-size: 0.9rem; }
         .journal-character-creation p { color: #666; margin: 0 0 0.5rem; font-size: 0.82rem; line-height: 1.5; }
@@ -724,12 +735,20 @@
         return '<img src="' + esc2(imageUrl) + '" alt="' + esc2(altText || 'Avatar') + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR_URL + '\';this.style.opacity=\'0.55\';" style="' + avatarStyle + '" />';
     }
 
-    function characterThumbnailMarkup(name, tier, slotLabel) {
+    function characterThumbnailMarkup(name, tier, slotNumber, memberTier, locked, selected) {
         var tierClass = tier === 'pro' ? 'pro property-rank-elite' : 'basic';
-        var accessibleLabel = name + (slotLabel ? ', ' + slotLabel : '');
-        return '<button type="button" class="character-thumb ' + tierClass + '"' +
+        var isLocked = tier === 'pro' && locked;
+        var slotLabel = memberTier + ' Slot ' + slotNumber;
+        var accessibleLabel = name + ', ' + slotLabel;
+        return '<button type="button" class="character-thumb ' + tierClass + (isLocked ? ' locked' : '') + (selected ? ' selected' : '') + '"' +
             ' data-character-name="' + esc2(name) + '"' +
-            ' onclick="selectCharacterThumbnail(this)" aria-label="Select ' + esc2(accessibleLabel) + '">' +
+            ' data-slot-number="' + slotNumber + '"' +
+            ' data-member-tier="' + esc2(memberTier) + '"' +
+            ' data-slot-locked="' + (isLocked ? 'true' : 'false') + '"' +
+            (isLocked ? ' title="Pro Member slot." data-tooltip="Pro Member slot."' : '') +
+            ' onclick="selectCharacterThumbnail(this)" aria-disabled="' + (isLocked ? 'true' : 'false') + '"' +
+            ' aria-pressed="' + (selected ? 'true' : 'false') + '"' +
+            ' aria-label="' + esc2(isLocked ? 'Pro Member slot.' : 'Select ' + accessibleLabel) + '">' +
             '<div class="character-thumb-placeholder" aria-hidden="true"></div>' +
             '<span>' + esc2(name) + '</span>' +
         '</button>';
@@ -737,12 +756,31 @@
 
     function selectCharacterThumbnail(button) {
         if (!button) return;
+        if (button.getAttribute('data-slot-locked') === 'true') {
+            button.classList.add('show-tooltip');
+            if (button._slotTooltipTimer) window.clearTimeout(button._slotTooltipTimer);
+            button._slotTooltipTimer = window.setTimeout(function() {
+                button.classList.remove('show-tooltip');
+            }, 1800);
+            return;
+        }
         var canvas = document.getElementById('activeCharacterCanvas');
         var name = document.getElementById('activeCharacterName');
-        var characterName = 'Active Character';
+        var memberTier = button.getAttribute('data-member-tier') || 'Basic';
+        var slotNumber = button.getAttribute('data-slot-number') || '1';
+        var characterName = 'Active Character ' + memberTier + ' Slot ' + slotNumber;
         if (!canvas) return;
-        canvas.innerHTML = '<div class="character-art-placeholder" role="img" aria-label="' +
-            esc2(characterName + ' image placeholder') + '"><span>Image placeholder</span></div>';
+        var thumbnailImage = button.querySelector('img');
+        canvas.innerHTML = '';
+        if (thumbnailImage) {
+            var portraitImage = thumbnailImage.cloneNode(true);
+            portraitImage.setAttribute('alt', characterName);
+            canvas.appendChild(portraitImage);
+        } else {
+            canvas.innerHTML = '<div class="character-art-placeholder" role="img" aria-label="' +
+                esc2(characterName + ' image placeholder') + '" data-slot-number="' + esc2(slotNumber) +
+                '"><span>Image placeholder</span></div>';
+        }
         if (name) name.textContent = characterName;
         document.querySelectorAll('.character-thumb').forEach(function(thumb) {
             thumb.classList.toggle('selected', thumb === button);
@@ -1673,6 +1711,7 @@
                         break;
 
                     case 'characters':
+                        var characterSlotTier = isPro ? 'Pro' : 'Basic';
                         if (isWanderer) {
                             html += '<h3>Characters</h3>' +
                                 '<p>Sign in to view your character previews and records.</p>';
@@ -1683,33 +1722,31 @@
                             '<div style="margin:2rem auto;max-width:600px;text-align:center;">' +
                                  '<div class="character-showcase">' +
                                      '<div class="character-canvas-frame">' +
-                                          '<div class="character-canvas" id="activeCharacterCanvas"><div class="character-art-placeholder" role="img" aria-label="Character image placeholder"><span>Image placeholder</span></div></div>' +
-                                          '<div class="character-canvas-name" id="activeCharacterName">Active Character</div>' +
+                                          '<div class="character-canvas" id="activeCharacterCanvas"><div class="character-art-placeholder" role="img" aria-label="' + esc2('Active Character ' + characterSlotTier + ' Slot 1 image placeholder') + '" data-slot-number="1"><span>Image placeholder</span></div></div>' +
+                                          '<div class="character-canvas-name" id="activeCharacterName">Active Character ' + characterSlotTier + ' Slot 1</div>' +
                                      '</div>' +
                                      '<div class="character-thumb-heading">Other Characters</div>' +
                                       '<div class="character-slot-groups">' +
                                           '<div class="character-slot-group">' +
-                                              '<div class="character-thumb-heading">Basic Slot</div>' +
+                                               '<div class="character-thumb-heading">Basic Slots</div>' +
                                               '<div class="character-thumb-row">' +
-                                                  characterThumbnailMarkup('Dormant', 'basic', 'Basic Slot') +
+                                                   characterThumbnailMarkup('Dormant', 'basic', 1, characterSlotTier, false, true) +
+                                                   characterThumbnailMarkup('Dormant', 'basic', 2, characterSlotTier, false, false) +
                                               '</div>' +
                                           '</div>' +
-                                          (isPro ? '<div class="character-slot-group">' +
+                                           '<div class="character-slot-group">' +
                                               '<div class="character-thumb-heading">Pro Slots</div>' +
                                               '<div class="character-thumb-row">' +
-                                                  characterThumbnailMarkup('Dormant', 'pro', 'Pro Slot 1') +
-                                                  characterThumbnailMarkup('Dormant', 'pro', 'Pro Slot 2') +
-                                                  characterThumbnailMarkup('Dormant', 'pro', 'Pro Slot 3') +
+                                                   characterThumbnailMarkup('Dormant', 'pro', 3, characterSlotTier, !isPro, false) +
+                                                   characterThumbnailMarkup('Dormant', 'pro', 4, characterSlotTier, !isPro, false) +
+                                                   characterThumbnailMarkup('Dormant', 'pro', 5, characterSlotTier, !isPro, false) +
                                               '</div>' +
-                                          '</div>' : '') +
+                                           '</div>' +
                                      '</div>' +
                                       '<p class="character-tier-note">Basic Members get two Character Slots - Pro Members an Additional three (5 altogether).</p>' +
                                  '</div>' +
-                                '<div style="margin-bottom:1.5rem;">' +
-                                    '<a href="https://sorcrpg.com/library" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Edit Character stats</a>' +
-                                '</div>' +
                                 '<div style="margin:1.5rem 0;">' +
-                                    '<a href="https://sorcrpg.com/content/character/character-customizer/character-customizer.html" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Customize Portrait</a>' +
+                                    '<a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank" rel="noopener noreferrer" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Create Character</a>' +
                                 '</div>' +
                             '</div>' +
                             '<div class="content-grid" style="margin-top:2rem;">' +
@@ -2003,7 +2040,9 @@
             if (OWNER_EMAILS.includes(user.email)) role = 'OWNER';
             else if (ADMIN_EMAILS.includes(user.email)) role = 'ADMIN';
 
-            var isPro = user.is_pro === true || user.is_pro === 1 || user.membership === 'pro';
+            var isPro = user.is_pro === true || user.is_pro === 1 ||
+                String(user.membership || user.membership_status || '').toLowerCase() === 'pro' ||
+                user.pro_member === true || user.box_set_redeemed === true || user.isPro === true;
 
             // Fetch fresh data
             try {
@@ -2014,7 +2053,9 @@
                     var freshData = await freshRes.json();
                     if (freshData.user) {
                         user = Object.assign(user, freshData.user);
-                        isPro = user.is_pro === true || user.is_pro === 1 || user.membership === 'pro';
+                        isPro = user.is_pro === true || user.is_pro === 1 ||
+                            String(user.membership || user.membership_status || '').toLowerCase() === 'pro' ||
+                            user.pro_member === true || user.box_set_redeemed === true || user.isPro === true;
                         localStorage.setItem('sorc_user', JSON.stringify(user));
                     }
                 } else {
