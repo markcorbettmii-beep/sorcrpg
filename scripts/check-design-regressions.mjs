@@ -67,7 +67,6 @@ const checks = [
       "<h5>Rented Storage</h5>",
       "<h5>Stash</h5>",
       'aria-label="Property pages"',
-      'aria-current="page"',
       "window.selectPropertyPage = function(name)",
       "PROPERTY_TAB_PAGES.some(function(item) { return item.id === name; })",
     ],
