@@ -172,6 +172,9 @@
       var lastSection = '';
       var qHtml = questions.map(function(q, idx) {
         var sectionHeading = q.section !== lastSection ? '<h3 style="color:#b9aa00;margin:1.3rem 0 .5rem;">' + (q.section === 'gm_tools' ? 'Lobby and Room Tools' : q.section === 'gm_codex' ? 'GM Codex' : 'Basic Rules') + '</h3>' : '';
+        var rulesReference = q.anchor
+          ? '<a href="' + esc(q.anchor) + '" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">See Rules</a>'
+          : '<span style="font-size:0.78rem;color:#777;letter-spacing:0.05em;">See Rules (GM Codex Under Development)</span>';
         lastSection = q.section;
         return '<div class="q-card" id="qcard-' + q.id + '">' +
           sectionHeading +
@@ -184,15 +187,15 @@
             }).join('') +
           '</div>' +
           '<div style="margin-top:0.75rem;text-align:right;">' +
-            '<a href="/content/essentia_core/essentia_core_' + q.page + '.html" target="_blank" style="font-size:0.78rem;color:#555;text-decoration:none;letter-spacing:0.05em;" onmouseover="this.style.color=\'#b9aa00\'" onmouseout="this.style.color=\'#555\'">Read Rules Pg. ' + q.page + '</a>' +
+            rulesReference +
           '</div>' +
         '</div>';
       }).join('');
 
       app.innerHTML =
         '<div class="role-track">' +
-          '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">Player Character (PC)</button>' +
-          '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">Game Master (GM)</button>' +
+          '<button class="track-btn pc" id="trackPC" onclick="setTrack(false)">Assess as Player - Complex</button>' +
+          '<button class="track-btn gm" id="trackGM" onclick="setTrack(true)">Assess as GM</button>' +
         '</div>' +
         '<p class="track-note" id="trackNote">Choose your track before answering - it locks in on your first answer and cannot be changed.</p>' +
         qHtml +
