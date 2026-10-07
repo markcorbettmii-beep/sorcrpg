@@ -183,7 +183,9 @@
             font-weight: bold; letter-spacing: 0.14em; margin-bottom: 0.7rem; }
         .character-canvas { width: 100%; height: 360px; display: flex; align-items: center; justify-content: center;
             overflow: hidden; border-radius: 8px; background: #080808; }
-        .character-canvas img { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+        .character-art-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            border: 1px dashed #555; border-radius: 8px; background: linear-gradient(135deg, #171717 0%, #242424 100%);
+            color: #777; font-size: 0.85rem; }
         .character-canvas-name { margin-top: 0.7rem; color: #e0cfc0; font-size: 1.05rem; font-weight: bold; }
         .character-thumb-heading { margin: 1.2rem 0 0.5rem; color: #b9aa00; font-size: 0.76rem;
             font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -192,15 +194,17 @@
             background: #211d0f; color: #d4c24a; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
         .character-thumb:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(185,170,0,0.28); }
         .character-thumb.selected { border-color: #fff0a0; box-shadow: 0 0 0 2px rgba(255,240,160,0.35); }
-        .character-thumb img { display: block; width: 64px; height: 72px; object-fit: cover; border-radius: 5px; }
+        .character-thumb-placeholder { display: block; width: 64px; height: 72px; margin: 0 auto; border: 1px dashed #555;
+            border-radius: 5px; background: #303030; }
         .character-thumb span { display: block; margin-top: 0.25rem; font-size: 0.62rem; font-weight: bold; }
         .character-thumb.pro { border-color: #8e44ad; background: #211329; color: #d7a8ee; }
-        .character-thumb.pro img { filter: hue-rotate(245deg) saturate(1.3); }
         .character-thumb.pro:hover { box-shadow: 0 4px 12px rgba(142,68,173,0.35); }
         .character-thumb.pro.selected { border-color: #edc7ff; box-shadow: 0 0 0 2px rgba(215,168,238,0.4); }
         .character-tier-note { margin: 0.7rem 0 0; color: #777; font-size: 0.76rem; line-height: 1.45; }
         body.lawful-mode .character-canvas-frame { background: linear-gradient(145deg, #fffdf6 0%, #eee5ce 100%); }
         body.lawful-mode .character-canvas { background: #f4eee2; }
+        body.lawful-mode .character-art-placeholder, body.lawful-mode .character-thumb-placeholder {
+            background: #f4eee2; border-color: #bbb; color: #777; }
         body.lawful-mode .character-canvas-name { color: #333; }
         body.lawful-mode .character-thumb { background: #fffbea; }
         body.lawful-mode .character-thumb.pro { background: #f5eafb; }
@@ -724,12 +728,11 @@
         return '<img src="' + esc2(imageUrl) + '" alt="' + esc2(altText || 'Avatar') + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR_URL + '\';this.style.opacity=\'0.55\';" style="' + avatarStyle + '" />';
     }
 
-    function characterThumbnailMarkup(name, fileName, tier) {
-        var imageUrl = '/images/avatars/' + encodeURIComponent(fileName);
+    function characterThumbnailMarkup(name, tier) {
         return '<button type="button" class="character-thumb ' + (tier === 'pro' ? 'pro' : 'basic') + '"' +
-            ' data-character-name="' + esc2(name) + '" data-character-src="' + esc2(imageUrl) + '"' +
+            ' data-character-name="' + esc2(name) + '"' +
             ' onclick="selectCharacterThumbnail(this)" aria-label="Select ' + esc2(name) + '">' +
-            '<img src="' + esc2(imageUrl) + '" alt="' + esc2(name) + '" />' +
+            '<div class="character-thumb-placeholder" aria-hidden="true"></div>' +
             '<span>' + esc2(name) + '</span>' +
         '</button>';
     }
@@ -738,10 +741,11 @@
         if (!button) return;
         var canvas = document.getElementById('activeCharacterCanvas');
         var name = document.getElementById('activeCharacterName');
-        var imageUrl = button.getAttribute('data-character-src');
-        if (!canvas || !imageUrl) return;
-        canvas.innerHTML = '<img src="' + esc2(imageUrl) + '" alt="' + esc2(button.getAttribute('data-character-name') || 'Active Character') + '" />';
-        if (name) name.textContent = button.getAttribute('data-character-name') || 'Active Character';
+        var characterName = button.getAttribute('data-character-name') || 'Active Character';
+        if (!canvas) return;
+        canvas.innerHTML = '<div class="character-art-placeholder" role="img" aria-label="' +
+            esc2(characterName + ' image placeholder') + '"><span>Image placeholder</span></div>';
+        if (name) name.textContent = characterName;
         document.querySelectorAll('.character-thumb').forEach(function(thumb) {
             thumb.classList.toggle('selected', thumb === button);
             thumb.setAttribute('aria-pressed', thumb === button ? 'true' : 'false');
@@ -891,7 +895,9 @@
     }
 
     function injectSpaceTabPrivacyControls() {
+        var tabsWithoutPagePrivacy = ['settings', 'mailbox', 'game-modes', 'forums', 'home', 'essentia-exchange'];
         PROFILE_TABS.forEach(function(tab) {
+            if (tabsWithoutPagePrivacy.indexOf(tab.id) !== -1) return;
             var panel = document.getElementById('tab-' + tab.id);
             if (!panel || panel.querySelector('.space-tab-privacy')) return;
             var heading = panel.querySelector('h3');
@@ -1138,36 +1144,74 @@
         })
         .catch(e => console.error('Failed to load friend requests:', e));
 
-        // Load online Fellows
+        // Load the Fellows list and render the selected status tab.
         fetch(API_URL + '/api/friends', {
             headers: { 'X-Auth-Key': saved.authKey }
         })
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-            var fellowsList = document.getElementById('onlineFellowsList');
-            if (!fellowsList) return;
-
-            if (!data || data.count === 0) {
-                fellowsList.innerHTML = '<p style="color:#888;font-size:0.9rem;grid-column:1/-1;">No Friends yet. <span style="color:#888;">Add a Fellow coming soon.</span></p>';
-                return;
-            }
-
-            var html = '';
-            data.friends.forEach(function(friend) {
-                var statusColor = friend.status === 'online' ? '#1a6b1a' : '#666';
-                html += '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:all 0.2s;hover:border-color:#b9aa00;">' +
-                    '<div style="width:64px;height:64px;border-radius:50%;margin:0 auto 0.75rem;background:#333;border:3px solid ' + statusColor + ';display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
-                    (friend.avatar ? '<img src="../../images/avatars/' + friend.avatar + '" style="width:100%;height:100%;object-fit:cover;" />' : '<span style="font-size:1.5rem;color:#666;">' + friend.display_name.charAt(0) + '</span>') +
-                    '</div>' +
-                    '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(friend.display_name) + '</p>' +
-                    '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + (friend.status === 'online' ? '🟢 Online' : '⚫ Offline') + '</p>' +
-                    '<button class="btn btn-sm btn-gold" type="button" disabled style="opacity:0.6;cursor:not-allowed;">View User Space</button>' +
-                '</div>';
-            });
-            fellowsList.innerHTML = html;
+            spaceFellows = data && Array.isArray(data.friends) ? data.friends : [];
+            renderSpaceFellows();
         })
         .catch(e => console.error('Failed to load friends:', e));
     }
+
+    var activeSpaceFellowTab = 'online';
+    var spaceFellows = [];
+
+    function renderSpaceFellows() {
+        var fellowsList = document.getElementById('onlineFellowsList');
+        if (!fellowsList) return;
+
+        var friends = spaceFellows.filter(function(friend) {
+            if (activeSpaceFellowTab === 'online') return friend.status === 'online';
+            if (activeSpaceFellowTab === 'offline') return friend.status === 'offline';
+            if (activeSpaceFellowTab === 'favorites') return friend.is_favorite === true || friend.favorite === true;
+            if (activeSpaceFellowTab === 'inactive') return friend.status === 'inactive' || friend.is_inactive === true || friend.inactive === true;
+            return false;
+        });
+
+        if (!friends.length) {
+            var emptyMessages = {
+                online: 'No Fellows are online right now.',
+                offline: 'No offline Fellows.',
+                favorites: 'No favorite Fellows yet.',
+                inactive: 'No inactive Fellows.'
+            };
+            fellowsList.innerHTML = '<p style="color:#888;font-size:0.9rem;grid-column:1/-1;">' +
+                emptyMessages[activeSpaceFellowTab] + '</p>';
+            return;
+        }
+
+        fellowsList.innerHTML = friends.map(function(friend) {
+            var displayName = friend.display_name || friend.username || 'Fellow';
+            var status = friend.status === 'online' ? 'online' : (friend.status === 'inactive' ? 'inactive' : 'offline');
+            var statusColor = status === 'online' ? '#1a6b1a' : (status === 'inactive' ? '#444' : '#666');
+            var avatar = friend.avatar
+                ? '<img src="../../images/avatars/' + encodeURIComponent(String(friend.avatar)) + '" alt="" style="width:100%;height:100%;object-fit:cover;" />'
+                : '<span style="font-size:1.5rem;color:#666;">' + esc(displayName.charAt(0)) + '</span>';
+            var statusLabel = status === 'online' ? '🟢 Online' : (status === 'inactive' ? 'Inactive' : '⚫ Offline');
+            return '<div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:1rem;text-align:center;cursor:pointer;transition:all 0.2s;hover:border-color:#b9aa00;">' +
+                '<div style="width:64px;height:64px;border-radius:50%;margin:0 auto 0.75rem;background:#333;border:3px solid ' + statusColor + ';display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+                avatar +
+                '</div>' +
+                '<p style="color:#e0cfc0;margin:0 0 0.25rem 0;font-weight:bold;font-size:0.95rem;">' + esc(displayName) + '</p>' +
+                '<p style="color:#888;font-size:0.8rem;margin:0 0 0.75rem 0;">' + statusLabel + '</p>' +
+                '<button class="btn btn-sm btn-gold" type="button" disabled style="opacity:0.6;cursor:not-allowed;">View User Space</button>' +
+            '</div>';
+        }).join('');
+    }
+
+    window.switchSpaceFellowListTab = function(tabId) {
+        if (['online', 'offline', 'favorites', 'inactive'].indexOf(tabId) === -1) return;
+        activeSpaceFellowTab = tabId;
+        document.querySelectorAll('#spaceFellowListTabs .subtab').forEach(function(button) {
+            var selected = button.getAttribute('data-fellow-list-tab') === tabId;
+            button.classList.toggle('active', selected);
+            button.setAttribute('aria-selected', selected ? 'true' : 'false');
+        });
+        renderSpaceFellows();
+    };
 
     function acceptFriend(friendId) {
         var saved = JSON.parse(localStorage.getItem('sorc_user') || '{}');
@@ -1202,10 +1246,7 @@
                 '<div class="space-banner-title" id="spaceCharacterTitle">User Space</div>' +
                 '</div>';
         }
-        var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
-        return '<div class="space-title-picker-row">' +
-            '<div class="space-banner-title" id="spaceCharacterTitle">' + esc(characterName + "'s User Space") + '</div>' +
-            '</div>';
+        return '';
     }
 
     function renderSpaceCharacterIndex() {
@@ -1410,9 +1451,6 @@
     };
     window.refreshSpaceCharacterIdentity = function() {
         var characterName = typeof window.SORCPropertyCharacterName === 'function' ? window.SORCPropertyCharacterName() : 'Character';
-        var title = document.getElementById('spaceCharacterTitle');
-        var titleText = characterName + "'s User Space";
-        if (title && title.textContent !== titleText) title.textContent = titleText;
         var roomTitle = document.getElementById('spaceCharacterRoomTitle');
         var roomTitleText = characterName + ' Room';
         if (roomTitle && roomTitle.textContent !== roomTitleText) roomTitle.textContent = roomTitleText;
@@ -1624,31 +1662,26 @@
                             '<p>Track your placements across game modes and review the trophies and awards you&rsquo;ve earned.</p>' +
                             '<p>Your earned badges, trophies, and collectible SORC Cards. Show off your conquests and rare finds.</p>' +
                             '<div class="content-grid">' +
+                                '<div class="card" id="leaderboards"><h4>Leaderboards</h4>' +
+                                    (isWanderer
+                                        ? '<p>Sign in to view game-mode standings.</p>'
+                                        : '<p>Ranked standings by Game Mode. Wins, ranks, and awards are displayed in your Home\'s Trophy Room. ' +
+                                            '<a href="/home-and-family.html#trophy-room" style="color:#b9aa00;text-decoration:underline;">Open Trophy Room</a></p>' +
+                                            '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+                                                '<button class="subtab active" onclick="switchGameMode(event, \'campaign\')">Campaign Mode</button>' +
+                                                '<button class="subtab" onclick="switchGameMode(event, \'trials-combat\')">Trials of Combat</button>' +
+                                                '<button class="subtab" onclick="switchGameMode(event, \'trials-zailister\')">Trials of Zailister</button>' +
+                                                '<button class="subtab" onclick="switchGameMode(event, \'omne\')">Omn&eacute; Chronicles</button>' +
+                                                '<button class="subtab" onclick="switchGameMode(event, \'crownmaster\')">Crownmaster</button>' +
+                                                '<button class="subtab" onclick="switchGameMode(event, \'legend\')">Legend (Pro)</button>' +
+                                            '</div>' +
+                                            '<div id="gameBoard" style="padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
+                                                '<p>Campaign Mode standings loading...</p>' +
+                                            '</div>') +
+                                '</div>' +
+                                '<div class="card" id="trophy-achievements"><h4>Achievements</h4><p>Earn badges by playing campaigns, winning tournaments, and completing quests. Basic set public, full set Pro.</p></div>' +
                                 '<div class="card" id="trophies"><h4>Trophies</h4><p>Combat victories, tournament placements, and special accomplishments tracked in your trophy case.</p></div>' +
                                 '<div class="card" id="collectibles"><h4>Collectables</h4><p>Rare and special SORC Cards you\'ve collected. Display your rarest finds to other adventurers.</p></div>' +
-                            '</div>';
-                        if (isWanderer) {
-                            html += '<h3>Leaderboards</h3>' +
-                                '<p>Sign in to view game-mode standings.</p>';
-                            break;
-                        }
-                        html += '<h3>Leaderboards</h3>' +
-                            '<p>Ranked standings by Game Mode. Wins, ranks, and awards are displayed in your Home\'s Trophy Room.</p>' +
-                            '<div style="margin:1rem 0;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
-                                '<button class="subtab active" onclick="switchGameMode(event, \'campaign\')">Campaign Mode</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'trials-combat\')">Trials of Combat</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'trials-zailister\')">Trials of Zailister</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'omne\')">Omn&eacute; Chronicles</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'crownmaster\')">Crownmaster</button>' +
-                                '<button class="subtab" onclick="switchGameMode(event, \'legend\')">Legend (Pro)</button>' +
-                            '</div>' +
-                            '<div id="gameBoard" style="padding:1.5rem;background:#222;border-radius:8px;text-align:center;color:#666;">' +
-                                '<p>Campaign Mode standings loading...</p>' +
-                            '</div>' +
-                            '<div class="card" style="margin-top:1rem;">' +
-                                '<h4>Trophy Room</h4>' +
-                                '<p>Wins, ranks, and tournament awards are displayed in your Home\'s Trophy Room. ' +
-                                '<a href="/home-and-family.html#trophy-room" style="color:#b9aa00;text-decoration:underline;">Open Trophy Room</a></p>' +
                             '</div>';
                         break;
 
@@ -1659,8 +1692,7 @@
                             break;
                         }
                         html += '<h3>Your Characters</h3>' +
-                            '<p>Keep each Character&rsquo;s sheet, progression, achievements, and session Journal together.</p>' +
-                            '<p>View summaries of your characters. Only public User Spaces are visible to others.</p>' +
+                            '<p>This section is where your Character\'s Prestige, Journal Logs and Notes, Quest Logs, Background, Mission Statement, Stats, and other data is recorded.</p>' +
                             '<div style="margin:2rem auto;max-width:600px;text-align:center;">' +
                                 '<div class="sheet-privacy">' +
                                     '<button type="button" class="privacy-btn" id="sheetPublicBtn" onclick="setSheetPrivacy(true)" disabled>Public</button>' +
@@ -1669,16 +1701,16 @@
                                 '<p class="sheet-privacy-note" id="sheetPrivacyNote">Recommend public in lobbies for GM recruiting.</p>' +
                                  '<div class="character-showcase">' +
                                      '<div class="character-canvas-frame">' +
-                                         '<div class="character-canvas" id="activeCharacterCanvas">' + avatarImageMarkup(user.avatar, displayName + ' active character') + '</div>' +
+                                          '<div class="character-canvas" id="activeCharacterCanvas"><div class="character-art-placeholder" role="img" aria-label="Character image placeholder"><span>Image placeholder</span></div></div>' +
                                          '<div class="character-canvas-name" id="activeCharacterName">' + esc(displayName) + '</div>' +
                                      '</div>' +
                                      '<div class="character-thumb-heading">Other Characters</div>' +
                                      '<div class="character-thumb-row">' +
-                                         characterThumbnailMarkup('Basic 1', '01deb0d8-fb1e-4e18-8048-020d8ea56272.png', 'basic') +
-                                         characterThumbnailMarkup('Basic 2', '037b9199-2abf-47a3-9b34-0b912a0675a6.png', 'basic') +
-                                         (isPro ? characterThumbnailMarkup('Pro 1', '1dc7c652-c366-4ed6-babb-50e9db131cf6.png', 'pro') : '') +
-                                         (isPro ? characterThumbnailMarkup('Pro 2', '1f56a37a-924b-4f5b-ad8c-9b3f811eca08.png', 'pro') : '') +
-                                         (isPro ? characterThumbnailMarkup('Pro 3', 'Fang, a Pinkling rogue._20260504_220543_0000.png', 'pro') : '') +
+                                          characterThumbnailMarkup('Basic 1', 'basic') +
+                                          characterThumbnailMarkup('Basic 2', 'basic') +
+                                          (isPro ? characterThumbnailMarkup('Pro 1', 'pro') : '') +
+                                          (isPro ? characterThumbnailMarkup('Pro 2', 'pro') : '') +
+                                          (isPro ? characterThumbnailMarkup('Pro 3', 'pro') : '') +
                                      '</div>' +
                                      '<p class="character-tier-note">' + (isPro
                                          ? 'Pro Members have three additional character highlights in a different hue.'
@@ -1732,14 +1764,19 @@
                             '<p>Your network of adventurers. See who\'s online, send friend requests, and join Fellow campaigns.</p>' +
 
                             '<div style="margin-top:1.5rem;padding:1.5rem;background:#222;border-radius:8px;margin-bottom:1.5rem;">' +
-                                '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Friend Requests</h4>' +
-                                '<div id="friendRequestsList" style="margin-bottom:1rem;"><p style="color:#888;font-size:0.9rem;">Loading friend requests...</p></div>' +
-                            '</div>' +
-
-                            '<div style="margin-bottom:1.5rem;padding:1.5rem;background:#222;border-radius:8px;">' +
-                                '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Online Fellows</h4>' +
+                                '<h4 style="color:#e0cfc0;margin:0 0 1rem 0;">Fellows List</h4>' +
+                                '<div id="spaceFellowListTabs" role="tablist" aria-label="Fellows List" style="margin:0 0 1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">' +
+                                    '<button type="button" class="subtab active" data-fellow-list-tab="online" role="tab" aria-selected="true" onclick="switchSpaceFellowListTab(\'online\')">Online</button>' +
+                                    '<button type="button" class="subtab" data-fellow-list-tab="offline" role="tab" aria-selected="false" onclick="switchSpaceFellowListTab(\'offline\')">Offline</button>' +
+                                    '<button type="button" class="subtab" data-fellow-list-tab="favorites" role="tab" aria-selected="false" onclick="switchSpaceFellowListTab(\'favorites\')">Favorites</button>' +
+                                    '<button type="button" class="subtab" data-fellow-list-tab="inactive" role="tab" aria-selected="false" onclick="switchSpaceFellowListTab(\'inactive\')">Inactive</button>' +
+                                '</div>' +
                                 '<div id="onlineFellowsList" style="display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">' +
                                     '<p style="color:#888;font-size:0.9rem;grid-column:1/-1;">Loading Fellows...</p>' +
+                                '</div>' +
+                                '<div style="margin-top:1.5rem;">' +
+                                    '<h5 style="color:#e0cfc0;margin:0 0 1rem 0;">Requests</h5>' +
+                                    '<div id="friendRequestsList" style="margin-bottom:1rem;"><p style="color:#888;font-size:0.9rem;">Loading friend requests...</p></div>' +
                                 '</div>' +
                             '</div>' +
 
