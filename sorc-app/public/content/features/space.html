@@ -183,6 +183,7 @@
             font-weight: bold; letter-spacing: 0.14em; margin-bottom: 0.7rem; }
         .character-canvas { width: 100%; height: 360px; display: flex; align-items: center; justify-content: center;
             overflow: hidden; border-radius: 8px; background: #080808; }
+        .character-canvas img { width: 100%; height: 100%; object-fit: contain; }
         .character-art-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
             border: 1px dashed #555; border-radius: 8px; background: linear-gradient(135deg, #171717 0%, #242424 100%);
             color: #777; font-size: 0.85rem; }
@@ -193,16 +194,21 @@
         .character-slot-groups { display: flex; justify-content: center; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
         .character-slot-group { text-align: center; }
         .character-slot-group .character-thumb-heading { margin-top: 0; }
-        .character-thumb { position: relative; width: 76px; padding: 0.25rem; border: 2px solid #b9aa00; border-radius: 8px;
-            background: #211d0f; color: #d4c24a; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+        .character-thumb { position: relative; width: 76px; padding: 0.25rem; border: 2px solid #5a5020; border-radius: 8px;
+            background: #17160d; color: #a9943e;
+            cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, background-color 0.15s; }
         .character-thumb:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(185,170,0,0.28); }
-        .character-thumb.selected { border-color: #fff0a0; box-shadow: 0 0 0 2px rgba(255,240,160,0.35); }
+        .character-thumb.selected { border-color: #fff0a0; background: #3d3413; color: #fff0a0;
+            box-shadow: 0 0 0 3px rgba(255,240,160,0.72), 0 0 14px rgba(255,240,160,0.42); }
         .character-thumb-placeholder { display: block; width: 64px; height: 72px; margin: 0 auto; border: 1px dashed #555;
             border-radius: 5px; background: #303030; }
+        .character-thumb img { display: block; width: 64px; height: 72px; margin: 0 auto; object-fit: contain;
+            border-radius: 5px; background: #101010; }
         .character-thumb span { display: block; margin-top: 0.25rem; font-size: 0.62rem; font-weight: bold; }
         .character-thumb.pro.property-rank-elite { border-color: var(--property-rank-color, #be0500); background: rgba(190,5,0,0.1); color: var(--property-rank-color, #be0500); }
         .character-thumb.pro.property-rank-elite:hover { box-shadow: 0 4px 12px rgba(190,5,0,0.35); }
-        .character-thumb.pro.property-rank-elite.selected { border-color: var(--property-rank-color, #be0500); box-shadow: 0 0 0 2px rgba(190,5,0,0.4); }
+        .character-thumb.pro.property-rank-elite.selected { border-color: var(--property-rank-color, #be0500); background: rgba(190,5,0,0.24);
+            color: #fff; box-shadow: 0 0 0 3px rgba(255,240,160,0.6), 0 0 16px rgba(190,5,0,0.48); }
         .character-thumb.locked { cursor: not-allowed; opacity: 0.86; }
         .character-thumb.locked:hover { transform: none; box-shadow: none; }
         .character-thumb.locked::after {
@@ -215,7 +221,9 @@
         .character-thumb.locked.show-tooltip::after { opacity: 1; visibility: visible; }
         body.lawful-mode .character-thumb.locked::after { background: #fff; color: #222; }
         .character-tier-note { margin: 0.7rem 0 0; color: #777; font-size: 0.76rem; line-height: 1.45; text-align: left; }
-        .journal-character-creation { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #333; }
+        .journal-character-creation { margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid #333; }
+        .character-section-title { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+        .character-section-arrow { margin-left: auto; color: #b9aa00; white-space: nowrap; }
         .journal-character-creation h5 { color: #e0cfc0; margin: 0 0 0.5rem; font-size: 0.9rem; }
         .journal-character-creation p { color: #666; margin: 0 0 0.5rem; font-size: 0.82rem; line-height: 1.5; }
         .character-creation-link { color: #b9aa00; font-size: 0.82rem; text-decoration: underline; }
@@ -225,7 +233,12 @@
             background: #f4eee2; border-color: #bbb; color: #777; }
         body.lawful-mode .character-canvas-name { color: #333; }
         body.lawful-mode .character-thumb { background: #fffbea; }
+        body.lawful-mode .character-thumb.selected { background: #f4e7a1; color: #332600;
+            border-color: #7a6200; box-shadow: 0 0 0 3px rgba(122,98,0,0.52), 0 0 14px rgba(122,98,0,0.3); }
         body.lawful-mode .character-thumb.pro.property-rank-elite { background: rgba(190,5,0,0.08); }
+        body.lawful-mode .character-thumb.pro.property-rank-elite.selected { background: rgba(190,5,0,0.2);
+            border-color: var(--property-rank-color, #be0500); color: #541010; }
+        body.lawful-mode .character-section-arrow { color: #c93f35; }
         body.lawful-mode .journal-character-creation { border-color: #e0e0e0; }
         body.lawful-mode .journal-character-creation h5 { color: #2c2c2c; }
         body.lawful-mode .character-creation-link { color: #c93f35; }
@@ -646,6 +659,9 @@
     <script src="/content/character/workspace-nav.js"></script>
     <script>
     var API_URL = 'https://api.sorcrpg.com';
+    var DEFAULT_CHARACTER_IMAGE_URL = '/content/character/assets/customizer/pickers/characters/picker-silhouette-grp.png_20260925_115236_0000.png';
+    var spaceCharacterRecordsData = [];
+    var spaceCharacterIsPro = false;
     var selectedAvatarFilename = null;
     var savedAvatarFilename = null;
     var OWNER_EMAILS = ['corbett@sorcrpg.com'];
@@ -735,23 +751,103 @@
         return '<img src="' + esc2(imageUrl) + '" alt="' + esc2(altText || 'Avatar') + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR_URL + '\';this.style.opacity=\'0.55\';" style="' + avatarStyle + '" />';
     }
 
-    function characterThumbnailMarkup(name, tier, slotNumber, memberTier, locked, selected) {
+    function characterRecordName(character) {
+        var data = character && character.data && typeof character.data === 'object' ? character.data : {};
+        var name = character && (character.name || character.character_name || character.characterName) ||
+            data.name || data.character_name || data.characterName;
+        return String(name || 'Unnamed Character').trim() || 'Unnamed Character';
+    }
+
+    function characterRecordImageUrl(character) {
+        if (!character || typeof character !== 'object') return DEFAULT_CHARACTER_IMAGE_URL;
+        var data = character.data && typeof character.data === 'object' ? character.data : {};
+        var sources = [character, data];
+        var imageKeys = ['avatarImage', 'avatar_image', 'avatar', 'image', 'imageUrl', 'image_url',
+            'portrait', 'portraitUrl', 'portrait_url'];
+        var imageUrl = '';
+        for (var sourceIndex = 0; sourceIndex < sources.length && !imageUrl; sourceIndex++) {
+            for (var imageIndex = 0; imageIndex < imageKeys.length; imageIndex++) {
+                var candidate = sources[sourceIndex][imageKeys[imageIndex]];
+                if (typeof candidate === 'string' && candidate.trim()) {
+                    imageUrl = candidate.trim();
+                    break;
+                }
+            }
+        }
+        if (!imageUrl) return DEFAULT_CHARACTER_IMAGE_URL;
+        if (/^data:image\/(?:png|jpe?g|webp|gif);/i.test(imageUrl)) return imageUrl;
+        if (/^https?:\/\//i.test(imageUrl) || imageUrl.charAt(0) === '/') return imageUrl;
+        var relativePath = imageUrl.replace(/^\.\//, '');
+        if (/^(?:content|images)\//i.test(relativePath) && relativePath.indexOf('..') === -1) {
+            return '/' + relativePath;
+        }
+        if (!/[\\/]/.test(imageUrl) && /^[^?#]+\.(?:png|jpe?g|webp|gif)$/i.test(imageUrl)) {
+            return '/images/avatars/' + encodeURIComponent(imageUrl.split(/[?#]/)[0]);
+        }
+        return DEFAULT_CHARACTER_IMAGE_URL;
+    }
+
+    function characterRecordIsDefault(character) {
+        return !!(character && (character.is_default === true || character.is_default === 1 || character.isDefault === true));
+    }
+
+    function characterThumbnailMarkup(character, slotNumber, isPro, selected) {
+        var tier = slotNumber > 2 ? 'pro' : 'basic';
+        var isLocked = tier === 'pro' && !isPro;
+        var slotLabel = (tier === 'pro' ? 'Pro' : 'Basic') + ' Slot ' + slotNumber;
+        var name = character ? characterRecordName(character) : 'Dormant';
+        var imageUrl = characterRecordImageUrl(character);
         var tierClass = tier === 'pro' ? 'pro property-rank-elite' : 'basic';
-        var isLocked = tier === 'pro' && locked;
-        var slotLabel = memberTier + ' Slot ' + slotNumber;
         var accessibleLabel = name + ', ' + slotLabel;
         return '<button type="button" class="character-thumb ' + tierClass + (isLocked ? ' locked' : '') + (selected ? ' selected' : '') + '"' +
             ' data-character-name="' + esc2(name) + '"' +
+            ' data-character-src="' + esc2(imageUrl) + '"' +
             ' data-slot-number="' + slotNumber + '"' +
-            ' data-member-tier="' + esc2(memberTier) + '"' +
+            ' data-member-tier="' + (tier === 'pro' ? 'Pro' : 'Basic') + '"' +
             ' data-slot-locked="' + (isLocked ? 'true' : 'false') + '"' +
             (isLocked ? ' title="Pro Member slot." data-tooltip="Pro Member slot."' : '') +
             ' onclick="selectCharacterThumbnail(this)" aria-disabled="' + (isLocked ? 'true' : 'false') + '"' +
             ' aria-pressed="' + (selected ? 'true' : 'false') + '"' +
             ' aria-label="' + esc2(isLocked ? 'Pro Member slot.' : 'Select ' + accessibleLabel) + '">' +
-            '<div class="character-thumb-placeholder" aria-hidden="true"></div>' +
+            '<img src="' + esc2(imageUrl) + '" alt="' + esc2(name) + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_CHARACTER_IMAGE_URL + '\';" />' +
             '<span>' + esc2(name) + '</span>' +
         '</button>';
+    }
+
+    function renderCharacterShowcaseMarkup(characters, isPro) {
+        var records = Array.isArray(characters) ? characters.slice(0, 5) : [];
+        var activeIndex = records.findIndex(characterRecordIsDefault);
+        if (activeIndex < 0 || activeIndex >= (isPro ? 5 : 2)) activeIndex = 0;
+        var activeRecord = records[activeIndex] || null;
+        var activeSlot = activeIndex + 1;
+        var activeTier = isPro ? 'Pro' : 'Basic';
+        var activeName = activeRecord ? characterRecordName(activeRecord) : 'Active Character ' + activeTier + ' Slot ' + activeSlot;
+        var activeImageUrl = characterRecordImageUrl(activeRecord);
+        var basicSlots = [1, 2].map(function(slotNumber) {
+            return characterThumbnailMarkup(records[slotNumber - 1] || null, slotNumber, isPro, slotNumber === activeSlot);
+        }).join('');
+        var proSlots = [3, 4, 5].map(function(slotNumber) {
+            return characterThumbnailMarkup(records[slotNumber - 1] || null, slotNumber, isPro, slotNumber === activeSlot);
+        }).join('');
+        return '<div class="character-showcase">' +
+            '<div class="character-canvas-frame">' +
+                '<div class="character-canvas" id="activeCharacterCanvas"><img src="' + esc2(activeImageUrl) + '" alt="' + esc2(activeName) + '" onerror="this.onerror=null;this.src=\'' + DEFAULT_CHARACTER_IMAGE_URL + '\';" /></div>' +
+                '<div class="character-canvas-name" id="activeCharacterName">' + esc2(activeName) + '</div>' +
+            '</div>' +
+            '<div class="character-thumb-heading">Other Characters</div>' +
+            '<div class="character-slot-groups">' +
+                '<div class="character-slot-group"><div class="character-thumb-heading">Basic Slots</div><div class="character-thumb-row">' + basicSlots + '</div></div>' +
+                '<div class="character-slot-group"><div class="character-thumb-heading">Pro Slots</div><div class="character-thumb-row">' + proSlots + '</div></div>' +
+            '</div>' +
+            '<p class="character-tier-note">Basic Members get two Character Slots - Pro Members an Additional three (5 altogether).</p>' +
+        '</div>';
+    }
+
+    function refreshSpaceCharacterShowcase(characters, isPro) {
+        if (Array.isArray(characters)) spaceCharacterRecordsData = characters;
+        if (typeof isPro === 'boolean') spaceCharacterIsPro = isPro;
+        var showcase = document.getElementById('characterShowcaseContent');
+        if (showcase) showcase.innerHTML = renderCharacterShowcaseMarkup(spaceCharacterRecordsData, spaceCharacterIsPro);
     }
 
     function selectCharacterThumbnail(button) {
@@ -766,9 +862,8 @@
         }
         var canvas = document.getElementById('activeCharacterCanvas');
         var name = document.getElementById('activeCharacterName');
-        var memberTier = button.getAttribute('data-member-tier') || 'Basic';
         var slotNumber = button.getAttribute('data-slot-number') || '1';
-        var characterName = 'Active Character ' + memberTier + ' Slot ' + slotNumber;
+        var characterName = button.getAttribute('data-character-name') || 'Active Character Slot ' + slotNumber;
         if (!canvas) return;
         var thumbnailImage = button.querySelector('img');
         canvas.innerHTML = '';
@@ -1711,7 +1806,7 @@
                         break;
 
                     case 'characters':
-                        var characterSlotTier = isPro ? 'Pro' : 'Basic';
+                        spaceCharacterIsPro = isPro;
                         if (isWanderer) {
                             html += '<h3>Characters</h3>' +
                                 '<p>Sign in to view your character previews and records.</p>';
@@ -1720,41 +1815,14 @@
                         html += '<h3>Your Characters</h3>' +
                             '<p>This section is where your Character\'s Prestige, Journal Logs and Notes, Quest Logs, Background, Mission Statement, Stats, and other data is recorded.</p>' +
                             '<div style="margin:2rem auto;max-width:600px;text-align:center;">' +
-                                 '<div class="character-showcase">' +
-                                     '<div class="character-canvas-frame">' +
-                                          '<div class="character-canvas" id="activeCharacterCanvas"><div class="character-art-placeholder" role="img" aria-label="' + esc2('Active Character ' + characterSlotTier + ' Slot 1 image placeholder') + '" data-slot-number="1"><span>Image placeholder</span></div></div>' +
-                                          '<div class="character-canvas-name" id="activeCharacterName">Active Character ' + characterSlotTier + ' Slot 1</div>' +
-                                     '</div>' +
-                                     '<div class="character-thumb-heading">Other Characters</div>' +
-                                      '<div class="character-slot-groups">' +
-                                          '<div class="character-slot-group">' +
-                                               '<div class="character-thumb-heading">Basic Slots</div>' +
-                                              '<div class="character-thumb-row">' +
-                                                   characterThumbnailMarkup('Dormant', 'basic', 1, characterSlotTier, false, true) +
-                                                   characterThumbnailMarkup('Dormant', 'basic', 2, characterSlotTier, false, false) +
-                                              '</div>' +
-                                          '</div>' +
-                                           '<div class="character-slot-group">' +
-                                              '<div class="character-thumb-heading">Pro Slots</div>' +
-                                              '<div class="character-thumb-row">' +
-                                                   characterThumbnailMarkup('Dormant', 'pro', 3, characterSlotTier, !isPro, false) +
-                                                   characterThumbnailMarkup('Dormant', 'pro', 4, characterSlotTier, !isPro, false) +
-                                                   characterThumbnailMarkup('Dormant', 'pro', 5, characterSlotTier, !isPro, false) +
-                                              '</div>' +
-                                           '</div>' +
-                                     '</div>' +
-                                      '<p class="character-tier-note">Basic Members get two Character Slots - Pro Members an Additional three (5 altogether).</p>' +
-                                 '</div>' +
-                                '<div style="margin:1.5rem 0;">' +
-                                    '<a href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank" rel="noopener noreferrer" style="color:#b9aa00;text-decoration:underline;font-size:0.95rem;">Create Character</a>' +
-                                '</div>' +
+                                 '<div id="characterShowcaseContent">' + renderCharacterShowcaseMarkup(spaceCharacterRecordsData, isPro) + '</div>' +
                             '</div>' +
                             '<div class="content-grid" style="margin-top:2rem;">' +
-                                '<div class="card"><h4>Recent Achievements</h4><p>Your latest achievements will appear here.</p></div>' +
-                                '<div class="card" id="achievements"><h4>Prestige</h4><p>Earn badges by playing campaigns, winning tournaments, and completing quests. Basic set public, full set Pro.</p></div>' +
-                                '<div class="card" id="online-journal"><h4>Journal</h4><p>Your completed sessions and campaign records. This is the online counterpart to your Journal booklet.</p>' +
+                                '<div class="card"><h4 class="character-section-title">Recent Achievements<span class="character-section-arrow" aria-hidden="true">»»</span></h4><p>Your latest achievements will appear here.</p></div>' +
+                                '<div class="card" id="achievements"><h4 class="character-section-title">Prestige<span class="character-section-arrow" aria-hidden="true">»»</span></h4><p>Earn badges by playing campaigns, winning tournaments, and completing quests. Basic set public, full set Pro.</p></div>' +
+                                '<div class="card" id="online-journal"><h4 class="character-section-title">Journal<span class="character-section-arrow" aria-hidden="true">»»</span></h4><p>Your completed sessions and campaign records. This is the online counterpart to your Journal booklet.</p>' +
                                     '<div class="journal-character-creation">' +
-                                        '<h5>Character Creation</h5>' +
+                                        '<h5 class="character-section-title">Character Creation<span class="character-section-arrow" aria-hidden="true">»»</span></h5>' +
                                         '<p>Finalize a character\'s Talents, Skills, and Traits before they enter play.</p>' +
                                         '<a class="character-creation-link" href="https://sorcrpg.com/content/essentia_core/rules_character-creation.html#character-creation" target="_blank">Open Character Creation Rules</a>' +
                                     '</div>' +
@@ -2126,6 +2194,7 @@
                         }
                         var list = Array.isArray(charData) ? charData : (charData.characters || []);
                         renderHomeCharacterRecords(list);
+                        refreshSpaceCharacterShowcase(list, isPro);
                         privacySheet = list.filter(function(ch) { return ch.is_default; })[0] || list[0] || null;
                         renderSheetPrivacy();
                     } else {
