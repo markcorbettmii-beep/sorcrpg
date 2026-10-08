@@ -275,9 +275,8 @@ class SORCNavigation {
                 </button>
                 <p class="sorc-nav-section-description">Tomes of Essentia, Character Sheets, Journal and other downloadable books and tools.</p>
                 <ul class="sorc-nav-section-menu" id="library-menu">
-                  <li><a href="${pathToRoot}library.html" aria-describedby="legacy-library-description">Legacy Library</a></li>
+                  <li><a href="${pathToRoot}library.html">Legacy Library</a></li>
                   <li><a href="${pathToRoot}content/library-index.html">Tomes of Essentia</a></li>
-                  <li><span class="sorc-nav-item-description" id="legacy-library-description">Retire your PC as an NPC, Legend, or Hermit.</span></li>
                   <li><a href="${pathToRoot}content/pages/prologue.html">Prologue</a></li>
                   <li><a href="${pathToRoot}content/pages/prologue.html#about">About SORC</a></li>
                 </ul>
