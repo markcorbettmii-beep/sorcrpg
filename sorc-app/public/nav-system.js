@@ -203,7 +203,19 @@ class SORCNavigation {
             </a>
 
             <div class="sorc-nav-content">
-              <!-- YOUR SPACE - First Section (Submenu) -->
+              <!-- ASSESS INTO YOUR ROLE SECTION -->
+              <div class="sorc-nav-section">
+                <button class="sorc-nav-section-toggle" data-section="assessment" aria-expanded="false" aria-controls="assessment-menu">
+                  <span class="sorc-nav-section-label">Assess Into Your Role</span>
+                  <span class="sorc-nav-section-icon">›</span>
+                </button>
+                <p class="sorc-nav-section-description">Assess as a Civilian, Player, GM or Test your Knowledge in Lore to earn Community Points to trade for products and winnings.</p>
+                <ul class="sorc-nav-section-menu" id="assessment-menu">
+                  <li><a href="${pathToRoot}content/reference/take-assessment.html">Take Assessment Now</a></li>
+                </ul>
+              </div>
+
+              <!-- USER SPACE SECTION -->
               <div class="sorc-nav-section">
                 <button class="sorc-nav-section-toggle" data-section="play" aria-expanded="false" aria-controls="play-menu">
                   <span class="sorc-nav-section-label sorc-play-section-label">User Space</span>
