@@ -27,12 +27,15 @@
     .choice-btn.gm:hover { background: #241d05; }
     .choice-btn.civilian { background: #1a1a1a; border: 2px solid #555; color: #aaa; }
     .choice-btn.civilian:hover { background: #242424; color: #e0cfc0; }
+    .choice-btn.inactive { background: #181818; border: 2px solid #333; color: #666; cursor: not-allowed; }
+    .choice-reference { color: #777; font-size: 0.78rem; text-align: center; margin-top: -0.5rem; }
     body.lawful-mode .role-explainer { background: #f5f5f0; border-color: #ddd; }
     body.lawful-mode .role-explainer p { color: #444; }
     body.lawful-mode .role-explainer strong { color: #2c2c2c; }
     body.lawful-mode .reassess-note { background: #fdf8e0; border-color: #e0d060; color: #7a6a00; }
     body.lawful-mode .admin-note { background: #fff; border-color: #ddd; color: #666; }
     body.lawful-mode .choice-btn.civilian { background: #fff; border-color: #ccc; color: #555; }
+    body.lawful-mode .choice-btn.inactive { background: #f5f5f0; border-color: #ddd; color: #999; }
   </style>
 </head>
 <body>
@@ -67,7 +70,7 @@
       </div>
 
       <div class="reassess-note">
-        Members that have already discovered Essentia may reassess as many times as they'd like, regardless of their results. Just click the Assessment Choice above.
+        Members that have already discovered Essentia may reassess as many times as they'd like, regardless of their results; however, their new score reflects the Users new Role. Lore Assessments don't change Role, but passing scores reward Community Points.
       </div>
 
       <div class="admin-note">
@@ -98,13 +101,19 @@
     var buttons = document.getElementById('choiceButtons');
     if (loggedIn) {
       buttons.innerHTML =
-        '<a href="assess.html?track=gm&from=join" class="choice-btn gm">Assess Into GM</a>' +
-        '<a href="assess.html?track=pc&from=join" class="choice-btn pc">Assess Into Player</a>' +
+        '<a href="assess.html?track=gm&from=join" class="choice-btn gm">Assess as GM</a>' +
+        '<span class="choice-reference">See Rules (GM Codex Under Development)</span>' +
+        '<a href="assess.html?track=pc&from=join" class="choice-btn pc">Assess as Player - Complex</a>' +
+        '<span class="choice-btn inactive" aria-disabled="true">Assess as Player - Bare Bones</span>' +
+        '<span class="choice-btn inactive" aria-disabled="true">SORC Lore Assessment</span>' +
         '<a href="sorc-web.html#basic-member" class="choice-btn civilian">Login as Civilian</a>';
     } else {
       buttons.innerHTML =
-        '<a href="signin.html?track=gm" class="choice-btn gm">Assess into GM Role</a>' +
-        '<a href="assess.html?track=pc" class="choice-btn pc">Assess into Player Role</a>' +
+        '<a href="signin.html?track=gm" class="choice-btn gm">Assess as GM</a>' +
+        '<span class="choice-reference">See Rules (GM Codex Under Development)</span>' +
+        '<a href="assess.html?track=pc" class="choice-btn pc">Assess as Player - Complex</a>' +
+        '<span class="choice-btn inactive" aria-disabled="true">Assess as Player - Bare Bones</span>' +
+        '<span class="choice-btn inactive" aria-disabled="true">SORC Lore Assessment</span>' +
         '<a href="signin.html?next=' + encodeURIComponent('sorc-web.html#basic-member') + '" class="choice-btn civilian">Skip the Assessment and Join as Civilian</a>';
     }
   </script>

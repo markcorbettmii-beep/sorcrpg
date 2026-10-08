@@ -115,9 +115,7 @@
               </button>
             `).join('')}
           </div>
-          <a href="https://sorcrpg.com/content/essentia_core/${({1:'rules-index',2:'rules_playable-races',3:'rules_playable-classes',4:'rules_equipment',5:'rules_game-features',6:'glossary'})[question.page] || 'rules-index'}.html" target="_blank" class="rules-link">
-            See rules pg. ${question.page}
-          </a>
+          <a href="${esc(question.anchor)}" target="_blank" rel="noopener noreferrer" class="rules-link">See Rules</a>
         </div>
       `).join("");
 
@@ -262,6 +260,9 @@
         const note = (wasWrong && correctIdx === null)
           ? '<div class="rev-note">The correct answer for this one is not shown - GM Codex questions keep their answer key.</div>'
           : '';
+        const rulesReference = question.anchor
+          ? `<a href="${esc(question.anchor)}" target="_blank" rel="noopener noreferrer" class="rules-link">See Rules</a>`
+          : '<div class="rules-link">See Rules (GM Codex Under Development)</div>';
 
         return `
           <div class="q-card${wasWrong ? ' was-wrong' : ''}">
@@ -269,9 +270,7 @@
             <div class="q-text">${esc(question.q)}</div>
             <div class="q-options">${opts}</div>
             ${note}
-            <a href="https://sorcrpg.com/content/essentia_core/${({1:'rules-index',2:'rules_playable-races',3:'rules_playable-classes',4:'rules_equipment',5:'rules_game-features',6:'glossary'})[question.page] || 'rules-index'}.html" target="_blank" class="rules-link">
-              See rules pg. ${question.page}
-            </a>
+            ${rulesReference}
           </div>
         `;
       }).join('');

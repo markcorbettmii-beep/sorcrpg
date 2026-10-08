@@ -1361,7 +1361,7 @@ app.post('/api/conversations/:id/messages', authMiddleware, async (c) => {
 
 // ─── ASSESSMENT SYSTEM ────────────────────────────────────────────────────────
 
-const ASSESSMENT_QUESTIONS = [
+const LEGACY_ASSESSMENT_QUESTIONS = [
   // PAGE 1 - Dice, D100 System, Action Resolution
   { q: "When rolling d100, your tens die shows 7 and your ones die shows 3. What is your result?", options: ["37", "73", "3", "7"], answer: 1, page: 1 },
   { q: "What does rolling two 0s on the d100 equal?", options: ["0", "10", "50", "100"], answer: 3, page: 1 },
@@ -1457,6 +1457,76 @@ const ASSESSMENT_QUESTIONS = [
   { q: "What happens to a character at the Burdened load threshold (95-99%)?", options: ["They cannot act", "They move at half speed", "They move at full speed", "They drop all items"], answer: 1, page: 5 },
 ];
 
+// Only prompts with reader-facing rule anchors enter the live Player pool.
+const PLAYER_ASSESSMENT_RULES: Record<string, string> = {
+  "What does DIFS stand for in SORC?": "/content/essentia_core/glossary.html#term-difs",
+  "In SORC, a D100 action roll must do what to the DIFS to succeed?": "/content/essentia_core/rules_character-creation.html#skills",
+  "How many playable races and kinborns are available in SORC?": "/content/essentia_core/rules_playable-races.html#playable-races",
+  "How many size categories do SORC races fall into?": "/content/essentia_core/rules_playable-races.html#playable-races",
+  "What are the three size categories for SORC races?": "/content/essentia_core/rules_playable-races.html#playable-races",
+  "In SORC, does a Human's culture (Omne, Nordian, etc.) affect their base Traits and Stats?": "/content/essentia_core/rules_playable-races.html#race-imperials",
+  "How many Attributes exist in SORC?": "/content/essentia_core/rules_character-creation.html#attributes",
+  "What is the maximum score a Skill can reach?": "/content/essentia_core/rules_character-creation.html#expertise",
+  "How many REM Points must be invested to unlock a Profession?": "/content/essentia_core/rules_character-creation.html#skills",
+  "Skill and talent scores are multiplied by what number for each use?": "/content/essentia_core/rules_character-creation.html#character-creation",
+  "Which Trait sets the maximum cap (Extent) for each Vitality resource?": "/content/essentia_core/rules_character-creation.html#vitality",
+  "Which Trait governs how fast Vitality resources recover?": "/content/essentia_core/rules_character-creation.html#vitality",
+  "Which Expertise tier does every character have access to for free?": "/content/essentia_core/rules_character-creation.html#expertise",
+  "Can characters equip items of a Rank above their own?": "/content/essentia_core/rules_combat-movement.html#encumbrance",
+  "What is the Crafting Check formula in SORC?": "/content/essentia_core/rules_character-creation.html#skills",
+  "What is the maximum number of Abilities a character can learn?": "/content/essentia_core/rules_character-creation.html#abilities",
+  "How many main Classes exist in SORC?": "/content/essentia_core/rules_playable-classes.html#playable-classes",
+  "How many Paths does each Class Tree have?": "/content/essentia_core/rules_playable-classes.html#playable-classes",
+  "How many Branches does each Path have?": "/content/essentia_core/rules_playable-classes.html#playable-classes",
+  "Which LVL range covers a Class Tree's Tier Abilities?": "/content/essentia_core/rules_playable-classes.html#playable-classes",
+  "How many Silver coins equal one Gold coin in SORC?": "/content/essentia_core/rules_currency.html#currency-system",
+  "How many Copper coins equal one Silver coin in SORC?": "/content/essentia_core/rules_currency.html#currency-system",
+  "What are the three standard currency denominations in Essentia?": "/content/essentia_core/rules_currency.html#currency-system",
+  "Which world serves as the universe's primary reserve currency issuer?": "/content/essentia_core/rules_currency.html#currency-system",
+  "Which worlds refuse coins and trade only in Credits?": "/content/essentia_core/rules_currency.html#currency-system",
+  "What Card rank is included in a module of LVLs 1-5?": "/content/essentia_core/rules_sorc-cards.html#sorc-cards",
+  "What Card rank is included in a module of LVLs 5-10?": "/content/essentia_core/rules_sorc-cards.html#sorc-cards",
+  "What is the highest item Rank in SORC?": "/content/essentia_core/rules_combat-movement.html#encumbrance",
+  "Which item Rank sits directly above Rare?": "/content/essentia_core/rules_combat-movement.html#encumbrance",
+  "What does PROTS stand for in SORC?": "/content/essentia_core/glossary.html#term-prots",
+  "What roll result counts as a Critical Hit in SORC?": "/content/essentia_core/rules_combat-movement.html#crit-window",
+  "How much damage does a Critical Hit deal?": "/content/essentia_core/rules_combat-movement.html#critical-hit",
+  "How many real-time seconds does each combat turn represent in SORC?": "/content/essentia_core/rules_sorc-cards.html#how-to-read-a-card",
+  "What is the base movement speed for Standard size races?": "/content/essentia_core/rules_combat-movement.html#movement",
+  "What is the base movement speed for Goliath size races?": "/content/essentia_core/rules_combat-movement.html#movement",
+  "What is the base movement speed for Small size races?": "/content/essentia_core/rules_combat-movement.html#movement",
+  "In SORC's armor system, when does an attack successfully hit?": "/content/essentia_core/rules_combat-movement.html#combat",
+  "What does the abbreviation 'AS' stand for in SORC?": "/content/essentia_core/glossary.html#term-as",
+  "What is the base Armor Score (AS) of Heavy (Plate) armor?": "/content/essentia_core/rules_combat-movement.html#combat",
+  "What does LST stand for in SORC combat?": "/content/essentia_core/rules_combat-movement.html#limb-specific-targeting-lst",
+  "How much carry capacity does each positive point of Strength add on top of the racial base?": "/content/essentia_core/rules_combat-movement.html#encumbrance",
+  "At what load threshold does a character become Encumbered and unable to move or act?": "/content/essentia_core/rules_combat-movement.html#encumbrance",
+  "What load percentage range still allows a character to move at full speed?": "/content/essentia_core/rules_combat-movement.html#encumbrance",
+  "What happens to a character at the Burdened load threshold (95-99%)?": "/content/essentia_core/rules_combat-movement.html#encumbrance"
+};
+const PLAYER_ASSESSMENT_FIXES: Record<string, any> = {
+  "In SORC, a D100 action roll must do what to the DIFS to succeed?": { q: "For a noncombat Skill check, what must your total meet or exceed to succeed?", options: ["The GM-set DIFS", "The target's PROTS", "The Character's Rank", "100 on the die"], answer: 0 },
+  "In SORC, does a Human's culture (Omne, Nordian, etc.) affect their base Traits and Stats?": { q: "How do the six Imperial Bloodlines differ?", options: ["Culturally; all share Traits, base statistics, and Innate Abilities", "Each has different Traits, base statistics, and Innate Abilities", "Only their size category differs", "They belong to different Main Classes"], answer: 0 },
+  "What is the maximum score a Skill can reach?": { q: "What is the maximum score for an individual TST?", options: ["45", "100", "199", "200"], answer: 1 },
+  "Skill and talent scores are multiplied by what number for each use?": { q: "When are Talent and Skill scores doubled?", options: ["At every use", "When acquired", "At character creation only", "After each Long Rest"], answer: 1 },
+  "Which Trait sets the maximum cap (Extent) for each Vitality resource?": { q: "Which Vitality score sets each resource's capacity?", options: ["Spirit", "Apex", "Growth", "Fortitude"], answer: 1 },
+  "Which Trait governs how fast Vitality resources recover?": { q: "Which Vitality score determines regeneration rate?", options: ["Apex", "Spirit", "Growth", "Endurance"], answer: 1 },
+  "Can characters equip items of a Rank above their own?": { q: "What is the exception to the same-Rank requirement for using an item?", options: ["Common items can be used by Characters of any Rank", "Items one Rank above the Character are allowed", "Armor is exempt from Rank requirements", "Rank only limits carrying capacity"], answer: 0 },
+  "What is the Crafting Check formula in SORC?": { options: ["d100 + Skill SCR + Aligned ATTR Modifier vs. DIFS", "d100 + (Skill SCR × 5) + Aligned ATTR Modifier vs. DIFS", "d20 + Profession Rank vs. PROTS", "Skill SCR alone vs. Character Rank"], answer: 0 },
+  "How many Branches does each Path have?": { options: ["One", "Two", "Three", "Four"], answer: 2 },
+  "How many Silver coins equal one Gold coin in SORC?": { options: ["10", "25", "50", "100"], answer: 2 },
+  "What are the three standard currency denominations in Essentia?": { q: "How many coin types are listed in the Currency System?", options: ["Three", "Four", "Five", "Six"], answer: 2 },
+  "What Card rank is included in a module of LVLs 5-10?": { q: "What Card rank is included in a module of LVLs 5-8?", options: ["Common", "Uncommon", "Rare", "Unique"], answer: 1 },
+  "What roll result counts as a Critical Hit in SORC?": { q: "For a Common-rank weapon, which d100 results are inside its Critical Window?", options: ["1-5", "90-95", "96-100", "Any natural roll"], answer: 2 },
+  "How many real-time seconds does each combat turn represent in SORC?": { q: "How often does a CD (Cooldown) Card normally restore a charge?", options: ["Once every Turn (6 seconds)", "Once per hour", "After a Short Rest only", "Only after the GM resets it"], answer: 0 },
+  "In SORC's armor system, when does an attack successfully hit?": { q: "What does an attacker's score need to meet or exceed for the attack to land?", options: ["The target's total PROTS", "The attacker's ATTR score", "The weapon's Rank", "The target's current Life"], answer: 0 },
+  "What does the abbreviation 'AS' stand for in SORC?": { q: "How is Armor Score abbreviated in the glossary?", options: ["Armor Set", "Armor SCR", "Attack Score", "Action Score"], answer: 1 },
+  "What is the base Armor Score (AS) of Heavy (Plate) armor?": { q: "What is the Base Armor Scr. of Heavy (Plate) armor?", options: ["25", "35", "45", "60"], answer: 2 }
+};
+const ASSESSMENT_QUESTIONS = LEGACY_ASSESSMENT_QUESTIONS
+  .filter((q) => Object.prototype.hasOwnProperty.call(PLAYER_ASSESSMENT_RULES, q.q))
+  .map((q) => ({ ...q, ...PLAYER_ASSESSMENT_FIXES[q.q], anchor: PLAYER_ASSESSMENT_RULES[q.q] }));
+
 const ASSESSMENT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function calcSorcRole(score: number, gmTrack: boolean): string {
@@ -1492,7 +1562,7 @@ app.get('/api/assess/questions', authMiddleware, async (c) => {
     id: q.id,
     q: q.q,
     options: q.options,
-    page: q.page
+    anchor: q.anchor
   }));
   /* Never cache: every request must return a freshly shuffled set of questions */
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
