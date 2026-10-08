@@ -277,7 +277,7 @@ class SORCNavigation {
                 <ul class="sorc-nav-section-menu" id="library-menu">
                   <li><a href="${pathToRoot}content/library-index.html">Library</a></li>
                   <li><a href="${pathToRoot}library.html">Legacy Library</a><span class="sorc-nav-item-description">Retire your PC as an NPC, Legend, or Hermit.</span></li>
-                  <li><a href="${pathToRoot}content/tomes/heroes-hermits.html">Tomes</a></li>
+                  <li><a href="${pathToRoot}content/library-index.html">Tones of Essentia</a></li>
                 </ul>
               </div>
 
