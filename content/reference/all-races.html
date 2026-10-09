@@ -2717,6 +2717,10 @@
           description: descriptionParts.join(' ')
         });
       });
+      const templates = previewDocument.getElementById('new-race-template-data');
+      if (templates) JSON.parse(templates.textContent).forEach(([id, name, description]) => {
+        metadata.set('race-' + id, { emptyTemplate: true, name, description });
+      });
       return metadata;
     }
     function previewStatusText(metadata) {
@@ -2948,6 +2952,35 @@
         const metadata = previewMetadata.get(card.dataset.race) || null;
         if (!metadata) console.error('No matching preview card for ' + card.dataset.race);
         addRaceTemplate(card, metadata);
+      });
+      const canonical = document.querySelector('.race-card[data-race="race-caelen"]');
+      previewMetadata.forEach((entry, id) => {
+        if (!entry.emptyTemplate) return;
+        const card = canonical.cloneNode(true);
+        card.dataset.race = id;
+        card.removeAttribute('data-size');
+        card.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'));
+        card.querySelectorAll('td').forEach((node) => { node.textContent = ''; });
+        card.querySelectorAll('.firstborn-canonical-note,.back-to-race-previews').forEach((node) => node.remove());
+        const walker = document.createTreeWalker(card, NodeFilter.SHOW_TEXT);
+        const textNodes = [];
+        while (walker.nextNode()) textNodes.push(walker.currentNode);
+        textNodes.forEach((node) => {
+          const parent = node.parentElement;
+          const isHeader = parent.closest('th,.race-template-heading,.race-section-label');
+          const isFieldLabel = parent.closest('strong') && parent.closest('.culture-template,.race-size-stats') && !parent.closest('td');
+          if (isHeader || isFieldLabel) node.nodeValue = node.nodeValue.replace(/Caelen/g, entry.name);
+          else node.nodeValue = '';
+        });
+        const heading = card.querySelector(':scope > h4');
+        heading.id = id;
+        heading.textContent = entry.name;
+        const image = heading.nextElementSibling;
+        image.innerHTML = '<div style="font-size:0.9rem;color:rgba(0,88,170,0.5);font-style:italic;text-align:center;">Place Holder awaiting Image.</div>';
+        const descriptionHeading = [...card.querySelectorAll('.race-template-heading')].find((node) => node.textContent.trim() === 'Description');
+        descriptionHeading.nextElementSibling.textContent = entry.description;
+        card.querySelectorAll('p').forEach((node) => { if (!node.textContent.trim() && !node.closest('td')) node.remove(); });
+        canonical.parentElement.appendChild(card);
       });
       document.querySelectorAll('.race-card').forEach((card) => {
         const back = document.createElement('p');
