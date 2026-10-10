@@ -65,6 +65,20 @@ const havenHudShortcutDestination = resolve(
 );
 copyFileSync(havenHudShortcutSource, havenHudShortcutDestination);
 
+const cameoPagePaths = [
+  "content/cameos/zailister/androids/the-quiet-index-droidserein.html",
+];
+const cameoPageAssets = cameoPagePaths.map((relativePath) => {
+  const source = resolve(repositoryRoot, relativePath);
+  const destination = resolve(publicRoot, relativePath);
+  if (!existsSync(source)) {
+    throw new Error(`Canonical Cameo page is missing: ${relativePath}`);
+  }
+  mkdirSync(dirname(destination), { recursive: true });
+  copyFileSync(source, destination);
+  return { source, destination };
+});
+
 const havenHudAssets = [
   "default-haven-app-hud_20260927_234628_0000.png",
   "omné-terminal-haven-app-hud_20260927_222728_0000.png",
@@ -150,6 +164,7 @@ if (existsSync(notableRacePageSource)) {
 
 for (const { source, destination } of [
   ...raceContentAssets,
+  ...cameoPageAssets,
 ]) {
   if (!readFileSync(source).equals(readFileSync(destination))) {
     throw new Error(`Canonical Worker asset differs after staging: ${destination}`);
@@ -163,6 +178,7 @@ for (const asset of [
   ...havenHudAssets,
   ...havenMapGridAssets,
   ...raceContentAssets.map(({ destination }) => destination),
+  ...cameoPageAssets.map(({ destination }) => destination),
 ]) {
   if (statSync(asset).size === 0) {
     throw new Error(`Required Worker asset was staged empty: ${asset}`);
@@ -170,5 +186,5 @@ for (const asset of [
 }
 
 console.log(
-  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, canonical Space and Haven HUD pages, three Haven HUD artworks, seven structure-map grids, and ${raceContentAssets.length} canonical playable-race pages and artwork.`,
+  `Staged ${rootHtmlFiles.length} root HTML pages, _redirects, brand logos, canonical Space and Haven HUD pages, three Haven HUD artworks, seven structure-map grids, ${raceContentAssets.length} canonical playable-race pages and artwork, and ${cameoPageAssets.length} canonical Cameo pages.`,
 );
